@@ -1,7 +1,7 @@
 # img-txt_viewer
 Display an image and text together.
 
-![image](https://user-images.githubusercontent.com/70049990/220435126-eff640d3-0700-471f-9800-f9861e39aedf.png)
+![image](https://user-images.githubusercontent.com/70049990/220445796-ea8c9b05-3a89-46cb-81f9-e291589d6c07.png)
 
 Place images and txt files in the same folder, with the same name.
 
