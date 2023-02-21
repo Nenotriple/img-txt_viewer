@@ -17,7 +17,7 @@ class ImageTextViewer:
         self.text_files = []
 
         self.label_image = Label(master)
-        self.text_box = Text(master, height=20, width=50, wrap=WORD)
+        self.text_box = Text(master, height=20, width=50, wrap=WORD, undo=True)
         self.next_button = Button(master, text="Next", command=self.next_pair)
         self.prev_button = Button(master, text="Previous", command=self.prev_pair)
         self.directory_button = Button(master, text="Choose Directory", command=self.choose_directory)
@@ -31,10 +31,15 @@ class ImageTextViewer:
         self.directory_button.pack(side=TOP, fill=X)
         self.label_image.pack(side=LEFT)
         self.next_button.pack(anchor=N, fill=X, ipadx=120, pady=3)
-        self.prev_button.pack(anchor=N, fill=X, ipadx=100, pady=3)
-        self.save_button.pack(side=TOP, fill=X, ipadx=100, pady=3)
+        self.prev_button.pack(anchor=N, fill=X, ipadx=120, pady=3)
+        self.save_button.pack(side=TOP, fill=X, ipadx=120, pady=3)
         self.auto_save_checkbutton = Checkbutton(master, text="Auto-save", variable=self.auto_save_var)
         self.auto_save_checkbutton.pack(side=TOP)
+        self.list_mode_var = BooleanVar()
+        self.list_mode_var.set(False)
+        self.list_mode_checkbutton = Checkbutton(self.master, text="List mode", variable=self.list_mode_var)
+        self.list_mode_checkbutton.pack(side=TOP)
+        self.list_mode_checkbutton.bind("<Button-1>", lambda event: self.toggle_list_mode())
 
         self.image_index_label = Label(self.master, text="Load some images!")
         self.image_index_label.pack(side=TOP, expand=NO)
@@ -64,7 +69,6 @@ class ImageTextViewer:
                 text_filename = os.path.splitext(filename)[0] + ".txt"
                 self.text_files.append(os.path.join(self.image_dir.get(), text_filename))
         self.show_pair()
-        self.display_image_count()
 
     def show_pair(self):
         if self.image_files:
@@ -116,13 +120,6 @@ class ImageTextViewer:
             self.show_pair()
             if not self.text_modified:
                 self.saved_label.config(text="No Changes", fg="black")
-    
-    def save_text_file(self):
-        if self.text_files:
-            text_file = self.text_files[self.current_index]
-            with open(text_file, "w") as f:
-                f.write(self.text_box.get("1.0", END))
-                self.saved_label.config(text="saved")
 
     def is_modified(self, *args):
         if self.text_files:
@@ -145,6 +142,17 @@ class ImageTextViewer:
             with open(text_file, "w") as f:
                 f.write(self.text_box.get("1.0", END))
             self.saved_label.config(text="Saved", bg="green", fg="white")
+
+    def toggle_list_mode(self):
+        text = self.text_box.get("1.0", "end-1c")
+        if self.list_mode_var.get():
+            new_text = text.replace(", ", "\n").lstrip()
+        else:
+            new_text = text.replace("\n", ", ").rstrip()
+        self.text_box.delete("1.0", END)
+        self.text_box.insert(END, new_text)
+
+
 
 root = Tk()
 app = ImageTextViewer(root)
