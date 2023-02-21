@@ -17,7 +17,7 @@ class ImageTextViewer:
         self.text_files = []
 
         self.label_image = Label(master)
-        self.text_box = Text(master, height=20, width=50, wrap=WORD, undo=True)
+        self.text_box = Text(master, height=20, width=50, wrap=WORD, undo=TRUE)
         self.next_button = Button(master, text="Next", command=self.next_pair)
         self.prev_button = Button(master, text="Previous", command=self.prev_pair)
         self.directory_button = Button(master, text="Choose Directory", command=self.choose_directory)
@@ -35,25 +35,20 @@ class ImageTextViewer:
         self.save_button.pack(side=TOP, fill=X, ipadx=120, pady=3)
         self.auto_save_checkbutton = Checkbutton(master, text="Auto-save", variable=self.auto_save_var)
         self.auto_save_checkbutton.pack(side=TOP)
-        self.list_mode_var = BooleanVar()
-        self.list_mode_var.set(False)
-        self.list_mode_checkbutton = Checkbutton(self.master, text="List mode", variable=self.list_mode_var)
-        self.list_mode_checkbutton.pack(side=TOP)
-        self.list_mode_checkbutton.bind("<Button-1>", lambda event: self.toggle_list_mode())
 
-        self.image_index_label = Label(self.master, text="Load some images!")
-        self.image_index_label.pack(side=TOP, expand=NO)
+        self.image_index_label = Label(self.master, text="Load a directory with image and text pairs.")
+        self.image_index_label.pack(anchor=N)
 
         self.create_saved_label()
         self.text_box.bind("<Key>", lambda event: self.change_label())
 
     def create_saved_label(self):
         self.saved_label = Label(self.master, text="No Changes")
-        self.saved_label.pack(side=TOP, expand=NO)
+        self.saved_label.pack(anchor=N)
         self.text_box.bind("<Key>", lambda event: self.text_modified())
 
     def change_label(self):
-        self.saved_label.config(text="Changes Not Saved", bg="red", fg="white")
+        self.saved_label.config(text="Changes Are Not Saved", bg="red", fg="white")
 
     def choose_directory(self):
         self.image_dir.set(askdirectory())
@@ -133,26 +128,12 @@ class ImageTextViewer:
                 else:
                     self.saved_label.config(text="No Changes", fg="black")
 
-    def text_modified(self):
-        self.saved_label.config(text="Unsaved", fg="red")
-
     def save_text_file(self):
         if self.text_files:
             text_file = self.text_files[self.current_index]
             with open(text_file, "w") as f:
                 f.write(self.text_box.get("1.0", END))
             self.saved_label.config(text="Saved", bg="green", fg="white")
-
-    def toggle_list_mode(self):
-        text = self.text_box.get("1.0", "end-1c")
-        if self.list_mode_var.get():
-            new_text = text.replace(", ", "\n").lstrip()
-        else:
-            new_text = text.replace("\n", ", ").rstrip()
-        self.text_box.delete("1.0", END)
-        self.text_box.insert(END, new_text)
-
-
 
 root = Tk()
 app = ImageTextViewer(root)
