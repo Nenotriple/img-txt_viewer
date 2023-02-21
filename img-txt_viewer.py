@@ -31,11 +31,11 @@ class ImageTextViewer:
         self.directory_entry.pack(side=TOP, expand=NO, fill=X)
         self.directory_button.pack(side=TOP, fill=X)
         self.label_image.pack(side=TOP, expand=YES)
-        self.next_button.pack(anchor=N, fill=X, ipadx=250, pady=3)
-        self.prev_button.pack(anchor=N, fill=X, ipadx=250, pady=3)
-        self.save_button.pack(side=TOP, fill=X, ipadx=250)
+        self.next_button.pack(anchor=N, fill=X, pady=3)
+        self.prev_button.pack(anchor=N, fill=X, pady=3)
+        self.save_button.pack(side=TOP, fill=X,)
         self.auto_save_checkbutton = Checkbutton(master, text="Auto-save", variable=self.auto_save_var)
-        self.auto_save_checkbutton.pack(side=TOP, fill=X, ipadx=250)
+        self.auto_save_checkbutton.pack(side=TOP,)
 
 
         self.create_saved_label()
