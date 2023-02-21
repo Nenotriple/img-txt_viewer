@@ -17,5 +17,4 @@ Holding ALT and pressing Left/Right arrow keys will move to the next or previous
 
 __________
 
-The bulk of this code was created with ChatGPT, and as such there's still a ton I want, but lack the knowledge. 
-Edditing the code with ChatGPT became cumbersome quickly, I'm not sure I can ask much more from it all at once. I'm simply not knowledgable enough to make the edits it suggests.
+This only uses tkinter, so if you have Python installed, you're good to go!
