@@ -1,7 +1,7 @@
 # img-txt_viewer
 Display an image and text together.
 
-![screenshot](https://raw.githubusercontent.com/Nenotriple/img-txt_viewer/main/test/01.png)
+![preview](https://user-images.githubusercontent.com/70049990/220434741-1541dabc-3203-4ee9-b991-58a7e720413f.png)
 
 Place images and txt files in the same folder, with the same name.
 
