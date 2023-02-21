@@ -26,6 +26,7 @@ class ImageTextViewer:
         self.save_button = Button(self.master, text="Save", command=self.save_text_file, fg="blue")
         self.auto_save_var = BooleanVar()
         self.auto_save_var.set(False)
+        self.text_modified = False
 
         self.directory_entry.pack(side=TOP, expand=NO, fill=X)
         self.directory_button.pack(side=TOP, fill=X)
@@ -84,20 +85,27 @@ class ImageTextViewer:
             with open(text_file, "r") as f:
                 self.text_box.delete("1.0", END)
                 self.text_box.insert(END, f.read())
+                self.text_modified = False
+            if not self.text_modified:
+                self.saved_label.config(text="No Changes", fg="black")
 
     def next_pair(self):
         if self.current_index < len(self.image_files) - 1:
             if self.auto_save_var.get():
                 self.save_text_file()
-                self.current_index += 1
-                self.show_pair()
-
+            self.current_index += 1
+            self.show_pair()
+            if not self.text_modified:
+                self.saved_label.config(text="No Changes", fg="black")
+    
     def prev_pair(self):
         if self.current_index > 0:
             if self.auto_save_var.get():
                 self.save_text_file()
-                self.current_index -= 1
-                self.show_pair()
+            self.current_index -= 1
+            self.show_pair()
+            if not self.text_modified:
+                self.saved_label.config(text="No Changes", fg="black")
 
     def save_text_file(self):
         if self.text_files:
@@ -115,7 +123,7 @@ class ImageTextViewer:
                 if file_content == text_content:
                     self.saved_label.config(text="saved")
                 else:
-                    self.saved_label.config(text="unsavd", fg="red")
+                    self.saved_label.config(text="unsaved", fg="red")
 
     def text_modified(self):
         self.saved_label.config(text="Unsaved", fg="red")
