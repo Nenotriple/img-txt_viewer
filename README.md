@@ -11,9 +11,11 @@ So 01.png and 01.txt and so on. The names need to be same same between pairs, bu
 
 __________
 
-Pressing CTRL+S will save the current text file.
+CTRL + S will save the current text file.
 
-Holding ALT and pressing Left/Right arrow keys will move to the next or previous img/txt pair.
+ALT + Left/Right arrow keys will move to the next or previous img/txt pair.
+
+If the auto-save box is checked, text will be saved when moving to the next or previous img/txt pair.
 
 __________
 
