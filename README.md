@@ -19,4 +19,4 @@ If the auto-save box is checked, text will be saved when moving to the next or p
 
 __________
 
-This only uses tkinter, so if you have Python installed, you're good to go!
+This only uses tkinter and Pillow.
