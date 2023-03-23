@@ -10,6 +10,7 @@ So 01.png and 01.txt and so on. The names need to be same same between pairs, bu
 .png and .jpg supported.
 
 __________
+CTRL + Z (sort of) works.
 
 CTRL + S will save the current text file.
 
