@@ -19,4 +19,10 @@ If the auto-save box is checked, text will be saved when moving to the next or p
 
 __________
 
-This only uses tkinter and Pillow.
+This only uses pillow and tkinter, so if you have Python installed, you're good to go!
+
+__________
+
+v1.1 changes:
+
+Fixed trailing space/new line when saving
