@@ -132,7 +132,7 @@ class ImageTextViewer:
         if self.text_files:
             text_file = self.text_files[self.current_index]
             with open(text_file, "w") as f:
-                f.write(self.text_box.get("1.0", END))
+                f.write(self.text_box.get("1.0", END).strip())
             self.saved_label.config(text="Saved", bg="green", fg="white")
 
 root = Tk()
