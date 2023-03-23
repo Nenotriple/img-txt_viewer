@@ -1,5 +1,5 @@
 # img-txt_viewer
-Display an image and text together.
+Display an image and text together for easy editing.
 
 ![image](https://user-images.githubusercontent.com/70049990/220445796-ea8c9b05-3a89-46cb-81f9-e291589d6c07.png)
 
