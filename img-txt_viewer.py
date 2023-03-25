@@ -10,6 +10,7 @@ class ImageTextViewer:
         master.bind("<Control-s>", lambda event: self.save_text_file())
         master.bind("<Alt-Left>", lambda event: self.prev_pair())
         master.bind("<Alt-Right>", lambda event: self.next_pair())
+        self.master.minsize(675, 560)
 
         self.image_dir = StringVar()
         self.current_index = 0
