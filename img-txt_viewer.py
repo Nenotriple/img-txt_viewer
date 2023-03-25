@@ -62,7 +62,11 @@ class ImageTextViewer:
             if filename.endswith((".jpg", ".png")):
                 self.image_files.append(os.path.join(self.image_dir.get(), filename))
                 text_filename = os.path.splitext(filename)[0] + ".txt"
-                self.text_files.append(os.path.join(self.image_dir.get(), text_filename))
+                text_file = os.path.join(self.image_dir.get(), text_filename)
+                if not os.path.exists(text_file):
+                    with open(text_file, "w") as f:
+                        f.write("")
+                self.text_files.append(text_file)
         self.show_pair()
 
     def show_pair(self):
