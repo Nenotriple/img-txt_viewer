@@ -24,6 +24,11 @@ This only uses pillow and tkinter, so if you have Python installed, you're good 
 
 __________
 
+v1.3 changes:
+
+window minsize now (675, 560) - prevents ui squish
+txt files now created for images without them
+
 v1.1 changes:
 
 Fixed trailing space/new line when saving
