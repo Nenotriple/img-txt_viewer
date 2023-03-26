@@ -6,7 +6,7 @@ import os
 class ImageTextViewer:
     def __init__(self, master):
         self.master = master
-        master.title("Image Text Viewer - ctrl+s Saves - alt+arrow Next/Previous Pair")
+        master.title("Image Text Viewer - Use CTRL + S to save - Use ALT + Left/Right keys to move between img/txt pairs")
         master.bind("<Control-s>", lambda event: self.save_text_file())
         master.bind("<Alt-Left>", lambda event: self.prev_pair())
         master.bind("<Alt-Right>", lambda event: self.next_pair())
