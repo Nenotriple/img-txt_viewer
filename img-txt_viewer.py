@@ -59,15 +59,26 @@ class ImageTextViewer:
     def load_pairs(self):
         self.image_files = []
         self.text_files = []
+        new_text_files = []
         for filename in sorted(os.listdir(self.image_dir.get())):
             if filename.endswith((".jpg", ".png")):
                 self.image_files.append(os.path.join(self.image_dir.get(), filename))
                 text_filename = os.path.splitext(filename)[0] + ".txt"
                 text_file = os.path.join(self.image_dir.get(), text_filename)
                 if not os.path.exists(text_file):
+                    new_text_files.append(filename)
+                self.text_files.append(text_file)
+
+        if new_text_files:
+            msg = f"Do you want to create {len(new_text_files)} new text files?"
+            result = messagebox.askquestion("New Text Files", msg)
+            if result == "yes":
+                for filename in new_text_files:
+                    text_filename = os.path.splitext(filename)[0] + ".txt"
+                    text_file = os.path.join(self.image_dir.get(), text_filename)
                     with open(text_file, "w") as f:
                         f.write("")
-                self.text_files.append(text_file)
+
         self.show_pair()
 
     def show_pair(self):
