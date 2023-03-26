@@ -1,22 +1,23 @@
 # img-txt_viewer
-Display an image and text file pair together, for easier editing.
+Show an image and its corresponding text file side by side to make editing text captions easier.
 
 ![image](https://user-images.githubusercontent.com/70049990/220445796-ea8c9b05-3a89-46cb-81f9-e291589d6c07.png)
 
-Place images and txt files in the same folder, with the same name.
+Store images and text files in a single folder with identical names.
 
-So 01.png and 01.txt and so on. The names need to be same same between pairs, but there's no special formatting needed.
+So 01.png and 01.txt and so on. The names in each pair should match, but no particular formatting is required.
 
 .png and .jpg supported.
 
 __________
-CTRL + Z (sort of) works.
 
-CTRL + S will save the current text file.
+Use CTRL + S to save the current text file.
 
-ALT + Left/Right arrow keys will move to the next or previous img/txt pair.
+Use ALT + Left/Right arrow keys to move between img/txt pairs.
 
-If the auto-save box is checked, text will be saved when moving to the next or previous img/txt pair.
+CTRL + Z Sort of works. (use caution and test before saving)
+
+If the auto-save box is checked, text will be saved when moving between img/txt pairs.
 
 __________
 
