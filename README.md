@@ -23,24 +23,24 @@ If the user chooses a folder with images but no matching text files, they will b
 
 __________
 
-This only uses pillow and tkinter, so if you have Python installed, you're good to go!
+This uses pillow for image viewing, and tkinter for the gui.
 
 __________
 
 v1.4 changes:
 
-The user is now asked whether or not they would like to create blank text files for images that don't already have a matching text pair.
+*The user is now asked whether or not they would like to create blank text files for images that don't already have a matching text pair.*
 
 v1.3 changes:
 
-window minsize now (675, 560) - prevents ui squish.
+*window minsize now (675, 560) - prevents ui squish.*
 
-txt files now created for images without them.
+*txt files now created for images without them.*
 
 v1.2 changes:
 
-minor typos fixed.
+*Minor typos fixed.*
 
 v1.1 changes:
 
-Fixed trailing space/new line when saving.
+*Fixed trailing space/new line when saving.*
