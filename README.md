@@ -19,6 +19,8 @@ CTRL + Z Sort of works. (use caution and test before saving)
 
 If the auto-save box is checked, text will be saved when moving between img/txt pairs.
 
+If the user chooses a folder with images but no matching text files, they will be prompted to create blank text files. The blank text files will only be created for images that currently don't have any text files.
+
 __________
 
 This only uses pillow and tkinter, so if you have Python installed, you're good to go!
