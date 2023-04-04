@@ -11,13 +11,11 @@ class ImageTextViewer:
         master.bind("<Control-s>", lambda event: self.save_text_file())
         master.bind("<Alt-Left>", lambda event: self.prev_pair())
         master.bind("<Alt-Right>", lambda event: self.next_pair())
-        self.master.minsize(675, 560)
-
+        self.master.minsize(700, 600)
         self.image_dir = StringVar()
         self.current_index = 0
         self.image_files = []
         self.text_files = []
-
         self.label_image = Label(master)
         self.text_box = Text(master, height=20, width=50, wrap=WORD, undo=TRUE)
         self.next_button = Button(master, text="Next", command=self.next_pair)
@@ -28,7 +26,6 @@ class ImageTextViewer:
         self.auto_save_var = BooleanVar()
         self.auto_save_var.set(False)
         self.text_modified = False
-
         self.directory_entry.pack(side=TOP, fill=X)
         self.directory_button.pack(side=TOP, fill=X)
         self.label_image.pack(side=LEFT)
@@ -37,10 +34,8 @@ class ImageTextViewer:
         self.save_button.pack(side=TOP, fill=X, ipadx=120, pady=3)
         self.auto_save_checkbutton = Checkbutton(master, text="Auto-save", variable=self.auto_save_var)
         self.auto_save_checkbutton.pack(side=TOP)
-
         self.image_index_label = Label(self.master, text="Load a directory with image and text pairs.")
         self.image_index_label.pack(anchor=N)
-
         self.create_saved_label()
         self.text_box.bind("<Key>", lambda event: self.change_label())
 
@@ -69,7 +64,6 @@ class ImageTextViewer:
                 if not os.path.exists(text_file):
                     new_text_files.append(filename)
                 self.text_files.append(text_file)
-
         if new_text_files:
             msg = f"Do you want to create {len(new_text_files)} new text files?"
             result = messagebox.askquestion("New Text Files", msg)
@@ -79,7 +73,6 @@ class ImageTextViewer:
                     text_file = os.path.join(self.image_dir.get(), text_filename)
                     with open(text_file, "w") as f:
                         f.write("")
-
         self.show_pair()
 
     def show_pair(self):
@@ -89,16 +82,30 @@ class ImageTextViewer:
             image = Image.open(image_file)
             w, h = image.size
             aspect_ratio = w / h
-            label_w = self.label_image.winfo_width()
-            label_h = self.label_image.winfo_height()
-            min_size = 512
-            max_size = min(label_w, label_h) - 20
-            new_w = max(min_size, min(max_size, label_w))
-            new_h = max(min_size, min(max_size, int(new_w / aspect_ratio)))
-            image = image.resize((new_w, new_h))
+            max_width = 650
+            max_height = 550
+            min_width = 650
+            min_height = 550
+            if w < min_width or h < min_height:  # Check if image is smaller than minimum size
+                if w > h:
+                    new_w = min_width
+                    new_h = int(new_w / aspect_ratio)
+                else:
+                    new_h = min_height
+                    new_w = int(new_h * aspect_ratio)
+                image = image.resize((new_w, new_h))
+            elif w > max_width or h > max_height:  # Check if image is larger than maximum size
+                if w > h:
+                    new_w = max_width
+                    new_h = int(new_w / aspect_ratio)
+                else:
+                    new_h = max_height
+                    new_w = int(new_h * aspect_ratio)
+                image = image.resize((new_w, new_h))
             photo = ImageTk.PhotoImage(image)
             self.label_image.config(image=photo)
             self.label_image.image = photo
+            self.label_image.config(width=max_width, height=max_height)  # Set fixed size for label
             with open(text_file, "r") as f:
                 self.text_box.delete("1.0", END)
                 self.text_box.insert(END, f.read())
@@ -114,7 +121,7 @@ class ImageTextViewer:
             self.image_index_label = Label(self.master, text=f"Image {self.current_index + 1}/{len(self.image_files)}")
             self.image_index_label.pack(side=TOP, expand=YES)
         self.text_box.pack(side=BOTTOM, expand=YES, fill=BOTH)
-    
+
     def next_pair(self):
         if self.current_index < len(self.image_files) - 1:
             if self.auto_save_var.get():
@@ -123,7 +130,7 @@ class ImageTextViewer:
             self.show_pair()
             if not self.text_modified:
                 self.saved_label.config(text="No Changes", fg="black")
-    
+
     def prev_pair(self):
         if self.current_index > 0:
             if self.auto_save_var.get():
