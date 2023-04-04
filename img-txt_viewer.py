@@ -45,7 +45,10 @@ class ImageTextViewer:
         self.text_box.bind("<Key>", lambda event: self.text_modified())
 
     def change_label(self):
-        self.saved_label.config(text="Changes Are Not Saved", bg="red", fg="white")
+        if self.auto_save_var.get():
+            self.saved_label.config(text="Changes Being autosaved", bg="#4DB6D2", fg="white")
+        else:
+            self.saved_label.config(text="Changes Are Not Saved", bg="red", fg="white")
 
     def choose_directory(self):
         self.image_dir.set(askdirectory())
