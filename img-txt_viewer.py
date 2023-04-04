@@ -11,7 +11,7 @@ class ImageTextViewer:
         master.bind("<Control-s>", lambda event: self.save_text_file())
         master.bind("<Alt-Left>", lambda event: self.prev_pair())
         master.bind("<Alt-Right>", lambda event: self.next_pair())
-        self.master.minsize(700, 600)
+        self.master.minsize(750, 600)
         self.image_dir = StringVar()
         self.current_index = 0
         self.image_files = []
@@ -68,7 +68,7 @@ class ImageTextViewer:
                     new_text_files.append(filename)
                 self.text_files.append(text_file)
         if new_text_files:
-            msg = f"There are {len(new_text_files)} missing text files. Create new text files?"
+            msg = f"Do you want to create {len(new_text_files)} new text files?"
             result = messagebox.askquestion("New Text Files", msg)
             if result == "yes":
                 for filename in new_text_files:
@@ -87,8 +87,8 @@ class ImageTextViewer:
             aspect_ratio = w / h
             max_width = 650
             max_height = 550
-            min_width = 650
-            min_height = 550
+            min_width = 512
+            min_height = 512
             if w < min_width or h < min_height:  # Check if image is smaller than minimum size
                 if w > h:
                     new_w = min_width
