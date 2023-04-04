@@ -29,7 +29,7 @@ __________
 
 v1.41 changes:
 
-Image aspect ratio is now preserved.
+*Image aspect ratio is now preserved.*
 
 v1.4 changes:
 
