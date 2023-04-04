@@ -27,20 +27,24 @@ This uses pillow for image viewing, and tkinter for the gui.
 
 __________
 
-v1.4 changes:
+_v1.41 changes:_
+
+Image aspect ratio is now preserved.
+
+_v1.4 changes:_
 
 *The user is now asked whether or not they would like to create blank text files for images that don't already have a matching text pair.*
 
-v1.3 changes:
+_v1.3 changes:_
 
 *window minsize now (675, 560) - prevents ui squish.*
 
 *txt files now created for images without them.*
 
-v1.2 changes:
+_v1.2 changes:_
 
 *Minor typos fixed.*
 
-v1.1 changes:
+_v1.1 changes:_
 
 *Fixed trailing space/new line when saving.*
