@@ -68,7 +68,7 @@ class ImageTextViewer:
                     new_text_files.append(filename)
                 self.text_files.append(text_file)
         if new_text_files:
-            msg = f"Do you want to create {len(new_text_files)} new text files?"
+            msg = f"There are {len(new_text_files)} missing text files. Create new text files?"
             result = messagebox.askquestion("New Text Files", msg)
             if result == "yes":
                 for filename in new_text_files:
