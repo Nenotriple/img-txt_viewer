@@ -60,7 +60,7 @@ class ImageTextViewer:
         self.text_files = []
         new_text_files = []
         for filename in sorted(os.listdir(self.image_dir.get())):
-            if filename.endswith((".jpg", ".png")):
+            if filename.endswith((".jpg", ".jpeg", ".png")):
                 self.image_files.append(os.path.join(self.image_dir.get(), filename))
                 text_filename = os.path.splitext(filename)[0] + ".txt"
                 text_file = os.path.join(self.image_dir.get(), text_filename)
