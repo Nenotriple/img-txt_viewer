@@ -9,7 +9,7 @@ Store images and text files in a single folder with identical names.
 
 So 01.png and 01.txt and so on. The names in each pair should match, but no particular formatting is required.
 
-.png and .jpg supported.
+.png .jpg .jpeg .webp .bmp image filetypes supported.
 
 # Tips and Features
 
