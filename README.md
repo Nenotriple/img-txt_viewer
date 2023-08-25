@@ -23,7 +23,24 @@ If the auto-save box is checked, text will be saved when moving between img/txt 
 
 If the user chooses a folder with images but no matching text files, they will be prompted to create blank text files. The blank text files will only be created for images that currently don't have any text files.
 
+# Requirements
+
+This uses pillow for image viewing, and tkinter for the gui.
+
+tkinter comes preinstalled with Python.
+
+Install pillow with the following command:
+```
+pip install pillow
+```
+
 # Version History
+
+v1.42 changes:
+
+*Misc ui improvements*
+
+*Now supports loading .jpeg/.webp/.bmp image types*
 
 v1.41 changes:
 
@@ -46,7 +63,3 @@ v1.2 changes:
 v1.1 changes:
 
 *Fixed trailing space/new line when saving.*
-
-__________
-
-This uses pillow for image viewing, and tkinter for the gui.
