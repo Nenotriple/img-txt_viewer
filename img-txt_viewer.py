@@ -8,7 +8,7 @@ import re
 class ImageTextViewer:
     def __init__(self, master):
         self.master = master
-        master.title("Image Text Viewer - Use CTRL + S to save - Use ALT + Left/Right keys to move between img/txt pairs")
+        master.title("v1.5 - img-txt_Viewer - Use CTRL + S to save - Use ALT + Left/Right keys to move between img/txt pairs")
         master.bind("<Control-s>", lambda event: self.save_text_file())
         master.bind("<Alt-Left>", lambda event: self.prev_pair())
         master.bind("<Alt-Right>", lambda event: self.next_pair())
@@ -35,9 +35,9 @@ class ImageTextViewer:
         self.save_button.pack(side=TOP, fill=X, ipadx=120, pady=3)
         self.auto_save_checkbutton = Checkbutton(master, text="Auto-save", variable=self.auto_save_var)
         self.auto_save_checkbutton.pack(side=TOP)
+        self.create_saved_label()
         self.image_index_label = Label(self.master, text="Load a directory with image and text pairs.")
         self.image_index_label.pack(anchor=N)
-        self.create_saved_label()
         self.text_box.bind("<Key>", lambda event: self.change_label())
         self.text_box.tag_configure("highlight", background="lightblue")
         self.text_box.bind("<ButtonRelease-1>", lambda event: self.highlight_duplicates(event, mouse=True))
