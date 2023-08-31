@@ -3,6 +3,7 @@ from tkinter.filedialog import askdirectory
 from tkinter import messagebox
 from PIL import ImageTk, Image
 import os
+import re
 
 class ImageTextViewer:
     def __init__(self, master):
@@ -38,6 +39,7 @@ class ImageTextViewer:
         self.image_index_label.pack(anchor=N)
         self.create_saved_label()
         self.text_box.bind("<Key>", lambda event: self.change_label())
+        self.text_box.tag_configure("highlight", background="lightblue")
 
     def create_saved_label(self):
         self.saved_label = Label(self.master, text="No Changes")
@@ -89,7 +91,7 @@ class ImageTextViewer:
             max_height = 550
             min_width = 512
             min_height = 512
-            if w < min_width or h < min_height:  # Check if image is smaller than minimum size
+            if w < min_width or h < min_height:
                 if w > h:
                     new_w = min_width
                     new_h = int(new_w / aspect_ratio)
@@ -97,7 +99,7 @@ class ImageTextViewer:
                     new_h = min_height
                     new_w = int(new_h * aspect_ratio)
                 image = image.resize((new_w, new_h))
-            elif w > max_width or h > max_height:  # Check if image is larger than maximum size
+            elif w > max_width or h > max_height:
                 if w > h:
                     new_w = max_width
                     new_h = int(new_w / aspect_ratio)
@@ -108,14 +110,32 @@ class ImageTextViewer:
             photo = ImageTk.PhotoImage(image)
             self.label_image.config(image=photo)
             self.label_image.image = photo
-            self.label_image.config(width=max_width, height=max_height)  # Set fixed size for label
+            self.label_image.config(width=max_width, height=max_height)
             with open(text_file, "r") as f:
                 self.text_box.delete("1.0", END)
                 self.text_box.insert(END, f.read())
                 self.text_modified = False
             if not self.text_modified:
                 self.saved_label.config(text="No Changes", bg="white", fg="black")
+            self.text_box.bind("<ButtonRelease-1>", self.highlight_duplicates)
+            self.text_box.bind("<Button-1>", lambda event: self.remove_highlight())    
             self.display_image_index()
+
+    def highlight_duplicates(self, event):
+        if not self.text_box.tag_ranges("sel"):
+            return
+        selected_text = self.text_box.selection_get()   
+        if selected_text:
+            self.text_box.tag_remove("highlight", "1.0", "end")    
+            search_text = re.escape(selected_text)
+            matches = re.finditer(search_text, self.text_box.get("1.0", "end"))
+            for match in matches:
+                start = match.start()
+                end = match.end()
+                self.text_box.tag_add("highlight", f"1.0 + {start} chars", f"1.0 + {end} chars") 
+
+    def remove_highlight(self):
+        self.text_box.tag_remove("highlight", "1.0", "end")                       
     
     def display_image_index(self):
         if hasattr(self, 'image_index_label'):
