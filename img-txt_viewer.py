@@ -40,6 +40,10 @@ class ImageTextViewer:
         self.create_saved_label()
         self.text_box.bind("<Key>", lambda event: self.change_label())
         self.text_box.tag_configure("highlight", background="lightblue")
+        self.text_box.bind("<ButtonRelease-1>", lambda event: self.highlight_duplicates(event, mouse=True))
+        self.text_box.bind("<KeyRelease>", lambda event: self.highlight_duplicates(event, mouse=False))
+        self.text_box.bind("<Left>", lambda event: self.remove_highlight())
+        self.text_box.bind("<Right>", lambda event: self.remove_highlight())       
 
     def create_saved_label(self):
         self.saved_label = Label(self.master, text="No Changes")
@@ -121,21 +125,26 @@ class ImageTextViewer:
             self.text_box.bind("<Button-1>", lambda event: self.remove_highlight())    
             self.display_image_index()
 
-    def highlight_duplicates(self, event):
+    def highlight_duplicates(self, event, mouse=True):
         if not self.text_box.tag_ranges("sel"):
             return
-        selected_text = self.text_box.selection_get()   
-        if selected_text:
-            self.text_box.tag_remove("highlight", "1.0", "end")    
-            search_text = re.escape(selected_text)
-            matches = re.finditer(search_text, self.text_box.get("1.0", "end"))
+        selected_text = self.text_box.selection_get().strip()
+        if len(selected_text) < 3:
+            return
+        self.text_box.tag_remove("highlight", "1.0", "end")
+        selected_words = selected_text.split()
+        for word in selected_words:
+            if len(word) < 3:
+                continue
+            pattern = re.escape(word)
+            matches = re.finditer(pattern, self.text_box.get("1.0", "end"))
             for match in matches:
                 start = match.start()
                 end = match.end()
-                self.text_box.tag_add("highlight", f"1.0 + {start} chars", f"1.0 + {end} chars") 
-
+                self.text_box.tag_add("highlight", f"1.0 + {start} chars", f"1.0 + {end} chars")
+        
     def remove_highlight(self):
-        self.text_box.tag_remove("highlight", "1.0", "end")                       
+        self.text_box.tag_remove("highlight", "1.0", "end")                     
     
     def display_image_index(self):
         if hasattr(self, 'image_index_label'):
