@@ -20,11 +20,11 @@ ALT+Left/Right arrow keys: to move between img/txt pairs.
 Select text with the mouse or keyboard to see duplicates.
 
 Get autocomplete suggestions while you type using danbooru tags.
-````
+
 Pressing TAB inserts the selected suggestion.
 
 Pressing TAB+Left/Right selects the autocomplete suggestion.
-````
+
 If the auto-save box is checked, text will be saved when moving between img/txt pairs.
 
 If the user chooses a folder with images but no matching text files, they will be prompted to create blank text files. The blank text files will only be created for images that currently don't have any text files.
