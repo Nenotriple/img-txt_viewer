@@ -50,7 +50,7 @@ class ImageTextViewer:
         self.text_files = []
         self.suggestions = []
         self.label_image = Label(master)
-        self.text_box = Text(master, height=20, width=50, wrap=WORD, undo=TRUE)
+        self.text_box = Text(master, height=20, width=50, wrap=WORD, undo=FALSE)
         self.suggestion_label = Label(master, text="")
         self.next_button = Button(master, text="Next", command=self.next_pair)
         self.prev_button = Button(master, text="Previous", command=self.prev_pair)
