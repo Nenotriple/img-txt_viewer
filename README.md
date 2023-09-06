@@ -15,7 +15,7 @@ Supported image types:
 
 Hotkeys
 - CTRL+S: to save the current text file.
-- CTRL+Z / CTRL+Y: Undo/Redo
+- CTRL+Z / CTRL+Y: Undo/Redo.
 - ALT+Left/Right arrow keys: to move between img/txt pairs.
 - Pressing TAB inserts the selected suggestion.
 - Pressing TAB+Left/Right selects the autocomplete suggestion.
@@ -38,36 +38,31 @@ Install pillow with the following command:
 pip install pillow
 ```
 
-The autocomplete function requires the included "danbooru.csv" file to be located in the same folder as the script
+The autocomplete function requires the included "danbooru.csv" file to be located in the same folder as the script.
 
 # Version History
+
+v1.63 changes:
+
+- *Autocomplete now returns much better suggestions.*
+- *Further improvements to typo correction.*
 
 v1.62 changes:
 
 - *Tips and features added to startup.*
-
-- *Removed directory text widget and replaced it with a button with a dynamic label*
-
-- *Error handling added when selecting a directory*
-
+- *Removed directory text widget and replaced it with a button with a dynamic label.*
+- *Error handling added when selecting a directory.*
+  
 v1.61 changes:
 
-- *Saving now fixes various typos such as: Double and triple commas are replaced with single commas. Extra spaces are reduced to single spaces. leading and trailing spaces/commas are removed*
-
+- *Saving now fixes various typos such as: Double and triple commas are replaced with single commas. Extra spaces are reduced to single spaces. leading and trailing spaces/commas are removed.*
 - *utf-8 encoding is enforced.*
-
-- *Undo now works as expected*
+- *Undo now works as expected.*
 
 v1.6 changes:
 
-- *New feature: Autocomplete using danbooru tags* 
+- *New feature: Autocomplete using danbooru tags.* 
 
 v1.5 changes:
 
-- *New feature: Select and highlight duplicates*
-
-v1.42 changes:
-
-- *Misc ui improvements*
-
-- *Now supports loading .jpeg/.webp/.bmp image types*
+- *New feature: Select and highlight duplicates.*
