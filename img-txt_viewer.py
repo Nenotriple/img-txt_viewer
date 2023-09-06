@@ -2,15 +2,11 @@ from tkinter import *
 from tkinter.filedialog import askdirectory
 from tkinter import messagebox
 from PIL import ImageTk, Image
-from difflib import get_close_matches
-import csv
-import os
-import re
+import csv, os, re
 
 class Autocomplete:
-    def __init__(self, data_file, autocomplete_delay=75, max_suggestions=3):
+    def __init__(self, data_file, max_suggestions=4):
         self.data = self.load_data(data_file)
-        self.autocomplete_delay = autocomplete_delay
         self.max_suggestions = max_suggestions
 
     def load_data(self, data_file):
@@ -25,32 +21,45 @@ class Autocomplete:
 
     def autocomplete(self, text):
         suggestions = []
-        text_without_spaces = text.replace(" ", "_")
+        text_with_underscores = text.replace(" ", "_")
         for true_name, similar_names in self.data.items():
-            if true_name.startswith(text_without_spaces):
+            if true_name.startswith(text_with_underscores):
                 suggestions.append((true_name, similar_names))
             else:
                 for sim_name in similar_names:
-                    if sim_name.startswith(text_without_spaces):
+                    if sim_name.startswith(text_with_underscores):
                         suggestions.append((true_name, similar_names))
                         break
+        suggestions.sort(key=lambda x: self.get_relevance_score(x[0], text_with_underscores), reverse=True)
         return suggestions[:self.max_suggestions]
+
+    def get_relevance_score(self, suggestion, text):
+        score = 0
+        for i in range(len(text)):
+            if suggestion[i] == text[i]:
+                score += 1
+            else:
+                break
+        return score
+
+    def update_data(self, data_file):
+        self.data = self.load_data(data_file)
 
 class ImageTextViewer:
     def __init__(self, master):
         self.master = master
-        master.title("v1.62 - img-txt_viewer  ---  https://github.com/Nenotriple/img-txt_viewer")
+        master.title("v1.63 - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
         master.bind("<Control-s>", lambda event: self.save_text_file())
         master.bind("<Alt-Left>", lambda event: self.prev_pair())
         master.bind("<Alt-Right>", lambda event: self.next_pair())
-        self.master.minsize(1025, 600)
+        self.master.minsize(1050, 600)
         self.image_dir = StringVar()
         self.current_index = 0
         self.image_files = []
         self.text_files = []
         self.suggestions = []
         self.button_label = StringVar()
-        self.image_dir.set("SELECT IMG/TXT DIRECTORY")
+        self.image_dir.set("Choose Directory")
         self.label_image = Label(master)
         self.text_box = Text(master, height=20, width=50, wrap=WORD, undo=True, maxundo=100)
         self.suggestion_label = Label(master, text="")
@@ -71,16 +80,18 @@ class ImageTextViewer:
         self.auto_save_checkbutton = Checkbutton(master, text="Auto-save", variable=self.auto_save_var)
         self.auto_save_checkbutton.pack(side=TOP)
         self.create_saved_label()
-        self.image_index_label = Label(self.master, text="\nSome Helpful tips and features:\n\n"
-                                       "CTRL+S: to save the current text file.\n\n"
-                                       "CTRL+Z / CTRL+Y: Undo/Redo\n\n"
+        self.image_index_label = Label(self.master, text="\n\n"
+                                       "CTRL+Z / CTRL+Y: Undo/Redo.\n\n"
+                                       "CTRL+S: to save the current text file.\n\n"                                       
                                        "ALT+Left/Right arrow keys: to move between img/txt pairs.\n\n"
-                                       "Select text to see duplicates.\n\n"
+                                       "\n"
                                        "Get autocomplete suggestions while you type using danbooru tags.\n\n"
-                                       "Pressing TAB inserts the selected suggestion.\n\n"
                                        "Pressing TAB+Left/Right selects the autocomplete suggestion.\n\n"
+                                       "Pressing TAB inserts the selected suggestion.\n\n"
+                                       "\n"
+                                       "Select text to see duplicates.\n\n"                                       
                                        "If the auto-save box is checked, text will be saved when moving between img/txt pairs.\n\n"
-                                       "Blank text files can be created for images without any matching file\n\n")
+                                       "Blank text files can be created for images without any matching files when loading a directory.\n\n")
         self.image_index_label.pack(anchor=N)
         self.suggestion_label.pack(side=TOP, fill=X)
         self.text_box.bind("<Key>", lambda event: self.change_label())
@@ -114,22 +125,24 @@ class ImageTextViewer:
             self.suggestion_label.config(text="")
             self.suggestions = []
         else:
-            if event.char and event.char.isalnum():
-                text = self.text_box.get("1.0", "insert")
-                elements = [element.strip() for element in text.split(',')]
-                current_word = elements[-1]
-                current_word = current_word.strip()
-                if current_word:
-                    self.suggestions = [suggestion[0].replace("_", " ") for suggestion in self.autocomplete.autocomplete(current_word)]
-                    if self.suggestions:
-                        suggestion_text = "Suggestions: " + ", ".join(self.suggestions)
-                        self.suggestion_label.config(text=suggestion_text)
-                        self.selected_suggestion_index = 0
-                        self.highlight_selected_suggestion()
-                    else:
-                        self.suggestion_label.config(text="")
+            text = self.text_box.get("1.0", "insert")
+            elements = [element.strip() for element in text.split(',')]
+            current_word = elements[-1]
+            current_word = current_word.strip()
+            if current_word:
+                suggestions = self.autocomplete.autocomplete(current_word)
+                suggestions.sort(key=lambda x: self.autocomplete.get_relevance_score(x[0], current_word), reverse=True)
+                self.suggestions = [suggestion[0].replace("_", " ") for suggestion in suggestions]
+                if self.suggestions:
+                    suggestion_text =", ".join(self.suggestions)
+                    self.suggestion_label.config(text=suggestion_text)
+                    self.selected_suggestion_index = 0
+                    self.highlight_selected_suggestion()
                 else:
                     self.suggestion_label.config(text="")
+            else:
+                self.suggestion_label.config(text="")
+
 
     def insert_completed_suggestion(self, completed_suggestion):
         text = self.text_box.get("1.0", "insert")
@@ -142,7 +155,7 @@ class ImageTextViewer:
     
     def highlight_selected_suggestion(self):
         if self.suggestions:
-            suggestion_text = "Suggestions: "
+            suggestion_text = ""
             for i, s in enumerate(self.suggestions):
                 if i == self.selected_suggestion_index:
                     label_text = f"[{s}]"
@@ -304,9 +317,10 @@ class ImageTextViewer:
             text_file = self.text_files[self.current_index]
             with open(text_file, "w", encoding="utf-8") as f:
                 text = self.text_box.get("1.0", END).strip()
+                text = ' '.join(text.split())
                 text = text.replace(",,,", ",")
                 text = text.replace(",,", ",")
-                text = ' '.join(text.split())
+                text = text.replace(" ,", ",")                
                 if text.endswith(","):
                     text = text[:-1]
                 if text.startswith(","):
