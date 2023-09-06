@@ -39,7 +39,7 @@ class Autocomplete:
 class ImageTextViewer:
     def __init__(self, master):
         self.master = master
-        master.title("v1.6 - img-txt_Viewer: (CTRL + S Quicksaves) (ALT + Left/Right Moves between img/txt pairs) (TAB inserts selected suggestion, TAB+Left/Right Selects suggestion)")
+        master.title("v1.62 - img-txt_viewer  ---  https://github.com/Nenotriple/img-txt_viewer")
         master.bind("<Control-s>", lambda event: self.save_text_file())
         master.bind("<Alt-Left>", lambda event: self.prev_pair())
         master.bind("<Alt-Right>", lambda event: self.next_pair())
@@ -49,27 +49,38 @@ class ImageTextViewer:
         self.image_files = []
         self.text_files = []
         self.suggestions = []
+        self.button_label = StringVar()
+        self.image_dir.set("SELECT IMG/TXT DIRECTORY")
         self.label_image = Label(master)
         self.text_box = Text(master, height=20, width=50, wrap=WORD, undo=True, maxundo=100)
         self.suggestion_label = Label(master, text="")
         self.next_button = Button(master, text="Next", command=self.next_pair)
         self.prev_button = Button(master, text="Previous", command=self.prev_pair)
-        self.directory_button = Button(master, text="Choose Directory", command=self.choose_directory)
-        self.directory_entry = Entry(master, textvariable=self.image_dir)
+        self.directory_button = Button(root, textvariable=self.image_dir, command=self.choose_directory)      
         self.save_button = Button(self.master, text="Save", command=self.save_text_file, fg="blue")
         self.auto_save_var = BooleanVar()
         self.auto_save_var.set(False)
         self.text_modified = False
-        self.directory_entry.pack(side=TOP, fill=X)               
         self.directory_button.pack(side=TOP, fill=X)
         self.label_image.pack(side=LEFT)
-        self.next_button.pack(anchor=N, fill=X, ipadx=120, pady=3)
-        self.prev_button.pack(anchor=N, fill=X, ipadx=120, pady=3)
-        self.save_button.pack(side=TOP, fill=X, ipadx=120, pady=3)
+        separator_frame = Frame(root, height=8)
+        separator_frame.pack()        
+        self.next_button.pack(anchor=N, fill=X, pady=3)
+        self.prev_button.pack(anchor=N, fill=X, pady=3)
+        self.save_button.pack(side=TOP, fill=X, pady=3)
         self.auto_save_checkbutton = Checkbutton(master, text="Auto-save", variable=self.auto_save_var)
         self.auto_save_checkbutton.pack(side=TOP)
         self.create_saved_label()
-        self.image_index_label = Label(self.master, text="Load a directory with image and text pairs.")
+        self.image_index_label = Label(self.master, text="\nSome Helpful tips and features:\n\n"
+                                       "CTRL+S: to save the current text file.\n\n"
+                                       "CTRL+Z / CTRL+Y: Undo/Redo\n\n"
+                                       "ALT+Left/Right arrow keys: to move between img/txt pairs.\n\n"
+                                       "Select text to see duplicates.\n\n"
+                                       "Get autocomplete suggestions while you type using danbooru tags.\n\n"
+                                       "Pressing TAB inserts the selected suggestion.\n\n"
+                                       "Pressing TAB+Left/Right selects the autocomplete suggestion.\n\n"
+                                       "If the auto-save box is checked, text will be saved when moving between img/txt pairs.\n\n"
+                                       "Blank text files can be created for images without any matching file\n\n")
         self.image_index_label.pack(anchor=N)
         self.suggestion_label.pack(side=TOP, fill=X)
         self.text_box.bind("<Key>", lambda event: self.change_label())
@@ -152,9 +163,14 @@ class ImageTextViewer:
             self.saved_label.config(text="Changes Are Not Saved", bg="red", fg="white")
 
     def choose_directory(self):
-        self.image_dir.set(askdirectory())
-        self.current_index = 0
-        self.load_pairs()
+        try:
+            directory = askdirectory()
+            if directory:
+                self.image_dir.set(directory)
+                self.current_index = 0
+                self.load_pairs()
+        except Exception as e:
+            pass
 
     def load_pairs(self):
         self.image_files = []
