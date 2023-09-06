@@ -50,7 +50,7 @@ class ImageTextViewer:
         self.text_files = []
         self.suggestions = []
         self.label_image = Label(master)
-        self.text_box = Text(master, height=20, width=50, wrap=WORD, undo=FALSE)
+        self.text_box = Text(master, height=20, width=50, wrap=WORD, undo=True, maxundo=100)
         self.suggestion_label = Label(master, text="")
         self.next_button = Button(master, text="Next", command=self.next_pair)
         self.prev_button = Button(master, text="Previous", command=self.prev_pair)
@@ -81,7 +81,7 @@ class ImageTextViewer:
         self.autocomplete = Autocomplete("danbooru.csv")
         self.text_box.bind("<KeyRelease>", self.update_suggestions) 
         self.selected_suggestion_index = 0
-
+        
     def update_suggestions(self, event):
         if event.keysym == "Tab":
             if self.selected_suggestion_index < len(self.suggestions):
@@ -210,6 +210,7 @@ class ImageTextViewer:
             self.label_image.config(image=photo)
             self.label_image.image = photo
             self.label_image.config(width=max_width, height=max_height)
+            self.text_box.config(undo=False)
             with open(text_file, "r") as f:
                 self.text_box.delete("1.0", END)
                 self.text_box.insert(END, f.read())
@@ -220,6 +221,8 @@ class ImageTextViewer:
             self.text_box.bind("<Button-1>", lambda event: self.remove_highlight())
             self.text_box.bind("<Tab>", self.disable_tab)   
             self.display_image_index()
+            self.text_box.config(undo=True)
+            
 
     def highlight_duplicates(self, event, mouse=True):
         if not self.text_box.tag_ranges("sel"):
@@ -283,9 +286,17 @@ class ImageTextViewer:
     def save_text_file(self):
         if self.text_files:
             text_file = self.text_files[self.current_index]
-            with open(text_file, "w") as f:
-                f.write(self.text_box.get("1.0", END).strip())
-            self.saved_label.config(text="Saved", bg="green", fg="white")
+            with open(text_file, "w", encoding="utf-8") as f:
+                text = self.text_box.get("1.0", END).strip()
+                text = text.replace(",,,", ",")
+                text = text.replace(",,", ",")
+                text = ' '.join(text.split())
+                if text.endswith(","):
+                    text = text[:-1]
+                if text.startswith(","):
+                    text = text[1:]
+                f.write(text)
+            self.saved_label.config(text="Saved", bg="green", fg="white")       
 
     def disable_tab(self, event):
         return "break"            
