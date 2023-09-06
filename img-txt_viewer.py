@@ -283,6 +283,7 @@ class ImageTextViewer:
         self.text_box.pack(side=BOTTOM, expand=YES, fill=BOTH)
 
     def next_pair(self):
+        self.text_box.edit_reset()
         if self.current_index < len(self.image_files) - 1:
             if self.auto_save_var.get():
                 self.save_text_file()
@@ -292,6 +293,7 @@ class ImageTextViewer:
                 self.saved_label.config(text="No Changes", fg="black")
 
     def prev_pair(self):
+        self.text_box.edit_reset()
         if self.current_index > 0:
             if self.auto_save_var.get():
                 self.save_text_file()
