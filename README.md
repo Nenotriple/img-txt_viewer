@@ -15,6 +15,8 @@ So 01.png and 01.txt and so on. The names in each pair should match, but no part
 
 CTRL+S: to save the current text file.
 
+CTRL+Z / CTRL+Y: Undo/Redo
+
 ALT+Left/Right arrow keys: to move between img/txt pairs.
 
 Select text with the mouse or keyboard to see duplicates.
@@ -28,8 +30,6 @@ Pressing TAB+Left/Right selects the autocomplete suggestion.
 If the auto-save box is checked, text will be saved when moving between img/txt pairs.
 
 If the user chooses a folder with images but no matching text files, they will be prompted to create blank text files. The blank text files will only be created for images that currently don't have any text files.
-
-~~CTRL+Z: Sort of works for undo. (Use caution and test before saving)~~ *Disabled until improved*
 
 # Requirements
 
@@ -46,6 +46,22 @@ You will need the included "danbooru.csv" file located in the same folder as the
 
 # Version History
 
+*v1.61 changes*
+
+*Tips and features added to startup.*
+
+*Removed directory text widget and replaced it with a button with a dynamic label*
+
+*Error handling added when selecting a directory*
+
+*v1.61 changes*
+
+*Saving now fixes various typos such as: Double and triple commas are replaced with single commas. Extra spaces are reduced to single spaces. leading and trailing spaces/commas are removed*
+
+*utf-8 encoding is enforced.*
+
+*Undo now works as expected*
+
 *v1.6 changes:*
 
 *New feature: Autocomplete using danbooru tags* 
@@ -59,11 +75,3 @@ v1.42 changes:
 *Misc ui improvements*
 
 *Now supports loading .jpeg/.webp/.bmp image types*
-
-v1.41 changes:
-
-*Image aspect ratio is now preserved.*
-
-v1.4 changes:
-
-*The user is now asked whether or not they would like to create blank text files for images that don't already have a matching text pair.*
