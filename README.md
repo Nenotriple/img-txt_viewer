@@ -46,7 +46,7 @@ You will need the included "danbooru.csv" file located in the same folder as the
 
 # Version History
 
-*v1.61 changes*
+*v1.62 changes*
 
 *Tips and features added to startup.*
 
