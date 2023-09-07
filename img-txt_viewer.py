@@ -48,7 +48,7 @@ class Autocomplete:
 class ImageTextViewer:
     def __init__(self, master):
         self.master = master
-        master.title("v1.63 - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
+        master.title("v1.65 - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
         master.bind("<Control-s>", lambda event: self.save_text_file())
         master.bind("<Alt-Left>", lambda event: self.prev_pair())
         master.bind("<Alt-Right>", lambda event: self.next_pair())
