@@ -24,6 +24,7 @@ Tips
 - Select text with the mouse or keyboard to see duplicates.
 - If the auto-save box is checked, text will be saved when moving between img/txt pairs.
 - If the user chooses a folder with images but no matching text files, they will be prompted to create blank text files. The blank text files will only be created for images that currently don't have any text files.
+- Click the image to zoom in.
 - Get autocomplete suggestions while you type using danbooru tags.
 
 
@@ -41,6 +42,12 @@ pip install pillow
 The autocomplete function requires the included "danbooru.csv" file to be located in the same folder as the script.
 
 # Version History
+
+v1.65 changes:
+
+- *New: Zoom into images by clicking them*
+- *New: Loop around the image index when hitting the end/start*
+- *New: Quickly jump to a specific image*
 
 v1.63 changes:
 
@@ -62,7 +69,3 @@ v1.61 changes:
 v1.6 changes:
 
 - *New feature: Autocomplete using danbooru tags.* 
-
-v1.5 changes:
-
-- *New feature: Select and highlight duplicates.*
