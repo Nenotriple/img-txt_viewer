@@ -1,6 +1,6 @@
 from tkinter import *
 from tkinter.filedialog import askdirectory
-from tkinter import messagebox
+from tkinter import messagebox, Tk
 from PIL import ImageTk, Image
 import csv, os, re
 
@@ -48,11 +48,12 @@ class Autocomplete:
 class ImageTextViewer:
     def __init__(self, master):
         self.master = master
-        master.title("v1.65 - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
+        master.title("v1.66 - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
         master.bind("<Control-s>", lambda event: self.save_text_file())
         master.bind("<Alt-Left>", lambda event: self.prev_pair())
         master.bind("<Alt-Right>", lambda event: self.next_pair())
         self.master.minsize(1050, 600)
+        root.geometry("1300x800")
         self.image_dir = StringVar()
         self.current_index = 0
         self.image_files = []
@@ -206,7 +207,7 @@ class ImageTextViewer:
                     with open(text_file, "w") as f:
                         f.write("")
         self.show_pair()
-        
+
     def show_pair(self):
         if self.image_files:
             image_file = self.image_files[self.current_index]
@@ -214,8 +215,8 @@ class ImageTextViewer:
             image = Image.open(image_file)
             w, h = image.size
             aspect_ratio = w / h
-            max_width = 650
-            max_height = 550
+            max_width = 900
+            max_height = 1200
             min_width = 512
             min_height = 512
             if w < min_width or h < min_height:
@@ -238,7 +239,7 @@ class ImageTextViewer:
             self.label_image.config(image=photo)
             self.label_image.image = photo
             self.label_image.config(width=max_width, height=max_height)
-            self.label_image.bind("<Button-1>", lambda event: self.zoom_image(event))
+            self.label_image.bind("<Configure>", lambda event: self.scale_image(event, aspect_ratio, image))
             self.text_box.config(undo=False)
             with open(text_file, "r") as f:
                 self.text_box.delete("1.0", END)
@@ -251,30 +252,25 @@ class ImageTextViewer:
             self.text_box.bind("<Tab>", self.disable_tab)   
             self.display_image_index()
             self.text_box.config(undo=True)
+            window_height = self.label_image.winfo_height()
+            window_width = self.label_image.winfo_width()
+            event = Event()
+            event.height = window_height
+            event.width = window_width
+            self.scale_image(event, aspect_ratio, image)
 
-    def zoom_image(self, event, zoom_factor=1.5):
-        current_size = event.widget.image.width(), event.widget.image.height()
-        new_size = tuple([int(zoom_factor * x) for x in current_size])
-        if current_size[0] > 650:
-            image_file = self.image_files[self.current_index]
-            image = Image.open(image_file)
-            w, h = image.size
-            aspect_ratio = w / h
-            max_width = 650
-            max_height = 550
-            if w > h:
-                new_w = max_width
-                new_h = int(new_w / aspect_ratio)
-            else:
-                new_h = max_height
-                new_w = int(new_h * aspect_ratio)
-            new_size = (new_w, new_h)
-        image_file = self.image_files[self.current_index]
-        image = Image.open(image_file)
-        zoomed_image = image.resize(new_size)
-        photo = ImageTk.PhotoImage(zoomed_image)
-        event.widget.config(image=photo)
-        event.widget.image = photo
+    def scale_image(self, event, aspect_ratio, image):
+        window_height = event.height
+        window_width = event.width
+        new_height = int(window_height * 1)
+        new_width = int(new_height * aspect_ratio)
+        if new_width > window_width:
+            new_width = window_width
+            new_height = int(new_width / aspect_ratio)
+        image = image.resize((new_width, new_height))
+        photo = ImageTk.PhotoImage(image)
+        self.label_image.config(image=photo)
+        self.label_image.image = photo
     
     def highlight_duplicates(self, event, mouse=True):
         if not self.text_box.tag_ranges("sel"):
@@ -303,11 +299,11 @@ class ImageTextViewer:
             self.image_index_entry.insert(0, f"{self.current_index + 1}")
         else:
             self.index_frame = Frame(self.master)
-            self.index_frame.pack(side=TOP, expand=YES)
+            self.index_frame.pack(side=TOP, expand=NO)
             self.image_index_entry = Entry(self.index_frame, width=5)
             self.image_index_entry.insert(0, f"{self.current_index + 1}")
             self.image_index_entry.bind("<Return>", self.jump_to_image)
-            self.image_index_entry.pack(side=LEFT, expand=YES)
+            self.image_index_entry.pack(side=LEFT, expand=NO)
             self.total_images_label = Label(self.index_frame, text=f"/{len(self.image_files)}")
             self.total_images_label.pack(side=LEFT, expand=YES)
         self.text_box.pack(side=BOTTOM, expand=YES, fill=BOTH)
@@ -316,13 +312,16 @@ class ImageTextViewer:
     def jump_to_image(self, event):
         try:
             index = int(self.image_index_entry.get()) - 1
-            if 0 <= index < len(self.image_files):
-                if self.auto_save_var.get():
-                    self.save_text_file()
-                self.current_index = index
-                self.show_pair()
-                if not self.text_modified:
-                    self.saved_label.config(text="No Changes", fg="black")
+            if index < 0:
+                index = 0
+            elif index >= len(self.image_files):
+                index = len(self.image_files) - 1
+            if self.auto_save_var.get():
+                self.save_text_file()
+            self.current_index = index
+            self.show_pair()
+            if not self.text_modified:
+                self.saved_label.config(text="No Changes", fg="black")
         except ValueError:
             pass
 
@@ -368,9 +367,8 @@ class ImageTextViewer:
             with open(text_file, "w", encoding="utf-8") as f:
                 text = self.text_box.get("1.0", END).strip()
                 text = ' '.join(text.split())
-                text = text.replace(",,,", ",")
-                text = text.replace(",,", ",")
-                text = text.replace(" ,", ",")                
+                text = re.sub(",+", ",", text)
+                text = text.replace(" ,", ",")
                 if text.endswith(","):
                     text = text[:-1]
                 if text.startswith(","):
