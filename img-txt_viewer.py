@@ -48,12 +48,24 @@ class Autocomplete:
 class ImageTextViewer:
     def __init__(self, master):
         self.master = master
-        master.title("v1.66 - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
+        master.title("v1.67 - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
         master.bind("<Control-s>", lambda event: self.save_text_file())
         master.bind("<Alt-Left>", lambda event: self.prev_pair())
         master.bind("<Alt-Right>", lambda event: self.next_pair())
-        self.master.minsize(1050, 600)
-        root.geometry("1300x800")
+        self.master.minsize(1050, 500)
+        root.geometry("1050x680")
+        self.max_width = IntVar()
+        self.max_width.set(650)
+        menubar = Menu(self.master)
+        self.master.config(menu=menubar)
+        filemenu = Menu(menubar, tearoff=0)
+        sizemenu = Menu(filemenu, tearoff=0)
+        menubar.add_cascade(label="Image Size", menu=sizemenu)
+        sizemenu.add_radiobutton(label="Smallest", variable=self.max_width, value=512, command=lambda: self.adjust_window(1050, 540, 1050, 500))
+        sizemenu.add_radiobutton(label="Small", variable=self.max_width, value=650, command=lambda: self.adjust_window(1050, 680, 1050, 500))
+        sizemenu.add_radiobutton(label="Medium", variable=self.max_width, value=800, command=lambda: self.adjust_window(1200, 830, 1200, 500))
+        sizemenu.add_radiobutton(label="Large", variable=self.max_width, value=1000, command=lambda: self.adjust_window(1400, 1030, 1400, 500))
+        sizemenu.add_radiobutton(label="Largest", variable=self.max_width, value=1200, command=lambda: self.adjust_window(1800, 1230, 1800, 500))
         self.image_dir = StringVar()
         self.current_index = 0
         self.image_files = []
@@ -66,7 +78,7 @@ class ImageTextViewer:
         self.suggestion_label = Label(master, text="")
         self.next_button = Button(master, text="Next", command=self.next_pair)
         self.prev_button = Button(master, text="Previous", command=self.prev_pair)
-        self.directory_button = Button(root, textvariable=self.image_dir, command=self.choose_directory)      
+        self.directory_button = Button(root, textvariable=self.image_dir, command=self.choose_directory)
         self.save_button = Button(self.master, text="Save", command=self.save_text_file, fg="blue")
         self.auto_save_var = BooleanVar()
         self.auto_save_var.set(False)
@@ -83,14 +95,14 @@ class ImageTextViewer:
         self.create_saved_label()
         self.info_label = Label(self.master, text="\n\n"
                                        "CTRL+Z / CTRL+Y: Undo/Redo.\n\n"
-                                       "CTRL+S: to save the current text file.\n\n"                                       
+                                       "CTRL+S: to save the current text file.\n\n"
                                        "ALT+Left/Right arrow keys: to move between img/txt pairs.\n\n"
                                        "\n"
                                        "Get autocomplete suggestions while you type using danbooru tags.\n\n"
                                        "Pressing TAB+Left/Right selects the autocomplete suggestion.\n\n"
                                        "Pressing TAB inserts the selected suggestion.\n\n"
                                        "\n"
-                                       "Select text to see duplicates.\n\n"                                       
+                                       "Select text to see duplicates.\n\n"
                                        "If the auto-save box is checked, text will be saved when moving between img/txt pairs.\n\n"
                                        "Blank text files can be created for images without any matching files when loading a directory.\n\n")
         self.info_label.pack(anchor=N)
@@ -103,7 +115,9 @@ class ImageTextViewer:
         self.autocomplete = Autocomplete("danbooru.csv")
         self.text_box.bind("<KeyRelease>", self.update_suggestions) 
         self.selected_suggestion_index = 0
-        
+
+########################################################################
+
     def update_suggestions(self, event):
         if event.keysym == "Tab":
             if self.selected_suggestion_index < len(self.suggestions):
@@ -162,7 +176,30 @@ class ImageTextViewer:
                     label_text = s
                 suggestion_text += label_text + ", "
             self.suggestion_label.config(text=suggestion_text[:-2])
-    
+
+    def highlight_duplicates(self, event, mouse=True):
+        if not self.text_box.tag_ranges("sel"):
+            return
+        selected_text = self.text_box.selection_get().strip()
+        if len(selected_text) < 3:
+            return
+        self.text_box.tag_remove("highlight", "1.0", "end")
+        selected_words = selected_text.split()
+        for word in selected_words:
+            if len(word) < 3:
+                continue
+            pattern = re.escape(word)
+            matches = re.finditer(pattern, self.text_box.get("1.0", "end"))
+            for match in matches:
+                start = match.start()
+                end = match.end()
+                self.text_box.tag_add("highlight", f"1.0 + {start} chars", f"1.0 + {end} chars")
+
+    def remove_highlight(self):
+        self.text_box.tag_remove("highlight", "1.0", "end")
+
+########################################################################
+
     def create_saved_label(self):
         self.saved_label = Label(self.master, text="No Changes")
         self.saved_label.pack(anchor=N)
@@ -173,6 +210,20 @@ class ImageTextViewer:
             self.saved_label.config(text="Changes Being autosaved", bg="#4DB6D2", fg="white")
         else:
             self.saved_label.config(text="Changes Are Not Saved", bg="red", fg="white")
+
+    def is_modified(self, *args):
+        if self.text_files:
+            text_file = self.text_files[self.current_index]
+            with open(text_file, "r") as f:
+                file_content = f.read()
+                text_content = self.text_box.get("1.0", END)
+                self.text_modified = file_content != text_content
+                if self.text_modified:
+                    self.saved_label.config(text="Changes Not Saved", fg="red")
+                else:
+                    self.saved_label.config(text="No Changes", fg="black")
+
+########################################################################
 
     def choose_directory(self):
         try:
@@ -215,7 +266,7 @@ class ImageTextViewer:
             image = Image.open(image_file)
             w, h = image.size
             aspect_ratio = w / h
-            max_width = 900
+            max_width = self.max_width.get()
             max_height = 1200
             min_width = 512
             min_height = 512
@@ -271,28 +322,9 @@ class ImageTextViewer:
         photo = ImageTk.PhotoImage(image)
         self.label_image.config(image=photo)
         self.label_image.image = photo
-    
-    def highlight_duplicates(self, event, mouse=True):
-        if not self.text_box.tag_ranges("sel"):
-            return
-        selected_text = self.text_box.selection_get().strip()
-        if len(selected_text) < 3:
-            return
-        self.text_box.tag_remove("highlight", "1.0", "end")
-        selected_words = selected_text.split()
-        for word in selected_words:
-            if len(word) < 3:
-                continue
-            pattern = re.escape(word)
-            matches = re.finditer(pattern, self.text_box.get("1.0", "end"))
-            for match in matches:
-                start = match.start()
-                end = match.end()
-                self.text_box.tag_add("highlight", f"1.0 + {start} chars", f"1.0 + {end} chars")
-        
-    def remove_highlight(self):
-        self.text_box.tag_remove("highlight", "1.0", "end")                     
-    
+
+########################################################################
+
     def display_image_index(self):
         if hasattr(self, 'image_index_entry'):
             self.image_index_entry.delete(0, END)
@@ -336,7 +368,7 @@ class ImageTextViewer:
         self.show_pair()
         if not self.text_modified:
             self.saved_label.config(text="No Changes", fg="black")
-    
+
     def prev_pair(self):
         self.text_box.edit_reset()
         if self.current_index > 0:
@@ -349,17 +381,7 @@ class ImageTextViewer:
         if not self.text_modified:
             self.saved_label.config(text="No Changes", fg="black")
 
-    def is_modified(self, *args):
-        if self.text_files:
-            text_file = self.text_files[self.current_index]
-            with open(text_file, "r") as f:
-                file_content = f.read()
-                text_content = self.text_box.get("1.0", END)
-                self.text_modified = file_content != text_content
-                if self.text_modified:
-                    self.saved_label.config(text="Changes Not Saved", fg="red")
-                else:
-                    self.saved_label.config(text="No Changes", fg="black")
+########################################################################
 
     def save_text_file(self):
         if self.text_files:
@@ -374,10 +396,18 @@ class ImageTextViewer:
                 if text.startswith(","):
                     text = text[1:]
                 f.write(text)
-            self.saved_label.config(text="Saved", bg="green", fg="white")       
+            self.saved_label.config(text="Saved", bg="green", fg="white")
 
     def disable_tab(self, event):
-        return "break"            
+        return "break"
+
+    def adjust_window(self, new_width, new_height, min_width=None, min_height=None):
+        self.save_text_file()
+        self.master.geometry(f"{new_width}x{new_height}")
+        if min_width is not None and min_height is not None:
+            self.master.minsize(min_width, min_height)
+        self.next_pair()
+        self.prev_pair()
 
 root = Tk()
 app = ImageTextViewer(root)
