@@ -1,7 +1,7 @@
 # img-txt_viewer
 Display an image and text file side-by-side for easy manual caption editing.
 
-![image](https://user-images.githubusercontent.com/70049990/220445796-ea8c9b05-3a89-46cb-81f9-e291589d6c07.png)
+![v1 67_img-txt_viewer](https://github.com/Nenotriple/img-txt_viewer/assets/70049990/09cb402a-db35-4b15-8ff2-828234b397e0)
 
 # Usage
 
@@ -43,6 +43,10 @@ The autocomplete function requires the included "danbooru.csv" file to be locate
 
 # Version History
 
+v1.67 changes:
+
+- *New: Select image viewing size. Small, medium, large, etc.*
+
 v1.66 changes:
 
 - *New: Image now scales with window size.*
@@ -64,9 +68,3 @@ v1.62 changes:
 - *Tips and features added to startup.*
 - *Removed directory text widget and replaced it with a button with a dynamic label.*
 - *Error handling added when selecting a directory.*
-  
-v1.61 changes:
-
-- *Saving now fixes various typos such as: Double and triple commas are replaced with single commas. Extra spaces are reduced to single spaces. leading and trailing spaces/commas are removed.*
-- *utf-8 encoding is enforced.*
-- *Undo now works as expected.*
