@@ -80,7 +80,7 @@ class ImageTextViewer:
         self.auto_save_checkbutton = Checkbutton(master, text="Auto-save", variable=self.auto_save_var)
         self.auto_save_checkbutton.pack(side=TOP)
         self.create_saved_label()
-        self.image_index_label = Label(self.master, text="\n\n"
+        self.info_label = Label(self.master, text="\n\n"
                                        "CTRL+Z / CTRL+Y: Undo/Redo.\n\n"
                                        "CTRL+S: to save the current text file.\n\n"                                       
                                        "ALT+Left/Right arrow keys: to move between img/txt pairs.\n\n"
@@ -92,8 +92,7 @@ class ImageTextViewer:
                                        "Select text to see duplicates.\n\n"                                       
                                        "If the auto-save box is checked, text will be saved when moving between img/txt pairs.\n\n"
                                        "Blank text files can be created for images without any matching files when loading a directory.\n\n")
-        self.image_index_label.pack(anchor=N)
-        self.suggestion_label.pack(side=TOP, fill=X)
+        self.info_label.pack(anchor=N)
         self.text_box.bind("<Key>", lambda event: self.change_label())
         self.text_box.tag_configure("highlight", background="lightblue")
         self.text_box.bind("<ButtonRelease-1>", lambda event: self.highlight_duplicates(event, mouse=True))
@@ -143,7 +142,6 @@ class ImageTextViewer:
             else:
                 self.suggestion_label.config(text="")
 
-
     def insert_completed_suggestion(self, completed_suggestion):
         text = self.text_box.get("1.0", "insert")
         elements = [element.strip() for element in text.split(',')]
@@ -186,6 +184,7 @@ class ImageTextViewer:
             pass
 
     def load_pairs(self):
+        self.info_label.pack_forget()
         self.image_files = []
         self.text_files = []
         new_text_files = []
@@ -207,7 +206,7 @@ class ImageTextViewer:
                     with open(text_file, "w") as f:
                         f.write("")
         self.show_pair()
-
+        
     def show_pair(self):
         if self.image_files:
             image_file = self.image_files[self.current_index]
@@ -239,6 +238,7 @@ class ImageTextViewer:
             self.label_image.config(image=photo)
             self.label_image.image = photo
             self.label_image.config(width=max_width, height=max_height)
+            self.label_image.bind("<Button-1>", lambda event: self.zoom_image(event))
             self.text_box.config(undo=False)
             with open(text_file, "r") as f:
                 self.text_box.delete("1.0", END)
@@ -251,8 +251,31 @@ class ImageTextViewer:
             self.text_box.bind("<Tab>", self.disable_tab)   
             self.display_image_index()
             self.text_box.config(undo=True)
-            
 
+    def zoom_image(self, event, zoom_factor=1.5):
+        current_size = event.widget.image.width(), event.widget.image.height()
+        new_size = tuple([int(zoom_factor * x) for x in current_size])
+        if current_size[0] > 650:
+            image_file = self.image_files[self.current_index]
+            image = Image.open(image_file)
+            w, h = image.size
+            aspect_ratio = w / h
+            max_width = 650
+            max_height = 550
+            if w > h:
+                new_w = max_width
+                new_h = int(new_w / aspect_ratio)
+            else:
+                new_h = max_height
+                new_w = int(new_h * aspect_ratio)
+            new_size = (new_w, new_h)
+        image_file = self.image_files[self.current_index]
+        image = Image.open(image_file)
+        zoomed_image = image.resize(new_size)
+        photo = ImageTk.PhotoImage(zoomed_image)
+        event.widget.config(image=photo)
+        event.widget.image = photo
+    
     def highlight_duplicates(self, event, mouse=True):
         if not self.text_box.tag_ranges("sel"):
             return
@@ -275,12 +298,33 @@ class ImageTextViewer:
         self.text_box.tag_remove("highlight", "1.0", "end")                     
     
     def display_image_index(self):
-        if hasattr(self, 'image_index_label'):
-            self.image_index_label.config(text=f"Image {self.current_index + 1}/{len(self.image_files)}")
+        if hasattr(self, 'image_index_entry'):
+            self.image_index_entry.delete(0, END)
+            self.image_index_entry.insert(0, f"{self.current_index + 1}")
         else:
-            self.image_index_label = Label(self.master, text=f"Image {self.current_index + 1}/{len(self.image_files)}")
-            self.image_index_label.pack(side=TOP, expand=YES)
+            self.index_frame = Frame(self.master)
+            self.index_frame.pack(side=TOP, expand=YES)
+            self.image_index_entry = Entry(self.index_frame, width=5)
+            self.image_index_entry.insert(0, f"{self.current_index + 1}")
+            self.image_index_entry.bind("<Return>", self.jump_to_image)
+            self.image_index_entry.pack(side=LEFT, expand=YES)
+            self.total_images_label = Label(self.index_frame, text=f"/{len(self.image_files)}")
+            self.total_images_label.pack(side=LEFT, expand=YES)
         self.text_box.pack(side=BOTTOM, expand=YES, fill=BOTH)
+        self.suggestion_label.pack(side=BOTTOM, fill=X)
+
+    def jump_to_image(self, event):
+        try:
+            index = int(self.image_index_entry.get()) - 1
+            if 0 <= index < len(self.image_files):
+                if self.auto_save_var.get():
+                    self.save_text_file()
+                self.current_index = index
+                self.show_pair()
+                if not self.text_modified:
+                    self.saved_label.config(text="No Changes", fg="black")
+        except ValueError:
+            pass
 
     def next_pair(self):
         self.text_box.edit_reset()
@@ -288,19 +332,23 @@ class ImageTextViewer:
             if self.auto_save_var.get():
                 self.save_text_file()
             self.current_index += 1
-            self.show_pair()
-            if not self.text_modified:
-                self.saved_label.config(text="No Changes", fg="black")
-
+        else:
+            self.current_index = 0
+        self.show_pair()
+        if not self.text_modified:
+            self.saved_label.config(text="No Changes", fg="black")
+    
     def prev_pair(self):
         self.text_box.edit_reset()
         if self.current_index > 0:
             if self.auto_save_var.get():
                 self.save_text_file()
             self.current_index -= 1
-            self.show_pair()
-            if not self.text_modified:
-                self.saved_label.config(text="No Changes", fg="black")
+        else:
+            self.current_index = len(self.image_files) - 1
+        self.show_pair()
+        if not self.text_modified:
+            self.saved_label.config(text="No Changes", fg="black")
 
     def is_modified(self, *args):
         if self.text_files:
