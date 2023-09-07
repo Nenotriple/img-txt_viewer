@@ -43,11 +43,16 @@ The autocomplete function requires the included "danbooru.csv" file to be locate
 
 # Version History
 
+v1.66 changes:
+
+- *New: Image now scales with window size.*
+- *New: Zoom has been removed for now.*
+
 v1.65 changes:
 
-- *New: Zoom into images by clicking them*
-- *New: Loop around the image index when hitting the end/start*
-- *New: Quickly jump to a specific image*
+- *New: Zoom into images by clicking them.*
+- *New: Loop around the image index when hitting the end/start.*
+- *New: Quickly jump to a specific image.*
 
 v1.63 changes:
 
@@ -65,7 +70,3 @@ v1.61 changes:
 - *Saving now fixes various typos such as: Double and triple commas are replaced with single commas. Extra spaces are reduced to single spaces. leading and trailing spaces/commas are removed.*
 - *utf-8 encoding is enforced.*
 - *Undo now works as expected.*
-
-v1.6 changes:
-
-- *New feature: Autocomplete using danbooru tags.* 
