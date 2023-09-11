@@ -48,7 +48,7 @@ class Autocomplete:
 class ImageTextViewer:
     def __init__(self, master):
         self.master = master
-        master.title("v1.67 - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
+        master.title("v1.68 - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
         master.bind("<Control-s>", lambda event: self.save_text_file())
         master.bind("<Alt-Left>", lambda event: self.prev_pair())
         master.bind("<Alt-Right>", lambda event: self.next_pair())
@@ -76,8 +76,6 @@ class ImageTextViewer:
         self.label_image = Label(master)
         self.text_box = Text(master, height=20, width=50, wrap=WORD, undo=True, maxundo=100)
         self.suggestion_label = Label(master, text="")
-        self.next_button = Button(master, text="Next", command=self.next_pair)
-        self.prev_button = Button(master, text="Previous", command=self.prev_pair)
         self.directory_button = Button(root, textvariable=self.image_dir, command=self.choose_directory)
         self.save_button = Button(self.master, text="Save", command=self.save_text_file, fg="blue")
         self.auto_save_var = BooleanVar()
@@ -86,9 +84,13 @@ class ImageTextViewer:
         self.directory_button.pack(side=TOP, fill=X)
         self.label_image.pack(side=LEFT)
         separator_frame = Frame(root, height=8)
-        separator_frame.pack()        
-        self.next_button.pack(anchor=N, fill=X, pady=3)
-        self.prev_button.pack(anchor=N, fill=X, pady=3)
+        separator_frame.pack()
+        frame = Frame(master)
+        frame.pack()
+        self.next_button = Button(frame, text="   Next--->   ", command=self.next_pair)
+        self.prev_button = Button(frame, text="<---Previous", command=self.prev_pair)                 
+        self.next_button.pack(side=RIGHT, fill=X, padx=2, expand=True)
+        self.prev_button.pack(side=LEFT, fill=X, padx=2, expand=True)
         self.save_button.pack(side=TOP, fill=X, pady=3)
         self.auto_save_checkbutton = Checkbutton(master, text="Auto-save", variable=self.auto_save_var)
         self.auto_save_checkbutton.pack(side=TOP)
@@ -101,6 +103,7 @@ class ImageTextViewer:
                                        "Get autocomplete suggestions while you type using danbooru tags.\n\n"
                                        "Pressing TAB+Left/Right selects the autocomplete suggestion.\n\n"
                                        "Pressing TAB inserts the selected suggestion.\n\n"
+                                       "Pressing ALT cycles between suggestions.\n\n"
                                        "\n"
                                        "Select text to see duplicates.\n\n"
                                        "If the auto-save box is checked, text will be saved when moving between img/txt pairs.\n\n"
@@ -108,8 +111,6 @@ class ImageTextViewer:
         self.info_label.pack(anchor=N)
         self.text_box.bind("<Key>", lambda event: self.change_label())
         self.text_box.tag_configure("highlight", background="lightblue")
-        self.text_box.bind("<ButtonRelease-1>", lambda event: self.highlight_duplicates(event, mouse=True))
-        self.text_box.bind("<KeyRelease>", lambda event: self.highlight_duplicates(event, mouse=False))
         self.text_box.bind("<Left>", lambda event: self.remove_highlight())
         self.text_box.bind("<Right>", lambda event: self.remove_highlight())
         self.autocomplete = Autocomplete("danbooru.csv")
@@ -125,9 +126,9 @@ class ImageTextViewer:
                 self.insert_completed_suggestion(completed_suggestion)
             self.suggestion_label.config(text="")
             self.suggestions = []
-        elif event.keysym in ("Left", "Right"):
+        elif event.keysym in ("Alt_L", "Alt_R"):
             if self.suggestions:
-                if event.keysym == "Left":
+                if event.keysym == "Alt_R":
                     self.selected_suggestion_index = (self.selected_suggestion_index - 1) % len(self.suggestions)
                 else:
                     self.selected_suggestion_index = (self.selected_suggestion_index + 1) % len(self.suggestions)
@@ -162,10 +163,17 @@ class ImageTextViewer:
         elements = [element.strip() for element in text.split(',')]
         current_word = elements[-1]
         current_word = current_word.strip()
-        updated_text = text.rsplit(',', 1)[0] + ', ' + completed_suggestion + ', '
+        remaining_text = self.text_box.get("insert", "end").rstrip('\n')
+        if ',' in remaining_text:
+            updated_text = text[:-len(current_word)] + completed_suggestion + remaining_text[remaining_text.index(','):]
+        else:
+            updated_text = text[:-len(current_word)] + completed_suggestion + ', ' + remaining_text
+        cursor_position = self.text_box.index("insert")   
         self.text_box.delete("1.0", "end")
         self.text_box.insert("1.0", updated_text)
-    
+        self.text_box.mark_set("insert", cursor_position)
+        self.text_box.event_generate("<Control-Right>")
+         
     def highlight_selected_suggestion(self):
         if self.suggestions:
             suggestion_text = ""
@@ -178,12 +186,16 @@ class ImageTextViewer:
             self.suggestion_label.config(text=suggestion_text[:-2])
 
     def highlight_duplicates(self, event, mouse=True):
+        self.text_box.after_idle(self._highlight_duplicates, mouse)
+
+    def _highlight_duplicates(self, mouse):
+        self.text_box.tag_remove("highlight", "1.0", "end")
         if not self.text_box.tag_ranges("sel"):
             return
         selected_text = self.text_box.selection_get().strip()
+        selected_text = selected_text.replace(',', '')
         if len(selected_text) < 3:
             return
-        self.text_box.tag_remove("highlight", "1.0", "end")
         selected_words = selected_text.split()
         for word in selected_words:
             if len(word) < 3:
@@ -196,7 +208,7 @@ class ImageTextViewer:
                 self.text_box.tag_add("highlight", f"1.0 + {start} chars", f"1.0 + {end} chars")
 
     def remove_highlight(self):
-        self.text_box.tag_remove("highlight", "1.0", "end")
+        self.text_box.tag_remove("highlight", "1.0", "end")                
 
 ########################################################################
 
@@ -299,6 +311,8 @@ class ImageTextViewer:
             if not self.text_modified:
                 self.saved_label.config(text="No Changes", bg="white", fg="black")
             self.text_box.bind("<ButtonRelease-1>", self.highlight_duplicates)
+            self.text_box.bind("<Shift-Left>", lambda event: self.highlight_duplicates(event, mouse=False))
+            self.text_box.bind("<Shift-Right>", lambda event: self.highlight_duplicates(event, mouse=False))
             self.text_box.bind("<Button-1>", lambda event: self.remove_highlight())
             self.text_box.bind("<Tab>", self.disable_tab)   
             self.display_image_index()
@@ -308,7 +322,7 @@ class ImageTextViewer:
             event = Event()
             event.height = window_height
             event.width = window_width
-            self.scale_image(event, aspect_ratio, image)
+            self.scale_image(event, aspect_ratio, image)         
 
     def scale_image(self, event, aspect_ratio, image):
         window_height = event.height
@@ -358,6 +372,7 @@ class ImageTextViewer:
             pass
 
     def next_pair(self):
+        self.text_box.config(undo=False)
         self.text_box.edit_reset()
         if self.current_index < len(self.image_files) - 1:
             if self.auto_save_var.get():
@@ -370,6 +385,7 @@ class ImageTextViewer:
             self.saved_label.config(text="No Changes", fg="black")
 
     def prev_pair(self):
+        self.text_box.config(undo=False)
         self.text_box.edit_reset()
         if self.current_index > 0:
             if self.auto_save_var.get():
@@ -405,7 +421,7 @@ class ImageTextViewer:
         self.save_text_file()
         self.master.geometry(f"{new_width}x{new_height}")
         if min_width is not None and min_height is not None:
-            self.master.minsize(min_width, min_height)
+            self.master.minsize(min_width, min_height)  
         self.next_pair()
         self.prev_pair()
 
