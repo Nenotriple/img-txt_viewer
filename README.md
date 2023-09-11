@@ -45,6 +45,14 @@ The autocomplete function requires the included "danbooru.csv" file to be locate
 
 v1.67 changes:
 
+- *New: Previous/Next buttons are now side-by-side.*
+- *New/Fixed: Choosing suggestions is now down with ALT. This prevents suggestions from being inserted erronesly.*
+- *Fixed: Inserting suggestions is now possible anywhere in the text field, not just the end of the text box.*
+- *Fixed: Duplicates will now be highlighted when selected with the keyboard.*
+- *Fixed: Commas are now ignored when matching highlighted duplicates.*
+
+v1.67 changes:
+
 - *New: Select image viewing size. Small, medium, large, etc.*
 
 v1.66 changes:
@@ -62,9 +70,3 @@ v1.63 changes:
 
 - *Autocomplete now returns much better suggestions.*
 - *Further improvements to typo correction.*
-
-v1.62 changes:
-
-- *Tips and features added to startup.*
-- *Removed directory text widget and replaced it with a button with a dynamic label.*
-- *Error handling added when selecting a directory.*
