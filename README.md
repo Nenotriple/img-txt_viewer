@@ -16,9 +16,9 @@ Supported image types:
 Hotkeys
 - CTRL+S: to save the current text file.
 - CTRL+Z / CTRL+Y: Undo/Redo.
-- ALT+Left/Right arrow keys: to move between img/txt pairs.
+- ALT+Left/Right arrow keys quickly moves between img/txt pairs.
 - Pressing TAB inserts the selected suggestion.
-- Pressing TAB+Left/Right selects the autocomplete suggestion.
+- Presing ALT cycles though suggestions.
 
 Tips
 - Select text with the mouse or keyboard to see duplicates.
@@ -43,7 +43,7 @@ The autocomplete function requires the included "danbooru.csv" file to be locate
 
 # Version History
 
-v1.67 changes:
+v1.68 changes:
 
 - *New: Previous/Next buttons are now side-by-side.*
 - *New/Fixed: Choosing suggestions is now down with ALT. This prevents suggestions from being inserted erronesly.*
