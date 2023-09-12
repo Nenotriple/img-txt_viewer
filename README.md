@@ -29,7 +29,7 @@ Tips
 
 # Requirements
 
-**Running the script will automatically fulfull all requirements.**
+**Running the script will automatically fulfill all requirements.**
 
 This uses pillow for image viewing, and tkinter for the ui.
 
