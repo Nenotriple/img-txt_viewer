@@ -23,12 +23,13 @@ Hotkeys
 Tips
 - Select text with the mouse or keyboard to see duplicates.
 - If the auto-save box is checked, text will be saved when moving between img/txt pairs.
-- If the user chooses a folder with images but no matching text files, they will be prompted to create blank text files. The blank text files will only be created for images that currently don't have any text files.
-- Click the image to zoom in.
+- Blank text files can be created for images without any matching files when loading a directory..
 - Get autocomplete suggestions while you type using danbooru tags.
 
 
 # Requirements
+
+**Running the script will automatically fulfull all requirements.**
 
 This uses pillow for image viewing, and tkinter for the ui.
 
@@ -42,6 +43,15 @@ pip install pillow
 The autocomplete function requires the included "danbooru.csv" file to be located in the same folder as the script.
 
 # Version History
+
+v1.7 changes:
+
+- *New: Options menu: Adjust font size, suggestions quantity, delete img-txt pairs.*
+- *New: UI Changes*
+- *New: Pillow library and danbooru.csv file can now be installed and downloaded automatically.*
+- *New: txt-img pairs are now loaded with logical sorting: Fixing the issue where filenames like 10 or 100 loaded before 2 or 9.*
+- *New/Fixed: Autosave will now properly save the text file when closing if it's enabled.*
+- *Complete changelog in release notes.*
 
 v1.68 changes:
 
@@ -66,7 +76,3 @@ v1.65 changes:
 - *New: Loop around the image index when hitting the end/start.*
 - *New: Quickly jump to a specific image.*
 
-v1.63 changes:
-
-- *Autocomplete now returns much better suggestions.*
-- *Further improvements to typo correction.*
