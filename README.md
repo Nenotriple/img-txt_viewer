@@ -6,7 +6,7 @@ Display an image and text file side-by-side for easy manual caption editing.
 # Usage
 
 Store images and text files in a single folder with identical names.
-- So 01.png and 01.txt and so on. The names in each pair should match, but no particular formatting is required.
+- So 01.png, 01.txt, and so on. The names in each pair should match, but no particular formatting is required.
 
 Supported image types:
 - .png .jpg .jpeg .webp .bmp
@@ -16,26 +16,27 @@ Supported image types:
 Hotkeys
 - CTRL+S: to save the current text file.
 - CTRL+Z / CTRL+Y: Undo/Redo.
-- ALT+Left/Right arrow keys quickly moves between img/txt pairs.
+- ALT+Left/Right arrow keys quickly move between img-txt pairs.
 - Pressing TAB inserts the selected suggestion.
-- Presing ALT cycles though suggestions.
+- Presing ALT cycles through suggestions.
+- Delete img-txt pairs: Del
 
 Tips
 - Select text with the mouse or keyboard to see duplicates.
-- If the auto-save box is checked, text will be saved when moving between img/txt pairs.
-- Blank text files can be created for images without any matching files when loading a directory..
-- Get autocomplete suggestions while you type using danbooru tags.
+- If the auto-save box is checked, text will be saved when moving between img-txt pairs.
+- Blank text files can be created for images without any matching files when loading a directory.
+- Get autocomplete suggestions while you type using Danbooru tags.
 
 
 # Requirements
 
 **Running the script will automatically fulfill all requirements.**
 
-This uses pillow for image viewing, and tkinter for the ui.
+This uses Pillow for image viewing and TKinter for the UI.
 
-tkinter comes preinstalled with Python.
+TKinter comes preinstalled with Python.
 
-Install pillow with the following command:
+Install Pillow with the following command:
 ```
 pip install pillow
 ```
@@ -44,35 +45,17 @@ The autocomplete function requires the included "danbooru.csv" file to be locate
 
 # Version History
 
-v1.7 changes:
+v1.71 changes:
 
-- *New: Options menu: Adjust font size, suggestions quantity, delete img-txt pairs.*
-- *New: UI Changes*
-- *New: Pillow library and danbooru.csv file can now be installed and downloaded automatically.*
-- *New: txt-img pairs are now loaded with logical sorting: Fixing the issue where filenames like 10 or 100 loaded before 2 or 9.*
-- *New/Fixed: Autosave will now properly save the text file when closing if it's enabled.*
-- *Complete changelog in release notes.*
-
-v1.68 changes:
-
-- *New: Previous/Next buttons are now side-by-side.*
-- *New/Fixed: Choosing suggestions is now down with ALT. This prevents suggestions from being inserted erronesly.*
-- *Fixed: Inserting suggestions is now possible anywhere in the text field, not just the end of the text box.*
-- *Fixed: Duplicates will now be highlighted when selected with the keyboard.*
-- *Fixed: Commas are now ignored when matching highlighted duplicates.*
-
-v1.67 changes:
-
-- *New: Select image viewing size. Small, medium, large, etc.*
-
-v1.66 changes:
-
-- *New: Image now scales with window size.*
-- *New: Zoom has been removed for now.*
-
-v1.65 changes:
-
-- *New: Zoom into images by clicking them.*
-- *New: Loop around the image index when hitting the end/start.*
-- *New: Quickly jump to a specific image.*
-
+- New:
+  - Now you can select any font installed on your system.
+  - Clicking the displayed image will open it in your default image viewing application.
+  - Right clicking the directory button will add the file path to the clipboard.
+  - Delete Pair now simply moves the img-txt pair to a local trash folder in the selected directory.
+  - Now you can delete an img-txt pair with the "del" keyboard key.
+- Fixed:
+  - Issue where the proceeding tag would be deleted if inserting a suggestion without encapsulating the input between commas.
+  - Improved handling of cursor position after inserting a suggestion. (again)
+  - Issue where image index would not update correctly when switching directories.
+  - Where "on_closing" message would trigger even if the text file was saved.
+  - Further improvemnts to the way text is cleaned up when saved.
