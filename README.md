@@ -58,4 +58,4 @@ v1.71 changes:
   - Improved handling of cursor position after inserting a suggestion. (again)
   - Issue where image index would not update correctly when switching directories.
   - Where "on_closing" message would trigger even if the text file was saved.
-  - Further improvemnts to the way text is cleaned up when saved.
+  - Further improvements to the way text is cleaned up when saved.
