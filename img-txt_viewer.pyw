@@ -10,11 +10,12 @@
 import csv
 import os
 import re
+import threading
+import tkinter.font
 import tkinter as tk
 from tkinter import *
 from tkinter import messagebox, Tk, ttk, Toplevel, Label, StringVar
 from tkinter.filedialog import askdirectory
-import tkinter.font
 
 try:
     from PIL import ImageTk, Image
@@ -132,7 +133,7 @@ class Autocomplete:
 class ImageTextViewer:
     def __init__(self, master):
         self.master = master
-        master.title("v1.71 - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
+        master.title("v1.72 - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
         master.bind("<Control-s>", lambda event: self.save_text_file())
         master.bind("<Alt-Left>", lambda event: self.prev_pair())
         master.bind("<Alt-Right>", lambda event: self.next_pair())
@@ -206,7 +207,7 @@ class ImageTextViewer:
 
         self.info_label = Label(self.master, text=
             "Keyboard Shortcuts:\n"
-            "  ▪️ Undo/Redo: CTRL+Z / CTRL+Y (Works but may be visually finnicky)\n"
+            "  ▪️ Undo/Redo: CTRL+Z / CTRL+Y (works but may be visually finnicky)\n"
             "  ▪️ Save File: CTRL+S\n"
             "  ▪️ Navigate between img/txt pairs: ALT+Left/Right arrow keys\n"
             "  ▪️ Delete img-txt pairs: Del\n\n"
@@ -220,7 +221,8 @@ class ImageTextViewer:
             "  ▪️ Highlight duplicates by selecting text.\n\n"
 
             "Auto-save Feature:\n"
-            "  ▪️ Check the auto-save box to save text when navigating between img/txt pairs or closing the window.\n\n"
+            "  ▪️ Check the auto-save box to save text when navigating between img/txt pairs or closing the window.\n"
+            "  ▪️ Text is cleaned up when saved, so you can ignore things like trailing comma/spaces, double comma/spaces, etc.\n\n"
             "File Creation:\n"
             "  ▪️ Blank text files can be created for images without any matching files when loading a directory.",
             justify=LEFT, font=("Segoe UI", 10))
@@ -365,22 +367,26 @@ class ImageTextViewer:
         self.image_files = []
         self.text_files = []
         new_text_files = []
-        for filename in sorted(os.listdir(self.image_dir.get()), key=self.natural_sort):
+        files_in_dir = sorted(os.listdir(self.image_dir.get()), key=self.natural_sort)
+        for filename in files_in_dir:
             if filename.endswith((".jpg", ".jpeg", ".png", ".webp", ".bmp")):
-                self.image_files.append(os.path.join(self.image_dir.get(), filename))
+                image_file_path = os.path.join(self.image_dir.get(), filename)
+                self.image_files.append(image_file_path)
                 text_filename = os.path.splitext(filename)[0] + ".txt"
-                text_file = os.path.join(self.image_dir.get(), text_filename)
-                if not os.path.exists(text_file):
+                text_file_path = os.path.join(self.image_dir.get(), text_filename)
+                if not os.path.exists(text_file_path):
                     new_text_files.append(filename)
-                self.text_files.append(text_file)
+                    with open(text_file_path, "w") as f:
+                        f.write("")
+                self.text_files.append(text_file_path)
         if new_text_files:
             msg = f"Do you want to create {len(new_text_files)} new text files?"
             result = messagebox.askquestion("New Text Files", msg)
             if result == "yes":
                 for filename in new_text_files:
                     text_filename = os.path.splitext(filename)[0] + ".txt"
-                    text_file = os.path.join(self.image_dir.get(), text_filename)
-                    with open(text_file, "w") as f:
+                    text_file_path = os.path.join(self.image_dir.get(), text_filename)
+                    with open(text_file_path, "w") as f:
                         f.write("")
         self.show_pair()
         if hasattr(self, 'total_images_label'):
@@ -397,20 +403,12 @@ class ImageTextViewer:
             max_height = 1200
             min_width = 512
             min_height = 512
-            if w < min_width or h < min_height:
+            if w < min_width or h < min_height or w > max_width or h > max_height:
                 if w > h:
-                    new_w = min_width
+                    new_w = max(min_width, min(max_width, w))
                     new_h = int(new_w / aspect_ratio)
                 else:
-                    new_h = min_height
-                    new_w = int(new_h * aspect_ratio)
-                image = image.resize((new_w, new_h))
-            elif w > max_width or h > max_height:
-                if w > h:
-                    new_w = max_width
-                    new_h = int(new_w / aspect_ratio)
-                else:
-                    new_h = max_height
+                    new_h = max(min_height, min(max_height, h))
                     new_w = int(new_h * aspect_ratio)
                 image = image.resize((new_w, new_h))
             photo = ImageTk.PhotoImage(image)
@@ -418,7 +416,7 @@ class ImageTextViewer:
             self.label_image.image = photo
             self.label_image.config(width=max_width, height=max_height)
             self.label_image.bind("<Configure>", lambda event: self.scale_image(event, aspect_ratio, image))
-            create_tooltip(self.label_image, "Click to open in default image viewer", 1000, 0, 500)
+            self.label_image.bind("<MouseWheel>", self.mouse_scroll)
             self.text_box.config(undo=False)
             with open(text_file, "r") as f:
                 self.text_box.delete("1.0", END)
@@ -432,22 +430,20 @@ class ImageTextViewer:
             self.text_box.bind("<Button-1>", lambda event: self.remove_highlight())
             self.text_box.bind("<Tab>", self.disable_tab)
             self.display_image_index()
-            self.text_box.config(undo=True)
             window_height = self.label_image.winfo_height()
             window_width = self.label_image.winfo_width()
             event = Event()
             event.height = window_height
             event.width = window_width
             self.scale_image(event, aspect_ratio, image)
-            self.suggestion_label.config(text="...")
         def open_image(event):
-            os.startfile(image_file)
+                os.startfile(image_file)
         self.label_image.bind("<Button-1>", open_image)
 
     def scale_image(self, event, aspect_ratio, image):
         window_height = event.height
         window_width = event.width
-        new_height = int(window_height * 1)
+        new_height = window_height
         new_width = int(new_height * aspect_ratio)
         if new_width > window_width:
             new_width = window_width
@@ -456,6 +452,12 @@ class ImageTextViewer:
         photo = ImageTk.PhotoImage(image)
         self.label_image.config(image=photo)
         self.label_image.image = photo
+
+    def mouse_scroll(self, event):
+        if event.delta > 0:
+            self.next_pair()
+        else:
+            self.prev_pair()
 
 ################################################################################################################################################
 ################################################################################################################################################
@@ -526,10 +528,11 @@ class ImageTextViewer:
         self.master.clipboard_append(self.image_dir.get())
 
     def cleanup_text(self, text):
-        text = ' '.join(text.split())
+        text = re.sub(' +', ' ', text)
         text = re.sub(",+", ",", text)
         text = re.sub("(,)(?=[^\s])", ", ", text)
-        text = re.sub(r'\((.*?)\)', r'\\(\1\\)', text)
+        text = re.sub(r'\((.*?)\)', r'\(\1\)', text)
+        text = re.sub(r'\\\\+', r'\\', text)
         text = text.strip(",")
         return text
 
@@ -642,17 +645,10 @@ app = ImageTextViewer(root)
 root.protocol("WM_DELETE_WINDOW", app.on_closing)
 root.mainloop()
 
-#v1.71 changes:
+#v1.72 changes:
 #
 #- New:
-#  - Now you can select any font installed on your system.
-#  - Clicking the displayed image will open it in your default image viewing application.
-#  - Right clicking the directory button will add the file path to the clipboard.
-#  - Delete Pair now simply moves the img-txt pair to a local trash folder in the selected directory.
-#  - Now you can delete an img-txt pair with the "del" keyboard key.
+#  - Now you can use the mousewheel over the displayed image to cycle through images.
+
 #- Fixed:
-#  - Issue where the proceeding tag would be deleted if inserting a suggestion without encapsulating the input between commas.
-#  - Improved handling of cursor position after inserting a suggestion. (again)
-#  - Issue where image index would not update correctly when switching directories.
-#  - Where "on_closing" message would trigger even if the text file was saved.
-#  - Further improvements to the way text is cleaned up when saved.
+#  - Escape characters "\" should now be properly handled during cleanup.
