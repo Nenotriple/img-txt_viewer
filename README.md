@@ -14,16 +14,17 @@ Supported image types:
 # Tips and Features
 
 Hotkeys
-- CTRL+S: to save the current text file.
+- CTRL+S: Save the current text file.
 - CTRL+Z / CTRL+Y: Undo/Redo.
-- ALT+Left/Right arrow keys quickly move between img-txt pairs.
-- Pressing TAB inserts the selected suggestion.
-- Presing ALT cycles through suggestions.
-- Delete img-txt pairs: Del
+- ALT+Left/Right: Quickly move between img-txt pairs.
+- ALT: Cycle through auto-suggestions.
+- TAB: Insert highlighted suggestion.
+- Del: Send the current pair to a local trash folder.
 
 Tips
 - Select text with the mouse or keyboard to see duplicates.
 - If the auto-save box is checked, text will be saved when moving between img-txt pairs.
+- Text is cleaned up when saved, so you can ignore things like trailing comma/spaces, double comma/spaces, etc.
 - Blank text files can be created for images without any matching files when loading a directory.
 - Get autocomplete suggestions while you type using Danbooru tags.
 
@@ -44,6 +45,13 @@ pip install pillow
 The autocomplete function requires the included "danbooru.csv" file to be located in the same folder as the script.
 
 # Version History
+
+v1.72 changes:
+
+- New:
+  - Now you can use the mousewheel over the displayed image to cycle through images.
+- Fixed:
+  - Escape characters `\` should now be properly handled during cleanup.
 
 v1.71 changes:
 
