@@ -5,21 +5,19 @@ Display an image and text file side-by-side for easy manual caption editing.
 
 # Usage
 
-Store images and text files in a single folder with identical names.
-- So 01.png, 01.txt, and so on. The names in each pair should match, but no particular formatting is required.
-
-Supported image types:
-- .png .jpg .jpeg .webp .bmp
+- Prepare Your Files:
+  - Put each image and its matching text file in the same folder. They should have the same name. For example, `01.png` and `01.txt`.
+  - Supported image types: `.png` `.jpg` `.jpeg` `.webp` `.bmp`
 
 # Tips and Features
 
 Hotkeys
-- CTRL+S: Save the current text file.
-- CTRL+Z / CTRL+Y: Undo/Redo.
-- ALT+Left/Right: Quickly move between img-txt pairs.
-- ALT: Cycle through auto-suggestions.
-- TAB: Insert highlighted suggestion.
-- Del: Send the current pair to a local trash folder.
+- `CTRL+S`: Save the current text file.
+- `CTRL+Z` / `CTRL+Y`: Undo/Redo.
+- `ALT`+`Left/Right`: Quickly move between img-txt pairs.
+- `ALT`: Cycle through auto-suggestions.
+- `TAB`: Insert highlighted suggestion.
+- `Del`: Send the current pair to a local trash folder.
 
 Tips
 - Select text with the mouse or keyboard to see duplicates.
@@ -30,40 +28,26 @@ Tips
 
 
 # Requirements
+You must have **Python 3.10+** installed to the system PATH.
 
 **Running the script will automatically fulfill all requirements.**
 
-This uses Pillow for image viewing and TKinter for the UI.
+The `pillow` library will be downloaded and installed *(if not already available)* upon launch.
 
-TKinter comes preinstalled with Python.
-
-Install Pillow with the following command:
-```
-pip install pillow
-```
-
-The autocomplete function requires the included "danbooru.csv" file to be located in the same folder as the script.
+The `danbooru.csv` file will be downloaded *(if not already available)* upon launch.
 
 # Version History
 
-v1.72 changes:
+v1.73 changes:
 
 - New:
-  - Now you can use the mousewheel over the displayed image to cycle through images.
+  - Big Comma Mode: This will make commas stand out much more, and it also changes the way text is spaced out.
+  - Middle-clicking the directory button now opens the selected folder.
+  - Right click or middle-click the displayed image to open the image directory.
 - Fixed:
-  - Escape characters `\` should now be properly handled during cleanup.
-
-v1.71 changes:
-
-- New:
-  - Now you can select any font installed on your system.
-  - Clicking the displayed image will open it in your default image viewing application.
-  - Right clicking the directory button will add the file path to the clipboard.
-  - Delete Pair now simply moves the img-txt pair to a local trash folder in the selected directory.
-  - Now you can delete an img-txt pair with the "del" keyboard key.
-- Fixed:
-  - Issue where the proceeding tag would be deleted if inserting a suggestion without encapsulating the input between commas.
-  - Improved handling of cursor position after inserting a suggestion. (again)
-  - Issue where image index would not update correctly when switching directories.
-  - Where "on_closing" message would trigger even if the text file was saved.
-  - Further improvements to the way text is cleaned up when saved.
+  - The image index now correctly updates with changes from outside the app. (Adding/Removing images)
+  - Text files now won't be created even when you select "No". A saveable text box still appears for images without text files.
+  - Images without a text pair can now be properly displayed without errors.
+  - The displayed text file is now refreshed when saving. This correctly displays changes made by cleanup.
+  - `jpg_large` files are now renamed to .jpg before loading.
+  - Unresponsive directory button.
