@@ -10,11 +10,10 @@
 import csv
 import os
 import re
-import threading
 import tkinter.font
 import tkinter as tk
-from tkinter import *
-from tkinter import messagebox, Tk, ttk, Toplevel, Label, StringVar
+from tkinter import BooleanVar, Button, Checkbutton, Entry, Event, Frame, IntVar, Label, Menu, StringVar, Text, Tk, Toplevel, messagebox, ttk
+from tkinter import WORD, YES, NO, BOTH, END, TOP, BOTTOM, LEFT, RIGHT, X, W
 from tkinter.filedialog import askdirectory
 
 try:
@@ -57,7 +56,7 @@ class ToolTip:
         if tw:
             tw.destroy()
 
-def create_tooltip(widget, text, delay=600, x_offset=0, y_offset=0):
+def create_tooltip(widget, text, delay=500, x_offset=0, y_offset=0):
     tool_tip = ToolTip(widget, x_offset, y_offset)
     id = None
     def enter(event):
@@ -133,7 +132,6 @@ class Autocomplete:
 class ImageTextViewer:
     def __init__(self, master):
         self.master = master
-        master.title("v1.72 - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
         master.bind("<Control-s>", lambda event: self.save_text_file())
         master.bind("<Alt-Left>", lambda event: self.prev_pair())
         master.bind("<Alt-Right>", lambda event: self.next_pair())
@@ -143,29 +141,12 @@ class ImageTextViewer:
         root.geometry("1050x680")
         self.max_width = IntVar()
         self.max_width.set(650)
-
-        menubar = Menu(self.master)
-        self.master.config(menu=menubar)
-
-        sizemenu = Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Image Size", menu=sizemenu)
-        sizemenu.add_radiobutton(label="Smallest", variable=self.max_width, value=512, command=lambda: self.adjust_window(1050, 540, 900, 550)) # (setW, setH, minW, minH)
-        sizemenu.add_radiobutton(label="Small", variable=self.max_width, value=650, command=lambda: self.adjust_window(1050, 680, 905, 550))
-        sizemenu.add_radiobutton(label="Medium", variable=self.max_width, value=800, command=lambda: self.adjust_window(1200, 830, 1200, 550))
-        sizemenu.add_radiobutton(label="Large", variable=self.max_width, value=1000, command=lambda: self.adjust_window(1400, 1030, 1400, 550))
-        sizemenu.add_radiobutton(label="Largest", variable=self.max_width, value=1800, command=lambda: self.adjust_window(1900, 1230, 1800, 550))
-
-        textmenu = Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Options", menu=textmenu)
-        textmenu.add_command(label="Font Options", command=self.set_font)
-        textmenu.add_command(label="Suggestion Quantity", command=self.set_suggestion_quantity)
-        textmenu.add_separator()
-        textmenu.add_command(label="Delete Current Pair", command=self.delete_pair)
-        root.bind('<Delete>', lambda event: self.delete_pair())
-
+        self.bold_commas = BooleanVar()
+        self.bold_commas.set(False)
         self.image_dir = StringVar()
         self.button_label = StringVar()
         self.auto_save_var = BooleanVar()
+        self.font_var = StringVar()
         self.auto_save_var.set(False)
         self.text_modified = False
         self.current_index = 0
@@ -175,16 +156,43 @@ class ImageTextViewer:
         self.suggestions = []
         self.image_dir.set("Choose Directory")
 
+        menubar = Menu(self.master)
+        self.master.config(menu=menubar)
+
+        sizemenu = Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Image Size", menu=sizemenu)
+        sizes = [("Smallest", 512, (1050, 540, 900, 550)),  # (setW, setH, minW, minH)
+                 ("Small", 650, (1050, 680, 905, 550)),
+                 ("Medium", 800, (1200, 830, 1200, 550)),
+                 ("Large", 1000, (1400, 1030, 1400, 550)),
+                 ("Largest", 1800, (1900, 1230, 1800, 550))]
+        for size in sizes:
+            sizemenu.add_radiobutton(label=size[0], variable=self.max_width,
+                                     value=size[1], command=lambda s=size: self.adjust_window(*s[2]))
+
+        textmenu = Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Options", menu=textmenu)
+        textmenu.add_command(label="Font Options", command=self.set_font)
+        textmenu.add_checkbutton(label="Big Commas", variable=self.bold_commas, command=self.toggle_big_comma)
+        textmenu.add_command(label="Suggestion Quantity", command=self.set_suggestion_quantity)
+        textmenu.add_separator()
+        textmenu.add_command(label="Delete Current Pair", command=self.delete_pair)
+        root.bind('<Delete>', lambda event: self.delete_pair())
+
         self.text_box = Text(master, height=5, width=5, wrap=WORD, undo=True, maxundo=200)
         self.suggestion_label = Label(master, text="")
 
         self.directory_button = Button(root, textvariable=self.image_dir, command=self.choose_directory)
+        self.directory_button.bind('<Button-2>', self.open_directory)
         self.directory_button.bind('<Button-3>', self.copy_to_clipboard)
-        create_tooltip(self.directory_button, "Right click to copy path", 600, 460, -20)
+        create_tooltip(self.directory_button, "Right click to copy path\n\nMiddle click to open in file explorer", 500, 430, -48)
         self.directory_button.pack(side=TOP, fill=X)
 
         self.label_image = Label(master)
         self.label_image.pack(side=LEFT)
+        self.label_image.bind('<Button-2>', self.open_directory)
+        self.label_image.bind('<Button-3>', self.open_directory)
+        create_tooltip(self.label_image, "Left click to open in system image viewer\n\nRight/Middle click to open in file explorer", 500, 0, 0)
 
         separator_frame = Frame(root, height=8)
         separator_frame.pack()
@@ -207,15 +215,22 @@ class ImageTextViewer:
 
         self.info_label = Label(self.master, text=
             "Keyboard Shortcuts:\n"
-            "  ▪️ Undo/Redo: CTRL+Z / CTRL+Y (works but may be visually finnicky)\n"
-            "  ▪️ Save File: CTRL+S\n"
-            "  ▪️ Navigate between img/txt pairs: ALT+Left/Right arrow keys\n"
-            "  ▪️ Delete img-txt pairs: Del\n\n"
+            "  ▪️ CTRL+S: Save the current text file\n"
+            "  ▪️ CTRL+Z / CTRL+Y: Undo/Redo\n"
+            "  ▪️ ALT+Left/Right: Quickly move between img-txt pairs\n"
+            "  ▪️ ALT: Cycle through auto-suggestions\n"
+            "  ▪️ TAB: Insert highlighted suggestion.\n"
+            "  ▪️ Del: Send the current pair to a local trash folder.\n\n"
+
+            "Tips:\n"
+            "  ▪️ Click the dispalyed image to open it.\n"
+            "  ▪️ Right-click or Middle-click the displayed image to open it's folder.\n"
+            "  ▪️ Right-click the directory button to copy the path.\n"
+            "  ▪️ Middle-click the directory button to open the folder.\n"
+            "  ▪️ Enable 'Big Comma' mode for more visual separation between captions.\n\n"
 
             "Autocomplete Suggestions:\n"
-            "  ▪️ Type to get suggestions based on danbooru tags.\n"
-            "  ▪️ Insert selected suggestion: Press TAB\n"
-            "  ▪️ Cycle through suggestions: Press ALT\n\n"
+            "  ▪️ Type to get suggestions based on danbooru tags.\n\n"
 
             "Text Selection:\n"
             "  ▪️ Highlight duplicates by selecting text.\n\n"
@@ -223,8 +238,10 @@ class ImageTextViewer:
             "Auto-save Feature:\n"
             "  ▪️ Check the auto-save box to save text when navigating between img/txt pairs or closing the window.\n"
             "  ▪️ Text is cleaned up when saved, so you can ignore things like trailing comma/spaces, double comma/spaces, etc.\n\n"
+
             "File Creation:\n"
             "  ▪️ Blank text files can be created for images without any matching files when loading a directory.",
+
             justify=LEFT, font=("Segoe UI", 10))
         self.info_label.pack(anchor=W)
 
@@ -232,7 +249,12 @@ class ImageTextViewer:
         self.text_box.bind("<Key>", lambda event: self.change_label())
         self.text_box.bind("<Left>", lambda event: self.remove_highlight())
         self.text_box.bind("<Right>", lambda event: self.remove_highlight())
-        self.text_box.bind("<KeyRelease>", self.update_suggestions)
+        self.text_box.bind("<KeyRelease>", lambda event: (self.update_suggestions(event), self.toggle_big_comma(event)))
+        self.text_box.bind("<ButtonRelease-1>", self.highlight_duplicates)
+        self.text_box.bind("<Shift-Left>", lambda event: self.highlight_duplicates(event, mouse=False))
+        self.text_box.bind("<Shift-Right>", lambda event: self.highlight_duplicates(event, mouse=False))
+        self.text_box.bind("<Button-1>", lambda event: self.remove_highlight())
+        self.text_box.bind("<Tab>", self.disable_tab)
 
 ################################################################################################################################################
 ################################################################################################################################################
@@ -242,8 +264,7 @@ class ImageTextViewer:
             if self.selected_suggestion_index < len(self.suggestions):
                 completed_suggestion = self.suggestions[self.selected_suggestion_index]
                 self.insert_completed_suggestion(completed_suggestion)
-            self.suggestion_label.config(text="...")
-            self.suggestions = []
+            self.clear_suggestions()
         elif event.keysym in ("Alt_L", "Alt_R"):
             if self.suggestions:
                 if event.keysym == "Alt_R":
@@ -252,11 +273,9 @@ class ImageTextViewer:
                     self.selected_suggestion_index = (self.selected_suggestion_index + 1) % len(self.suggestions)
                 self.highlight_selected_suggestion()
         elif event.keysym in ("Up", "Down"):
-            self.suggestion_label.config(text="...")
-            self.suggestions = []
+            self.clear_suggestions()
         elif event.char == ",":
-            self.suggestion_label.config(text="...")
-            self.suggestions = []
+            self.clear_suggestions()
         else:
             text = self.text_box.get("1.0", "insert")
             elements = [element.strip() for element in text.split(',')]
@@ -272,9 +291,9 @@ class ImageTextViewer:
                     self.selected_suggestion_index = 0
                     self.highlight_selected_suggestion()
                 else:
-                    self.suggestion_label.config(text="...")
+                    self.clear_suggestions()
             else:
-                self.suggestion_label.config(text="...")
+                self.clear_suggestions()
 
     def insert_completed_suggestion(self, completed_suggestion):
         text = self.text_box.get("1.0", "insert")
@@ -331,6 +350,10 @@ class ImageTextViewer:
     def remove_highlight(self):
         self.text_box.tag_remove("highlight", "1.0", "end")
 
+    def clear_suggestions(self):
+        self.suggestion_label.config(text="...")
+        self.suggestions = []
+
 ################################################################################################################################################
 ################################################################################################################################################
 
@@ -369,25 +392,20 @@ class ImageTextViewer:
         new_text_files = []
         files_in_dir = sorted(os.listdir(self.image_dir.get()), key=self.natural_sort)
         for filename in files_in_dir:
-            if filename.endswith((".jpg", ".jpeg", ".png", ".webp", ".bmp")):
+            if filename.lower().endswith("jpg_large"):
+                new_filename = filename[:-9] + "jpg"
+                os.rename(os.path.join(self.image_dir.get(), filename), os.path.join(self.image_dir.get(), new_filename))
+                filename = new_filename
+            if filename.lower().endswith((".jpg", ".jpeg", ".png", ".webp", ".bmp")):
                 image_file_path = os.path.join(self.image_dir.get(), filename)
                 self.image_files.append(image_file_path)
                 text_filename = os.path.splitext(filename)[0] + ".txt"
                 text_file_path = os.path.join(self.image_dir.get(), text_filename)
                 if not os.path.exists(text_file_path):
                     new_text_files.append(filename)
-                    with open(text_file_path, "w") as f:
-                        f.write("")
                 self.text_files.append(text_file_path)
         if new_text_files:
-            msg = f"Do you want to create {len(new_text_files)} new text files?"
-            result = messagebox.askquestion("New Text Files", msg)
-            if result == "yes":
-                for filename in new_text_files:
-                    text_filename = os.path.splitext(filename)[0] + ".txt"
-                    text_file_path = os.path.join(self.image_dir.get(), text_filename)
-                    with open(text_file_path, "w") as f:
-                        f.write("")
+            self.create_blank_textfiles(new_text_files)
         self.show_pair()
         if hasattr(self, 'total_images_label'):
             self.total_images_label.config(text=f"/{len(self.image_files)}")
@@ -395,22 +413,14 @@ class ImageTextViewer:
     def show_pair(self):
         if self.image_files:
             image_file = self.image_files[self.current_index]
-            text_file = self.text_files[self.current_index]
+            try:
+                text_file = self.text_files[self.current_index]
+            except IndexError:
+                text_file = None
             image = Image.open(image_file)
-            w, h = image.size
-            aspect_ratio = w / h
             max_width = self.max_width.get()
-            max_height = 1200
-            min_width = 512
-            min_height = 512
-            if w < min_width or h < min_height or w > max_width or h > max_height:
-                if w > h:
-                    new_w = max(min_width, min(max_width, w))
-                    new_h = int(new_w / aspect_ratio)
-                else:
-                    new_h = max(min_height, min(max_height, h))
-                    new_w = int(new_h * aspect_ratio)
-                image = image.resize((new_w, new_h))
+            max_height = 2000
+            image, aspect_ratio = self.resize_image(image, max_width, max_height)
             photo = ImageTk.PhotoImage(image)
             self.label_image.config(image=photo)
             self.label_image.image = photo
@@ -418,17 +428,13 @@ class ImageTextViewer:
             self.label_image.bind("<Configure>", lambda event: self.scale_image(event, aspect_ratio, image))
             self.label_image.bind("<MouseWheel>", self.mouse_scroll)
             self.text_box.config(undo=False)
-            with open(text_file, "r") as f:
-                self.text_box.delete("1.0", END)
-                self.text_box.insert(END, f.read())
-                self.text_modified = False
+            self.text_box.delete("1.0", END)
+            if text_file and os.path.isfile(text_file):
+                with open(text_file, "r") as f:
+                    self.text_box.insert(END, f.read())
+            self.text_modified = False
             if not self.text_modified:
                 self.saved_label.config(text="No Changes", bg="#f0f0f0", fg="black")
-            self.text_box.bind("<ButtonRelease-1>", self.highlight_duplicates)
-            self.text_box.bind("<Shift-Left>", lambda event: self.highlight_duplicates(event, mouse=False))
-            self.text_box.bind("<Shift-Right>", lambda event: self.highlight_duplicates(event, mouse=False))
-            self.text_box.bind("<Button-1>", lambda event: self.remove_highlight())
-            self.text_box.bind("<Tab>", self.disable_tab)
             self.display_image_index()
             window_height = self.label_image.winfo_height()
             window_width = self.label_image.winfo_width()
@@ -437,8 +443,23 @@ class ImageTextViewer:
             event.width = window_width
             self.scale_image(event, aspect_ratio, image)
         def open_image(event):
-                os.startfile(image_file)
+            os.startfile(image_file)
         self.label_image.bind("<Button-1>", open_image)
+
+    def resize_image(self, image, max_width, max_height):
+        w, h = image.size
+        aspect_ratio = w / h
+        min_width = 512
+        min_height = 512
+        if w < min_width or h < min_height or w > max_width or h > max_height:
+            if w > h:
+                new_w = max(min_width, min(max_width, w))
+                new_h = int(new_w / aspect_ratio)
+            else:
+                new_h = max(min_height, min(max_height, h))
+                new_w = int(new_h * aspect_ratio)
+            image = image.resize((new_w, new_h))
+        return image, aspect_ratio
 
     def scale_image(self, event, aspect_ratio, image):
         window_height = event.height
@@ -497,6 +518,7 @@ class ImageTextViewer:
     def next_pair(self):
         self.text_box.config(undo=False)
         self.text_box.edit_reset()
+        self.load_pairs()
         if self.current_index < len(self.image_files) - 1:
             if self.auto_save_var.get():
                 self.save_text_file()
@@ -504,12 +526,14 @@ class ImageTextViewer:
         else:
             self.current_index = 0
         self.show_pair()
+        self.toggle_big_comma()
         if not self.text_modified:
             self.saved_label.config(text="No Changes", fg="black")
 
     def prev_pair(self):
         self.text_box.config(undo=False)
         self.text_box.edit_reset()
+        self.load_pairs()
         if self.current_index > 0:
             if self.auto_save_var.get():
                 self.save_text_file()
@@ -517,15 +541,43 @@ class ImageTextViewer:
         else:
             self.current_index = len(self.image_files) - 1
         self.show_pair()
+        self.toggle_big_comma()
         if not self.text_modified:
             self.saved_label.config(text="No Changes", fg="black")
 
 ################################################################################################################################################
 ################################################################################################################################################
 
+    def create_blank_textfiles(self, new_text_files):
+        msg = f"Do you want to create {len(new_text_files)} new text files?"
+        result = messagebox.askquestion("New Text Files", msg)
+        if result == "yes":
+            for filename in new_text_files:
+                text_filename = os.path.splitext(filename)[0] + ".txt"
+                text_file_path = os.path.join(self.image_dir.get(), text_filename)
+                with open(text_file_path, "w") as f:
+                    f.write("")
+
+    def toggle_big_comma(self, event=None):
+        if self.bold_commas.get():
+            self.text_box.tag_remove("bold", "1.0", "end")
+            index = "1.0"
+            while True:
+                index = self.text_box.search(",", index, stopindex="end")
+                if not index:
+                    break
+                self.text_box.tag_add("bold", index, "{}+1c".format(index))
+                index = "{}+1c".format(index)
+            self.text_box.tag_configure("bold", font=(self.font_var.get(), 18, "bold"))
+        else:
+            self.text_box.tag_remove("bold", "1.0", "end")
+
     def copy_to_clipboard(self, event):
         self.master.clipboard_clear()
         self.master.clipboard_append(self.image_dir.get())
+
+    def open_directory(self, event):
+        os.startfile(self.image_dir.get())
 
     def cleanup_text(self, text):
         text = re.sub(' +', ' ', text)
@@ -533,7 +585,10 @@ class ImageTextViewer:
         text = re.sub("(,)(?=[^\s])", ", ", text)
         text = re.sub(r'\((.*?)\)', r'\(\1\)', text)
         text = re.sub(r'\\\\+', r'\\', text)
+        text = re.sub(",+$", "", text)
+        text = re.sub(" +$", "", text)
         text = text.strip(",")
+        text = text.strip(" ")
         return text
 
     def save_text_file(self):
@@ -544,6 +599,7 @@ class ImageTextViewer:
                 cleaned_text = self.cleanup_text(text)
                 f.write(cleaned_text)
             self.saved_label.config(text="Saved", bg="#6ca079", fg="white")
+        self.show_pair()
 
     def on_closing(self):
         if self.saved_label.cget("text") in ["No Changes", "Saved"]:
@@ -577,37 +633,31 @@ class ImageTextViewer:
         self.master.geometry(f"{new_width}x{new_height}")
         if min_width is not None and min_height is not None:
             self.master.minsize(min_width, min_height)
-        self.next_pair()
-        self.prev_pair()
 
     def set_font(self, event=None):
         current_font = self.text_box.cget("font")
         current_font_name = self.text_box.tk.call("font", "actual", current_font, "-family")
         current_font_size = self.text_box.tk.call("font", "actual", current_font, "-size")
-
         dialog = Toplevel(self.master)
         dialog.focus_force()
         dialog.geometry("220x100")
         dialog.title("Font and Size")
         dialog.attributes('-toolwindow', True)
         dialog.resizable(False, False)
-
         Label(dialog, text="Font:").pack()
-        font_var = StringVar()
-        font_box = ttk.Combobox(dialog, textvariable=font_var, width=50)
+        font_box = ttk.Combobox(dialog, textvariable=self.font_var, width=50)
         font_box['values'] = list(tkinter.font.families())
         font_box.set(current_font_name)
-        font_box.bind("<<ComboboxSelected>>", lambda event: self.set_font_and_size(font_var.get(), size_var.get(), dialog))
+        font_box.bind("<<ComboboxSelected>>", lambda event: self.set_font_and_size(self.font_var.get(), size_var.get(), dialog))
         font_box.bind("<Button-1>", lambda event: font_box.event_generate('<Down>'))
         create_tooltip(font_box, "Recommended Fonts: Courier New, Ariel, Consolas, Segoe UI", 200, -10, -30)
         font_box.pack()
-
         Label(dialog, text="Font Size:").pack()
         size_var = StringVar()
         size_box = ttk.Combobox(dialog, textvariable=size_var, width=50)
         size_box['values'] = list(range(9, 19))
         size_box.set(current_font_size)
-        size_box.bind("<<ComboboxSelected>>", lambda event: self.set_font_and_size(font_var.get(), size_var.get(), dialog))
+        size_box.bind("<<ComboboxSelected>>", lambda event: self.set_font_and_size(self.font_var.get(), size_var.get(), dialog))
         size_box.bind("<Button-1>", lambda event: size_box.event_generate('<Down>'))
         create_tooltip(size_box, "Default size = 10", 200, 0, -30)
         size_box.pack()
@@ -643,12 +693,20 @@ class ImageTextViewer:
 root = Tk()
 app = ImageTextViewer(root)
 root.protocol("WM_DELETE_WINDOW", app.on_closing)
+root.title("v1.73 - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
 root.mainloop()
 
-#v1.72 changes:
+#v1.73 changes:
 #
 #- New:
-#  - Now you can use the mousewheel over the displayed image to cycle through images.
+#  - Big Comma Mode: This will make commas stand out much more, and it also changes the way text is spaced out.
+#  - Middle-clicking the directory button now opens the selected folder.
+#  - Right click or middle-click the displayed image to open the image directory.
 
 #- Fixed:
-#  - Escape characters "\" should now be properly handled during cleanup.
+#  - The image index now correctly updates with changes from outside the app. (Adding/Removing images)
+#  - Text files now won't be created even when you select "No". A saveable text box still appears for images without text files.
+#  - Images without a text pair can now be properly displayed without errors.
+#  - The displayed text file is now refreshed when saving. This correctly displays changes made by cleanup.
+#  - `jpg_large` files are now renamed to .jpg before loading.
+#  - Unresponsive directory button.
