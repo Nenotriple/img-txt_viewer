@@ -56,7 +56,7 @@ The `danbooru.csv` file will be downloaded *(if not already available)* upon lau
 
 # 📜 Version History
 
-- [v1.75 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.75)
+[v1.75 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.75)
   - New:
     - New tool: `Batch Token Delete` This tool allows you to see a list of all tokens in the selected folder and delete them easily.
       - This tool can be used "standalone" without img-txt_viewer. Simply double-click the .py file and select a directory.
@@ -80,7 +80,7 @@ The `danbooru.csv` file will be downloaded *(if not already available)* upon lau
 
 ___
 
-- [v1.74 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.74)
+[v1.74 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.74)
   - New:
     - `Search and Replace`: Replace any text string across all text files in the loaded directory.
     - `Prefix Text Files`: Insert text at the START of all text files.
