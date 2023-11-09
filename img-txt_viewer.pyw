@@ -135,12 +135,17 @@ class Autocomplete:
                 f.write(response.content)
 
     def load_data(self, data_file):
+        if getattr(sys, 'frozen', False):
+            application_path = sys._MEIPASS
+        else:
+            application_path = os.path.dirname(os.path.abspath(__file__))
+        data_file_path = os.path.join(application_path, data_file)
         data = {}
-        if not os.path.isfile(data_file):
-            self.download_data(data_file)
-        if not os.path.isfile(data_file):
+        if not os.path.isfile(data_file_path):
+            self.download_data(data_file_path)
+        if not os.path.isfile(data_file_path):
             return None
-        with open(data_file, newline='', encoding='utf-8') as csvfile:
+        with open(data_file_path, newline='', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
             for row in reader:
                 true_name = row[0]
@@ -763,7 +768,12 @@ class imgtxt_viewer:
             self.check_directory()
         except ValueError:
             return
-        process = subprocess.Popen(["pythonw", "batch_token_delete.py", self.image_dir.get()])
+        if getattr(sys, 'frozen', False):
+            application_path = sys._MEIPASS
+        else:
+            application_path = os.path.dirname(os.path.abspath(__file__))
+        script_path = os.path.join(application_path, 'batch_token_delete.py')
+        process = subprocess.Popen(["pythonw", script_path, self.image_dir.get()])
         process.communicate()
         self.cleanup_all_text_files(show_confirmation=False)
         self.show_pair()
