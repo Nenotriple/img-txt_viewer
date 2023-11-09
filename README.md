@@ -56,40 +56,17 @@ The `danbooru.csv` file will be downloaded *(if not already available)* upon lau
 
 # 📜 Version History
 
-[v1.75 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.75)
+[v1.76 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.76)
   - New:
-    - New tool: `Batch Token Delete` This tool allows you to see a list of all tokens in the selected folder and delete them easily.
-      - This tool can be used "standalone" without img-txt_viewer. Simply double-click the .py file and select a directory.
-      - NOTE: v1.0 of Batch Token Delete currently relies on a cleanup function within img-txt_viewer to properly clean text files.
-    - New tool: `Cleanup Text` This fixes common typos in all text files within a chosen folder, such as double commas or spaces and missing spaces after commas.
-    - New option: `Suggestion Style` Here, you can select from four options. The old style is still there, plus a new default style.
-    - New option: `Suggestion Alignment` Here you can select between "Left Aligned", and "Centered". The default is now: Left Aligned.
-    - Changes: `Prefix` and `Append`: These tools now insert commas and spaces where appropriate. Prefix=`token, ` Append=`, token`
-    - UI Tweaks.
-
+    - Duplicate tokens are now removed when saving, cleaning, or inserting text.
+    - Periods at the end of words are now replaced with commas when saving or cleaning text.
+    - You can now enable or disable `Clean Text on Save`.
+    - Pillow is now installed much more gracefully than before. _(Python version only)_
+    - Various small UI tweaks
+    
 <br>
 
   - Fixed:
-    - `cleanup_text` now handles situations like `, ,` *(and repeating)*
-    - Further improvements for suggested text insertion and cursor positioning. *(This is a tricky one to nail down)*
-    - Pressing “Alt” to cycle a suggestion, then typing, unintentionally cycles the suggestion again.
-    - When moving to the next/prev pair using the alt+Arrow hotkeys: The suggestion index would progress by +/-1.
-    - The suggestion label now updates after setting the suggestion quantity.
-    - Issue where `Big Comma Mode` wouldn't enable when using some features.
-    - Error handling is added to check for a directory before running certain tools.
-
-___
-
-[v1.74 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.74)
-  - New:
-    - `Search and Replace`: Replace any text string across all text files in the loaded directory.
-    - `Prefix Text Files`: Insert text at the START of all text files.
-    - `Append Text Files`: Insert text at the END of all text files.
-    - Minor UI tweaks and enhancements.
-
-  - Fixed:
-    - Resolved an issue where the app would repeatedly ask: `Do you want to create '...' new text files?` even after selecting `No`.
-    - The 'Saved' label now updates correctly upon saving.
-    - The image index is now refreshed only when the folder quantity changes, resulting in faster navigation.
-    - Re-enabled the 'Undo' function.
-    - Extensive internal code refactoring for improved cleanliness and maintainability.
+    - `Autocomplete Inserting` fixes:
+      - Duplicate trailing comma, duplicate first letter, no space inserted, double space inserted.
+    - Using undo after inserting a suggestion should no longer be as jarring.
