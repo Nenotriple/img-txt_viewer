@@ -23,23 +23,57 @@ from tkinter import BooleanVar, Button, Checkbutton, Entry, Event, Frame, IntVar
 from tkinter import RAISED, WORD, YES, NO, BOTH, END, TOP, BOTTOM, LEFT, RIGHT, X, W
 from tkinter.filedialog import askdirectory
 
+##################
+#                #
+# Install Pillow #
+#                #
+##################
+
 try:
-    from PIL import ImageTk, Image
+    from PIL import Image, ImageTk
 except ImportError:
     import subprocess, sys
+    import threading
+    from tkinter import Tk, Label, messagebox
+
+    def download_pillow():
+        cmd = ["pythonw", '-m', 'pip', 'install', 'pillow']
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        for line in iter(lambda: process.stdout.readline(), b''):
+            pillow_label = Label(root, wraplength=450)
+            pillow_label.pack(anchor="w")
+            pillow_label.config(text=line.rstrip())
+        process.stdout.close()
+        process.wait()
+        done_label = Label(root, text="\nAll done! This window will now close...", wraplength=450)
+        done_label.pack(anchor="w")
+        root.after(3000, root.destroy)
+
     root = Tk()
+    root.title("Pillow Is Installing...")
+    root.geometry('600x200')
+    root.resizable(False, False)
     root.withdraw()
-    install_pillow = messagebox.askyesno("Pillow not installed!", " Pillow (image viewer) not found. Would you like to install it? ~2.5MB \n\n It's required to display images.")
+    root.protocol("WM_DELETE_WINDOW", lambda: None)
+
+    install_pillow = messagebox.askyesno("Pillow not installed!", "Pillow not found!\npypi.org/project/Pillow\n\nWould you like to install it? ~2.5MB \n\n It's required to view images.")
     if install_pillow:
-        subprocess.check_call(["python", '-m', 'pip', 'install', 'pillow'])
-        messagebox.showinfo("Pillow Installed", " Successfully installed Pillow. \n\n Please restart the program.")
-    sys.exit()
+        root.deiconify()
+        pillow_label = Label(root, wraplength=450)
+        pillow_label.pack(anchor="w")
+        pillow_label.config(text="Beginning Pillow install now...\n")
+        threading.Thread(target=download_pillow).start()
+        root.mainloop()
+        from PIL import Image
+    else:
+        sys.exit()
 
 ################################################################################################################################################
 ################################################################################################################################################
 #          #
 # ToolTips #
 #          #
+
 
 class ToolTip:
     def __init__(self, widget, x_offset=0, y_offset=0):
@@ -59,6 +93,7 @@ class ToolTip:
         tw.wm_geometry(f"+{x}+{y}")
         label = tk.Label(tw, text=tip_text, background="#ffffe0", relief=tk.SOLID, borderwidth=1)
         label.pack()
+        self.widget.after(8000, self.hide_tip)
 
     def hide_tip(self):
         tw = self.tip_window
@@ -74,7 +109,8 @@ class ToolTip:
             id = widget.after(delay, lambda: tool_tip.show_tip(text))
         def leave(event):
             nonlocal id
-            widget.after_cancel(id)
+            if id is not None:
+                widget.after_cancel(id)
             tool_tip.hide_tip()
         widget.bind('<Enter>', enter)
         widget.bind('<Leave>', leave)
@@ -151,12 +187,13 @@ class imgtxt_viewer:
 
         # Window settings
         master.minsize(905, 516)
-        root.geometry("1050x655")
+        root.geometry("1250x655")
 
         # Variables
         self.master = master
         self.suggestion_quantity = IntVar()
         self.auto_save_var = BooleanVar()
+        self.cleaning_text = BooleanVar()
         self.bold_commas = BooleanVar()
         self.button_label = StringVar()
         self.image_dir = StringVar()
@@ -180,6 +217,7 @@ class imgtxt_viewer:
         self.suggestion_style.set("Style 1: ⚫")
         self.suggestion_alignment.set("Left Aligned")
         self.bold_commas.set(False)
+        self.cleaning_text.set(True)
         self.auto_save_var.set(False)
         self.image_dir.set("Choose Directory")
 
@@ -202,8 +240,10 @@ class imgtxt_viewer:
         # Initilize Menu Bar
         menubar = Menu(self.master)
         self.master.config(menu=menubar)
+        # Options
         optionsmenu = Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Options", menu=optionsmenu)
+        # Tools
         toolsmenu = Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Tools", menu=toolsmenu)
 
@@ -211,12 +251,15 @@ class imgtxt_viewer:
         sizemenu = Menu(optionsmenu, tearoff=0)
         optionsmenu.add_cascade(label="Image Size", menu=sizemenu)
         sizes = [("Smallest", 512, (1050, 516, 900, 516)),  # (MAX_img_W, set_W, set_H, min_W, min_H)
-                 ("Small", 650, (1050, 655, 905, 516)),
-                 ("Medium", 800, (1200, 805, 1200, 516)),
-                 ("Large", 1000, (1400, 1005, 1400, 516)),
-                 ("Largest", 1200, (1300, 1205, 1800, 516))]
+                 ("Small", 650, (1250, 655, 905, 516)),
+                 ("Medium", 800, (1400, 805, 1200, 516)),
+                 ("Large", 1000, (1700, 1005, 1400, 516)),
+                 ("Largest", 1200, (1800, 1205, 1800, 516))]
         for size in sizes:
             sizemenu.add_radiobutton(label=size[0], variable=self.max_width, value=size[1], command=lambda s=size: self.adjust_window(*s[2]))
+
+        # Clean On Save Setting
+        optionsmenu.add_checkbutton(label="Clean Text on Save", variable=self.cleaning_text)
 
         # Suggestion Quantity Menu
         optionsmenu.add_separator()
@@ -271,7 +314,7 @@ class imgtxt_viewer:
         self.label_image.bind('<Button-2>', self.open_directory)
         self.label_image.bind('<Button-3>', self.open_directory)
         self.label_image.bind("<MouseWheel>", self.mouse_scroll)
-        ToolTip.create_tooltip(self.label_image, "Left click to open in system image viewer\n\nRight/Middle click to open in file explorer\n\nMouse-Wheel to scroll through images", 1000, 1, -80)
+        ToolTip.create_tooltip(self.label_image, "Double-Click to open in system image viewer\n\nRight/Middle click to open in file explorer\n\nMouse-Wheel to scroll through images", 1000, 1, -80)
 
         # Directory Button
         self.directory_button = Button(root, textvariable=self.image_dir, command=self.choose_directory)
@@ -309,7 +352,8 @@ class imgtxt_viewer:
         self.text_box.bind("<ButtonRelease-1>", self.highlight_duplicates)
         self.text_box.bind("<Left>", lambda event: self.remove_highlight())
         self.text_box.bind("<Right>", lambda event: self.remove_highlight())
-        self.text_box.bind("<Button-1>", lambda event: self.remove_highlight())
+        self.text_box.bind("<Button-1>", lambda event: (self.remove_highlight(), self.clear_suggestions()))
+        self.text_box.bind("<BackSpace>", lambda event: self.remove_highlight())
         self.text_box.bind("<Tab>", self.disable_button)
         self.text_box.bind("<Alt_L>", self.disable_button)
         self.text_box.bind("<Alt_R>", self.disable_button)
@@ -321,43 +365,49 @@ class imgtxt_viewer:
         # Info_Text #
         #           #
 
-        # Startup text
-        self.info_label = Label(self.master, text=
-            "Keyboard Shortcuts:\n"
-            "  ▪️ ALT+Left/Right: Quickly move between img-txt pairs.\n"
-            "  ▪️ Del: Send the current pair to a local trash folder.\n"
-            "  ▪️ ALT: Cycle through auto-suggestions.\n"
-            "  ▪️ TAB: Insert the highlighted suggestion.\n"
-            "  ▪️ CTRL+S: Save the current text file.\n"
-            "  ▪️ CTRL+Z / CTRL+Y: Undo/Redo.\n\n"
+        self.info_text = Text(root)
+        self.info_text.pack(expand=True, fill='both')
+        headers = ["Keyboard Shortcuts:", "Tips:", "Text Tools:", "Auto-Save:"]
+        content = [
+            "▪️ ALT+Left/Right: Quickly move between img-txt pairs.\n"
+            "▪️ Del: Send the current pair to a local trash folder.\n"
+            "▪️ ALT: Cycle through auto-suggestions.\n"
+            "▪️ TAB: Insert the highlighted suggestion.\n"
+            "▪️ CTRL+S: Save the current text file.\n"
+            "▪️ CTRL+Z / CTRL+Y: Undo/Redo.\n",
 
-            "Tips:\n"
-            "  ▪️ Highlight duplicates by selecting text.\n"
-            "  ▪️ Right-click the directory button to copy the path.\n"
-            "  ▪️ Middle-click the directory button to open the folder.\n"
-            "  ▪️ Right-click or Middle-click the displayed image to open its folder.\n"
-            "  ▪️ Enable 'Big Comma' mode for more visual separation between captions.\n"
-            "  ▪️ Blank text files can be created for images without any matching pair when loading a directory.\n\n"
+            "▪️ Highlight duplicates by selecting text.\n"
+            "▪️ Right-click the directory button to copy the path.\n"
+            "▪️ Middle-click the directory button to open the folder.\n"
+            "▪️ Right-click or Middle-click the displayed image to open its folder.\n"
+            "▪️ Enable 'Big Comma' mode for more visual separation between captions.\n"
+            "▪️ Blank text files can be created for images without any matching pair when loading a directory.\n",
 
-            "Text Tools:\n"
-            "  ▪️ These are destructive tools, the process cannot be undone! Test before using.\n"
+            " ▪️ These are destructive tools, the process cannot be undone! Test before using.\n"
             "         ▪️ Search and Replace: Edit all text files at once.\n"
             "         ▪️ Prefix Text Files: Insert text at the START of all text files.\n"
             "         ▪️ Append Text Files: Insert text at the END of all text files.\n"
             "         ▪️ Batch Token Delete: View all tokens in a directory, and quickly delete them.\n"
-            "         ▪️ Cleanup Text: This tool fixes simple typos in text files in the selected folder, such as multiple spaces or commas, and missing spaces after commas.\n\n"
+            "         ▪️ Cleanup Text: This tool fixes simple typos in text files in the selected folder, such as duplicate tokens, multiple spaces or commas, and missing spaces after commas.\n",
 
-            "Auto-Save:\n"
-            "  ▪️ Check the auto-save box to save text when navigating between img/txt pairs or closing the window.\n"
-            "  ▪️ Text is cleaned up when saved, so you can ignore things like trailing comma/spaces, double comma/spaces, etc.\n\n",
+            "▪️ Check the auto-save box to save text when navigating between img/txt pairs or closing the window.\n"
+            "▪️ Text is cleaned up when saved, so you can ignore things like duplicate tokens, trailing comma/spaces, double comma/spaces, etc.\n"
+            "▪️ You can disable text cleanup in the options menu."
+        ]
 
-            justify=LEFT, font=("Segoe UI", 10)); self.info_label.pack(anchor=W)
+        for header, section in zip(headers, content):
+            self.info_text.insert(END, header + "\n", "header")
+            self.info_text.insert(END, section + "\n", "section")
+
+        self.info_text.tag_config("header", font=("Segoe UI", 10, "bold"))
+        self.info_text.tag_config("section", font=("Segoe UI", 10))
+        self.info_text.config(state='disabled')
 
 ################################################################################################################################################
 ################################################################################################################################################
-    #                             #
-    # Autocomplete and Highlights #
-    #                             #
+    #              #
+    # Autocomplete #
+    #              #
 
     def update_suggestions(self, event=None):
         if event is None:
@@ -377,7 +427,7 @@ class imgtxt_viewer:
                     self.selected_suggestion_index = (self.selected_suggestion_index + 1) % len(self.suggestions)
                 self.highlight_selected_suggestion(self.suggestion_style.get())
             self.is_alt_arrow_pressed = False
-        elif event.keysym in ("Up", "Down"):
+        elif event.keysym in ("Up", "Down", "Left", "Right"):
             self.clear_suggestions()
         elif event.char == ",":
             self.clear_suggestions()
@@ -403,27 +453,33 @@ class imgtxt_viewer:
     def insert_completed_suggestion(self, completed_suggestion):
         completed_suggestion = completed_suggestion.strip()
         current_position = self.text_box.index("insert")
-        text = self.text_box.get("1.0", "insert")
+        text = self.text_box.get("1.0", "insert").rstrip()
         elements = [element.strip() for element in text.split(',')]
         current_word = elements[-1]
-        current_word = current_word.strip()
         remaining_text = self.text_box.get("insert", "end").rstrip('\n')
-        space_after_comma = ' ' if not remaining_text.startswith(' ') and remaining_text else ''
-        space_before_comma = ' ' if len(current_word) < len(text) and text[-len(current_word)-1] != ' ' else ''
-        updated_text = text[:-len(current_word)] + space_before_comma + completed_suggestion + ',' + space_after_comma + remaining_text
-        cleaned_text = self.cleanup_text(updated_text)
-        if not cleaned_text.endswith(", ") and remaining_text == '':
-            cleaned_text += ", "
+        start_of_current_word = "1.0 + {} chars".format(len(text) - len(current_word))
+        self.text_box.delete(start_of_current_word, "insert")
+        if not remaining_text.startswith(','):
+            self.text_box.insert(start_of_current_word, completed_suggestion + ', ')
+        else:
+            self.text_box.insert(start_of_current_word, completed_suggestion)
+        self.text_box.config(undo=False)
+        cleaned_text = self.cleanup_text(self.text_box.get("1.0", "end"))
         self.text_box.delete("1.0", "end")
         self.text_box.insert("1.0", cleaned_text)
+        self.text_box.config(undo=True)
+        new_position = self.position_cursor(current_position, completed_suggestion, current_word)
+        self.text_box.mark_set("insert", new_position)
+
+    def position_cursor(self, current_position, completed_suggestion, current_word):
         current_position_split = current_position.split('.')
-        current_position_split[1] = str(int(current_position_split[1]) + len(completed_suggestion) - len(current_word) + 2)
+        current_position_split[1] = str(int(current_position_split[1]) + len(completed_suggestion) - len(current_word) + 1)
         new_position = '.'.join(current_position_split)
         while self.text_box.get(new_position) == ' ':
             new_position_split = new_position.split('.')
             new_position_split[1] = str(int(new_position_split[1]) + 1)
             new_position = '.'.join(new_position_split)
-        self.text_box.mark_set("insert", new_position)
+        return new_position
 
     def highlight_selected_suggestion(self, suggestion_style):
         if self.suggestions:
@@ -463,8 +519,15 @@ class imgtxt_viewer:
         elif suggestion_alignment == "Left Aligned":
             self.suggestion_label.config(anchor='w')
 
-    def highlight_duplicates(self, event, mouse=True):
-        self.text_box.after_idle(self._highlight_duplicates, mouse)
+    def clear_suggestions(self):
+        self.suggestions = []
+        self.suggestion_label.config(text="...")
+
+################################################################################################################################################
+################################################################################################################################################
+    #                    #
+    # TextBox Highlights #
+    #                    #
 
     def _highlight_duplicates(self, mouse):
         self.text_box.tag_remove("highlight", "1.0", "end")
@@ -485,12 +548,11 @@ class imgtxt_viewer:
                 end = match.end()
                 self.text_box.tag_add("highlight", f"1.0 + {start} chars", f"1.0 + {end} chars")
 
+    def highlight_duplicates(self, event, mouse=True):
+        self.text_box.after_idle(self._highlight_duplicates, mouse)
+
     def remove_highlight(self):
         self.text_box.tag_remove("highlight", "1.0", "end")
-
-    def clear_suggestions(self):
-        self.suggestions = []
-        self.suggestion_label.config(text="...")
 
 ################################################################################################################################################
 ################################################################################################################################################
@@ -499,7 +561,7 @@ class imgtxt_viewer:
     #                   #
 
     def load_pairs(self):
-        self.info_label.pack_forget()
+        self.info_text.pack_forget()
         self.image_files = []
         self.text_files = []
         self.new_text_files = []
@@ -555,7 +617,7 @@ class imgtxt_viewer:
             self.scale_image(event, aspect_ratio, image)
         def open_image(event):
             os.startfile(image_file)
-        self.label_image.bind("<Button-1>", open_image)
+        self.label_image.bind("<Double-1>", open_image)
         self.toggle_big_comma()
         self.clear_suggestions()
 
@@ -701,7 +763,7 @@ class imgtxt_viewer:
             self.check_directory()
         except ValueError:
             return
-        process = subprocess.Popen(["pythonw", "v1.0_batch_token_delete.py", self.image_dir.get()])
+        process = subprocess.Popen(["pythonw", "batch_token_delete.py", self.image_dir.get()])
         process.communicate()
         self.cleanup_all_text_files(show_confirmation=False)
         self.show_pair()
@@ -853,21 +915,32 @@ class imgtxt_viewer:
             text_file = self.text_files[self.current_index]
             with open(text_file, "w", encoding="utf-8") as f:
                 text = self.text_box.get("1.0", END).strip()
-                cleaned_text = self.cleanup_text(text)
-                f.write(cleaned_text)
+                if self.cleaning_text.get():
+                    text = self.cleanup_text(text)
+                f.write(text)
         self.saved_label.config(text="Saved", bg="#6ca079", fg="white")
         self.show_pair()
 
+    def remove_duplicates(self, text):
+        text = text.lower().split(',')
+        text = [item.strip() for item in text]
+        text = list(dict.fromkeys(text))
+        text = ','.join(text)
+        return text
+
     def cleanup_text(self, text):
-        text = re.sub(' *, *', ',', text)  # replace one or more spaces surrounded by optional commas with a single comma
-        text = re.sub(' +', ' ', text)  # replace multiple spaces with a single space
-        text = re.sub(",+", ",", text)  # replace multiple commas with a single comma
-        text = re.sub(",(?=[^\s])", ", ", text)  # add a space after a comma if it's not already there
-        text = re.sub(r'\\\\+', r'\\', text)  # replace multiple backslashes with a single backslash
-        text = re.sub(",+$", "", text)  # remove trailing commas
-        text = re.sub(" +$", "", text)  # remove trailing spaces
-        text = text.strip(",")  # remove leading and trailing commas
-        text = text.strip()  # remove leading and trailing spaces
+        if self.cleaning_text.get():
+            text = self.remove_duplicates(text)
+            text = re.sub(r'\.\s', ', ', text)  # replace period and space with comma and space
+            text = re.sub(' *, *', ',', text)  # replace one or more spaces surrounded by optional commas with a single comma
+            text = re.sub(' +', ' ', text)  # replace multiple spaces with a single space
+            text = re.sub(",+", ",", text)  # replace multiple commas with a single comma
+            text = re.sub(",(?=[^\s])", ", ", text)  # add a space after a comma if it's not already there
+            text = re.sub(r'\\\\+', r'\\', text)  # replace multiple backslashes with a single backslash
+            text = re.sub(",+$", "", text)  # remove trailing commas
+            text = re.sub(" +$", "", text)  # remove trailing spaces
+            text = text.strip(",")  # remove leading and trailing commas
+            text = text.strip()  # remove leading and trailing spaces
         return text
 
     def cleanup_all_text_files(self, show_confirmation=True):
@@ -876,7 +949,7 @@ class imgtxt_viewer:
         except ValueError:
             return
         if show_confirmation:
-            user_confirmation = messagebox.askokcancel("Confirmation", "This operation will clean all text files from typos like:\nExtra commas, Extra spaces, trailing commas/spaces, commas without spaces, and more.\n\nExample Cleanup:\n  From: dog,solo,  ,happy  ,,\n       To: dog, solo, happy")
+            user_confirmation = messagebox.askokcancel("Confirmation", "This operation will clean all text files from typos like:\n Duplicate tokens, Extra commas, Extra spaces, trailing commas/spaces, commas without spaces, and more.\n\nExample Cleanup:\n  From: dog,solo,  ,happy  ,,\n       To: dog, solo, happy")
             self.saved_label.config(text="Text Files Cleaned Up!", bg="#6ca079", fg="white")
             if not user_confirmation:
                 return
@@ -927,7 +1000,11 @@ class imgtxt_viewer:
     def copy_to_clipboard(self, event):
         try:
             self.master.clipboard_clear()
-            self.master.clipboard_append(self.image_dir.get())
+            image_dir = self.image_dir.get()
+            if image_dir != "Copied!":
+                self.master.clipboard_append(image_dir)
+                self.image_dir.set("Copied!")
+                self.master.after(400, lambda: self.image_dir.set(image_dir))
         except:
             pass
 
@@ -1046,7 +1123,7 @@ class imgtxt_viewer:
 root = Tk()
 app = imgtxt_viewer(root)
 root.protocol("WM_DELETE_WINDOW", app.on_closing)
-root.title("v1.75 - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
+root.title("v1.76 - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
 
 if getattr(sys, 'frozen', False): # This is for including an icon with the --onefile excutable version.
     application_path = sys._MEIPASS
@@ -1068,27 +1145,20 @@ root.mainloop()
 
 '''
 
-- [v1.75 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.75)
+[v1.76 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.76)
   - New:
-    - New tool: `Batch Token Delete` This tool allows you to see a list of all tokens in the selected folder and delete them easily.
-      - This tool can be used "standalone" without img-txt_viewer. Simply double-click the .py file and select a directory.
-      - Note: v1.0 of Batch Token Delete currently relies on a cleanup function within img-txt_viewer to properly clean text files.
-    - New tool: `Cleanup Text` This fixes common typos in all text files within a chosen folder, such as double commas or spaces and missing spaces after commas.
-    - New option: `Suggestion Style` Here, you can select from four options. The old style is still there, plus a new default style.
-    - New option: `Suggestion Alignment` Here you can select between "Left Aligned", and "Centered". The default is now: Left Aligned.
-    - Changes: `Prefix` and `Append`: These tools now insert commas and spaces where appropriate. Prefix=`token, ` Append=`, token`
-    - UI Tweaks.
+    - Duplicate tokens are now removed when saving, cleaning, or inserting text.
+    - Periods at the end of words are now replaced with commas when saving or cleaning text.
+    - You can now enable or disable `Clean Text on Save`.
+    - Pillow is now installed much more gracefully than before. _(Python version only)_
+    - Various small UI tweaks
 
 <br>
 
   - Fixed:
-    - `cleanup_text` now handles situations like `, ,` *(and repeating)*
-    - Further improvements for suggested text insertion and cursor positioning. *(This is a tricky one to nail down)*
-    - Pressing “Alt” to cycle a suggestion, then typing, unintentionally cycles the suggestion again.
-    - When moving to the next/prev pair using the alt+Arrow hotkeys: The suggestion index would progress by +/-1.
-    - The suggestion label now updates after setting the suggestion quantity.
-    - Issue where `Big Comma Mode` wouldn't enable when using some features.
-    - Error handling is added to check for a directory before running certain tools.
+    - `Autocomplete Inserting` fixes:
+      - Duplicate trailing comma, duplicate first letter, no space inserted, double space inserted.
+    - Using undo after inserting a suggestion should no longer be as jarring.
 
 '''
 
@@ -1101,13 +1171,9 @@ root.mainloop()
 '''
 
 - Todo
-  -
+ -
 
 - Tofix
-  - When inserting a suggestion: If the cursor position isn't at the very end of the currently typed word when the suggestion is inserted, the inserted word is split.
-       This also happens when moving the cursor over a previously typed word and inserting a suggestion.
-       (Asterisk = Cursor)
-       Example Input: ", dog*g"
-       Example Output: ", doggystyle, *g"
+  -
 
 '''
