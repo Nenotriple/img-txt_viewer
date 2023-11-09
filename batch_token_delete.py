@@ -1,6 +1,6 @@
 ###################### github.com/Nenotriple
 #                    #
-# batch_token_delete # v1.0
+# batch_token_delete # v1.01
 #                    #
 ######################
 # This script reads the contents of all text files in a selected directory, creating a list of tokens, and their occurence.
@@ -61,9 +61,9 @@ def display_tokens(token_dict, directory, scrollable_frame, filter_text=''):
       if filter_text and not fuzzy_search(filter_text.lower(), token.lower()):
         continue
       pair_frame = tk.Frame(scrollable_frame)
-      label = tk.Label(pair_frame, text=f"x{count}", width=10, anchor="w")
+      label = tk.Label(pair_frame, text=f" x{count} ---------------", width=6, anchor="w")
       label.pack(side=tk.LEFT)
-      button = tk.Button(pair_frame, text=f"{token}", width=49, anchor="w", command=lambda t=token: (delete_token(directory, t, filter_text), display_tokens(count_tokens(directory), directory, scrollable_frame, filter_text)))
+      button = tk.Button(pair_frame, text=f"{token}", width=55, anchor="w", command=lambda t=token: (delete_token(directory, t, filter_text), display_tokens(count_tokens(directory), directory, scrollable_frame, filter_text)))
       button.pack(side=tk.LEFT)
       pair_frame.pack(side=tk.TOP, pady=2)
 
@@ -167,7 +167,7 @@ def main(directory):
     # Initialize the root window
     root = tk.Tk()
     root.title(f"Token List: {directory}")
-    root.geometry("500x800")
+    root.geometry("400x800")
     root.minsize(400, 100)
     root.maxsize(500, 2000)
 
@@ -236,3 +236,4 @@ if __name__ == "__main__":
 
 #- Tofix
 #  -
+#
