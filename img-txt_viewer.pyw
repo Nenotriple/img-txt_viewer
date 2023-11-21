@@ -891,6 +891,8 @@ class ImgTxtViewer:
                 self.save_text_file()
             self.current_index += 1
         else:
+            if self.auto_save_var.get():
+                self.save_text_file()
             self.current_index = 0
         self.show_pair()
 
@@ -910,6 +912,8 @@ class ImgTxtViewer:
                 self.save_text_file()
             self.current_index -= 1
         else:
+            if self.auto_save_var.get():
+                self.save_text_file()
             self.current_index = len(self.image_files) - 1
         self.show_pair()
 
