@@ -1,5 +1,3 @@
-[comment]: <> (CTRL+K V: Open preview side-by-side)
-
 # img-txt_viewer
 Display an image and text file side-by-side for easy manual caption editing.
 
