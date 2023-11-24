@@ -3,7 +3,7 @@
 #                                      #
 #            IMG-TXT VIEWER            #
 #                                      #
-#   Version : v1.77                    #
+#   Version : v1.78                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -170,7 +170,7 @@ class Autocomplete:
             reader = csv.reader(csvfile)
             for row in reader:
                 true_name = row[0]
-                similar_names = row[3].split(',')
+                similar_names = row[3].split(',') if len(row) > 3 else []
                 data[true_name] = similar_names
         return data
 
@@ -247,6 +247,7 @@ class ImgTxtViewer:
 
         # Autocomplete settings
         self.autocomplete = Autocomplete("danbooru.csv")
+        self.csv_var = StringVar(value='danbooru.csv')
         self.suggestion_alignment = StringVar(value="Left Aligned")
         self.suggestion_style = StringVar(value="Style 1: ⚫")
         self.suggestion_quantity = IntVar(value=4)
@@ -274,15 +275,15 @@ class ImgTxtViewer:
         menubar.add_cascade(label="Options", menu=optionsMenu)
 
         # Max Image Size Menu
-        sizemenu = Menu(optionsMenu, tearoff=0)
-        optionsMenu.add_cascade(label="Max Image Size", menu=sizemenu)
+        sizeMenu = Menu(optionsMenu, tearoff=0)
+        optionsMenu.add_cascade(label="Max Image Size", menu=sizeMenu)
         self.sizes = [("Smaller", 512),
                       ("Small",    650),
                       ("Medium",   900),
                       ("Large",    1200),
                       ("Larger",  1352)]
         for size in self.sizes:
-            sizemenu.add_radiobutton(label=size[0], variable=self.max_img_width, value=size[1], command=lambda s=size: self.save_text_file())
+            sizeMenu.add_radiobutton(label=size[0], variable=self.max_img_width, value=size[1], command=lambda s=size: self.save_text_file())
 
         # Clean On Save Setting
         optionsMenu.add_checkbutton(label="Clean Text on Save", variable=self.cleaning_text)
@@ -290,8 +291,14 @@ class ImgTxtViewer:
         # Highlighting Duplicates
         optionsMenu.add_checkbutton(label="Highlighting Duplicates", variable=self.highlighting_duplicates)
 
-        # Suggestion Quantity Menu
+        # Suggestion Dictionary
         optionsMenu.add_separator()
+        dictionaryMenu = Menu(optionsMenu, tearoff=0)
+        optionsMenu.add_cascade(label="Suggestion Dictionary", menu=dictionaryMenu)
+        dictionaryMenu.add_checkbutton(label="Anime Tags", variable=self.csv_var, onvalue='danbooru.csv', offvalue='dictionary.csv', command=self.change_dictionary)
+        dictionaryMenu.add_checkbutton(label="Dictionary Words", variable=self.csv_var, onvalue='dictionary.csv', offvalue='danbooru.csv', command=self.change_dictionary)
+
+        # Suggestion Quantity Menu
         suggestion_quantity_menu = Menu(optionsMenu, tearoff=0)
         optionsMenu.add_cascade(label="Suggestion Quantity", menu=suggestion_quantity_menu)
         for i in range(1, 10):
@@ -1248,6 +1255,9 @@ class ImgTxtViewer:
     def disable_button(self, event):
         return "break"
 
+    def change_dictionary(self):
+        self.autocomplete = Autocomplete(self.csv_var.get())
+
 #endregion
 ################################################################################################################################################
 ################################################################################################################################################
@@ -1414,7 +1424,7 @@ app = ImgTxtViewer(root)
 app.toggle_always_on_top()
 root.attributes('-topmost', 0)
 root.protocol("WM_DELETE_WINDOW", app.on_closing)
-root.title("v1.77 - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
+root.title("v1.78 - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
 root.mainloop()
 
 #endregion
@@ -1426,25 +1436,17 @@ root.mainloop()
 
 '''
 
-[v1.77 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.77)
+[v1.78 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.78)
   - New:
-    - `List View`: Display text files in a list format. Text is always saved in the standard single-line CSV format.
-    - `Always on Top`: Enable this to keep the window in focus.
-    - `Highlight All Duplicates`: Highlight all matching words in the text box.
-    - `Delete entire tokens`: By middle-clicking them.
-    - `Text Context menu`
-    - `Image Context menu`
-    - Enable or disable highlighting duplicate words when selecting text. _(Default = On)_
-    - You can now swap the image and text/control positions.
-    - Various UI tweaks, the biggest change being: Image scaling is now more flexible.
+    - You can now use the English dictionary as a suggestion library as you type.
+      - Enable this in the options menu > "Suggestion Dictionary"
+
 
 <br>
 
   - Fixed:
-    - When highlighting words: Any _selected_ words longer than 3 characters would be _highlighted_. Now, only exact matches are highlighted.
-    - Window size no longer changes when changing maximum image size.
-    - You can no longer insert a suggestion "inside" an existing token.
-    - Code refactoring for improved cleanliness and maintainability.
+    - Fix autosave for first and last index navigation
+
 
 '''
 
