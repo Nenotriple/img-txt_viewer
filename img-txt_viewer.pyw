@@ -147,13 +147,21 @@ class Autocomplete:
         self.data = self.load_data(data_file)
         self.max_suggestions = max_suggestions
 
-    def download_data(self, data_file):
-        download = messagebox.askyesno("File not found.", "'danbooru.csv' is required for autocomplete suggestions.\n\nDo you want to download it from the repo? ~2MB\n\nYes = Download\nNo = Ignore")
-        if download:
-            url = "https://raw.githubusercontent.com/Nenotriple/img-txt_viewer/main/danbooru.csv"
-            response = requests.get(url)
-            with open(data_file, 'wb') as f:
-                f.write(response.content)
+    def download_data(self):
+        files = {
+            'danbooru.csv': "https://raw.githubusercontent.com/Nenotriple/img-txt_viewer/main/danbooru.csv",
+            'dictionary.csv': "https://raw.githubusercontent.com/Nenotriple/img-txt_viewer/main/dictionary.csv"
+        }
+
+        missing_files = [file for file in files if not os.path.exists(file)]
+        if missing_files:
+            download = messagebox.askyesno("Files not found.", f"The following dictionaries required for autocomplete suggestions were not found: \n\n{', '.join(missing_files)}.\n\nDo you want to download them from the repo? ~2MB each\n\nYes = Download All\nNo = Ignore")
+            if download:
+                for data_file in missing_files:
+                    url = files[data_file]
+                    response = requests.get(url)
+                    with open(data_file, 'wb') as f:
+                        f.write(response.content)
 
     def load_data(self, data_file):
         if getattr(sys, 'frozen', False):
@@ -163,7 +171,7 @@ class Autocomplete:
         data_file_path = os.path.join(application_path, data_file)
         data = {}
         if not os.path.isfile(data_file_path):
-            self.download_data(data_file_path)
+            self.download_data()
         if not os.path.isfile(data_file_path):
             return None
         with open(data_file_path, newline='', encoding='utf-8') as csvfile:
