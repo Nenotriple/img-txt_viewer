@@ -363,10 +363,12 @@ class ImgTxtViewer:
         self.master_image_frame = Frame(master)
         self.master_image_frame.pack(side=LEFT)
 
-        # Text Box and Suggestion Label
+        # Suggestion Label
+        self.suggestion_label = Label(self.master_control_frame, text="", anchor='w')
+
+        # Text Box
         self.scrollbar = Scrollbar(self.master_control_frame)
         self.scrollbar.pack(side=RIGHT, fill=Y)
-        self.suggestion_label = Label(self.master_control_frame, text="", anchor='w')
         self.text_box = Text(self.master_control_frame, wrap=WORD, undo=True, maxundo=200, yscrollcommand=self.scrollbar.set)
         self.text_box.tag_configure("highlight", background="#5da9be", foreground="white")
         self.scrollbar.config(command=self.text_box.yview)
@@ -584,6 +586,7 @@ class ImgTxtViewer:
 #                       #
 
 ### Display Suggestions ##################################################
+
     def update_suggestions(self, event=None):
         if event is None:
             event = type('', (), {})()
@@ -1005,6 +1008,7 @@ class ImgTxtViewer:
             formatted_contents = '\n'.join([item.strip() for item in contents if item.strip()])
             self.text_box.delete("1.0", "end")
             self.text_box.insert("1.0", self.cleanup_text(formatted_contents))
+            self.text_box.insert(END, "\n")
         else:
             contents = self.text_box.get("1.0", "end").strip().split('\n')
             formatted_contents = ', '.join([item for item in contents if item])
@@ -1448,13 +1452,14 @@ root.mainloop()
   - New:
     - You can now use the English dictionary as a suggestion library as you type.
       - Enable this in the options menu > "Suggestion Dictionary"
+      - Just like the danbooru.csv, this dictionary can be downloaded from the script version.
 
 
 <br>
 
   - Fixed:
     - Fix autosave for first and last index navigation
-
+    - The cursor's now placed at the end of the text file on a newline when navigating between pairs.
 
 '''
 
