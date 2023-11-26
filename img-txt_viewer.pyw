@@ -325,7 +325,9 @@ class ImgTxtViewer:
         dictionaryMenu = Menu(optionsMenu, tearoff=0)
         optionsMenu.add_cascade(label="Suggestion Dictionary", menu=dictionaryMenu)
         dictionaryMenu.add_checkbutton(label="Anime Tags", variable=self.csv_var, onvalue='danbooru.csv', offvalue='dictionary.csv', command=self.change_autocomplete_dictionary)
-        dictionaryMenu.add_checkbutton(label="Dictionary Words", variable=self.csv_var, onvalue='dictionary.csv', offvalue='danbooru.csv', command=self.change_autocomplete_dictionary)
+        dictionaryMenu.add_checkbutton(label="English Dictionary", variable=self.csv_var, onvalue='dictionary.csv', offvalue='danbooru.csv', command=self.change_autocomplete_dictionary)
+        dictionaryMenu.add_separator()
+        dictionaryMenu.add_checkbutton(label="Both", variable=self.csv_var, onvalue='both', command=self.change_autocomplete_dictionary)
 
         # Suggestion Quantity Menu
         suggestion_quantity_menu = Menu(optionsMenu, tearoff=0)
@@ -723,7 +725,11 @@ class ImgTxtViewer:
 ### Suggestion Settings ##################################################
 
     def change_autocomplete_dictionary(self):
-        self.autocomplete = Autocomplete(self.csv_var.get())
+        if self.csv_var.get() == 'both':
+            self.autocomplete = Autocomplete('danbooru.csv')
+            self.autocomplete.data.update(Autocomplete('dictionary.csv').data)
+        else:
+            self.autocomplete = Autocomplete(self.csv_var.get())
 
     def set_suggestion_quantity(self, suggestion_quantity):
         self.autocomplete.max_suggestions = suggestion_quantity
@@ -1487,15 +1493,18 @@ root.mainloop()
     - You can now use the English dictionary as a suggestion library while you type.
       - Enable this in the options menu > "Suggestion Dictionary"
       - Just like the danbooru.csv file, this dictionary can be downloaded from the script version.
+      - Over 20,000 typos for just over 8,000 words also match the correct spelling while typing.
     - You can now add to or edit a list of custom suggestions used with autocomplete.
-      - Running this command will create a file called "my_tags.csv" if it doesn't already exist, and open it up for you to edit.
+      - Running this command will create a file called "my_tags.csv" if it doesn't already exist, then open it up for you to edit.
       - Running the command again after saving "my_tags.csv" will refresh the dictionary with your changes.
+    - You can also use both anime tags and the English dictionary at the same time.
+      - Anime tags are still default.
 
 <br>
 
   - Fixed:
     - Fix autosave for first and last index navigation
-    - The cursor's now placed at the end of the text file on a newline when navigating between pairs.
+    - List mode: The cursor is now placed at the end of the text file on a newline when navigating between pairs.
     - App icon now displays properly in the taskbar.
 
 '''
