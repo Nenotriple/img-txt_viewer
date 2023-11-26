@@ -163,12 +163,13 @@ class Autocomplete:
                     with open(data_file, 'wb') as f:
                         f.write(response.content)
 
-    def load_data(self, data_file):
+    def load_data(self, data_file, additional_file='my_tags.csv'):
         if getattr(sys, 'frozen', False):
             application_path = sys._MEIPASS
         else:
             application_path = os.path.dirname(os.path.abspath(__file__))
         data_file_path = os.path.join(application_path, data_file)
+        additional_file_path = os.path.join(application_path, additional_file)
         data = {}
         if not os.path.isfile(data_file_path):
             self.download_data()
@@ -177,9 +178,21 @@ class Autocomplete:
         with open(data_file_path, newline='', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
             for row in reader:
-                true_name = row[0]
-                similar_names = row[3].split(',') if len(row) > 3 else []
-                data[true_name] = similar_names
+                if row and not row[0].startswith('###'):
+                    true_name = row[0]
+                    similar_names = row[3].split(',') if len(row) > 3 else []
+                    data[true_name] = similar_names
+        if os.path.isfile(additional_file_path):
+            with open(additional_file_path, newline='', encoding='utf-8') as csvfile:
+                reader = csv.reader(csvfile)
+                for row in reader:
+                    if row and not row[0].startswith('###'):
+                        true_name = row[0]
+                        similar_names = row[3].split(',') if len(row) > 3 else []
+                        if true_name in data:
+                            data[true_name].extend(similar_names)
+                        else:
+                            data[true_name] = similar_names
         return data
 
     def autocomplete(self, text):
@@ -299,12 +312,15 @@ class ImgTxtViewer:
         # Highlighting Duplicates
         optionsMenu.add_checkbutton(label="Highlighting Duplicates", variable=self.highlighting_duplicates)
 
-        # Suggestion Dictionary
+        # Edit Suggestions
         optionsMenu.add_separator()
+        optionsMenu.add_command(label="Edit Custom Suggestions", command=self.create_and_open_custom_dictionary)
+
+        # Suggestion Dictionary Menu
         dictionaryMenu = Menu(optionsMenu, tearoff=0)
         optionsMenu.add_cascade(label="Suggestion Dictionary", menu=dictionaryMenu)
-        dictionaryMenu.add_checkbutton(label="Anime Tags", variable=self.csv_var, onvalue='danbooru.csv', offvalue='dictionary.csv', command=self.change_dictionary)
-        dictionaryMenu.add_checkbutton(label="Dictionary Words", variable=self.csv_var, onvalue='dictionary.csv', offvalue='danbooru.csv', command=self.change_dictionary)
+        dictionaryMenu.add_checkbutton(label="Anime Tags", variable=self.csv_var, onvalue='danbooru.csv', offvalue='dictionary.csv', command=self.change_autocomplete_dictionary)
+        dictionaryMenu.add_checkbutton(label="Dictionary Words", variable=self.csv_var, onvalue='dictionary.csv', offvalue='danbooru.csv', command=self.change_autocomplete_dictionary)
 
         # Suggestion Quantity Menu
         suggestion_quantity_menu = Menu(optionsMenu, tearoff=0)
@@ -586,7 +602,6 @@ class ImgTxtViewer:
 #                       #
 
 ### Display Suggestions ##################################################
-
     def update_suggestions(self, event=None):
         if event is None:
             event = type('', (), {})()
@@ -701,6 +716,10 @@ class ImgTxtViewer:
             return 'break'
 
 ### Suggestion Settings ##################################################
+
+    def change_autocomplete_dictionary(self):
+        self.autocomplete = Autocomplete(self.csv_var.get())
+
     def set_suggestion_quantity(self, suggestion_quantity):
         self.autocomplete.max_suggestions = suggestion_quantity
         self.update_suggestions(event=None)
@@ -714,6 +733,19 @@ class ImgTxtViewer:
             self.suggestion_label.config(anchor='center')
         elif suggestion_alignment == "Left Aligned":
             self.suggestion_label.config(anchor='w')
+
+    def create_and_open_custom_dictionary(self):
+        csv_filename = 'my_tags.csv'
+        if not os.path.isfile(csv_filename):
+            with open(csv_filename, 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(["### This is where you can create a custom dictionary of tokens/tags."])
+                writer.writerow(["### These tokens will be loaded alongside the chosen autocomplete dictionary."])
+                writer.writerow(["### Lines starting with 3 pound symbols '###' will be ignored so you can create comments."])
+                writer.writerow([])
+                writer.writerow(["supercalifragilisticexpialidocious"])
+        os.system(f'start {csv_filename}')
+        self.change_autocomplete_dictionary()
 
 #endregion
 ################################################################################################################################################
@@ -1267,9 +1299,6 @@ class ImgTxtViewer:
     def disable_button(self, event):
         return "break"
 
-    def change_dictionary(self):
-        self.autocomplete = Autocomplete(self.csv_var.get())
-
 #endregion
 ################################################################################################################################################
 ################################################################################################################################################
@@ -1450,10 +1479,12 @@ root.mainloop()
 
 [v1.78 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.78)
   - New:
-    - You can now use the English dictionary as a suggestion library as you type.
+    - You can now use the English dictionary as a suggestion library while you type.
       - Enable this in the options menu > "Suggestion Dictionary"
-      - Just like the danbooru.csv, this dictionary can be downloaded from the script version.
-
+      - Just like the danbooru.csv file, this dictionary can be downloaded from the script version.
+    - You can now add to or edit a list of custom suggestions used with autocomplete.
+      - Running this command will create a file called "my_tags.csv" if it doesn't already exist, and open it up for you to edit.
+      - Running the command again after saving "my_tags.csv" will refresh the dictionary with your changes.
 
 <br>
 
