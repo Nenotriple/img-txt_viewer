@@ -3,7 +3,7 @@
 #                                      #
 #          batch_token_delete          #
 #                                      #
-#   Version : v1.02                    #
+#   Version : v1.03                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -26,6 +26,7 @@ Description:
 
 import os
 import sys
+import ctypes
 import tkinter as tk
 from collections import Counter
 from tkinter import messagebox, simpledialog, filedialog
@@ -35,6 +36,9 @@ from tkinter import messagebox, simpledialog, filedialog
 #           #
 # Variables #
 #           #
+
+myappid = 'ImgTxtViewer.Nenotriple'
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 sort_order = 'count'
 
@@ -257,12 +261,18 @@ if __name__ == "__main__":
 # Changelog #
 #           #
 
-#- v1.02 changes:
-#  - New:
-#    - You can now select multiple tokens then delete them all at once.
+'''
 
-#  - Fixed:
-#    - Newlines should be properly handled/deleted now.
+v1.03 changes:
+
+  - New:
+    -
+
+  - Fixed:
+    - The app shares the parent icon, and groups with the main window in the taskbar.
+
+
+'''
 
 ################################################################################################################################################
 ################################################################################################################################################
@@ -270,9 +280,12 @@ if __name__ == "__main__":
 # todo #
 #      #
 
-#- Todo
-#  -
+'''
 
-#- Tofix
-#  -
-#
+- Todo
+  -
+
+- Tofix
+  -
+
+'''
