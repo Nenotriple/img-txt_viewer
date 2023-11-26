@@ -451,7 +451,7 @@ class ImgTxtViewer:
         # Update the autocomplete suggestion label after every KeyRelease event.
         self.text_box.bind("<KeyRelease>", lambda event: (self.update_suggestions(event), self.toggle_big_comma_mode(event)))
 
-        # Insert a newline after inserting an autocomplete suggestion when list_most is active.
+        # Insert a newline after inserting an autocomplete suggestion when list_mode is active.
         self.text_box.bind('<comma>', self.insert_newline_listmode)
 
         # Highlight duplicates when selecting text with keyboard or mouse.
@@ -481,9 +481,9 @@ class ImgTxtViewer:
 #region -  Info_Text #
 #                    #
 
-        self.info_text = Text(self.master_control_frame)
+        self.info_text = Text(self.master_control_frame, yscrollcommand=self.scrollbar.set)
         self.info_text.pack(expand=True, fill='both')
-        headers = [" Keyboard Shortcuts:", " Tips:", " Text Tools:", " Auto-Save:", " Updates and more info here:"]
+        headers = [" Shortcuts:", " Tips:", " Text Tools:", " Auto-Save:"]
         content = [
             " ▪️ ALT+Left/Right: Quickly move between img-txt pairs.\n"
             " ▪️ Del: Send the current pair to a local trash folder.\n"
@@ -491,23 +491,24 @@ class ImgTxtViewer:
             " ▪️ TAB: Insert the highlighted suggestion.\n"
             " ▪️ CTRL+F: Highlight all duplicate words.\n"
             " ▪️ CTRL+S: Save the current text file.\n"
-            " ▪️ CTRL+Z / CTRL+Y: Undo/Redo.\n",
+            " ▪️ CTRL+Z / CTRL+Y: Undo/Redo.\n"
+            " ▪️ Middle-click a token to delete it.\n",
 
-            " ▪️ Middle-click a token to delete it.\n"
             " ▪️ Highlight duplicates by selecting text.\n"
-            " ▪️ Blank text files can be created for images without any matching pair when loading a directory.\n",
+            " ▪️ List Mode: Display tags in a list format while saving in standard format.\n"
+            " ▪️ Blank text files can be created for images without any matching pair when loading a directory.\n"
+            " ▪️ When selecting a suggestion dictionary, you can use either Anime tags, English dictionary, or Both.\n"
+            " ▪️ Running 'Edit Custom Suggestions' will create the file 'my_tags.csv' where you can add your own words to the suggestion dictionary.\n",
 
-            "         ▪️ Search and Replace: Edit all text files at once.\n"
-            "         ▪️ Prefix Text Files: Insert text at the START of all text files.\n"
-            "         ▪️ Append Text Files: Insert text at the END of all text files.\n"
-            "         ▪️ Batch Token Delete: View all tokens in a directory as a list, and quickly delete them.\n"
-            "         ▪️ Cleanup Text: Fix typos in all text files of the selected folder, such as duplicate tokens, multiple spaces or commas, missing spaces, and more.\n",
+            " ▪️ Search and Replace: Edit all text files at once.\n"
+            " ▪️ Prefix Text Files: Insert text at the START of all text files.\n"
+            " ▪️ Append Text Files: Insert text at the END of all text files.\n"
+            " ▪️ Batch Token Delete: View all tokens in a directory as a list, and quickly delete them.\n"
+            " ▪️ Cleanup Text: Fix typos in all text files of the selected folder, such as duplicate tokens, multiple spaces or commas, missing spaces, and more.\n",
 
             " ▪️ Check the auto-save box to save text when navigating between img/txt pairs or closing the window.\n"
             " ▪️ Text is cleaned up when saved, so you can ignore things like duplicate tokens, trailing comma/spaces, double comma/spaces, etc.\n"
-            " ▪️ Text cleanup can be disabled from the options menu.\n",
-
-            " github.com/Nenotriple/img-txt_viewer"
+            " ▪️ Text cleanup can be disabled from the options menu.",
         ]
 
         for header, section in zip(headers, content):
@@ -1491,19 +1492,19 @@ root.mainloop()
 [v1.78 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.78)
   - New:
     - You can now use the English dictionary as a suggestion library while you type.
-      - Enable this in the options menu > "Suggestion Dictionary"
+      - Enable this from: Options > Suggestion Dictionary > English Dictionary
       - Just like the danbooru.csv file, this dictionary can be downloaded from the script version.
       - Over 20,000 typos for just over 8,000 words also match the correct spelling while typing.
-    - You can now add to or edit a list of custom suggestions used with autocomplete.
+      - You can also use both anime tags and the English dictionary at the same time. _(Can be slow)_
+    - `Custom Suggestions:` You can now define custom tags that will be used for autocomplete suggestions.
+      - Run the command from: Options > Edit Custom Suggestions
       - Running this command will create a file called "my_tags.csv" if it doesn't already exist, then open it up for you to edit.
       - Running the command again after saving "my_tags.csv" will refresh the dictionary with your changes.
-    - You can also use both anime tags and the English dictionary at the same time.
-      - Anime tags are still default.
 
 <br>
 
   - Fixed:
-    - Fix autosave for first and last index navigation
+    - Fix autosave for first and last index navigation.
     - List mode: The cursor is now placed at the end of the text file on a newline when navigating between pairs.
     - App icon now displays properly in the taskbar.
 
