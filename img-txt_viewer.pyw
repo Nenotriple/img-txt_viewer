@@ -24,6 +24,7 @@ import re
 import csv
 import sys
 import time
+import ctypes
 import random
 import requests
 import subprocess
@@ -235,6 +236,10 @@ class Autocomplete:
 class ImgTxtViewer:
     def __init__(self, master):
         self.master = master
+
+        # Used to create a new ID separate from Python to properly set the app icon.
+        myappid = 'ImgTxtViewer.Nenotriple'
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
         # Window settings
         master.minsize(965, 300) # Width x Height
@@ -1491,6 +1496,7 @@ root.mainloop()
   - Fixed:
     - Fix autosave for first and last index navigation
     - The cursor's now placed at the end of the text file on a newline when navigating between pairs.
+    - App icon now displays properly in the taskbar.
 
 '''
 
