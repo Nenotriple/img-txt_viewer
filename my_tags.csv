@@ -1,0 +1,5 @@
+### This is where you can create a custom dictionary of tokens/tags.
+### These tokens will be loaded alongside the chosen autocomplete dictionary.
+### Lines starting with 3 pound symbols '###' will be ignored so you can create comments.
+
+supercalifragilisticexpialidocious
