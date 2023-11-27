@@ -237,13 +237,9 @@ class ImgTxtViewer:
     def __init__(self, master):
         self.master = master
 
-        # Used to create a new ID separate from Python to properly set the app icon.
-        myappid = 'ImgTxtViewer.Nenotriple'
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-
         # Window settings
-        master.minsize(965, 300) # Width x Height
-        master.geometry("1290x645")
+        self.set_appid()
+        self.set_window_size(master)
         self.set_icon()
 
         # Variables
@@ -715,6 +711,7 @@ class ImgTxtViewer:
         else:
             offset = len(selected_suggestion) + 1
         self.text_box.mark_set("insert", "{}+{}c".format(start_of_current_word, offset))
+        self.text_box.insert("insert", " ")
 
     def insert_newline_listmode(self, event=None, called_from_insert=False):
         if self.list_mode.get():
@@ -1458,12 +1455,12 @@ class ImgTxtViewer:
         if messagebox.askokcancel("Warning", "This will move the img-txt pair to a local trash folder.\n\nThe trash folder will be created in the selected directory."):
             trash_dir = os.path.join(os.path.dirname(self.image_files[self.current_index]), "Trash")
             os.makedirs(trash_dir, exist_ok=True)
-            os.rename(self.image_files[self.current_index], os.path.join(trash_dir, os.path.basename(self.image_files[self.current_index])))
-            os.rename(self.text_files[self.current_index], os.path.join(trash_dir, os.path.basename(self.text_files[self.current_index])))
-            del self.image_files[self.current_index]
-            del self.text_files[self.current_index]
+            for file_list in [self.image_files, self.text_files]:
+                os.rename(file_list[self.current_index], os.path.join(trash_dir, os.path.basename(file_list[self.current_index])))
+                del file_list[self.current_index]
             self.total_images_label.config(text=f"/{len(self.image_files)}")
             self.show_pair()
+
 
 #endregion
 ################################################################################################################################################
@@ -1471,6 +1468,14 @@ class ImgTxtViewer:
 #                    #
 #region -  Framework #
 #                    #
+
+    def set_appid(self):
+        myappid = 'ImgTxtViewer.Nenotriple'
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
+    def set_window_size(self, master):
+        master.minsize(965, 300) # Width x Height
+        master.geometry("1290x645")
 
 root = Tk()
 app = ImgTxtViewer(root)
@@ -1507,6 +1512,7 @@ root.mainloop()
     - Fix autosave for first and last index navigation.
     - List mode: The cursor is now placed at the end of the text file on a newline when navigating between pairs.
     - App icon now displays properly in the taskbar.
+    - Further improvements to cursor positioning after inserting a suggestion.
 
 '''
 
