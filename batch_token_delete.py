@@ -67,10 +67,16 @@ def display_tokens(token_dict, directory, scrollable_frame, filter_text=''):
         label.pack(side=tk.LEFT)
         button = tk.Button(pair_frame, text=f"{token}", width=55, anchor="w", command=lambda t=token: (delete_token(directory, t, filter_text), display_tokens(count_tokens(directory), directory, scrollable_frame, filter_text)))
         button.pack(side=tk.LEFT)
+        enter, leave = create_hover_effect(button, "#ffcac9")
+        button.bind("<Enter>", enter)
+        button.bind("<Leave>", leave)
         var = tk.BooleanVar()
         checkbox = tk.Checkbutton(pair_frame, variable=var)
         checkbox.var = var
         checkbox.pack(side=tk.RIGHT)
+        enter, leave = create_hover_effect(checkbox, "#e5f3ff")
+        checkbox.bind("<Enter>", enter)
+        checkbox.bind("<Leave>", leave)
         checkbox.bind('<Button-3>', lambda event: toggle_all_checkboxes(event, scrollable_frame))
         pair_frame.pack(side=tk.TOP, pady=2)
 
@@ -130,6 +136,9 @@ def remove_duplicates(text):
     text = list(dict.fromkeys(text))
     text = ','.join(text)
     return text
+
+def create_hover_effect(widget, hover_color):
+    return (lambda event: widget.config(bg=hover_color), lambda event: widget.config(bg="SystemButtonFace"))
 
 ################################################################################################################################################
 ################################################################################################################################################
@@ -301,6 +310,7 @@ v1.03 changes:
     - Now that text is cleaned within the script, this is a standalone app!
       - Simply launch the "batch_token_delete.py" script and select a folder to manage text/tags in that folder.
     - Deleting tags using a "less than or equal to" threshold now displays the affected tags.
+    - A highlight has been added to the buttons/checkboxes.
 
 <br>
 
