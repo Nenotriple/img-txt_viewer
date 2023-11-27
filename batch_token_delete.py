@@ -11,8 +11,9 @@
 Description:
 -------------
  This script reads the contents of all text files in a selected directory, creating a list of tokens, and their occurence.
- Tokens are each listed on a separate button beside their occurence, allowing you to easily click a token and delete it from all text files. Or batch delete using a "less than or equal to" threshold.
- This script is dependent on the function "cleanup_all_text_files" found in img-txt_viewer.pyw to fix some minor text errors.
+
+ Tokens are each listed on a separate button beside their occurence, allowing you to easily click a token and delete it from all text files.
+ Or batch delete using a "less than or equal to" threshold.
 
  Expected text format: "token, token 2, another token here, ..."
 
@@ -37,6 +38,7 @@ from tkinter import messagebox, simpledialog, filedialog
 # Variables #
 #           #
 
+# Used to create a group ID so app shares the parent icon, and groups with the main window in the taskbar.
 myappid = 'ImgTxtViewer.Nenotriple'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
@@ -72,6 +74,18 @@ def display_tokens(token_dict, directory, scrollable_frame, filter_text=''):
         checkbox.bind('<Button-3>', lambda event: toggle_all_checkboxes(event, scrollable_frame))
         pair_frame.pack(side=tk.TOP, pady=2)
 
+def count_tokens(directory):
+    token_dict = Counter()
+    for filename in os.listdir(directory):
+        if filename.endswith(".txt"):
+            with open(os.path.join(directory, filename), 'r') as file:
+                lines = file.readlines()
+                for line in lines:
+                    tokens = line.strip().split(',')
+                    for token in tokens:
+                        token_dict[token.strip()] += 1
+    return token_dict
+
 def delete_token(directory, token, filter_text='', confirm_prompt=True):
     parent = tk.Toplevel()
     parent.withdraw()
@@ -91,20 +105,31 @@ def delete_token(directory, token, filter_text='', confirm_prompt=True):
                 if filter_text and not fuzzy_search(filter_text.lower(), lines.lower()):
                     file.write(lines)
                 else:
+                    new_line = cleanup_text(new_line)  # Call cleanup_text here
                     file.write(new_line)
     parent.destroy()
 
-def count_tokens(directory):
-    token_dict = Counter()
-    for filename in os.listdir(directory):
-        if filename.endswith(".txt"):
-            with open(os.path.join(directory, filename), 'r') as file:
-                lines = file.readlines()
-                for line in lines:
-                    tokens = line.strip().split(',')
-                    for token in tokens:
-                        token_dict[token.strip()] += 1
-    return token_dict
+def cleanup_text(text):
+        import re
+        text = remove_duplicates(text)
+        text = re.sub(r'\.\s', ', ', text)  # replace period and space with comma and space
+        text = re.sub(' *, *', ',', text)  # replace one or more spaces surrounded by optional commas with a single comma
+        text = re.sub(' +', ' ', text)  # replace multiple spaces with a single space
+        text = re.sub(",+", ",", text)  # replace multiple commas with a single comma
+        text = re.sub(",(?=[^\s])", ", ", text)  # add a space after a comma if it's not already there
+        text = re.sub(r'\\\\+', r'\\', text)  # replace multiple backslashes with a single backslash
+        text = re.sub(",+$", "", text)  # remove trailing commas
+        text = re.sub(" +$", "", text)  # remove trailing spaces
+        text = text.strip(",")  # remove leading and trailing commas
+        text = text.strip()  # remove leading and trailing spaces
+        return text
+
+def remove_duplicates(text):
+    text = text.lower().split(',')
+    text = [item.strip() for item in text]
+    text = list(dict.fromkeys(text))
+    text = ','.join(text)
+    return text
 
 ################################################################################################################################################
 ################################################################################################################################################
@@ -112,17 +137,24 @@ def count_tokens(directory):
 # Batch Delete #
 #              #
 
-def batch_delete(directory, count_threshold, scrollable_frame):
+def batch_delete(directory, count_threshold, scrollable_frame, max_display_tokens=150):
     token_dict = count_tokens(directory)
     tokens_to_delete = [token for token, count in token_dict.items() if count <= count_threshold]
-    if not tokens_to_delete:
-      messagebox.showinfo("No Tokens Found", "No tokens found that meet the given criteria.")
-      return
-    confirm = messagebox.askyesno("Delete Tokens?", f"Found {len(tokens_to_delete)} tokens. Are you sure you want to delete them?")
+    sorted_tokens_to_delete = sorted(tokens_to_delete)
+    limited_tokens_to_display = sorted_tokens_to_delete[:max_display_tokens]
+    tokens_message = ', '.join(limited_tokens_to_display)
+    message = f"Found {len(sorted_tokens_to_delete)} tokens:\n\n{tokens_message}\n\n"
+    if len(sorted_tokens_to_delete) > max_display_tokens:
+        message += f"... and {len(sorted_tokens_to_delete) - max_display_tokens} more tokens.\n\n"
+    message += "Are you sure you want to delete them?"
+    if not sorted_tokens_to_delete:
+        messagebox.showinfo("No Tokens Found", "No tokens found that meet the given criteria.")
+        return
+    confirm = messagebox.askyesno("Delete Tokens?", message)
     if confirm:
-      for token in tokens_to_delete:
-        delete_token(directory, token, confirm_prompt=False)
-      display_tokens(count_tokens(directory), directory, scrollable_frame)
+        for token in sorted_tokens_to_delete:
+            delete_token(directory, token, confirm_prompt=False)
+        display_tokens(count_tokens(directory), directory, scrollable_frame)
 
 def ask_count_threshold(directory, scrollable_frame, root):
     count_threshold = simpledialog.askinteger("Delete all less than or equal to", "\tEnter the count threshold\t\t", parent=root)
@@ -266,7 +298,11 @@ if __name__ == "__main__":
 v1.03 changes:
 
   - New:
-    -
+    - Now that text is cleaned within the script, this is a standalone app!
+      - Simply launch the "batch_token_delete.py" script and select a folder to manage text/tags in that folder.
+    - Deleting tags using a "less than or equal to" threshold now displays the affected tags.
+
+<br>
 
   - Fixed:
     - The app shares the parent icon, and groups with the main window in the taskbar.
