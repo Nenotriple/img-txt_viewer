@@ -344,10 +344,14 @@ class ImgTxtViewer:
         for style in ["Style 1: ⚫", "Style 2: ⬛", "Style 3: ◾", "Style 4: ◾[]"]:
             suggestion_style_menu.add_radiobutton(label=style, variable=self.suggestion_style, value=style, command=lambda style=style: self.set_suggestion_style(style))
 
-        # Font Menu and More
+        # Text options and More
         optionsMenu.add_separator()
         optionsMenu.add_command(label="Font Options", command=self.set_font)
+        optionsMenu.add_separator()
+        optionsMenu.add_checkbutton(label="Highlighting Duplicates", variable=self.highlighting_duplicates)
+        optionsMenu.add_checkbutton(label="Cleaning Text on Save", variable=self.cleaning_text)
         optionsMenu.add_checkbutton(label="Big Comma Mode", variable=self.bold_commas, command=self.toggle_big_comma_mode)
+        optionsMenu.add_checkbutton(label="List View", variable=self.list_mode, command=self.toggle_list_mode)
         optionsMenu.add_separator()
         optionsMenu.add_command(label="Swap img-txt sides", command=self.swap_master_frames)
         optionsMenu.add_checkbutton(label="Always On Top", command=self.toggle_always_on_top)
@@ -357,6 +361,9 @@ class ImgTxtViewer:
         menubar.add_cascade(label="Tools", menu=toolsMenu)
 
         # Tools
+        toolsMenu.add_command(label="Open Directory...", command=self.open_current_directory)
+        toolsMenu.add_command(label="Open Image...", command=self.open_current_image)
+        toolsMenu.add_separator()
         toolsMenu.add_command(label="Cleanup Text", command=self.cleanup_all_text_files)
         toolsMenu.add_separator()
         toolsMenu.add_command(label="Batch Token Delete...", command=self.batch_token_delete)
@@ -365,7 +372,7 @@ class ImgTxtViewer:
         toolsMenu.add_command(label="Prefix Text Files", command=self.prefix_text_files)
         toolsMenu.add_command(label="Append Text Files", command=self.append_text_files)
         toolsMenu.add_separator()
-        toolsMenu.add_command(label="Delete Current Pair", command=self.delete_pair)
+        toolsMenu.add_command(label="Delete img-txt Pair", command=self.delete_pair)
 
 #endregion
 ################################################################################################################################################
@@ -579,7 +586,7 @@ class ImgTxtViewer:
         imageContext_menu.add_command(label="Open Directory...", command=self.open_current_directory)
         imageContext_menu.add_command(label="Open Image...", command=self.open_current_image)
         imageContext_menu.add_separator()
-        imageContext_menu.add_command(label="Delete Pair" + ' ' * 8 + "Del", command=self.delete_pair)
+        imageContext_menu.add_command(label="Delete img-txt Pair" + ' ' * 8 + "Del", command=self.delete_pair)
         imageContext_menu.add_separator()
         imageContext_menu.add_command(label="Swap img/txt sides", command=self.swap_master_frames)
         imageContext_menu.add_separator()
@@ -1441,7 +1448,10 @@ class ImgTxtViewer:
             pass
 
     def open_current_image(self, event=None):
-        os.startfile(self.image_file)
+        try:
+            os.startfile(self.image_file)
+        except:
+            pass
 
     def check_directory(self):
         if not os.path.isdir(self.image_dir.get()):
@@ -1514,7 +1524,7 @@ root.mainloop()
 
 [v1.79 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.79)
   - New:
-    -
+    - Several changes/additions to the options/tools menu. Just exposing features, nothing new.
 
 <br>
 
