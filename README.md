@@ -19,7 +19,7 @@ Display an image and text file side-by-side for easy manual caption editing.
   - `Del`: Send the current pair to a local trash folder.
   - `ALT`: Cycle through auto-suggestions.
   - `TAB`: Insert the highlighted suggestion.
-  - `CRTL+F`: Highlight all duplicate words. 
+  - `CTRL+F`: Highlight all duplicate words. 
   - `CTRL+S`: Save the current text file.
   - `CTRL+Z` / `CTRL+Y`: Undo/Redo.
   - `Middle-click`: a token to quickly delete it.
