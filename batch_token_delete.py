@@ -3,7 +3,7 @@
 #                                      #
 #          batch_token_delete          #
 #                                      #
-#   Version : v1.03                    #
+#   Version : v1.04                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -249,7 +249,11 @@ def main(directory=None):
     # Initialize the root window
     root = tk.Tk()
     root.title(f"Token List: {directory}")
-    root.geometry("490x800")
+    window_width = 490
+    window_height = 800
+    position_right = root.winfo_screenwidth()//2 - window_width//2
+    position_top = root.winfo_screenheight()//2 - window_height//2
+    root.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
     root.minsize(400, 100)
     root.maxsize(490, 2000)
 
@@ -304,19 +308,15 @@ if __name__ == "__main__":
 
 '''
 
-v1.03 changes:
+v1.04 changes:
 
   - New:
-    - Now that text is cleaned within the script, this is a standalone app!
-      - Simply launch the "batch_token_delete.py" script and select a folder to manage text/tags in that folder.
-    - Deleting tags using a "less than or equal to" threshold now displays the affected tags.
-    - A highlight has been added to the buttons/checkboxes.
+    - The window now opens in the center of the screen.
 
 <br>
 
   - Fixed:
-    - The app shares the parent icon, and groups with the main window in the taskbar.
-
+    -
 
 '''
 
