@@ -855,8 +855,8 @@ class ImgTxtViewer:
         self.new_text_files = []
         files_in_dir = sorted(os.listdir(self.image_dir.get()), key=self.natural_sort)
         for filename in files_in_dir:
-            if filename.lower().endswith("jpg_large"):
-                new_filename = filename[:-9] + "jpg"
+            if filename.lower().endswith("jpg_large") or filename.lower().endswith(".jfif"):
+                new_filename = filename[:-9] + "jpg" if filename.lower().endswith("jpg_large") else filename[:-4] + "jpg"
                 os.rename(os.path.join(self.image_dir.get(), filename), os.path.join(self.image_dir.get(), new_filename))
                 filename = new_filename
             if filename.lower().endswith((".jpg", ".jpeg", ".png", ".webp", ".bmp")):
@@ -1525,6 +1525,7 @@ root.mainloop()
 [v1.79 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.79)
   - New:
     - Several changes/additions to the options/tools menu. Just exposing features, nothing new.
+    - `.jfif` file support added. Like '.jpg_large', these files are simply renamed to '.jpg'
 
 <br>
 
