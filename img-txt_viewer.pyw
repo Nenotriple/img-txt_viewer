@@ -3,7 +3,7 @@
 #                                      #
 #            IMG-TXT VIEWER            #
 #                                      #
-#   Version : v1.78                    #
+#   Version : v1.79                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -315,7 +315,7 @@ class ImgTxtViewer:
 
         # Edit Suggestions
         optionsMenu.add_separator()
-        optionsMenu.add_command(label="Edit Custom Suggestions", command=self.create_and_open_custom_dictionary)
+        optionsMenu.add_command(label="Edit Custom Suggestions...", command=self.create_and_open_custom_dictionary)
 
         # Suggestion Dictionary Menu
         dictionaryMenu = Menu(optionsMenu, tearoff=0)
@@ -359,7 +359,7 @@ class ImgTxtViewer:
         # Tools
         toolsMenu.add_command(label="Cleanup Text", command=self.cleanup_all_text_files)
         toolsMenu.add_separator()
-        toolsMenu.add_command(label="Batch Token Delete", command=self.batch_token_delete)
+        toolsMenu.add_command(label="Batch Token Delete...", command=self.batch_token_delete)
         toolsMenu.add_separator()
         toolsMenu.add_command(label="Search and Replace", command=self.search_and_replace)
         toolsMenu.add_command(label="Prefix Text Files", command=self.prefix_text_files)
@@ -1016,6 +1016,7 @@ class ImgTxtViewer:
         current_font_size = self.text_box.tk.call("font", "actual", current_font, "-size")
         dialog = Toplevel(self.master)
         dialog.focus_force()
+        self.position_dialog(dialog, 220, 100)
         dialog.geometry("220x100")
         dialog.title("Font and Size")
         dialog.attributes('-toolwindow', True)
@@ -1100,6 +1101,7 @@ class ImgTxtViewer:
             return
         dialog = Toplevel(self.master)
         dialog.focus_force()
+        self.position_dialog(dialog, 345, 145)
         dialog.geometry("345x145")
         dialog.title("Search and Replace")
         dialog.attributes('-toolwindow', True)
@@ -1151,6 +1153,7 @@ class ImgTxtViewer:
             return
         dialog = Toplevel(self.master)
         dialog.focus_force()
+        self.position_dialog(dialog, 405, 75)
         dialog.geometry("405x75")
         dialog.title("Prefix Text Files")
         dialog.attributes('-toolwindow', True)
@@ -1191,6 +1194,7 @@ class ImgTxtViewer:
         self.check_directory()
         dialog = Toplevel(self.master)
         dialog.focus_force()
+        self.position_dialog(dialog, 405, 75)
         dialog.geometry("405x75")
         dialog.title("Append Text Files")
         dialog.attributes('-toolwindow', True)
@@ -1256,7 +1260,7 @@ class ImgTxtViewer:
         except ValueError:
             return
         if show_confirmation:
-            user_confirmation = messagebox.askokcancel("Confirmation", "This operation will clean all text files from typos like:\n Duplicate tokens, Extra commas, Extra spaces, trailing commas/spaces, commas without spaces, and more.\n\nExample Cleanup:\n  From: dog,solo,  ,happy  ,,\n       To: dog, solo, happy")
+            user_confirmation = messagebox.askokcancel("Confirmation", "This operation will clean all text files from typos like:\nDuplicate tokens, Extra commas, Extra spaces, trailing commas/spaces, commas without spaces, and more.\n\nExample Cleanup:\n  From: dog,solo,  ,happy  ,,\n       To: dog, solo, happy")
             self.saved_label.config(text="Text Files Cleaned Up!", bg="#6ca079", fg="white")
             if not user_confirmation:
                 return
@@ -1275,6 +1279,16 @@ class ImgTxtViewer:
 #                        #
 #region - Misc Functions #
 #                        #
+
+    # Used to position new windows beside the main window.
+    def position_dialog(self, dialog, window_width, window_height):
+        root_x = self.master.winfo_rootx()
+        root_y = self.master.winfo_rooty()
+        root_width = self.master.winfo_width()
+        position_right = root_x + root_width
+        position_top = root_y + -50
+        dialog.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
+
     def change_label(self):
         if self.auto_save_var.get():
             self.saved_label.config(text="Changes are autosaved", bg="#5da9be", fg="white")
@@ -1482,7 +1496,7 @@ app = ImgTxtViewer(root)
 app.toggle_always_on_top()
 root.attributes('-topmost', 0)
 root.protocol("WM_DELETE_WINDOW", app.on_closing)
-root.title("v1.78 - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
+root.title("v1.79 - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
 root.mainloop()
 
 #endregion
@@ -1494,25 +1508,14 @@ root.mainloop()
 
 '''
 
-[v1.78 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.78)
+[v1.79 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.79)
   - New:
-    - You can now use the English dictionary as a suggestion library while you type.
-      - Enable this from: Options > Suggestion Dictionary > English Dictionary
-      - Just like the danbooru.csv file, this dictionary can be downloaded from the script version.
-      - Over 20,000 typos for just over 8,000 words also match the correct spelling while typing.
-      - You can also use both anime tags and the English dictionary at the same time. _(Can be slow)_
-    - `Custom Suggestions:` You can now define custom tags that will be used for autocomplete suggestions.
-      - Run the command from: Options > Edit Custom Suggestions
-      - Running this command will create a file called "my_tags.csv" if it doesn't already exist, then open it up for you to edit.
-      - Running the command again after saving "my_tags.csv" will refresh the dictionary with your changes.
+    -
 
 <br>
 
   - Fixed:
-    - Fix autosave for first and last index navigation.
-    - List mode: The cursor is now placed at the end of the text file on a newline when navigating between pairs.
-    - App icon now displays properly in the taskbar.
-    - Further improvements to cursor positioning after inserting a suggestion.
+    - Most new windows now open directly beside the main window.
 
 '''
 
