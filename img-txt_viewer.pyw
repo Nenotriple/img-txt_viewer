@@ -1489,7 +1489,11 @@ class ImgTxtViewer:
 
     def set_window_size(self, master):
         master.minsize(965, 300) # Width x Height
-        master.geometry("1290x645")
+        window_width = 1290
+        window_height = 645
+        position_right = root.winfo_screenwidth()//2 - window_width//2
+        position_top = root.winfo_screenheight()//2 - window_height//2
+        root.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
 
 root = Tk()
 app = ImgTxtViewer(root)
@@ -1515,6 +1519,7 @@ root.mainloop()
 <br>
 
   - Fixed:
+    - The app now always opens in the center of the screen.
     - Most new windows now open directly beside the main window.
 
 '''
