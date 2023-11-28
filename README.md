@@ -30,7 +30,7 @@ Display an image and text file side-by-side for easy manual caption editing.
   - Enable `Big Comma Mode` for more visual separation between captions.
   - Blank text files can be created for images without any matching files when loading a directory.
   - `Autocomplete Suggestions` while you type using Danbooru/Anime tags, the English Dictionary, or both. 
-  - Running 'Edit Custom Suggestions' will create the file 'my_tags.csv' where you can add your own words to the suggestion dictionary.
+  - Running `Edit Custom Suggestions` will create the file 'my_tags.csv' where you can add your own words to the suggestion dictionary.
 
 - Text Tools:
   - `Batch Token Delete`: View all tokens in a directory as a list, and quickly delete them.
