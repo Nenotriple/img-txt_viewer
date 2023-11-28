@@ -855,10 +855,7 @@ class ImgTxtViewer:
         self.new_text_files = []
         files_in_dir = sorted(os.listdir(self.image_dir.get()), key=self.natural_sort)
         for filename in files_in_dir:
-            if filename.lower().endswith("jpg_large") or filename.lower().endswith(".jfif"):
-                new_filename = filename[:-9] + "jpg" if filename.lower().endswith("jpg_large") else filename[:-4] + "jpg"
-                os.rename(os.path.join(self.image_dir.get(), filename), os.path.join(self.image_dir.get(), new_filename))
-                filename = new_filename
+            filename = self.rename_odd_files(filename)
             if filename.lower().endswith((".jpg", ".jpeg", ".png", ".webp", ".bmp")):
                 image_file_path = os.path.join(self.image_dir.get(), filename)
                 self.image_files.append(image_file_path)
@@ -1287,6 +1284,30 @@ class ImgTxtViewer:
 #region - Misc Functions #
 #                        #
 
+    def rename_odd_files(self, filename):
+        file_extension = os.path.splitext(filename)[1].lower()
+        file_rename_dict = {".jpg_large": "jpg", ".jfif": "jpg"}
+        if file_extension in file_rename_dict:
+            new_file_extension = file_rename_dict[file_extension]
+            base_filename = os.path.splitext(filename)[0]
+            new_filename = base_filename + "." + new_file_extension
+            counter = 1
+            duplicate_files = []
+            while os.path.exists(os.path.join(self.image_dir.get(), new_filename)):
+                duplicate_files.append(new_filename)
+                new_filename = base_filename + "_" + str(counter).zfill(3) + "." + new_file_extension
+                counter += 1
+            if duplicate_files:
+                root = Tk()
+                root.withdraw()
+                MsgBox = messagebox.askquestion ('Rename Files','The following files are duplicates and will be renamed:\n' + '\n'.join(duplicate_files) + '\nDo you want to continue?',icon = 'warning')
+                if MsgBox == 'no':
+                    root.destroy()
+                    return filename
+            os.rename(os.path.join(self.image_dir.get(), filename), os.path.join(self.image_dir.get(), new_filename))
+            filename = new_filename
+        return filename
+
     # Used to position new windows beside the main window.
     def position_dialog(self, dialog, window_width, window_height):
         root_x = self.master.winfo_rootx()
@@ -1392,6 +1413,7 @@ class ImgTxtViewer:
             self.saved_label.config(text="Saved", bg="#6ca079", fg="white")
             self.save_second_cleanup()
 
+    # This is just a hacky way of fixing a text cleanup issue.
     def save_second_cleanup(self):
         if self.text_files:
             text_file = self.text_files[self.current_index]
@@ -1485,7 +1507,6 @@ class ImgTxtViewer:
             self.total_images_label.config(text=f"/{len(self.image_files)}")
             self.show_pair()
 
-
 #endregion
 ################################################################################################################################################
 ################################################################################################################################################
@@ -1526,6 +1547,7 @@ root.mainloop()
   - New:
     - Several changes/additions to the options/tools menu. Just exposing features, nothing new.
     - `.jfif` file support added. Like '.jpg_large', these files are simply renamed to '.jpg'
+      - Duplicate files are handled by appending an underscore and a 3-digit number. E.g. "_001"
 
 <br>
 
