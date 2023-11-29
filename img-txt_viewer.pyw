@@ -1393,29 +1393,20 @@ class ImgTxtViewer:
         except ValueError:
             return
         if self.text_files:
-            text_file = self.text_files[self.current_index]
-            with open(text_file, "w", encoding="utf-8") as f:
-                text = self.text_box.get("1.0", END).strip()
-                if self.cleaning_text.get():
-                    text = self.cleanup_text(text)
-                if self.list_mode.get():
-                    text = ', '.join(text.split('\n'))
-                f.write(text)
+            self.save_file()
             self.saved_label.config(text="Saved", bg="#6ca079", fg="white")
-            self.save_second_cleanup()
-
-    # This is just a hacky way of fixing a text cleanup issue.
-    def save_second_cleanup(self):
-        if self.text_files:
-            text_file = self.text_files[self.current_index]
-            with open(text_file, "w", encoding="utf-8") as f:
-                text = self.text_box.get("1.0", END).strip()
-                if self.cleaning_text.get():
-                    text = self.cleanup_text(text)
-                if self.list_mode.get():
-                    text = ', '.join(text.split('\n'))
-                f.write(text)
+            self.save_file()
             self.show_pair()
+
+    def save_file(self):
+        text_file = self.text_files[self.current_index]
+        with open(text_file, "w", encoding="utf-8") as f:
+            text = self.text_box.get("1.0", END).strip()
+            if self.cleaning_text.get():
+                text = self.cleanup_text(text)
+            if self.list_mode.get():
+                text = ', '.join(text.split('\n'))
+            f.write(text)
 
     def on_closing(self):
         if self.saved_label.cget("text") in ["No Changes", "Saved", "Text Files Cleaned up!"]:
