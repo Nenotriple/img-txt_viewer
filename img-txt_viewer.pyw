@@ -407,7 +407,7 @@ class ImgTxtViewer:
         self.image_preview.bind('<Button-2>', self.open_current_directory)
         self.image_preview.bind("<MouseWheel>", self.mouse_scroll)
         self.image_preview.bind("<Button-3>", self.show_imageContext_menu)
-        ToolTip.create_tooltip(self.image_preview, " Double-Click to open in system image viewer \n\nRight/Middle click to open in file explorer\n\nMouse-Wheel to scroll through images", 1000, 6, 4)
+        ToolTip.create_tooltip(self.image_preview, "Double-Click to open in system image viewer \n\nRight/Middle click to open in file explorer\n\nMouse-Wheel to scroll through images", 1000, 6, 4)
 
         # Directory Button
         top_button_frame = Frame(self.master_control_frame)
@@ -416,12 +416,12 @@ class ImgTxtViewer:
         self.directory_button.pack(side=TOP, fill=X)
         self.directory_button.bind('<Button-2>', self.open_current_directory)
         self.directory_button.bind('<Button-3>', self.copy_to_clipboard)
-        ToolTip.create_tooltip(self.directory_button, "Right click to copy path\n\n Middle click to open in file explorer ", 1000, 6, 4)
+        ToolTip.create_tooltip(self.directory_button, "Right click to copy path\n\nMiddle click to open in file explorer", 1000, 6, 4)
 
         # Save Button
         self.save_button = Button(top_button_frame, text="Save", command=self.save_text_file, fg="blue")
         self.save_button.pack(side=TOP, fill=X, pady=2)
-        ToolTip.create_tooltip(self.save_button, " CTRL+S ", 1000, 6, 4)
+        ToolTip.create_tooltip(self.save_button, "CTRL+S ", 1000, 6, 4)
 
         # Navigation Buttons
         nav_button_frame = Frame(self.master_control_frame)
@@ -430,8 +430,8 @@ class ImgTxtViewer:
         self.prev_button = Button(nav_button_frame, text="<---Previous", command=lambda event=None: self.prev_pair(event), width=16)
         self.next_button.pack(side=RIGHT, padx=2, pady=2)
         self.prev_button.pack(side=RIGHT, padx=2, pady=2)
-        ToolTip.create_tooltip(self.next_button, " ALT+R ", 1000, 6, 4)
-        ToolTip.create_tooltip(self.prev_button, " ALT+L ", 1000, 6, 4)
+        ToolTip.create_tooltip(self.next_button, "ALT+R ", 1000, 6, 4)
+        ToolTip.create_tooltip(self.prev_button, "ALT+L ", 1000, 6, 4)
 
         # Saved Label / Autosave
         saved_label_frame = Frame(self.master_control_frame)
@@ -539,7 +539,7 @@ class ImgTxtViewer:
     def display_text_box(self):
         self.suggestion_label.pack(side=TOP, fill=X)
         self.text_box.pack(side=TOP, expand=YES, fill=BOTH)
-        ToolTip.create_tooltip(self.suggestion_label, " TAB: insert highlighted suggestion \nALT: Cycle suggestions", 1000, 6, 4)
+        ToolTip.create_tooltip(self.suggestion_text, "TAB: insert highlighted suggestion \nALT: Cycle suggestions\n\nColor Code:\nBlack=Normal Tag\nRed=Artist\nPurple=Copyright\nGreen=Character\nOrange=Other", 1000, 6, 4)
 
     def display_index_frame(self):
         if not hasattr(self, 'index_frame'):
@@ -1032,7 +1032,7 @@ class ImgTxtViewer:
         font_box.set(current_font_name)
         font_box.bind("<<ComboboxSelected>>", lambda event: self.set_font_and_size(self.font_var.get(), size_var.get(), dialog))
         font_box.bind("<Button-1>", lambda event: font_box.event_generate('<Down>'))
-        ToolTip.create_tooltip(font_box, " Recommended Fonts: Courier New, Ariel, Consolas, Segoe UI ", 200, 6, 4)
+        ToolTip.create_tooltip(font_box, "Recommended Fonts: Courier New, Ariel, Consolas, Segoe UI", 200, 6, 4)
         font_box.pack()
         Label(dialog, text="Font Size:").pack()
         size_var = StringVar()
@@ -1041,7 +1041,7 @@ class ImgTxtViewer:
         size_box.set(current_font_size)
         size_box.bind("<<ComboboxSelected>>", lambda event: self.set_font_and_size(self.font_var.get(), size_var.get(), dialog))
         size_box.bind("<Button-1>", lambda event: size_box.event_generate('<Down>'))
-        ToolTip.create_tooltip(size_box, " Default size = 10 ", 200, 6, 4)
+        ToolTip.create_tooltip(size_box, "Default size = 10", 200, 6, 4)
         size_box.pack()
 
     def set_font_and_size(self, font, size, dialog):
