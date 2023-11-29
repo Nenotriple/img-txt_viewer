@@ -181,8 +181,9 @@ class Autocomplete:
             for row in reader:
                 if row and not row[0].startswith('###'):
                     true_name = row[0]
+                    classifier_id = row[1]
                     similar_names = row[3].split(',') if len(row) > 3 else []
-                    data[true_name] = similar_names
+                    data[true_name] = (classifier_id, similar_names)
         if os.path.isfile(additional_file_path):
             with open(additional_file_path, newline='', encoding='utf-8') as csvfile:
                 reader = csv.reader(csvfile)
@@ -191,9 +192,9 @@ class Autocomplete:
                         true_name = row[0]
                         similar_names = row[3].split(',') if len(row) > 3 else []
                         if true_name in data:
-                            data[true_name].extend(similar_names)
+                            data[true_name][1].extend(similar_names)
                         else:
-                            data[true_name] = similar_names
+                            data[true_name] = ('', similar_names)
         return data
 
     def autocomplete(self, text):
@@ -201,13 +202,13 @@ class Autocomplete:
             return None
         suggestions = []
         text_with_underscores = text.replace(" ", "_")
-        for true_name, similar_names in self.data.items():
+        for true_name, (classifier_id, similar_names) in self.data.items():
             if true_name.startswith(text_with_underscores):
-                suggestions.append((true_name, similar_names))
+                suggestions.append((true_name, classifier_id, similar_names))
             else:
                 for sim_name in similar_names:
                     if sim_name.startswith(text_with_underscores):
-                        suggestions.append((true_name, similar_names))
+                        suggestions.append((true_name, classifier_id, similar_names))
                         break
         suggestions.sort(key=lambda x: self.get_score(x[0], text_with_underscores), reverse=True)
         return suggestions[:self.max_suggestions]
