@@ -102,7 +102,7 @@ class ToolTip:
         tw.wm_geometry(f"+{x}+{y}")
         tw.wm_attributes("-topmost", True)
         tw.wm_attributes("-disabled", True)
-        label = Label(tw, text=tip_text, background="#ffffe0", relief=RIDGE, borderwidth=1)
+        label = Label(tw, text=tip_text, background="#ffffe0", relief=RIDGE, borderwidth=1, justify=LEFT)
         label.pack()
         self.id = self.widget.after(3000, self.hide_tip)
 
