@@ -1527,15 +1527,35 @@ root.mainloop()
 
 [v1.79 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.79)
   - New:
-    - Several changes/additions to the options/tools menu. Just exposing features, nothing new.
-    - `.jfif` file support added. Like '.jpg_large', these files are simply renamed to '.jpg'
-      - Duplicate files are handled by appending an underscore and a 3-digit number. E.g. "_001"
+    - Danbooru suggestions are now colored based on their classification, just like when using the website. [#1a5cea1][1a5cea1]
+    - Several changes and additions to the options/tools menu. Just exposing features, nothing new. [#0e8818d][0e8818d]
+    - `.jfif` file support added. Like '.jpg_large', these files are simply renamed to '.jpg' [#9d6e167][9d6e167]
+      - Duplicate files are handled by appending an underscore and a 3-digit number. E.g. "_001" [#6cdd0d4][6cdd0d4]
 
 <br>
 
   - Fixed:
-    - The app now always opens in the center of the screen.
-    - Most new windows now open directly beside the main window.
+    - The app now always opens in the center of the screen. [#3ae6e13][3ae6e13]
+    - Most new windows now open directly beside the main window. [#a943cfd][a943cfd]
+
+<br>
+
+  - Other Changes:
+    - Suggestion style and alignment menu have been removed.  [#1a5cea1][1a5cea1]
+    - Other changes: [#dd863c0][dd863c0], [#9dac3bf][9dac3bf], [#85ebb01][85ebb01], [#2e6804f][2e6804f]
+
+[1a5cea1]: https://github.com/Nenotriple/img-txt_viewer/commit/1a5cea1cec326a071ce512519dda35c73a03cd51
+[0e8818d]: https://github.com/Nenotriple/img-txt_viewer/commit/0e8818dff7229055441af9871136ca10c981f5de
+[9d6e167]: https://github.com/Nenotriple/img-txt_viewer/commit/9d6e1670b6aff6d190041a2f4b9ac9b03649ecd3
+[6cdd0d4]: https://github.com/Nenotriple/img-txt_viewer/commit/6cdd0d45927072f0a0792a6b0007a7a7a164f819
+
+[3ae6e13]: https://github.com/Nenotriple/img-txt_viewer/commit/3ae6e13c87a7b5519762d14f7937fe4d273f87bb
+[a943cfd]: https://github.com/Nenotriple/img-txt_viewer/commit/a943cfd2112bc9a7da051900987b0b32269d5cb5
+
+[dd863c0]: https://github.com/Nenotriple/img-txt_viewer/commit/dd863c0450cc47b314a91c89566bd2eb59b3041d
+[9dac3bf]: https://github.com/Nenotriple/img-txt_viewer/commit/9dac3bfc3fd9998301350bbe056cb92ca16076ce
+[85ebb01]: https://github.com/Nenotriple/img-txt_viewer/commit/85ebb01ce599efa533d3cca873629f89f4721574
+[2e6804f]: https://github.com/Nenotriple/img-txt_viewer/commit/2e6804ffd046b3927332aa93f14b18d5f534d1b9
 
 '''
 
