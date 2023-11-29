@@ -659,7 +659,10 @@ class ImgTxtViewer:
         self.suggestion_textbox.config(state='normal')
         self.suggestion_textbox.delete('1.0', 'end')
         for i, (s, classifier_id) in enumerate(self.suggestions):
-            color_id = int(classifier_id) % len(self.suggestion_colors)
+            if classifier_id and classifier_id.isdigit():
+                color_id = int(classifier_id) % len(self.suggestion_colors)
+            else:
+                color_id = 0
             color = self.suggestion_colors[color_id]
             if i == self.selected_suggestion_index:
                 self.suggestion_textbox.insert('end', "⚫")
