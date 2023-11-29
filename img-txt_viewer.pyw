@@ -271,8 +271,6 @@ class ImgTxtViewer:
         # Autocomplete settings
         self.autocomplete = Autocomplete("danbooru.csv")
         self.csv_var = StringVar(value='danbooru.csv')
-        self.suggestion_alignment = StringVar(value="Left Aligned")
-        self.suggestion_style = StringVar(value="Style 1: ⚫")
         self.suggestion_quantity = IntVar(value=4)
 
         # Bindings
@@ -332,19 +330,6 @@ class ImgTxtViewer:
         for i in range(1, 10):
             suggestion_quantity_menu.add_radiobutton(label=str(i), variable=self.suggestion_quantity, value=i, command=lambda suggestion_quantity=i: self.set_suggestion_quantity(suggestion_quantity))
 
-        # Suggestion Alignment Menu
-        suggestion_style_menu = Menu(optionsMenu, tearoff=0)
-        suggestion_alignment_menu = Menu(suggestion_style_menu, tearoff=0)
-        suggestion_style_menu.add_cascade(label="Alignment", menu=suggestion_alignment_menu)
-        for suggestion_alignment in ["Left Aligned", "Centered"]:
-            suggestion_alignment_menu.add_radiobutton(label=suggestion_alignment, variable=self.suggestion_alignment, value=suggestion_alignment, command=lambda suggestion_alignment=suggestion_alignment: self.set_suggestion_alignment(suggestion_alignment))
-
-        # Suggestion Style Menu
-        suggestion_style_menu.add_separator()
-        optionsMenu.add_cascade(label="Suggestion Style", menu=suggestion_style_menu)
-        for style in ["Style 1: ⚫", "Style 2: ⬛", "Style 3: ◾", "Style 4: ◾[]"]:
-            suggestion_style_menu.add_radiobutton(label=style, variable=self.suggestion_style, value=style, command=lambda style=style: self.set_suggestion_style(style))
-
         # Text options and More
         optionsMenu.add_separator()
         optionsMenu.add_command(label="Font Options", command=self.set_font)
@@ -391,7 +376,8 @@ class ImgTxtViewer:
         self.master_image_frame.pack(side=LEFT)
 
         # Suggestion Label
-        self.suggestion_label = Label(self.master_control_frame, text="", anchor='w')
+        self.suggestion_textbox = Text(self.master_control_frame, height=1, borderwidth=0, highlightthickness=0, bg='#f0f0f0')
+        self.suggestion_colors = {0: "black", 1: "#c00004", 2: "black", 3: "#a800aa", 4: "#00ab2c", 5: "#fd9200"} #0=Normal tag, 1=Artist, 2=UNUSED, 3=Copyright, 4=Character, 5=Other
 
         # Text Box
         self.scrollbar = Scrollbar(self.master_control_frame)
@@ -537,9 +523,9 @@ class ImgTxtViewer:
 #                                     #
 
     def display_text_box(self):
-        self.suggestion_label.pack(side=TOP, fill=X)
+        self.suggestion_textbox.pack(side=TOP, fill=X)
         self.text_box.pack(side=TOP, expand=YES, fill=BOTH)
-        ToolTip.create_tooltip(self.suggestion_text, "TAB: insert highlighted suggestion \nALT: Cycle suggestions\n\nColor Code:\nBlack=Normal Tag\nRed=Artist\nPurple=Copyright\nGreen=Character\nOrange=Other", 1000, 6, 4)
+        ToolTip.create_tooltip(self.suggestion_textbox, "TAB: insert highlighted suggestion \nALT: Cycle suggestions\n\nColor Code:\nBlack=Normal Tag\nRed=Artist\nPurple=Copyright\nGreen=Character\nOrange=Other", 1000, 6, 4)
 
     def display_index_frame(self):
         if not hasattr(self, 'index_frame'):
@@ -614,6 +600,31 @@ class ImgTxtViewer:
 #                       #
 
 ### Display Suggestions ##################################################
+    def handle_suggestion_event(self, event):
+        if event.keysym == "Tab":
+            if self.selected_suggestion_index < len(self.suggestions):
+                selected_suggestion = self.suggestions[self.selected_suggestion_index]
+                if isinstance(selected_suggestion, tuple):
+                    selected_suggestion = selected_suggestion[0]
+                selected_suggestion = selected_suggestion.strip()
+                self.insert_selected_suggestion(selected_suggestion)
+            self.clear_suggestions()
+        elif event.keysym in ("Alt_L", "Alt_R"):
+            if self.suggestions and not self.is_alt_arrow_pressed:
+                if event.keysym == "Alt_R":
+                    self.selected_suggestion_index = (self.selected_suggestion_index - 1) % len(self.suggestions)
+                else:
+                    self.selected_suggestion_index = (self.selected_suggestion_index + 1) % len(self.suggestions)
+                self.highlight_suggestions()
+            self.is_alt_arrow_pressed = False
+        elif event.keysym in ("Up", "Down", "Left", "Right"):
+            self.clear_suggestions()
+        elif event.char == ",":
+            self.clear_suggestions()
+        else:
+            return False
+        return True
+
     def update_suggestions(self, event=None):
         if event is None:
             event = type('', (), {})()
@@ -623,60 +634,44 @@ class ImgTxtViewer:
         if self.cursor_inside_token(cursor_position):
             self.clear_suggestions()
             return
-        if event.keysym == "Tab":
-            if self.selected_suggestion_index < len(self.suggestions):
-                selected_suggestion = self.suggestions[self.selected_suggestion_index]
-                self.insert_selected_suggestion(selected_suggestion)
-            self.clear_suggestions()
-        elif event.keysym in ("Alt_L", "Alt_R"):
-            if self.suggestions and not self.is_alt_arrow_pressed:
-                if event.keysym == "Alt_R":
-                    self.selected_suggestion_index = (self.selected_suggestion_index - 1) % len(self.suggestions)
-                else:
-                    self.selected_suggestion_index = (self.selected_suggestion_index + 1) % len(self.suggestions)
-                self.highlight_selected_suggestion(self.suggestion_style.get())
-            self.is_alt_arrow_pressed = False
-        elif event.keysym in ("Up", "Down", "Left", "Right"):
-            self.clear_suggestions()
-        elif event.char == ",":
-            self.clear_suggestions()
+        if self.handle_suggestion_event(event):
+            return
+        text = self.text_box.get("1.0", "insert")
+        self.clear_suggestions()
+        if self.list_mode.get():
+            elements = [element.strip() for element in text.split('\n')]
         else:
-            text = self.text_box.get("1.0", "insert")
-            if self.list_mode.get():
-                elements = [element.strip() for element in text.split('\n')]
-            else:
-                elements = [element.strip() for element in text.split(',')]
-            current_word = elements[-1]
-            current_word = current_word.strip()
-            if current_word:
-                suggestions = self.autocomplete.autocomplete(current_word)
-                suggestions.sort(key=lambda x: self.autocomplete.get_score(x[0], current_word), reverse=True)
-                self.suggestions = [suggestion[0].replace("_", " ") for suggestion in suggestions]
-                if self.suggestions:
-                    suggestion_text =", ".join(self.suggestions)
-                    self.suggestion_label.config(text=suggestion_text)
-                    self.selected_suggestion_index = 0
-                    self.highlight_selected_suggestion(self.suggestion_style.get())
-                else:
-                    self.clear_suggestions()
+            elements = [element.strip() for element in text.split(',')]
+        current_word = elements[-1]
+        current_word = current_word.strip()
+        if current_word:
+            suggestions = self.autocomplete.autocomplete(current_word)
+            suggestions.sort(key=lambda x: self.autocomplete.get_score(x[0], current_word), reverse=True)
+            self.suggestions = [(suggestion[0].replace("_", " "), suggestion[1]) for suggestion in suggestions]
+            if self.suggestions:
+                self.highlight_suggestions()
             else:
                 self.clear_suggestions()
+        else:
+            self.clear_suggestions()
 
-    def highlight_selected_suggestion(self, suggestion_style):
-        styles = {
-            "Style 1: ⚫": ("⚫", "⚪"),
-            "Style 2: ⬛": ("⬛", "⬜"),
-            "Style 3: ◾": ("◾", "◽"),
-            "Style 4: ◾[]": ("◾[", "]")
-        }
-
-        if self.suggestions and suggestion_style in styles:
-            selected, unselected = styles[suggestion_style]
-            suggestion_text = ",   ".join(
-                f"{selected}{s}" if i == self.selected_suggestion_index else f"{unselected}{s}"
-                for i, s in enumerate(self.suggestions)
-            )
-            self.suggestion_label.config(text=suggestion_text)
+    def highlight_suggestions(self):
+        self.suggestion_textbox.config(state='normal')
+        self.suggestion_textbox.delete('1.0', 'end')
+        for i, (s, classifier_id) in enumerate(self.suggestions):
+            color_id = int(classifier_id) % len(self.suggestion_colors)
+            color = self.suggestion_colors[color_id]
+            if i == self.selected_suggestion_index:
+                self.suggestion_textbox.insert('end', "⚫")
+                self.suggestion_textbox.insert('end', s, 'bold')
+                self.suggestion_textbox.tag_config('bold', foreground=color, font=('Consolas', '10', 'bold'))
+            else:
+                self.suggestion_textbox.insert('end', "⚪")
+                self.suggestion_textbox.insert('end', s, color)
+                self.suggestion_textbox.tag_config(color, foreground=color, font=('Consolas', '10'))
+            if i != len(self.suggestions) - 1:
+                self.suggestion_textbox.insert('end', ', ')
+        self.suggestion_textbox.config(state='disabled')
 
     def cursor_inside_token(self, cursor_position):
         line, column = map(int, cursor_position.split('.'))
@@ -689,9 +684,14 @@ class ImgTxtViewer:
 
     def clear_suggestions(self):
         self.suggestions = []
-        self.suggestion_label.config(text="...")
+        self.selected_suggestion_index = 0
+        self.suggestion_textbox.config(state='normal')
+        self.suggestion_textbox.delete('1.0', 'end')
+        self.suggestion_textbox.insert('1.0', "...")
+        self.suggestion_textbox.config(state='disabled')
 
 ### Insert Suggestion ##################################################
+
     def insert_selected_suggestion(self, selected_suggestion):
         selected_suggestion = selected_suggestion.strip()
         text = self.text_box.get("1.0", "insert").rstrip()
@@ -740,16 +740,6 @@ class ImgTxtViewer:
     def set_suggestion_quantity(self, suggestion_quantity):
         self.autocomplete.max_suggestions = suggestion_quantity
         self.update_suggestions(event=None)
-
-    def set_suggestion_style(self, suggestion_style):
-        self.suggestion_style.set(suggestion_style)
-        self.highlight_selected_suggestion(suggestion_style)
-
-    def set_suggestion_alignment(self, suggestion_alignment):
-        if suggestion_alignment == "Centered":
-            self.suggestion_label.config(anchor='center')
-        elif suggestion_alignment == "Left Aligned":
-            self.suggestion_label.config(anchor='w')
 
     def create_and_open_custom_dictionary(self):
         csv_filename = 'my_tags.csv'
