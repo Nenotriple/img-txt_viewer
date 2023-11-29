@@ -666,12 +666,12 @@ class ImgTxtViewer:
             color = self.suggestion_colors[color_id]
             if i == self.selected_suggestion_index:
                 self.suggestion_textbox.insert('end', "⚫")
-                self.suggestion_textbox.insert('end', s, 'bold')
-                self.suggestion_textbox.tag_config('bold', foreground=color, font=('Consolas', '10', 'bold'))
+                self.suggestion_textbox.insert('end', s, color)
+                self.suggestion_textbox.tag_config(color, foreground=color, font=('Segoe UI', '9'))
             else:
                 self.suggestion_textbox.insert('end', "⚪")
                 self.suggestion_textbox.insert('end', s, color)
-                self.suggestion_textbox.tag_config(color, foreground=color, font=('Consolas', '10'))
+                self.suggestion_textbox.tag_config(color, foreground=color, font=('Segoe UI', '9'))
             if i != len(self.suggestions) - 1:
                 self.suggestion_textbox.insert('end', ', ')
         self.suggestion_textbox.config(state='disabled')
@@ -1545,7 +1545,7 @@ root.mainloop()
 
   - Other Changes:
     - Suggestion style and alignment menu have been removed.  [#1a5cea1][1a5cea1]
-    - Other changes: [#dd863c0][dd863c0], [#9dac3bf][9dac3bf], [#85ebb01][85ebb01], [#2e6804f][2e6804f]
+    - Other changes: [#dd863c0][dd863c0], [#9dac3bf][9dac3bf], [#85ebb01][85ebb01], [#2e6804f][2e6804f], [#b3f02fb][b3f02fb]
 
 [1a5cea1]: https://github.com/Nenotriple/img-txt_viewer/commit/1a5cea1cec326a071ce512519dda35c73a03cd51
 [0e8818d]: https://github.com/Nenotriple/img-txt_viewer/commit/0e8818dff7229055441af9871136ca10c981f5de
@@ -1559,6 +1559,7 @@ root.mainloop()
 [9dac3bf]: https://github.com/Nenotriple/img-txt_viewer/commit/9dac3bfc3fd9998301350bbe056cb92ca16076ce
 [85ebb01]: https://github.com/Nenotriple/img-txt_viewer/commit/85ebb01ce599efa533d3cca873629f89f4721574
 [2e6804f]: https://github.com/Nenotriple/img-txt_viewer/commit/2e6804ffd046b3927332aa93f14b18d5f534d1b9
+[b3f02fb]: https://github.com/Nenotriple/img-txt_viewer/commit/b3f02fb67b85b387959491a29f106689ba3c5ea6
 
 '''
 
