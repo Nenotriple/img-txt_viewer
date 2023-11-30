@@ -394,7 +394,7 @@ class ImgTxtViewer:
 
         # Suggestion Label
         self.suggestion_textbox = Text(self.master_control_frame, height=1, borderwidth=0, highlightthickness=0, bg='#f0f0f0')
-        self.suggestion_colors = {0: "black", 1: "#c00004", 2: "black", 3: "#a800aa", 4: "#00ab2c", 5: "#fd9200"} #0=Normal tag, 1=Artist, 2=UNUSED, 3=Copyright, 4=Character, 5=Other
+        self.suggestion_colors = {0: "black", 1: "#c00004", 2: "black", 3: "#a800aa", 4: "#00ab2c", 5: "#fd9200"} #0=General tags, 1=Artists, 2=UNUSED, 3=Copyright, 4=Character, 5=Meta
 
         # Text Box
         self.scrollbar = Scrollbar(self.master_control_frame)
@@ -410,7 +410,7 @@ class ImgTxtViewer:
         self.image_preview.bind('<Button-2>', self.open_current_directory)
         self.image_preview.bind("<MouseWheel>", self.mouse_scroll)
         self.image_preview.bind("<Button-3>", self.show_imageContext_menu)
-        ToolTip.create_tooltip(self.image_preview, "Double-Click to open in system image viewer \n\nRight/Middle click to open in file explorer\n\nALT+Left/Right, Mouse-Wheel to move between img-txt pairs", 1000, 6, 4)
+        ToolTip.create_tooltip(self.image_preview, "Double-Click to open in system image viewer \n\nRight-click / Middle-click to open in file explorer\n\nALT+Left/Right, Mouse-Wheel to move between img-txt pairs", 1000, 6, 4)
 
         # Directory Button
         top_button_frame = Frame(self.master_control_frame)
@@ -885,6 +885,7 @@ class ImgTxtViewer:
         if self.new_text_files:
             self.create_blank_textfiles(self.new_text_files)
         self.show_pair()
+        self.directory_button.config(relief=GROOVE)
         if hasattr(self, 'total_images_label'):
             self.total_images_label.config(text=f"/{len(self.image_files)}")
         self.prev_num_files = len(files_in_dir)
@@ -1583,7 +1584,8 @@ root.mainloop()
 
 [v1.79 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.79)
   - New:
-    - Danbooru/e621 suggestions are now colored based on their classification, just like when using the website. [#1a5cea1][1a5cea1]
+    - Suggestions now display colored text based on Danbooru tag color classification. [#1a5cea1][1a5cea1]
+      - Tag colors: ${\textsf{\color{black}General tags}}$, ${\textsf{\color{red}Artists}}$, ${\textsf{\color{purple}Copyright}}$, ${\textsf{\color{green}Characters}}$, ${\textsf{\color{orange}Meta}}$
     - Several changes and additions to the options and tools menu. Just exposing features, nothing new. [#0e8818d][0e8818d]
     - `.jfif` file support added. Like '.jpg_large', these files are simply renamed to '.jpg' [#9d6e167][9d6e167]
       - Duplicate files are handled by appending an underscore and a padded 3-digit number. E.g. "_001" [#6cdd0d4][6cdd0d4]
@@ -1605,7 +1607,7 @@ root.mainloop()
     - Suggestion style and alignment menu have been removed.  [#1a5cea1][1a5cea1]
     - English Dictionary: ~47,000 words were given an increased priority. [#33d717c][33d717c]
     - Danbooru tags: ~100 unnecessary tags removed. [#8d07b66][8d07b66]
-    - Other changes: [#dd863c0][dd863c0], [#9dac3bf][9dac3bf], [#85ebb01][85ebb01], [#2e6804f][2e6804f], [#b3f02fb][b3f02fb], [#dc92a2f][dc92a2f], [#f8ca427][f8ca427], [#56e4519][56e4519]
+    - Other changes: [#dd863c0][dd863c0], [#9dac3bf][9dac3bf], [#85ebb01][85ebb01], [#2e6804f][2e6804f], [#b3f02fb][b3f02fb], [#dc92a2f][dc92a2f], [#f8ca427][f8ca427], [#56e4519][56e4519], [#723f289][723f289]
 
 <!-- New -->
 [1a5cea1]: https://github.com/Nenotriple/img-txt_viewer/commit/1a5cea1cec326a071ce512519dda35c73a03cd51
@@ -1634,6 +1636,8 @@ root.mainloop()
 [dc92a2f]: https://github.com/Nenotriple/img-txt_viewer/commit/dc92a2f325fe452ec0d414308f1c7e6310aa3c31
 [f8ca427]: https://github.com/Nenotriple/img-txt_viewer/commit/f8ca4279d8ac62b2f96f77ce523e62ce414f999b
 [56e4519]: https://github.com/Nenotriple/img-txt_viewer/commit/56e4519b7882c7cb17719815f78e03c4467c9694
+[723f289]: https://github.com/Nenotriple/img-txt_viewer/commit/723f289091ab198f58bf055e482d800ae0a76a01
+
 
 '''
 
