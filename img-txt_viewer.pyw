@@ -410,7 +410,7 @@ class ImgTxtViewer:
         self.image_preview.bind('<Button-2>', self.open_current_directory)
         self.image_preview.bind("<MouseWheel>", self.mouse_scroll)
         self.image_preview.bind("<Button-3>", self.show_imageContext_menu)
-        ToolTip.create_tooltip(self.image_preview, "Double-Click to open in system image viewer \n\nRight/Middle click to open in file explorer\n\nMouse-Wheel to scroll through images", 1000, 6, 4)
+        ToolTip.create_tooltip(self.image_preview, "Double-Click to open in system image viewer \n\nRight/Middle click to open in file explorer\n\nALT+Left/Right, Mouse-Wheel to move between img-txt pairs", 1000, 6, 4)
 
         # Directory Button
         top_button_frame = Frame(self.master_control_frame)
@@ -1588,7 +1588,8 @@ root.mainloop()
     - `.jfif` file support added. Like '.jpg_large', these files are simply renamed to '.jpg' [#9d6e167][9d6e167]
       - Duplicate files are handled by appending an underscore and a padded 3-digit number. E.g. "_001" [#6cdd0d4][6cdd0d4]
     - `e621` tag dictionary added. [#ade503e][ade503e], [#4c92655][4c92655], [#a66938e][a66938e]
-    - `Undo Delete` You can now restore deleted img-txt pairs.
+    - `Undo Delete` You can now restore deleted img-txt pairs. [#82a59d3][82a59d3]
+    - Increase score/priority of tags from 'my_tags.csv' [#e800867][e800867]
 
 <br>
 
@@ -1604,7 +1605,7 @@ root.mainloop()
     - Suggestion style and alignment menu have been removed.  [#1a5cea1][1a5cea1]
     - English Dictionary: ~47,000 words were given an increased priority. [#33d717c][33d717c]
     - Danbooru tags: ~100 unnecessary tags removed. [#8d07b66][8d07b66]
-    - Other changes: [#dd863c0][dd863c0], [#9dac3bf][9dac3bf], [#85ebb01][85ebb01], [#2e6804f][2e6804f], [#b3f02fb][b3f02fb], [#dc92a2f][dc92a2f]
+    - Other changes: [#dd863c0][dd863c0], [#9dac3bf][9dac3bf], [#85ebb01][85ebb01], [#2e6804f][2e6804f], [#b3f02fb][b3f02fb], [#dc92a2f][dc92a2f], [#f8ca427][f8ca427], [#56e4519][56e4519]
 
 <!-- New -->
 [1a5cea1]: https://github.com/Nenotriple/img-txt_viewer/commit/1a5cea1cec326a071ce512519dda35c73a03cd51
@@ -1614,6 +1615,8 @@ root.mainloop()
 [ade503e]: https://github.com/Nenotriple/img-txt_viewer/commit/ade503eaeffbf9f45290c9d0bb5e2fc6b1da8ca5
 [4c92655]: https://github.com/Nenotriple/img-txt_viewer/commit/4c9265528f694389571010df7b7dbec67a656733
 [a66938e]: https://github.com/Nenotriple/img-txt_viewer/commit/a66938ed25b184452e59b2f60e70e3e733d7c484
+[82a59d3]: https://github.com/Nenotriple/img-txt_viewer/commit/82a59d3c66499d97420e92ebe1b1949098e7842d
+[e800867]: https://github.com/Nenotriple/img-txt_viewer/commit/e80086755c2320a8152723df6bbe3fe995bd53e2
 
 <!-- Fixed -->
 [3ae6e13]: https://github.com/Nenotriple/img-txt_viewer/commit/3ae6e13c87a7b5519762d14f7937fe4d273f87bb
@@ -1629,6 +1632,8 @@ root.mainloop()
 [2e6804f]: https://github.com/Nenotriple/img-txt_viewer/commit/2e6804ffd046b3927332aa93f14b18d5f534d1b9
 [b3f02fb]: https://github.com/Nenotriple/img-txt_viewer/commit/b3f02fb67b85b387959491a29f106689ba3c5ea6
 [dc92a2f]: https://github.com/Nenotriple/img-txt_viewer/commit/dc92a2f325fe452ec0d414308f1c7e6310aa3c31
+[f8ca427]: https://github.com/Nenotriple/img-txt_viewer/commit/f8ca4279d8ac62b2f96f77ce523e62ce414f999b
+[56e4519]: https://github.com/Nenotriple/img-txt_viewer/commit/56e4519b7882c7cb17719815f78e03c4467c9694
 
 '''
 
