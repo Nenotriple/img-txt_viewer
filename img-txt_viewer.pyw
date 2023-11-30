@@ -151,7 +151,8 @@ class Autocomplete:
     def download_data(self):
         files = {
             'danbooru.csv': "https://raw.githubusercontent.com/Nenotriple/img-txt_viewer/main/danbooru.csv",
-            'dictionary.csv': "https://raw.githubusercontent.com/Nenotriple/img-txt_viewer/main/dictionary.csv"
+            'dictionary.csv': "https://raw.githubusercontent.com/Nenotriple/img-txt_viewer/main/dictionary.csv",
+            'e621.csv': "https://raw.githubusercontent.com/Nenotriple/img-txt_viewer/main/e621.csv"
         }
 
         missing_files = [file for file in files if not os.path.exists(file)]
@@ -1537,11 +1538,11 @@ root.mainloop()
 
 [v1.79 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.79)
   - New:
-    - Danbooru suggestions are now colored based on their classification, just like when using the website. [#1a5cea1][1a5cea1]
+    - Danbooru/e621 suggestions are now colored based on their classification, just like when using the website. [#1a5cea1][1a5cea1]
     - Several changes and additions to the options and tools menu. Just exposing features, nothing new. [#0e8818d][0e8818d]
     - `.jfif` file support added. Like '.jpg_large', these files are simply renamed to '.jpg' [#9d6e167][9d6e167]
       - Duplicate files are handled by appending an underscore and a padded 3-digit number. E.g. "_001" [#6cdd0d4][6cdd0d4]
-    - `e621` tag dictionary added.
+    - `e621` tag dictionary added. [#ade503e][ade503e]
 
 <br>
 
@@ -1564,6 +1565,7 @@ root.mainloop()
 [0e8818d]: https://github.com/Nenotriple/img-txt_viewer/commit/0e8818dff7229055441af9871136ca10c981f5de
 [9d6e167]: https://github.com/Nenotriple/img-txt_viewer/commit/9d6e1670b6aff6d190041a2f4b9ac9b03649ecd3
 [6cdd0d4]: https://github.com/Nenotriple/img-txt_viewer/commit/6cdd0d45927072f0a0792a6b0007a7a7a164f819
+[ade503e]: https://github.com/Nenotriple/img-txt_viewer/commit/ade503eaeffbf9f45290c9d0bb5e2fc6b1da8ca5
 
 <!-- Fixed -->
 [3ae6e13]: https://github.com/Nenotriple/img-txt_viewer/commit/3ae6e13c87a7b5519762d14f7937fe4d273f87bb
