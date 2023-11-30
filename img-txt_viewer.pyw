@@ -772,9 +772,10 @@ class ImgTxtViewer:
                 writer.writerow(["### This is where you can create a custom dictionary of tokens/tags."])
                 writer.writerow(["### These tokens will be loaded alongside the chosen autocomplete dictionary."])
                 writer.writerow(["### Lines starting with 3 pound symbols '###' will be ignored so you can create comments."])
+                writer.writerow(["### Tags near the top of the list have a higher priority than lower tags."])
                 writer.writerow([])
                 writer.writerow(["supercalifragilisticexpialidocious"])
-        os.system(f'start {csv_filename}')
+        subprocess.Popen(f'start {csv_filename}', shell=True)
         self.change_autocomplete_dictionary()
 
     def get_tags_with_underscore(self):
