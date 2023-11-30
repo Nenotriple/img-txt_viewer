@@ -147,6 +147,8 @@ class Autocomplete:
     def __init__(self, data_file, max_suggestions=4):
         self.data = self.load_data(data_file)
         self.max_suggestions = max_suggestions
+        self.previous_text = None
+        self.previous_suggestions = None
 
     def download_data(self):
         files = {
@@ -201,17 +203,24 @@ class Autocomplete:
     def autocomplete(self, text):
         if not hasattr(self, 'data') or not self.data:
             return None
-        suggestions = []
         text_with_underscores = text.replace(" ", "_")
-        for true_name, (classifier_id, similar_names) in self.data.items():
-            if true_name.startswith(text_with_underscores):
-                suggestions.append((true_name, classifier_id, similar_names))
-            else:
-                for sim_name in similar_names:
-                    if sim_name.startswith(text_with_underscores):
-                        suggestions.append((true_name, classifier_id, similar_names))
-                        break
+        if self.previous_text is not None and text.startswith(self.previous_text):
+            suggestions = [suggestion for suggestion in self.previous_suggestions if suggestion[0].startswith(text_with_underscores)]
+        else:
+            suggestions = []
+            for true_name, (classifier_id, similar_names) in self.data.items():
+                if len(suggestions) >= 100000:
+                    break
+                if true_name.startswith(text_with_underscores):
+                    suggestions.append((true_name, classifier_id, similar_names))
+                else:
+                    for sim_name in similar_names:
+                        if sim_name.startswith(text_with_underscores):
+                            suggestions.append((true_name, classifier_id, similar_names))
+                            break
         suggestions.sort(key=lambda x: self.get_score(x[0], text_with_underscores), reverse=True)
+        self.previous_text = text
+        self.previous_suggestions = suggestions
         return suggestions[:self.max_suggestions]
 
     def get_score(self, suggestion, text):
