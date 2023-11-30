@@ -317,12 +317,14 @@ class ImgTxtViewer:
         optionsMenu.add_command(label="Edit Custom Suggestions...", command=self.create_and_open_custom_dictionary)
 
         # Suggestion Dictionary Menu
+
         dictionaryMenu = Menu(optionsMenu, tearoff=0)
         optionsMenu.add_cascade(label="Suggestion Dictionary", menu=dictionaryMenu)
-        dictionaryMenu.add_checkbutton(label="Anime Tags", variable=self.csv_var, onvalue='danbooru.csv', offvalue='dictionary.csv', command=self.change_autocomplete_dictionary)
         dictionaryMenu.add_checkbutton(label="English Dictionary", variable=self.csv_var, onvalue='dictionary.csv', offvalue='danbooru.csv', command=self.change_autocomplete_dictionary)
+        dictionaryMenu.add_checkbutton(label="Danbooru", variable=self.csv_var, onvalue='danbooru.csv', offvalue='dictionary.csv', command=self.change_autocomplete_dictionary)
+        dictionaryMenu.add_checkbutton(label="e621", variable=self.csv_var, onvalue='e621.csv', offvalue='danbooru.csv', command=self.change_autocomplete_dictionary)
         dictionaryMenu.add_separator()
-        dictionaryMenu.add_checkbutton(label="Both", variable=self.csv_var, onvalue='both', command=self.change_autocomplete_dictionary)
+        dictionaryMenu.add_checkbutton(label="All (slow)", variable=self.csv_var, onvalue='all', command=self.change_autocomplete_dictionary)
 
         # Suggestion Quantity Menu
         suggestion_quantity_menu = Menu(optionsMenu, tearoff=0)
@@ -735,9 +737,10 @@ class ImgTxtViewer:
 ### Suggestion Settings ##################################################
 
     def change_autocomplete_dictionary(self):
-        if self.csv_var.get() == 'both':
+        if self.csv_var.get() == 'all':
             self.autocomplete = Autocomplete('danbooru.csv')
             self.autocomplete.data.update(Autocomplete('dictionary.csv').data)
+            self.autocomplete.data.update(Autocomplete('e621.csv').data)
         else:
             self.autocomplete = Autocomplete(self.csv_var.get())
 
@@ -1538,13 +1541,14 @@ root.mainloop()
     - Several changes and additions to the options and tools menu. Just exposing features, nothing new. [#0e8818d][0e8818d]
     - `.jfif` file support added. Like '.jpg_large', these files are simply renamed to '.jpg' [#9d6e167][9d6e167]
       - Duplicate files are handled by appending an underscore and a padded 3-digit number. E.g. "_001" [#6cdd0d4][6cdd0d4]
+    - `e621` tag dictionary added.
 
 <br>
 
   - Fixed:
     - The app now always opens in the center of the screen. [#3ae6e13][3ae6e13]
     - Most new windows now open directly beside the main window. [#a943cfd][a943cfd]
-    - Expression/smiley emotes that should include an underscore now insert and display properly.
+    - Expression/smiley emotes that should include an underscore now insert and display properly. [#5c41ffe][5c41ffe]
       - Please feel free to submit an issue if you come across any tags that should include an underscore!
 
 <br>
@@ -1564,6 +1568,7 @@ root.mainloop()
 <!-- Fixed -->
 [3ae6e13]: https://github.com/Nenotriple/img-txt_viewer/commit/3ae6e13c87a7b5519762d14f7937fe4d273f87bb
 [a943cfd]: https://github.com/Nenotriple/img-txt_viewer/commit/a943cfd2112bc9a7da051900987b0b32269d5cb5
+[5c41ffe]: https://github.com/Nenotriple/img-txt_viewer/commit/5c41ffeaa322f8056fb36c3075163b7d132ecbaf
 
 <!-- Other changes -->
 [33d717c]: https://github.com/Nenotriple/img-txt_viewer/commit/33d717c4e34d11158a5bd72ab44c56ce36429055
