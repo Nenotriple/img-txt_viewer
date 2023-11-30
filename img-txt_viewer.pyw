@@ -1029,6 +1029,8 @@ class ImgTxtViewer:
 #                       #
 
     def set_font(self, event=None):
+        def open_dropdown(event):
+            event.widget.after(100, lambda: event.widget.event_generate('<Down>'))
         current_font = self.text_box.cget("font")
         current_font_name = self.text_box.tk.call("font", "actual", current_font, "-family")
         current_font_size = self.text_box.tk.call("font", "actual", current_font, "-size")
@@ -1044,7 +1046,7 @@ class ImgTxtViewer:
         font_box['values'] = list(tkinter.font.families())
         font_box.set(current_font_name)
         font_box.bind("<<ComboboxSelected>>", lambda event: self.set_font_and_size(self.font_var.get(), size_var.get(), dialog))
-        font_box.bind("<Button-1>", lambda event: font_box.event_generate('<Down>'))
+        font_box.bind("<Button-1>", open_dropdown)
         ToolTip.create_tooltip(font_box, "Recommended Fonts: Courier New, Ariel, Consolas, Segoe UI", 200, 6, 4)
         font_box.pack()
         Label(dialog, text="Font Size:").pack()
@@ -1053,7 +1055,7 @@ class ImgTxtViewer:
         size_box['values'] = list(range(9, 19))
         size_box.set(current_font_size)
         size_box.bind("<<ComboboxSelected>>", lambda event: self.set_font_and_size(self.font_var.get(), size_var.get(), dialog))
-        size_box.bind("<Button-1>", lambda event: size_box.event_generate('<Down>'))
+        size_box.bind("<Button-1>", open_dropdown)
         ToolTip.create_tooltip(size_box, "Default size = 10", 200, 6, 4)
         size_box.pack()
 
@@ -1595,6 +1597,7 @@ root.mainloop()
     - Most new windows now open directly beside the main window. [#a943cfd][a943cfd]
     - Expression/smiley emotes that should include an underscore now insert and display properly. [#5c41ffe][5c41ffe]
       - Please feel free to submit an issue if you come across any tags that should include an underscore!
+    - Fixed annoying behaviour of "Font Options" dropdown boxes. 
 
 <br>
 
