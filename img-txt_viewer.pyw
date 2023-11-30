@@ -257,9 +257,11 @@ class ImgTxtViewer:
         self.image_files = []
         self.suggestions = []
         self.new_text_files = []
+        self.deleted_pairs = []
 
         # Settings
         self.max_img_width = IntVar(value=900)
+        self.undo_state = StringVar(value="disabled")
         self.image_dir = StringVar(value="Choose Directory")
         self.list_mode = BooleanVar(value=False)
         self.bold_commas = BooleanVar(value=False)
@@ -346,22 +348,23 @@ class ImgTxtViewer:
         optionsMenu.add_checkbutton(label="Always On Top", command=self.toggle_always_on_top)
 
 ####### Tools Menu ##################################################
-        toolsMenu = Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Tools", menu=toolsMenu)
+        self.toolsMenu = Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Tools", menu=self.toolsMenu)
 
         # Tools
-        toolsMenu.add_command(label="Open Directory...", command=self.open_current_directory)
-        toolsMenu.add_command(label="Open Image...", command=self.open_current_image)
-        toolsMenu.add_separator()
-        toolsMenu.add_command(label="Cleanup Text", command=self.cleanup_all_text_files)
-        toolsMenu.add_separator()
-        toolsMenu.add_command(label="Batch Token Delete...", command=self.batch_token_delete)
-        toolsMenu.add_separator()
-        toolsMenu.add_command(label="Search and Replace", command=self.search_and_replace)
-        toolsMenu.add_command(label="Prefix Text Files", command=self.prefix_text_files)
-        toolsMenu.add_command(label="Append Text Files", command=self.append_text_files)
-        toolsMenu.add_separator()
-        toolsMenu.add_command(label="Delete img-txt Pair", command=self.delete_pair)
+        self.toolsMenu.add_command(label="Open Directory...", command=self.open_current_directory)
+        self.toolsMenu.add_command(label="Open Image...", command=self.open_current_image)
+        self.toolsMenu.add_separator()
+        self.toolsMenu.add_command(label="Cleanup Text", command=self.cleanup_all_text_files)
+        self.toolsMenu.add_separator()
+        self.toolsMenu.add_command(label="Batch Token Delete...", command=self.batch_token_delete)
+        self.toolsMenu.add_separator()
+        self.toolsMenu.add_command(label="Search and Replace", command=self.search_and_replace)
+        self.toolsMenu.add_command(label="Prefix Text Files", command=self.prefix_text_files)
+        self.toolsMenu.add_command(label="Append Text Files", command=self.append_text_files)
+        self.toolsMenu.add_separator()
+        self.toolsMenu.add_command(label="Delete img-txt Pair", command=self.delete_pair)
+        self.toolsMenu.add_command(label="Undo Delete", command=self.undo_delete_pair, state="disabled")
 
 #endregion
 ################################################################################################################################################
@@ -577,6 +580,7 @@ class ImgTxtViewer:
         imageContext_menu.add_command(label="Open Image...", command=self.open_current_image)
         imageContext_menu.add_separator()
         imageContext_menu.add_command(label="Delete img-txt Pair" + ' ' * 8 + "Del", command=self.delete_pair)
+        imageContext_menu.add_command(label="Undo Delete", command=self.undo_delete_pair, state=self.undo_state.get())
         imageContext_menu.add_separator()
         imageContext_menu.add_command(label="Swap img/txt sides", command=self.swap_master_frames)
         imageContext_menu.add_separator()
@@ -1492,13 +1496,42 @@ class ImgTxtViewer:
         except ValueError:
             return
         if messagebox.askokcancel("Warning", "This will move the img-txt pair to a local trash folder.\n\nThe trash folder will be created in the selected directory."):
-            trash_dir = os.path.join(os.path.dirname(self.image_files[self.current_index]), "Trash")
-            os.makedirs(trash_dir, exist_ok=True)
-            for file_list in [self.image_files, self.text_files]:
-                os.rename(file_list[self.current_index], os.path.join(trash_dir, os.path.basename(file_list[self.current_index])))
-                del file_list[self.current_index]
-            self.total_images_label.config(text=f"/{len(self.image_files)}")
-            self.show_pair()
+            if self.current_index < len(self.image_files):
+                trash_dir = os.path.join(os.path.dirname(self.image_files[self.current_index]), "Trash")
+                os.makedirs(trash_dir, exist_ok=True)
+                deleted_pair = []
+                for file_list in [self.image_files, self.text_files]:
+                    trash_file = os.path.join(trash_dir, os.path.basename(file_list[self.current_index]))
+                    os.rename(file_list[self.current_index], trash_file)
+                    deleted_pair.append((file_list, self.current_index, trash_file))
+                    del file_list[self.current_index]
+                self.deleted_pairs.append(deleted_pair)
+                self.total_images_label.config(text=f"/{len(self.image_files)}")
+                self.show_pair()
+                self.undo_state.set("normal")
+                self.toolsMenu.entryconfig("Undo Delete", state="normal")
+
+            else:
+                print("Index out of range. No more files to delete.")
+
+    def undo_delete_pair(self):
+        try:
+            self.check_directory()
+        except ValueError:
+            return
+        if not self.deleted_pairs:
+            print("No files to restore.")
+            return
+        deleted_pair = self.deleted_pairs.pop()
+        for file_list, index, trash_file in deleted_pair:
+            original_path = os.path.join(self.image_dir.get(), os.path.basename(trash_file))
+            os.rename(trash_file, original_path)
+            file_list.insert(index, original_path)
+        self.total_images_label.config(text=f"/{len(self.image_files)}")
+        self.show_pair()
+        if not self.deleted_pairs:
+            self.undo_state.set("disabled")
+            self.toolsMenu.entryconfig("Undo Delete", state="disabled")
 
 #endregion
 ################################################################################################################################################
@@ -1542,7 +1575,8 @@ root.mainloop()
     - Several changes and additions to the options and tools menu. Just exposing features, nothing new. [#0e8818d][0e8818d]
     - `.jfif` file support added. Like '.jpg_large', these files are simply renamed to '.jpg' [#9d6e167][9d6e167]
       - Duplicate files are handled by appending an underscore and a padded 3-digit number. E.g. "_001" [#6cdd0d4][6cdd0d4]
-    - `e621` tag dictionary added. [#ade503e][ade503e]
+    - `e621` tag dictionary added. [#ade503e][ade503e], [#4c92655][4c92655], [#a66938e][a66938e]
+    - `Undo Delete` You can now restore deleted img-txt pairs.
 
 <br>
 
@@ -1566,6 +1600,8 @@ root.mainloop()
 [9d6e167]: https://github.com/Nenotriple/img-txt_viewer/commit/9d6e1670b6aff6d190041a2f4b9ac9b03649ecd3
 [6cdd0d4]: https://github.com/Nenotriple/img-txt_viewer/commit/6cdd0d45927072f0a0792a6b0007a7a7a164f819
 [ade503e]: https://github.com/Nenotriple/img-txt_viewer/commit/ade503eaeffbf9f45290c9d0bb5e2fc6b1da8ca5
+[4c92655]: https://github.com/Nenotriple/img-txt_viewer/commit/4c9265528f694389571010df7b7dbec67a656733
+[a66938e]: https://github.com/Nenotriple/img-txt_viewer/commit/a66938ed25b184452e59b2f60e70e3e733d7c484
 
 <!-- Fixed -->
 [3ae6e13]: https://github.com/Nenotriple/img-txt_viewer/commit/3ae6e13c87a7b5519762d14f7937fe4d273f87bb
