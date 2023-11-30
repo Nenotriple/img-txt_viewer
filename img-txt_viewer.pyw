@@ -224,6 +224,8 @@ class Autocomplete:
                     score += 1
                 else:
                     break
+        if self.data[suggestion][0] == '' and suggestion[:3] == text[:3]:
+            score += 1
         return score
 
 #endregion
