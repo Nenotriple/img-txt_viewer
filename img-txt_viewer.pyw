@@ -626,6 +626,7 @@ class ImgTxtViewer:
         return True
 
     def update_suggestions(self, event=None):
+        tags_with_underscore = self.get_tags_with_underscore()
         if event is None:
             event = type('', (), {})()
             event.keysym = ''
@@ -647,7 +648,7 @@ class ImgTxtViewer:
         if current_word:
             suggestions = self.autocomplete.autocomplete(current_word)
             suggestions.sort(key=lambda x: self.autocomplete.get_score(x[0], current_word), reverse=True)
-            self.suggestions = [(suggestion[0].replace("_", " "), suggestion[1]) for suggestion in suggestions]
+            self.suggestions = [(suggestion[0].replace("_", " ") if suggestion[0] not in tags_with_underscore else suggestion[0], suggestion[1]) for suggestion in suggestions]
             if self.suggestions:
                 self.highlight_suggestions()
             else:
@@ -756,6 +757,9 @@ class ImgTxtViewer:
                 writer.writerow(["supercalifragilisticexpialidocious"])
         os.system(f'start {csv_filename}')
         self.change_autocomplete_dictionary()
+
+    def get_tags_with_underscore(self):
+        return {"0_0", "o_o", "x_x", "|_|", "._.", "^_^", ">_<", "@_@", ">_@", "+_+", "+_-", "=_=", "<o>_<o>", "<|>_<|>"}
 
 #endregion
 ################################################################################################################################################
@@ -1531,35 +1535,45 @@ root.mainloop()
 [v1.79 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.79)
   - New:
     - Danbooru suggestions are now colored based on their classification, just like when using the website. [#1a5cea1][1a5cea1]
-    - Several changes and additions to the options/tools menu. Just exposing features, nothing new. [#0e8818d][0e8818d]
+    - Several changes and additions to the options and tools menu. Just exposing features, nothing new. [#0e8818d][0e8818d]
     - `.jfif` file support added. Like '.jpg_large', these files are simply renamed to '.jpg' [#9d6e167][9d6e167]
-      - Duplicate files are handled by appending an underscore and a 3-digit number. E.g. "_001" [#6cdd0d4][6cdd0d4]
+      - Duplicate files are handled by appending an underscore and a padded 3-digit number. E.g. "_001" [#6cdd0d4][6cdd0d4]
 
 <br>
 
   - Fixed:
     - The app now always opens in the center of the screen. [#3ae6e13][3ae6e13]
     - Most new windows now open directly beside the main window. [#a943cfd][a943cfd]
+    - Expression/smiley emotes that should include an underscore now insert and display properly.
+      - Please feel free to submit an issue if you come across any tags that should include an underscore!
 
 <br>
 
-  - Other Changes:
+  - Other changes:
     - Suggestion style and alignment menu have been removed.  [#1a5cea1][1a5cea1]
-    - Other changes: [#dd863c0][dd863c0], [#9dac3bf][9dac3bf], [#85ebb01][85ebb01], [#2e6804f][2e6804f], [#b3f02fb][b3f02fb]
+    - English Dictionary: ~47,000 words were given an increased priority. [#33d717c][33d717c]
+    - Danbooru tags: ~100 unnecessary tags removed. [#8d07b66][8d07b66]
+    - Other changes: [#dd863c0][dd863c0], [#9dac3bf][9dac3bf], [#85ebb01][85ebb01], [#2e6804f][2e6804f], [#b3f02fb][b3f02fb], [#dc92a2f][dc92a2f]
 
+<!-- New -->
 [1a5cea1]: https://github.com/Nenotriple/img-txt_viewer/commit/1a5cea1cec326a071ce512519dda35c73a03cd51
 [0e8818d]: https://github.com/Nenotriple/img-txt_viewer/commit/0e8818dff7229055441af9871136ca10c981f5de
 [9d6e167]: https://github.com/Nenotriple/img-txt_viewer/commit/9d6e1670b6aff6d190041a2f4b9ac9b03649ecd3
 [6cdd0d4]: https://github.com/Nenotriple/img-txt_viewer/commit/6cdd0d45927072f0a0792a6b0007a7a7a164f819
 
+<!-- Fixed -->
 [3ae6e13]: https://github.com/Nenotriple/img-txt_viewer/commit/3ae6e13c87a7b5519762d14f7937fe4d273f87bb
 [a943cfd]: https://github.com/Nenotriple/img-txt_viewer/commit/a943cfd2112bc9a7da051900987b0b32269d5cb5
 
+<!-- Other changes -->
+[33d717c]: https://github.com/Nenotriple/img-txt_viewer/commit/33d717c4e34d11158a5bd72ab44c56ce36429055
+[8d07b66]: https://github.com/Nenotriple/img-txt_viewer/commit/8d07b66078f379658eb13e3d2a87076c4297d3af
 [dd863c0]: https://github.com/Nenotriple/img-txt_viewer/commit/dd863c0450cc47b314a91c89566bd2eb59b3041d
 [9dac3bf]: https://github.com/Nenotriple/img-txt_viewer/commit/9dac3bfc3fd9998301350bbe056cb92ca16076ce
 [85ebb01]: https://github.com/Nenotriple/img-txt_viewer/commit/85ebb01ce599efa533d3cca873629f89f4721574
 [2e6804f]: https://github.com/Nenotriple/img-txt_viewer/commit/2e6804ffd046b3927332aa93f14b18d5f534d1b9
 [b3f02fb]: https://github.com/Nenotriple/img-txt_viewer/commit/b3f02fb67b85b387959491a29f106689ba3c5ea6
+[dc92a2f]: https://github.com/Nenotriple/img-txt_viewer/commit/dc92a2f325fe452ec0d414308f1c7e6310aa3c31
 
 '''
 
