@@ -309,23 +309,6 @@ class ImgTxtViewer:
         optionsMenu = Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Options", menu=optionsMenu)
 
-        # Max Image Size Menu
-        sizeMenu = Menu(optionsMenu, tearoff=0)
-        optionsMenu.add_cascade(label="Max Image Size", menu=sizeMenu)
-        self.sizes = [("Smaller", 512),
-                      ("Small",    650),
-                      ("Medium",   900),
-                      ("Large",    1200),
-                      ("Larger",  1352)]
-        for size in self.sizes:
-            sizeMenu.add_radiobutton(label=size[0], variable=self.max_img_width, value=size[1], command=lambda s=size: self.save_text_file())
-
-        # Clean On Save Setting
-        optionsMenu.add_checkbutton(label="Clean Text on Save", variable=self.cleaning_text)
-
-        # Highlighting Duplicates
-        optionsMenu.add_checkbutton(label="Highlighting Duplicates", variable=self.highlighting_duplicates)
-
         # Edit Suggestions
         optionsMenu.add_separator()
         optionsMenu.add_command(label="Edit Custom Suggestions...", command=self.create_and_open_custom_dictionary)
@@ -350,6 +333,18 @@ class ImgTxtViewer:
         optionsMenu.add_separator()
         optionsMenu.add_command(label="Font Options", command=self.set_font)
         optionsMenu.add_separator()
+
+        # Max Image Size Menu
+        sizeMenu = Menu(optionsMenu, tearoff=0)
+        optionsMenu.add_cascade(label="Max Image Size", menu=sizeMenu)
+        self.sizes = [("Smaller", 512),
+                      ("Small",    650),
+                      ("Medium",   900),
+                      ("Large",    1200),
+                      ("Larger",  1352)]
+        for size in self.sizes:
+            sizeMenu.add_radiobutton(label=size[0], variable=self.max_img_width, value=size[1], command=lambda s=size: self.save_text_file())
+
         optionsMenu.add_checkbutton(label="Highlighting Duplicates", variable=self.highlighting_duplicates)
         optionsMenu.add_checkbutton(label="Cleaning Text on Save", variable=self.cleaning_text)
         optionsMenu.add_checkbutton(label="Big Comma Mode", variable=self.bold_commas, command=self.toggle_big_comma_mode)
@@ -1041,7 +1036,7 @@ class ImgTxtViewer:
         dialog.focus_force()
         self.position_dialog(dialog, 220, 100)
         dialog.geometry("220x100")
-        dialog.title("Font and Size")
+        dialog.title("Font Options")
         dialog.attributes('-toolwindow', True)
         dialog.resizable(False, False)
         Label(dialog, text="Font:").pack()
@@ -1607,7 +1602,7 @@ root.mainloop()
     - Suggestion style and alignment menu have been removed.  [#1a5cea1][1a5cea1]
     - English Dictionary: ~47,000 words were given an increased priority. [#33d717c][33d717c]
     - Danbooru tags: ~100 unnecessary tags removed. [#8d07b66][8d07b66]
-    - Other changes: [#dd863c0][dd863c0], [#9dac3bf][9dac3bf], [#85ebb01][85ebb01], [#2e6804f][2e6804f], [#b3f02fb][b3f02fb], [#dc92a2f][dc92a2f], [#f8ca427][f8ca427], [#56e4519][56e4519], [#723f289][723f289]
+    - Other changes: [#dd863c0][dd863c0], [#9dac3bf][9dac3bf], [#85ebb01][85ebb01], [#2e6804f][2e6804f], [#b3f02fb][b3f02fb], [#dc92a2f][dc92a2f], [#f8ca427][f8ca427], [#56e4519][56e4519], [#723f289][723f289], [#48f8d4f][48f8d4f]
 
 <!-- New -->
 [1a5cea1]: https://github.com/Nenotriple/img-txt_viewer/commit/1a5cea1cec326a071ce512519dda35c73a03cd51
@@ -1637,6 +1632,7 @@ root.mainloop()
 [f8ca427]: https://github.com/Nenotriple/img-txt_viewer/commit/f8ca4279d8ac62b2f96f77ce523e62ce414f999b
 [56e4519]: https://github.com/Nenotriple/img-txt_viewer/commit/56e4519b7882c7cb17719815f78e03c4467c9694
 [723f289]: https://github.com/Nenotriple/img-txt_viewer/commit/723f289091ab198f58bf055e482d800ae0a76a01
+[48f8d4f]: https://github.com/Nenotriple/img-txt_viewer/commit/48f8d4fc5b861620bc3b17262dfb1104e4677fae
 
 
 '''
