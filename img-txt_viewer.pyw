@@ -256,6 +256,7 @@ class ImgTxtViewer:
         self.set_icon()
 
         # Variables
+        self.panes_swapped = False
         self.text_modified = False
         self.user_selected_no = False
         self.is_alt_arrow_pressed = False
@@ -271,7 +272,7 @@ class ImgTxtViewer:
         self.deleted_pairs = []
 
         # Settings
-        self.max_img_width = IntVar(value=900)
+        self.max_img_width = IntVar(value=2500)
         self.undo_state = StringVar(value="disabled")
         self.image_dir = StringVar(value="Choose Directory")
         self.list_mode = BooleanVar(value=False)
@@ -338,10 +339,8 @@ class ImgTxtViewer:
         sizeMenu = Menu(optionsMenu, tearoff=0)
         optionsMenu.add_cascade(label="Max Image Size", menu=sizeMenu)
         self.sizes = [("Smaller", 512),
-                      ("Small",    650),
-                      ("Medium",   900),
-                      ("Large",    1200),
-                      ("Larger",  1352)]
+                      ("Normal",  2500),
+                      ("Larger",  4000)]
         for size in self.sizes:
             sizeMenu.add_radiobutton(label=size[0], variable=self.max_img_width, value=size[1], command=lambda s=size: self.save_text_file())
 
@@ -350,7 +349,7 @@ class ImgTxtViewer:
         optionsMenu.add_checkbutton(label="Big Comma Mode", variable=self.bold_commas, command=self.toggle_big_comma_mode)
         optionsMenu.add_checkbutton(label="List View", variable=self.list_mode, command=self.toggle_list_mode)
         optionsMenu.add_separator()
-        optionsMenu.add_command(label="Swap img-txt sides", command=self.swap_master_frames)
+        optionsMenu.add_command(label="Swap img-txt sides", command=self.swap_panes)
         optionsMenu.add_checkbutton(label="Always On Top", command=self.toggle_always_on_top)
 
 ####### Tools Menu ##################################################
@@ -379,13 +378,20 @@ class ImgTxtViewer:
 #region -  Buttons, Labels, and more #
 #                                    #
 
-        # This frame serves as a container for all primary UI frames, with the exception of the master_image_frame.
-        self.master_control_frame = Frame(master)
-        self.master_control_frame.pack(side=RIGHT, padx=2, pady=2, fill=BOTH, expand=True, anchor="n")
+        # This PanedWindow holds both master frames.
+        self.paned_window = PanedWindow(master, orient=HORIZONTAL, sashwidth=10, bg="#d0d0d0", bd=0)
+        self.paned_window.pack(fill=BOTH, expand=1)
+        self.paned_window.bind('<ButtonRelease-1>', self.snap_sash_to_half)
 
         # This frame is exclusively used for the displayed image.
         self.master_image_frame = Frame(master)
-        self.master_image_frame.pack(side=LEFT)
+        self.paned_window.add(self.master_image_frame)
+
+        # This frame serves as a container for all primary UI frames, with the exception of the master_image_frame.
+        self.master_control_frame = Frame(master)
+        self.paned_window.add(self.master_control_frame)
+        self.paned_window.paneconfigure(self.master_control_frame, minsize=275)
+        self.paned_window.sash_place(0, 5, 0)
 
         # Suggestion Label
         self.suggestion_textbox = Text(self.master_control_frame, height=1, borderwidth=0, highlightthickness=0, bg='#f0f0f0')
@@ -437,6 +443,7 @@ class ImgTxtViewer:
         self.auto_save_checkbutton = Checkbutton(saved_label_frame, text="Auto-save", variable=self.auto_save_var, command=self.change_label)
         self.auto_save_checkbutton.pack(side=RIGHT)
         self.saved_label(saved_label_frame)
+
 
 #endregion
 ################################################################################################################################################
@@ -537,26 +544,25 @@ class ImgTxtViewer:
     def display_text_box(self):
         self.suggestion_textbox.pack(side=TOP, fill=X)
         self.text_box.pack(side=TOP, expand=YES, fill=BOTH)
-        ToolTip.create_tooltip(
-            self.suggestion_textbox,
-            "TAB: insert highlighted suggestion\n"
-            "ALT: Cycle suggestions\n\n"
-            "Danbooru Color Code:\n"
-            "  Black = Normal Tag\n"
-            "  Red = Artist\n"
-            "  Purple = Copyright\n"
-            "  Green = Character\n"
-            "  Orange = Other\n\n"
-            "e621 Color Code:\n"
-            "  Black = General\n"
-            "  Light Orange = Artist\n"
-            "  Purple = Copyright\n"
-            "  Green = Character\n"
-            "  Dark Orange = Species\n"
-            "  Red = Invalid, Meta\n"
-            "  Dark Green = Lore",
-            1000, 6, 4
-        )
+        ToolTip.create_tooltip(self.suggestion_textbox,
+                               "TAB: insert highlighted suggestion\n"
+                               "ALT: Cycle suggestions\n\n"
+                               "Danbooru Color Code:\n"
+                               "  Black = Normal Tag\n"
+                               "  Red = Artist\n"
+                               "  Purple = Copyright\n"
+                               "  Green = Character\n"
+                               "  Orange = Other\n\n"
+                               "e621 Color Code:\n"
+                               "  Black = General\n"
+                               "  Light Orange = Artist\n"
+                               "  Purple = Copyright\n"
+                               "  Green = Character\n"
+                               "  Dark Orange = Species\n"
+                               "  Red = Invalid, Meta\n"
+                               "  Dark Green = Lore",
+                               1000, 6, 4
+                               )
 
     def display_index_frame(self):
         if not hasattr(self, 'index_frame'):
@@ -607,11 +613,41 @@ class ImgTxtViewer:
         imageContext_menu.add_command(label="Delete img-txt Pair" + ' ' * 8 + "Del", command=self.delete_pair)
         imageContext_menu.add_command(label="Undo Delete", command=self.undo_delete_pair, state=self.undo_state.get())
         imageContext_menu.add_separator()
-        imageContext_menu.add_command(label="Swap img/txt sides", command=self.swap_master_frames)
+        imageContext_menu.add_command(label="Swap img/txt sides", command=self.swap_panes)
         imageContext_menu.add_separator()
         for size in self.sizes:
             imageContext_menu.add_radiobutton(label=size[0], variable=self.max_img_width, value=size[1], command=lambda s=size: self.save_text_file())
         imageContext_menu.tk_popup(event.x_root, event.y_root)
+
+    def configure_pane_position(self):
+        window_width = self.master.winfo_width()
+        self.paned_window.sash_place(0, window_width // 2, 0)
+        self.paned_window.paneconfigure(self.master_image_frame, minsize=100)
+
+    def swap_panes(self):
+        self.paned_window.remove(self.master_image_frame)
+        self.paned_window.remove(self.master_control_frame)
+        if not self.panes_swapped:
+            self.paned_window.add(self.master_control_frame)
+            self.paned_window.add(self.master_image_frame)
+        else:
+            self.paned_window.add(self.master_image_frame)
+            self.paned_window.add(self.master_control_frame)
+        self.configure_pane_position()
+        self.paned_window.paneconfigure(self.master_control_frame, minsize=275)
+        self.panes_swapped = not self.panes_swapped
+
+    def snap_sash_to_half(self, event):
+        total_width = self.paned_window.winfo_width()
+        half_point = int(total_width / 2)
+        sash_pos = self.paned_window.sash_coord(0)[0]
+        if abs(sash_pos - half_point) < 75:
+            self.paned_window.sash_place(0, half_point, 0)
+
+    def toggle_always_on_top(self):
+        current_state = root.attributes('-topmost')
+        new_state = 0 if current_state == 1 else 1
+        root.attributes('-topmost', new_state)
 
     def set_icon(self):
         if getattr(sys, 'frozen', False):
@@ -888,6 +924,7 @@ class ImgTxtViewer:
         if self.new_text_files:
             self.create_blank_textfiles(self.new_text_files)
         self.show_pair()
+        self.configure_pane_position()
         self.directory_button.config(relief=GROOVE)
         if hasattr(self, 'total_images_label'):
             self.total_images_label.config(text=f"/{len(self.image_files)}")
@@ -1358,19 +1395,6 @@ class ImgTxtViewer:
         except:
             pass
 
-    def swap_master_frames(self):
-        if self.master_control_frame.pack_info()['side'] == 'right':
-            self.master_control_frame.pack(side='left')
-            self.master_image_frame.pack(side='right')
-        else:
-            self.master_control_frame.pack(side='right')
-            self.master_image_frame.pack(side='left')
-
-    def toggle_always_on_top(self):
-        current_state = root.attributes('-topmost')
-        new_state = 0 if current_state == 1 else 1
-        root.attributes('-topmost', new_state)
-
     def disable_button(self, event):
         return "break"
 
@@ -1578,9 +1602,9 @@ class ImgTxtViewer:
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
     def set_window_size(self, master):
-        master.minsize(965, 300) # Width x Height
-        window_width = 1290
-        window_height = 645
+        master.minsize(400, 300) # Width x Height
+        window_width = 1280
+        window_height = 660
         position_right = root.winfo_screenwidth()//2 - window_width//2
         position_top = root.winfo_screenheight()//2 - window_height//2
         root.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
@@ -1604,8 +1628,11 @@ root.mainloop()
 
 [v1.79 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.79)
   - New:
-    - Suggestions now display colored text based on Danbooru tag color classification. [#1a5cea1][1a5cea1]
-      - Tag colors: ${\textsf{\color{black}General tags}}$, ${\textsf{\color{red}Artists}}$, ${\textsf{\color{purple}Copyright}}$, ${\textsf{\color{green}Characters}}$, ${\textsf{\color{orange}Meta}}$
+    - The image and text+controls are now contained in a PanedWindow, this allows you to drag and resize these frames.
+      - This makes image and text sizing very flexible!
+    - Suggestions now display colored text based on the tag color classification. [#1a5cea1][1a5cea1]
+      - Danbooru color code: ${\textsf{\color{black}General tags}}$, ${\textsf{\color{#c00004}Artists}}$, ${\textsf{\color{#a800aa}Copyright}}$, ${\textsf{\color{#00ab2c}Characters}}$, ${\textsf{\color{#fd9200}Meta}}$
+      - e621 color code: ${\textsf{\color{black}General tags}}$, ${\textsf{\color{#f2ac08}Artists}}$, ${\textsf{\color{#dd00dd}Copyright}}$, ${\textsf{\color{#00aa00}Characters}}$, ${\textsf{\color{#ed5d1f}Species}}$, ${\textsf{\color{#ff3d3d}Meta}}$, ${\textsf{\color{#228822}Lore}}$
     - Several changes and additions to the options and tools menu. Just exposing features, nothing new. [#0e8818d][0e8818d]
     - `.jfif` file support added. Like '.jpg_large', these files are simply renamed to '.jpg' [#9d6e167][9d6e167]
       - Duplicate files are handled by appending an underscore and a padded 3-digit number. E.g. "_001" [#6cdd0d4][6cdd0d4]
@@ -1629,7 +1656,7 @@ root.mainloop()
     - Suggestion style and alignment menu have been removed.  [#1a5cea1][1a5cea1]
     - English Dictionary: ~47,000 words were given an increased priority. [#33d717c][33d717c]
     - Danbooru tags: ~100 unnecessary tags removed. [#8d07b66][8d07b66]
-    - Other changes: [#dd863c0][dd863c0], [#9dac3bf][9dac3bf], [#85ebb01][85ebb01], [#2e6804f][2e6804f], [#b3f02fb][b3f02fb], [#dc92a2f][dc92a2f], [#f8ca427][f8ca427], [#56e4519][56e4519], [#723f289][723f289], [#48f8d4f][48f8d4f]
+    - Other changes: [#dd863c0][dd863c0], [#9dac3bf][9dac3bf], [#85ebb01][85ebb01], [#2e6804f][2e6804f], [#b3f02fb][b3f02fb], [#dc92a2f][dc92a2f], [#f8ca427][f8ca427], [#56e4519][56e4519], [#723f289][723f289], [#48f8d4f][48f8d4f], [#d36140f][d36140f]
 
 <!-- New -->
 [1a5cea1]: https://github.com/Nenotriple/img-txt_viewer/commit/1a5cea1cec326a071ce512519dda35c73a03cd51
@@ -1662,7 +1689,7 @@ root.mainloop()
 [56e4519]: https://github.com/Nenotriple/img-txt_viewer/commit/56e4519b7882c7cb17719815f78e03c4467c9694
 [723f289]: https://github.com/Nenotriple/img-txt_viewer/commit/723f289091ab198f58bf055e482d800ae0a76a01
 [48f8d4f]: https://github.com/Nenotriple/img-txt_viewer/commit/48f8d4fc5b861620bc3b17262dfb1104e4677fae
-
+[d36140f]: https://github.com/Nenotriple/img-txt_viewer/commit/d36140fcb53fd1a5290fdfcc5db511d236ed89ad
 
 '''
 
