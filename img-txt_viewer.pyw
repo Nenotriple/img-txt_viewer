@@ -1517,10 +1517,11 @@ class ImgTxtViewer:
                     del file_list[self.current_index]
                 self.deleted_pairs.append(deleted_pair)
                 self.total_images_label.config(text=f"/{len(self.image_files)}")
+                if self.current_index >= len(self.image_files):
+                    self.current_index = len(self.image_files) - 1
                 self.show_pair()
                 self.undo_state.set("normal")
                 self.toolsMenu.entryconfig("Undo Delete", state="normal")
-
             else:
                 print("Index out of range. No more files to delete.")
 
