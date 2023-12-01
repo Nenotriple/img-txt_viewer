@@ -111,7 +111,7 @@ def delete_token(directory, token, filter_text='', confirm_prompt=True):
                 if filter_text and not fuzzy_search(filter_text.lower(), lines.lower()):
                     file.write(lines)
                 else:
-                    new_line = cleanup_text(new_line)  # Call cleanup_text here
+                    new_line = cleanup_text(new_line)
                     file.write(new_line)
     parent.destroy()
 
@@ -256,6 +256,7 @@ def main(directory=None):
     root.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
     root.minsize(400, 100)
     root.maxsize(490, 2000)
+    root.focus_force()
 
     # Count tokens in the directory
     token_dict = count_tokens(directory)
@@ -311,13 +312,16 @@ if __name__ == "__main__":
 v1.04 changes:
 
   - New:
-    - The window now opens in the center of the screen.
+    - The window now opens in the center of the screen. [#dfc396d][dfc396d]
+    - The window now always opens in focus.
 
 <br>
 
   - Fixed:
     -
 
+
+[dfc396d]: https://github.com/Nenotriple/img-txt_viewer/commit/dfc396d36b95fe6fc42ad9144008d839eb2e2dd5
 '''
 
 ################################################################################################################################################
