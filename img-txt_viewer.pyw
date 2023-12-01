@@ -1628,7 +1628,7 @@ root.mainloop()
 
 [v1.79 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.79)
   - New:
-    - The image and text+controls are now contained in a PanedWindow, this allows you to drag and resize these frames.
+    - The img-txt pair is now contained in a PanedWindow, this allows you to drag and resize these frames. [#0237473][0237473]
       - This makes image and text sizing very flexible!
     - Suggestions now display colored text based on the tag color classification. [#1a5cea1][1a5cea1]
       - Danbooru color code: ${\textsf{\color{black}General tags}}$, ${\textsf{\color{#c00004}Artists}}$, ${\textsf{\color{#a800aa}Copyright}}$, ${\textsf{\color{#00ab2c}Characters}}$, ${\textsf{\color{#fd9200}Meta}}$
@@ -1659,6 +1659,7 @@ root.mainloop()
     - Other changes: [#dd863c0][dd863c0], [#9dac3bf][9dac3bf], [#85ebb01][85ebb01], [#2e6804f][2e6804f], [#b3f02fb][b3f02fb], [#dc92a2f][dc92a2f], [#f8ca427][f8ca427], [#56e4519][56e4519], [#723f289][723f289], [#48f8d4f][48f8d4f], [#d36140f][d36140f]
 
 <!-- New -->
+[0237473]: https://github.com/Nenotriple/img-txt_viewer/commit/0237473dea9f27d30a959adf49fd6f5cec63d375
 [1a5cea1]: https://github.com/Nenotriple/img-txt_viewer/commit/1a5cea1cec326a071ce512519dda35c73a03cd51
 [0e8818d]: https://github.com/Nenotriple/img-txt_viewer/commit/0e8818dff7229055441af9871136ca10c981f5de
 [9d6e167]: https://github.com/Nenotriple/img-txt_viewer/commit/9d6e1670b6aff6d190041a2f4b9ac9b03649ecd3
