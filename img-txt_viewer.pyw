@@ -759,20 +759,6 @@ class ImgTxtViewer:
         self.autocomplete.max_suggestions = suggestion_quantity
         self.update_suggestions(event=None)
 
-    def create_and_open_custom_dictionary(self):
-        csv_filename = 'my_tags.csv'
-        if not os.path.isfile(csv_filename):
-            with open(csv_filename, 'w', newline='') as file:
-                writer = csv.writer(file)
-                writer.writerow(["### This is where you can create a custom dictionary of tokens/tags."])
-                writer.writerow(["### These tokens will be loaded alongside the chosen autocomplete dictionary."])
-                writer.writerow(["### Lines starting with 3 pound symbols '###' will be ignored so you can create comments."])
-                writer.writerow(["### Tags near the top of the list have a higher priority than lower tags."])
-                writer.writerow([])
-                writer.writerow(["supercalifragilisticexpialidocious"])
-        subprocess.Popen(f'start {csv_filename}', shell=True)
-        self.change_autocomplete_dictionary()
-
     def get_tags_with_underscore(self):
         return {"0_0", "o_o", "x_x", "|_|", "._.", "^_^", ">_<", "@_@", ">_@", "+_+", "+_-", "=_=", "<o>_<o>", "<|>_<|>"}
 
@@ -1500,6 +1486,20 @@ class ImgTxtViewer:
             elif result == "no":
                 self.user_selected_no = True
 
+    def create_and_open_custom_dictionary(self):
+        csv_filename = 'my_tags.csv'
+        if not os.path.isfile(csv_filename):
+            with open(csv_filename, 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(["### This is where you can create a custom dictionary of tokens/tags."])
+                writer.writerow(["### These tokens will be loaded alongside the chosen autocomplete dictionary."])
+                writer.writerow(["### Lines starting with 3 hash symbols '###' will be ignored so you can create comments."])
+                writer.writerow(["### Tags near the top of the list have a higher priority than lower tags."])
+                writer.writerow([])
+                writer.writerow(["supercalifragilisticexpialidocious"])
+        subprocess.Popen(f'start {csv_filename}', shell=True)
+        self.change_autocomplete_dictionary()
+
     def delete_pair(self):
         try:
             self.check_directory()
@@ -1598,7 +1598,8 @@ root.mainloop()
     - Most new windows now open directly beside the main window. [#a943cfd][a943cfd]
     - Expression/smiley emotes that should include an underscore now insert and display properly. [#5c41ffe][5c41ffe]
       - Please feel free to submit an issue if you come across any tags that should include an underscore!
-    - Fixed annoying behaviour of "Font Options" dropdown boxes. 
+    - Fixed annoying behaviour of "Font Options" dropdown boxes. [#e65f107][e65f107]
+    - Fix for IndexError in delete_pair function. [#e12a73f][e12a73f]
 
 <br>
 
@@ -1623,6 +1624,8 @@ root.mainloop()
 [3ae6e13]: https://github.com/Nenotriple/img-txt_viewer/commit/3ae6e13c87a7b5519762d14f7937fe4d273f87bb
 [a943cfd]: https://github.com/Nenotriple/img-txt_viewer/commit/a943cfd2112bc9a7da051900987b0b32269d5cb5
 [5c41ffe]: https://github.com/Nenotriple/img-txt_viewer/commit/5c41ffeaa322f8056fb36c3075163b7d132ecbaf
+[e65f107]: https://github.com/Nenotriple/img-txt_viewer/commit/e65f107d219f53df95147a96f821ddae05b28961
+[e12a73f]: https://github.com/Nenotriple/img-txt_viewer/commit/e12a73f194e26d3c374bb5f241188e0b2475822e
 
 <!-- Other changes -->
 [33d717c]: https://github.com/Nenotriple/img-txt_viewer/commit/33d717c4e34d11158a5bd72ab44c56ce36429055
