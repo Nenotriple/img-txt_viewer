@@ -537,7 +537,26 @@ class ImgTxtViewer:
     def display_text_box(self):
         self.suggestion_textbox.pack(side=TOP, fill=X)
         self.text_box.pack(side=TOP, expand=YES, fill=BOTH)
-        ToolTip.create_tooltip(self.suggestion_textbox, "TAB: insert highlighted suggestion \nALT: Cycle suggestions\n\nColor Code:\nBlack=Normal Tag\nRed=Artist\nPurple=Copyright\nGreen=Character\nOrange=Other", 1000, 6, 4)
+        ToolTip.create_tooltip(
+            self.suggestion_textbox,
+            "TAB: insert highlighted suggestion\n"
+            "ALT: Cycle suggestions\n\n"
+            "Danbooru Color Code:\n"
+            "  Black = Normal Tag\n"
+            "  Red = Artist\n"
+            "  Purple = Copyright\n"
+            "  Green = Character\n"
+            "  Orange = Other\n\n"
+            "e621 Color Code:\n"
+            "  Black = General\n"
+            "  Light Orange = Artist\n"
+            "  Purple = Copyright\n"
+            "  Green = Character\n"
+            "  Dark Orange = Species\n"
+            "  Red = Invalid, Meta\n"
+            "  Dark Green = Lore",
+            1000, 6, 4
+        )
 
     def display_index_frame(self):
         if not hasattr(self, 'index_frame'):
@@ -752,6 +771,9 @@ class ImgTxtViewer:
             self.autocomplete = Autocomplete('danbooru.csv')
             self.autocomplete.data.update(Autocomplete('dictionary.csv').data)
             self.autocomplete.data.update(Autocomplete('e621.csv').data)
+        elif self.csv_var.get() == 'e621.csv':
+            self.autocomplete = Autocomplete(self.csv_var.get())
+            self.suggestion_colors = {-1: "black", 0: "black", 1: "#f2ac08", 3: "#dd00dd", 4: "#00aa00", 5: "#ed5d1f", 6: "#ff3d3d", 7: "#ff3d3d", 8: "#228822"}
         else:
             self.autocomplete = Autocomplete(self.csv_var.get())
 
