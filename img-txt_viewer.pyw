@@ -32,6 +32,7 @@ import tkinter.font
 from tkinter import *
 from tkinter import ttk, messagebox
 from tkinter.filedialog import askdirectory
+from tkinter.scrolledtext import ScrolledText
 
 ##################
 #                #
@@ -382,6 +383,7 @@ class ImgTxtViewer:
         self.paned_window = PanedWindow(master, orient=HORIZONTAL, sashwidth=10, bg="#d0d0d0", bd=0)
         self.paned_window.pack(fill=BOTH, expand=1)
         self.paned_window.bind('<ButtonRelease-1>', self.snap_sash_to_half)
+        self.paned_window.bind('<Configure>', self.snap_sash_to_half)
 
         # This frame is exclusively used for the displayed image.
         self.master_image_frame = Frame(master)
@@ -390,7 +392,7 @@ class ImgTxtViewer:
         # This frame serves as a container for all primary UI frames, with the exception of the master_image_frame.
         self.master_control_frame = Frame(master)
         self.paned_window.add(self.master_control_frame)
-        self.paned_window.paneconfigure(self.master_control_frame, minsize=275)
+        self.paned_window.paneconfigure(self.master_control_frame, minsize=300)
         self.paned_window.sash_place(0, 5, 0)
 
         # Suggestion Label
@@ -398,11 +400,8 @@ class ImgTxtViewer:
         self.suggestion_colors = {0: "black", 1: "#c00004", 2: "black", 3: "#a800aa", 4: "#00ab2c", 5: "#fd9200"} #0=General tags, 1=Artists, 2=UNUSED, 3=Copyright, 4=Character, 5=Meta
 
         # Text Box
-        self.scrollbar = Scrollbar(self.master_control_frame)
-        self.scrollbar.pack(side=RIGHT, fill=Y)
-        self.text_box = Text(self.master_control_frame, wrap=WORD, undo=True, maxundo=200, yscrollcommand=self.scrollbar.set)
+        self.text_box = ScrolledText(self.master_control_frame, wrap=WORD, undo=True, maxundo=200, inactiveselectbackground="#c8c8c8")
         self.text_box.tag_configure("highlight", background="#5da9be", foreground="white")
-        self.scrollbar.config(command=self.text_box.yview)
 
         # Image Label
         self.image_preview = Label(self.master_image_frame)
@@ -416,22 +415,22 @@ class ImgTxtViewer:
         # Directory Button
         top_button_frame = Frame(self.master_control_frame)
         top_button_frame.pack(side=TOP, fill=X)
-        self.directory_button = Button(top_button_frame, textvariable=self.image_dir, command=self.choose_working_directory)
+        self.directory_button = Button(top_button_frame, overrelief="groove", textvariable=self.image_dir, command=self.choose_working_directory)
         self.directory_button.pack(side=TOP, fill=X)
         self.directory_button.bind('<Button-2>', self.open_current_directory)
         self.directory_button.bind('<Button-3>', self.copy_to_clipboard)
         ToolTip.create_tooltip(self.directory_button, "Right click to copy path\n\nMiddle click to open in file explorer", 1000, 6, 4)
 
         # Save Button
-        self.save_button = Button(top_button_frame, text="Save", command=self.save_text_file, fg="blue")
+        self.save_button = Button(top_button_frame, overrelief="groove", text="Save", fg="blue", command=self.save_text_file)
         self.save_button.pack(side=TOP, fill=X, pady=2)
         ToolTip.create_tooltip(self.save_button, "CTRL+S ", 1000, 6, 4)
 
         # Navigation Buttons
         nav_button_frame = Frame(self.master_control_frame)
         nav_button_frame.pack()
-        self.next_button = Button(nav_button_frame, text="Next--->", command=lambda event=None: self.next_pair(event), width=16)
-        self.prev_button = Button(nav_button_frame, text="<---Previous", command=lambda event=None: self.prev_pair(event), width=16)
+        self.next_button = Button(nav_button_frame, overrelief="groove", text="Next--->", command=lambda event=None: self.next_pair(event), width=16)
+        self.prev_button = Button(nav_button_frame, overrelief="groove", text="<---Previous", command=lambda event=None: self.prev_pair(event), width=16)
         self.next_button.pack(side=RIGHT, padx=2, pady=2)
         self.prev_button.pack(side=RIGHT, padx=2, pady=2)
         ToolTip.create_tooltip(self.next_button, "ALT+R ", 1000, 6, 4)
@@ -440,7 +439,7 @@ class ImgTxtViewer:
         # Saved Label / Autosave
         saved_label_frame = Frame(self.master_control_frame)
         saved_label_frame.pack(pady=2)
-        self.auto_save_checkbutton = Checkbutton(saved_label_frame, text="Auto-save", variable=self.auto_save_var, command=self.change_label)
+        self.auto_save_checkbutton = Checkbutton(saved_label_frame, overrelief="groove", text="Auto-save", variable=self.auto_save_var, command=self.change_label)
         self.auto_save_checkbutton.pack(side=RIGHT)
         self.saved_label(saved_label_frame)
 
@@ -490,7 +489,8 @@ class ImgTxtViewer:
 #region -  Info_Text #
 #                    #
 
-        self.info_text = Text(self.master_control_frame, yscrollcommand=self.scrollbar.set)
+
+        self.info_text = ScrolledText(self.master_control_frame)
         self.info_text.pack(expand=True, fill='both')
         headers = [" Shortcuts:", " Tips:", " Text Tools:", " Auto-Save:"]
         content = [
@@ -622,7 +622,7 @@ class ImgTxtViewer:
     def configure_pane_position(self):
         window_width = self.master.winfo_width()
         self.paned_window.sash_place(0, window_width // 2, 0)
-        self.paned_window.paneconfigure(self.master_image_frame, minsize=100)
+        self.paned_window.paneconfigure(self.master_image_frame, minsize=300)
 
     def swap_panes(self):
         self.paned_window.remove(self.master_image_frame)
@@ -634,8 +634,10 @@ class ImgTxtViewer:
             self.paned_window.add(self.master_image_frame)
             self.paned_window.add(self.master_control_frame)
         self.configure_pane_position()
-        self.paned_window.paneconfigure(self.master_control_frame, minsize=275)
+        self.paned_window.paneconfigure(self.master_control_frame, minsize=300)
         self.panes_swapped = not self.panes_swapped
+
+
 
     def snap_sash_to_half(self, event):
         total_width = self.paned_window.winfo_width()
@@ -925,7 +927,7 @@ class ImgTxtViewer:
             self.create_blank_textfiles(self.new_text_files)
         self.show_pair()
         self.configure_pane_position()
-        self.directory_button.config(relief=GROOVE)
+        self.directory_button.config(relief=GROOVE, overrelief=RIDGE)
         if hasattr(self, 'total_images_label'):
             self.total_images_label.config(text=f"/{len(self.image_files)}")
         self.prev_num_files = len(files_in_dir)
@@ -1208,8 +1210,8 @@ class ImgTxtViewer:
             self.show_pair()
         search_and_replace_button_frame = Frame(dialog)
         search_and_replace_button_frame.pack()
-        Button(search_and_replace_button_frame, text="OK", command=perform_search_and_replace, width=15, relief=RAISED, borderwidth=3).pack(side=LEFT, pady=2, padx=2)
-        Button(search_and_replace_button_frame, text="Cancel", command=close_dialog, width=15).pack(side=LEFT, pady=2, padx=2)
+        Button(search_and_replace_button_frame, overrelief="groove", text="OK", command=perform_search_and_replace, width=15, relief=RAISED, borderwidth=3).pack(side=LEFT, pady=2, padx=2)
+        Button(search_and_replace_button_frame, overrelief="groove", text="Cancel", command=close_dialog, width=15).pack(side=LEFT, pady=2, padx=2)
 
     def prefix_text_files(self):
         try:
@@ -1248,8 +1250,8 @@ class ImgTxtViewer:
             self.show_pair()
         prefix_text_button_frame = Frame(dialog)
         prefix_text_button_frame.pack()
-        Button(prefix_text_button_frame, text="OK", command=lambda: messagebox.askokcancel("Confirmation", f"Are you sure you want to prefix all files with:\n\n'{prefix_text_var.get()}, '", parent=dialog) and perform_prefix_text(), width=15, relief=RAISED, borderwidth=3).pack(side=LEFT, pady=2, padx=2)
-        Button(prefix_text_button_frame, text="Cancel", command=close_dialog, width=15).pack(side=LEFT, pady=2, padx=2)
+        Button(prefix_text_button_frame, overrelief="groove", text="OK", command=lambda: messagebox.askokcancel("Confirmation", f"Are you sure you want to prefix all files with:\n\n'{prefix_text_var.get()}, '", parent=dialog) and perform_prefix_text(), width=15, relief=RAISED, borderwidth=3).pack(side=LEFT, pady=2, padx=2)
+        Button(prefix_text_button_frame, overrelief="groove", text="Cancel", command=close_dialog, width=15).pack(side=LEFT, pady=2, padx=2)
 
     def append_text_files(self):
         try:
@@ -1287,8 +1289,8 @@ class ImgTxtViewer:
             self.show_pair()
         append_text_button_frame = Frame(dialog)
         append_text_button_frame.pack()
-        Button(append_text_button_frame, text="OK", command=lambda: messagebox.askokcancel("Confirmation", f"Are you sure you want to append all files with:\n\n', {append_text_var.get()}'", parent=dialog) and perform_append_text(), width=15, relief=RAISED, borderwidth=3).pack(side=LEFT, pady=2, padx=2)
-        Button(append_text_button_frame, text="Cancel", command=close_dialog, width=15).pack(side=LEFT, pady=2, padx=2)
+        Button(append_text_button_frame, overrelief="groove", text="OK", command=lambda: messagebox.askokcancel("Confirmation", f"Are you sure you want to append all files with:\n\n', {append_text_var.get()}'", parent=dialog) and perform_append_text(), width=15, relief=RAISED, borderwidth=3).pack(side=LEFT, pady=2, padx=2)
+        Button(append_text_button_frame, overrelief="groove", text="Cancel", command=close_dialog, width=15).pack(side=LEFT, pady=2, padx=2)
 
     def clear_entry_field(self, event, entry, default_text):
         if entry.get() == default_text:
@@ -1604,7 +1606,7 @@ class ImgTxtViewer:
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
     def set_window_size(self, master):
-        master.minsize(400, 300) # Width x Height
+        master.minsize(600, 300) # Width x Height
         window_width = 1280
         window_height = 660
         position_right = root.winfo_screenwidth()//2 - window_width//2
@@ -1630,12 +1632,12 @@ root.mainloop()
 
 [v1.80 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.80)
   - New:
-    - 
+    - Small ui tweaks.
 
 <br>
 
   - Fixed:
-    - Fixed bug where a warning triggers after enabling autosave and closing the window without selecting a directory. 
+    - Fixed autosave bug causing warning on window close without directory selection.
 
 <br>
 
