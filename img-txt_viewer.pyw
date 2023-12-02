@@ -34,6 +34,7 @@ from tkinter import *
 from tkinter import ttk, messagebox
 from tkinter.filedialog import askdirectory
 from tkinter.scrolledtext import ScrolledText
+import threading
 
 ##################
 #                #
@@ -260,8 +261,10 @@ class ImgTxtViewer:
         self.set_icon()
 
         # Variables
+        self.process = None
         self.panes_swapped = False
         self.text_modified = False
+        self.thread_running = False
         self.user_selected_no = False
         self.is_alt_arrow_pressed = False
         self.current_index = 0
@@ -1146,16 +1149,14 @@ class ImgTxtViewer:
 #                     #
 
     def batch_token_delete(self):
-        if not self.check_directory():
-            return
         if getattr(sys, 'frozen', False):
             application_path = sys._MEIPASS
         else:
             application_path = os.path.dirname(os.path.abspath(__file__))
         script_path = os.path.join(application_path, 'batch_token_delete.py')
-        subprocess.Popen(["pythonw", script_path, self.image_dir.get()])
-        self.cleanup_all_text_files(show_confirmation=False)
-        self.show_pair()
+        self.process = subprocess.Popen(["pythonw", script_path, self.image_dir.get()])
+        threading.Thread(target=self.watch_files).start()
+        self.thread_running = True
 
     def search_and_replace(self):
         if not self.check_directory():
@@ -1391,6 +1392,24 @@ class ImgTxtViewer:
 #region - Misc Functions #
 #                        #
 
+    # Used to watch the current text file for changes while batch_token_delete is running.
+    def watch_files(self):
+        last_modified_times = {}
+        while self.process.poll() is None and self.thread_running:
+            file_modified = False
+            current_text_file = self.text_files[self.current_index]
+            if os.path.isfile(current_text_file):
+                last_modified = os.path.getmtime(current_text_file)
+                if current_text_file in last_modified_times:
+                    if last_modified != last_modified_times[current_text_file]:
+                        last_modified_times[current_text_file] = last_modified
+                        file_modified = True
+                else:
+                    last_modified_times[current_text_file] = last_modified
+            if file_modified:
+                self.show_pair()
+            time.sleep(1)
+
     # Used to position new windows beside the main window.
     def position_dialog(self, dialog, window_width, window_height):
         root_x = self.master.winfo_rootx()
@@ -1486,6 +1505,9 @@ class ImgTxtViewer:
             f.write(text)
 
     def on_closing(self):
+        self.thread_running = False
+        if self.process is not None:
+            self.process.terminate()
         if not os.path.isdir(self.image_dir.get()):
             root.destroy()
         elif self.saved_label.cget("text") in ["No Changes", "Saved", "Text Files Cleaned up!"]:
@@ -1595,9 +1617,12 @@ class ImgTxtViewer:
         return filename
 
     def delete_text_backup(self):
-        backup_folder = os.path.join(os.path.dirname(self.text_files[0]), 'text_backup')
-        if os.path.exists(backup_folder):
-            shutil.rmtree(backup_folder)
+        if self.text_files:
+            backup_folder = os.path.join(os.path.dirname(self.text_files[0]), 'text_backup')
+            if os.path.exists(backup_folder):
+                shutil.rmtree(backup_folder)
+        else:
+            pass
 
     def delete_pair(self):
         if not self.check_directory():
@@ -1680,7 +1705,9 @@ root.mainloop()
     - Small ui tweaks. [#22b2764][22b2764]
     - `Fuzzy Search` You can now use an asterisk while typing to "search" for tags. [#05ca179][05ca179]
       - For example: Typing `*lo*b` returns "**lo**oking **b**ack", and even "yel**lo**w **b**ackground"
-    - You can now undo the last operation for search_and_replace, prefix_text, and append_text.
+    - You can now undo the last operation for search_and_replace, prefix_text, and append_text. [#c5be6a2][c5be6a2]
+    - Batch Token Delete no longer locks the main img-txt_viewer window. [#f2f8414][f2f8414]
+      - While Batch Token Delete is open, text files are scanned for changes and automatically updated.
 
 <br>
 
@@ -1690,17 +1717,20 @@ root.mainloop()
 <br>
 
   - Other changes:
-    - PanedWindow adjustments.
+    - PanedWindow adjustments. [#2bfdb3a][2bfdb3a]
+    - Other changes: [#f2f8414][f2f8414]
 
 <!-- New -->
 [22b2764]: https://github.com/Nenotriple/img-txt_viewer/commit/22b2764edbf16e4477dce16bebdf08cf2d3459df
 [05ca179]: https://github.com/Nenotriple/img-txt_viewer/commit/05ca179914d3288108206465d78ab199874b6cc2
+[c5be6a2]: https://github.com/Nenotriple/img-txt_viewer/commit/c5be6a2861192d634777d5c0d5c6d9a8804bbc72
 
 <!-- Fixed -->
 [b3f00a2]: https://github.com/Nenotriple/img-txt_viewer/commit/b3f00a28c82beb2300e78693df5d771802b2cfe4
 
 <!-- Other changes -->
-[]:
+[2bfdb3a]: https://github.com/Nenotriple/img-txt_viewer/commit/2bfdb3a6e4d075f26b6c89ef160e990190d27dc3
+[f2f8414]: https://github.com/Nenotriple/img-txt_viewer/commit/f2f84141f2481fc555fc3a74393f1816f9a199ec
 
 '''
 
