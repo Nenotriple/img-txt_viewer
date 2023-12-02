@@ -1,7 +1,7 @@
 """
 ########################################
 #                                      #
-#          batch_token_delete          #
+#          batch_tag_delete            #
 #                                      #
 #   Version : v1.05                    #
 #   Author  : github.com/Nenotriple    #
@@ -10,12 +10,12 @@
 
 Description:
 -------------
- This script reads the contents of all text files in a selected directory, creating a list of tokens, and their occurence.
+ This script reads the contents of all text files in a selected directory, creating a list of tags, and their occurence.
 
- Tokens are each listed on a separate button beside their occurence, allowing you to easily click a token and delete it from all text files.
+ tags are each listed on a separate button beside their occurence, allowing you to easily click a tag and delete it from all text files.
  Or batch delete using a "less than or equal to" threshold.
 
- Expected text format: "token, token 2, another token here, ..."
+ Expected text format: "tag, tag 2, another tag here, ..."
 
 """
 
@@ -51,22 +51,22 @@ sort_order = 'count'
 # Primary Functions #
 #                   #
 
-def display_tokens(token_dict, directory, scrollable_frame, filter_text=''):
+def display_tags(tag_dict, directory, scrollable_frame, filter_text=''):
     if sort_order == 'alpha':
-        sorted_token_items = sorted(token_dict.items(), key=lambda item: item[0])
+        sorted_tag_items = sorted(tag_dict.items(), key=lambda item: item[0])
     else:
-        sorted_token_items = sorted(token_dict.items(), key=lambda item: item[1], reverse=True)
+        sorted_tag_items = sorted(tag_dict.items(), key=lambda item: item[1], reverse=True)
     for widget in scrollable_frame.winfo_children():
         widget.destroy()
     scrollable_frame.canvas.configure(scrollregion=scrollable_frame.canvas.bbox("all"))
     scrollable_frame.canvas.yview_moveto(0)
-    for token, count in sorted_token_items:
-        if filter_text and not fuzzy_search(filter_text.lower(), token.lower()):
+    for tag, count in sorted_tag_items:
+        if filter_text and not fuzzy_search(filter_text.lower(), tag.lower()):
             continue
         pair_frame = tk.Frame(scrollable_frame)
         label = tk.Label(pair_frame, text=f" x{count} ---------------", width=6, anchor="w")
         label.pack(side=tk.LEFT)
-        button = tk.Button(pair_frame, text=f"{token}", width=55, anchor="w", command=lambda t=token: (delete_token(directory, t, filter_text), display_tokens(count_tokens(directory), directory, scrollable_frame, filter_text)))
+        button = tk.Button(pair_frame, text=f"{tag}", width=55, anchor="w", command=lambda t=tag: (delete_tag(directory, t, filter_text), display_tags(count_tags(directory), directory, scrollable_frame, filter_text)))
         button.pack(side=tk.LEFT)
         enter, leave = create_hover_effect(button, "#ffcac9")
         button.bind("<Enter>", enter)
@@ -81,24 +81,24 @@ def display_tokens(token_dict, directory, scrollable_frame, filter_text=''):
         checkbox.bind('<Button-3>', lambda event: toggle_all_checkboxes(event, scrollable_frame))
         pair_frame.pack(side=tk.TOP, pady=2)
 
-def count_tokens(directory):
-    token_dict = Counter()
+def count_tags(directory):
+    tag_dict = Counter()
     for filename in os.listdir(directory):
         if filename.endswith(".txt"):
             with open(os.path.join(directory, filename), 'r') as file:
                 lines = file.readlines()
                 for line in lines:
-                    tokens = line.strip().split(',')
-                    for token in tokens:
-                        token_dict[token.strip()] += 1
-    return token_dict
+                    tags = line.strip().split(',')
+                    for tag in tags:
+                        tag_dict[tag.strip()] += 1
+    return tag_dict
 
-def delete_token(directory, token, filter_text='', confirm_prompt=True):
+def delete_tag(directory, tag, filter_text='', confirm_prompt=True):
     parent = tk.Toplevel()
     parent.withdraw()
     if confirm_prompt:
-        message = "Are you sure you want to delete the token\n\n'%s'" % (token)
-        result = tk.messagebox.askquestion("Delete Token", message, parent=parent)
+        message = "Are you sure you want to delete the tag\n\n'%s'" % (tag)
+        result = tk.messagebox.askquestion("Delete tag", message, parent=parent)
         if result != "yes":
             return
     for filename in os.listdir(directory):
@@ -106,9 +106,9 @@ def delete_token(directory, token, filter_text='', confirm_prompt=True):
             with open(os.path.join(directory, filename), 'r') as file:
                 lines = file.read().replace('\n', '')
             with open(os.path.join(directory, filename), 'w') as file:
-                tokens = lines.strip().split(',')
-                tokens = [t for t in tokens if t.strip() != token]
-                new_line = ','.join(tokens)
+                tags = lines.strip().split(',')
+                tags = [t for t in tags if t.strip() != tag]
+                new_line = ','.join(tags)
                 if filter_text and not fuzzy_search(filter_text.lower(), lines.lower()):
                     file.write(lines)
                 else:
@@ -147,48 +147,48 @@ def create_hover_effect(widget, hover_color):
 # Batch Delete #
 #              #
 
-def batch_delete(directory, count_threshold, scrollable_frame, max_display_tokens=150):
-    token_dict = count_tokens(directory)
-    tokens_to_delete = [token for token, count in token_dict.items() if count <= count_threshold]
-    sorted_tokens_to_delete = sorted(tokens_to_delete)
-    limited_tokens_to_display = sorted_tokens_to_delete[:max_display_tokens]
-    tokens_message = ', '.join(limited_tokens_to_display)
-    message = f"Found {len(sorted_tokens_to_delete)} tokens:\n\n{tokens_message}\n\n"
-    if len(sorted_tokens_to_delete) > max_display_tokens:
-        message += f"... and {len(sorted_tokens_to_delete) - max_display_tokens} more tokens.\n\n"
+def batch_delete(directory, count_threshold, scrollable_frame, max_display_tags=150):
+    tag_dict = count_tags(directory)
+    tags_to_delete = [tag for tag, count in tag_dict.items() if count <= count_threshold]
+    sorted_tags_to_delete = sorted(tags_to_delete)
+    limited_tags_to_display = sorted_tags_to_delete[:max_display_tags]
+    tags_message = ', '.join(limited_tags_to_display)
+    message = f"Found {len(sorted_tags_to_delete)} tags:\n\n{tags_message}\n\n"
+    if len(sorted_tags_to_delete) > max_display_tags:
+        message += f"... and {len(sorted_tags_to_delete) - max_display_tags} more tags.\n\n"
     message += "Are you sure you want to delete them?"
-    if not sorted_tokens_to_delete:
-        messagebox.showinfo("No Tokens Found", "No tokens found that meet the given criteria.")
+    if not sorted_tags_to_delete:
+        messagebox.showinfo("No tags Found", "No tags found that meet the given criteria.")
         return
-    confirm = messagebox.askyesno("Delete Tokens?", message)
+    confirm = messagebox.askyesno("Delete tags?", message)
     if confirm:
-        for token in sorted_tokens_to_delete:
-            delete_token(directory, token, confirm_prompt=False)
-        display_tokens(count_tokens(directory), directory, scrollable_frame)
+        for tag in sorted_tags_to_delete:
+            delete_tag(directory, tag, confirm_prompt=False)
+        display_tags(count_tags(directory), directory, scrollable_frame)
 
 def ask_count_threshold(directory, scrollable_frame, root):
     count_threshold = simpledialog.askinteger("Delete all less than or equal to", "\tEnter the count threshold\t\t", parent=root)
     if count_threshold is not None:
         batch_delete(directory, count_threshold, scrollable_frame)
 
-def delete_selected_tokens(directory, scrollable_frame, filter_text=''):
+def delete_selected_tags(directory, scrollable_frame, filter_text=''):
     parent = tk.Toplevel()
     parent.withdraw()
-    token_count = 0
+    tag_count = 0
     for widget in scrollable_frame.winfo_children():
         if isinstance(widget, tk.Frame):
             checkbox = widget.winfo_children()[-1]
             if checkbox.var.get():
-                token_count += 1
-    if messagebox.askokcancel("Confirmation", f"Are you sure you want to delete {token_count} tokens?"):
+                tag_count += 1
+    if messagebox.askokcancel("Confirmation", f"Are you sure you want to delete {tag_count} tags?"):
         for widget in scrollable_frame.winfo_children():
             if isinstance(widget, tk.Frame):
                 checkbox = widget.winfo_children()[-1]
                 if checkbox.var.get():
-                    token = widget.winfo_children()[1].cget("text")
-                    delete_token(directory, token, filter_text, confirm_prompt=False)
+                    tag = widget.winfo_children()[1].cget("text")
+                    delete_tag(directory, tag, filter_text, confirm_prompt=False)
     parent.destroy()
-    display_tokens(count_tokens(directory), directory, scrollable_frame, filter_text)
+    display_tags(count_tags(directory), directory, scrollable_frame, filter_text)
 
 def toggle_all_checkboxes(event, scrollable_frame):
     clicked_checkbox_state = event.widget.var.get()
@@ -205,19 +205,19 @@ def toggle_all_checkboxes(event, scrollable_frame):
 # Sorting #
 #         #
 
-def toggle_token_order(token_dict, directory, scrollable_frame, filter_text=''):
+def toggle_tag_order(tag_dict, directory, scrollable_frame, filter_text=''):
     global sort_order
     if sort_order == 'count':
         sort_order = 'alpha'
     else:
         sort_order = 'count'
-    display_tokens(token_dict, directory, scrollable_frame, filter_text)
+    display_tags(tag_dict, directory, scrollable_frame, filter_text)
 
-def filter_tokens(event, directory, scrollable_frame):
+def filter_tags(event, directory, scrollable_frame):
     filter_text = event.widget.get()
-    token_dict = count_tokens(directory)
-    filtered_dict = {k: v for k, v in token_dict.items() if fuzzy_search(filter_text.lower(), k.lower())}
-    display_tokens(filtered_dict, directory, scrollable_frame, filter_text)
+    tag_dict = count_tags(directory)
+    filtered_dict = {k: v for k, v in tag_dict.items() if fuzzy_search(filter_text.lower(), k.lower())}
+    display_tags(filtered_dict, directory, scrollable_frame, filter_text)
 
 def fuzzy_search(str1, str2):
     m = len(str1)
@@ -249,13 +249,7 @@ def restore_backup(directory, scrollable_frame):
     for filename in os.listdir(backup_directory):
         if filename.endswith(".txt"):
             shutil.copy(os.path.join(backup_directory, filename), os.path.join(directory, filename))
-    display_tokens(count_tokens(directory), directory, scrollable_frame)
-
-def delete_bak_files(directory):
-    backup_directory = os.path.join(directory, "text_backup")
-    for filename in os.listdir(directory):
-        if filename.endswith(".txt"):
-            os.remove(os.path.join(backup_directory, filename))
+    display_tags(count_tags(directory), directory, scrollable_frame)
 
 def on_closing(directory, root):
     backup_directory = os.path.join(directory, "text_backup")
@@ -282,7 +276,7 @@ def main(directory=None):
 
     # Initialize the root window
     root = tk.Tk()
-    root.title(f"Token List: {directory}")
+    root.title(f"tag List: {directory}")
     window_width = 490
     window_height = 800
     position_right = root.winfo_screenwidth()//2 - window_width//2
@@ -292,8 +286,8 @@ def main(directory=None):
     root.maxsize(490, 2000)
     root.focus_force()
 
-    # Count tokens in the directory
-    token_dict = count_tokens(directory)
+    # Count tags in the directory
+    tag_dict = count_tags(directory)
 
     # Create refresh function
     last_modification_times = {}
@@ -308,7 +302,7 @@ def main(directory=None):
                 last_modification_times[file] = mod_time
                 modified = True
         if modified:
-            display_tokens(count_tokens(directory), directory, scrollable_frame)
+            display_tags(count_tags(directory), directory, scrollable_frame)
         root.after(1000, refresh)
 
     # Create the menubar
@@ -316,22 +310,22 @@ def main(directory=None):
     root.config(menu=menubar)
 
     # Add options to the menubar
-    menubar.add_command(label="Change Sort", command=lambda: toggle_token_order(token_dict, directory, scrollable_frame))
+    menubar.add_command(label="Change Sort", command=lambda: toggle_tag_order(tag_dict, directory, scrollable_frame))
     menubar.add_separator()
     menubar.add_command(label="Delete ≤", command=lambda: ask_count_threshold(directory, scrollable_frame, root))
     menubar.add_separator()
-    menubar.add_command(label="Delete Selected", command=lambda: delete_selected_tokens(directory, scrollable_frame))
+    menubar.add_command(label="Delete Selected", command=lambda: delete_selected_tags(directory, scrollable_frame))
     menubar.add_separator()
     menubar.add_command(label="Undo All", command=lambda: restore_backup(directory, scrollable_frame))
 
     # Create the filter entry
     filter_entry = tk.Entry(root)
-    filter_entry.insert(0, "Filter tokens here (fuzzy search)")
-    filter_entry.bind("<FocusIn>", lambda args: filter_entry.delete('0', 'end') if filter_entry.get() == "Filter tokens here (fuzzy search)" else None)
+    filter_entry.insert(0, "Filter tags here (fuzzy search)")
+    filter_entry.bind("<FocusIn>", lambda args: filter_entry.delete('0', 'end') if filter_entry.get() == "Filter tags here (fuzzy search)" else None)
     filter_entry.pack(side="top", fill="x", ipady=1)
-    filter_entry.bind("<KeyRelease>", lambda event: filter_tokens(event, directory, scrollable_frame))
+    filter_entry.bind("<KeyRelease>", lambda event: filter_tags(event, directory, scrollable_frame))
 
-    # Create the frame and canvas for displaying tokens
+    # Create the frame and canvas for displaying tags
     frame = tk.Frame(root)
     frame.pack(fill="both", expand=True)
     canvas = tk.Canvas(frame)
@@ -345,8 +339,8 @@ def main(directory=None):
     canvas.pack(side="left", fill="both", expand=True)
     scrollbar.pack(side="right", fill="y")
 
-    # Display tokens and Start main loop
-    display_tokens(token_dict, directory, scrollable_frame)
+    # Display tags and Start main loop
+    display_tags(tag_dict, directory, scrollable_frame)
     backup_files(directory)
     root.protocol("WM_DELETE_WINDOW", lambda: on_closing(directory, root))
     refresh()
@@ -367,7 +361,7 @@ if __name__ == "__main__":
 v1.05 changes:
 
   - New:
-    - `Undo All` You can now restore the text files to their original state from when Batch Token Delete was launched. [#7d574a8][7d574a8]
+    - `Undo All` You can now restore the text files to their original state from when Batch tag Delete was launched. [#7d574a8][7d574a8]
     - Implement Auto-Refresh Feature. [#4f78be5][4f78be5]
 
 <br>
