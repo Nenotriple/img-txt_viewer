@@ -205,18 +205,20 @@ class Autocomplete:
         if not hasattr(self, 'data') or not self.data:
             return None
         text_with_underscores = text.replace(" ", "_")
+        text_with_asterisks = text_with_underscores.replace("*", ".*")
+        pattern = re.compile(text_with_asterisks)
         if self.previous_text is not None and text.startswith(self.previous_text):
-            suggestions = [suggestion for suggestion in self.previous_suggestions if suggestion[0].startswith(text_with_underscores)]
+            suggestions = [suggestion for suggestion in self.previous_suggestions if pattern.match(suggestion[0])]
         else:
             suggestions = []
             for true_name, (classifier_id, similar_names) in self.data.items():
                 if len(suggestions) >= 100000:
                     break
-                if true_name.startswith(text_with_underscores):
+                if pattern.match(true_name):
                     suggestions.append((true_name, classifier_id, similar_names))
                 else:
                     for sim_name in similar_names:
-                        if sim_name.startswith(text_with_underscores):
+                        if pattern.match(sim_name):
                             suggestions.append((true_name, classifier_id, similar_names))
                             break
         suggestions.sort(key=lambda x: self.get_score(x[0], text_with_underscores), reverse=True)
@@ -312,7 +314,6 @@ class ImgTxtViewer:
         menubar.add_cascade(label="Options", menu=optionsMenu)
 
         # Edit Suggestions
-        optionsMenu.add_separator()
         optionsMenu.add_command(label="Edit Custom Suggestions...", command=self.create_and_open_custom_dictionary)
 
         # Suggestion Dictionary Menu
@@ -820,7 +821,7 @@ class ImgTxtViewer:
         self.update_suggestions(event=None)
 
     def get_tags_with_underscore(self):
-        return {"0_0", "o_o", "x_x", "|_|", "._.", "^_^", ">_<", "@_@", ">_@", "+_+", "+_-", "=_=", "<o>_<o>", "<|>_<|>"}
+        return {"0_0", "o_o", ">_o", "x_x", "|_|", "._.", "^_^", ">_<", "@_@", ">_@", "+_+", "+_-", "=_=", "<o>_<o>", "<|>_<|>", "ಠ_ಠ"}
 
 #endregion
 ################################################################################################################################################
@@ -1633,6 +1634,8 @@ root.mainloop()
 [v1.80 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.80)
   - New:
     - Small ui tweaks.
+    - `Fuzzy Search` You can now use an asterisk while typing to "search" for tags.
+      - For example: typing `*lo*b` returns "**lo**oking **b**ack", and even "yel**lo**w **b**ackground"
 
 <br>
 
