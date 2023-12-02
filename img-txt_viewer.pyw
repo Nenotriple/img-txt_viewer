@@ -384,15 +384,14 @@ class ImgTxtViewer:
         self.paned_window = PanedWindow(master, orient=HORIZONTAL, sashwidth=10, bg="#d0d0d0", bd=0)
         self.paned_window.pack(fill=BOTH, expand=1)
         self.paned_window.bind('<ButtonRelease-1>', self.snap_sash_to_half)
-        self.paned_window.bind('<Configure>', self.snap_sash_to_half)
 
         # This frame is exclusively used for the displayed image.
         self.master_image_frame = Frame(master)
-        self.paned_window.add(self.master_image_frame)
+        self.paned_window.add(self.master_image_frame, stretch="always")
 
         # This frame serves as a container for all primary UI frames, with the exception of the master_image_frame.
         self.master_control_frame = Frame(master)
-        self.paned_window.add(self.master_control_frame)
+        self.paned_window.add(self.master_control_frame, stretch="always", )
         self.paned_window.paneconfigure(self.master_control_frame, minsize=300)
         self.paned_window.sash_place(0, 5, 0)
 
@@ -637,8 +636,6 @@ class ImgTxtViewer:
         self.configure_pane_position()
         self.paned_window.paneconfigure(self.master_control_frame, minsize=300)
         self.panes_swapped = not self.panes_swapped
-
-
 
     def snap_sash_to_half(self, event):
         total_width = self.paned_window.winfo_width()
@@ -1633,25 +1630,26 @@ root.mainloop()
 
 [v1.80 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.80)
   - New:
-    - Small ui tweaks.
-    - `Fuzzy Search` You can now use an asterisk while typing to "search" for tags.
-      - For example: typing `*lo*b` returns "**lo**oking **b**ack", and even "yel**lo**w **b**ackground"
+    - Small ui tweaks. [#22b2764][22b2764]
+    - `Fuzzy Search` You can now use an asterisk while typing to "search" for tags. [#05ca179][05ca179]
+      - For example: Typing `*lo*b` returns "**lo**oking **b**ack", and even "yel**lo**w **b**ackground"
 
 <br>
 
   - Fixed:
-    - Fixed autosave bug causing warning on window close without directory selection.
+    - Fixed autosave bug causing warning on window close without directory selection. [#b3f00a2][b3f00a2]
 
 <br>
 
   - Other changes:
-    -
+    - PanedWindow adjustments.
 
 <!-- New -->
-[]:
+[22b2764]: https://github.com/Nenotriple/img-txt_viewer/commit/22b2764edbf16e4477dce16bebdf08cf2d3459df
+[05ca179]: https://github.com/Nenotriple/img-txt_viewer/commit/05ca179914d3288108206465d78ab199874b6cc2
 
 <!-- Fixed -->
-[]:
+[b3f00a2]: https://github.com/Nenotriple/img-txt_viewer/commit/b3f00a28c82beb2300e78693df5d771802b2cfe4
 
 <!-- Other changes -->
 []:
