@@ -1345,30 +1345,6 @@ class ImgTxtViewer:
 #region - Misc Functions #
 #                        #
 
-    def rename_odd_files(self, filename):
-        file_extension = os.path.splitext(filename)[1].lower()
-        file_rename_dict = {".jpg_large": "jpg", ".jfif": "jpg"}
-        if file_extension in file_rename_dict:
-            new_file_extension = file_rename_dict[file_extension]
-            base_filename = os.path.splitext(filename)[0]
-            new_filename = base_filename + "." + new_file_extension
-            counter = 1
-            duplicate_files = []
-            while os.path.exists(os.path.join(self.image_dir.get(), new_filename)):
-                duplicate_files.append(new_filename)
-                new_filename = base_filename + "_" + str(counter).zfill(3) + "." + new_file_extension
-                counter += 1
-            if duplicate_files:
-                root = Tk()
-                root.withdraw()
-                MsgBox = messagebox.askquestion ('Rename Files','The following files are duplicates and will be renamed:\n' + '\n'.join(duplicate_files) + '\nDo you want to continue?',icon = 'warning')
-                if MsgBox == 'no':
-                    root.destroy()
-                    return filename
-            os.rename(os.path.join(self.image_dir.get(), filename), os.path.join(self.image_dir.get(), new_filename))
-            filename = new_filename
-        return filename
-
     # Used to position new windows beside the main window.
     def position_dialog(self, dialog, window_width, window_height):
         root_x = self.master.winfo_rootx()
@@ -1547,6 +1523,30 @@ class ImgTxtViewer:
                 writer.writerow(["supercalifragilisticexpialidocious"])
         subprocess.Popen(f'start {csv_filename}', shell=True)
         self.change_autocomplete_dictionary()
+
+    def rename_odd_files(self, filename):
+        file_extension = os.path.splitext(filename)[1].lower()
+        file_rename_dict = {".jpg_large": "jpg", ".jfif": "jpg"}
+        if file_extension in file_rename_dict:
+            new_file_extension = file_rename_dict[file_extension]
+            base_filename = os.path.splitext(filename)[0]
+            new_filename = base_filename + "." + new_file_extension
+            counter = 1
+            duplicate_files = []
+            while os.path.exists(os.path.join(self.image_dir.get(), new_filename)):
+                duplicate_files.append(new_filename)
+                new_filename = base_filename + "_" + str(counter).zfill(3) + "." + new_file_extension
+                counter += 1
+            if duplicate_files:
+                root = Tk()
+                root.withdraw()
+                MsgBox = messagebox.askquestion ('Rename Files','The following files are duplicates and will be renamed:\n' + '\n'.join(duplicate_files) + '\nDo you want to continue?',icon = 'warning')
+                if MsgBox == 'no':
+                    root.destroy()
+                    return filename
+            os.rename(os.path.join(self.image_dir.get(), filename), os.path.join(self.image_dir.get(), new_filename))
+            filename = new_filename
+        return filename
 
     def delete_pair(self):
         try:
