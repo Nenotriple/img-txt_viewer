@@ -246,9 +246,9 @@ def backup_files(directory):
 
 def restore_backup(directory, scrollable_frame):
     backup_directory = os.path.join(directory, "text_backup")
-    for filename in os.listdir(directory):
+    for filename in os.listdir(backup_directory):
         if filename.endswith(".txt"):
-            shutil.copy(os.path.join(directory, filename), os.path.join(backup_directory, filename))
+            shutil.copy(os.path.join(backup_directory, filename), os.path.join(directory, filename))
     display_tokens(count_tokens(directory), directory, scrollable_frame)
 
 def delete_bak_files(directory):
@@ -367,13 +367,15 @@ if __name__ == "__main__":
 v1.05 changes:
 
   - New:
-    - `Undo All`
-    - Implement Auto-Refresh Feature
+    - `Undo All` You can now restore the text files to their original state from when Batch Token Delete was launched. [#7d574a8][7d574a8]
+    - Implement Auto-Refresh Feature. [#4f78be5][4f78be5]
 
 <br>
 
   - Fixed:
     -
+[7d574a8]: https://github.com/Nenotriple/img-txt_viewer/commit/7d574a85b300f60bd01015aeadfca4e3d38cdf71
+[4f78be5]: https://github.com/Nenotriple/img-txt_viewer/commit/4f78be5df917f6af19796591fbbff05e64f8e944
 
 '''
 
