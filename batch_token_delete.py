@@ -261,6 +261,22 @@ def main(directory=None):
     # Count tokens in the directory
     token_dict = count_tokens(directory)
 
+    # Create refresh function
+    last_modification_times = {}
+    def refresh():
+        nonlocal last_modification_times
+        txt_files = [f for f in os.listdir(directory) if f.endswith('.txt')]
+        modified = False
+        for file in txt_files:
+            path = os.path.join(directory, file)
+            mod_time = os.path.getmtime(path)
+            if file not in last_modification_times or mod_time > last_modification_times[file]:
+                last_modification_times[file] = mod_time
+                modified = True
+        if modified:
+            display_tokens(count_tokens(directory), directory, scrollable_frame)
+        root.after(1000, refresh)
+
     # Create the menubar
     menubar = tk.Menu(root)
     root.config(menu=menubar)
@@ -271,6 +287,8 @@ def main(directory=None):
     menubar.add_command(label="Delete ≤", command=lambda: ask_count_threshold(directory, scrollable_frame, root))
     menubar.add_separator()
     menubar.add_command(label="Delete Selected", command=lambda: delete_selected_tokens(directory, scrollable_frame))
+    menubar.add_separator()
+    menubar.add_command(label="Undo All", command=lambda: restore_backup(directory, scrollable_frame))
 
     # Create the filter entry
     filter_entry = tk.Entry(root)
@@ -295,6 +313,9 @@ def main(directory=None):
 
     # Display tokens and Start main loop
     display_tokens(token_dict, directory, scrollable_frame)
+    backup_files(directory)
+    root.protocol("WM_DELETE_WINDOW", lambda: on_closing(directory, root))
+    refresh()
     root.mainloop()
 
 # This starts the main function. If a command-line argument is provided, it uses that. If "None", it opens a file dialog.
