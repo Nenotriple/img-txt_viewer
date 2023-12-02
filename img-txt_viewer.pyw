@@ -368,7 +368,7 @@ class ImgTxtViewer:
         self.toolsMenu.add_separator()
         self.toolsMenu.add_command(label="Cleanup Text", command=self.cleanup_all_text_files)
         self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Batch Token Delete...", command=self.batch_tag_delete)
+        self.toolsMenu.add_command(label="Batch Tag Delete...", command=self.batch_tag_delete)
         self.toolsMenu.add_separator()
         self.toolsMenu.add_command(label="Search and Replace", command=self.search_and_replace)
         self.toolsMenu.add_command(label="Prefix Text Files", command=self.prefix_text_files)
@@ -457,7 +457,7 @@ class ImgTxtViewer:
 
         # Mouse binds
         self.text_box.bind("<Button-1>", lambda event: (self.remove_tag(), self.clear_suggestions()))
-        self.text_box.bind("<Button-2>", lambda event: (self.delete_token_under_mouse(event), self.change_label()))
+        self.text_box.bind("<Button-2>", lambda event: (self.delete_tag_under_mouse(event), self.change_label()))
         self.text_box.bind("<Button-3>", lambda event: (self.remove_highlight(), self.show_textContext_menu(event)))
 
         # Update the autocomplete suggestion label after every KeyRelease event.
@@ -505,7 +505,7 @@ class ImgTxtViewer:
             " ▪️ CTRL+F: Highlight all duplicate words.\n"
             " ▪️ CTRL+S: Save the current text file.\n"
             " ▪️ CTRL+Z / CTRL+Y: Undo/Redo.\n"
-            " ▪️ Middle-click a token to delete it.\n",
+            " ▪️ Middle-click a tag to delete it.\n",
 
             " ▪️ Highlight duplicates by selecting text.\n"
             " ▪️ List Mode: Display tags in a list format while saving in standard format.\n"
@@ -516,11 +516,11 @@ class ImgTxtViewer:
             " ▪️ Search and Replace: Edit all text files at once.\n"
             " ▪️ Prefix Text Files: Insert text at the START of all text files.\n"
             " ▪️ Append Text Files: Insert text at the END of all text files.\n"
-            " ▪️ Batch Token Delete: View all tokens in a directory as a list, and quickly delete them.\n"
-            " ▪️ Cleanup Text: Fix typos in all text files of the selected folder, such as duplicate tokens, multiple spaces or commas, missing spaces, and more.\n",
+            " ▪️ Batch Tag Delete: View all tags in a directory as a list, and quickly delete them.\n"
+            " ▪️ Cleanup Text: Fix typos in all text files of the selected folder, such as duplicate tags, multiple spaces or commas, missing spaces, and more.\n",
 
             " ▪️ Check the auto-save box to save text when navigating between img/txt pairs or closing the window.\n"
-            " ▪️ Text is cleaned up when saved, so you can ignore things like duplicate tokens, trailing comma/spaces, double comma/spaces, etc.\n"
+            " ▪️ Text is cleaned up when saved, so you can ignore things like duplicate tags, trailing comma/spaces, double comma/spaces, etc.\n"
             " ▪️ Text cleanup can be disabled from the options menu.",
         ]
 
@@ -704,7 +704,7 @@ class ImgTxtViewer:
             event.keysym = ''
             event.char = ''
         cursor_position = self.text_box.index("insert")
-        if self.cursor_inside_token(cursor_position):
+        if self.cursor_inside_tag(cursor_position):
             self.clear_suggestions()
             return
         if self.handle_suggestion_event(event):
@@ -749,14 +749,14 @@ class ImgTxtViewer:
                 self.suggestion_textbox.insert('end', ', ')
         self.suggestion_textbox.config(state='disabled')
 
-    def cursor_inside_token(self, cursor_position):
+    def cursor_inside_tag(self, cursor_position):
         line, column = map(int, cursor_position.split('.'))
         line_text = self.text_box.get(f"{line}.0", f"{line}.end")
         if self.list_mode.get():
-            inside_token = column not in (0, len(line_text))
+            inside_tag = column not in (0, len(line_text))
         else:
-            inside_token = not (column == 0 or line_text[column-1:column] in (',', ' ') or line_text[column:column+1] in (',', ' ') or column == len(line_text))
-        return inside_token
+            inside_tag = not (column == 0 or line_text[column-1:column] in (',', ' ') or line_text[column:column+1] in (',', ' ') or column == len(line_text))
+        return inside_tag
 
     def clear_suggestions(self):
         self.suggestions = []
@@ -1343,25 +1343,25 @@ class ImgTxtViewer:
         if entry.get() == default_text:
             entry.delete(0, END)
 
-    def delete_token_under_mouse(self, event):
+    def delete_tag_under_mouse(self, event):
         cursor_pos = self.text_box.index(f"@{event.x},{event.y}")
         line_start = self.text_box.index(f"{cursor_pos} linestart")
         line_end = self.text_box.index(f"{cursor_pos} lineend")
         line_text = self.text_box.get(line_start, line_end)
-        tokens = line_text.split(',')
-        for token in tokens:
-            start_of_token = line_text.find(token)
-            end_of_token = start_of_token + len(token)
-            if start_of_token <= int(cursor_pos.split('.')[1]) <= end_of_token:
-                clicked_token = token
+        tags = line_text.split(',')
+        for tag in tags:
+            start_of_tag = line_text.find(tag)
+            end_of_tag = start_of_tag + len(tag)
+            if start_of_tag <= int(cursor_pos.split('.')[1]) <= end_of_tag:
+                clicked_tag = tag
                 break
-        start_of_clicked_token = line_text.find(clicked_token)
-        end_of_clicked_token = start_of_clicked_token + len(clicked_token)
-        self.text_box.tag_add("highlight", f"{line_start}+{start_of_clicked_token}c", f"{line_start}+{end_of_clicked_token}c")
+        start_of_clicked_tag = line_text.find(clicked_tag)
+        end_of_clicked_tag = start_of_clicked_tag + len(clicked_tag)
+        self.text_box.tag_add("highlight", f"{line_start}+{start_of_clicked_tag}c", f"{line_start}+{end_of_clicked_tag}c")
         self.text_box.tag_config("highlight", background="#FD8A8A")
         self.text_box.update_idletasks()
         time.sleep(0.2)
-        self.text_box.delete(f"{line_start}+{start_of_clicked_token}c", f"{line_start}+{end_of_clicked_token}c")
+        self.text_box.delete(f"{line_start}+{start_of_clicked_tag}c", f"{line_start}+{end_of_clicked_tag}c")
         cleaned_text = self.cleanup_text(self.text_box.get("1.0", "end"))
         cleaned_text = '\n'.join([line for line in cleaned_text.split('\n') if line.strip() != ''])
         self.text_box.delete("1.0", "end")
@@ -1372,7 +1372,7 @@ class ImgTxtViewer:
         if not self.check_directory():
             return
         if show_confirmation:
-            user_confirmation = messagebox.askokcancel("Confirmation", "This operation will clean all text files from typos like:\nDuplicate tokens, Extra commas, Extra spaces, trailing commas/spaces, commas without spaces, and more.\n\nExample Cleanup:\n  From: dog,solo,  ,happy  ,,\n       To: dog, solo, happy")
+            user_confirmation = messagebox.askokcancel("Confirmation", "This operation will clean all text files from typos like:\nDuplicate tags, Extra commas, Extra spaces, trailing commas/spaces, commas without spaces, and more.\n\nExample Cleanup:\n  From: dog,solo,  ,happy  ,,\n       To: dog, solo, happy")
             self.saved_label.config(text="Text Files Cleaned Up!", bg="#6ca079", fg="white")
             if not user_confirmation:
                 return
@@ -1584,8 +1584,8 @@ class ImgTxtViewer:
         if not os.path.isfile(csv_filename):
             with open(csv_filename, 'w', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow(["### This is where you can create a custom dictionary of tokens/tags."])
-                writer.writerow(["### These tokens will be loaded alongside the chosen autocomplete dictionary."])
+                writer.writerow(["### This is where you can create a custom dictionary of tags/tags."])
+                writer.writerow(["### These tags will be loaded alongside the chosen autocomplete dictionary."])
                 writer.writerow(["### Lines starting with 3 hash symbols '###' will be ignored so you can create comments."])
                 writer.writerow(["### Tags near the top of the list have a higher priority than lower tags."])
                 writer.writerow([])
@@ -1707,8 +1707,8 @@ root.mainloop()
     - `Fuzzy Search` You can now use an asterisk while typing to "search" for tags. [#05ca179][05ca179]
       - For example: Typing `*lo*b` returns "**lo**oking **b**ack", and even "yel**lo**w **b**ackground"
     - You can now undo the last operation for search_and_replace, prefix_text, and append_text. [#c5be6a2][c5be6a2]
-    - Batch Token Delete no longer locks the main img-txt_viewer window. [#f2f8414][f2f8414]
-      - While Batch Token Delete is open, text files are scanned for changes and automatically updated.
+    - Batch Tag Delete no longer locks the main img-txt_viewer window. [#f2f8414][f2f8414]
+      - While Batch Tag Delete is open, text files are scanned for changes and automatically updated.
 
 <br>
 
