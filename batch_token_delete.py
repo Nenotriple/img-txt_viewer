@@ -3,7 +3,7 @@
 #                                      #
 #          batch_token_delete          #
 #                                      #
-#   Version : v1.04                    #
+#   Version : v1.05                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -28,6 +28,7 @@ Description:
 import os
 import sys
 import ctypes
+import shutil
 import tkinter as tk
 from collections import Counter
 from tkinter import messagebox, simpledialog, filedialog
@@ -231,6 +232,39 @@ def fuzzy_search(str1, str2):
 
 ################################################################################################################################################
 ################################################################################################################################################
+#                #
+# Manage Backups #
+#                #
+
+def backup_files(directory):
+    backup_directory = os.path.join(directory, "text_backup")
+    if not os.path.exists(backup_directory):
+        os.makedirs(backup_directory)
+    for filename in os.listdir(directory):
+        if filename.endswith(".txt"):
+            shutil.copy2(os.path.join(directory, filename), os.path.join(backup_directory, filename))
+
+def restore_backup(directory, scrollable_frame):
+    backup_directory = os.path.join(directory, "text_backup")
+    for filename in os.listdir(directory):
+        if filename.endswith(".txt"):
+            shutil.copy(os.path.join(directory, filename), os.path.join(backup_directory, filename))
+    display_tokens(count_tokens(directory), directory, scrollable_frame)
+
+def delete_bak_files(directory):
+    backup_directory = os.path.join(directory, "text_backup")
+    for filename in os.listdir(directory):
+        if filename.endswith(".txt"):
+            os.remove(os.path.join(backup_directory, filename))
+
+def on_closing(directory, root):
+    backup_directory = os.path.join(directory, "text_backup")
+    if os.path.exists(backup_directory):
+        shutil.rmtree(backup_directory)
+    root.destroy()
+
+################################################################################################################################################
+################################################################################################################################################
 #      #
 # Main #
 #      #
@@ -330,19 +364,17 @@ if __name__ == "__main__":
 
 '''
 
-v1.04 changes:
+v1.05 changes:
 
   - New:
-    - The window now opens in the center of the screen. [#dfc396d][dfc396d]
-    - The window now always opens in focus.
+    - `Undo All`
+    - Implement Auto-Refresh Feature
 
 <br>
 
   - Fixed:
     -
 
-
-[dfc396d]: https://github.com/Nenotriple/img-txt_viewer/commit/dfc396d36b95fe6fc42ad9144008d839eb2e2dd5
 '''
 
 ################################################################################################################################################
