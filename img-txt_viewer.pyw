@@ -24,6 +24,7 @@ import re
 import csv
 import sys
 import time
+import shutil
 import ctypes
 import random
 import requests
@@ -1145,10 +1146,7 @@ class ImgTxtViewer:
 #                     #
 
     def batch_token_delete(self):
-        try:
-            self.check_directory()
-        except ValueError:
-            return
+        self.check_directory()
         if getattr(sys, 'frozen', False):
             application_path = sys._MEIPASS
         else:
@@ -1160,10 +1158,8 @@ class ImgTxtViewer:
         self.show_pair()
 
     def search_and_replace(self):
-        try:
-            self.check_directory()
-        except ValueError:
-            return
+        self.check_directory()
+        self.delete_text_bakup()
         dialog = Toplevel(self.master)
         dialog.focus_force()
         self.position_dialog(dialog, 345, 145)
@@ -1190,32 +1186,47 @@ class ImgTxtViewer:
             replace_string = replace_string_var.get()
             total_count = 0
             for text_file in self.text_files:
-                with open(text_file, 'r') as file:
-                    filedata = file.read()
-                count = filedata.count(search_string)
-                total_count += count
+                try:
+                    with open(text_file, 'r') as file:
+                        filedata = file.read()
+                    count = filedata.count(search_string)
+                    total_count += count
+                except Exception as e:
+                    print(f"Error while processing file {text_file}: {e}")
             msg = f"The string: '{search_string}'\n\nWas found {total_count} times across all files.\n\nDo you want to replace it with:\n\n{replace_string}"
             if messagebox.askyesno("Confirmation", msg):
                 for text_file in self.text_files:
-                    with open(text_file, 'r') as file:
-                        filedata = file.read()
-                    filedata = filedata.replace(search_string, replace_string)
-                    with open(text_file, 'w') as file:
-                        file.write(filedata)
-                close_dialog()
+                    try:
+                        shutil.copy2(text_file, text_file + '.bak')
+                        with open(text_file, 'r') as file:
+                            filedata = file.read()
+                        filedata = filedata.replace(search_string, replace_string)
+                        with open(text_file, 'w') as file:
+                            file.write(filedata)
+                    except Exception as e:
+                        print(f"Error while processing file {text_file}: {e}")
+            self.show_pair()
+        def undo_search_and_replace():
+            for text_file in self.text_files:
+                try:
+                    if os.path.exists(text_file + '.bak'):
+                        shutil.move(text_file + '.bak', text_file)
+                except Exception as e:
+                    print(f"Error while undoing changes for file {text_file}: {e}")
+            self.show_pair()
         def close_dialog():
+            self.delete_text_bakup()
             dialog.destroy()
             self.show_pair()
         search_and_replace_button_frame = Frame(dialog)
         search_and_replace_button_frame.pack()
         Button(search_and_replace_button_frame, overrelief="groove", text="OK", command=perform_search_and_replace, width=15, relief=RAISED, borderwidth=3).pack(side=LEFT, pady=2, padx=2)
+        Button(search_and_replace_button_frame, overrelief="groove", text="Undo", command=undo_search_and_replace, width=15).pack(side=LEFT, pady=2, padx=2)
         Button(search_and_replace_button_frame, overrelief="groove", text="Cancel", command=close_dialog, width=15).pack(side=LEFT, pady=2, padx=2)
 
     def prefix_text_files(self):
-        try:
-            self.check_directory()
-        except ValueError:
-            return
+        self.check_directory()
+        self.delete_text_bakup()
         dialog = Toplevel(self.master)
         dialog.focus_force()
         self.position_dialog(dialog, 405, 75)
@@ -1236,27 +1247,35 @@ class ImgTxtViewer:
                 prefix_text += ', '
             for text_file in self.text_files:
                 try:
+                    shutil.copy2(text_file, text_file + '.bak')
                     with open(text_file, 'r+') as file:
                         content = file.read()
                         file.seek(0, 0)
                         file.write(prefix_text + content)
                 except Exception as e:
                     print(f"Error while processing file {text_file}: {e}")
-            close_dialog()
+            self.show_pair()
+        def undo_prefix_text():
+            for text_file in self.text_files:
+                try:
+                    if os.path.exists(text_file + '.bak'):
+                        shutil.move(text_file + '.bak', text_file)
+                except Exception as e:
+                    print(f"Error while undoing changes for file {text_file}: {e}")
+            self.show_pair()
         def close_dialog():
+            self.delete_text_bakup()
             dialog.destroy()
             self.show_pair()
         prefix_text_button_frame = Frame(dialog)
         prefix_text_button_frame.pack()
         Button(prefix_text_button_frame, overrelief="groove", text="OK", command=lambda: messagebox.askokcancel("Confirmation", f"Are you sure you want to prefix all files with:\n\n'{prefix_text_var.get()}, '", parent=dialog) and perform_prefix_text(), width=15, relief=RAISED, borderwidth=3).pack(side=LEFT, pady=2, padx=2)
+        Button(prefix_text_button_frame, overrelief="groove", text="Undo", command=undo_prefix_text, width=15).pack(side=LEFT, pady=2, padx=2)
         Button(prefix_text_button_frame, overrelief="groove", text="Cancel", command=close_dialog, width=15).pack(side=LEFT, pady=2, padx=2)
 
     def append_text_files(self):
-        try:
-            self.check_directory()
-        except ValueError:
-            return
         self.check_directory()
+        self.delete_text_bakup()
         dialog = Toplevel(self.master)
         dialog.focus_force()
         self.position_dialog(dialog, 405, 75)
@@ -1277,17 +1296,28 @@ class ImgTxtViewer:
                 append_text = ', ' + append_text
             for text_file in self.text_files:
                 try:
+                    shutil.copy2(text_file, text_file + '.bak')
                     with open(text_file, 'a') as file:
                         file.write(append_text)
                 except Exception as e:
                     print(f"Error while processing file {text_file}: {e}")
-            close_dialog()
+            self.show_pair()
+        def undo_append_text():
+            for text_file in self.text_files:
+                try:
+                    if os.path.exists(text_file + '.bak'):
+                        shutil.move(text_file + '.bak', text_file)
+                except Exception as e:
+                    print(f"Error while undoing changes for file {text_file}: {e}")
+            self.show_pair()
         def close_dialog():
+            self.delete_text_bakup()
             dialog.destroy()
             self.show_pair()
         append_text_button_frame = Frame(dialog)
         append_text_button_frame.pack()
         Button(append_text_button_frame, overrelief="groove", text="OK", command=lambda: messagebox.askokcancel("Confirmation", f"Are you sure you want to append all files with:\n\n', {append_text_var.get()}'", parent=dialog) and perform_append_text(), width=15, relief=RAISED, borderwidth=3).pack(side=LEFT, pady=2, padx=2)
+        Button(append_text_button_frame, overrelief="groove", text="Undo", command=undo_append_text, width=15).pack(side=LEFT, pady=2, padx=2)
         Button(append_text_button_frame, overrelief="groove", text="Cancel", command=close_dialog, width=15).pack(side=LEFT, pady=2, padx=2)
 
     def clear_entry_field(self, event, entry, default_text):
@@ -1456,6 +1486,7 @@ class ImgTxtViewer:
                     root.destroy()
             except:
                 pass
+        self.delete_text_bakup()
 
 #endregion
 ################################################################################################################################################
@@ -1548,6 +1579,12 @@ class ImgTxtViewer:
             filename = new_filename
         return filename
 
+    def delete_text_bakup(self):
+        for text_file in self.text_files:
+            backup_file = text_file + '.bak'
+            if os.path.exists(backup_file):
+                os.remove(backup_file)
+
     def delete_pair(self):
         try:
             self.check_directory()
@@ -1633,6 +1670,7 @@ root.mainloop()
     - Small ui tweaks. [#22b2764][22b2764]
     - `Fuzzy Search` You can now use an asterisk while typing to "search" for tags. [#05ca179][05ca179]
       - For example: Typing `*lo*b` returns "**lo**oking **b**ack", and even "yel**lo**w **b**ackground"
+    - You can now undo the last operation for search_and_replace, prefix_text, and append_text.
 
 <br>
 
