@@ -1146,20 +1146,21 @@ class ImgTxtViewer:
 #                     #
 
     def batch_token_delete(self):
-        self.check_directory()
+        if not self.check_directory():
+            return
         if getattr(sys, 'frozen', False):
             application_path = sys._MEIPASS
         else:
             application_path = os.path.dirname(os.path.abspath(__file__))
         script_path = os.path.join(application_path, 'batch_token_delete.py')
-        process = subprocess.Popen(["pythonw", script_path, self.image_dir.get()])
-        process.communicate()
+        subprocess.Popen(["pythonw", script_path, self.image_dir.get()])
         self.cleanup_all_text_files(show_confirmation=False)
         self.show_pair()
 
     def search_and_replace(self):
-        self.check_directory()
-        self.delete_text_bakup()
+        if not self.check_directory():
+            return
+        self.delete_text_backup()
         dialog = Toplevel(self.master)
         dialog.focus_force()
         self.position_dialog(dialog, 345, 145)
@@ -1185,6 +1186,8 @@ class ImgTxtViewer:
             search_string = search_string_var.get()
             replace_string = replace_string_var.get()
             total_count = 0
+            backup_folder = os.path.join(os.path.dirname(self.text_files[0]), 'text_backup')
+            os.makedirs(backup_folder, exist_ok=True)
             for text_file in self.text_files:
                 try:
                     with open(text_file, 'r') as file:
@@ -1197,7 +1200,8 @@ class ImgTxtViewer:
             if messagebox.askyesno("Confirmation", msg):
                 for text_file in self.text_files:
                     try:
-                        shutil.copy2(text_file, text_file + '.bak')
+                        backup_file = os.path.join(backup_folder, os.path.basename(text_file) + '.bak')
+                        shutil.copy2(text_file, backup_file)
                         with open(text_file, 'r') as file:
                             filedata = file.read()
                         filedata = filedata.replace(search_string, replace_string)
@@ -1207,15 +1211,17 @@ class ImgTxtViewer:
                         print(f"Error while processing file {text_file}: {e}")
             self.show_pair()
         def undo_search_and_replace():
+            backup_folder = os.path.join(os.path.dirname(self.text_files[0]), 'text_backup')
             for text_file in self.text_files:
                 try:
-                    if os.path.exists(text_file + '.bak'):
-                        shutil.move(text_file + '.bak', text_file)
+                    backup_file = os.path.join(backup_folder, os.path.basename(text_file) + '.bak')
+                    if os.path.exists(backup_file):
+                        shutil.move(backup_file, text_file)
                 except Exception as e:
                     print(f"Error while undoing changes for file {text_file}: {e}")
             self.show_pair()
         def close_dialog():
-            self.delete_text_bakup()
+            self.delete_text_backup()
             dialog.destroy()
             self.show_pair()
         search_and_replace_button_frame = Frame(dialog)
@@ -1225,8 +1231,9 @@ class ImgTxtViewer:
         Button(search_and_replace_button_frame, overrelief="groove", text="Cancel", command=close_dialog, width=15).pack(side=LEFT, pady=2, padx=2)
 
     def prefix_text_files(self):
-        self.check_directory()
-        self.delete_text_bakup()
+        if not self.check_directory():
+            return
+        self.delete_text_backup()
         dialog = Toplevel(self.master)
         dialog.focus_force()
         self.position_dialog(dialog, 405, 75)
@@ -1245,9 +1252,12 @@ class ImgTxtViewer:
             prefix_text = prefix_text_var.get()
             if not prefix_text.endswith(', '):
                 prefix_text += ', '
+            backup_folder = os.path.join(os.path.dirname(self.text_files[0]), 'text_backup')
+            os.makedirs(backup_folder, exist_ok=True)
             for text_file in self.text_files:
                 try:
-                    shutil.copy2(text_file, text_file + '.bak')
+                    backup_file = os.path.join(backup_folder, os.path.basename(text_file) + '.bak')
+                    shutil.copy2(text_file, backup_file)
                     with open(text_file, 'r+') as file:
                         content = file.read()
                         file.seek(0, 0)
@@ -1256,15 +1266,17 @@ class ImgTxtViewer:
                     print(f"Error while processing file {text_file}: {e}")
             self.show_pair()
         def undo_prefix_text():
+            backup_folder = os.path.join(os.path.dirname(self.text_files[0]), 'text_backup')
             for text_file in self.text_files:
                 try:
-                    if os.path.exists(text_file + '.bak'):
-                        shutil.move(text_file + '.bak', text_file)
+                    backup_file = os.path.join(backup_folder, os.path.basename(text_file) + '.bak')
+                    if os.path.exists(backup_file):
+                        shutil.move(backup_file, text_file)
                 except Exception as e:
                     print(f"Error while undoing changes for file {text_file}: {e}")
             self.show_pair()
         def close_dialog():
-            self.delete_text_bakup()
+            self.delete_text_backup()
             dialog.destroy()
             self.show_pair()
         prefix_text_button_frame = Frame(dialog)
@@ -1274,8 +1286,9 @@ class ImgTxtViewer:
         Button(prefix_text_button_frame, overrelief="groove", text="Cancel", command=close_dialog, width=15).pack(side=LEFT, pady=2, padx=2)
 
     def append_text_files(self):
-        self.check_directory()
-        self.delete_text_bakup()
+        if not self.check_directory():
+            return
+        self.delete_text_backup()
         dialog = Toplevel(self.master)
         dialog.focus_force()
         self.position_dialog(dialog, 405, 75)
@@ -1294,24 +1307,29 @@ class ImgTxtViewer:
             append_text = append_text_var.get()
             if not append_text.startswith(', '):
                 append_text = ', ' + append_text
+            backup_folder = os.path.join(os.path.dirname(self.text_files[0]), 'text_backup')
+            os.makedirs(backup_folder, exist_ok=True)
             for text_file in self.text_files:
                 try:
-                    shutil.copy2(text_file, text_file + '.bak')
+                    backup_file = os.path.join(backup_folder, os.path.basename(text_file) + '.bak')
+                    shutil.copy2(text_file, backup_file)
                     with open(text_file, 'a') as file:
                         file.write(append_text)
                 except Exception as e:
                     print(f"Error while processing file {text_file}: {e}")
             self.show_pair()
         def undo_append_text():
+            backup_folder = os.path.join(os.path.dirname(self.text_files[0]), 'text_backup')
             for text_file in self.text_files:
                 try:
-                    if os.path.exists(text_file + '.bak'):
-                        shutil.move(text_file + '.bak', text_file)
+                    backup_file = os.path.join(backup_folder, os.path.basename(text_file) + '.bak')
+                    if os.path.exists(backup_file):
+                        shutil.move(backup_file, text_file)
                 except Exception as e:
                     print(f"Error while undoing changes for file {text_file}: {e}")
             self.show_pair()
         def close_dialog():
-            self.delete_text_bakup()
+            self.delete_text_backup()
             dialog.destroy()
             self.show_pair()
         append_text_button_frame = Frame(dialog)
@@ -1350,9 +1368,7 @@ class ImgTxtViewer:
         self.text_box.tag_configure("highlight", background="#5da9be")
 
     def cleanup_all_text_files(self, show_confirmation=True):
-        try:
-            self.check_directory()
-        except ValueError:
+        if not self.check_directory():
             return
         if show_confirmation:
             user_confirmation = messagebox.askokcancel("Confirmation", "This operation will clean all text files from typos like:\nDuplicate tokens, Extra commas, Extra spaces, trailing commas/spaces, commas without spaces, and more.\n\nExample Cleanup:\n  From: dog,solo,  ,happy  ,,\n       To: dog, solo, happy")
@@ -1451,9 +1467,7 @@ class ImgTxtViewer:
 #                         #
 
     def save_text_file(self):
-        try:
-            self.check_directory()
-        except ValueError:
+        if not self.check_directory():
             return
         if self.text_files:
             self.save_file()
@@ -1486,7 +1500,7 @@ class ImgTxtViewer:
                     root.destroy()
             except:
                 pass
-        self.delete_text_bakup()
+        self.delete_text_backup()
 
 #endregion
 ################################################################################################################################################
@@ -1526,7 +1540,8 @@ class ImgTxtViewer:
     def check_directory(self):
         if not os.path.isdir(self.image_dir.get()):
             messagebox.showerror("Error!", "Invalid or No directory selected.\n\n Select a directory before using this tool.")
-            raise ValueError("Invalid directory")
+            return False
+        return True
 
     def create_blank_textfiles(self, new_text_files):
         if not self.user_selected_no:
@@ -1579,16 +1594,13 @@ class ImgTxtViewer:
             filename = new_filename
         return filename
 
-    def delete_text_bakup(self):
-        for text_file in self.text_files:
-            backup_file = text_file + '.bak'
-            if os.path.exists(backup_file):
-                os.remove(backup_file)
+    def delete_text_backup(self):
+        backup_folder = os.path.join(os.path.dirname(self.text_files[0]), 'text_backup')
+        if os.path.exists(backup_folder):
+            shutil.rmtree(backup_folder)
 
     def delete_pair(self):
-        try:
-            self.check_directory()
-        except ValueError:
+        if not self.check_directory():
             return
         if messagebox.askokcancel("Warning", "This will move the img-txt pair to a local trash folder.\n\nThe trash folder will be created in the selected directory."):
             if self.current_index < len(self.image_files):
@@ -1611,9 +1623,7 @@ class ImgTxtViewer:
                 print("Index out of range. No more files to delete.")
 
     def undo_delete_pair(self):
-        try:
-            self.check_directory()
-        except ValueError:
+        if not self.check_directory():
             return
         if not self.deleted_pairs:
             print("No files to restore.")
