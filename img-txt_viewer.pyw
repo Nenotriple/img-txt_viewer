@@ -368,7 +368,7 @@ class ImgTxtViewer:
         self.toolsMenu.add_separator()
         self.toolsMenu.add_command(label="Cleanup Text", command=self.cleanup_all_text_files)
         self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Batch Token Delete...", command=self.batch_token_delete)
+        self.toolsMenu.add_command(label="Batch Token Delete...", command=self.batch_tag_delete)
         self.toolsMenu.add_separator()
         self.toolsMenu.add_command(label="Search and Replace", command=self.search_and_replace)
         self.toolsMenu.add_command(label="Prefix Text Files", command=self.prefix_text_files)
@@ -1148,12 +1148,12 @@ class ImgTxtViewer:
 #region -  Text Tools #
 #                     #
 
-    def batch_token_delete(self):
+    def batch_tag_delete(self):
         if getattr(sys, 'frozen', False):
             application_path = sys._MEIPASS
         else:
             application_path = os.path.dirname(os.path.abspath(__file__))
-        script_path = os.path.join(application_path, 'batch_token_delete.py')
+        script_path = os.path.join(application_path, 'batch_tag_delete.py')
         self.process = subprocess.Popen(["pythonw", script_path, self.image_dir.get()])
         threading.Thread(target=self.watch_files).start()
         self.thread_running = True
@@ -1392,22 +1392,23 @@ class ImgTxtViewer:
 #region - Misc Functions #
 #                        #
 
-    # Used to watch the current text file for changes while batch_token_delete is running.
+    # Used to watch the current text file for changes while batch_tag_delete is running.
     def watch_files(self):
         last_modified_times = {}
         while self.process.poll() is None and self.thread_running:
             file_modified = False
-            current_text_file = self.text_files[self.current_index]
-            if os.path.isfile(current_text_file):
-                last_modified = os.path.getmtime(current_text_file)
-                if current_text_file in last_modified_times:
-                    if last_modified != last_modified_times[current_text_file]:
+            if self.current_index < len(self.text_files):
+                current_text_file = self.text_files[self.current_index]
+                if os.path.isfile(current_text_file):
+                    last_modified = os.path.getmtime(current_text_file)
+                    if current_text_file in last_modified_times:
+                        if last_modified != last_modified_times[current_text_file]:
+                            last_modified_times[current_text_file] = last_modified
+                            file_modified = True
+                    else:
                         last_modified_times[current_text_file] = last_modified
-                        file_modified = True
-                else:
-                    last_modified_times[current_text_file] = last_modified
-            if file_modified:
-                self.show_pair()
+                if file_modified:
+                    self.show_pair()
             time.sleep(1)
 
     # Used to position new windows beside the main window.
