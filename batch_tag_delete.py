@@ -264,8 +264,7 @@ def on_closing(directory, root):
 #      #
 
 def main(directory=None):
-
-    # Get directory
+    # If directory is not provided or is not valid, ask user to select a directory
     if not directory or not os.path.isdir(directory):
         root = tk.Tk()
         root.withdraw()
@@ -274,13 +273,13 @@ def main(directory=None):
         if not directory:
             return
 
-    # Initialize the root window
+    # Initialize root window
     root = tk.Tk()
     root.title(f"tag List: {directory}")
     window_width = 490
     window_height = 800
-    position_right = root.winfo_screenwidth()//2 - window_width//2
-    position_top = root.winfo_screenheight()//2 - window_height//2
+    position_right = root.winfo_screenwidth() // 2 - window_width // 2
+    position_top = root.winfo_screenheight() // 2 - window_height // 2
     root.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
     root.minsize(400, 100)
     root.maxsize(490, 2000)
@@ -289,8 +288,10 @@ def main(directory=None):
     # Count tags in the directory
     tag_dict = count_tags(directory)
 
-    # Create refresh function
+    # Initialize last modification times
     last_modification_times = {}
+
+    # Function to refresh the display
     def refresh():
         nonlocal last_modification_times
         txt_files = [f for f in os.listdir(directory) if f.endswith('.txt')]
@@ -305,6 +306,7 @@ def main(directory=None):
             display_tags(count_tags(directory), directory, scrollable_frame)
         root.after(1000, refresh)
 
+    # Function to set the icon
     def set_icon():
         if getattr(sys, 'frozen', False):
             application_path = sys._MEIPASS
@@ -316,11 +318,11 @@ def main(directory=None):
         except TclError:
             pass
 
-    # Create the menubar
+    # Initialize menubar
     menubar = tk.Menu(root)
     root.config(menu=menubar)
 
-    # Add options to the menubar
+    # Add commands to the menubar
     menubar.add_command(label="Change Sort", command=lambda: toggle_tag_order(tag_dict, directory, scrollable_frame))
     menubar.add_separator()
     menubar.add_command(label="Delete ≤", command=lambda: ask_count_threshold(directory, scrollable_frame, root))
@@ -329,14 +331,14 @@ def main(directory=None):
     menubar.add_separator()
     menubar.add_command(label="Undo All", command=lambda: restore_backup(directory, scrollable_frame))
 
-    # Create the filter entry
+    # Initialize filter entry
     filter_entry = tk.Entry(root)
     filter_entry.insert(0, "Filter tags here (fuzzy search)")
     filter_entry.bind("<FocusIn>", lambda args: filter_entry.delete('0', 'end') if filter_entry.get() == "Filter tags here (fuzzy search)" else None)
     filter_entry.pack(side="top", fill="x", ipady=1)
     filter_entry.bind("<KeyRelease>", lambda event: filter_tags(event, directory, scrollable_frame))
 
-    # Create the frame and canvas for displaying tags
+    # Initialize frame, canvas, scrollbar, and scrollable frame
     frame = tk.Frame(root)
     frame.pack(fill="both", expand=True)
     canvas = tk.Canvas(frame)
@@ -346,20 +348,24 @@ def main(directory=None):
     scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
     canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
     canvas.configure(yscrollcommand=scrollbar.set)
-    canvas.bind_all("<MouseWheel>", lambda event: canvas.yview_scroll(int(-1*(event.delta/120)), "units"))
+    canvas.bind_all("<MouseWheel>", lambda event: canvas.yview_scroll(int(-1 * (event.delta / 120)), "units"))
     canvas.pack(side="left", fill="both", expand=True)
     scrollbar.pack(side="right", fill="y")
 
-    # Display tags and Start main loop
+    # Display tags, backup files, and set closing protocol
     display_tags(tag_dict, directory, scrollable_frame)
     backup_files(directory)
     root.protocol("WM_DELETE_WINDOW", lambda: on_closing(directory, root))
+
+    # Refresh display and set icon
     refresh()
     set_icon()
+
+    # Start main loop
     root.mainloop()
 
-# This starts the main function. If a command-line argument is provided, it uses that. If "None", it opens a file dialog.
 if __name__ == "__main__":
+    # If a command line argument is provided, it is used as the directory. Otherwise, None is passed to the main function.
     main(sys.argv[1] if len(sys.argv) > 1 else None)
 
 ################################################################################################################################################
@@ -375,15 +381,20 @@ v1.05 changes:
   - New:
     - `Undo All` You can now restore the text files to their original state from when Batch Tag Delete was launched. [#7d574a8][7d574a8]
     - Implement Auto-Refresh Feature. [#4f78be5][4f78be5]
-    - Renamed to: Batch Tag Delete
+    - Renamed to: Batch Tag Delete [#f7e9389][f7e9389]
 
 <br>
 
   - Fixed:
-    - Properly set app icon.
+    - Properly set app icon. [#358ee1d][358ee1d]
+
+  - Other:
 
 [7d574a8]: https://github.com/Nenotriple/img-txt_viewer/commit/7d574a85b300f60bd01015aeadfca4e3d38cdf71
 [4f78be5]: https://github.com/Nenotriple/img-txt_viewer/commit/4f78be5df917f6af19796591fbbff05e64f8e944
+[f7e9389]: https://github.com/Nenotriple/img-txt_viewer/commit/f7e9389d77ed86508ccb4f9705c3d709eb00ab0e
+
+[358ee1d]: https://github.com/Nenotriple/img-txt_viewer/commit/358ee1d93636d0001a3e9b96d72ba3230697fcdd
 
 '''
 
