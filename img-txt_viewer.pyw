@@ -97,6 +97,7 @@ class ToolTip:
         self.x_offset = x_offset
         self.y_offset = y_offset
         self.id = None
+        self.hide_time = 0
 
     def show_tip(self, tip_text, x, y):
         if self.tip_window or not tip_text:
@@ -116,24 +117,18 @@ class ToolTip:
         self.tip_window = None
         if tw:
             tw.destroy()
+        self.hide_time = time.time()
 
     def create_tooltip(widget, text, delay=0, x_offset=0, y_offset=0):
         tool_tip = ToolTip(widget, x_offset, y_offset)
         def enter(event):
             if tool_tip.id is not None:
                 widget.after_cancel(tool_tip.id)
-            tool_tip.id = widget.after(delay, lambda: tool_tip.show_tip(text, widget.winfo_pointerx(), widget.winfo_pointery()))
+            if time.time() - tool_tip.hide_time > 0.1:
+                tool_tip.id = widget.after(delay, lambda: tool_tip.show_tip(text, widget.winfo_pointerx(), widget.winfo_pointery()))
         def leave(event):
             if tool_tip.id is not None:
                 widget.after_cancel(tool_tip.id)
-            x, y, _, _ = widget.bbox("insert")
-            x += widget.winfo_rootx() + 25
-            y += widget.winfo_rooty() + 20
-            if tool_tip.tip_window:
-                tw_x, tw_y, tw_w, tw_h = tool_tip.tip_window.winfo_rootx(), tool_tip.tip_window.winfo_rooty(), tool_tip.tip_window.winfo_width(), tool_tip.tip_window.winfo_height()
-                if tw_x < event.x_root < tw_x + tw_w and tw_y < event.y_root < tw_y + tw_h:
-                    tool_tip.id = widget.after(delay, lambda: tool_tip.hide_tip())
-                    return
             tool_tip.hide_tip()
         widget.bind('<Enter>', enter)
         widget.bind('<Leave>', leave)
@@ -1709,7 +1704,7 @@ root.mainloop()
       - For example: Typing `*lo*b` returns "**lo**oking **b**ack", and even "yel**lo**w **b**ackground"
     - You can now undo the last operation for search_and_replace, prefix_text, and append_text. [#c5be6a2][c5be6a2]
     - Batch Tag Delete no longer locks the main img-txt_viewer window. [#f2f8414][f2f8414]
-      - While Batch Tag Delete is open, text files are scanned for changes and automatically updated. [#143140e][143140e]
+      - While Batch Tag Delete is open, text files are scanned for changes and automatically updated. [#143140e][143140e], [#b38a786][b38a786]
 
 <br>
 
@@ -1727,6 +1722,7 @@ root.mainloop()
 [05ca179]: https://github.com/Nenotriple/img-txt_viewer/commit/05ca179914d3288108206465d78ab199874b6cc2
 [c5be6a2]: https://github.com/Nenotriple/img-txt_viewer/commit/c5be6a2861192d634777d5c0d5c6d9a8804bbc72
 [143140e]: https://github.com/Nenotriple/img-txt_viewer/commit/143140efc4bca1515579d3ce0d73c68837ac5c30
+[b38a786]: https://github.com/Nenotriple/img-txt_viewer/commit/b38a786c4f75edf0ad03d2966076f32c7d870d3e
 
 <!-- Fixed -->
 [b3f00a2]: https://github.com/Nenotriple/img-txt_viewer/commit/b3f00a28c82beb2300e78693df5d771802b2cfe4
