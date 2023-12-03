@@ -31,7 +31,7 @@ import ctypes
 import shutil
 import tkinter as tk
 from collections import Counter
-from tkinter import messagebox, simpledialog, filedialog
+from tkinter import messagebox, simpledialog, filedialog, TclError
 
 ################################################################################################################################################
 ################################################################################################################################################
@@ -305,6 +305,17 @@ def main(directory=None):
             display_tags(count_tags(directory), directory, scrollable_frame)
         root.after(1000, refresh)
 
+    def set_icon():
+        if getattr(sys, 'frozen', False):
+            application_path = sys._MEIPASS
+        elif __file__:
+            application_path = os.path.dirname(__file__)
+        icon_path = os.path.join(application_path, "icon.ico")
+        try:
+            root.iconbitmap(icon_path)
+        except TclError:
+            pass
+
     # Create the menubar
     menubar = tk.Menu(root)
     root.config(menu=menubar)
@@ -344,6 +355,7 @@ def main(directory=None):
     backup_files(directory)
     root.protocol("WM_DELETE_WINDOW", lambda: on_closing(directory, root))
     refresh()
+    set_icon()
     root.mainloop()
 
 # This starts the main function. If a command-line argument is provided, it uses that. If "None", it opens a file dialog.
@@ -361,13 +373,15 @@ if __name__ == "__main__":
 v1.05 changes:
 
   - New:
-    - `Undo All` You can now restore the text files to their original state from when Batch tag Delete was launched. [#7d574a8][7d574a8]
+    - `Undo All` You can now restore the text files to their original state from when Batch Tag Delete was launched. [#7d574a8][7d574a8]
     - Implement Auto-Refresh Feature. [#4f78be5][4f78be5]
+    - Renamed to: Batch Tag Delete
 
 <br>
 
   - Fixed:
-    -
+    - Properly set app icon.
+
 [7d574a8]: https://github.com/Nenotriple/img-txt_viewer/commit/7d574a85b300f60bd01015aeadfca4e3d38cdf71
 [4f78be5]: https://github.com/Nenotriple/img-txt_viewer/commit/4f78be5df917f6af19796591fbbff05e64f8e944
 
