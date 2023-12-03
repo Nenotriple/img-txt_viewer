@@ -171,7 +171,7 @@ def ask_count_threshold(directory, scrollable_frame, root):
     if count_threshold is not None:
         batch_delete(directory, count_threshold, scrollable_frame)
 
-def delete_selected_tags(directory, scrollable_frame, filter_text=''):
+def delete_selected_tags(root, directory, scrollable_frame, filter_text=''):
     parent = tk.Toplevel()
     parent.withdraw()
     tag_count = 0
@@ -180,7 +180,10 @@ def delete_selected_tags(directory, scrollable_frame, filter_text=''):
             checkbox = widget.winfo_children()[-1]
             if checkbox.var.get():
                 tag_count += 1
-    if messagebox.askokcancel("Confirmation", f"Are you sure you want to delete {tag_count} tags?"):
+    if tag_count == 0:
+        messagebox.showinfo("No tags selected!", "Please select some tags to delete first!", parent=root)
+        return
+    if messagebox.askokcancel("Confirmation", f"Are you sure you want to delete {tag_count} tags?", parent=root):
         for widget in scrollable_frame.winfo_children():
             if isinstance(widget, tk.Frame):
                 checkbox = widget.winfo_children()[-1]
@@ -327,7 +330,7 @@ def main(directory=None):
     menubar.add_separator()
     menubar.add_command(label="Delete ≤", command=lambda: ask_count_threshold(directory, scrollable_frame, root))
     menubar.add_separator()
-    menubar.add_command(label="Delete Selected", command=lambda: delete_selected_tags(directory, scrollable_frame))
+    menubar.add_command(label="Delete Selected", command=lambda: delete_selected_tags(root, directory, scrollable_frame))
     menubar.add_separator()
     menubar.add_command(label="Undo All", command=lambda: restore_backup(directory, scrollable_frame))
 
@@ -387,14 +390,17 @@ v1.05 changes:
 
   - Fixed:
     - Properly set app icon. [#358ee1d][358ee1d]
+    - Improved popup handling when clicking `Delete Selected` when no tags are selected.
 
-  - Other:
+  - Other: [#7ccd0fb][7ccd0fb]
 
 [7d574a8]: https://github.com/Nenotriple/img-txt_viewer/commit/7d574a85b300f60bd01015aeadfca4e3d38cdf71
 [4f78be5]: https://github.com/Nenotriple/img-txt_viewer/commit/4f78be5df917f6af19796591fbbff05e64f8e944
 [f7e9389]: https://github.com/Nenotriple/img-txt_viewer/commit/f7e9389d77ed86508ccb4f9705c3d709eb00ab0e
 
 [358ee1d]: https://github.com/Nenotriple/img-txt_viewer/commit/358ee1d93636d0001a3e9b96d72ba3230697fcdd
+
+[7ccd0fb]: https://github.com/Nenotriple/img-txt_viewer/commit/7ccd0fb7c41a82eb31e128b656b16fbccd78c784
 
 '''
 
