@@ -12,6 +12,8 @@ Description:
 -------------
 Display an image and text file side-by-side for easy manual caption editing.
 
+More info here: https://github.com/Nenotriple/img-txt_viewer
+
 """
 ################################################################################################################################################
 ################################################################################################################################################
@@ -28,13 +30,13 @@ import shutil
 import ctypes
 import random
 import requests
+import threading
 import subprocess
 import tkinter.font
 from tkinter import *
 from tkinter import ttk, messagebox
 from tkinter.filedialog import askdirectory
 from tkinter.scrolledtext import ScrolledText
-import threading
 
 ##################
 #                #
@@ -117,12 +119,10 @@ class ToolTip:
 
     def create_tooltip(widget, text, delay=0, x_offset=0, y_offset=0):
         tool_tip = ToolTip(widget, x_offset, y_offset)
-
         def enter(event):
             if tool_tip.id is not None:
                 widget.after_cancel(tool_tip.id)
             tool_tip.id = widget.after(delay, lambda: tool_tip.show_tip(text, widget.winfo_pointerx(), widget.winfo_pointery()))
-
         def leave(event):
             if tool_tip.id is not None:
                 widget.after_cancel(tool_tip.id)
@@ -135,7 +135,6 @@ class ToolTip:
                     tool_tip.id = widget.after(delay, lambda: tool_tip.hide_tip())
                     return
             tool_tip.hide_tip()
-
         widget.bind('<Enter>', enter)
         widget.bind('<Leave>', leave)
 
@@ -261,10 +260,10 @@ class ImgTxtViewer:
         self.set_icon()
 
         # Variables
-        self.process = None
         self.panes_swapped = False
         self.text_modified = False
         self.thread_running = False
+        self.watcher_process = None
         self.user_selected_no = False
         self.is_alt_arrow_pressed = False
         self.current_index = 0
@@ -275,10 +274,11 @@ class ImgTxtViewer:
         self.text_files = []
         self.image_files = []
         self.suggestions = []
-        self.new_text_files = []
         self.deleted_pairs = []
+        self.new_text_files = []
 
         # Settings
+        self.font_var = StringVar()
         self.max_img_width = IntVar(value=2500)
         self.undo_state = StringVar(value="disabled")
         self.image_dir = StringVar(value="Choose Directory")
@@ -288,7 +288,6 @@ class ImgTxtViewer:
         self.auto_save_var = BooleanVar(value=False)
         self.highlighting_duplicates = BooleanVar(value=True)
         self.highlighting_all_duplicates = BooleanVar(value=False)
-        self.font_var = StringVar()
 
         # Autocomplete settings
         self.autocomplete = Autocomplete("danbooru.csv")
@@ -321,7 +320,6 @@ class ImgTxtViewer:
         optionsMenu.add_command(label="Edit Custom Suggestions...", command=self.create_and_open_custom_dictionary)
 
         # Suggestion Dictionary Menu
-
         dictionaryMenu = Menu(optionsMenu, tearoff=0)
         optionsMenu.add_cascade(label="Suggestion Dictionary", menu=dictionaryMenu)
         dictionaryMenu.add_checkbutton(label="English Dictionary", variable=self.csv_var, onvalue='dictionary.csv', offvalue='danbooru.csv', command=self.change_autocomplete_dictionary)
@@ -523,7 +521,6 @@ class ImgTxtViewer:
             " ▪️ Text is cleaned up when saved, so you can ignore things like duplicate tags, trailing comma/spaces, double comma/spaces, etc.\n"
             " ▪️ Text cleanup can be disabled from the options menu.",
         ]
-
         for header, section in zip(headers, content):
             self.info_text.insert(END, header + "\n", "header")
             self.info_text.insert(END, section + "\n", "section")
@@ -531,7 +528,7 @@ class ImgTxtViewer:
         self.info_text.tag_config("header", font=("Segoe UI", 10, "bold"))
         self.info_text.tag_config("section", font=("Segoe UI", 10))
         self.info_text.bind("<Button-3>", self.show_textContext_menu)
-        self.info_text.config(state='disabled', height=100, wrap=WORD)
+        self.info_text.config(state='disabled', wrap=WORD)
 
 #                 #
 # End of __init__ #
@@ -928,6 +925,7 @@ class ImgTxtViewer:
         if self.new_text_files:
             self.create_blank_textfiles(self.new_text_files)
         self.show_pair()
+        self.saved_label.config(text="No Changes", bg="#f0f0f0", fg="black")
         self.configure_pane_position()
         self.directory_button.config(relief=GROOVE, overrelief=RIDGE)
         if hasattr(self, 'total_images_label'):
@@ -954,8 +952,6 @@ class ImgTxtViewer:
                     self.text_box.insert(END, f.read())
             self.text_modified = False
             self.text_box.config(undo=True)
-            if not self.text_modified and self.saved_label.cget("text") != "Saved":
-                self.saved_label.config(text="No Changes", bg="#f0f0f0", fg="black")
             self.update_image_index()
             self.display_text_box()
             window_height = self.image_preview.winfo_height()
@@ -1009,7 +1005,7 @@ class ImgTxtViewer:
         if num_files_in_dir != self.prev_num_files:
             self.load_pairs()
         if not self.text_modified:
-            self.saved_label.config(text="No Changes", fg="black")
+            self.saved_label.config(text="No Changes", bg="#f0f0f0", fg="black")
         self.text_box.config(undo=False)
         self.text_box.edit_reset()
         if self.current_index < len(self.image_files) - 1:
@@ -1030,7 +1026,7 @@ class ImgTxtViewer:
         if num_files_in_dir != self.prev_num_files:
             self.load_pairs()
         if not self.text_modified:
-            self.saved_label.config(text="No Changes", fg="black")
+            self.saved_label.config(text="No Changes", bg="#f0f0f0", fg="black")
         self.text_box.config(undo=False)
         self.text_box.edit_reset()
         if self.current_index > 0:
@@ -1055,7 +1051,7 @@ class ImgTxtViewer:
             self.current_index = index
             self.show_pair()
             if not self.text_modified:
-                self.saved_label.config(text="No Changes", fg="black")
+                self.saved_label.config(text="No Changes", bg="#f0f0f0", fg="black")
         except ValueError:
             pass
 
@@ -1154,7 +1150,7 @@ class ImgTxtViewer:
         else:
             application_path = os.path.dirname(os.path.abspath(__file__))
         script_path = os.path.join(application_path, 'batch_tag_delete.py')
-        self.process = subprocess.Popen(["pythonw", script_path, self.image_dir.get()])
+        self.watcher_process = subprocess.Popen(["pythonw", script_path, self.image_dir.get()])
         threading.Thread(target=self.watch_files).start()
         self.thread_running = True
 
@@ -1394,8 +1390,9 @@ class ImgTxtViewer:
 
     # Used to watch the current text file for changes while batch_tag_delete is running.
     def watch_files(self):
+        self.saved_label.config(text="Batch Tag Delete!", bg="#f0f0f0", fg="black")
         last_modified_times = {}
-        while self.process.poll() is None and self.thread_running:
+        while self.watcher_process.poll() is None and self.thread_running:
             file_modified = False
             if self.current_index < len(self.text_files):
                 current_text_file = self.text_files[self.current_index]
@@ -1409,7 +1406,11 @@ class ImgTxtViewer:
                         last_modified_times[current_text_file] = last_modified
                 if file_modified:
                     self.show_pair()
+                    self.saved_label.config(text="File Modified!", bg="#5da9be", fg="white")
             time.sleep(1)
+            self.saved_label.config(text="Watching for changes...", bg="#f0f0f0", fg="black")
+        if self.watcher_process.poll() is not None:
+            self.saved_label.config(text="Changes Saved!", bg="#5da9be", fg="white")
 
     # Used to position new windows beside the main window.
     def position_dialog(self, dialog, window_width, window_height):
@@ -1507,8 +1508,8 @@ class ImgTxtViewer:
 
     def on_closing(self):
         self.thread_running = False
-        if self.process is not None:
-            self.process.terminate()
+        if self.watcher_process is not None:
+            self.watcher_process.terminate()
         if not os.path.isdir(self.image_dir.get()):
             root.destroy()
         elif self.saved_label.cget("text") in ["No Changes", "Saved", "Text Files Cleaned up!"]:
@@ -1519,7 +1520,7 @@ class ImgTxtViewer:
             root.destroy()
         else:
             try:
-                if messagebox.askokcancel("Quit", "Are you sure you want to quit without saving?"):
+                if messagebox.askyesno("Quit", "Are you sure you want to quit without saving?"):
                     root.destroy()
             except:
                 pass
@@ -1584,7 +1585,7 @@ class ImgTxtViewer:
         if not os.path.isfile(csv_filename):
             with open(csv_filename, 'w', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow(["### This is where you can create a custom dictionary of tags/tags."])
+                writer.writerow(["### This is where you can create a custom dictionary of tags."])
                 writer.writerow(["### These tags will be loaded alongside the chosen autocomplete dictionary."])
                 writer.writerow(["### Lines starting with 3 hash symbols '###' will be ignored so you can create comments."])
                 writer.writerow(["### Tags near the top of the list have a higher priority than lower tags."])
@@ -1708,7 +1709,7 @@ root.mainloop()
       - For example: Typing `*lo*b` returns "**lo**oking **b**ack", and even "yel**lo**w **b**ackground"
     - You can now undo the last operation for search_and_replace, prefix_text, and append_text. [#c5be6a2][c5be6a2]
     - Batch Tag Delete no longer locks the main img-txt_viewer window. [#f2f8414][f2f8414]
-      - While Batch Tag Delete is open, text files are scanned for changes and automatically updated.
+      - While Batch Tag Delete is open, text files are scanned for changes and automatically updated. [#143140e][143140e]
 
 <br>
 
@@ -1725,6 +1726,7 @@ root.mainloop()
 [22b2764]: https://github.com/Nenotriple/img-txt_viewer/commit/22b2764edbf16e4477dce16bebdf08cf2d3459df
 [05ca179]: https://github.com/Nenotriple/img-txt_viewer/commit/05ca179914d3288108206465d78ab199874b6cc2
 [c5be6a2]: https://github.com/Nenotriple/img-txt_viewer/commit/c5be6a2861192d634777d5c0d5c6d9a8804bbc72
+[143140e]: https://github.com/Nenotriple/img-txt_viewer/commit/143140efc4bca1515579d3ce0d73c68837ac5c30
 
 <!-- Fixed -->
 [b3f00a2]: https://github.com/Nenotriple/img-txt_viewer/commit/b3f00a28c82beb2300e78693df5d771802b2cfe4
