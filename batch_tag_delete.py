@@ -266,8 +266,8 @@ def on_closing(directory, root):
 # Main #
 #      #
 
-def main(directory=None):
-    # If directory is not provided or is not valid, ask user to select a directory
+def main(directory=None, main_window_x=None, main_window_y=None):
+    # If directory is not provided or is not a valid directory, open a directory dialog
     if not directory or not os.path.isdir(directory):
         root = tk.Tk()
         root.withdraw()
@@ -281,8 +281,16 @@ def main(directory=None):
     root.title(f"tag List: {directory}")
     window_width = 490
     window_height = 800
-    position_right = root.winfo_screenwidth() // 2 - window_width // 2
-    position_top = root.winfo_screenheight() // 2 - window_height // 2
+
+    if main_window_x is not None and main_window_y is not None:
+        # position of the new window relative to the main window
+        position_right = int(main_window_x) + -500
+        position_top = int(main_window_y) + 0
+    else:
+        # center the window on the screen
+        position_right = root.winfo_screenwidth() // 2 - window_width // 2
+        position_top = root.winfo_screenheight() // 2 - window_height // 2
+
     root.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
     root.minsize(400, 100)
     root.maxsize(490, 2000)
@@ -368,8 +376,13 @@ def main(directory=None):
     root.mainloop()
 
 if __name__ == "__main__":
-    # If a command line argument is provided, it is used as the directory. Otherwise, None is passed to the main function.
-    main(sys.argv[1] if len(sys.argv) > 1 else None)
+    # Call the main function with command line arguments if provided
+    # sys.argv[1] is the first command line argument, which is the directory
+    # sys.argv[2] is the second command line argument, which is the main_window_x
+    # sys.argv[3] is the third command line argument, which is the main_window_y
+    # If these arguments are not provided, None is passed to the main function
+    main(sys.argv[1] if len(sys.argv) > 1 else None, sys.argv[2] if len(sys.argv) > 2 else None, sys.argv[3] if len(sys.argv) > 3 else None)
+
 
 ################################################################################################################################################
 ################################################################################################################################################
@@ -385,14 +398,16 @@ v1.05 changes:
     - `Undo All` You can now restore the text files to their original state from when Batch Tag Delete was launched. [#7d574a8][7d574a8]
     - Implement Auto-Refresh Feature. [#4f78be5][4f78be5]
     - Renamed to: Batch Tag Delete [#f7e9389][f7e9389]
+    - The window position can now be controlled with the starting command arguments. This is used to position this script beside the main window.
+     - Example: `python batch_tag_delete.py /path/to/directory 500 800`
 
 <br>
 
   - Fixed:
     - Properly set app icon. [#358ee1d][358ee1d]
-    - Improved popup handling when clicking `Delete Selected` when no tags are selected.
+    - Improved popup handling when clicking `Delete Selected` when no tags are selected. [#3a0a60b][3a0a60b]
 
-  - Other: [#7ccd0fb][7ccd0fb]
+  - Other: [#7ccd0fb][7ccd0fb], [3a0a60b][3a0a60b]
 
 [7d574a8]: https://github.com/Nenotriple/img-txt_viewer/commit/7d574a85b300f60bd01015aeadfca4e3d38cdf71
 [4f78be5]: https://github.com/Nenotriple/img-txt_viewer/commit/4f78be5df917f6af19796591fbbff05e64f8e944
@@ -401,6 +416,7 @@ v1.05 changes:
 [358ee1d]: https://github.com/Nenotriple/img-txt_viewer/commit/358ee1d93636d0001a3e9b96d72ba3230697fcdd
 
 [7ccd0fb]: https://github.com/Nenotriple/img-txt_viewer/commit/7ccd0fb7c41a82eb31e128b656b16fbccd78c784
+[3a0a60b]: https://github.com/Nenotriple/img-txt_viewer/commit/3a0a60bbf41a2da0c5b943624bfe61dceba71703
 
 '''
 
