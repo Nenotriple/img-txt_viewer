@@ -348,8 +348,10 @@ class ImgTxtViewer:
         optionsMenu.add_checkbutton(label="Big Comma Mode", variable=self.bold_commas, command=self.toggle_big_comma_mode)
         optionsMenu.add_checkbutton(label="List View", variable=self.list_mode, command=self.toggle_list_mode)
         optionsMenu.add_separator()
-        optionsMenu.add_command(label="Swap img-txt sides", command=self.swap_panes)
-        optionsMenu.add_checkbutton(label="Always On Top", command=self.toggle_always_on_top)
+        optionsMenu.add_checkbutton(label="Enable Always On Top", command=self.toggle_always_on_top)
+        optionsMenu.add_command(label="Swap img-txt - Sides", command=self.swap_pane_sides)
+        optionsMenu.add_command(label="Swap img-txt - H/V", command=self.swap_pane_orientation)
+
 
 ####### Tools Menu ##################################################
         self.toolsMenu = Menu(menubar, tearoff=0)
@@ -390,7 +392,7 @@ class ImgTxtViewer:
         self.master_control_frame = Frame(master)
         self.paned_window.add(self.master_control_frame, stretch="always", )
         self.paned_window.paneconfigure(self.master_control_frame, minsize=300)
-        self.paned_window.sash_place(0, 5, 0)
+        self.paned_window.update(); self.paned_window.sash_place(0, 0, 0)
 
         # Suggestion Label
         self.suggestion_textbox = Text(self.master_control_frame, height=1, borderwidth=0, highlightthickness=0, bg='#f0f0f0')
@@ -609,36 +611,12 @@ class ImgTxtViewer:
         imageContext_menu.add_command(label="Delete img-txt Pair" + ' ' * 8 + "Del", command=self.delete_pair)
         imageContext_menu.add_command(label="Undo Delete", command=self.undo_delete_pair, state=self.undo_state.get())
         imageContext_menu.add_separator()
-        imageContext_menu.add_command(label="Swap img/txt sides", command=self.swap_panes)
+        imageContext_menu.add_command(label="Swap img-txt - Sides", command=self.swap_pane_sides)
+        imageContext_menu.add_command(label="Swap img-txt - H/V", command=self.swap_pane_orientation)
         imageContext_menu.add_separator()
         for size in self.sizes:
             imageContext_menu.add_radiobutton(label=size[0], variable=self.max_img_width, value=size[1], command=lambda s=size: self.save_text_file())
         imageContext_menu.tk_popup(event.x_root, event.y_root)
-
-    def configure_pane_position(self):
-        window_width = self.master.winfo_width()
-        self.paned_window.sash_place(0, window_width // 2, 0)
-        self.paned_window.paneconfigure(self.master_image_frame, minsize=300)
-
-    def swap_panes(self):
-        self.paned_window.remove(self.master_image_frame)
-        self.paned_window.remove(self.master_control_frame)
-        if not self.panes_swapped:
-            self.paned_window.add(self.master_control_frame)
-            self.paned_window.add(self.master_image_frame)
-        else:
-            self.paned_window.add(self.master_image_frame)
-            self.paned_window.add(self.master_control_frame)
-        self.configure_pane_position()
-        self.paned_window.paneconfigure(self.master_control_frame, minsize=300)
-        self.panes_swapped = not self.panes_swapped
-
-    def snap_sash_to_half(self, event):
-        total_width = self.paned_window.winfo_width()
-        half_point = int(total_width / 2)
-        sash_pos = self.paned_window.sash_coord(0)[0]
-        if abs(sash_pos - half_point) < 75:
-            self.paned_window.sash_place(0, half_point, 0)
 
     def toggle_always_on_top(self):
         current_state = root.attributes('-topmost')
@@ -655,6 +633,47 @@ class ImgTxtViewer:
             self.master.iconbitmap(icon_path)
         except TclError:
             pass
+
+####### PanedWindow ##################################################
+    def configure_pane_position(self):
+        window_width = self.master.winfo_width()
+        self.paned_window.sash_place(0, window_width // 2, 0)
+        self.configure_pane()
+
+    def swap_pane_sides(self):
+        self.paned_window.remove(self.master_image_frame)
+        self.paned_window.remove(self.master_control_frame)
+        if not self.panes_swapped:
+            self.paned_window.add(self.master_control_frame)
+            self.paned_window.add(self.master_image_frame)
+        else:
+            self.paned_window.add(self.master_image_frame)
+            self.paned_window.add(self.master_control_frame)
+        self.master.after_idle(self.configure_pane_position)
+        self.configure_pane()
+        self.panes_swapped = not self.panes_swapped
+
+    def swap_pane_orientation(self):
+        current_orient = self.paned_window.cget('orient')
+        new_orient = 'vertical' if current_orient == 'horizontal' else 'horizontal'
+        self.paned_window.configure(orient=new_orient)
+        if new_orient == 'horizontal':
+            self.master.minsize(600, 300)
+        else:
+            self.master.minsize(300, 600)
+        self.master.after_idle(self.configure_pane_position)
+
+    def snap_sash_to_half(self, event):
+        total_width = self.paned_window.winfo_width()
+        half_point = int(total_width / 2)
+        sash_pos = self.paned_window.sash_coord(0)[0]
+        if abs(sash_pos - half_point) < 75:
+            self.paned_window.sash_place(0, half_point, 0)
+        self.configure_pane()
+
+    def configure_pane(self):
+        self.paned_window.paneconfigure(self.master_image_frame, minsize=300, stretch="always")
+        self.paned_window.paneconfigure(self.master_control_frame, minsize=300, stretch="always")
 
 #endregion
 ################################################################################################################################################
