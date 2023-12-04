@@ -1164,7 +1164,9 @@ class ImgTxtViewer:
         else:
             application_path = os.path.dirname(os.path.abspath(__file__))
         script_path = os.path.join(application_path, 'batch_tag_delete.py')
-        self.watcher_process = subprocess.Popen(["pythonw", script_path, self.image_dir.get()])
+        main_window_x = root.winfo_x()
+        main_window_y = root.winfo_y()
+        self.watcher_process = subprocess.Popen(["pythonw", script_path, self.image_dir.get(), str(main_window_x), str(main_window_y)])
         threading.Thread(target=self.watch_files).start()
         self.thread_running = True
 
@@ -1724,17 +1726,19 @@ root.mainloop()
     - You can now undo the last operation for search_and_replace, prefix_text, and append_text. [#c5be6a2][c5be6a2]
     - Batch Tag Delete no longer locks the main img-txt_viewer window. [#f2f8414][f2f8414]
       - While Batch Tag Delete is open, text files are scanned for changes and automatically updated. [#143140e][143140e], [#b38a786][b38a786]
+    - You can now swap img-txt pair horizontal and vertical positions. [#ee7d052][ee7d052]
 
 <br>
 
   - Fixed:
     - Fixed autosave bug causing warning on window close without directory selection. [#b3f00a2][b3f00a2]
+    - Batch Tag Delete now opens beside the main window. 
 
 <br>
 
   - Other changes:
     - PanedWindow adjustments. [#2bfdb3a][2bfdb3a]
-    - Other changes: [#f2f8414][f2f8414]
+    - Other changes: [#f2f8414][f2f8414], [#9c8c580][9c8c580], [#0362e23][0362e23]
 
 <!-- New -->
 [22b2764]: https://github.com/Nenotriple/img-txt_viewer/commit/22b2764edbf16e4477dce16bebdf08cf2d3459df
@@ -1742,6 +1746,7 @@ root.mainloop()
 [c5be6a2]: https://github.com/Nenotriple/img-txt_viewer/commit/c5be6a2861192d634777d5c0d5c6d9a8804bbc72
 [143140e]: https://github.com/Nenotriple/img-txt_viewer/commit/143140efc4bca1515579d3ce0d73c68837ac5c30
 [b38a786]: https://github.com/Nenotriple/img-txt_viewer/commit/b38a786c4f75edf0ad03d2966076f32c7d870d3e
+[ee7d052]: https://github.com/Nenotriple/img-txt_viewer/commit/ee7d0527d006803f4bf1377e5e95cebf13af429f
 
 <!-- Fixed -->
 [b3f00a2]: https://github.com/Nenotriple/img-txt_viewer/commit/b3f00a28c82beb2300e78693df5d771802b2cfe4
@@ -1749,6 +1754,8 @@ root.mainloop()
 <!-- Other changes -->
 [2bfdb3a]: https://github.com/Nenotriple/img-txt_viewer/commit/2bfdb3a6e4d075f26b6c89ef160e990190d27dc3
 [f2f8414]: https://github.com/Nenotriple/img-txt_viewer/commit/f2f84141f2481fc555fc3a74393f1816f9a199ec
+[9c8c580]: https://github.com/Nenotriple/img-txt_viewer/commit/9c8c580dab9ff0e569df0f45fdf26d3914511497
+[0362e23]: https://github.com/Nenotriple/img-txt_viewer/commit/0362e23f0e684eb5b1ce73b89c1b0267af144ba8
 
 '''
 
