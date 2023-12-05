@@ -91,6 +91,7 @@ except ImportError:
 #             #
 # AboutWindow #
 #             #
+
 class AboutWindow(Toplevel):
 
     headers = [" Shortcuts:", " Tips:", " Text Tools:", " Auto-Save:"]
@@ -154,7 +155,6 @@ class AboutWindow(Toplevel):
     def open_url(self):
         import webbrowser
         webbrowser.open(f"{self.github_url}")
-
 
 ################################################################################################################################################
 ################################################################################################################################################
@@ -327,16 +327,20 @@ class ImgTxtViewer:
         self.set_icon()
 
         # Variables
-        self.about_window = None
         self.panes_swapped = False
         self.text_modified = False
-        self.thread_running = False
+        self.batch_tag_delete_running = False
         self.watcher_process = None
         self.user_selected_no = False
         self.is_alt_arrow_pressed = False
         self.current_index = 0
         self.prev_num_files = 0
         self.selected_suggestion_index = 0
+
+        self.is_search_replace_open = False
+        self.is_prefix_open = False
+        self.is_append_open = False
+        self.about_window = None
 
         # File lists
         self.text_files = []
@@ -431,12 +435,12 @@ class ImgTxtViewer:
         menubar.add_cascade(label="Tools", menu=self.toolsMenu)
 
         # Tools
-        self.toolsMenu.add_command(label="Open Directory...", command=self.open_current_directory)
-        self.toolsMenu.add_command(label="Open Image...", command=self.open_current_image)
+        self.toolsMenu.add_command(label="Open Current Directory...", command=self.open_current_directory)
+        self.toolsMenu.add_command(label="Open Current Image...", command=self.open_current_image)
         self.toolsMenu.add_separator()
         self.toolsMenu.add_command(label="Cleanup Text", command=self.cleanup_all_text_files)
         self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Batch Tag Delete...", command=self.batch_tag_delete)
+        self.toolsMenu.add_command(label="Batch Tag Delete", command=self.batch_tag_delete)
         self.toolsMenu.add_separator()
         self.toolsMenu.add_command(label="Search and Replace", command=self.search_and_replace)
         self.toolsMenu.add_command(label="Prefix Text Files", command=self.prefix_text_files)
@@ -640,7 +644,7 @@ class ImgTxtViewer:
             textContext_menu.add_command(label="Undo" + ' ' * 51 + "Ctrl-Z", command=lambda: (widget_in_focus.event_generate('<<Undo>>'), self.change_label()))
             textContext_menu.add_command(label="Redo" + ' ' * 52 + "Ctrl-Y", command=lambda: (widget_in_focus.event_generate('<<Redo>>'), self.change_label()))
             textContext_menu.add_separator()
-            textContext_menu.add_command(label="Open Directory...", command=self.open_current_directory)
+            textContext_menu.add_command(label="Open Text Directory...", command=self.open_current_directory)
             textContext_menu.add_separator()
             textContext_menu.add_command(label="Highlight all Duplicates" + ' ' * 20 + "Ctrl-F", command=self.highlight_all_duplicates)
             textContext_menu.add_separator()
@@ -653,8 +657,8 @@ class ImgTxtViewer:
     # Image context menu
     def show_imageContext_menu(self, event):
         imageContext_menu = Menu(self.master, tearoff=0)
-        imageContext_menu.add_command(label="Open Directory...", command=self.open_current_directory)
-        imageContext_menu.add_command(label="Open Image...", command=self.open_current_image)
+        imageContext_menu.add_command(label="Open Current Directory...", command=self.open_current_directory)
+        imageContext_menu.add_command(label="Open Current Image...", command=self.open_current_image)
         imageContext_menu.add_separator()
         imageContext_menu.add_command(label="Delete img-txt Pair" + ' ' * 8 + "Del", command=self.delete_pair)
         imageContext_menu.add_command(label="Undo Delete", command=self.undo_delete_pair, state=self.undo_state.get())
@@ -1216,13 +1220,18 @@ class ImgTxtViewer:
         main_window_y = root.winfo_y()
         self.watcher_process = subprocess.Popen(["pythonw", script_path, self.image_dir.get(), str(main_window_x), str(main_window_y)])
         threading.Thread(target=self.watch_files).start()
-        self.thread_running = True
+        self.batch_tag_delete_running = True
+        self.toolsMenu.entryconfig("Batch Tag Delete", state="disable")
 
     def search_and_replace(self):
         if not self.check_directory():
             return
         self.delete_text_backup()
+        if self.is_search_replace_open is not False:
+            return
         dialog = Toplevel(self.master)
+        self.is_search_replace_open = True
+        self.toolsMenu.entryconfig("Search and Replace", state="disable")
         dialog.focus_force()
         self.position_dialog(dialog, 345, 145)
         dialog.geometry("345x145")
@@ -1255,8 +1264,7 @@ class ImgTxtViewer:
                         filedata = file.read()
                     count = filedata.count(search_string)
                     total_count += count
-                except Exception as e:
-                    print(f"Error while processing file {text_file}: {e}")
+                except Exception: pass
             msg = f"The string: '{search_string}'\n\nWas found {total_count} times across all files.\n\nDo you want to replace it with:\n\n{replace_string}"
             if messagebox.askyesno("Confirmation", msg):
                 for text_file in self.text_files:
@@ -1268,8 +1276,7 @@ class ImgTxtViewer:
                         filedata = filedata.replace(search_string, replace_string)
                         with open(text_file, 'w') as file:
                             file.write(filedata)
-                    except Exception as e:
-                        print(f"Error while processing file {text_file}: {e}")
+                    except Exception: pass
             self.show_pair()
         def undo_search_and_replace():
             backup_folder = os.path.join(os.path.dirname(self.text_files[0]), 'text_backup')
@@ -1278,13 +1285,15 @@ class ImgTxtViewer:
                     backup_file = os.path.join(backup_folder, os.path.basename(text_file) + '.bak')
                     if os.path.exists(backup_file):
                         shutil.move(backup_file, text_file)
-                except Exception as e:
-                    print(f"Error while undoing changes for file {text_file}: {e}")
+                except Exception: pass
             self.show_pair()
         def close_dialog():
             self.delete_text_backup()
             dialog.destroy()
+            self.is_search_replace_open = False
+            self.toolsMenu.entryconfig("Search and Replace", state="normal")
             self.show_pair()
+        dialog.protocol("WM_DELETE_WINDOW", close_dialog)
         search_and_replace_button_frame = Frame(dialog)
         search_and_replace_button_frame.pack()
         Button(search_and_replace_button_frame, overrelief="groove", text="OK", command=perform_search_and_replace, width=15, relief=RAISED, borderwidth=3).pack(side=LEFT, pady=2, padx=2)
@@ -1295,7 +1304,11 @@ class ImgTxtViewer:
         if not self.check_directory():
             return
         self.delete_text_backup()
+        if self.is_prefix_open is not False:
+            return
         dialog = Toplevel(self.master)
+        self.is_prefix_open = True
+        self.toolsMenu.entryconfig("Prefix Text Files", state="normal")
         dialog.focus_force()
         self.position_dialog(dialog, 405, 75)
         dialog.geometry("405x75")
@@ -1323,8 +1336,7 @@ class ImgTxtViewer:
                         content = file.read()
                         file.seek(0, 0)
                         file.write(prefix_text + content)
-                except Exception as e:
-                    print(f"Error while processing file {text_file}: {e}")
+                except Exception: pass
             self.show_pair()
         def undo_prefix_text():
             backup_folder = os.path.join(os.path.dirname(self.text_files[0]), 'text_backup')
@@ -1333,13 +1345,15 @@ class ImgTxtViewer:
                     backup_file = os.path.join(backup_folder, os.path.basename(text_file) + '.bak')
                     if os.path.exists(backup_file):
                         shutil.move(backup_file, text_file)
-                except Exception as e:
-                    print(f"Error while undoing changes for file {text_file}: {e}")
+                except Exception: pass
             self.show_pair()
         def close_dialog():
             self.delete_text_backup()
             dialog.destroy()
+            self.is_prefix_open = False
+            self.toolsMenu.entryconfig("Prefix Text Files", state="disable")
             self.show_pair()
+        dialog.protocol("WM_DELETE_WINDOW", close_dialog)
         prefix_text_button_frame = Frame(dialog)
         prefix_text_button_frame.pack()
         Button(prefix_text_button_frame, overrelief="groove", text="OK", command=lambda: messagebox.askokcancel("Confirmation", f"Are you sure you want to prefix all files with:\n\n'{prefix_text_var.get()}, '", parent=dialog) and perform_prefix_text(), width=15, relief=RAISED, borderwidth=3).pack(side=LEFT, pady=2, padx=2)
@@ -1350,7 +1364,11 @@ class ImgTxtViewer:
         if not self.check_directory():
             return
         self.delete_text_backup()
+        if self.is_append_open is not False:
+            return
         dialog = Toplevel(self.master)
+        self.is_append_open = True
+        self.toolsMenu.entryconfig("Append Text Files", state="normal")
         dialog.focus_force()
         self.position_dialog(dialog, 405, 75)
         dialog.geometry("405x75")
@@ -1376,8 +1394,7 @@ class ImgTxtViewer:
                     shutil.copy2(text_file, backup_file)
                     with open(text_file, 'a') as file:
                         file.write(append_text)
-                except Exception as e:
-                    print(f"Error while processing file {text_file}: {e}")
+                except Exception: pass
             self.show_pair()
         def undo_append_text():
             backup_folder = os.path.join(os.path.dirname(self.text_files[0]), 'text_backup')
@@ -1386,13 +1403,15 @@ class ImgTxtViewer:
                     backup_file = os.path.join(backup_folder, os.path.basename(text_file) + '.bak')
                     if os.path.exists(backup_file):
                         shutil.move(backup_file, text_file)
-                except Exception as e:
-                    print(f"Error while undoing changes for file {text_file}: {e}")
+                except Exception: pass
             self.show_pair()
         def close_dialog():
             self.delete_text_backup()
             dialog.destroy()
+            self.is_append_open = False
+            self.toolsMenu.entryconfig("Append Text Files", state="disabled")
             self.show_pair()
+        dialog.protocol("WM_DELETE_WINDOW", close_dialog)
         append_text_button_frame = Frame(dialog)
         append_text_button_frame.pack()
         Button(append_text_button_frame, overrelief="groove", text="OK", command=lambda: messagebox.askokcancel("Confirmation", f"Are you sure you want to append all files with:\n\n', {append_text_var.get()}'", parent=dialog) and perform_append_text(), width=15, relief=RAISED, borderwidth=3).pack(side=LEFT, pady=2, padx=2)
@@ -1439,7 +1458,7 @@ class ImgTxtViewer:
     def watch_files(self):
         self.saved_label.config(text="Batch Tag Delete!", bg="#f0f0f0", fg="black")
         last_modified_times = {}
-        while self.watcher_process.poll() is None and self.thread_running:
+        while self.watcher_process.poll() is None and self.batch_tag_delete_running:
             file_modified = False
             if self.current_index < len(self.text_files):
                 current_text_file = self.text_files[self.current_index]
@@ -1458,6 +1477,7 @@ class ImgTxtViewer:
             self.saved_label.config(text="Watching for changes...", bg="#f0f0f0", fg="black")
         if self.watcher_process.poll() is not None:
             self.saved_label.config(text="Changes Saved!", bg="#5da9be", fg="white")
+            self.toolsMenu.entryconfig("Batch Tag Delete", state="normal")
 
     # Used to position new windows beside the main window.
     def position_dialog(self, dialog, window_width, window_height):
@@ -1482,18 +1502,22 @@ class ImgTxtViewer:
                 self.master.clipboard_append(image_dir)
                 self.image_dir.set("Copied!")
                 self.master.after(400, lambda: self.image_dir.set(image_dir))
-        except:
-            pass
+        except Exception: pass
 
     def disable_button(self, event):
         return "break"
 
     def open_about_window(self):
-        if self.about_window is None or not self.about_window.winfo_exists():
+        if self.about_window is not None:
+            self.about_window.lift()
+        else:
             self.about_window = AboutWindow(self.master)
             self.position_dialog(self.about_window, 450, 550)
-        else:
-            self.about_window.lift()
+            self.about_window.protocol("WM_DELETE_WINDOW", self.close_about_window)
+
+    def close_about_window(self):
+        self.about_window.destroy()
+        self.about_window = None
 
 #endregion
 ################################################################################################################################################
@@ -1578,12 +1602,12 @@ class ImgTxtViewer:
             f.write(text)
 
     def on_closing(self):
-        self.thread_running = False
+        self.batch_tag_delete_running = False
         if self.watcher_process is not None:
             self.watcher_process.terminate()
         if not os.path.isdir(self.image_dir.get()):
             root.destroy()
-        elif self.saved_label.cget("text") in ["No Changes", "Saved", "Text Files Cleaned up!"]:
+        elif self.saved_label.cget("text") in ["No Changes", "Saved", "Changes Saved!", "Text Files Cleaned up!"]:
             root.destroy()
         elif self.auto_save_var.get():
             self.cleanup_all_text_files(show_confirmation=False)
@@ -1591,10 +1615,9 @@ class ImgTxtViewer:
             root.destroy()
         else:
             try:
-                if messagebox.askyesno("Quit", "Are you sure you want to quit without saving?"):
+                if messagebox.askyesno("Quit", "Quit without saving?"):
                     root.destroy()
-            except:
-                pass
+            except Exception: pass
         self.delete_text_backup()
         self.delete_trash_folder()
 
@@ -1619,20 +1642,17 @@ class ImgTxtViewer:
                 self.current_index = 0
                 self.load_pairs()
                 self.directory_button.config(anchor='w')
-        except Exception as e:
-            pass
+        except Exception: pass
 
     def open_current_directory(self, event=None):
         try:
             os.startfile(self.image_dir.get())
-        except:
-            pass
+        except Exception: pass
 
     def open_current_image(self, event=None):
         try:
             os.startfile(self.image_file)
-        except:
-            pass
+        except Exception: pass
 
     def check_directory(self):
         if not os.path.isdir(self.image_dir.get()):
@@ -1796,12 +1816,14 @@ root.mainloop()
     - Batch Tag Delete now opens beside the main window. [#f75362f][f75362f]
     - Selecting a new directory now removes the left over text backups. [#b1f4655][b1f4655]
     - Closing the app now removes the "Trash" folder if it's empty. [#f8144ab][f8144ab]
+    - Prevent multiple instances of a tool window from opening.
+
 
 <br>
 
   - Other changes:
     - PanedWindow adjustments. [#2bfdb3a][2bfdb3a]
-    - Other changes: [#f2f8414][f2f8414], [#9c8c580][9c8c580], [#0362e23][0362e23]
+    - Other changes: [#f2f8414][f2f8414], [#9c8c580][9c8c580], [#0362e23][0362e23], [#fbcaaec][fbcaaec]
 
 <!-- New -->
 [22b2764]: https://github.com/Nenotriple/img-txt_viewer/commit/22b2764edbf16e4477dce16bebdf08cf2d3459df
@@ -1823,6 +1845,7 @@ root.mainloop()
 [f2f8414]: https://github.com/Nenotriple/img-txt_viewer/commit/f2f84141f2481fc555fc3a74393f1816f9a199ec
 [9c8c580]: https://github.com/Nenotriple/img-txt_viewer/commit/9c8c580dab9ff0e569df0f45fdf26d3914511497
 [0362e23]: https://github.com/Nenotriple/img-txt_viewer/commit/0362e23f0e684eb5b1ce73b89c1b0267af144ba8
+[fbcaaec]: https://github.com/Nenotriple/img-txt_viewer/commit/fbcaaecd83cf6c6a38de33baef41981b61de243e
 
 '''
 
