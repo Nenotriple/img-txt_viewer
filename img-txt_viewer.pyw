@@ -3,7 +3,6 @@
 #                                      #
 #            IMG-TXT VIEWER            #
 #                                      #
-#   Version : v1.80                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -15,6 +14,9 @@ Display an image and text file side-by-side for easy manual caption editing.
 More info here: https://github.com/Nenotriple/img-txt_viewer
 
 """
+
+VERSION = "v1.80"
+
 ################################################################################################################################################
 ################################################################################################################################################
 #                  #
@@ -89,7 +91,6 @@ except ImportError:
 #             #
 # AboutWindow #
 #             #
-
 class AboutWindow(Toplevel):
 
     headers = [" Shortcuts:", " Tips:", " Text Tools:", " Auto-Save:"]
@@ -107,7 +108,8 @@ class AboutWindow(Toplevel):
         " ▪️ List Mode: Display tags in a list format while saving in standard format.\n"
         " ▪️ Blank text files can be created for images without any matching pair when loading a directory.\n"
         " ▪️ When selecting a suggestion dictionary, you can use either Anime tags, English dictionary, or Both.\n"
-        " ▪️ Running 'Edit Custom Suggestions' will create the file 'my_tags.csv' where you can add your own words to the suggestion dictionary.\n",
+        " ▪️ Running 'Edit Custom Suggestions' will create the file 'my_tags.csv' where you can add your own words to the suggestion dictionary.\n"
+        " ▪️ Use an asterisk * while typing to return suggestions using 'fuzzy search'.\n",
 
         " ▪️ Search and Replace: Edit all text files at once.\n"
         " ▪️ Prefix Text Files: Insert text at the START of all text files.\n"
@@ -146,7 +148,7 @@ class AboutWindow(Toplevel):
         self.info_text.tag_config("section", font=("Segoe UI", 10))
         self.info_text.config(state='disabled', wrap=WORD)
 
-        self.made_by_label = Label(self, text="(2023) Created by: Nenotriple - v1.80 - img-txt_viewer", font=("Arial", 10))
+        self.made_by_label = Label(self, text=f"(2023) Created by: Nenotriple - {VERSION} - img-txt_viewer", font=("Arial", 10))
         self.made_by_label.pack(pady=5)
 
     def open_url(self):
@@ -325,9 +327,7 @@ class ImgTxtViewer:
         self.set_icon()
 
         # Variables
-
         self.about_window = None
-
         self.panes_swapped = False
         self.text_modified = False
         self.thread_running = False
@@ -1766,7 +1766,7 @@ app = ImgTxtViewer(root)
 app.toggle_always_on_top()
 root.attributes('-topmost', 0)
 root.protocol("WM_DELETE_WINDOW", app.on_closing)
-root.title("v1.80 - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
+root.title(f"{VERSION} - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
 root.mainloop()
 
 #endregion
@@ -1787,7 +1787,7 @@ root.mainloop()
     - Batch Tag Delete no longer locks the main img-txt_viewer window. [#f2f8414][f2f8414]
       - While Batch Tag Delete is open, text files are scanned for changes and automatically updated. [#143140e][143140e], [#b38a786][b38a786]
     - You can now swap img-txt pair horizontal and vertical positions. [#ee7d052][ee7d052]
-    - About window added.
+    - About window added. [#e692ebe][e692ebe]
 
 <br>
 
@@ -1810,6 +1810,7 @@ root.mainloop()
 [143140e]: https://github.com/Nenotriple/img-txt_viewer/commit/143140efc4bca1515579d3ce0d73c68837ac5c30
 [b38a786]: https://github.com/Nenotriple/img-txt_viewer/commit/b38a786c4f75edf0ad03d2966076f32c7d870d3e
 [ee7d052]: https://github.com/Nenotriple/img-txt_viewer/commit/ee7d0527d006803f4bf1377e5e95cebf13af429f
+[e692ebe]: https://github.com/Nenotriple/img-txt_viewer/commit/e692ebe56e34433ad5697ab2c1a3404b62b7c7c8
 
 <!-- Fixed -->
 [b3f00a2]: https://github.com/Nenotriple/img-txt_viewer/commit/b3f00a28c82beb2300e78693df5d771802b2cfe4
