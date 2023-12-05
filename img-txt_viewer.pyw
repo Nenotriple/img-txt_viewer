@@ -1522,6 +1522,7 @@ class ImgTxtViewer:
                 text = ', '.join(text.split('\n'))
             f.write(text)
 
+
     def on_closing(self):
         self.thread_running = False
         if self.watcher_process is not None:
@@ -1541,6 +1542,7 @@ class ImgTxtViewer:
             except:
                 pass
         self.delete_text_backup()
+        self.delete_trash_folder()
 
 #endregion
 ################################################################################################################################################
@@ -1641,6 +1643,11 @@ class ImgTxtViewer:
             if os.path.exists(backup_folder):
                 shutil.rmtree(backup_folder)
 
+    def delete_trash_folder(self):
+        trash_dir = os.path.join(self.image_dir.get(), "Trash")
+        if os.path.exists(trash_dir) and not os.listdir(trash_dir):
+            shutil.rmtree(trash_dir)
+
     def delete_pair(self):
         if not self.check_directory():
             return
@@ -1732,7 +1739,8 @@ root.mainloop()
   - Fixed:
     - Fixed autosave bug causing warning on window close without directory selection. [#b3f00a2][b3f00a2]
     - Batch Tag Delete now opens beside the main window. [#f75362f][f75362f]
-    - Selecting a new directory now removes the left over text backups.
+    - Selecting a new directory now removes the left over text backups. [#b1f4655][b1f4655]
+    - Closing the app now removes the "Trash" folder if it's empty.
 
 <br>
 
@@ -1751,6 +1759,7 @@ root.mainloop()
 <!-- Fixed -->
 [b3f00a2]: https://github.com/Nenotriple/img-txt_viewer/commit/b3f00a28c82beb2300e78693df5d771802b2cfe4
 [f75362f]: https://github.com/Nenotriple/img-txt_viewer/commit/f75362feea79e088d40af05c3fdc4e62881e64ab
+[b1f4655]: https://github.com/Nenotriple/img-txt_viewer/commit/b1f465555306d3ff9bf169dcc085de80dd96cc81
 
 <!-- Other changes -->
 [2bfdb3a]: https://github.com/Nenotriple/img-txt_viewer/commit/2bfdb3a6e4d075f26b6c89ef160e990190d27dc3
