@@ -1557,7 +1557,8 @@ class ImgTxtViewer:
         self.user_selected_no = False
         try:
             directory = askdirectory()
-            if directory:
+            if directory and directory != self.image_dir.get():
+                self.delete_text_backup()
                 self.image_dir.set(directory)
                 self.current_index = 0
                 self.load_pairs()
@@ -1639,8 +1640,6 @@ class ImgTxtViewer:
             backup_folder = os.path.join(os.path.dirname(self.text_files[0]), 'text_backup')
             if os.path.exists(backup_folder):
                 shutil.rmtree(backup_folder)
-        else:
-            pass
 
     def delete_pair(self):
         if not self.check_directory():
@@ -1722,8 +1721,8 @@ root.mainloop()
   - New:
     - Small ui tweaks. [#22b2764][22b2764]
     - `Fuzzy Search` You can now use an asterisk while typing to "search" for tags. [#05ca179][05ca179]
-      - For example: Typing `*lo*b` returns "**lo**oking **b**ack", and even "yel**lo**w **b**ackground"
-    - You can now undo the last operation for search_and_replace, prefix_text, and append_text. [#c5be6a2][c5be6a2]
+      - For example: Typing `*lo*b` returns "<ins>**lo**</ins>oking <ins>**b**</ins>ack", and even "yel<ins>**lo**</ins>w <ins>**b**</ins>ackground"
+    You can now undo the last operation for: Search and Replace, Prefix Text, and Append Text. [#c5be6a2][c5be6a2]
     - Batch Tag Delete no longer locks the main img-txt_viewer window. [#f2f8414][f2f8414]
       - While Batch Tag Delete is open, text files are scanned for changes and automatically updated. [#143140e][143140e], [#b38a786][b38a786]
     - You can now swap img-txt pair horizontal and vertical positions. [#ee7d052][ee7d052]
@@ -1732,7 +1731,8 @@ root.mainloop()
 
   - Fixed:
     - Fixed autosave bug causing warning on window close without directory selection. [#b3f00a2][b3f00a2]
-    - Batch Tag Delete now opens beside the main window. 
+    - Batch Tag Delete now opens beside the main window. [#f75362f][f75362f]
+    - Selecting a new directory now removes the left over text backups.
 
 <br>
 
@@ -1750,6 +1750,7 @@ root.mainloop()
 
 <!-- Fixed -->
 [b3f00a2]: https://github.com/Nenotriple/img-txt_viewer/commit/b3f00a28c82beb2300e78693df5d771802b2cfe4
+[f75362f]: https://github.com/Nenotriple/img-txt_viewer/commit/f75362feea79e088d40af05c3fdc4e62881e64ab
 
 <!-- Other changes -->
 [2bfdb3a]: https://github.com/Nenotriple/img-txt_viewer/commit/2bfdb3a6e4d075f26b6c89ef160e990190d27dc3
