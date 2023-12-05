@@ -1219,12 +1219,13 @@ class ImgTxtViewer:
         else:
             application_path = os.path.dirname(os.path.abspath(__file__))
         script_path = os.path.join(application_path, 'batch_tag_delete.py')
-        main_window_x = root.winfo_x()
-        main_window_y = root.winfo_y()
-        self.watcher_process = subprocess.Popen(["pythonw", script_path, self.image_dir.get(), str(main_window_x), str(main_window_y)])
-        threading.Thread(target=self.watch_files).start()
-        self.batch_tag_delete_running = True
-        self.toolsMenu.entryconfig("Batch Tag Delete", state="disable")
+        if os.path.exists(script_path):
+            main_window_x = root.winfo_x()
+            main_window_y = root.winfo_y()
+            self.watcher_process = subprocess.Popen(["pythonw", script_path, self.image_dir.get(), str(main_window_x), str(main_window_y)])
+            threading.Thread(target=self.watch_files).start()
+            self.batch_tag_delete_running = True
+            self.toolsMenu.entryconfig("Batch Tag Delete", state="disable")
 
     def search_and_replace(self):
         if not self.check_directory():
@@ -1821,7 +1822,7 @@ root.mainloop()
 
   - Other changes:
     - PanedWindow adjustments. [#2bfdb3a][2bfdb3a]
-    - Other changes: [#f2f8414][f2f8414], [#9c8c580][9c8c580], [#0362e23][0362e23], [#fbcaaec][fbcaaec]
+    - Other changes: [#f2f8414][f2f8414], [#9c8c580][9c8c580], [#0362e23][0362e23], [#fbcaaec][fbcaaec], [353827d][353827d]
 
 <!-- New -->
 [22b2764]: https://github.com/Nenotriple/img-txt_viewer/commit/22b2764edbf16e4477dce16bebdf08cf2d3459df
@@ -1845,6 +1846,7 @@ root.mainloop()
 [9c8c580]: https://github.com/Nenotriple/img-txt_viewer/commit/9c8c580dab9ff0e569df0f45fdf26d3914511497
 [0362e23]: https://github.com/Nenotriple/img-txt_viewer/commit/0362e23f0e684eb5b1ce73b89c1b0267af144ba8
 [fbcaaec]: https://github.com/Nenotriple/img-txt_viewer/commit/fbcaaecd83cf6c6a38de33baef41981b61de243e
+[353827d]: https://github.com/Nenotriple/img-txt_viewer/commit/353827d1648f64d9f54cee709e6cb857a75387de
 
 '''
 
