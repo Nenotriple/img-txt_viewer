@@ -84,6 +84,76 @@ except ImportError:
         sys.exit()
 
 #endregion
+##########################################################################################################################################################################
+##########################################################################################################################################################################
+#             #
+# AboutWindow #
+#             #
+
+class AboutWindow(Toplevel):
+
+    headers = [" Shortcuts:", " Tips:", " Text Tools:", " Auto-Save:"]
+    content = [
+        " ▪️ ALT+Left/Right: Quickly move between img-txt pairs.\n"
+        " ▪️ Del: Send the current pair to a local trash folder.\n"
+        " ▪️ ALT: Cycle through auto-suggestions.\n"
+        " ▪️ TAB: Insert the highlighted suggestion.\n"
+        " ▪️ CTRL+F: Highlight all duplicate words.\n"
+        " ▪️ CTRL+S: Save the current text file.\n"
+        " ▪️ CTRL+Z / CTRL+Y: Undo/Redo.\n"
+        " ▪️ Middle-click a tag to delete it.\n",
+
+        " ▪️ Highlight duplicates by selecting text.\n"
+        " ▪️ List Mode: Display tags in a list format while saving in standard format.\n"
+        " ▪️ Blank text files can be created for images without any matching pair when loading a directory.\n"
+        " ▪️ When selecting a suggestion dictionary, you can use either Anime tags, English dictionary, or Both.\n"
+        " ▪️ Running 'Edit Custom Suggestions' will create the file 'my_tags.csv' where you can add your own words to the suggestion dictionary.\n",
+
+        " ▪️ Search and Replace: Edit all text files at once.\n"
+        " ▪️ Prefix Text Files: Insert text at the START of all text files.\n"
+        " ▪️ Append Text Files: Insert text at the END of all text files.\n"
+        " ▪️ Batch Tag Delete: View all tags in a directory as a list, and quickly delete them.\n"
+        " ▪️ Cleanup Text: Fix typos in all text files of the selected folder, such as duplicate tags, multiple spaces or commas, missing spaces, and more.\n",
+
+        " ▪️ Check the auto-save box to save text when navigating between img/txt pairs or closing the window.\n"
+        " ▪️ Text is cleaned up when saved, so you can ignore things like duplicate tags, trailing comma/spaces, double comma/spaces, etc.\n"
+        " ▪️ Text cleanup can be disabled from the options menu.",
+    ]
+
+    def __init__(self, master=None):
+        super().__init__(master=master)
+        self.title("About")
+        self.geometry("450x660")
+        self.maxsize(800, 660)
+        self.minsize(450, 660)
+
+        self.github_url = "https://github.com/Nenotriple/img-txt_viewer"
+
+        self.url_button = Button(self, text=f"Open: {self.github_url}", fg="blue", overrelief="groove", command=self.open_url)
+        self.url_button.pack(fill="x")
+
+        self.info_label = Label(self, text="Info", font=("Arial", 14))
+        self.info_label.pack(pady=5)
+
+        self.info_text = ScrolledText(self)
+        self.info_text.pack(expand=True, fill='both')
+
+        for header, section in zip(AboutWindow.headers, AboutWindow.content):
+            self.info_text.insert(END, header + "\n", "header")
+            self.info_text.insert(END, section + "\n", "section")
+
+        self.info_text.tag_config("header", font=("Segoe UI", 10, "bold"))
+        self.info_text.tag_config("section", font=("Segoe UI", 10))
+        self.info_text.config(state='disabled', wrap=WORD)
+
+        self.made_by_label = Label(self, text="(2023) Created by: Nenotriple - v1.80 - img-txt_viewer", font=("Arial", 10))
+        self.made_by_label.pack(pady=5)
+
+    def open_url(self):
+        import webbrowser
+        webbrowser.open(f"{self.github_url}")
+
+
 ################################################################################################################################################
 ################################################################################################################################################
 #                   #
@@ -255,6 +325,9 @@ class ImgTxtViewer:
         self.set_icon()
 
         # Variables
+
+        self.about_window = None
+
         self.panes_swapped = False
         self.text_modified = False
         self.thread_running = False
@@ -372,6 +445,8 @@ class ImgTxtViewer:
         self.toolsMenu.add_command(label="Delete img-txt Pair", command=self.delete_pair)
         self.toolsMenu.add_command(label="Undo Delete", command=self.undo_delete_pair, state="disabled")
 
+        menubar.add_command(label="About", command=self.open_about_window)
+
 #endregion
 ################################################################################################################################################
 ################################################################################################################################################
@@ -442,7 +517,6 @@ class ImgTxtViewer:
         self.auto_save_checkbutton.pack(side=RIGHT)
         self.saved_label(saved_label_frame)
 
-
 #endregion
 ################################################################################################################################################
 ################################################################################################################################################
@@ -491,34 +565,8 @@ class ImgTxtViewer:
 
         self.info_text = ScrolledText(self.master_control_frame)
         self.info_text.pack(expand=True, fill='both')
-        headers = [" Shortcuts:", " Tips:", " Text Tools:", " Auto-Save:"]
-        content = [
-            " ▪️ ALT+Left/Right: Quickly move between img-txt pairs.\n"
-            " ▪️ Del: Send the current pair to a local trash folder.\n"
-            " ▪️ ALT: Cycle through auto-suggestions.\n"
-            " ▪️ TAB: Insert the highlighted suggestion.\n"
-            " ▪️ CTRL+F: Highlight all duplicate words.\n"
-            " ▪️ CTRL+S: Save the current text file.\n"
-            " ▪️ CTRL+Z / CTRL+Y: Undo/Redo.\n"
-            " ▪️ Middle-click a tag to delete it.\n",
 
-            " ▪️ Highlight duplicates by selecting text.\n"
-            " ▪️ List Mode: Display tags in a list format while saving in standard format.\n"
-            " ▪️ Blank text files can be created for images without any matching pair when loading a directory.\n"
-            " ▪️ When selecting a suggestion dictionary, you can use either Anime tags, English dictionary, or Both.\n"
-            " ▪️ Running 'Edit Custom Suggestions' will create the file 'my_tags.csv' where you can add your own words to the suggestion dictionary.\n",
-
-            " ▪️ Search and Replace: Edit all text files at once.\n"
-            " ▪️ Prefix Text Files: Insert text at the START of all text files.\n"
-            " ▪️ Append Text Files: Insert text at the END of all text files.\n"
-            " ▪️ Batch Tag Delete: View all tags in a directory as a list, and quickly delete them.\n"
-            " ▪️ Cleanup Text: Fix typos in all text files of the selected folder, such as duplicate tags, multiple spaces or commas, missing spaces, and more.\n",
-
-            " ▪️ Check the auto-save box to save text when navigating between img/txt pairs or closing the window.\n"
-            " ▪️ Text is cleaned up when saved, so you can ignore things like duplicate tags, trailing comma/spaces, double comma/spaces, etc.\n"
-            " ▪️ Text cleanup can be disabled from the options menu.",
-        ]
-        for header, section in zip(headers, content):
+        for header, section in zip(AboutWindow.headers, AboutWindow.content):
             self.info_text.insert(END, header + "\n", "header")
             self.info_text.insert(END, section + "\n", "section")
 
@@ -1380,23 +1428,6 @@ class ImgTxtViewer:
         self.text_box.insert("1.0", cleaned_text)
         self.text_box.tag_configure("highlight", background="#5da9be")
 
-    def cleanup_all_text_files(self, show_confirmation=True):
-        if not self.check_directory():
-            return
-        if show_confirmation:
-            user_confirmation = messagebox.askokcancel("Confirmation", "This operation will clean all text files from typos like:\nDuplicate tags, Extra commas, Extra spaces, trailing commas/spaces, commas without spaces, and more.\n\nExample Cleanup:\n  From: dog,solo,  ,happy  ,,\n       To: dog, solo, happy")
-            self.saved_label.config(text="Text Files Cleaned Up!", bg="#6ca079", fg="white")
-            if not user_confirmation:
-                return
-        for text_file in self.text_files:
-            with open(text_file, "r+", encoding="utf-8") as f:
-                text = f.read().strip()
-                cleaned_text = self.cleanup_text(text)
-                f.seek(0)
-                f.write(cleaned_text)
-                f.truncate()
-        self.show_pair()
-
 #endregion
 ################################################################################################################################################
 ################################################################################################################################################
@@ -1457,12 +1488,36 @@ class ImgTxtViewer:
     def disable_button(self, event):
         return "break"
 
+    def open_about_window(self):
+        if self.about_window is None or not self.about_window.winfo_exists():
+            self.about_window = AboutWindow(self.master)
+            self.position_dialog(self.about_window, 450, 550)
+        else:
+            self.about_window.lift()
+
 #endregion
 ################################################################################################################################################
 ################################################################################################################################################
 #                      #
 #region - Text Cleanup #
 #                      #
+
+    def cleanup_all_text_files(self, show_confirmation=True):
+        if not self.check_directory():
+            return
+        if show_confirmation:
+            user_confirmation = messagebox.askokcancel("Confirmation", "This operation will clean all text files from typos like:\nDuplicate tags, Extra commas, Extra spaces, trailing commas/spaces, commas without spaces, and more.\n\nExample Cleanup:\n  From: dog,solo,  ,happy  ,,\n       To: dog, solo, happy")
+            self.saved_label.config(text="Text Files Cleaned Up!", bg="#6ca079", fg="white")
+            if not user_confirmation:
+                return
+        for text_file in self.text_files:
+            with open(text_file, "r+", encoding="utf-8") as f:
+                text = f.read().strip()
+                cleaned_text = self.cleanup_text(text)
+                f.seek(0)
+                f.write(cleaned_text)
+                f.truncate()
+        self.show_pair()
 
     def cleanup_text(self, text):
         if self.cleaning_text.get():
@@ -1521,7 +1576,6 @@ class ImgTxtViewer:
             if self.list_mode.get():
                 text = ', '.join(text.split('\n'))
             f.write(text)
-
 
     def on_closing(self):
         self.thread_running = False
@@ -1733,6 +1787,7 @@ root.mainloop()
     - Batch Tag Delete no longer locks the main img-txt_viewer window. [#f2f8414][f2f8414]
       - While Batch Tag Delete is open, text files are scanned for changes and automatically updated. [#143140e][143140e], [#b38a786][b38a786]
     - You can now swap img-txt pair horizontal and vertical positions. [#ee7d052][ee7d052]
+    - About window added.
 
 <br>
 
@@ -1740,7 +1795,7 @@ root.mainloop()
     - Fixed autosave bug causing warning on window close without directory selection. [#b3f00a2][b3f00a2]
     - Batch Tag Delete now opens beside the main window. [#f75362f][f75362f]
     - Selecting a new directory now removes the left over text backups. [#b1f4655][b1f4655]
-    - Closing the app now removes the "Trash" folder if it's empty.
+    - Closing the app now removes the "Trash" folder if it's empty. [#f8144ab][f8144ab]
 
 <br>
 
@@ -1760,6 +1815,7 @@ root.mainloop()
 [b3f00a2]: https://github.com/Nenotriple/img-txt_viewer/commit/b3f00a28c82beb2300e78693df5d771802b2cfe4
 [f75362f]: https://github.com/Nenotriple/img-txt_viewer/commit/f75362feea79e088d40af05c3fdc4e62881e64ab
 [b1f4655]: https://github.com/Nenotriple/img-txt_viewer/commit/b1f465555306d3ff9bf169dcc085de80dd96cc81
+[f8144ab]: https://github.com/Nenotriple/img-txt_viewer/commit/f8144abf49cfbd5e34294a8a8e868010741a6956
 
 <!-- Other changes -->
 [2bfdb3a]: https://github.com/Nenotriple/img-txt_viewer/commit/2bfdb3a6e4d075f26b6c89ef160e990190d27dc3
@@ -1782,5 +1838,6 @@ root.mainloop()
 
 - Tofix
   - **Minor** Undo should be less jarring when inserting a suggestion.
+  - **Minor** After deleting or Undo Delete. PanedWindow sash moves position.
 
 '''
