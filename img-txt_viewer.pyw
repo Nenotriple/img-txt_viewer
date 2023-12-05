@@ -1312,7 +1312,7 @@ class ImgTxtViewer:
             return
         dialog = Toplevel(self.master)
         self.is_prefix_open = True
-        self.toolsMenu.entryconfig("Prefix Text Files", state="normal")
+        self.toolsMenu.entryconfig("Prefix Text Files", state="disabled")
         dialog.focus_force()
         self.position_dialog(dialog, 405, 75)
         dialog.geometry("405x75")
@@ -1355,7 +1355,7 @@ class ImgTxtViewer:
             self.delete_text_backup()
             dialog.destroy()
             self.is_prefix_open = False
-            self.toolsMenu.entryconfig("Prefix Text Files", state="disable")
+            self.toolsMenu.entryconfig("Prefix Text Files", state="normal")
             self.show_pair()
         dialog.protocol("WM_DELETE_WINDOW", close_dialog)
         prefix_text_button_frame = Frame(dialog)
@@ -1372,7 +1372,7 @@ class ImgTxtViewer:
             return
         dialog = Toplevel(self.master)
         self.is_append_open = True
-        self.toolsMenu.entryconfig("Append Text Files", state="normal")
+        self.toolsMenu.entryconfig("Append Text Files", state="disabled")
         dialog.focus_force()
         self.position_dialog(dialog, 405, 75)
         dialog.geometry("405x75")
@@ -1413,7 +1413,7 @@ class ImgTxtViewer:
             self.delete_text_backup()
             dialog.destroy()
             self.is_append_open = False
-            self.toolsMenu.entryconfig("Append Text Files", state="disabled")
+            self.toolsMenu.entryconfig("Append Text Files", state="normal")
             self.show_pair()
         dialog.protocol("WM_DELETE_WINDOW", close_dialog)
         append_text_button_frame = Frame(dialog)
