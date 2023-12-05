@@ -93,7 +93,6 @@ except ImportError:
 #             #
 
 class AboutWindow(Toplevel):
-
     headers = [" Shortcuts:", " Tips:", " Text Tools:", " Auto-Save:"]
     content = [
         " ▪️ ALT+Left/Right: Quickly move between img-txt pairs.\n"
@@ -134,9 +133,6 @@ class AboutWindow(Toplevel):
 
         self.url_button = Button(self, text=f"Open: {self.github_url}", fg="blue", overrelief="groove", command=self.open_url)
         self.url_button.pack(fill="x")
-
-        self.info_label = Label(self, text="Info", font=("Arial", 14))
-        self.info_label.pack(pady=5)
 
         self.info_text = ScrolledText(self)
         self.info_text.pack(expand=True, fill='both')
@@ -429,24 +425,23 @@ class ImgTxtViewer:
         optionsMenu.add_command(label="Swap img-txt - Sides", command=self.swap_pane_sides)
         optionsMenu.add_command(label="Swap img-txt - H/V", command=self.swap_pane_orientation)
 
-
 ####### Tools Menu ##################################################
         self.toolsMenu = Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Tools", menu=self.toolsMenu)
 
         # Tools
-        self.toolsMenu.add_command(label="Open Current Directory...", command=self.open_current_directory)
-        self.toolsMenu.add_command(label="Open Current Image...", command=self.open_current_image)
+        self.toolsMenu.add_command(label="Open Current Directory...", state="disable", command=self.open_current_directory)
+        self.toolsMenu.add_command(label="Open Current Image...", state="disable", command=self.open_current_image)
         self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Cleanup Text", command=self.cleanup_all_text_files)
+        self.toolsMenu.add_command(label="Cleanup Text", state="disable", command=self.cleanup_all_text_files)
         self.toolsMenu.add_separator()
         self.toolsMenu.add_command(label="Batch Tag Delete", command=self.batch_tag_delete)
         self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Search and Replace", command=self.search_and_replace)
-        self.toolsMenu.add_command(label="Prefix Text Files", command=self.prefix_text_files)
-        self.toolsMenu.add_command(label="Append Text Files", command=self.append_text_files)
+        self.toolsMenu.add_command(label="Search and Replace", state="disable", command=self.search_and_replace)
+        self.toolsMenu.add_command(label="Prefix Text Files", state="disable", command=self.prefix_text_files)
+        self.toolsMenu.add_command(label="Append Text Files", state="disable", command=self.append_text_files)
         self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Delete img-txt Pair", command=self.delete_pair)
+        self.toolsMenu.add_command(label="Delete img-txt Pair", state="disable", command=self.delete_pair)
         self.toolsMenu.add_command(label="Undo Delete", command=self.undo_delete_pair, state="disabled")
 
         menubar.add_command(label="About", command=self.open_about_window)
@@ -566,7 +561,6 @@ class ImgTxtViewer:
 #region -  Info_Text #
 #                    #
 
-
         self.info_text = ScrolledText(self.master_control_frame)
         self.info_text.pack(expand=True, fill='both')
 
@@ -611,8 +605,7 @@ class ImgTxtViewer:
                                "  Dark Orange = Species\n"
                                "  Red = Invalid, Meta\n"
                                "  Dark Green = Lore",
-                               1000, 6, 4
-                               )
+                               1000, 6, 4)
 
     def display_index_frame(self):
         if not hasattr(self, 'index_frame'):
@@ -683,8 +676,18 @@ class ImgTxtViewer:
         icon_path = os.path.join(application_path, "icon.ico")
         try:
             self.master.iconbitmap(icon_path)
-        except TclError:
-            pass
+        except TclError: pass
+
+    def enable_menu_options(self):
+        commands = ["Open Current Directory...",
+                    "Open Current Image...",
+                    "Cleanup Text",
+                    "Search and Replace",
+                    "Prefix Text Files",
+                    "Append Text Files",
+                    "Delete img-txt Pair"]
+        for command in commands:
+            self.toolsMenu.entryconfig(command, state="normal")
 
 ####### PanedWindow ##################################################
     def configure_pane_position(self):
@@ -990,6 +993,7 @@ class ImgTxtViewer:
                 self.text_files.append(text_file_path)
         if self.new_text_files:
             self.create_blank_textfiles(self.new_text_files)
+        self.enable_menu_options()
         self.show_pair()
         self.saved_label.config(text="No Changes", bg="#f0f0f0", fg="black")
         self.configure_pane_position()
@@ -1118,8 +1122,7 @@ class ImgTxtViewer:
             self.show_pair()
             if not self.text_modified:
                 self.saved_label.config(text="No Changes", bg="#f0f0f0", fg="black")
-        except ValueError:
-            pass
+        except ValueError: pass
 
     def update_image_index(self):
         self.display_index_frame()
@@ -1583,9 +1586,7 @@ class ImgTxtViewer:
 #                         #
 
     def save_text_file(self):
-        if not self.check_directory():
-            return
-        if self.text_files:
+        if self.image_dir.get() != "Choose Directory" and self.check_directory() and self.text_files:
             self.save_file()
             self.saved_label.config(text="Saved", bg="#6ca079", fg="white")
             self.save_file()
@@ -1742,14 +1743,12 @@ class ImgTxtViewer:
                 self.show_pair()
                 self.undo_state.set("normal")
                 self.toolsMenu.entryconfig("Undo Delete", state="normal")
-            else:
-                print("Index out of range. No more files to delete.")
+            else: pass
 
     def undo_delete_pair(self):
         if not self.check_directory():
             return
         if not self.deleted_pairs:
-            print("No files to restore.")
             return
         deleted_pair = self.deleted_pairs.pop()
         for file_list, index, trash_file in deleted_pair:
@@ -1816,8 +1815,7 @@ root.mainloop()
     - Batch Tag Delete now opens beside the main window. [#f75362f][f75362f]
     - Selecting a new directory now removes the left over text backups. [#b1f4655][b1f4655]
     - Closing the app now removes the "Trash" folder if it's empty. [#f8144ab][f8144ab]
-    - Prevent multiple instances of a tool window from opening.
-
+    - Prevent multiple instances of a tool window from opening. [#3320d8e][3320d8e]
 
 <br>
 
@@ -1839,6 +1837,7 @@ root.mainloop()
 [f75362f]: https://github.com/Nenotriple/img-txt_viewer/commit/f75362feea79e088d40af05c3fdc4e62881e64ab
 [b1f4655]: https://github.com/Nenotriple/img-txt_viewer/commit/b1f465555306d3ff9bf169dcc085de80dd96cc81
 [f8144ab]: https://github.com/Nenotriple/img-txt_viewer/commit/f8144abf49cfbd5e34294a8a8e868010741a6956
+[3320d8e]: https://github.com/Nenotriple/img-txt_viewer/commit/3320d8e7647ddb194d874f172976c05dab4f2910
 
 <!-- Other changes -->
 [2bfdb3a]: https://github.com/Nenotriple/img-txt_viewer/commit/2bfdb3a6e4d075f26b6c89ef160e990190d27dc3
