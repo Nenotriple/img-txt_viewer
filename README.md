@@ -69,10 +69,9 @@ The `pillow` library will be downloaded and installed *(if not already available
       - For example: Typing `*lo*b` returns "<ins>**lo**</ins>oking <ins>**b**</ins>ack", and even "yel<ins>**lo**</ins>w <ins>**b**</ins>ackground"
     - You can now undo the last operation for: Search and Replace, Prefix Text, and Append Text. [#c5be6a2][c5be6a2]
     - Batch Tag Delete no longer locks the main img-txt_viewer window. [#f2f8414][f2f8414]
-      - While Batch Tag Delete is open, text files are scanned for changes and automatically updated. [#143140e][143140e], [#b38a786][b38a786]
     - You can now swap img-txt pair horizontal and vertical positions. [#ee7d052][ee7d052]
     - About window added. [#e692ebe][e692ebe]
-    - The current text file is now scanned every 2 seconds, and refreshed if changed outside the app.
+    - The current text file is now scanned every 2 seconds, and refreshed if changed outside the app. [#95910e4][95910e4]
 
 <br>
 
@@ -88,7 +87,7 @@ The `pillow` library will be downloaded and installed *(if not already available
 
   - Other changes:
     - PanedWindow adjustments. [#2bfdb3a][2bfdb3a]
-    - Other changes: [#f2f8414][f2f8414], [#9c8c580][9c8c580], [#0362e23][0362e23], [#fbcaaec][fbcaaec], [353827d][353827d], [#a41d99c][a41d99c]
+    - Other changes: [#f2f8414][f2f8414], [#9c8c580][9c8c580], [#0362e23][0362e23], [#fbcaaec][fbcaaec], [353827d][353827d], [#a41d99c][a41d99c], [#143140e][143140e], [#b38a786][b38a786]
 
 <!-- New -->
 [22b2764]: https://github.com/Nenotriple/img-txt_viewer/commit/22b2764edbf16e4477dce16bebdf08cf2d3459df
