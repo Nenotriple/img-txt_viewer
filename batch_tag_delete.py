@@ -327,7 +327,7 @@ def main(directory=None, main_window_x=None, main_window_y=None):
                     modified = True
             if modified:
                 display_tags(count_tags(directory), directory, scrollable_frame)
-                time.sleep(1)
+                time.sleep(2)
 
     # Function to set the icon
     def set_icon():
@@ -420,7 +420,7 @@ v1.05 changes:
     - Improved popup handling when clicking `Delete Selected` when no tags are selected. [#3a0a60b][3a0a60b]
     - Fixed error related to file refresh being called after closing when launched from img-txt_viewer.
 
-  - Other: [#7ccd0fb][7ccd0fb], [3a0a60b][3a0a60b]
+  - Other: [#7ccd0fb][7ccd0fb], [3a0a60b][3a0a60b], [42e01c5][42e01c5]
 
 [7d574a8]: https://github.com/Nenotriple/img-txt_viewer/commit/7d574a85b300f60bd01015aeadfca4e3d38cdf71
 [4f78be5]: https://github.com/Nenotriple/img-txt_viewer/commit/4f78be5df917f6af19796591fbbff05e64f8e944
@@ -431,6 +431,7 @@ v1.05 changes:
 
 [7ccd0fb]: https://github.com/Nenotriple/img-txt_viewer/commit/7ccd0fb7c41a82eb31e128b656b16fbccd78c784
 [3a0a60b]: https://github.com/Nenotriple/img-txt_viewer/commit/3a0a60bbf41a2da0c5b943624bfe61dceba71703
+[42e01c5]: https://github.com/Nenotriple/img-txt_viewer/commit/42e01c591b73fef211ac636fa945da84dfd67d61
 
 '''
 
