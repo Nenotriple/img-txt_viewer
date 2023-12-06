@@ -15,7 +15,7 @@ More info here: https://github.com/Nenotriple/img-txt_viewer
 
 """
 
-VERSION = "v1.80"
+VERSION = "v1.81"
 
 ################################################################################################################################################
 ################################################################################################################################################
@@ -128,7 +128,7 @@ class AboutWindow(Toplevel):
         super().__init__(master=master)
         self.title("About")
         self.geometry("450x660")
-        self.maxsize(800, 660)
+        self.maxsize(900, 660)
         self.minsize(450, 660)
 
         self.github_url = "https://github.com/Nenotriple/img-txt_viewer"
@@ -385,70 +385,70 @@ class ImgTxtViewer:
         self.master.config(menu=menubar)
 
 ####### Options Menu ##################################################
-        optionsMenu = Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Options", menu=optionsMenu)
+        self.optionsMenu = Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Options", underline=0, menu=self.optionsMenu)
 
         # Edit Suggestions
-        optionsMenu.add_command(label="Edit Custom Suggestions...", command=self.create_and_open_custom_dictionary)
+        self.optionsMenu.add_command(label="Edit Custom Suggestions...", underline=0, command=self.create_and_open_custom_dictionary)
 
         # Suggestion Dictionary Menu
-        dictionaryMenu = Menu(optionsMenu, tearoff=0)
-        optionsMenu.add_cascade(label="Suggestion Dictionary", menu=dictionaryMenu)
-        dictionaryMenu.add_checkbutton(label="English Dictionary", variable=self.csv_var, onvalue='dictionary.csv', offvalue='danbooru.csv', command=self.change_autocomplete_dictionary)
-        dictionaryMenu.add_checkbutton(label="Danbooru", variable=self.csv_var, onvalue='danbooru.csv', offvalue='dictionary.csv', command=self.change_autocomplete_dictionary)
-        dictionaryMenu.add_checkbutton(label="e621", variable=self.csv_var, onvalue='e621.csv', offvalue='danbooru.csv', command=self.change_autocomplete_dictionary)
+        dictionaryMenu = Menu(self.optionsMenu, tearoff=0)
+        self.optionsMenu.add_cascade(label="Suggestion Dictionary", underline=11, state="disable", menu=dictionaryMenu)
+        dictionaryMenu.add_checkbutton(label="English Dictionary", underline=0, variable=self.csv_var, onvalue='dictionary.csv', offvalue='danbooru.csv', command=self.change_autocomplete_dictionary)
+        dictionaryMenu.add_checkbutton(label="Danbooru", underline=0, variable=self.csv_var, onvalue='danbooru.csv', offvalue='dictionary.csv', command=self.change_autocomplete_dictionary)
+        dictionaryMenu.add_checkbutton(label="e621", underline=0, variable=self.csv_var, onvalue='e621.csv', offvalue='danbooru.csv', command=self.change_autocomplete_dictionary)
         dictionaryMenu.add_separator()
-        dictionaryMenu.add_checkbutton(label="All (slow)", variable=self.csv_var, onvalue='all', command=self.change_autocomplete_dictionary)
+        dictionaryMenu.add_checkbutton(label="All (slow)", underline=0, variable=self.csv_var, onvalue='all', command=self.change_autocomplete_dictionary)
 
         # Suggestion Quantity Menu
-        suggestion_quantity_menu = Menu(optionsMenu, tearoff=0)
-        optionsMenu.add_cascade(label="Suggestion Quantity", menu=suggestion_quantity_menu)
+        suggestion_quantity_menu = Menu(self.optionsMenu, tearoff=0)
+        self.optionsMenu.add_cascade(label="Suggestion Quantity", underline=11, state="disable", menu=suggestion_quantity_menu)
         for i in range(1, 10):
             suggestion_quantity_menu.add_radiobutton(label=str(i), variable=self.suggestion_quantity, value=i, command=lambda suggestion_quantity=i: self.set_suggestion_quantity(suggestion_quantity))
 
         # Text options and More
-        optionsMenu.add_separator()
-        optionsMenu.add_command(label="Font Options", command=self.set_font)
-        optionsMenu.add_separator()
+        self.optionsMenu.add_separator()
+        self.optionsMenu.add_command(label="Font Options", underline=0, state="disable", command=self.set_font)
+        self.optionsMenu.add_separator()
 
         # Max Image Size Menu
-        sizeMenu = Menu(optionsMenu, tearoff=0)
-        optionsMenu.add_cascade(label="Max Image Size", menu=sizeMenu)
+        sizeMenu = Menu(self.optionsMenu, tearoff=0)
+        self.optionsMenu.add_cascade(label="Max Image Size", underline=0, state="disable", menu=sizeMenu)
         self.sizes = [("Smaller", 512),
                       ("Normal",  2500),
                       ("Larger",  4000)]
         for size in self.sizes:
-            sizeMenu.add_radiobutton(label=size[0], variable=self.max_img_width, value=size[1], command=lambda s=size: self.save_text_file())
+            sizeMenu.add_radiobutton(label=size[0], variable=self.max_img_width, value=size[1], underline=0, command=lambda s=size: self.save_text_file())
 
-        optionsMenu.add_checkbutton(label="Highlighting Duplicates", variable=self.highlighting_duplicates)
-        optionsMenu.add_checkbutton(label="Cleaning Text on Save", variable=self.cleaning_text)
-        optionsMenu.add_checkbutton(label="Big Comma Mode", variable=self.bold_commas, command=self.toggle_big_comma_mode)
-        optionsMenu.add_checkbutton(label="List View", variable=self.list_mode, command=self.toggle_list_mode)
-        optionsMenu.add_separator()
-        optionsMenu.add_checkbutton(label="Enable Always On Top", command=self.toggle_always_on_top)
-        optionsMenu.add_command(label="Swap img-txt - Sides", command=self.swap_pane_sides)
-        optionsMenu.add_command(label="Swap img-txt - H/V", command=self.swap_pane_orientation)
+        self.optionsMenu.add_checkbutton(label="Highlighting Duplicates", underline=0, state="disable", variable=self.highlighting_duplicates)
+        self.optionsMenu.add_checkbutton(label="Cleaning Text on Save", underline=0, state="disable", variable=self.cleaning_text)
+        self.optionsMenu.add_checkbutton(label="Big Comma Mode", underline=0, state="disable", variable=self.bold_commas, command=self.toggle_big_comma_mode)
+        self.optionsMenu.add_checkbutton(label="List View", underline=0, state="disable", variable=self.list_mode, command=self.toggle_list_mode)
+        self.optionsMenu.add_separator()
+        self.optionsMenu.add_checkbutton(label="Always On Top", underline=0, command=self.toggle_always_on_top)
+        self.optionsMenu.add_checkbutton(label="Vertical View", underline=0, state="disable", command=self.swap_pane_orientation)
+        self.optionsMenu.add_command(label="Swap img-txt Sides", underline=0, state="disable", command=self.swap_pane_sides)
 
 ####### Tools Menu ##################################################
         self.toolsMenu = Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Tools", menu=self.toolsMenu)
+        menubar.add_cascade(label="Tools", underline=0, menu=self.toolsMenu)
 
         # Tools
-        self.toolsMenu.add_command(label="Open Current Directory...", state="disable", command=self.open_current_directory)
-        self.toolsMenu.add_command(label="Open Current Image...", state="disable", command=self.open_current_image)
+        self.toolsMenu.add_command(label="Open Current Directory...", underline=13, state="disable", command=self.open_current_directory)
+        self.toolsMenu.add_command(label="Open Current Image...", underline=13, state="disable", command=self.open_current_image)
         self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Cleanup Text", state="disable", command=self.cleanup_all_text_files)
+        self.toolsMenu.add_command(label="Cleanup Text", underline=0, state="disable", command=self.cleanup_all_text_files)
         self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Batch Tag Delete", command=self.batch_tag_delete)
+        self.toolsMenu.add_command(label="Batch Tag Delete", underline=0, command=self.batch_tag_delete)
         self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Search and Replace", state="disable", command=self.search_and_replace)
-        self.toolsMenu.add_command(label="Prefix Text Files", state="disable", command=self.prefix_text_files)
-        self.toolsMenu.add_command(label="Append Text Files", state="disable", command=self.append_text_files)
+        self.toolsMenu.add_command(label="Search and Replace", underline=0, state="disable", command=self.search_and_replace)
+        self.toolsMenu.add_command(label="Prefix Text Files", underline=0, state="disable", command=self.prefix_text_files)
+        self.toolsMenu.add_command(label="Append Text Files", underline=0, state="disable", command=self.append_text_files)
         self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Delete img-txt Pair", state="disable", command=self.delete_pair)
-        self.toolsMenu.add_command(label="Undo Delete", command=self.undo_delete_pair, state="disabled")
+        self.toolsMenu.add_command(label="Delete img-txt Pair", accelerator="Del", state="disable", command=self.delete_pair)
+        self.toolsMenu.add_command(label="Undo Delete", underline=0, command=self.undo_delete_pair, state="disabled")
 
-        menubar.add_command(label="About", command=self.toggle_about_window)
+        menubar.add_command(label="About", underline=0, command=self.toggle_about_window)
 
 #endregion
 ################################################################################################################################################
@@ -481,7 +481,7 @@ class ImgTxtViewer:
         self.text_box.tag_configure("highlight", background="#5da9be", foreground="white")
 
         # Image Label
-        self.image_preview = Label(self.master_image_frame)
+        self.image_preview = Button(self.master_image_frame, relief="flat")
         self.image_preview.pack(side=LEFT)
         self.image_preview.bind("<Double-1>", self.open_current_image)
         self.image_preview.bind('<Button-2>', self.open_current_directory)
@@ -530,7 +530,7 @@ class ImgTxtViewer:
         # Mouse binds
         self.text_box.bind("<Button-1>", lambda event: (self.remove_tag(), self.clear_suggestions()))
         self.text_box.bind("<Button-2>", lambda event: (self.delete_tag_under_mouse(event), self.change_label()))
-        self.text_box.bind("<Button-3>", lambda event: (self.remove_highlight(), self.show_textContext_menu(event)))
+        self.text_box.bind("<Button-3>", lambda event: (self.show_textContext_menu(event)))
 
         # Update the autocomplete suggestion label after every KeyRelease event.
         self.text_box.bind("<KeyRelease>", lambda event: (self.update_suggestions(event), self.toggle_big_comma_mode(event)))
@@ -633,17 +633,17 @@ class ImgTxtViewer:
         if widget_in_focus == self.info_text:
             textContext_menu.add_command(label="Copy", command=lambda: widget_in_focus.event_generate('<<Copy>>'))
         elif widget_in_focus == self.text_box:
-            textContext_menu.add_command(label="Cut" + ' ' * 54 + "Ctrl-X", command=lambda: (widget_in_focus.event_generate('<<Cut>>'), self.change_label()))
-            textContext_menu.add_command(label="Copy" + ' ' * 51 + "Ctrl-C", command=lambda: widget_in_focus.event_generate('<<Copy>>'))
-            textContext_menu.add_command(label="Paste" + ' ' * 51 + "Ctrl-V", command=lambda: (widget_in_focus.event_generate('<<Paste>>'), self.change_label()))
-            textContext_menu.add_command(label="Delete" + ' ' * 54 + "Del", command=lambda: (widget_in_focus.event_generate('<<Clear>>'), self.change_label()))
+            textContext_menu.add_command(label="Cut", accelerator="Ctrl+X", command=lambda: (widget_in_focus.event_generate('<<Cut>>'), self.change_label()))
+            textContext_menu.add_command(label="Copy", accelerator="Ctrl+C", command=lambda: widget_in_focus.event_generate('<<Copy>>'))
+            textContext_menu.add_command(label="Paste", accelerator="Ctrl+V", command=lambda: (widget_in_focus.event_generate('<<Paste>>'), self.change_label()))
+            textContext_menu.add_command(label="Delete", accelerator="Del", command=lambda: (widget_in_focus.event_generate('<<Clear>>'), self.change_label()))
             textContext_menu.add_separator()
-            textContext_menu.add_command(label="Undo" + ' ' * 51 + "Ctrl-Z", command=lambda: (widget_in_focus.event_generate('<<Undo>>'), self.change_label()))
-            textContext_menu.add_command(label="Redo" + ' ' * 52 + "Ctrl-Y", command=lambda: (widget_in_focus.event_generate('<<Redo>>'), self.change_label()))
+            textContext_menu.add_command(label="Undo", accelerator="Ctrl+Z", command=lambda: (widget_in_focus.event_generate('<<Undo>>'), self.change_label()))
+            textContext_menu.add_command(label="Redo", accelerator="Ctrl+Y", command=lambda: (widget_in_focus.event_generate('<<Redo>>'), self.change_label()))
             textContext_menu.add_separator()
             textContext_menu.add_command(label="Open Text Directory...", command=self.open_current_directory)
             textContext_menu.add_separator()
-            textContext_menu.add_command(label="Highlight all Duplicates" + ' ' * 20 + "Ctrl-F", command=self.highlight_all_duplicates)
+            textContext_menu.add_command(label="Highlight all Duplicates", accelerator="Ctrl+F", command=self.highlight_all_duplicates)
             textContext_menu.add_separator()
             textContext_menu.add_checkbutton(label="Highlighting Duplicates", variable=self.highlighting_duplicates)
             textContext_menu.add_checkbutton(label="Clean Text on Save", variable=self.cleaning_text)
@@ -657,11 +657,11 @@ class ImgTxtViewer:
         imageContext_menu.add_command(label="Open Current Directory...", command=self.open_current_directory)
         imageContext_menu.add_command(label="Open Current Image...", command=self.open_current_image)
         imageContext_menu.add_separator()
-        imageContext_menu.add_command(label="Delete img-txt Pair" + ' ' * 8 + "Del", command=self.delete_pair)
+        imageContext_menu.add_command(label="Delete img-txt Pair", accelerator="Del", command=self.delete_pair)
         imageContext_menu.add_command(label="Undo Delete", command=self.undo_delete_pair, state=self.undo_state.get())
         imageContext_menu.add_separator()
+        imageContext_menu.add_checkbutton(label="Vertical View", command=self.swap_pane_orientation)
         imageContext_menu.add_command(label="Swap img-txt - Sides", command=self.swap_pane_sides)
-        imageContext_menu.add_command(label="Swap img-txt - H/V", command=self.swap_pane_orientation)
         imageContext_menu.add_separator()
         for size in self.sizes:
             imageContext_menu.add_radiobutton(label=size[0], variable=self.max_img_width, value=size[1], command=lambda s=size: self.save_text_file())
@@ -683,15 +683,27 @@ class ImgTxtViewer:
         except TclError: pass
 
     def enable_menu_options(self):
-        commands = ["Open Current Directory...",
-                    "Open Current Image...",
-                    "Cleanup Text",
-                    "Search and Replace",
-                    "Prefix Text Files",
-                    "Append Text Files",
-                    "Delete img-txt Pair"]
-        for command in commands:
-            self.toolsMenu.entryconfig(command, state="normal")
+        tool_commands = ["Open Current Directory...",
+                        "Open Current Image...",
+                        "Cleanup Text",
+                        "Search and Replace",
+                        "Prefix Text Files",
+                        "Append Text Files",
+                        "Delete img-txt Pair"]
+        options_commands = ["Suggestion Dictionary",
+                            "Suggestion Quantity",
+                            "Font Options",
+                            "Max Image Size",
+                            "Highlighting Duplicates",
+                            "Cleaning Text on Save",
+                            "Big Comma Mode",
+                            "List View",
+                            "Vertical View",
+                            "Swap img-txt Sides",]
+        for t_command in tool_commands:
+            self.toolsMenu.entryconfig(t_command, state="normal")
+        for o_command in options_commands:
+            self.optionsMenu.entryconfig(o_command, state="normal")
 
 ####### PanedWindow ##################################################
     def configure_pane_position(self):
@@ -1071,10 +1083,16 @@ class ImgTxtViewer:
         thread.start()
 
     def watch_file(self):
+        if not self.text_files:
+            return
         text_file = self.text_files[self.current_index]
+        if not os.path.exists(text_file):
+            return
         last_modified = os.path.getmtime(text_file)
         while not self.stop_thread:
             time.sleep(2)
+            if not os.path.exists(text_file):
+                return
             current_modified = os.path.getmtime(text_file)
             if current_modified != last_modified:
                 self.saved_label.config(text="File Modified!", bg="#f0f0f0", fg="black")
@@ -1246,7 +1264,7 @@ class ImgTxtViewer:
             batch_tag_delete.main(self.image_dir.get(), str(main_window_x), str(main_window_y))
 
     def search_and_replace(self):
-        if not self.check_directory():
+        if not self.check_current_directory():
             return
         self.delete_text_backup()
         if self.is_search_replace_open is not False:
@@ -1323,7 +1341,7 @@ class ImgTxtViewer:
         Button(search_and_replace_button_frame, overrelief="groove", text="Cancel", command=close_dialog, width=15).pack(side=LEFT, pady=2, padx=2)
 
     def prefix_text_files(self):
-        if not self.check_directory():
+        if not self.check_current_directory():
             return
         self.delete_text_backup()
         if self.is_prefix_open is not False:
@@ -1383,7 +1401,7 @@ class ImgTxtViewer:
         Button(prefix_text_button_frame, overrelief="groove", text="Cancel", command=close_dialog, width=15).pack(side=LEFT, pady=2, padx=2)
 
     def append_text_files(self):
-        if not self.check_directory():
+        if not self.check_current_directory():
             return
         self.delete_text_backup()
         if self.is_append_open is not False:
@@ -1533,7 +1551,7 @@ class ImgTxtViewer:
 #                      #
 
     def cleanup_all_text_files(self, show_confirmation=True):
-        if not self.check_directory():
+        if not self.check_current_directory():
             return
         if show_confirmation:
             user_confirmation = messagebox.askokcancel("Confirmation", "This operation will clean all text files from typos like:\nDuplicate tags, Extra commas, Extra spaces, trailing commas/spaces, commas without spaces, and more.\n\nExample Cleanup:\n  From: dog,solo,  ,happy  ,,\n       To: dog, solo, happy")
@@ -1589,7 +1607,7 @@ class ImgTxtViewer:
 #                         #
 
     def save_text_file(self):
-        if self.image_dir.get() != "Choose Directory" and self.check_directory() and self.text_files:
+        if self.image_dir.get() != "Choose Directory" and self.check_current_directory() and self.text_files:
             self.save_file()
             self.saved_label.config(text="Saved", bg="#6ca079", fg="white")
             self.save_file()
@@ -1597,8 +1615,10 @@ class ImgTxtViewer:
 
     def save_file(self):
         text_file = self.text_files[self.current_index]
+        text = self.text_box.get("1.0", END).strip()
+        if text == "None" or text == "":
+            return
         with open(text_file, "w", encoding="utf-8") as f:
-            text = self.text_box.get("1.0", END).strip()
             if self.cleaning_text.get():
                 text = self.cleanup_text(text)
             if self.list_mode.get():
@@ -1639,11 +1659,14 @@ class ImgTxtViewer:
         try:
             directory = askdirectory()
             if directory and directory != self.image_dir.get():
-                self.delete_text_backup()
-                self.image_dir.set(directory)
-                self.current_index = 0
-                self.load_pairs()
-                self.directory_button.config(anchor='w')
+                if any(fname.lower().endswith(('.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp')) for fname in os.listdir(directory)):
+                    self.delete_text_backup()
+                    self.image_dir.set(directory)
+                    self.current_index = 0
+                    self.load_pairs()
+                    self.directory_button.config(anchor='w')
+                else:
+                    messagebox.showwarning("No Images", "The selected directory does not contain any images.")
         except Exception: pass
 
     def open_current_directory(self, event=None):
@@ -1656,7 +1679,7 @@ class ImgTxtViewer:
             os.startfile(self.image_file)
         except Exception: pass
 
-    def check_directory(self):
+    def check_current_directory(self):
         if not os.path.isdir(self.image_dir.get()):
             messagebox.showerror("Error!", "Invalid or No directory selected.\n\n Select a directory before using this tool.")
             return False
@@ -1686,7 +1709,10 @@ class ImgTxtViewer:
                 writer.writerow(["### Tags near the top of the list have a higher priority than lower tags."])
                 writer.writerow([])
                 writer.writerow(["supercalifragilisticexpialidocious"])
-        subprocess.Popen(f'start {csv_filename}', shell=True)
+        try:
+            subprocess.Popen(f'start {csv_filename}', shell=True)
+        except:
+            subprocess.Popen(['notepad', csv_filename])
         self.change_autocomplete_dictionary()
 
     def rename_odd_files(self, filename):
@@ -1725,7 +1751,7 @@ class ImgTxtViewer:
             shutil.rmtree(trash_dir)
 
     def delete_pair(self):
-        if not self.check_directory():
+        if not self.check_current_directory():
             return
         if messagebox.askokcancel("Warning", "This will move the img-txt pair to a local trash folder.\n\nThe trash folder will be created in the selected directory."):
             if self.current_index < len(self.image_files):
@@ -1747,7 +1773,7 @@ class ImgTxtViewer:
             else: pass
 
     def undo_delete_pair(self):
-        if not self.check_directory():
+        if not self.check_current_directory():
             return
         if not self.deleted_pairs:
             return
@@ -1798,59 +1824,36 @@ root.mainloop()
 
 '''
 
-[v1.80 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.80)
+[v1.81 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.81)
   - New:
-    - Small ui tweaks. [#22b2764][22b2764]
-    - `Fuzzy Search` You can now use an asterisk while typing to "search" for tags. [#05ca179][05ca179]
-      - For example: Typing `*lo*b` returns "<ins>**lo**</ins>oking <ins>**b**</ins>ack", and even "yel<ins>**lo**</ins>w <ins>**b**</ins>ackground"
-    You can now undo the last operation for: Search and Replace, Prefix Text, and Append Text. [#c5be6a2][c5be6a2]
-    - Batch Tag Delete no longer locks the main img-txt_viewer window. [#f2f8414][f2f8414]
-      - While Batch Tag Delete is open, text files are scanned for changes and automatically updated. [#143140e][143140e], [#b38a786][b38a786]
-    - You can now swap img-txt pair horizontal and vertical positions. [#ee7d052][ee7d052]
-    - About window added. [#e692ebe][e692ebe]
-    - The current text file is now scanned every 2 seconds, and refreshed if changed outside the app. [#95910e4][95910e4]
+    - Added underlining (Alt+Letter) to all menubar commands.
 
 <br>
 
   - Fixed:
-    - Huge fix: Batch Tag Delete now properly opens when launched from the executable version. [#95910e4][95910e4]
-    - Fixed autosave bug causing warning on window close without directory selection. [#b3f00a2][b3f00a2]
-    - Batch Tag Delete now opens beside the main window. [#f75362f][f75362f]
-    - Selecting a new directory now removes the left over text backups. [#b1f4655][b1f4655]
-    - Closing the app now removes the "Trash" folder if empty. [#f8144ab][f8144ab]
-    - Prevent multiple instances of a tool window from opening. [#3320d8e][3320d8e]
+    - Prevent app crash when selecting a folder without any text files.
+    - Blank text files are no longer created when attempting to save a blank text entry box.
+      - This includes when auto-save is enabled and moving between img-txt pairs.
+    - Right clicking the text box no longer clears the text selection.
+    - Propperly set menu accelerator flags.
+    - You can no longer select a directory that doesn't contain images.
+    - Some menu options are now disabled before loading a directory.
+    - Edit Custom Suggestions now opens the ".csv" file as a regular text document if no CSV file editor is present.
 
 <br>
 
   - Other changes:
-    - PanedWindow adjustments. [#2bfdb3a][2bfdb3a]
-    - Other changes: [#f2f8414][f2f8414], [#9c8c580][9c8c580], [#0362e23][0362e23], [#fbcaaec][fbcaaec], [353827d][353827d], [#a41d99c][a41d99c]
+    -
+
 
 <!-- New -->
-[22b2764]: https://github.com/Nenotriple/img-txt_viewer/commit/22b2764edbf16e4477dce16bebdf08cf2d3459df
-[05ca179]: https://github.com/Nenotriple/img-txt_viewer/commit/05ca179914d3288108206465d78ab199874b6cc2
-[c5be6a2]: https://github.com/Nenotriple/img-txt_viewer/commit/c5be6a2861192d634777d5c0d5c6d9a8804bbc72
-[143140e]: https://github.com/Nenotriple/img-txt_viewer/commit/143140efc4bca1515579d3ce0d73c68837ac5c30
-[b38a786]: https://github.com/Nenotriple/img-txt_viewer/commit/b38a786c4f75edf0ad03d2966076f32c7d870d3e
-[ee7d052]: https://github.com/Nenotriple/img-txt_viewer/commit/ee7d0527d006803f4bf1377e5e95cebf13af429f
-[e692ebe]: https://github.com/Nenotriple/img-txt_viewer/commit/e692ebe56e34433ad5697ab2c1a3404b62b7c7c8
+[]:
 
 <!-- Fixed -->
-[95910e4]: https://github.com/Nenotriple/img-txt_viewer/commit/95910e42c8f8212a66c0eb68d3d75db7078587cb
-[b3f00a2]: https://github.com/Nenotriple/img-txt_viewer/commit/b3f00a28c82beb2300e78693df5d771802b2cfe4
-[f75362f]: https://github.com/Nenotriple/img-txt_viewer/commit/f75362feea79e088d40af05c3fdc4e62881e64ab
-[b1f4655]: https://github.com/Nenotriple/img-txt_viewer/commit/b1f465555306d3ff9bf169dcc085de80dd96cc81
-[f8144ab]: https://github.com/Nenotriple/img-txt_viewer/commit/f8144abf49cfbd5e34294a8a8e868010741a6956
-[3320d8e]: https://github.com/Nenotriple/img-txt_viewer/commit/3320d8e7647ddb194d874f172976c05dab4f2910
+[]:
 
 <!-- Other changes -->
-[2bfdb3a]: https://github.com/Nenotriple/img-txt_viewer/commit/2bfdb3a6e4d075f26b6c89ef160e990190d27dc3
-[f2f8414]: https://github.com/Nenotriple/img-txt_viewer/commit/f2f84141f2481fc555fc3a74393f1816f9a199ec
-[9c8c580]: https://github.com/Nenotriple/img-txt_viewer/commit/9c8c580dab9ff0e569df0f45fdf26d3914511497
-[0362e23]: https://github.com/Nenotriple/img-txt_viewer/commit/0362e23f0e684eb5b1ce73b89c1b0267af144ba8
-[fbcaaec]: https://github.com/Nenotriple/img-txt_viewer/commit/fbcaaecd83cf6c6a38de33baef41981b61de243e
-[353827d]: https://github.com/Nenotriple/img-txt_viewer/commit/353827d1648f64d9f54cee709e6cb857a75387de
-[a41d99c]: https://github.com/Nenotriple/img-txt_viewer/commit/a41d99cccb368e6e6faa3b9598b22032a07fc441
+[]:
 
 '''
 
@@ -1863,7 +1866,8 @@ root.mainloop()
 '''
 
 - Todo
-  -
+  - Batch tag delete (and other tools) could be placed in a tabbed notebook. BTD specifically could be opened in a Toplevel container.
+  - The displayed image could be a button widget. This would give a little feedback when clicking on the image.
 
 - Tofix
   - **Minor** Undo should be less jarring when inserting a suggestion.
