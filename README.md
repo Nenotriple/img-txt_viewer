@@ -31,6 +31,8 @@ Display an image and text file side-by-side for easy manual caption editing.
   - Blank text files can be created for images without any matching files when loading a directory.
   - `Autocomplete Suggestions` while you type using Danbooru/Anime tags, the English Dictionary, or both. 
   - Running `Edit Custom Suggestions` will create the file 'my_tags.csv' where you can add your own words to the suggestion dictionary.
+  - `Fuzzy Search` Use an asterisk * while typing to return a broader range of suggestions.
+    - For example: Typing `*lo*b` returns "<ins>**lo**</ins>oking <ins>**b**</ins>ack", and even "yel<ins>**lo**</ins>w <ins>**b**</ins>ackground"
 
 - Text Tools:
   - `Batch Token Delete`: View all tokens in a directory as a list, and quickly delete them.
@@ -60,80 +62,87 @@ The `pillow` library will be downloaded and installed *(if not already available
 
 # 📜 Version History
 
-[v1.79 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.78)
+[v1.80 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.80)
   - New:
-    - The img-txt pair is now contained in a PanedWindow, this allows you to drag and resize these frames. [#0237473][0237473]
-      - This makes image and text sizing very flexible!
-    - Suggestions now display colored text based on the tag color classification. [#1a5cea1][1a5cea1]
-      - Danbooru color code: ${\textsf{\color{black}General tags}}$, ${\textsf{\color{#c00004}Artists}}$, ${\textsf{\color{#a800aa}Copyright}}$, ${\textsf{\color{#00ab2c}Characters}}$, ${\textsf{\color{#fd9200}Meta}}$
-      - e621 color code: ${\textsf{\color{black}General tags}}$, ${\textsf{\color{#f2ac08}Artists}}$, ${\textsf{\color{#dd00dd}Copyright}}$, ${\textsf{\color{#00aa00}Characters}}$, ${\textsf{\color{#ed5d1f}Species}}$, ${\textsf{\color{#ff3d3d}Meta}}$, ${\textsf{\color{#228822}Lore}}$
-    - Several changes and additions to the options and tools menu. Just exposing features, nothing new. [#0e8818d][0e8818d]
-    - `.jfif` file support added. Like '.jpg_large', these files are simply renamed to '.jpg' [#9d6e167][9d6e167]
-      - Duplicate files are handled by appending an underscore and a padded 3-digit number. E.g. "_001" [#6cdd0d4][6cdd0d4]
-    - `e621` tag dictionary added. [#ade503e][ade503e], [#4c92655][4c92655], [#a66938e][a66938e]
-    - `Undo Delete` You can now restore deleted img-txt pairs. [#82a59d3][82a59d3]
-    - Increase score/priority of tags from 'my_tags.csv' [#e800867][e800867]
+    - Small ui tweaks. [#22b2764][22b2764]
+    - `Fuzzy Search` You can now use an asterisk while typing to "search" for tags. [#05ca179][05ca179]
+      - For example: Typing `*lo*b` returns "<ins>**lo**</ins>oking <ins>**b**</ins>ack", and even "yel<ins>**lo**</ins>w <ins>**b**</ins>ackground"
+    You can now undo the last operation for: Search and Replace, Prefix Text, and Append Text. [#c5be6a2][c5be6a2]
+    - Batch Tag Delete no longer locks the main img-txt_viewer window. [#f2f8414][f2f8414]
+      - While Batch Tag Delete is open, text files are scanned for changes and automatically updated. [#143140e][143140e], [#b38a786][b38a786]
+    - You can now swap img-txt pair horizontal and vertical positions. [#ee7d052][ee7d052]
+    - About window added. [#e692ebe][e692ebe]
+    - The current text file is now scanned every 2 seconds, and refreshed if changed outside the app.
 
 <br>
 
   - Fixed:
-    - The app now always opens in the center of the screen. [#3ae6e13][3ae6e13]
-    - Most new windows now open directly beside the main window. [#a943cfd][a943cfd]
-    - Expression/smiley emotes that should include an underscore now insert and display properly. [#5c41ffe][5c41ffe]
-      - Please feel free to submit an issue if you come across any tags that should include an underscore!
-    - Fixed annoying behaviour of "Font Options" dropdown boxes. [#e65f107][e65f107]
-    - Fix for IndexError in delete_pair function. [#e12a73f][e12a73f]
+    - Huge fix: Batch Tag Delete now properly opens when launched from the executable version. [#95910e4][95910e4]
+    - Fixed autosave bug causing warning on window close without directory selection. [#b3f00a2][b3f00a2]
+    - Batch Tag Delete now opens beside the main window. [#f75362f][f75362f]
+    - Selecting a new directory now removes the left over text backups. [#b1f4655][b1f4655]
+    - Closing the app now removes the "Trash" folder if empty. [#f8144ab][f8144ab]
+    - Prevent multiple instances of a tool window from opening. [#3320d8e][3320d8e]
 
 <br>
 
   - Other changes:
-    - Suggestion style and alignment menu have been removed.  [#1a5cea1][1a5cea1]
-    - English Dictionary: ~47,000 words were given an increased priority. [#33d717c][33d717c]
-    - Danbooru tags: ~100 unnecessary tags removed. [#8d07b66][8d07b66]
-    - Other changes: [#dd863c0][dd863c0], [#9dac3bf][9dac3bf], [#85ebb01][85ebb01], [#2e6804f][2e6804f], [#b3f02fb][b3f02fb], [#dc92a2f][dc92a2f], [#f8ca427][f8ca427], [#56e4519][56e4519], [#723f289][723f289], [#48f8d4f][48f8d4f], [#d36140f][d36140f]
+    - PanedWindow adjustments. [#2bfdb3a][2bfdb3a]
+    - Other changes: [#f2f8414][f2f8414], [#9c8c580][9c8c580], [#0362e23][0362e23], [#fbcaaec][fbcaaec], [353827d][353827d], [#a41d99c][a41d99c]
 
 <!-- New -->
-[0237473]: https://github.com/Nenotriple/img-txt_viewer/commit/0237473dea9f27d30a959adf49fd6f5cec63d375
-[1a5cea1]: https://github.com/Nenotriple/img-txt_viewer/commit/1a5cea1cec326a071ce512519dda35c73a03cd51
-[0e8818d]: https://github.com/Nenotriple/img-txt_viewer/commit/0e8818dff7229055441af9871136ca10c981f5de
-[9d6e167]: https://github.com/Nenotriple/img-txt_viewer/commit/9d6e1670b6aff6d190041a2f4b9ac9b03649ecd3
-[6cdd0d4]: https://github.com/Nenotriple/img-txt_viewer/commit/6cdd0d45927072f0a0792a6b0007a7a7a164f819
-[ade503e]: https://github.com/Nenotriple/img-txt_viewer/commit/ade503eaeffbf9f45290c9d0bb5e2fc6b1da8ca5
-[4c92655]: https://github.com/Nenotriple/img-txt_viewer/commit/4c9265528f694389571010df7b7dbec67a656733
-[a66938e]: https://github.com/Nenotriple/img-txt_viewer/commit/a66938ed25b184452e59b2f60e70e3e733d7c484
-[82a59d3]: https://github.com/Nenotriple/img-txt_viewer/commit/82a59d3c66499d97420e92ebe1b1949098e7842d
-[e800867]: https://github.com/Nenotriple/img-txt_viewer/commit/e80086755c2320a8152723df6bbe3fe995bd53e2
+[22b2764]: https://github.com/Nenotriple/img-txt_viewer/commit/22b2764edbf16e4477dce16bebdf08cf2d3459df
+[05ca179]: https://github.com/Nenotriple/img-txt_viewer/commit/05ca179914d3288108206465d78ab199874b6cc2
+[c5be6a2]: https://github.com/Nenotriple/img-txt_viewer/commit/c5be6a2861192d634777d5c0d5c6d9a8804bbc72
+[143140e]: https://github.com/Nenotriple/img-txt_viewer/commit/143140efc4bca1515579d3ce0d73c68837ac5c30
+[b38a786]: https://github.com/Nenotriple/img-txt_viewer/commit/b38a786c4f75edf0ad03d2966076f32c7d870d3e
+[ee7d052]: https://github.com/Nenotriple/img-txt_viewer/commit/ee7d0527d006803f4bf1377e5e95cebf13af429f
+[e692ebe]: https://github.com/Nenotriple/img-txt_viewer/commit/e692ebe56e34433ad5697ab2c1a3404b62b7c7c8
 
 <!-- Fixed -->
-[3ae6e13]: https://github.com/Nenotriple/img-txt_viewer/commit/3ae6e13c87a7b5519762d14f7937fe4d273f87bb
-[a943cfd]: https://github.com/Nenotriple/img-txt_viewer/commit/a943cfd2112bc9a7da051900987b0b32269d5cb5
-[5c41ffe]: https://github.com/Nenotriple/img-txt_viewer/commit/5c41ffeaa322f8056fb36c3075163b7d132ecbaf
-[e65f107]: https://github.com/Nenotriple/img-txt_viewer/commit/e65f107d219f53df95147a96f821ddae05b28961
-[e12a73f]: https://github.com/Nenotriple/img-txt_viewer/commit/e12a73f194e26d3c374bb5f241188e0b2475822e
+[95910e4]: https://github.com/Nenotriple/img-txt_viewer/commit/95910e42c8f8212a66c0eb68d3d75db7078587cb
+[b3f00a2]: https://github.com/Nenotriple/img-txt_viewer/commit/b3f00a28c82beb2300e78693df5d771802b2cfe4
+[f75362f]: https://github.com/Nenotriple/img-txt_viewer/commit/f75362feea79e088d40af05c3fdc4e62881e64ab
+[b1f4655]: https://github.com/Nenotriple/img-txt_viewer/commit/b1f465555306d3ff9bf169dcc085de80dd96cc81
+[f8144ab]: https://github.com/Nenotriple/img-txt_viewer/commit/f8144abf49cfbd5e34294a8a8e868010741a6956
+[3320d8e]: https://github.com/Nenotriple/img-txt_viewer/commit/3320d8e7647ddb194d874f172976c05dab4f2910
 
 <!-- Other changes -->
-[33d717c]: https://github.com/Nenotriple/img-txt_viewer/commit/33d717c4e34d11158a5bd72ab44c56ce36429055
-[8d07b66]: https://github.com/Nenotriple/img-txt_viewer/commit/8d07b66078f379658eb13e3d2a87076c4297d3af
-[dd863c0]: https://github.com/Nenotriple/img-txt_viewer/commit/dd863c0450cc47b314a91c89566bd2eb59b3041d
-[9dac3bf]: https://github.com/Nenotriple/img-txt_viewer/commit/9dac3bfc3fd9998301350bbe056cb92ca16076ce
-[85ebb01]: https://github.com/Nenotriple/img-txt_viewer/commit/85ebb01ce599efa533d3cca873629f89f4721574
-[2e6804f]: https://github.com/Nenotriple/img-txt_viewer/commit/2e6804ffd046b3927332aa93f14b18d5f534d1b9
-[b3f02fb]: https://github.com/Nenotriple/img-txt_viewer/commit/b3f02fb67b85b387959491a29f106689ba3c5ea6
-[dc92a2f]: https://github.com/Nenotriple/img-txt_viewer/commit/dc92a2f325fe452ec0d414308f1c7e6310aa3c31
-[f8ca427]: https://github.com/Nenotriple/img-txt_viewer/commit/f8ca4279d8ac62b2f96f77ce523e62ce414f999b
-[56e4519]: https://github.com/Nenotriple/img-txt_viewer/commit/56e4519b7882c7cb17719815f78e03c4467c9694
-[723f289]: https://github.com/Nenotriple/img-txt_viewer/commit/723f289091ab198f58bf055e482d800ae0a76a01
-[48f8d4f]: https://github.com/Nenotriple/img-txt_viewer/commit/48f8d4fc5b861620bc3b17262dfb1104e4677fae
-[d36140f]: https://github.com/Nenotriple/img-txt_viewer/commit/d36140fcb53fd1a5290fdfcc5db511d236ed89ad
+[2bfdb3a]: https://github.com/Nenotriple/img-txt_viewer/commit/2bfdb3a6e4d075f26b6c89ef160e990190d27dc3
+[f2f8414]: https://github.com/Nenotriple/img-txt_viewer/commit/f2f84141f2481fc555fc3a74393f1816f9a199ec
+[9c8c580]: https://github.com/Nenotriple/img-txt_viewer/commit/9c8c580dab9ff0e569df0f45fdf26d3914511497
+[0362e23]: https://github.com/Nenotriple/img-txt_viewer/commit/0362e23f0e684eb5b1ce73b89c1b0267af144ba8
+[fbcaaec]: https://github.com/Nenotriple/img-txt_viewer/commit/fbcaaecd83cf6c6a38de33baef41981b61de243e
+[353827d]: https://github.com/Nenotriple/img-txt_viewer/commit/353827d1648f64d9f54cee709e6cb857a75387de
+[a41d99c]: https://github.com/Nenotriple/img-txt_viewer/commit/a41d99cccb368e6e6faa3b9598b22032a07fc441
 
 ___
 
-### Batch Token Delete
-v1.04 changes:
+### Batch Tag Delete
+v1.05 changes:
+
+  - New:
+    - `Undo All` You can now restore the text files to their original state from when Batch Tag Delete was launched. [#7d574a8][7d574a8]
+    - Implement Auto-Refresh Feature. [#4f78be5][4f78be5]
+    - Renamed to: Batch Tag Delete [#f7e9389][f7e9389]
+    - Window position can be controlled with cmd arguments. This is used to position this window beside img-txt_viewer. [#9fe7499][9fe7499]
+     - Example: `python batch_tag_delete.py /path/to/directory 500 800`
+
+<br>
 
   - Fixed:
-    - The window now opens in the center of the screen. [#dfc396d][dfc396d]
-    - The window now always opens in focus. [#f886c4f][f886c4f]
+    - Properly set app icon. [#358ee1d][358ee1d]
+    - Improved popup handling when clicking `Delete Selected` when no tags are selected. [#3a0a60b][3a0a60b]
+    - Fixed error related to file refresh being called after closing when launched from img-txt_viewer.
 
-[dfc396d]: https://github.com/Nenotriple/img-txt_viewer/commit/dfc396d36b95fe6fc42ad9144008d839eb2e2dd5
-[f886c4f]: https://github.com/Nenotriple/img-txt_viewer/commit/f886c4fe51a41fcc4766f3d7b5d0659537ec5ea3
+  - Other: [#7ccd0fb][7ccd0fb], [3a0a60b][3a0a60b]
+
+[7d574a8]: https://github.com/Nenotriple/img-txt_viewer/commit/7d574a85b300f60bd01015aeadfca4e3d38cdf71
+[4f78be5]: https://github.com/Nenotriple/img-txt_viewer/commit/4f78be5df917f6af19796591fbbff05e64f8e944
+[f7e9389]: https://github.com/Nenotriple/img-txt_viewer/commit/f7e9389d77ed86508ccb4f9705c3d709eb00ab0e
+[9fe7499]: https://github.com/Nenotriple/img-txt_viewer/commit/9fe7499d89d5689606a3e576554c03c8c3f4f4c8
+
+[358ee1d]: https://github.com/Nenotriple/img-txt_viewer/commit/358ee1d93636d0001a3e9b96d72ba3230697fcdd
+
+[7ccd0fb]: https://github.com/Nenotriple/img-txt_viewer/commit/7ccd0fb7c41a82eb31e128b656b16fbccd78c784
+[3a0a60b]: https://github.com/Nenotriple/img-txt_viewer/commit/3a0a60bbf41a2da0c5b943624bfe61dceba71703
