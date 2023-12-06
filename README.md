@@ -67,7 +67,7 @@ The `pillow` library will be downloaded and installed *(if not already available
     - Small ui tweaks. [#22b2764][22b2764]
     - `Fuzzy Search` You can now use an asterisk while typing to "search" for tags. [#05ca179][05ca179]
       - For example: Typing `*lo*b` returns "<ins>**lo**</ins>oking <ins>**b**</ins>ack", and even "yel<ins>**lo**</ins>w <ins>**b**</ins>ackground"
-    You can now undo the last operation for: Search and Replace, Prefix Text, and Append Text. [#c5be6a2][c5be6a2]
+    - You can now undo the last operation for: Search and Replace, Prefix Text, and Append Text. [#c5be6a2][c5be6a2]
     - Batch Tag Delete no longer locks the main img-txt_viewer window. [#f2f8414][f2f8414]
       - While Batch Tag Delete is open, text files are scanned for changes and automatically updated. [#143140e][143140e], [#b38a786][b38a786]
     - You can now swap img-txt pair horizontal and vertical positions. [#ee7d052][ee7d052]
