@@ -27,8 +27,10 @@ Description:
 
 import os
 import sys
+import time
 import ctypes
 import shutil
+import threading
 import tkinter as tk
 from collections import Counter
 from tkinter import messagebox, simpledialog, filedialog, TclError
@@ -44,6 +46,7 @@ myappid = 'ImgTxtViewer.Nenotriple'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 sort_order = 'count'
+stop_thread = False
 
 ################################################################################################################################################
 ################################################################################################################################################
@@ -255,6 +258,8 @@ def restore_backup(directory, scrollable_frame):
     display_tags(count_tags(directory), directory, scrollable_frame)
 
 def on_closing(directory, root):
+    global stop_thread
+    stop_thread = True
     backup_directory = os.path.join(directory, "text_backup")
     if os.path.exists(backup_directory):
         shutil.rmtree(backup_directory)
@@ -303,19 +308,26 @@ def main(directory=None, main_window_x=None, main_window_y=None):
     last_modification_times = {}
 
     # Function to refresh the display
+    def start_watching_files():
+        global stop_thread
+        stop_thread = False
+        thread = threading.Thread(target=refresh)
+        thread.start()
+
     def refresh():
         nonlocal last_modification_times
-        txt_files = [f for f in os.listdir(directory) if f.endswith('.txt')]
-        modified = False
-        for file in txt_files:
-            path = os.path.join(directory, file)
-            mod_time = os.path.getmtime(path)
-            if file not in last_modification_times or mod_time > last_modification_times[file]:
-                last_modification_times[file] = mod_time
-                modified = True
-        if modified:
-            display_tags(count_tags(directory), directory, scrollable_frame)
-        root.after(1000, refresh)
+        while not stop_thread:
+            txt_files = [f for f in os.listdir(directory) if f.endswith('.txt')]
+            modified = False
+            for file in txt_files:
+                path = os.path.join(directory, file)
+                mod_time = os.path.getmtime(path)
+                if file not in last_modification_times or mod_time > last_modification_times[file]:
+                    last_modification_times[file] = mod_time
+                    modified = True
+            if modified:
+                display_tags(count_tags(directory), directory, scrollable_frame)
+                time.sleep(1)
 
     # Function to set the icon
     def set_icon():
@@ -369,7 +381,7 @@ def main(directory=None, main_window_x=None, main_window_y=None):
     root.protocol("WM_DELETE_WINDOW", lambda: on_closing(directory, root))
 
     # Refresh display and set icon
-    refresh()
+    start_watching_files()
     set_icon()
 
     # Start main loop
@@ -398,7 +410,7 @@ v1.05 changes:
     - `Undo All` You can now restore the text files to their original state from when Batch Tag Delete was launched. [#7d574a8][7d574a8]
     - Implement Auto-Refresh Feature. [#4f78be5][4f78be5]
     - Renamed to: Batch Tag Delete [#f7e9389][f7e9389]
-    - The window position can now be controlled with the starting command arguments. This is used to position this script beside the main window.
+    - Window position can be controlled with cmd arguments. This is used to position this window beside img-txt_viewer. [#9fe7499][9fe7499]
      - Example: `python batch_tag_delete.py /path/to/directory 500 800`
 
 <br>
@@ -406,12 +418,14 @@ v1.05 changes:
   - Fixed:
     - Properly set app icon. [#358ee1d][358ee1d]
     - Improved popup handling when clicking `Delete Selected` when no tags are selected. [#3a0a60b][3a0a60b]
+    - Fixed error related to file refresh being called after closing when launched from img-txt_viewer.
 
   - Other: [#7ccd0fb][7ccd0fb], [3a0a60b][3a0a60b]
 
 [7d574a8]: https://github.com/Nenotriple/img-txt_viewer/commit/7d574a85b300f60bd01015aeadfca4e3d38cdf71
 [4f78be5]: https://github.com/Nenotriple/img-txt_viewer/commit/4f78be5df917f6af19796591fbbff05e64f8e944
 [f7e9389]: https://github.com/Nenotriple/img-txt_viewer/commit/f7e9389d77ed86508ccb4f9705c3d709eb00ab0e
+[9fe7499]: https://github.com/Nenotriple/img-txt_viewer/commit/9fe7499d89d5689606a3e576554c03c8c3f4f4c8
 
 [358ee1d]: https://github.com/Nenotriple/img-txt_viewer/commit/358ee1d93636d0001a3e9b96d72ba3230697fcdd
 
