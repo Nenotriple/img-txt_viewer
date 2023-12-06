@@ -1808,12 +1808,12 @@ root.mainloop()
       - While Batch Tag Delete is open, text files are scanned for changes and automatically updated. [#143140e][143140e], [#b38a786][b38a786]
     - You can now swap img-txt pair horizontal and vertical positions. [#ee7d052][ee7d052]
     - About window added. [#e692ebe][e692ebe]
-    - The current text file is now scanned every 2 seconds, and refreshed if changed outside the app.
+    - The current text file is now scanned every 2 seconds, and refreshed if changed outside the app. [#95910e4][95910e4]
 
 <br>
 
   - Fixed:
-    - Huge fix: Batch Tag Delete now properly opens when launched from the executable version.
+    - Huge fix: Batch Tag Delete now properly opens when launched from the executable version. [#95910e4][95910e4]
     - Fixed autosave bug causing warning on window close without directory selection. [#b3f00a2][b3f00a2]
     - Batch Tag Delete now opens beside the main window. [#f75362f][f75362f]
     - Selecting a new directory now removes the left over text backups. [#b1f4655][b1f4655]
@@ -1836,6 +1836,7 @@ root.mainloop()
 [e692ebe]: https://github.com/Nenotriple/img-txt_viewer/commit/e692ebe56e34433ad5697ab2c1a3404b62b7c7c8
 
 <!-- Fixed -->
+[95910e4]: https://github.com/Nenotriple/img-txt_viewer/commit/95910e42c8f8212a66c0eb68d3d75db7078587cb
 [b3f00a2]: https://github.com/Nenotriple/img-txt_viewer/commit/b3f00a28c82beb2300e78693df5d771802b2cfe4
 [f75362f]: https://github.com/Nenotriple/img-txt_viewer/commit/f75362feea79e088d40af05c3fdc4e62881e64ab
 [b1f4655]: https://github.com/Nenotriple/img-txt_viewer/commit/b1f465555306d3ff9bf169dcc085de80dd96cc81
