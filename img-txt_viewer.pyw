@@ -40,6 +40,8 @@ from tkinter import ttk, messagebox
 from tkinter.filedialog import askdirectory
 from tkinter.scrolledtext import ScrolledText
 
+import batch_tag_delete
+
 ##################
 #                #
 # Install Pillow #
@@ -88,9 +90,9 @@ except ImportError:
 #endregion
 ##########################################################################################################################################################################
 ##########################################################################################################################################################################
-#             #
-# AboutWindow #
-#             #
+#                   #
+#region AboutWindow #
+#                   #
 
 class AboutWindow(Toplevel):
     headers = [" Shortcuts:", " Tips:", " Text Tools:", " Auto-Save:"]
@@ -152,6 +154,7 @@ class AboutWindow(Toplevel):
         import webbrowser
         webbrowser.open(f"{self.github_url}")
 
+#endregion
 ################################################################################################################################################
 ################################################################################################################################################
 #                   #
@@ -325,13 +328,14 @@ class ImgTxtViewer:
         # Variables
         self.panes_swapped = False
         self.text_modified = False
-        self.batch_tag_delete_running = False
-        self.watcher_process = None
         self.user_selected_no = False
         self.is_alt_arrow_pressed = False
         self.current_index = 0
         self.prev_num_files = 0
         self.selected_suggestion_index = 0
+
+        self.stop_thread = False
+        self.watching_files = False
 
         self.is_search_replace_open = False
         self.is_prefix_open = False
@@ -444,7 +448,7 @@ class ImgTxtViewer:
         self.toolsMenu.add_command(label="Delete img-txt Pair", state="disable", command=self.delete_pair)
         self.toolsMenu.add_command(label="Undo Delete", command=self.undo_delete_pair, state="disabled")
 
-        menubar.add_command(label="About", command=self.open_about_window)
+        menubar.add_command(label="About", command=self.toggle_about_window)
 
 #endregion
 ################################################################################################################################################
@@ -833,7 +837,6 @@ class ImgTxtViewer:
         self.suggestion_textbox.config(state='disabled')
 
 ### Insert Suggestion ##################################################
-
     def insert_selected_suggestion(self, selected_suggestion):
         selected_suggestion = selected_suggestion.strip()
         text = self.text_box.get("1.0", "insert").rstrip()
@@ -871,7 +874,6 @@ class ImgTxtViewer:
             return 'break'
 
 ### Suggestion Settings ##################################################
-
     def change_autocomplete_dictionary(self):
         if self.csv_var.get() == 'all':
             self.autocomplete = Autocomplete('danbooru.csv')
@@ -1001,6 +1003,8 @@ class ImgTxtViewer:
         if hasattr(self, 'total_images_label'):
             self.total_images_label.config(text=f"/{len(self.image_files)}")
         self.prev_num_files = len(files_in_dir)
+        if not self.watching_files:
+            self.start_watching_file()
 
     def show_pair(self):
         if self.image_files:
@@ -1059,6 +1063,23 @@ class ImgTxtViewer:
             self.image_preview.config(image=photo)
             self.image_preview.image = photo
         return image, aspect_ratio
+
+    def start_watching_file(self):
+        self.stop_thread = False
+        self.watching_files = True
+        thread = threading.Thread(target=self.watch_file)
+        thread.start()
+
+    def watch_file(self):
+        text_file = self.text_files[self.current_index]
+        last_modified = os.path.getmtime(text_file)
+        while not self.stop_thread:
+            time.sleep(2)
+            current_modified = os.path.getmtime(text_file)
+            if current_modified != last_modified:
+                self.saved_label.config(text="File Modified!", bg="#f0f0f0", fg="black")
+                self.show_pair()
+                last_modified = current_modified
 
 #endregion
 ################################################################################################################################################
@@ -1222,10 +1243,7 @@ class ImgTxtViewer:
         if os.path.exists(script_path):
             main_window_x = root.winfo_x()
             main_window_y = root.winfo_y()
-            self.watcher_process = subprocess.Popen(["pythonw", script_path, self.image_dir.get(), str(main_window_x), str(main_window_y)])
-            threading.Thread(target=self.watch_files).start()
-            self.batch_tag_delete_running = True
-            self.toolsMenu.entryconfig("Batch Tag Delete", state="disable")
+            batch_tag_delete.main(self.image_dir.get(), str(main_window_x), str(main_window_y))
 
     def search_and_replace(self):
         if not self.check_directory():
@@ -1458,31 +1476,6 @@ class ImgTxtViewer:
 #region - Misc Functions #
 #                        #
 
-    # Used to watch the current text file for changes while batch_tag_delete is running.
-    def watch_files(self):
-        self.saved_label.config(text="Batch Tag Delete!", bg="#f0f0f0", fg="black")
-        last_modified_times = {}
-        while self.watcher_process.poll() is None and self.batch_tag_delete_running:
-            file_modified = False
-            if self.current_index < len(self.text_files):
-                current_text_file = self.text_files[self.current_index]
-                if os.path.isfile(current_text_file):
-                    last_modified = os.path.getmtime(current_text_file)
-                    if current_text_file in last_modified_times:
-                        if last_modified != last_modified_times[current_text_file]:
-                            last_modified_times[current_text_file] = last_modified
-                            file_modified = True
-                    else:
-                        last_modified_times[current_text_file] = last_modified
-                if file_modified:
-                    self.show_pair()
-                    self.saved_label.config(text="File Modified!", bg="#5da9be", fg="white")
-            time.sleep(1)
-            self.saved_label.config(text="Watching for changes...", bg="#f0f0f0", fg="black")
-        if self.watcher_process.poll() is not None:
-            self.saved_label.config(text="Changes Saved!", bg="#5da9be", fg="white")
-            self.toolsMenu.entryconfig("Batch Tag Delete", state="normal")
-
     # Used to position new windows beside the main window.
     def position_dialog(self, dialog, window_width, window_height):
         root_x = self.master.winfo_rootx()
@@ -1511,13 +1504,22 @@ class ImgTxtViewer:
     def disable_button(self, event):
         return "break"
 
-    def open_about_window(self):
+#endregion
+################################################################################################################################################
+################################################################################################################################################
+#                      #
+#region - About Window #
+#                      #
+    def toggle_about_window(self):
         if self.about_window is not None:
-            self.about_window.lift()
+            self.close_about_window()
         else:
-            self.about_window = AboutWindow(self.master)
-            self.position_dialog(self.about_window, 450, 550)
-            self.about_window.protocol("WM_DELETE_WINDOW", self.close_about_window)
+            self.open_about_window()
+
+    def open_about_window(self):
+        self.about_window = AboutWindow(self.master)
+        self.position_dialog(self.about_window, 450, 550)
+        self.about_window.protocol("WM_DELETE_WINDOW", self.close_about_window)
 
     def close_about_window(self):
         self.about_window.destroy()
@@ -1604,9 +1606,7 @@ class ImgTxtViewer:
             f.write(text)
 
     def on_closing(self):
-        self.batch_tag_delete_running = False
-        if self.watcher_process is not None:
-            self.watcher_process.terminate()
+        self.stop_thread = True
         if not os.path.isdir(self.image_dir.get()):
             root.destroy()
         elif self.saved_label.cget("text") in ["No Changes", "Saved", "Changes Saved!", "Text Files Cleaned up!"]:
@@ -1792,9 +1792,9 @@ root.mainloop()
 #endregion
 ################################################################################################################################################
 ################################################################################################################################################
-#           #
-# Changelog #
-#           #
+#                   #
+#region - Changelog #
+#                   #
 
 '''
 
@@ -1808,21 +1808,23 @@ root.mainloop()
       - While Batch Tag Delete is open, text files are scanned for changes and automatically updated. [#143140e][143140e], [#b38a786][b38a786]
     - You can now swap img-txt pair horizontal and vertical positions. [#ee7d052][ee7d052]
     - About window added. [#e692ebe][e692ebe]
+    - The current text file is now scanned every 2 seconds, and refreshed if changed outside the app.
 
 <br>
 
   - Fixed:
+    - Huge fix: Batch Tag Delete now properly opens when launched from the executable version.
     - Fixed autosave bug causing warning on window close without directory selection. [#b3f00a2][b3f00a2]
     - Batch Tag Delete now opens beside the main window. [#f75362f][f75362f]
     - Selecting a new directory now removes the left over text backups. [#b1f4655][b1f4655]
-    - Closing the app now removes the "Trash" folder if it's empty. [#f8144ab][f8144ab]
+    - Closing the app now removes the "Trash" folder if empty. [#f8144ab][f8144ab]
     - Prevent multiple instances of a tool window from opening. [#3320d8e][3320d8e]
 
 <br>
 
   - Other changes:
     - PanedWindow adjustments. [#2bfdb3a][2bfdb3a]
-    - Other changes: [#f2f8414][f2f8414], [#9c8c580][9c8c580], [#0362e23][0362e23], [#fbcaaec][fbcaaec], [353827d][353827d]
+    - Other changes: [#f2f8414][f2f8414], [#9c8c580][9c8c580], [#0362e23][0362e23], [#fbcaaec][fbcaaec], [353827d][353827d], [#a41d99c][a41d99c]
 
 <!-- New -->
 [22b2764]: https://github.com/Nenotriple/img-txt_viewer/commit/22b2764edbf16e4477dce16bebdf08cf2d3459df
@@ -1847,6 +1849,7 @@ root.mainloop()
 [0362e23]: https://github.com/Nenotriple/img-txt_viewer/commit/0362e23f0e684eb5b1ce73b89c1b0267af144ba8
 [fbcaaec]: https://github.com/Nenotriple/img-txt_viewer/commit/fbcaaecd83cf6c6a38de33baef41981b61de243e
 [353827d]: https://github.com/Nenotriple/img-txt_viewer/commit/353827d1648f64d9f54cee709e6cb857a75387de
+[a41d99c]: https://github.com/Nenotriple/img-txt_viewer/commit/a41d99cccb368e6e6faa3b9598b22032a07fc441
 
 '''
 
@@ -1866,3 +1869,4 @@ root.mainloop()
   - **Minor** After deleting or Undo Delete. PanedWindow sash moves position.
 
 '''
+#endregion
