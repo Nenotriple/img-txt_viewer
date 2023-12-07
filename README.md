@@ -1,5 +1,5 @@
 # img-txt_viewer
-Display an image and text file side-by-side for easy manual caption editing.
+Display an image and text file side-by-side for easy manual captioning. + Tons of features to help you work faster!
 
 ![v1 74_img-txt_viewer](https://github.com/Nenotriple/img-txt_viewer/assets/70049990/7949c61d-c507-4dd2-934c-906feef3b9fe)
 
