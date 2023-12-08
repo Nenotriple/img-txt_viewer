@@ -1,6 +1,5 @@
 ### This is where you can create a custom dictionary of tags.
 ### These tags will be loaded alongside the chosen autocomplete dictionary.
-### Lines starting with 3 hash symbols '###' will be ignored so you can create comments.
 ### Tags near the top of the list have a higher priority than lower tags.
 
 supercalifragilisticexpialidocious
