@@ -30,7 +30,6 @@ Display an image and text file side-by-side for easy manual captioning. + Tons o
   - Enable `Big Comma Mode` for more visual separation between captions.
   - Blank text files can be created for images without any matching files when loading a directory.
   - `Autocomplete Suggestions` while you type using Danbooru/Anime tags, the English Dictionary, or both. 
-  - Running `Edit Custom Suggestions` will create the file 'my_tags.csv' where you can add your own words to the suggestion dictionary.
   - `Fuzzy Search` Use an asterisk * while typing to return a broader range of suggestions.
     - For example: Typing `*lo*b` returns "<ins>**lo**</ins>oking <ins>**b**</ins>ack", and even "yel<ins>**lo**</ins>w <ins>**b**</ins>ackground"
 
@@ -62,20 +61,26 @@ The `pillow` library will be downloaded and installed *(if not already available
 
 # 📜 Version History
 
-[v1.81 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.81) [#a19eed3][a19eed3]
+[v1.82 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.82)
+
+The biggest visible change this release is the addition of a new Paned Window that now holds all text tools. (excluding Batch Tag Delete)
+This makes it way more simple and easier to use these tools.
+
   - New:
-    - Added underlining (Alt+Letter) to all menubar commands.
+    - Search and Replace, Prefix Text, Append Text, Font Options, and Edit Custom Dictionary are now in a convient tabbed interface below the text box.
+    - You can now refresh the custom dictionary
 
 <br>
 
   - Fixed:
-    - Prevent app crash when selecting a folder without any text files.
-    - Blank text files are no longer created when attempting to save a blank text box.
-      - This includes when auto-save is enabled and moving between img-txt pairs.
-    - Right clicking the text box no longer clears the text selection.
-    - Propperly set menu accelerator flags.
-    - You can no longer select a directory that doesn't contain images.
-    - Some menu options are now disabled before loading a directory.
-    - `Edit Custom Suggestions` now opens the ".csv" file as a regular text document if no CSV file editor is present.
+    - Saving a blank text file now deletes it.
+    - Fixed error when 'Cleanup Text' was run in a folder where some images had missing text pairs.
+    - Fixed an error when attempting to delete an img-txt pair and no text file was present.
+    - 'Batch Tag Delete' and 'About' no longer open beside the main window. This prevents the new window from opening off the screen.
+    - Running 'Prefix' or 'Append' text now creates text files for images that previously didn't have a pair.
 
-[a19eed3]: https://github.com/Nenotriple/img-txt_viewer/commit/a19eed3f0720056308655ab43f22b0dace7512f5
+<br>
+
+  - Other changes:
+    - Basically all text tools were completly redone.
+    - I've tried to fix as many small bugs and add polish wherever possible. Too many changes to list them all.
