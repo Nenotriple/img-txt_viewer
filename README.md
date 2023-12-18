@@ -1,7 +1,7 @@
 # img-txt_viewer
 Display an image and text file side-by-side for easy manual captioning. + Tons of features to help you work faster!
 
-![v1 74_img-txt_viewer](https://github.com/Nenotriple/img-txt_viewer/assets/70049990/7949c61d-c507-4dd2-934c-906feef3b9fe)
+![v1 83_img-txt_viewer](https://github.com/Nenotriple/img-txt_viewer/assets/70049990/0c98427f-bbe7-478c-8972-a10a7df0fd86)
 
 # 📝 Usage
 
@@ -22,7 +22,7 @@ Display an image and text file side-by-side for easy manual captioning. + Tons o
   - `CTRL+F`: Highlight all duplicate words. 
   - `CTRL+S`: Save the current text file.
   - `CTRL+Z` / `CTRL+Y`: Undo/Redo.
-  - `Middle-click`: a token to quickly delete it.
+  - `Middle-click`: A token to quickly delete it.
 
 - Tips:
   - `Highlight duplicates` by selecting text.
