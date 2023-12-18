@@ -15,7 +15,7 @@ More info here: https://github.com/Nenotriple/img-txt_viewer
 
 """
 
-VERSION = "v1.82"
+VERSION = "v1.83"
 
 ################################################################################################################################################
 ################################################################################################################################################
@@ -84,7 +84,7 @@ except ImportError:
         pillow_label.config(text="Beginning Pillow install now...\n")
         threading.Thread(target=download_pillow).start()
         root.mainloop()
-        from PIL import Image
+        from PIL import Image, ImageTk
     else:
         sys.exit()
 
@@ -96,60 +96,63 @@ except ImportError:
 #                   #
 
 class AboutWindow(Toplevel):
-    headers = [" Shortcuts:", " Tips:", " Text Tools:", " Auto-Save:"]
-    content = [
-        " ▪️ ALT+Left/Right: Quickly move between img-txt pairs.\n"
-        " ▪️ Del: Send the current pair to a local trash folder.\n"
-        " ▪️ ALT: Cycle through auto-suggestions.\n"
-        " ▪️ TAB: Insert the highlighted suggestion.\n"
-        " ▪️ CTRL+F: Highlight all duplicate words.\n"
-        " ▪️ CTRL+S: Save the current text file.\n"
-        " ▪️ CTRL+Z / CTRL+Y: Undo/Redo.\n"
-        " ▪️ Middle-click a tag to delete it.\n",
+    info_headers = ["Shortcuts:", "Tips:", "Text Tools:", "Auto-Save:"]
+    info_content = [
+        " ⦁ALT+Left/Right: Quickly move between img-txt pairs.\n"
+        " ⦁Del: Send the current pair to a local trash folder.\n"
+        " ⦁ALT: Cycle through auto-suggestions.\n"
+        " ⦁TAB: Insert the highlighted suggestion.\n"
+        " ⦁CTRL+F: Highlight all duplicate words.\n"
+        " ⦁CTRL+S: Save the current text file.\n"
+        " ⦁CTRL+Z / CTRL+Y: Undo/Redo.\n"
+        " ⦁Middle-click a tag to delete it.\n",
 
-        " ▪️ Highlight duplicates by selecting text.\n"
-        " ▪️ List Mode: Display tags in a list format while saving in standard format.\n"
-        " ▪️ Blank text files can be created for images without any matching pair when loading a directory.\n"
-        " ▪️ When selecting a suggestion dictionary, you can use either Anime tags, English dictionary, or Both.\n"
-        " ▪️ Running 'Edit Custom Suggestions' will create the file 'my_tags.csv' where you can add your own words to the suggestion dictionary.\n"
-        " ▪️ Use an asterisk * while typing to return suggestions using 'fuzzy search'.\n",
+        " ⦁Highlight duplicates by selecting text.\n"
+        " ⦁List Mode: Display tags in a list format while saving in standard format.\n"
+        " ⦁Blank text files can be created for images without any matching pair when loading a directory.\n"
+        " ⦁When selecting a suggestion dictionary, you can use either Anime tags, English dictionary, or Both.\n"
+        " ⦁Use an asterisk * while typing to return suggestions using 'fuzzy search'.\n",
 
-        " ▪️ Search and Replace: Edit all text files at once.\n"
-        " ▪️ Prefix Text Files: Insert text at the START of all text files.\n"
-        " ▪️ Append Text Files: Insert text at the END of all text files.\n"
-        " ▪️ Batch Tag Delete: View all tags in a directory as a list, and quickly delete them.\n"
-        " ▪️ Cleanup Text: Fix typos in all text files of the selected folder, such as duplicate tags, multiple spaces or commas, missing spaces, and more.\n",
+        " ⦁Search and Replace: Edit all text files at once.\n"
+        " ⦁Prefix Text Files: Insert text at the START of all text files.\n"
+        " ⦁Append Text Files: Insert text at the END of all text files.\n"
+        " ⦁Batch Tag Delete: View all tags in a directory as a list, and quickly delete them.\n"
+        " ⦁Cleanup Text: Fix typos in all text files of the selected folder, such as duplicate tags, multiple spaces or commas, missing spaces, and more.\n",
 
-        " ▪️ Check the auto-save box to save text when navigating between img/txt pairs or closing the window.\n"
-        " ▪️ Text is cleaned up when saved, so you can ignore things like duplicate tags, trailing comma/spaces, double comma/spaces, etc.\n"
-        " ▪️ Text cleanup can be disabled from the options menu.",
-    ]
+        " ⦁Check the auto-save box to save text when navigating between img/txt pairs or closing the window.\n"
+        " ⦁Text is cleaned up when saved, so you can ignore things like duplicate tags, trailing comma/spaces, double comma/spaces, etc.\n"
+        " ⦁Text cleanup can be disabled from the options menu.",]
 
     def __init__(self, master=None):
         super().__init__(master=master)
         self.title("About")
-        self.geometry("450x660")
-        self.maxsize(900, 660)
-        self.minsize(450, 660)
-
+        self.geometry("850x560")
+        self.maxsize(900, 900)
+        self.minsize(300, 300)
         self.github_url = "https://github.com/Nenotriple/img-txt_viewer"
+        self.create_url_button()
+        self.create_info_text()
+        self.create_made_by_label()
 
+    def create_url_button(self):
         self.url_button = Button(self, text=f"Open: {self.github_url}", fg="blue", overrelief="groove", command=self.open_url)
         self.url_button.pack(fill="x")
+        ToolTip.create_tooltip(self.url_button, "Click this button to open the repo in your default browser", 10, 6, 4)
 
+    def create_info_text(self):
         self.info_text = ScrolledText(self)
         self.info_text.pack(expand=True, fill='both')
-
-        for header, section in zip(AboutWindow.headers, AboutWindow.content):
-            self.info_text.insert(END, header + "\n", "header")
-            self.info_text.insert(END, section + "\n", "section")
-
+        for header, section in zip(AboutWindow.info_headers, AboutWindow.info_content):
+            self.info_text.insert("end", header + "\n", "header")
+            self.info_text.insert("end", section + "\n", "section")
         self.info_text.tag_config("header", font=("Segoe UI", 10, "bold"))
         self.info_text.tag_config("section", font=("Segoe UI", 10))
-        self.info_text.config(state='disabled', wrap=WORD)
+        self.info_text.config(state='disabled', wrap="word")
 
-        self.made_by_label = Label(self, text=f"(2023) Created by: Nenotriple - {VERSION} - img-txt_viewer", font=("Arial", 10))
+    def create_made_by_label(self):
+        self.made_by_label = Label(self, text=f"{VERSION} img-txt_viewer - Created by: Nenotriple (2023)", font=("Arial", 10))
         self.made_by_label.pack(pady=5)
+        ToolTip.create_tooltip(self.made_by_label, "🤍Thank you for using my app!🤍 (^‿^)", 10, 6, 4)
 
     def open_url(self):
         import webbrowser
@@ -174,13 +177,14 @@ class ToolTip:
     def show_tip(self, tip_text, x, y):
         if self.tip_window or not tip_text:
             return
-        x, y = x + self.x_offset, y + self.y_offset
+        x += self.x_offset
+        y += self.y_offset
         self.tip_window = tw = Toplevel(self.widget)
         tw.wm_overrideredirect(True)
         tw.wm_geometry(f"+{x}+{y}")
         tw.wm_attributes("-topmost", True)
         tw.wm_attributes("-disabled", True)
-        label = Label(tw, text=tip_text, background="#ffffee", relief=RIDGE, borderwidth=1, justify=LEFT, padx=4, pady=4)
+        label = Label(tw, text=tip_text, background="#ffffee", relief="ridge", borderwidth=1, justify="left", padx=4, pady=4)
         label.pack()
         self.id = self.widget.after(3000, self.hide_tip)
 
@@ -191,15 +195,16 @@ class ToolTip:
             tw.destroy()
         self.hide_time = time.time()
 
+    @staticmethod
     def create_tooltip(widget, text, delay=0, x_offset=0, y_offset=0):
         tool_tip = ToolTip(widget, x_offset, y_offset)
         def enter(event):
-            if tool_tip.id is not None:
+            if tool_tip.id:
                 widget.after_cancel(tool_tip.id)
             if time.time() - tool_tip.hide_time > 0.1:
                 tool_tip.id = widget.after(delay, lambda: tool_tip.show_tip(text, widget.winfo_pointerx(), widget.winfo_pointery()))
         def leave(event):
-            if tool_tip.id is not None:
+            if tool_tip.id:
                 widget.after_cancel(tool_tip.id)
             tool_tip.hide_tip()
         widget.bind('<Enter>', enter)
@@ -220,21 +225,21 @@ class Autocomplete:
         self.previous_suggestions = None
 
     def download_data(self):
-        files = {
-            'danbooru.csv': "https://raw.githubusercontent.com/Nenotriple/img-txt_viewer/main/danbooru.csv",
-            'dictionary.csv': "https://raw.githubusercontent.com/Nenotriple/img-txt_viewer/main/dictionary.csv",
-            'e621.csv': "https://raw.githubusercontent.com/Nenotriple/img-txt_viewer/main/e621.csv"
-        }
-
+        files = {'danbooru.csv': "https://raw.githubusercontent.com/Nenotriple/img-txt_viewer/main/danbooru.csv",
+                 'dictionary.csv': "https://raw.githubusercontent.com/Nenotriple/img-txt_viewer/main/dictionary.csv",
+                 'e621.csv': "https://raw.githubusercontent.com/Nenotriple/img-txt_viewer/main/e621.csv"}
         missing_files = [file for file in files if not os.path.exists(file)]
         if missing_files:
             download = messagebox.askyesno("Files not found.", f"The following dictionaries required for autocomplete suggestions were not found: \n\n{', '.join(missing_files)}.\n\nDo you want to download them from the repo? ~2MB each\n\nYes = Download All\nNo = Ignore")
             if download:
                 for data_file in missing_files:
                     url = files[data_file]
-                    response = requests.get(url)
-                    with open(data_file, 'wb') as f:
-                        f.write(response.content)
+                    threading.Thread(target=self.download_file, args=(url, data_file)).start()
+
+    def download_file(self, url, data_file):
+        response = requests.get(url)
+        with open(data_file, 'wb') as f:
+            f.write(response.content)
 
     def load_data(self, data_file, additional_file='my_tags.csv'):
         if getattr(sys, 'frozen', False):
@@ -333,6 +338,8 @@ class ImgTxtViewer:
         self.text_modified = False
         self.watching_files = False
         self.is_alt_arrow_pressed = False
+
+        # Navigation variables
         self.selected_suggestion_index = 0
         self.prev_num_files = 0
         self.current_index = 0
@@ -354,7 +361,7 @@ class ImgTxtViewer:
         self.font_var = StringVar()
         self.max_img_width = IntVar(value=2500)
         self.undo_state = StringVar(value="disabled")
-        self.image_dir = StringVar(value="Choose Directory")
+        self.image_dir = StringVar(value="Choose Directory...")
         self.list_mode = BooleanVar(value=False)
         self.bold_commas = BooleanVar(value=False)
         self.cleaning_text = BooleanVar(value=True)
@@ -373,6 +380,7 @@ class ImgTxtViewer:
         master.bind("<Alt-Right>", lambda event: self.next_pair(event))
         master.bind("<Alt-Left>", lambda event: self.prev_pair(event))
         master.bind('<Delete>', lambda event: self.delete_pair())
+
 
 #endregion
 ################################################################################################################################################
@@ -450,7 +458,7 @@ class ImgTxtViewer:
 #                                    #
 
         # This PanedWindow holds both master frames.
-        self.primary_paned_window = PanedWindow(master, orient="horizontal", sashwidth=10, bg="#d0d0d0", bd=0)
+        self.primary_paned_window = PanedWindow(master, orient="horizontal", sashwidth=5, bg="#d0d0d0", bd=0)
         self.primary_paned_window.pack(fill="both", expand=1)
         self.primary_paned_window.bind('<ButtonRelease-1>', self.snap_sash_to_half)
 
@@ -483,15 +491,15 @@ class ImgTxtViewer:
         ToolTip.create_tooltip(self.directory_button, "Right click to copy path\n\nMiddle click to open in file explorer", 1000, 6, 4)
 
         # Save Button
-        self.save_button = Button(top_button_frame, overrelief="groove", text="Save", fg="blue", command=self.save_text_file)
+        self.save_button = Button(top_button_frame, overrelief="groove", text="Save", fg="blue", state="disabled", command=self.save_text_file)
         self.save_button.pack(side="top", fill="x", pady=2)
         ToolTip.create_tooltip(self.save_button, "CTRL+S ", 1000, 6, 4)
 
         # Navigation Buttons
         nav_button_frame = Frame(self.master_control_frame)
         nav_button_frame.pack()
-        self.next_button = Button(nav_button_frame, overrelief="groove", text="Next--->", command=lambda event=None: self.next_pair(event), width=16)
-        self.prev_button = Button(nav_button_frame, overrelief="groove", text="<---Previous", command=lambda event=None: self.prev_pair(event), width=16)
+        self.next_button = Button(nav_button_frame, overrelief="groove", text="Next--->", state="disabled", command=lambda event=None: self.next_pair(event), width=16)
+        self.prev_button = Button(nav_button_frame, overrelief="groove", text="<---Previous", state="disabled", command=lambda event=None: self.prev_pair(event), width=16)
         self.next_button.pack(side="right", padx=2, pady=2)
         self.prev_button.pack(side="right", padx=2, pady=2)
         ToolTip.create_tooltip(self.next_button, "ALT+R ", 1000, 6, 4)
@@ -500,33 +508,33 @@ class ImgTxtViewer:
         # Saved Label / Autosave
         saved_label_frame = Frame(self.master_control_frame)
         saved_label_frame.pack(pady=2)
-        self.auto_save_checkbutton = Checkbutton(saved_label_frame, overrelief="groove", text="Auto-save", variable=self.auto_save_var, command=self.change_label)
+        self.auto_save_checkbutton = Checkbutton(saved_label_frame, overrelief="groove", text="Auto-save", state="disabled", variable=self.auto_save_var, command=self.change_label)
         self.auto_save_checkbutton.pack(side="right")
-        self.saved_label = Label(saved_label_frame, text="No Changes", width=23)
+        self.saved_label = Label(saved_label_frame, text="No Changes", state="disabled", width=23)
         self.saved_label.pack()
 
         # Image Index
         self.index_frame = Frame(self.master_control_frame)
-        self.index_frame.pack(side=TOP, expand=NO)
-        self.current_images_label = Label(self.index_frame, text="Pair")
-        self.current_images_label.pack(side=LEFT, expand=YES)
-        self.image_index_entry = Entry(self.index_frame, width=5)
+        self.index_frame.pack(side="top", expand="no")
+        self.current_images_label = Label(self.index_frame, text="Pair", state="disabled")
+        self.current_images_label.pack(side="left", expand="yes")
+        self.image_index_entry = Entry(self.index_frame, width=5, state="disabled")
         self.image_index_entry.bind("<Return>", self.jump_to_image)
-        self.image_index_entry.pack(side=LEFT, expand=NO)
-        self.total_images_label = Label(self.index_frame, text=f"of {len(self.image_files)}")
-        self.total_images_label.pack(side=LEFT, expand=YES)
+        self.image_index_entry.pack(side="left", expand="no")
+        self.total_images_label = Label(self.index_frame, text=f"of {len(self.image_files)}", state="disabled")
+        self.total_images_label.pack(side="left", expand="yes")
 
         # Suggestion text
         self.suggestion_textbox = Text(self.master_control_frame, height=1, borderwidth=0, highlightthickness=0, bg='#f0f0f0')
         self.suggestion_colors = {0: "black", 1: "#c00004", 2: "black", 3: "#a800aa", 4: "#00ab2c", 5: "#fd9200"} #0=General tags, 1=Artists, 2=UNUSED, 3=Copyright, 4=Character, 5=Meta
-        self.suggestion_textbox.pack(side=TOP, fill=X)
+        self.suggestion_textbox.pack(side="top", fill="x")
 
         # Startup info text
         self.info_text = ScrolledText(self.master_control_frame)
-        self.info_text.pack(expand=True, fill='both')
-        for header, section in zip(AboutWindow.headers, AboutWindow.content):
-            self.info_text.insert(END, header + "\n", "header")
-            self.info_text.insert(END, section + "\n", "section")
+        self.info_text.pack(expand=True, fill="both")
+        for header, section in zip(AboutWindow.info_headers, AboutWindow.info_content):
+            self.info_text.insert("end", header + "\n", "header")
+            self.info_text.insert("end", section + "\n", "section")
         self.info_text.tag_config("header", font=("Segoe UI", 10, "bold"))
         self.info_text.tag_config("section", font=("Segoe UI", 10))
         self.info_text.bind("<Button-3>", self.show_textContext_menu)
@@ -545,19 +553,22 @@ class ImgTxtViewer:
 #                         #
 
     def create_text_pane(self):
-        self.text_pane = PanedWindow(self.master_control_frame, orient="vertical", sashwidth=10, bg="#d0d0d0", bd=0)
-        self.text_pane.pack(side="bottom", fill=BOTH, expand=1)
+        if not hasattr(self, 'text_pane'):
+            self.text_pane = PanedWindow(self.master_control_frame, orient="vertical", sashwidth=5, bg="#d0d0d0", bd=0)
+            self.text_pane.pack(side="bottom", fill="both", expand=1)
 
     def create_text_box(self):
         self.create_text_pane()
-        self.text_frame = Frame(self.master_control_frame)
-        self.text_pane.add(self.text_frame, stretch="always")
-        self.text_pane.paneconfigure(self.text_frame, minsize=80)
-        self.text_box = ScrolledText(self.text_frame, wrap="word", undo="true", maxundo=200, inactiveselectbackground="#c8c8c8")
-        self.text_box.pack(side=TOP, expand=YES, fill=BOTH)
-        self.text_box.tag_configure("highlight", background="#5da9be", foreground="white")
-        self.set_text_box_binds()
-        self.create_text_control_frame()
+        if not hasattr(self, 'text_frame'):
+            self.text_frame = Frame(self.master_control_frame)
+            self.text_pane.add(self.text_frame, stretch="always")
+            self.text_pane.paneconfigure(self.text_frame, minsize=80)
+            self.text_box = ScrolledText(self.text_frame, wrap="word", undo=True, maxundo=200, inactiveselectbackground="#0078d7")
+            self.text_box.pack(side="top", expand="yes", fill="both")
+            self.text_box.tag_configure("highlight", background="#5da9be", foreground="white")
+            self.set_text_box_binds()
+        if not hasattr(self, 'text_widget_frame'):
+            self.create_text_control_frame()
         ToolTip.create_tooltip(self.suggestion_textbox,
                                "TAB: insert highlighted suggestion\n"
                                "ALT: Cycle suggestions\n\n"
@@ -582,7 +593,7 @@ class ImgTxtViewer:
         self.text_pane.add(self.text_widget_frame, stretch="never")
         self.text_pane.paneconfigure(self.text_widget_frame)
         # Create the notebook and tabs
-        self.text_notebook = ttk.Notebook(self.text_widget_frame, takefocus=False)
+        self.text_notebook = ttk.Notebook(self.text_widget_frame)
         self.tab1 = Frame(self.text_notebook)
         self.tab2 = Frame(self.text_notebook)
         self.tab3 = Frame(self.text_notebook)
@@ -593,7 +604,7 @@ class ImgTxtViewer:
         self.text_notebook.add(self.tab3, text='Append Text')
         self.text_notebook.add(self.tab4, text='Font Settings')
         self.text_notebook.add(self.tab5, text='Custom Dictionary')
-        self.text_notebook.pack(expand=True, fill='both')
+        self.text_notebook.pack(fill='both')
         self.create_search_and_replace_widgets()
         self.create_prefix_text_widgets()
         self.create_append_text_widgets()
@@ -605,59 +616,59 @@ class ImgTxtViewer:
             self.search_entry.delete(0, 'end')
             self.replace_entry.delete(0, 'end')
         self.search_label = Label(self.tab1, text="Search for:")
-        self.search_label.pack(side='left')
+        self.search_label.pack(side='left', anchor="n", pady=4)
         ToolTip.create_tooltip(self.search_label, "Enter the EXACT text you want to search for", 200, 6, 4)
-        self.search_entry = Entry(self.tab1, textvariable=self.search_string_var, width=5)
-        self.search_entry.pack(side='left', fill='x', expand=True)
+        self.search_entry = Entry(self.tab1, textvariable=self.search_string_var, width=4)
+        self.search_entry.pack(side='left', anchor="n", pady=4, fill='x', expand=True)
         self.replace_label = Label(self.tab1, text="Replace with:")
-        self.replace_label.pack(side='left')
+        self.replace_label.pack(side='left', anchor="n", pady=4)
         ToolTip.create_tooltip(self.replace_label, "Enter the text you want to replace the searched text with\n\nLeave empty to replace with nothing (delete)", 200, 6, 4)
-        self.replace_entry = Entry(self.tab1, textvariable=self.replace_string_var, width=5)
-        self.replace_entry.pack(side='left', fill='x', expand=True)
+        self.replace_entry = Entry(self.tab1, textvariable=self.replace_string_var, width=4)
+        self.replace_entry.pack(side='left', anchor="n", pady=4, fill='x', expand=True)
         self.replace_entry.bind('<Return>', lambda event: self.search_and_replace())
-        self.replace_button = Button(self.tab1, text="Go!", overrelief="groove", width=6, command=self.search_and_replace)
-        self.replace_button.pack(side='left', padx=2)
+        self.replace_button = Button(self.tab1, text="Go!", overrelief="groove", width=4, command=self.search_and_replace)
+        self.replace_button.pack(side='left', anchor="n", pady=4, padx=1)
         ToolTip.create_tooltip(self.replace_button, "Text files will be backup up", 200, 6, 4)
-        self.clear_button = Button(self.tab1, text="Clear", overrelief="groove", width=6, command=clear_all)
-        self.clear_button.pack(side='left', padx=2)
-        self.undo_button = Button(self.tab1, text="Undo", overrelief="groove", width=6, command=self.restore_backup)
-        self.undo_button.pack(side='left', padx=2)
+        self.clear_button = Button(self.tab1, text="Clear", overrelief="groove", width=4, command=clear_all)
+        self.clear_button.pack(side='left', anchor="n", pady=4, padx=1)
+        self.undo_button = Button(self.tab1, text="Undo", overrelief="groove", width=4, command=self.restore_backup)
+        self.undo_button.pack(side='left', anchor="n", pady=4, padx=1)
         ToolTip.create_tooltip(self.undo_button, "Revert last action", 200, 6, 4)
 
     def create_prefix_text_widgets(self):
         def clear():
             self.prefix_entry.delete(0, 'end')
         self.prefix_label = Label(self.tab2, text="Prefix text:")
-        self.prefix_label.pack(side='left')
+        self.prefix_label.pack(side='left', anchor="n", pady=4)
         ToolTip.create_tooltip(self.prefix_label, "Enter the text you want to insert at the START of all text files\n\nCommas will be inserted as needed", 200, 6, 4)
-        self.prefix_entry = Entry(self.tab2, textvariable=self.prefix_string_var, width=5)
-        self.prefix_entry.pack(side='left', fill='x', expand=True)
+        self.prefix_entry = Entry(self.tab2, textvariable=self.prefix_string_var, width=4)
+        self.prefix_entry.pack(side='left', anchor="n", pady=4, fill='x', expand=True)
         self.prefix_entry.bind('<Return>', lambda event: self.prefix_text_files())
-        self.prefix_button = Button(self.tab2, text="Go!", overrelief="groove", width=6, command=self.prefix_text_files)
-        self.prefix_button.pack(side='left', padx=2)
+        self.prefix_button = Button(self.tab2, text="Go!", overrelief="groove", width=4, command=self.prefix_text_files)
+        self.prefix_button.pack(side='left', anchor="n", pady=4, padx=1)
         ToolTip.create_tooltip(self.prefix_button, "Text files will be backup up", 200, 6, 4)
-        self.clear_button = Button(self.tab2, text="Clear", overrelief="groove", width=6, command=clear)
-        self.clear_button.pack(side='left', padx=2)
-        self.undo_button = Button(self.tab2, text="Undo", overrelief="groove", width=6, command=self.restore_backup)
-        self.undo_button.pack(side='left', padx=2)
+        self.clear_button = Button(self.tab2, text="Clear", overrelief="groove", width=4, command=clear)
+        self.clear_button.pack(side='left', anchor="n", pady=4, padx=1)
+        self.undo_button = Button(self.tab2, text="Undo", overrelief="groove", width=4, command=self.restore_backup)
+        self.undo_button.pack(side='left', anchor="n", pady=4, padx=1)
         ToolTip.create_tooltip(self.undo_button, "Revert last action", 200, 6, 4)
 
     def create_append_text_widgets(self):
         def clear():
             self.append_entry.delete(0, 'end')
         self.append_label = Label(self.tab3, text="Append text:")
-        self.append_label.pack(side='left')
+        self.append_label.pack(side='left', anchor="n", pady=4)
         ToolTip.create_tooltip(self.append_label, "Enter the text you want to insert at the END of all text files\n\nCommas will be inserted as needed", 200, 6, 4)
-        self.append_entry = Entry(self.tab3, textvariable=self.append_string_var, width=5)
-        self.append_entry.pack(side='left', fill='x', expand=True)
+        self.append_entry = Entry(self.tab3, textvariable=self.append_string_var, width=4)
+        self.append_entry.pack(side='left', anchor="n", pady=4, fill='x', expand=True)
         self.append_entry.bind('<Return>', lambda event: self.append_text_files())
-        self.append_button = Button(self.tab3, text="Go!", overrelief="groove", width=6, command=self.append_text_files)
-        self.append_button.pack(side='left', padx=2)
+        self.append_button = Button(self.tab3, text="Go!", overrelief="groove", width=4, command=self.append_text_files)
+        self.append_button.pack(side='left', anchor="n", pady=4, padx=1)
         ToolTip.create_tooltip(self.append_button, "Text files will be backup up", 200, 6, 4)
-        self.clear_button = Button(self.tab3, text="Clear", overrelief="groove", width=6, command=clear)
-        self.clear_button.pack(side='left', padx=2)
-        self.undo_button = Button(self.tab3, text="Undo", overrelief="groove", width=6, command=self.restore_backup)
-        self.undo_button.pack(side='left', padx=2)
+        self.clear_button = Button(self.tab3, text="Clear", overrelief="groove", width=4, command=clear)
+        self.clear_button.pack(side='left', anchor="n", pady=4, padx=1)
+        self.undo_button = Button(self.tab3, text="Undo", overrelief="groove", width=4, command=self.restore_backup)
+        self.undo_button.pack(side='left', anchor="n", pady=4, padx=1)
         ToolTip.create_tooltip(self.undo_button, "Revert last action", 200, 6, 4)
 
     def create_font_widgets(self, event=None):
@@ -668,7 +679,7 @@ class ImgTxtViewer:
                 self.text_box.config(font=(font, int(size)))
         def reset_to_defaults():
             self.font_var.set(default_font)
-            size_var.set(default_size)
+            size_scale.set(default_size)
             set_font_and_size(default_font, default_size)
         current_font = self.text_box.cget("font")
         current_font_name = self.text_box.tk.call("font", "actual", current_font, "-family")
@@ -676,26 +687,23 @@ class ImgTxtViewer:
         default_font = current_font_name
         default_size = current_font_size
         font_label = Label(self.tab4, text="Font:")
-        font_label.pack(side="left")
+        font_label.pack(side="left", anchor="n", pady=4)
         ToolTip.create_tooltip(font_label, "Recommended Fonts: Courier New, Ariel, Consolas, Segoe UI", 200, 6, 4)
-        font_box = ttk.Combobox(self.tab4, textvariable=self.font_var, width=5)
+        font_box = ttk.Combobox(self.tab4, textvariable=self.font_var, width=4, takefocus=False)
         font_box['values'] = list(tkinter.font.families())
         font_box.set(current_font_name)
-        font_box.bind("<<ComboboxSelected>>", lambda event: set_font_and_size(self.font_var.get(), size_var.get()))
+        font_box.bind("<<ComboboxSelected>>", lambda event: set_font_and_size(self.font_var.get(), size_scale.get()))
         font_box.bind("<Button-1>", open_dropdown)
-        font_box.pack(side="left", fill="x", expand="true")
+        font_box.pack(side="left", anchor="n", pady=4, fill="x", expand=True)
         font_size = Label(self.tab4, text="Font Size:")
-        font_size.pack(side="left")
+        font_size.pack(side="left", anchor="n", pady=4)
         ToolTip.create_tooltip(font_size, "Default size = 10", 200, 6, 4)
-        size_var = StringVar()
-        size_box = ttk.Combobox(self.tab4, textvariable=size_var, width=5)
-        size_box['values'] = list(range(9, 19))
-        size_box.set(current_font_size)
-        size_box.bind("<<ComboboxSelected>>", lambda event: set_font_and_size(self.font_var.get(), size_var.get()))
-        size_box.bind("<Button-1>", open_dropdown)
-        size_box.pack(side="left", fill="x", expand="true")
-        reset_button = Button(self.tab4, text="Reset", overrelief="groove", width=6, command=reset_to_defaults)
-        reset_button.pack(side="left", padx=2)
+        size_scale = Scale(self.tab4, from_=8, to=19, showvalue=False, orient="horizontal", cursor="hand2", takefocus=False)
+        size_scale.set(current_font_size)
+        size_scale.bind("<ButtonRelease-1>", lambda event: set_font_and_size(self.font_var.get(), size_scale.get()))
+        size_scale.pack(side="left", anchor="n", pady=4, fill="x", expand=True)
+        reset_button = Button(self.tab4, text="Reset", overrelief="groove", width=4, command=reset_to_defaults)
+        reset_button.pack(side="left", anchor="n", pady=4, padx=1)
 
     def create_custom_dictionary_widgets(self):
         def save_content():
@@ -709,16 +717,21 @@ class ImgTxtViewer:
                 self.custom_dictionary_textbox.insert('end', content)
                 self.change_autocomplete_dictionary()
         self.create_custom_dictionary()
-        self.tab5_button_frame = Frame(self.tab5)
-        self.tab5_button_frame.pack(side='top', fill='x')
+        self.tab5_frame = Frame(self.tab5)
+        self.tab5_frame.pack(side='top', fill='both')
+        self.tab5_button_frame = Frame(self.tab5_frame)
+        self.tab5_button_frame.pack(side='top', fill='x', pady=4)
         self.save_dictionary_button = Button(self.tab5_button_frame, text="Save", overrelief="groove", takefocus=False, command=save_content)
         ToolTip.create_tooltip(self.save_dictionary_button, "Save the current changes to the 'my_tags.csv' file", 200, 6, 4)
-        self.save_dictionary_button.pack(side='left', fill='x', expand=True)
+        self.save_dictionary_button.pack(side='left', padx=1, fill='x', expand=True)
+        self.tab5_label = Label(self.tab5_button_frame, text="^^^Expand this frame to view the text box^^^")
+        self.tab5_label.pack(side='left')
+        ToolTip.create_tooltip(self.tab5_label, "Click and drag the gray bar up to reveal the text box", 200, 6, 4)
         self.refresh_button = Button(self.tab5_button_frame, text="Refresh", overrelief="groove", takefocus=False, command=refresh_content)
         ToolTip.create_tooltip(self.refresh_button, "Refresh the suggestion dictionary after saving your changes", 200, 6, 4)
-        self.refresh_button.pack(side='left', fill='x', expand=True)
-        self.custom_dictionary_textbox = ScrolledText(self.tab5, height=1)
-        self.custom_dictionary_textbox.pack(side='bottom', fill='both', expand=True)
+        self.refresh_button.pack(side='left', padx=1, fill='x', expand=True)
+        self.custom_dictionary_textbox = ScrolledText(self.tab5_frame)
+        self.custom_dictionary_textbox.pack(side='bottom', fill='both')
         with open('my_tags.csv', 'r') as file:
             content = file.read()
             self.custom_dictionary_textbox.insert('end', content)
@@ -788,6 +801,7 @@ class ImgTxtViewer:
         imageContext_menu.add_checkbutton(label="Vertical View", command=self.swap_pane_orientation)
         imageContext_menu.add_command(label="Swap img-txt - Sides", command=self.swap_pane_sides)
         imageContext_menu.add_separator()
+        imageContext_menu.add_command(label="Max Image Size", state="disabled", activebackground="#f0f0f0", activeforeground="black")
         for size in self.sizes:
             imageContext_menu.add_radiobutton(label=size[0], variable=self.max_img_width, value=size[1], command=lambda s=size: self.save_text_file())
         imageContext_menu.tk_popup(event.x_root, event.y_root)
@@ -810,11 +824,14 @@ class ImgTxtViewer:
         except TclError: pass
 
     def enable_menu_options(self):
-        tool_commands = ["Open Current Directory...",
-                        "Open Current Image...",
-                        "Cleanup Text",
-                        "Delete img-txt Pair"]
-        options_commands = ["Suggestion Dictionary",
+        tool_commands =    [
+                           "Open Current Directory...",
+                           "Open Current Image...",
+                           "Cleanup Text",
+                           "Delete img-txt Pair"
+                           ]
+        options_commands = [
+                            "Suggestion Dictionary",
                             "Suggestion Quantity",
                             "Max Image Size",
                             "Highlighting Duplicates",
@@ -822,11 +839,20 @@ class ImgTxtViewer:
                             "Big Comma Mode",
                             "List View",
                             "Vertical View",
-                            "Swap img-txt Sides",]
+                            "Swap img-txt Sides"
+                            ]
         for t_command in tool_commands:
             self.toolsMenu.entryconfig(t_command, state="normal")
         for o_command in options_commands:
             self.optionsMenu.entryconfig(o_command, state="normal")
+        self.current_images_label.configure(state="normal")
+        self.image_index_entry.configure(state="normal")
+        self.total_images_label.configure(state="normal")
+        self.saved_label.configure(state="normal")
+        self.save_button.configure(state="normal")
+        self.next_button.configure(state="normal")
+        self.prev_button.configure(state="normal")
+        self.auto_save_checkbutton.configure(state="normal")
 
 ####### PanedWindow ##################################################
     def configure_pane_position(self):
@@ -1133,7 +1159,7 @@ class ImgTxtViewer:
         self.show_pair()
         self.saved_label.config(text="No Changes", bg="#f0f0f0", fg="black")
         self.configure_pane_position()
-        self.directory_button.config(relief=GROOVE, overrelief=RIDGE)
+        self.directory_button.config(relief="groove", overrelief="ridge")
         if hasattr(self, 'total_images_label'):
             self.total_images_label.config(text=f"of {len(self.image_files)}")
         self.prev_num_files = len(files_in_dir)
@@ -1154,13 +1180,13 @@ class ImgTxtViewer:
             self.image_preview.config(width=max_img_width, height=max_height)
             self.image_preview.bind("<Configure>", lambda event: self.resize_and_scale_image(image, max_img_width, max_height, event))
             self.text_box.config(undo=False)
-            self.text_box.delete("1.0", END)
+            self.text_box.delete("1.0", "end")
             if text_file and os.path.isfile(text_file):
                 with open(text_file, "r") as f:
-                    self.text_box.insert(END, f.read())
+                    self.text_box.insert("end", f.read())
             self.text_modified = False
             self.text_box.config(undo=True)
-            self.image_index_entry.delete(0, END)
+            self.image_index_entry.delete(0, "end")
             self.image_index_entry.insert(0, f"{self.current_index + 1}")
             window_height = self.image_preview.winfo_height()
             window_width = self.image_preview.winfo_width()
@@ -1176,18 +1202,16 @@ class ImgTxtViewer:
     def resize_and_scale_image(self, image, max_img_width, max_height, event=None):
         w, h = image.size
         aspect_ratio = w / h
-        if w > max_img_width or h > max_height:
-            if w > h:
-                new_width = min(max_img_width, w)
-                new_height = int(new_width / aspect_ratio)
-            else:
-                new_height = min(max_height, h)
-                new_width = int(new_height * aspect_ratio)
-            image = image.resize((new_width, new_height))
+        new_width = min(max_img_width, w)
+        new_height = int(new_width / aspect_ratio)
+        if new_height > max_height:
+            new_height = max_height
+            new_width = int(new_height * aspect_ratio)
+        image = image.resize((new_width, new_height))
         if event:
             window_height = event.height
             window_width = event.width
-            new_height = window_height
+            new_height = min(window_height, new_height)
             new_width = int(new_height * aspect_ratio)
             if new_width > window_width:
                 new_width = window_width
@@ -1199,23 +1223,29 @@ class ImgTxtViewer:
         return image, aspect_ratio
 
     def start_watching_file(self):
-        self.stop_thread = False
-        self.watching_files = True
+        if not self.text_files:
+            return
+        if self.current_index >= len(self.text_files):
+            return
         thread = threading.Thread(target=self.watch_file)
         thread.start()
 
     def watch_file(self):
-        if not self.text_files:
-            return
         text_file = self.text_files[self.current_index]
         if not os.path.exists(text_file):
             return
-        last_modified = os.path.getmtime(text_file)
+        try:
+            last_modified = os.path.getmtime(text_file)
+        except OSError:
+            return
         while not self.stop_thread:
             time.sleep(2)
             if not os.path.exists(text_file):
                 return
-            current_modified = os.path.getmtime(text_file)
+            try:
+                current_modified = os.path.getmtime(text_file)
+            except OSError:
+                return
             if current_modified != last_modified:
                 self.show_pair()
                 last_modified = current_modified
@@ -1227,8 +1257,8 @@ class ImgTxtViewer:
 #region -  Navigation #
 #                     #
 
-    def next_pair(self, event):
-        if self.image_dir.get() == "Choose Directory":
+    def update_pair(self, direction):
+        if self.image_dir.get() == "Choose Directory...":
             return
         self.is_alt_arrow_pressed = True
         num_files_in_dir = len(os.listdir(self.image_dir.get()))
@@ -1239,37 +1269,19 @@ class ImgTxtViewer:
             self.saved_label.config(text="No Changes", bg="#f0f0f0", fg="black")
         self.text_box.config(undo=False)
         self.text_box.edit_reset()
-        if self.current_index < len(self.image_files) - 1:
-            if self.auto_save_var.get():
-                self.save_text_file()
-            self.current_index += 1
-        else:
-            if self.auto_save_var.get():
-                self.save_text_file()
-            self.current_index = 0
+        if self.auto_save_var.get():
+            self.save_text_file()
+        if direction == 'next':
+            self.current_index = (self.current_index + 1) % len(self.image_files)
+        elif direction == 'prev':
+            self.current_index = (self.current_index - 1) % len(self.image_files)
         self.show_pair()
 
+    def next_pair(self, event):
+        self.update_pair('next')
+
     def prev_pair(self, event):
-        if self.image_dir.get() == "Choose Directory":
-            return
-        self.is_alt_arrow_pressed = True
-        num_files_in_dir = len(os.listdir(self.image_dir.get()))
-        if num_files_in_dir != self.prev_num_files:
-            self.update_image_file_count()
-            self.prev_num_files = num_files_in_dir
-        if not self.text_modified:
-            self.saved_label.config(text="No Changes", bg="#f0f0f0", fg="black")
-        self.text_box.config(undo=False)
-        self.text_box.edit_reset()
-        if self.current_index > 0:
-            if self.auto_save_var.get():
-                self.save_text_file()
-            self.current_index -= 1
-        else:
-            if self.auto_save_var.get():
-                self.save_text_file()
-            self.current_index = len(self.image_files) - 1
-        self.show_pair()
+        self.update_pair('prev')
 
     def jump_to_image(self, event):
         try:
@@ -1297,7 +1309,6 @@ class ImgTxtViewer:
             self.next_pair(event)
         else:
             self.prev_pair(event)
-
 #endregion
 ################################################################################################################################################
 ################################################################################################################################################
@@ -1312,7 +1323,7 @@ class ImgTxtViewer:
             formatted_contents = '\n'.join([item.strip() for item in contents if item.strip()])
             self.text_box.delete("1.0", "end")
             self.text_box.insert("1.0", self.cleanup_text(formatted_contents))
-            self.text_box.insert(END, "\n")
+            self.text_box.insert("end", "\n")
         else:
             contents = self.text_box.get("1.0", "end").strip().split('\n')
             formatted_contents = ', '.join([item for item in contents if item])
@@ -1433,10 +1444,6 @@ class ImgTxtViewer:
         self.saved_label.config(text="Append Text Complete!", bg="#6ca079", fg="white")
 
     def delete_tag_under_mouse(self, event):
-        current_tab = self.text_notebook.index("current")
-        if current_tab == 3:
-            self.text_notebook.select(0)
-            time.sleep(0.1)
         cursor_pos = self.text_box.index(f"@{event.x},{event.y}")
         line_start = self.text_box.index(f"{cursor_pos} linestart")
         line_end = self.text_box.index(f"{cursor_pos} lineend")
@@ -1460,9 +1467,6 @@ class ImgTxtViewer:
         self.text_box.delete("1.0", "end")
         self.text_box.insert("1.0", cleaned_text)
         self.text_box.tag_configure("highlight", background="#5da9be")
-        if current_tab == 3:
-            self.text_notebook.select(3)
-            time.sleep(0.1)
 
 #endregion
 ################################################################################################################################################
@@ -1521,8 +1525,8 @@ class ImgTxtViewer:
         self.about_window.protocol("WM_DELETE_WINDOW", self.close_about_window)
         main_window_width = root.winfo_width()
         main_window_height = root.winfo_height()
-        main_window_x = root.winfo_x() - 200 + main_window_width // 2
-        main_window_y = root.winfo_y() - 300 + main_window_height // 2
+        main_window_x = root.winfo_x() - 425 + main_window_width // 2
+        main_window_y = root.winfo_y() - 275 + main_window_height // 2
         self.about_window.geometry("+{}+{}".format(main_window_x, main_window_y))
 
     def close_about_window(self):
@@ -1596,7 +1600,7 @@ class ImgTxtViewer:
 #                         #
 
     def save_text_file(self):
-        if self.image_dir.get() != "Choose Directory" and self.check_current_directory() and self.text_files:
+        if self.image_dir.get() != "Choose Directory..." and self.check_current_directory() and self.text_files:
             self.save_file()
             self.saved_label.config(text="Saved", bg="#6ca079", fg="white")
             self.save_file()
@@ -1604,7 +1608,7 @@ class ImgTxtViewer:
 
     def save_file(self):
         text_file = self.text_files[self.current_index]
-        text = self.text_box.get("1.0", END).strip()
+        text = self.text_box.get("1.0", "end").strip()
         if text == "None" or text == "":
             if os.path.exists(text_file):
                 os.remove(text_file)
@@ -1830,29 +1834,21 @@ root.mainloop()
 
 '''
 
-[v1.82 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.82)
-
-The biggest visible change this release is the addition of a new Paned Window that now holds all text tools. (excluding Batch Tag Delete)
-This makes it way more simple and easier to use these tools.
+[v1.83 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.83)
 
   - New:
-    - Search and Replace, Prefix Text, Append Text, Font Options, and Edit Custom Dictionary are now in a convient tabbed interface below the text box.
-    - You can now refresh the custom dictionary
+    -
 
 <br>
 
   - Fixed:
-    - Saving a blank text file now deletes it.
-    - Fixed error when 'Cleanup Text' was run in a folder where some images had missing text pairs.
-    - Fixed an error when attempting to delete an img-txt pair and no text file was present.
-    - 'Batch Tag Delete' and 'About' no longer open beside the main window. This prevents the new window from opening off the screen.
-    - Running 'Prefix' or 'Append' text now creates text files for images that previously didn't have a pair.
+    - Fix text box duplicating when selecting a new directory.
+    - Fixed some small issues with the file watcher, and image index.
 
 <br>
 
   - Other changes:
-    - Basically all text tools were completly redone.
-    - I've tried to fix as many small bugs and add polish wherever possible. Too many changes to list them all.
+    - Minor code cleanup and internal changes.
 
 
 <!-- New -->
@@ -1878,7 +1874,7 @@ This makes it way more simple and easier to use these tools.
   -
 
 - Tofix
-  - Make sure file watcher isn't getting in the way of normal saving.
+  -
 
   - **Minor** Undo should be less jarring when inserting a suggestion.
   - **Minor** After deleting or Undo Delete. PanedWindow sash moves position.
