@@ -61,26 +61,13 @@ The `pillow` library will be downloaded and installed *(if not already available
 
 # 📜 Version History
 
-[v1.82 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.82)
-
-The biggest visible change this release is the addition of a new Paned Window that now holds all text tools. (excluding Batch Tag Delete)
-This makes it way more simple and easier to use these tools.
-
-  - New:
-    - Search and Replace, Prefix Text, Append Text, Font Options, and Edit Custom Dictionary are now in a convient tabbed interface below the text box.
-    - You can now refresh the custom dictionary
-
-<br>
+[v1.83 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.83)
 
   - Fixed:
-    - Saving a blank text file now deletes it.
-    - Fixed error when 'Cleanup Text' was run in a folder where some images had missing text pairs.
-    - Fixed an error when attempting to delete an img-txt pair and no text file was present.
-    - 'Batch Tag Delete' and 'About' no longer open beside the main window. This prevents the new window from opening off the screen.
-    - Running 'Prefix' or 'Append' text now creates text files for images that previously didn't have a pair.
+    - Fix text box duplicating when selecting a new directory.
+    - Fixed some small issues with the file watcher, and image index.
 
 <br>
 
   - Other changes:
-    - Basically all text tools were completly redone.
-    - I've tried to fix as many small bugs and add polish wherever possible. Too many changes to list them all.
+    - Minor code cleanup and internal changes.
