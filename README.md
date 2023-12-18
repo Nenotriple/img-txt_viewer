@@ -65,7 +65,7 @@ The `pillow` library will be downloaded and installed *(if not already available
 
   - Fixed:
     - Fix text box duplicating when selecting a new directory.
-    - Fixed some small issues with the file watcher, and image index.
+    - Fixed some small issues with the file watcher and image index.
 
 <br>
 
