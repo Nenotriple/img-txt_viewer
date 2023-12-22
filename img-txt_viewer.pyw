@@ -15,7 +15,7 @@ More info here: https://github.com/Nenotriple/img-txt_viewer
 
 """
 
-VERSION = "v1.83"
+VERSION = "v1.84"
 
 ################################################################################################################################################
 ################################################################################################################################################
@@ -278,7 +278,7 @@ class Autocomplete:
         if not hasattr(self, 'data') or not self.data:
             return None
         text_with_underscores = text.replace(" ", "_")
-        text_with_asterisks = text_with_underscores.replace("*", ".*")
+        text_with_asterisks = re.escape(text_with_underscores).replace("\\*", ".*")
         pattern = re.compile(text_with_asterisks)
         if self.previous_text is not None and text.startswith(self.previous_text):
             suggestions = [suggestion for suggestion in self.previous_suggestions if pattern.match(suggestion[0])]
@@ -1834,7 +1834,7 @@ root.mainloop()
 
 '''
 
-[v1.83 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.83)
+[v1.84 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.84)
 
   - New:
     -
@@ -1842,13 +1842,12 @@ root.mainloop()
 <br>
 
   - Fixed:
-    - Fix text box duplicating when selecting a new directory.
-    - Fixed some small issues with the file watcher, and image index.
+    - Fixed suggestions breaking when typing a parentheses.
 
 <br>
 
   - Other changes:
-    - Minor code cleanup and internal changes.
+    -
 
 
 <!-- New -->
