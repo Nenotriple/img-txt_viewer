@@ -17,6 +17,7 @@ Resize operations include: Resize to Resolution, Resize to Width, Resize to Heig
 """
 
 
+
 ################################################################################################################################################
 #region -  Imports
 
@@ -30,6 +31,8 @@ from tkinter import ttk, filedialog, messagebox, TclError
 from tkinter.scrolledtext import ScrolledText
 from PIL import Image
 
+myappid = 'ImgTxtViewer.Nenotriple'
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 #endregion
 ################################################################################################################################################
@@ -348,8 +351,6 @@ def setup_root():
     root.maxsize(2000,500)
     root.update_idletasks()
     set_icon(root)
-    myappid = 'ImgTxtViewer.Nenotriple'
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     return root
 
 
