@@ -1496,7 +1496,7 @@ class ImgTxtViewer:
         else:
             executable_path = "./batch_tag_delete.exe"
             command = [executable_path, str(directory), str(main_window_x), str(main_window_y)]
-        subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW)
 
 
     def search_and_replace(self):
@@ -1619,7 +1619,7 @@ class ImgTxtViewer:
             command = f'python resize_images.py --folder_path "{self.image_dir.get()}"'
         else:
             command = f'resize_images.exe --folder_path "{self.image_dir.get()}"'
-        subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW)
 
 
 #endregion
