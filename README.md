@@ -82,3 +82,12 @@ The `pillow` library will be downloaded and installed *(if not already available
 
   - Other changes:
     - Batch Tag Delete is no longer bundled within img-txt_viewer. This allows you to run them separately.
+
+___
+
+### Batch Token Delete
+v1.06 changes:
+
+  - Fixed:
+    - Fixed tag list refreshing twice
+    - Fixed multi-tag delete when "batch_tag_delete" is ran from "img-txt_viewer"
