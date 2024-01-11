@@ -3,7 +3,7 @@
 #                                      #
 #          batch_tag_delete            #
 #                                      #
-#   Version : v1.05                    #
+#   Version : v1.06                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -19,11 +19,13 @@ Description:
 
 """
 
+
 ################################################################################################################################################
 ################################################################################################################################################
 #         #
 # Imports #
 #         #
+
 
 import os
 import sys
@@ -35,24 +37,31 @@ import tkinter as tk
 from collections import Counter
 from tkinter import messagebox, simpledialog, filedialog, TclError
 
+from threading import Lock
+
+
 ################################################################################################################################################
 ################################################################################################################################################
 #           #
 # Variables #
 #           #
 
+
 # Used to create a group ID so app shares the parent icon, and groups with the main window in the taskbar.
 myappid = 'ImgTxtViewer.Nenotriple'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
+
 sort_order = 'count'
 stop_thread = False
+
 
 ################################################################################################################################################
 ################################################################################################################################################
 #                   #
 # Primary Functions #
 #                   #
+
 
 def display_tags(tag_dict, directory, scrollable_frame, filter_text=''):
     if sort_order == 'alpha':
@@ -84,6 +93,8 @@ def display_tags(tag_dict, directory, scrollable_frame, filter_text=''):
         checkbox.bind('<Button-3>', lambda event: toggle_all_checkboxes(event, scrollable_frame))
         pair_frame.pack(side=tk.TOP, pady=2)
 
+
+
 def count_tags(directory):
     tag_dict = Counter()
     for filename in os.listdir(directory):
@@ -95,6 +106,7 @@ def count_tags(directory):
                     for tag in tags:
                         tag_dict[tag.strip()] += 1
     return tag_dict
+
 
 def delete_tag(directory, tag, filter_text='', confirm_prompt=True):
     parent = tk.Toplevel()
@@ -119,6 +131,7 @@ def delete_tag(directory, tag, filter_text='', confirm_prompt=True):
                     file.write(new_line)
     parent.destroy()
 
+
 def cleanup_text(text):
         import re
         text = remove_duplicates(text)
@@ -134,6 +147,7 @@ def cleanup_text(text):
         text = text.strip()  # remove leading and trailing spaces
         return text
 
+
 def remove_duplicates(text):
     text = text.lower().split(',')
     text = [item.strip() for item in text]
@@ -141,14 +155,17 @@ def remove_duplicates(text):
     text = ','.join(text)
     return text
 
+
 def create_hover_effect(widget, hover_color):
     return (lambda event: widget.config(bg=hover_color), lambda event: widget.config(bg="SystemButtonFace"))
+
 
 ################################################################################################################################################
 ################################################################################################################################################
 #              #
 # Batch Delete #
 #              #
+
 
 def batch_delete(directory, count_threshold, scrollable_frame, max_display_tags=150):
     tag_dict = count_tags(directory)
@@ -169,10 +186,12 @@ def batch_delete(directory, count_threshold, scrollable_frame, max_display_tags=
             delete_tag(directory, tag, confirm_prompt=False)
         display_tags(count_tags(directory), directory, scrollable_frame)
 
+
 def ask_count_threshold(directory, scrollable_frame, root):
     count_threshold = simpledialog.askinteger("Delete all less than or equal to", "\tEnter the count threshold\t\t", parent=root)
     if count_threshold is not None:
         batch_delete(directory, count_threshold, scrollable_frame)
+
 
 def delete_selected_tags(root, directory, scrollable_frame, filter_text=''):
     parent = tk.Toplevel()
@@ -196,6 +215,7 @@ def delete_selected_tags(root, directory, scrollable_frame, filter_text=''):
     parent.destroy()
     display_tags(count_tags(directory), directory, scrollable_frame, filter_text)
 
+
 def toggle_all_checkboxes(event, scrollable_frame):
     clicked_checkbox_state = event.widget.var.get()
     new_state = not clicked_checkbox_state
@@ -205,11 +225,13 @@ def toggle_all_checkboxes(event, scrollable_frame):
                 if isinstance(sub_widget, tk.Checkbutton):
                     sub_widget.var.set(new_state)
 
+
 ################################################################################################################################################
 ################################################################################################################################################
 #         #
 # Sorting #
 #         #
+
 
 def toggle_tag_order(tag_dict, directory, scrollable_frame, filter_text=''):
     global sort_order
@@ -219,11 +241,13 @@ def toggle_tag_order(tag_dict, directory, scrollable_frame, filter_text=''):
         sort_order = 'count'
     display_tags(tag_dict, directory, scrollable_frame, filter_text)
 
+
 def filter_tags(event, directory, scrollable_frame):
     filter_text = event.widget.get()
     tag_dict = count_tags(directory)
     filtered_dict = {k: v for k, v in tag_dict.items() if fuzzy_search(filter_text.lower(), k.lower())}
     display_tags(filtered_dict, directory, scrollable_frame, filter_text)
+
 
 def fuzzy_search(str1, str2):
     m = len(str1)
@@ -236,11 +260,13 @@ def fuzzy_search(str1, str2):
       i = i + 1
     return j == m
 
+
 ################################################################################################################################################
 ################################################################################################################################################
 #                #
 # Manage Backups #
 #                #
+
 
 def backup_files(directory):
     backup_directory = os.path.join(directory, "text_backup")
@@ -250,12 +276,14 @@ def backup_files(directory):
         if filename.endswith(".txt"):
             shutil.copy2(os.path.join(directory, filename), os.path.join(backup_directory, filename))
 
+
 def restore_backup(directory, scrollable_frame):
     backup_directory = os.path.join(directory, "text_backup")
     for filename in os.listdir(backup_directory):
         if filename.endswith(".txt"):
             shutil.copy(os.path.join(backup_directory, filename), os.path.join(directory, filename))
     display_tags(count_tags(directory), directory, scrollable_frame)
+
 
 def on_closing(directory, root):
     global stop_thread
@@ -265,11 +293,13 @@ def on_closing(directory, root):
         shutil.rmtree(backup_directory)
     root.destroy()
 
+
 ################################################################################################################################################
 ################################################################################################################################################
 #      #
 # Main #
 #      #
+
 
 def main(directory=None, main_window_x=None, main_window_y=None):
     # If directory is not provided or is not a valid directory, open a directory dialog
@@ -281,9 +311,10 @@ def main(directory=None, main_window_x=None, main_window_y=None):
         if not directory:
             return
 
+
     # Initialize root window
     root = tk.Tk()
-    root.title(f"tag List: {directory}")
+    root.title(f"Tag List: {directory}")
     window_width = 490
     window_height = 800
 
@@ -301,13 +332,18 @@ def main(directory=None, main_window_x=None, main_window_y=None):
     root.maxsize(490, 2000)
     root.focus_force()
 
+
     # Count tags in the directory
     tag_dict = count_tags(directory)
+
 
     # Initialize last modification times
     last_modification_times = {}
 
+
     # Function to refresh the display
+    display_lock = Lock()
+
     def start_watching_files():
         global stop_thread
         stop_thread = False
@@ -325,9 +361,13 @@ def main(directory=None, main_window_x=None, main_window_y=None):
                 if file not in last_modification_times or mod_time > last_modification_times[file]:
                     last_modification_times[file] = mod_time
                     modified = True
-            if modified:
-                display_tags(count_tags(directory), directory, scrollable_frame)
-                time.sleep(2)
+            if modified and display_lock.acquire(False):
+                try:
+                    display_tags(count_tags(directory), directory, scrollable_frame)
+                finally:
+                    display_lock.release()
+            time.sleep(1)
+
 
     # Function to set the icon
     def set_icon():
@@ -341,9 +381,11 @@ def main(directory=None, main_window_x=None, main_window_y=None):
         except TclError:
             pass
 
+
     # Initialize menubar
     menubar = tk.Menu(root)
     root.config(menu=menubar)
+
 
     # Add commands to the menubar
     menubar.add_command(label="Change Sort", command=lambda: toggle_tag_order(tag_dict, directory, scrollable_frame))
@@ -354,12 +396,14 @@ def main(directory=None, main_window_x=None, main_window_y=None):
     menubar.add_separator()
     menubar.add_command(label="Undo All", command=lambda: restore_backup(directory, scrollable_frame))
 
+
     # Initialize filter entry
     filter_entry = tk.Entry(root)
     filter_entry.insert(0, "Filter tags here (fuzzy search)")
     filter_entry.bind("<FocusIn>", lambda args: filter_entry.delete('0', 'end') if filter_entry.get() == "Filter tags here (fuzzy search)" else None)
     filter_entry.pack(side="top", fill="x", ipady=1)
     filter_entry.bind("<KeyRelease>", lambda event: filter_tags(event, directory, scrollable_frame))
+
 
     # Initialize frame, canvas, scrollbar, and scrollable frame
     frame = tk.Frame(root)
@@ -375,18 +419,22 @@ def main(directory=None, main_window_x=None, main_window_y=None):
     canvas.pack(side="left", fill="both", expand=True)
     scrollbar.pack(side="right", fill="y")
 
+
     # Display tags, backup files, and set closing protocol
     display_tags(tag_dict, directory, scrollable_frame)
     backup_files(directory)
     root.protocol("WM_DELETE_WINDOW", lambda: on_closing(directory, root))
 
+
     # Refresh display and set icon
     start_watching_files()
     set_icon()
 
+
     # Start main loop
     root.mainloop()
 
+# How can I launch this as an executable? The name of the executable is "batch_tag_delete.exe"
 if __name__ == "__main__":
     # Call the main function with command line arguments if provided
     # sys.argv[1] is the first command line argument, which is the directory
@@ -396,50 +444,38 @@ if __name__ == "__main__":
     main(sys.argv[1] if len(sys.argv) > 1 else None, sys.argv[2] if len(sys.argv) > 2 else None, sys.argv[3] if len(sys.argv) > 3 else None)
 
 
+
 ################################################################################################################################################
 ################################################################################################################################################
 #           #
 # Changelog #
 #           #
 
+
 '''
 
-v1.05 changes:
+v1.06 changes:
 
   - New:
-    - `Undo All` You can now restore the text files to their original state from when Batch Tag Delete was launched. [#7d574a8][7d574a8]
-    - Implement Auto-Refresh Feature. [#4f78be5][4f78be5]
-    - Renamed to: Batch Tag Delete [#f7e9389][f7e9389]
-    - Window position can be controlled with cmd arguments. This is used to position this window beside img-txt_viewer. [#9fe7499][9fe7499]
-     - Example: `python batch_tag_delete.py /path/to/directory 500 800`
+    -
 
 <br>
 
   - Fixed:
-    - Properly set app icon. [#358ee1d][358ee1d]
-    - Improved popup handling when clicking `Delete Selected` when no tags are selected. [#3a0a60b][3a0a60b]
-    - Fixed error related to file refresh being called after closing when launched from img-txt_viewer.
+    - Fixed tag list refreshing twice
+    - Fixed Multi-tag delete when "batch_tag_delete" is ran from "img-txt_viewer"
 
-  - Other: [#7ccd0fb][7ccd0fb], [3a0a60b][3a0a60b], [42e01c5][42e01c5]
-
-[7d574a8]: https://github.com/Nenotriple/img-txt_viewer/commit/7d574a85b300f60bd01015aeadfca4e3d38cdf71
-[4f78be5]: https://github.com/Nenotriple/img-txt_viewer/commit/4f78be5df917f6af19796591fbbff05e64f8e944
-[f7e9389]: https://github.com/Nenotriple/img-txt_viewer/commit/f7e9389d77ed86508ccb4f9705c3d709eb00ab0e
-[9fe7499]: https://github.com/Nenotriple/img-txt_viewer/commit/9fe7499d89d5689606a3e576554c03c8c3f4f4c8
-
-[358ee1d]: https://github.com/Nenotriple/img-txt_viewer/commit/358ee1d93636d0001a3e9b96d72ba3230697fcdd
-
-[7ccd0fb]: https://github.com/Nenotriple/img-txt_viewer/commit/7ccd0fb7c41a82eb31e128b656b16fbccd78c784
-[3a0a60b]: https://github.com/Nenotriple/img-txt_viewer/commit/3a0a60bbf41a2da0c5b943624bfe61dceba71703
-[42e01c5]: https://github.com/Nenotriple/img-txt_viewer/commit/42e01c591b73fef211ac636fa945da84dfd67d61
+  - Other:
 
 '''
+
 
 ################################################################################################################################################
 ################################################################################################################################################
 #      #
 # todo #
 #      #
+
 
 '''
 
