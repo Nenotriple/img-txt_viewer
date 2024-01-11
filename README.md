@@ -40,6 +40,9 @@ Display an image and text file side-by-side for easy manual captioning. + Tons o
   - `Append Text Files`: Insert text at the END of all text files.
   - `Search and Replace`: Edit all text files at once.
 
+ - Image Tools
+   -`Resize Images`: Resize to Resolution, Resize to Width, Resize to Height, Resize to Shorter Side, Resize to Longer Side
+
  - Auto-Save
    - Check the auto-save box to save text when navigating between img/txt pairs or closing the window.
    - Text is cleaned when saved, so you can ignore typos such as duplicate tokens, multiple spaces or commas, missing spaces, and more.
@@ -61,13 +64,21 @@ The `pillow` library will be downloaded and installed *(if not already available
 
 # 📜 Version History
 
-[v1.83 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.83)
+[v1.84 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.84)
+
+  - New:
+    - New tool: `Resize Images`: You can find this in the Tools menu.
+      - Resize operations: Resize to Resolution, Resize to Width, Resize to Height, Resize to Shorter Side, Resize to Longer Side
+      - Just like "batch_tag_delete.py", "resize_images.py" is a stand-alone tool. You can run it 100% independently of img-txt_viewer.
+      - Images will be overwritten when resized.
+      - New option: `Colored Suggestions`, Use this to enable or disable the color coded autocomplete suggestions.
+
+<br>
 
   - Fixed:
-    - Fix text box duplicating when selecting a new directory.
-    - Fixed some small issues with the file watcher and image index.
+    - Fixed suggestions breaking when typing a parentheses.
 
 <br>
 
   - Other changes:
-    - Minor code cleanup and internal changes.
+    - Batch Tag Delete is no longer bundled within img-txt_viewer. This allows you to run them separately.
