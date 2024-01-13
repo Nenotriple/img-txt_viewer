@@ -71,7 +71,7 @@ The `pillow` library will be downloaded and installed *(if not already available
       - Resize operations: Resize to Resolution, Resize to Width, Resize to Height, Resize to Shorter Side, Resize to Longer Side
       - Just like "batch_tag_delete.py", "resize_images.py" is a stand-alone tool. You can run it 100% independently of img-txt_viewer.
       - Images will be overwritten when resized.
-      - New option: `Colored Suggestions`, Use this to enable or disable the color coded autocomplete suggestions.
+    - New option: `Colored Suggestions`, Use this to enable or disable the color coded autocomplete suggestions.
 
 <br>
 
