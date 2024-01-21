@@ -39,6 +39,8 @@ Display an image and text file side-by-side for easy manual captioning. + Tons o
   - `Prefix Text Files`: Insert text at the START of all text files.
   - `Append Text Files`: Insert text at the END of all text files.
   - `Search and Replace`: Edit all text files at once.
+  - `Filter Pairs`: Filter img-txt pairs text.
+  - `Active Highlights`: Always highlight specific words.
 
  - Image Tools
    -`Resize Images`: Resize to Resolution, Resize to Width, Resize to Height, Resize to Shorter Side, Resize to Longer Side
@@ -64,30 +66,12 @@ The `pillow` library will be downloaded and installed *(if not already available
 
 # 📜 Version History
 
-[v1.84 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.84)
+[v1.85 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.85)
 
   - New:
-    - New tool: `Resize Images`: You can find this in the Tools menu.
-      - Resize operations: Resize to Resolution, Resize to Width, Resize to Height, Resize to Shorter Side, Resize to Longer Side
-      - Just like "batch_tag_delete.py", "resize_images.py" is a stand-alone tool. You can run it 100% independently of img-txt_viewer.
-      - Images will be overwritten when resized.
-    - New option: `Colored Suggestions`, Use this to enable or disable the color coded autocomplete suggestions.
+    - New Text Tool `Filter Pairs`: Use this to search all text files and filter the img-txt pairs to display only those that include the matched text.
+      - Also supports regular expressions.
+    - New Text Tool `Active Highlights`: Use this to always highlight certain text.
+      - Use ` + ` to highlight multiple strings of text, *(Note the spaces!)*. Example: dog + cat
 
-<br>
-
-  - Fixed:
-    - Fixed suggestions breaking when typing a parentheses.
-
-<br>
-
-  - Other changes:
-    - Batch Tag Delete is no longer bundled within img-txt_viewer. This allows you to run them separately.
-
-___
-
-### Batch Token Delete
-v1.06 changes:
-
-  - Fixed:
-    - Fixed tag list refreshing twice
-    - Fixed multi-tag delete when "batch_tag_delete" is ran from "img-txt_viewer"
+Thank you [@TeKett](https://github.com/TeKett) for these suggestions! [#18](https://github.com/Nenotriple/img-txt_viewer/issues/18)
