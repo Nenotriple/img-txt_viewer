@@ -3,7 +3,7 @@
 #                                      #
 #            IMG-TXT VIEWER            #
 #                                      #
-#   Version : v1.84                    #
+#   Version : v1.85                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -17,7 +17,7 @@ More info here: https://github.com/Nenotriple/img-txt_viewer
 """
 
 
-VERSION = "v1.84"
+VERSION = "v1.85"
 
 
 ################################################################################################################################################
@@ -381,6 +381,15 @@ class ImgTxtViewer:
         self.current_index = 0
 
 
+        # Filter variables
+        self.original_image_files = []
+        self.original_text_files = []
+        self.filter_string_var = StringVar()
+
+        # Active highlight variable
+        self.custom_highlight_string = StringVar()
+
+
         # Text tool strings
         self.search_string_var = StringVar()
         self.replace_string_var = StringVar()
@@ -667,20 +676,27 @@ class ImgTxtViewer:
         self.tab3 = Frame(self.text_notebook)
         self.tab4 = Frame(self.text_notebook)
         self.tab5 = Frame(self.text_notebook)
+        self.tab6 = Frame(self.text_notebook)
+        self.tab7 = Frame(self.text_notebook)
         self.text_notebook.add(self.tab1, text='Search & Replace')
         self.text_notebook.add(self.tab2, text='Prefix Text')
         self.text_notebook.add(self.tab3, text='Append Text')
-        self.text_notebook.add(self.tab4, text='Font Settings')
-        self.text_notebook.add(self.tab5, text='Custom Dictionary')
+        self.text_notebook.add(self.tab4, text='Filter Pairs')
+        self.text_notebook.add(self.tab5, text='Active Highlights')
+        self.text_notebook.add(self.tab6, text='Font Settings')
+        self.text_notebook.add(self.tab7, text='Custom Dictionary')
+
         self.text_notebook.pack(fill='both')
-        self.create_search_and_replace_widgets()
-        self.create_prefix_text_widgets()
-        self.create_append_text_widgets()
-        self.create_font_widgets()
-        self.create_custom_dictionary_widgets()
+        self.create_search_and_replace_widgets_tab1()
+        self.create_prefix_text_widgets_tab2()
+        self.create_append_text_widgets_tab3()
+        self.create_filter_text_image_pairs_widgets_tab4()
+        self.create_custom_active_highlight_widgets_tab5()
+        self.create_font_widgets_tab6()
+        self.create_custom_dictionary_widgets_tab7()
 
 
-    def create_search_and_replace_widgets(self):
+    def create_search_and_replace_widgets_tab1(self):
         def clear_all():
             self.search_entry.delete(0, 'end')
             self.replace_entry.delete(0, 'end')
@@ -705,7 +721,7 @@ class ImgTxtViewer:
         ToolTip.create(self.undo_button, "Revert last action", 200, 6, 4)
 
 
-    def create_prefix_text_widgets(self):
+    def create_prefix_text_widgets_tab2(self):
         def clear():
             self.prefix_entry.delete(0, 'end')
         self.prefix_label = Label(self.tab2, text="Prefix text:")
@@ -724,7 +740,7 @@ class ImgTxtViewer:
         ToolTip.create(self.undo_button, "Revert last action", 200, 6, 4)
 
 
-    def create_append_text_widgets(self):
+    def create_append_text_widgets_tab3(self):
         def clear():
             self.append_entry.delete(0, 'end')
         self.append_label = Label(self.tab3, text="Append text:")
@@ -743,7 +759,40 @@ class ImgTxtViewer:
         ToolTip.create(self.undo_button, "Revert last action", 200, 6, 4)
 
 
-    def create_font_widgets(self, event=None):
+    def create_filter_text_image_pairs_widgets_tab4(self):
+        self.filter_label = Label(self.tab4, text="Filter by:")
+        self.filter_label.pack(side='left', anchor="n", pady=4)
+        ToolTip.create(self.filter_label, "Enter the EXACT text you want to filter by\nThis will search all text files for the exact string of text and only display img-txt pairs containing that text", 200, 6, 4)
+        self.filter_entry = Entry(self.tab4, textvariable=self.filter_string_var, width=4)
+        self.filter_entry.pack(side='left', anchor="n", pady=4, fill='x', expand=True)
+        self.filter_button = Button(self.tab4, text="Go!", overrelief="groove", width=4, command=self.filter_text_image_pairs)
+        self.filter_button.pack(side='left', anchor="n", pady=4, padx=1)
+        ToolTip.create(self.filter_button, "Text files will be filtered based on the entered text", 200, 6, 4)
+        self.revert_button = Button(self.tab4, text="Clear Filter", overrelief="groove", width=8, command=self.revert_text_image_filter)
+        self.revert_button.pack(side='left', anchor="n", pady=4, padx=1)
+        ToolTip.create(self.revert_button, "Clear any filtering applied", 200, 6, 4)
+        self.filter_use_regex = BooleanVar()
+        self.regex_checkbutton = Checkbutton(self.tab4, text="Use Regex", overrelief="groove", variable=self.filter_use_regex)
+        self.regex_checkbutton.pack(side='left', anchor="n", pady=4, padx=1)
+        ToolTip.create(self.regex_checkbutton, "Check this if you want to use regular expressions for filtering", 200, 6, 4)
+
+
+    def create_custom_active_highlight_widgets_tab5(self):
+        def clear():
+            self.custom_entry.delete(0, 'end')
+        self.custom_label = Label(self.tab5, text="Highlight Text:")
+        self.custom_label.pack(side='left', anchor="n", pady=4)
+        ToolTip.create(self.custom_label, "Enter the text you want to highlight\nUse ' + ' to highlight multiple strings of text\n\nExample: dog + cat", 200, 6, 4)
+        self.custom_entry = Entry(self.tab5, textvariable=self.custom_highlight_string, width=4)
+        self.custom_entry.pack(side='left', anchor="n", pady=4, fill='x', expand=True)
+        self.custom_entry.bind('<KeyRelease>', lambda event: self.highlight_custom_string())
+        self.highlight_button = Button(self.tab5, text="Highlight", overrelief="groove", width=8, command=self.highlight_custom_string)
+        self.highlight_button.pack(side='left', anchor="n", pady=4, padx=1)
+        self.clear_button = Button(self.tab5, text="Clear", overrelief="groove", width=4, command=clear)
+        self.clear_button.pack(side='left', anchor="n", pady=4, padx=1)
+
+
+    def create_font_widgets_tab6(self, event=None):
         def open_dropdown(event):
             event.widget.after(100, lambda: event.widget.event_generate('<Down>'))
         def set_font_and_size(font, size):
@@ -758,27 +807,27 @@ class ImgTxtViewer:
         current_font_size = self.text_box.tk.call("font", "actual", current_font, "-size")
         default_font = current_font_name
         default_size = current_font_size
-        font_label = Label(self.tab4, text="Font:")
+        font_label = Label(self.tab6, text="Font:")
         font_label.pack(side="left", anchor="n", pady=4)
         ToolTip.create(font_label, "Recommended Fonts: Courier New, Ariel, Consolas, Segoe UI", 200, 6, 4)
-        font_box = ttk.Combobox(self.tab4, textvariable=self.font_var, width=4, takefocus=False)
+        font_box = ttk.Combobox(self.tab6, textvariable=self.font_var, width=4, takefocus=False)
         font_box['values'] = list(tkinter.font.families())
         font_box.set(current_font_name)
         font_box.bind("<<ComboboxSelected>>", lambda event: set_font_and_size(self.font_var.get(), size_scale.get()))
         font_box.bind("<Button-1>", open_dropdown)
         font_box.pack(side="left", anchor="n", pady=4, fill="x", expand=True)
-        font_size = Label(self.tab4, text="Font Size:")
+        font_size = Label(self.tab6, text="Font Size:")
         font_size.pack(side="left", anchor="n", pady=4)
         ToolTip.create(font_size, "Default size = 10", 200, 6, 4)
-        size_scale = Scale(self.tab4, from_=8, to=19, showvalue=False, orient="horizontal", cursor="hand2", takefocus=False)
+        size_scale = Scale(self.tab6, from_=8, to=19, showvalue=False, orient="horizontal", cursor="hand2", takefocus=False)
         size_scale.set(current_font_size)
         size_scale.bind("<ButtonRelease-1>", lambda event: set_font_and_size(self.font_var.get(), size_scale.get()))
         size_scale.pack(side="left", anchor="n", pady=4, fill="x", expand=True)
-        reset_button = Button(self.tab4, text="Reset", overrelief="groove", width=4, command=reset_to_defaults)
+        reset_button = Button(self.tab6, text="Reset", overrelief="groove", width=4, command=reset_to_defaults)
         reset_button.pack(side="left", anchor="n", pady=4, padx=1)
 
 
-    def create_custom_dictionary_widgets(self):
+    def create_custom_dictionary_widgets_tab7(self):
         def save_content():
             with open('my_tags.csv', 'w') as file:
                 file.write(self.custom_dictionary_textbox.get("1.0", "end-1c"))
@@ -790,20 +839,20 @@ class ImgTxtViewer:
                 self.custom_dictionary_textbox.insert('end', content)
                 self.change_autocomplete_dictionary()
         self.create_custom_dictionary()
-        self.tab5_frame = Frame(self.tab5)
-        self.tab5_frame.pack(side='top', fill='both')
-        self.tab5_button_frame = Frame(self.tab5_frame)
-        self.tab5_button_frame.pack(side='top', fill='x', pady=4)
-        self.save_dictionary_button = Button(self.tab5_button_frame, text="Save", overrelief="groove", takefocus=False, command=save_content)
+        self.tab7_frame = Frame(self.tab7)
+        self.tab7_frame.pack(side='top', fill='both')
+        self.tab7_button_frame = Frame(self.tab7_frame)
+        self.tab7_button_frame.pack(side='top', fill='x', pady=4)
+        self.save_dictionary_button = Button(self.tab7_button_frame, text="Save", overrelief="groove", takefocus=False, command=save_content)
         ToolTip.create(self.save_dictionary_button, "Save the current changes to the 'my_tags.csv' file", 200, 6, 4)
         self.save_dictionary_button.pack(side='left', padx=1, fill='x', expand=True)
-        self.tab5_label = Label(self.tab5_button_frame, text="^^^Expand this frame to view the text box^^^")
-        self.tab5_label.pack(side='left')
-        ToolTip.create(self.tab5_label, "Click and drag the gray bar up to reveal the text box", 200, 6, 4)
-        self.refresh_button = Button(self.tab5_button_frame, text="Refresh", overrelief="groove", takefocus=False, command=refresh_content)
+        self.tab7_label = Label(self.tab7_button_frame, text="^^^Expand this frame to view the text box^^^")
+        self.tab7_label.pack(side='left')
+        ToolTip.create(self.tab7_label, "Click and drag the gray bar up to reveal the text box", 200, 6, 4)
+        self.refresh_button = Button(self.tab7_button_frame, text="Refresh", overrelief="groove", takefocus=False, command=refresh_content)
         ToolTip.create(self.refresh_button, "Refresh the suggestion dictionary after saving your changes", 200, 6, 4)
         self.refresh_button.pack(side='left', padx=1, fill='x', expand=True)
-        self.custom_dictionary_textbox = ScrolledText(self.tab5_frame)
+        self.custom_dictionary_textbox = ScrolledText(self.tab7_frame)
         self.custom_dictionary_textbox.pack(side='bottom', fill='both')
         with open('my_tags.csv', 'r') as file:
             content = file.read()
@@ -1232,6 +1281,21 @@ class ImgTxtViewer:
                 start = end
 
 
+    def highlight_custom_string(self):
+        self.text_box.tag_remove("highlight", "1.0", "end")
+        if not self.custom_highlight_string.get():
+            return
+        words = self.custom_highlight_string.get().split('+')
+        for word in words:
+            pattern = re.escape(word.strip())
+            matches = [match for match in re.finditer(pattern, self.text_box.get("1.0", "end"))]
+            if matches:
+                for match in matches:
+                    start = match.start()
+                    end = match.end()
+                    self.text_box.tag_add("highlight", f"1.0 + {start} chars", f"1.0 + {end} chars")
+
+
     def remove_highlight(self):
         self.text_box.tag_remove("highlight", "1.0", "end")
         self.master.after(100, lambda: self.remove_tag())
@@ -1269,6 +1333,8 @@ class ImgTxtViewer:
                 if not os.path.exists(text_file_path):
                     self.new_text_files.append(filename)
                 self.text_files.append(text_file_path)
+        self.original_image_files = list(self.image_files)
+        self.original_text_files = list(self.text_files)
         self.enable_menu_options()
         self.create_text_box()
         self.show_pair()
@@ -1310,10 +1376,13 @@ class ImgTxtViewer:
             event.height = window_height
             event.width = window_width
             self.resize_and_scale_image(image, max_img_width, max_height, event)
+
         self.toggle_big_comma_mode()
         self.toggle_list_mode()
         self.clear_suggestions()
+        self.highlight_custom_string()
         self.highlighting_all_duplicates.set(False)
+
 
 
     def resize_and_scale_image(self, image, max_img_width, max_height, event=None):
@@ -1510,7 +1579,8 @@ class ImgTxtViewer:
         if not confirm:
             return
         self.backup_text_files()
-        self.update_image_file_count()
+        if not self.filter_string_var.get():
+            self.update_image_file_count()
         for text_file in self.text_files:
             try:
                 with open(text_file, 'r') as file:
@@ -1536,7 +1606,8 @@ class ImgTxtViewer:
         if not confirm:
             return
         self.backup_text_files()
-        self.update_image_file_count()
+        if not self.filter_string_var.get():
+            self.update_image_file_count()
         for text_file in self.text_files:
             try:
                 if not os.path.exists(text_file):
@@ -1565,7 +1636,8 @@ class ImgTxtViewer:
         if not confirm:
             return
         self.backup_text_files()
-        self.update_image_file_count()
+        if not self.filter_string_var.get():
+            self.update_image_file_count()
         for text_file in self.text_files:
             try:
                 if not os.path.exists(text_file):
@@ -1578,6 +1650,44 @@ class ImgTxtViewer:
         self.cleanup_all_text_files(show_confirmation=False)
         self.show_pair()
         self.saved_label.config(text="Append Text Complete!", bg="#6ca079", fg="white")
+
+
+    def filter_text_image_pairs(self):
+        if not self.check_current_directory():
+            return
+        self.revert_text_image_filter()
+        filter_string = self.filter_string_var.get()
+        if not filter_string:
+            return
+        self.filtered_image_files = []
+        self.filtered_text_files = []
+        for image_file, text_file in zip(self.image_files, self.text_files):
+            try:
+                with open(text_file, 'r') as file:
+                    filedata = file.read()
+                if self.filter_use_regex:
+                    if re.search(filter_string, filedata):
+                        self.filtered_image_files.append(image_file)
+                        self.filtered_text_files.append(text_file)
+                else:
+                    if filter_string in filedata:
+                        self.filtered_image_files.append(image_file)
+                        self.filtered_text_files.append(text_file)
+            except Exception: pass
+        self.image_files = self.filtered_image_files
+        self.text_files = self.filtered_text_files
+        if hasattr(self, 'total_images_label'):
+            self.total_images_label.config(text=f"of {len(self.image_files)}")
+        self.current_index = 0
+        self.show_pair()
+        self.saved_label.config(text="Filter Complete!", bg="#6ca079", fg="white")
+
+
+    def revert_text_image_filter(self):
+        self.update_image_file_count()
+        self.current_index = 0
+        self.show_pair()
+        self.saved_label.config(text="Filter Cleared!", bg="#6ca079", fg="white")
 
 
     def delete_tag_under_mouse(self, event):
@@ -2027,24 +2137,24 @@ root.mainloop()
 '''
 
 
-[v1.84 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.84)
+[v1.85 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.85)
 
   - New:
-    - New tool: `Resize Images`: You can find this in the Tools menu.
-      - Resize operations: Resize to Resolution, Resize to Width, Resize to Height, Resize to Shorter Side, Resize to Longer Side
-      - Just like "batch_tag_delete.py", "resize_images.py" is a stand-alone tool. You can run it 100% independently of img-txt_viewer.
-      - Images will be overwritten when resized.
-      - New option: `Colored Suggestions`, Use this to enable or disable the color coded autocomplete suggestions.
+    - New Text Tool `Filter Pairs`: Use this to search all text files and filter the img-txt pairs to display only those that include the matched text.
+      - Also supports regular expressions.
+    - New Text Tool `Active Highlights`: Use this to always highlight certain text.
+      - Use ` + ` to highlight multiple strings of text, *(Note the spaces!)*. Example: dog + cat
+
 
 <br>
 
   - Fixed:
-    - Fixed suggestions breaking when typing a parentheses.
+    -
 
 <br>
 
   - Other changes:
-    - Batch Tag Delete is no longer bundled within img-txt_viewer. This allows you to run them separately.
+    -
 
 
 <!-- New -->
@@ -2071,7 +2181,7 @@ root.mainloop()
 
 
 - Todo
-  -
+  - Add "Add selected text to custom dictionary" button to text box context menu.
 
 - Tofix
   -
