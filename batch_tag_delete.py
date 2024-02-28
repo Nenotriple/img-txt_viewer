@@ -3,7 +3,7 @@
 #                                      #
 #          batch_tag_delete            #
 #                                      #
-#   Version : v1.06                    #
+#   Version : v1.07                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -34,10 +34,9 @@ import ctypes
 import shutil
 import threading
 import tkinter as tk
+from threading import Lock
 from collections import Counter
 from tkinter import messagebox, simpledialog, filedialog, TclError
-
-from threading import Lock
 
 
 ################################################################################################################################################
@@ -94,7 +93,6 @@ def display_tags(tag_dict, directory, scrollable_frame, filter_text=''):
         pair_frame.pack(side=tk.TOP, pady=2)
 
 
-
 def count_tags(directory):
     tag_dict = Counter()
     for filename in os.listdir(directory):
@@ -120,15 +118,16 @@ def delete_tag(directory, tag, filter_text='', confirm_prompt=True):
         if filename.endswith(".txt"):
             with open(os.path.join(directory, filename), 'r') as file:
                 lines = file.read().replace('\n', '')
+            tags = lines.strip().split(',')
+            tags = [t for t in tags if t.strip() != tag]
+            new_line = ','.join(tags)
+            if filter_text and not fuzzy_search(filter_text.lower(), lines.lower()):
+                continue
+            else:
+                new_line = cleanup_text(new_line)
+                lines = new_line
             with open(os.path.join(directory, filename), 'w') as file:
-                tags = lines.strip().split(',')
-                tags = [t for t in tags if t.strip() != tag]
-                new_line = ','.join(tags)
-                if filter_text and not fuzzy_search(filter_text.lower(), lines.lower()):
-                    file.write(lines)
-                else:
-                    new_line = cleanup_text(new_line)
-                    file.write(new_line)
+                file.write(lines)
     parent.destroy()
 
 
@@ -169,7 +168,10 @@ def create_hover_effect(widget, hover_color):
 
 def batch_delete(directory, count_threshold, scrollable_frame, max_display_tags=150):
     tag_dict = count_tags(directory)
-    tags_to_delete = [tag for tag, count in tag_dict.items() if count <= count_threshold]
+    tags_to_delete = set(tag for tag, count in tag_dict.items() if count <= count_threshold)
+    if not tags_to_delete:
+        messagebox.showinfo("No tags Found", "No tags found that meet the given criteria.")
+        return
     sorted_tags_to_delete = sorted(tags_to_delete)
     limited_tags_to_display = sorted_tags_to_delete[:max_display_tags]
     tags_message = ', '.join(limited_tags_to_display)
@@ -177,14 +179,19 @@ def batch_delete(directory, count_threshold, scrollable_frame, max_display_tags=
     if len(sorted_tags_to_delete) > max_display_tags:
         message += f"... and {len(sorted_tags_to_delete) - max_display_tags} more tags.\n\n"
     message += "Are you sure you want to delete them?"
-    if not sorted_tags_to_delete:
-        messagebox.showinfo("No tags Found", "No tags found that meet the given criteria.")
-        return
     confirm = messagebox.askyesno("Delete tags?", message)
     if confirm:
-        for tag in sorted_tags_to_delete:
-            delete_tag(directory, tag, confirm_prompt=False)
+        for filename in os.listdir(directory):
+            if filename.endswith(".txt"):
+                with open(os.path.join(directory, filename), 'r') as file:
+                    lines = file.read().replace('\n', '')
+                tags = lines.strip().split(',')
+                tags = [t for t in tags if t.strip() not in tags_to_delete]
+                new_line = ','.join(tags)
+                with open(os.path.join(directory, filename), 'w') as file:
+                    file.write(new_line)
         display_tags(count_tags(directory), directory, scrollable_frame)
+
 
 
 def ask_count_threshold(directory, scrollable_frame, root):
@@ -285,12 +292,15 @@ def restore_backup(directory, scrollable_frame):
     display_tags(count_tags(directory), directory, scrollable_frame)
 
 
-def on_closing(directory, root):
-    global stop_thread
-    stop_thread = True
+def delete_backup(directory):
     backup_directory = os.path.join(directory, "text_backup")
     if os.path.exists(backup_directory):
         shutil.rmtree(backup_directory)
+
+def on_closing(directory, root):
+    global stop_thread
+    stop_thread = True
+    delete_backup(directory)
     root.destroy()
 
 
@@ -301,10 +311,10 @@ def on_closing(directory, root):
 #      #
 
 
-def main(directory=None, main_window_x=None, main_window_y=None):
-    # If directory is not provided or is not a valid directory, open a directory dialog
-    if not directory or not os.path.isdir(directory):
-        root = tk.Tk()
+def main(directory=None, main_window_x=None, main_window_y=None, change_directory=False, root=None):
+    # If directory is not provided, is "Choose Directory...", is not a valid directory, or change_directory is True, open a directory dialog
+    if change_directory or not directory or directory == "Choose Directory..." or not os.path.isdir(directory):
+        root = tk.Tk() if root is None else root
         root.withdraw()
         directory = filedialog.askdirectory()
         root.destroy()
@@ -314,7 +324,7 @@ def main(directory=None, main_window_x=None, main_window_y=None):
 
     # Initialize root window
     root = tk.Tk()
-    root.title(f"Tag List: {directory}")
+    root.title("Batch Tag Delete")
     window_width = 490
     window_height = 800
 
@@ -328,7 +338,7 @@ def main(directory=None, main_window_x=None, main_window_y=None):
         position_top = root.winfo_screenheight() // 2 - window_height // 2
 
     root.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
-    root.minsize(400, 100)
+    root.minsize(490, 100)
     root.maxsize(490, 2000)
     root.focus_force()
 
@@ -388,6 +398,8 @@ def main(directory=None, main_window_x=None, main_window_y=None):
 
 
     # Add commands to the menubar
+    menubar.add_command(label="Directory...", command=lambda: (delete_backup(directory), main(change_directory=True, root=root)))
+    menubar.add_separator()
     menubar.add_command(label="Change Sort", command=lambda: toggle_tag_order(tag_dict, directory, scrollable_frame))
     menubar.add_separator()
     menubar.add_command(label="Delete ≤", command=lambda: ask_count_threshold(directory, scrollable_frame, root))
@@ -396,6 +408,9 @@ def main(directory=None, main_window_x=None, main_window_y=None):
     menubar.add_separator()
     menubar.add_command(label="Undo All", command=lambda: restore_backup(directory, scrollable_frame))
 
+    # Display current directory
+    directory_label = tk.Label(root, text=directory)
+    directory_label.pack(anchor="w")
 
     # Initialize filter entry
     filter_entry = tk.Entry(root)
@@ -434,7 +449,7 @@ def main(directory=None, main_window_x=None, main_window_y=None):
     # Start main loop
     root.mainloop()
 
-# How can I launch this as an executable? The name of the executable is "batch_tag_delete.exe"
+
 if __name__ == "__main__":
     # Call the main function with command line arguments if provided
     # sys.argv[1] is the first command line argument, which is the directory
@@ -454,16 +469,17 @@ if __name__ == "__main__":
 
 '''
 
-v1.06 changes:
+v1.07 changes:
 
   - New:
-    -
+    - Significantly improved the speed tags are deleted.
+    - You can now choose a new directory after opening the app.
+
 
 <br>
 
   - Fixed:
-    - Fixed tag list refreshing twice
-    - Fixed Multi-tag delete when "batch_tag_delete" is ran from "img-txt_viewer"
+    -
 
   - Other:
 
