@@ -3,7 +3,7 @@
 #                                      #
 #             Resize Image             #
 #                                      #
-#   Version : v1.00                    #
+#   Version : v1.01                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -15,7 +15,6 @@ Resize operations include: Resize to Resolution, Resize to Width, Resize to Heig
 
 
 """
-
 
 
 ################################################################################################################################################
@@ -58,25 +57,23 @@ class Resize_Image(tk.Frame):
         widget_frame.pack(fill="both", padx=2, pady=2)
 
 
-        # Directory Label
-        self.directory_label = tk.Label(widget_frame, relief="groove", text="", anchor="w", background="white")
+        # Directory Frame
+        directory_frame = tk.Frame(widget_frame)
+        directory_frame.pack(fill="both")
+
+        self.directory_label = tk.Label(directory_frame, relief="groove", text="", anchor="w", background="white")
         if self.folder_path is None:
             self.directory_label.config(text="Select a directory containing images to begin!")
         else:
             self.directory_label.config(text=f"{self.folder_path}")
-        self.directory_label.pack(fill="x")
+        self.directory_label.pack(side="left", fill="x", expand=True)
 
-
-        # Select Frame
-        select_frame = tk.Frame(widget_frame)
-        select_frame.pack(fill="both")
-
-        self.select_button = tk.Button(select_frame, overrelief="groove")
-        self.select_button["text"] = "   \tSelect Folder"
+        self.select_button = tk.Button(directory_frame, width=8, overrelief="groove")
+        self.select_button["text"] = "Browse..."
         self.select_button["command"] = self.select_folder
-        self.select_button.pack(side="left", fill="x", expand=True, padx=2, pady=2)
+        self.select_button.pack(side="left", padx=2, pady=2)
 
-        self.open_button = tk.Button(select_frame, overrelief="groove", width=10)
+        self.open_button = tk.Button(directory_frame, width=8, overrelief="groove")
         self.open_button["text"] = "Open"
         self.open_button["command"] = self.open_folder
         self.open_button.pack(side="left", padx=2, pady=2)
@@ -86,13 +83,31 @@ class Resize_Image(tk.Frame):
         resize_mode_frame = tk.Frame(widget_frame)
         resize_mode_frame.pack(fill="x")
 
-        self.resize_mode_label = tk.Label(resize_mode_frame, text="Resize Mode:")
+        self.resize_mode_label = tk.Label(resize_mode_frame, text="Resize To:")
         self.resize_mode_label.pack(side="left", anchor="w", padx=2, pady=2)
 
         self.resize_mode_var = tk.StringVar()
-        self.resize_mode = ttk.Combobox(resize_mode_frame, textvariable=self.resize_mode_var, values=["Resize to Resolution", "Resize to Width", "Resize to Height", "Resize to Shorter Side", "Resize to Longer Side"], state="readonly")
-        self.resize_mode.set("Resize to Resolution")
-        self.resize_mode.pack(side="left", fill="x", expand=True, padx=2, pady=2)
+        self.resize_mode = ttk.Combobox(resize_mode_frame, width=11, textvariable=self.resize_mode_var, values=["Resolution", "Width", "Height", "Shorter Side", "Longer Side"], state="readonly")
+        self.resize_mode.set("Resolution")
+        self.resize_mode.pack(side="left", fill="x", padx=2, pady=2)
+
+
+        self.resize_condition_label = tk.Label(resize_mode_frame, text="Condition:")
+        self.resize_condition_label.pack(side="left", anchor="w", padx=2, pady=2)
+
+        self.resize_condition_var = tk.StringVar()
+        self.resize_condition = ttk.Combobox(resize_mode_frame, width=21, textvariable=self.resize_condition_var, values=["Upscale and Downscale", "Upscale Only", "Downscale Only"], state="readonly")
+        self.resize_condition.set("Upscale and Downscale")
+        self.resize_condition.pack(side="left", fill="x", padx=2, pady=2)
+
+
+        self.filetype_label = tk.Label(resize_mode_frame, text="Filetype:")
+        self.filetype_label.pack(side="left", anchor="w", padx=2, pady=2)
+
+        self.filetype_var = tk.StringVar()
+        self.filetype = ttk.Combobox(resize_mode_frame, width=4, textvariable=self.filetype_var, values=["JPEG", "PNG", "WEBP"], state="readonly")
+        self.filetype.set("JPEG")
+        self.filetype.pack(side="left", fill="x", padx=2, pady=2)
 
         self.use_output_folder_var = tk.IntVar(value=1)
         self.use_output_folder_checkbutton = tk.Checkbutton(resize_mode_frame, overrelief="groove", text="Use Output Folder", variable=self.use_output_folder_var)
@@ -133,12 +148,17 @@ class Resize_Image(tk.Frame):
         # Text Box
         self.text_box = ScrolledText(widget_frame)
         self.text_box.pack(fill="both", expand=True, padx=2, pady=2)
-        descriptions = ["Resize to Resolution: Resize to specific width and height\n\n",
-                        "Preserves aspect ratio:\n",
-                        "Resize to Width: Resize the image width\n",
-                        "Resize to Height: Resize the image height\n",
-                        "Resize to Shorter side: Resize the shorter side of the image\n",
-                        "Resize to Longer side: Resize the longer side of the image"]
+        descriptions = ["Resize to Resolution: Resize to specific width and height\n\n"
+                        "Preserves aspect ratio:\n\n"
+                        "Resize to Width: Resize the image width\n\n"
+                        "Resize to Height: Resize the image height\n\n"
+                        "Resize to Shorter side: Resize the shorter side of the image\n\n"
+                        "Resize to Longer side: Resize the longer side of the image\n\n"
+                        "Resize Condition:\n"
+                        "Upscale and Downscale: Resize the image to the new dimensions regardless of whether they are larger or smaller than the original dimensions.\n\n"
+                        "Upscale Only: Resize the image if the new dimensions are larger than the original dimensions.\n\n"
+                        "Downscale Only: Resize the image if the new dimensions are smaller than the original dimensions."]
+
         for description in descriptions:
             self.text_box.insert("end", description + "\n")
         self.text_box.config(state="disabled")
@@ -154,18 +174,18 @@ class Resize_Image(tk.Frame):
 
     def update_entries(self, *args):
         mode = self.resize_mode_var.get()
-        if mode == "Resize to Resolution":
+        if mode == "Resolution":
             self.width_entry.config(state="normal")
             self.width_label.config(state="normal")
             self.height_entry.config(state="normal")
             self.height_label.config(state="normal")
-        elif mode in ["Resize to Width", "Resize to Shorter Side"]:
+        elif mode in ["Width", "Shorter Side"]:
             self.width_entry.config(state="normal")
             self.width_label.config(state="normal")
             self.height_entry.delete(0, 'end')
             self.height_entry.config(state="disabled")
             self.height_label.config(state="disabled")
-        elif mode in ["Resize to Height", "Resize to Longer Side"]:
+        elif mode in ["Height", "Longer Side"]:
             self.width_entry.delete(0, 'end')
             self.width_entry.config(state="disabled")
             self.width_label.config(state="disabled")
@@ -188,7 +208,7 @@ class Resize_Image(tk.Frame):
 
     def get_output_folder_path(self):
         if self.use_output_folder_var.get() == 1:
-            output_folder_path = os.path.join(self.folder_path, "output")
+            output_folder_path = os.path.join(self.folder_path, "Resize Output")
             if not os.path.exists(output_folder_path):
                 os.makedirs(output_folder_path)
         else:
@@ -279,6 +299,41 @@ class Resize_Image(tk.Frame):
         return img
 
 
+    def should_resize(self, original_size, new_size):
+        resize_condition = self.resize_condition_var.get()
+        if resize_condition == "Upscale Only":
+            return new_size > original_size
+        elif resize_condition == "Downscale Only":
+            return new_size < original_size
+        else:  # "Upscale and Downscale"
+            return True
+
+
+    def calculate_resize_mode(self, img, resize_mode, width, height):
+        original_size = img.size
+        if resize_mode == "Resolution":
+            new_size = (width, height)
+            if self.should_resize(original_size, new_size):
+                img = self.resize_to_resolution(img, width, height)
+        elif resize_mode == "Width":
+            new_size = (width, original_size[1])
+            if self.should_resize(original_size, new_size):
+                img = self.resize_to_width(img, width)
+        elif resize_mode == "Height":
+            new_size = (original_size[0], height)
+            if self.should_resize(original_size, new_size):
+                img = self.resize_to_height(img, height)
+        elif resize_mode == "Shorter Side":
+            new_size = (width, width)
+            if self.should_resize(original_size, new_size):
+                img = self.resize_to_shorter_side(img, width)
+        elif resize_mode == "Longer Side":
+            new_size = (height, height)
+            if self.should_resize(original_size, new_size):
+                img = self.resize_to_longer_side(img, height)
+        return img
+
+
     def resize(self):
         self.percent_complete.set(0)
         if self.folder_path is not None:
@@ -303,21 +358,15 @@ class Resize_Image(tk.Frame):
                             if img is None:
                                 return
                             img = img.convert('RGB')
-                            if resize_mode == "Resize to Resolution":
-                                img = self.resize_to_resolution(img, width, height)
-                            elif resize_mode == "Resize to Width":
-                                img = self.resize_to_width(img, width)
-                            elif resize_mode == "Resize to Height":
-                                img = self.resize_to_height(img, height)
-                            elif resize_mode == "Resize to Shorter Side":
-                                img = self.resize_to_shorter_side(img, width)
-                            elif resize_mode == "Resize to Longer Side":
-                                img = self.resize_to_longer_side(img, height)
+                            img = self.calculate_resize_mode(img, resize_mode, width, height)
                             if img is None:
                                 return
                             if 'icc_profile' in img.info:
                                 del img.info['icc_profile']
-                            img.save(os.path.join(output_folder_path, filename), 'PNG')
+                            filetype = self.filetype_var.get().lower()
+                            base_filename, _ = os.path.splitext(filename)
+                            filename_with_new_extension = f"{base_filename}.{filetype}"
+                            img.save(os.path.join(output_folder_path, filename_with_new_extension), filetype, quality=100, optimize=True)
                             self.percent_complete.set((i+1)/total_images*100)
                             self.percent_bar['value'] = self.percent_complete.get()
                             self.percent_bar.update()
@@ -346,8 +395,8 @@ def parse_arguments():
 def setup_root():
     root = tk.Tk()
     root.title("Resize Images")
-    root.geometry("525x425")
-    root.minsize(300,155)
+    root.geometry("610x425")
+    root.minsize(610,165)
     root.maxsize(2000,500)
     root.update_idletasks()
     set_icon(root)
@@ -385,3 +434,28 @@ if __name__ == "__main__":
 
 
 #endregion
+
+'''
+
+v1.01 changes:
+
+  - New:
+    - You can now choose image filetype.
+    - You can now set the `Resize Condition` to the following modes:
+      - `Upscale and Downscale`, Resize the image to the new dimensions regardless of whether they are larger or smaller than the original dimensions.
+      - `Upscale Only`, Resize the image if the new dimensions are larger than the original dimensions.
+      - `Downscale Only`, Resize the image if the new dimensions are smaller than the original dimensions
+
+
+<br>
+
+  - Fixed:
+    -
+
+<br>
+
+  - Other changes:
+    -
+
+
+'''
