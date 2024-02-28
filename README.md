@@ -15,26 +15,28 @@ Display an image and text file side-by-side for easy manual captioning. + Tons o
 # 💡 Tips and Features
 
 - Shortcuts:
-  - `ALT+Left/Right`: Quickly move between img-txt pairs.
-  - `Del`: Send the current pair to a local trash folder.
+  - `ALT+LEFT/RIGHT`: Quickly move between img-txt pairs.
+  - `SHIFT+DEL`: Send the current pair to a local trash folder.
   - `ALT`: Cycle through auto-suggestions.
   - `TAB`: Insert the highlighted suggestion.
-  - `CTRL+F`: Highlight all duplicate words. 
+  - `CTRL+F`: Highlight all duplicate words.
+  - `CTRL+E`: Quickly jump to the next empty text file. 
   - `CTRL+S`: Save the current text file.
   - `CTRL+Z` / `CTRL+Y`: Undo/Redo.
+  - `F5`: Refresh the text box.
   - `Middle-click`: A token to quickly delete it.
 
 - Tips:
   - `Highlight duplicates` by selecting text.
   - Enable `List View` to display text in a vertical list format.
   - Enable `Big Comma Mode` for more visual separation between captions.
-  - Blank text files can be created for images without any matching files when loading a directory.
+  - Quickly create text pairs by loading the image and saving the text.
   - `Autocomplete Suggestions` while you type using Danbooru/Anime tags, the English Dictionary, or both. 
   - `Fuzzy Search` Use an asterisk * while typing to return a broader range of suggestions.
     - For example: Typing `*lo*b` returns "<ins>**lo**</ins>oking <ins>**b**</ins>ack", and even "yel<ins>**lo**</ins>w <ins>**b**</ins>ackground"
 
 - Text Tools:
-  - `Batch Token Delete`: View all tokens in a directory as a list, and quickly delete them.
+  - `Batch Token Delete`: View all tokens in a directory as a list, and quickly delete them. (Stand alone tool)
   - `Cleanup Text`: Fix simple typos in all text files of the selected folder.
   - `Prefix Text Files`: Insert text at the START of all text files.
   - `Append Text Files`: Insert text at the END of all text files.
@@ -42,8 +44,12 @@ Display an image and text file side-by-side for easy manual captioning. + Tons o
   - `Filter Pairs`: Filter img-txt pairs text.
   - `Active Highlights`: Always highlight specific words.
 
- - Image Tools
-   -`Resize Images`: Resize to Resolution, Resize to Width, Resize to Height, Resize to Shorter Side, Resize to Longer Side
+ - Other Tools
+   - `Resize Images`: Resize images using several methods and conditions. (Stand alone tool)
+   - `Crop Image`: Quickly crop an image to a square or freeform ratio.
+   - `Expand Current Image`: Expand an image to a square ratio instead of cropping.
+   - `Find Duplicate Files`: Find and separate any duplicate files in a folder (Stand alone tool)
+   - `Rename and Convert Pairs`: Automatically rename and convert files using a neat and tidy formatting.
 
  - Auto-Save
    - Check the auto-save box to save text when navigating between img/txt pairs or closing the window.
@@ -58,20 +64,16 @@ ___
 
 You must have **Python 3.10+** installed to the system PATH.
 
-**Running the script will automatically fulfill all requirements.**
+You will need `Pillow` installed to the system.
 
-The `pillow` library will be downloaded and installed *(if not already available)* upon launch.
-
-`dictionary.csv` `danbooru.csv` `e621.csv` will be downloaded *(if not already available)* upon launch.
+To install Pillow, run this from the terminal: `pip install pillow`
 
 # 📜 Version History
 
-[v1.85 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.85)
+[v1.90 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.90)
 
-  - New:
-    - New Text Tool `Filter Pairs`: Use this to search all text files and filter the img-txt pairs to display only those that include the matched text.
-      - Also supports regular expressions.
-    - New Text Tool `Active Highlights`: Use this to always highlight certain text.
-      - Use ` + ` to highlight multiple strings of text, *(Note the spaces!)*. Example: dog + cat
+I'm very happy to announce img-txt_viewer is 1 year old!
 
-Thank you [@TeKett](https://github.com/TeKett) for these suggestions! [#18](https://github.com/Nenotriple/img-txt_viewer/issues/18)
+I love knowing that this app has helped at least a few people work faster and easier. I want to thank everyone so much for your interest and support.
+
+There's a lot to cover this releease, so please see the [v1.90 release page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.90) for the change notes.
