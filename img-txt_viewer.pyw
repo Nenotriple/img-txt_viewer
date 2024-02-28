@@ -3,7 +3,7 @@
 #                                      #
 #            IMG-TXT VIEWER            #
 #                                      #
-#   Version : v1.85                    #
+#   Version : v1.90                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -17,7 +17,7 @@ More info here: https://github.com/Nenotriple/img-txt_viewer
 """
 
 
-VERSION = "v1.85"
+VERSION = "v1.90"
 
 
 ################################################################################################################################################
@@ -36,64 +36,17 @@ import time
 import shutil
 import ctypes
 import random
-import requests
-import threading
+import webbrowser
+import crop_image
 import subprocess
+import numpy as np
+import configparser
 import tkinter.font
 from tkinter import *
 from tkinter import ttk, messagebox
 from tkinter.filedialog import askdirectory
 from tkinter.scrolledtext import ScrolledText
-
-
-##################
-#                #
-# Install Pillow #
-#                #
-##################
-
-
-try:
-    from PIL import Image, ImageTk
-except ImportError:
-    import subprocess, sys
-    import threading
-    from tkinter import Tk, Label, messagebox
-
-
-    def download_pillow():
-        cmd = ["pythonw", '-m', 'pip', 'install', 'pillow']
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        for line in iter(lambda: process.stdout.readline(), b''):
-            pillow_label = Label(root, wraplength=450)
-            pillow_label.pack(anchor="w")
-            pillow_label.config(text=line.rstrip())
-        process.stdout.close()
-        process.wait()
-        done_label = Label(root, text="\nAll done! This window will now close...", wraplength=450)
-        done_label.pack(anchor="w")
-        root.after(3000, root.destroy)
-
-
-    root = Tk()
-    root.title("Pillow Is Installing...")
-    root.geometry('600x200')
-    root.resizable(False, False)
-    root.withdraw()
-    root.protocol("WM_DELETE_WINDOW", lambda: None)
-
-
-    install_pillow = messagebox.askyesno("Pillow not installed!", "Pillow not found!\npypi.org/project/Pillow\n\nWould you like to install it? ~2.5MB \n\n It's required to view images.")
-    if install_pillow:
-        root.deiconify()
-        pillow_label = Label(root, wraplength=450)
-        pillow_label.pack(anchor="w")
-        pillow_label.config(text="Beginning Pillow install now...\n")
-        threading.Thread(target=download_pillow).start()
-        root.mainloop()
-        from PIL import Image, ImageTk
-    else:
-        sys.exit()
+from PIL import Image, ImageTk
 
 
 #endregion
@@ -105,38 +58,54 @@ except ImportError:
 
 
 class AboutWindow(Toplevel):
-    info_headers = ["Shortcuts:", "Tips:", "Text Tools:", "Auto-Save:"]
+    info_headers = ["Shortcuts", "Tips", "Text Tools", "Other Tools", "Auto-Save"]
     info_content = [
-        " ⦁ALT+Left/Right: Quickly move between img-txt pairs.\n"
-        " ⦁Del: Send the current pair to a local trash folder.\n"
+        # Shortcuts
+        " ⦁ALT+LEFT/RIGHT: Quickly move between img-txt pairs.\n"
+        " ⦁SHIFT+DEL: Send the current pair to a local trash folder.\n"
         " ⦁ALT: Cycle through auto-suggestions.\n"
         " ⦁TAB: Insert the highlighted suggestion.\n"
         " ⦁CTRL+F: Highlight all duplicate words.\n"
+        " ⦁CTRL+E: Quickly jump to the next empty text file.\n"
         " ⦁CTRL+S: Save the current text file.\n"
         " ⦁CTRL+Z / CTRL+Y: Undo/Redo.\n"
+        " ⦁F5: Refresh the text box.\n"
         " ⦁Middle-click a tag to delete it.\n",
 
+        # Tips
         " ⦁Highlight duplicates by selecting text.\n"
         " ⦁List Mode: Display tags in a list format while saving in standard format.\n"
-        " ⦁Blank text files can be created for images without any matching pair when loading a directory.\n"
-        " ⦁When selecting a suggestion dictionary, you can use either Anime tags, English dictionary, or Both.\n"
+        " ⦁If no text file for the image exists it will be created when saving the text.\n"
         " ⦁Use an asterisk * while typing to return suggestions using 'fuzzy search'.\n",
 
+        # Text Tools
         " ⦁Search and Replace: Edit all text files at once.\n"
         " ⦁Prefix Text Files: Insert text at the START of all text files.\n"
         " ⦁Append Text Files: Insert text at the END of all text files.\n"
+        " ⦁Filter: Filter pairs based on matching text.\n"
+        " ⦁Highlight: Always highlight certain text.\n"
+        " ⦁My Tags: Quickly add you own tags to be used as autocomplete suggestions.\n"
         " ⦁Batch Tag Delete: View all tags in a directory as a list, and quickly delete them.\n"
         " ⦁Cleanup Text: Fix typos in all text files of the selected folder, such as duplicate tags, multiple spaces or commas, missing spaces, and more.\n",
 
+        # Other Tools
+        " ⦁Resize Images: Resize images using several methods.\n"
+        " ⦁Crop Image: Quickly crop an image to a square or freeform ratio.\n"
+        " ⦁Find Duplicate Files: Find and separate any duplicate files in a folder.\n"
+        " ⦁Expand Current Image: Expand an image to a square ratio instead of cropping.\n"
+        " ⦁Rename and Convert Pairs: Automatically rename files using a neat and tidy formatting.\n",
+
+        # Auto Save
         " ⦁Check the auto-save box to save text when navigating between img/txt pairs or closing the window.\n"
         " ⦁Text is cleaned up when saved, so you can ignore things like duplicate tags, trailing comma/spaces, double comma/spaces, etc.\n"
-        " ⦁Text cleanup can be disabled from the options menu.",]
+        " ⦁Text cleanup can be disabled from the options menu.",
+        ]
 
 
     def __init__(self, master=None):
         super().__init__(master=master)
         self.title("About")
-        self.geometry("850x560")
+        self.geometry("850x650")
         self.maxsize(900, 900)
         self.minsize(300, 300)
         self.github_url = "https://github.com/Nenotriple/img-txt_viewer"
@@ -157,30 +126,30 @@ class AboutWindow(Toplevel):
         for header, section in zip(AboutWindow.info_headers, AboutWindow.info_content):
             self.info_text.insert("end", header + "\n", "header")
             self.info_text.insert("end", section + "\n", "section")
-        self.info_text.tag_config("header", font=("Segoe UI", 10, "bold"))
-        self.info_text.tag_config("section", font=("Segoe UI", 10))
+        self.info_text.tag_config("header", font=("Segoe UI", 9, "bold"))
+        self.info_text.tag_config("section", font=("Segoe UI", 9))
         self.info_text.config(state='disabled', wrap="word")
 
 
     def create_made_by_label(self):
-        self.made_by_label = Label(self, text=f"{VERSION} img-txt_viewer - Created by: Nenotriple (2023)", font=("Arial", 10))
+        self.made_by_label = Label(self, text=f"{VERSION} - img-txt_viewer - Created by: Nenotriple (2023-2024)", font=("Arial", 10))
         self.made_by_label.pack(pady=5)
         ToolTip.create(self.made_by_label, "🤍Thank you for using my app!🤍 (^‿^)", 10, 6, 4)
 
 
     def open_url(self):
-        import webbrowser
         webbrowser.open(f"{self.github_url}")
 
 
 #endregion
 ################################################################################################################################################
 ################################################################################################################################################
-#                   #
-#region -  ToolTips #
-#                   #
+#                         #
+#region -  CLASS ToolTips #
+#                         #
 
-''' Example ToolTip: ToolTip.create(WIDGET, "TOOLTIP TEXT", delay=0, x_offset=0, y_offset=0) '''
+# Example ToolTip:
+        ''' ToolTip.create(WIDGET, "TOOLTIP TEXT", delay=0, x_offset=0, y_offset=0) '''
 
 
 class ToolTip:
@@ -192,6 +161,7 @@ class ToolTip:
         self.id = None
         self.hide_id = None
         self.hide_time = 0
+
 
     def show_tip(self, tip_text, x, y):
         if self.tip_window or not tip_text:
@@ -205,7 +175,8 @@ class ToolTip:
         tw.wm_attributes("-disabled", True)
         label = Label(tw, text=tip_text, background="#ffffee", relief="ridge", borderwidth=1, justify="left", padx=4, pady=4)
         label.pack()
-        self.hide_id = self.widget.after(5000, self.hide_tip)
+        self.hide_id = self.widget.after(10000, self.hide_tip)
+
 
     def hide_tip(self):
         tw = self.tip_window
@@ -213,6 +184,7 @@ class ToolTip:
         if tw:
             tw.destroy()
         self.hide_time = time.time()
+
 
     @staticmethod
     def create(widget, text, delay=0, x_offset=0, y_offset=0):
@@ -238,9 +210,9 @@ class ToolTip:
 #endregion
 ################################################################################################################################################
 ################################################################################################################################################
-#                       #
-#region -  Autocomplete #
-#                       #
+#                            #
+#region - CLASS Autocomplete #
+#                            #
 
 
 class Autocomplete:
@@ -251,25 +223,6 @@ class Autocomplete:
         self.previous_suggestions = None
 
 
-    def download_data(self):
-        files = {'danbooru.csv': "https://raw.githubusercontent.com/Nenotriple/img-txt_viewer/main/danbooru.csv",
-                 'dictionary.csv': "https://raw.githubusercontent.com/Nenotriple/img-txt_viewer/main/dictionary.csv",
-                 'e621.csv': "https://raw.githubusercontent.com/Nenotriple/img-txt_viewer/main/e621.csv"}
-        missing_files = [file for file in files if not os.path.exists(file)]
-        if missing_files:
-            download = messagebox.askyesno("Files not found.", f"The following dictionaries required for autocomplete suggestions were not found: \n\n{', '.join(missing_files)}.\n\nDo you want to download them from the repo? ~2MB each\n\nYes = Download All\nNo = Ignore")
-            if download:
-                for data_file in missing_files:
-                    url = files[data_file]
-                    threading.Thread(target=self.download_file, args=(url, data_file)).start()
-
-
-    def download_file(self, url, data_file):
-        response = requests.get(url)
-        with open(data_file, 'wb') as f:
-            f.write(response.content)
-
-
     def load_data(self, data_file, additional_file='my_tags.csv'):
         if getattr(sys, 'frozen', False):
             application_path = sys._MEIPASS
@@ -278,8 +231,6 @@ class Autocomplete:
         data_file_path = os.path.join(application_path, data_file)
         additional_file_path = os.path.join(application_path, additional_file)
         data = {}
-        if not os.path.isfile(data_file_path):
-            self.download_data()
         if not os.path.isfile(data_file_path):
             return None
         with open(data_file_path, newline='', encoding='utf-8') as csvfile:
@@ -350,9 +301,9 @@ class Autocomplete:
 ################################################################################################################################################
 ################################################################################################################################################
 ################################################################################################################################################
-#                     #
-#region -  Main Class #
-#                     #
+#                             #
+#region -  CLASS ImgTxtViewer #
+#                             #
 
 
 class ImgTxtViewer:
@@ -366,17 +317,18 @@ class ImgTxtViewer:
         self.set_icon()
 
 
-        # Variables
-        self.stop_thread = False
+        # Setup ConfigParser
+        self.config = configparser.ConfigParser()
+
+
+        # Misc Variables
         self.about_window = None
         self.panes_swapped = False
         self.text_modified = False
-        self.watching_files = False
         self.is_alt_arrow_pressed = False
 
 
         # Navigation variables
-        self.selected_suggestion_index = 0
         self.prev_num_files = 0
         self.current_index = 0
 
@@ -400,29 +352,36 @@ class ImgTxtViewer:
         # File lists
         self.text_files = []
         self.image_files = []
-        self.suggestions = []
         self.deleted_pairs = []
         self.new_text_files = []
 
 
         # Settings
         self.font_var = StringVar()
-        self.max_img_width = IntVar(value=2500)
+        self.max_img_width = IntVar(value=1536)
         self.undo_state = StringVar(value="disabled")
         self.image_dir = StringVar(value="Choose Directory...")
-        self.list_mode = BooleanVar(value=False)
-        self.bold_commas = BooleanVar(value=False)
+        self.list_mode_var = BooleanVar(value=False)
+        self.scale_img_up = BooleanVar(value=True)
+        self.bold_comma_var = BooleanVar(value=False)
         self.cleaning_text = BooleanVar(value=True)
         self.auto_save_var = BooleanVar(value=False)
-        self.use_colored_suggestions = BooleanVar(value=True)
+        self.big_save_button_var = BooleanVar(value=False)
         self.highlighting_duplicates = BooleanVar(value=True)
         self.highlighting_all_duplicates = BooleanVar(value=False)
 
 
         # Autocomplete settings
-        self.autocomplete = Autocomplete("danbooru.csv")
-        self.csv_var = StringVar(value='danbooru.csv')
+        self.csv_danbooru = BooleanVar(value=True)
+        self.csv_e621 = BooleanVar(value=False)
+        self.csv_english_dictionary = BooleanVar(value=False)
+        self.use_colored_suggestions = BooleanVar(value=True)
+
+
+        # Autocomplete  variables
         self.suggestion_quantity = IntVar(value=4)
+        self.selected_suggestion_index = 0
+        self.suggestions = []
 
 
         # Bindings
@@ -430,7 +389,7 @@ class ImgTxtViewer:
         master.bind("<Control-s>", lambda event: self.save_text_file())
         master.bind("<Alt-Right>", lambda event: self.next_pair(event))
         master.bind("<Alt-Left>", lambda event: self.prev_pair(event))
-        master.bind('<Delete>', lambda event: self.delete_pair())
+        master.bind('<Shift-Delete>', lambda event: self.delete_pair())
 
 
 #endregion
@@ -442,11 +401,15 @@ class ImgTxtViewer:
 
 
 ####### Initilize Menu Bar ############################################
+
+
         menubar = Menu(self.master)
         self.master.config(menu=menubar)
 
 
 ####### Options Menu ##################################################
+
+
         self.optionsMenu = Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Options", underline=0, menu=self.optionsMenu)
 
@@ -454,17 +417,15 @@ class ImgTxtViewer:
         # Suggestion Dictionary Menu
         dictionaryMenu = Menu(self.optionsMenu, tearoff=0)
         self.optionsMenu.add_cascade(label="Suggestion Dictionary", underline=11, state="disable", menu=dictionaryMenu)
-        dictionaryMenu.add_checkbutton(label="English Dictionary", underline=0, variable=self.csv_var, onvalue='dictionary.csv', offvalue='danbooru.csv', command=self.change_autocomplete_dictionary)
-        dictionaryMenu.add_checkbutton(label="Danbooru", underline=0, variable=self.csv_var, onvalue='danbooru.csv', offvalue='dictionary.csv', command=self.change_autocomplete_dictionary)
-        dictionaryMenu.add_checkbutton(label="e621", underline=0, variable=self.csv_var, onvalue='e621.csv', offvalue='danbooru.csv', command=self.change_autocomplete_dictionary)
-        dictionaryMenu.add_separator()
-        dictionaryMenu.add_checkbutton(label="All (slow)", underline=0, variable=self.csv_var, onvalue='all', command=self.change_autocomplete_dictionary)
+        dictionaryMenu.add_checkbutton(label="English Dictionary", underline=0, variable=self.csv_english_dictionary, command=self.update_autocomplete_dictionary)
+        dictionaryMenu.add_checkbutton(label="Danbooru", underline=0, variable=self.csv_danbooru, command=self.update_autocomplete_dictionary)
+        dictionaryMenu.add_checkbutton(label="e621", underline=0, variable=self.csv_e621, command=self.update_autocomplete_dictionary)
 
 
         # Suggestion Quantity Menu
         suggestion_quantity_menu = Menu(self.optionsMenu, tearoff=0)
         self.optionsMenu.add_cascade(label="Suggestion Quantity", underline=11, state="disable", menu=suggestion_quantity_menu)
-        for i in range(1, 10):
+        for i in range(0, 10):
             suggestion_quantity_menu.add_radiobutton(label=str(i), variable=self.suggestion_quantity, value=i, command=lambda suggestion_quantity=i: self.set_suggestion_quantity(suggestion_quantity))
         self.optionsMenu.add_separator()
 
@@ -472,19 +433,20 @@ class ImgTxtViewer:
         # Max Image Size Menu
         sizeMenu = Menu(self.optionsMenu, tearoff=0)
         self.optionsMenu.add_cascade(label="Max Image Size", underline=0, state="disable", menu=sizeMenu)
-        self.sizes = [("Small", 512),
-                      ("Normal",  2500),
-                      ("Larger",  4000)]
-        for size in self.sizes:
+        self.max_img_size_value = [("Small", 768),
+                                   ("Normal",  1536),
+                                   ("Larger",  2560)]
+        for size in self.max_img_size_value:
             sizeMenu.add_radiobutton(label=size[0], variable=self.max_img_width, value=size[1], underline=0, command=lambda s=size: self.save_text_file())
 
-# Please alter "Use Colored Suggestion" so it also runs  "change_autocomplete_dictionary"
+
         # Options
-        self.optionsMenu.add_checkbutton(label="Highlighting Duplicates", underline=0, state="disable", variable=self.highlighting_duplicates)
+        self.optionsMenu.add_checkbutton(label="Highlighting Selected Duplicates", underline=0, state="disable", variable=self.highlighting_duplicates)
         self.optionsMenu.add_checkbutton(label="Cleaning Text on Save", underline=0, state="disable", variable=self.cleaning_text)
-        self.optionsMenu.add_checkbutton(label="Colored Suggestions", underline=0, state="disable", variable=self.use_colored_suggestions, command=self.change_autocomplete_dictionary)
-        self.optionsMenu.add_checkbutton(label="Big Comma Mode", underline=0, state="disable", variable=self.bold_commas, command=self.toggle_big_comma_mode)
-        self.optionsMenu.add_checkbutton(label="List View", underline=0, state="disable", variable=self.list_mode, command=self.toggle_list_mode)
+        self.optionsMenu.add_checkbutton(label="Colored Suggestions", underline=0, state="disable", variable=self.use_colored_suggestions, command=self.update_autocomplete_dictionary)
+        self.optionsMenu.add_checkbutton(label="Big Comma Mode", underline=0, state="disable", variable=self.bold_comma_var, command=self.toggle_big_comma_mode)
+        self.optionsMenu.add_checkbutton(label="Big Save Button", underline=4, state="disable", variable=self.big_save_button_var, command=self.toggle_save_button_height)
+        self.optionsMenu.add_checkbutton(label="List View", underline=0, state="disable", variable=self.list_mode_var, command=self.toggle_list_mode)
         self.optionsMenu.add_separator()
         self.optionsMenu.add_checkbutton(label="Always On Top", underline=0, command=self.toggle_always_on_top)
         self.optionsMenu.add_checkbutton(label="Vertical View", underline=0, state="disable", command=self.swap_pane_orientation)
@@ -492,24 +454,38 @@ class ImgTxtViewer:
 
 
 ####### Tools Menu ##################################################
+
+
         self.toolsMenu = Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Tools", underline=0, menu=self.toolsMenu)
 
 
         # Tools
         self.toolsMenu.add_command(label="Batch Tag Delete...", underline=0, command=self.batch_tag_delete)
-        self.toolsMenu.add_command(label="Resize Images...", underline=0, command=self.resize_images)
+        self.toolsMenu.add_command(label="Resize Images...", underline=2, command=self.resize_images)
+        self.toolsMenu.add_command(label="Find Duplicate Files...", underline=0, command=self.find_duplicate_files)
+        self.toolsMenu.add_command(label="Rename and Convert img-txt Pairs...", underline=2, state="disable", command=self.rename_and_convert_images)
         self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Cleanup Text", underline=0, state="disable", command=self.cleanup_all_text_files)
+        self.toolsMenu.add_command(label="Crop Current Image...", underline=0, state="disable", command=self.open_crop_tool)
+        self.toolsMenu.add_command(label="Expand Current Image", underline=1, state="disable", command=self.expand_image)
+        self.toolsMenu.add_command(label="Rotate Current Image", underline=1, state="disable", command=self.rotate_current_image)
+        self.toolsMenu.add_command(label="Flip Current Image", underline=1, state="disable", command=self.flip_current_image)
+
+        self.toolsMenu.add_separator()
+        self.toolsMenu.add_command(label="Next Empty Text File", underline=5, accelerator="Ctrl+E", state="disable", command=self.index_goto_next_empty)
+        self.toolsMenu.add_command(label="Cleanup all Text Files", underline=1, state="disable", command=self.cleanup_all_text_files)
         self.toolsMenu.add_separator()
         self.toolsMenu.add_command(label="Open Current Directory...", underline=13, state="disable", command=self.open_current_directory)
         self.toolsMenu.add_command(label="Open Current Image...", underline=13, state="disable", command=self.open_current_image)
         self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Delete img-txt Pair", accelerator="Del", state="disable", command=self.delete_pair)
+        self.toolsMenu.add_command(label="Duplicate img-txt pair", underline=2, state="disable", command=self.duplicate_pair)
+        self.toolsMenu.add_command(label="Delete img-txt Pair", accelerator="Shift+Del", state="disable", command=self.delete_pair)
         self.toolsMenu.add_command(label="Undo Delete", underline=0, command=self.undo_delete_pair, state="disabled")
 
 
 ####### About Menu ##################################################
+
+
         menubar.add_command(label="About", underline=0, command=self.toggle_about_window)
 
 
@@ -527,7 +503,7 @@ class ImgTxtViewer:
         self.primary_paned_window.bind('<ButtonRelease-1>', self.snap_sash_to_half)
 
 
-        # This frame is exclusively used for the displayed image.
+        # This frame is exclusively used for the displayed image and image info.
         self.master_image_frame = Frame(master)
         self.primary_paned_window.add(self.master_image_frame, stretch="always")
 
@@ -540,6 +516,10 @@ class ImgTxtViewer:
 
 
         # Image Label
+        self.stats_frame = Frame(self.master_image_frame)
+        self.stats_frame.pack(side="top", fill="x")
+        self.image_label = Label(self.stats_frame, text="...")
+        self.image_label.pack(side="top", fill="x")
         self.image_preview = Button(self.master_image_frame, relief="flat")
         self.image_preview.pack(side="left")
         self.image_preview.bind("<Double-1>", self.open_current_image)
@@ -549,20 +529,51 @@ class ImgTxtViewer:
         ToolTip.create(self.image_preview, "Double-Click to open in system image viewer \n\nRight-click / Middle-click to open in file explorer\n\nALT+Left/Right, Mouse-Wheel to move between img-txt pairs", 1000, 6, 4)
 
 
-        # Directory Button
+        # Directory Selection
         top_button_frame = Frame(self.master_control_frame)
         top_button_frame.pack(side="top", fill="x")
-        self.directory_button = Button(top_button_frame, overrelief="groove", textvariable=self.image_dir, command=self.choose_working_directory)
-        self.directory_button.pack(side="top", fill="x")
-        self.directory_button.bind('<Button-2>', self.open_current_directory)
-        self.directory_button.bind('<Button-3>', self.copy_to_clipboard)
-        ToolTip.create(self.directory_button, "Right click to copy path\n\nMiddle click to open in file explorer", 1000, 6, 4)
+        self.directory_entry = Entry(top_button_frame, textvariable=self.image_dir)
+        self.directory_entry.pack(side="left", fill="both", expand=True, pady=2)
+        self.directory_entry.bind('<Return>', self.set_working_directory)
+        self.dir_context_menu = Menu(self.directory_entry, tearoff=0)
+        self.dir_context_menu.add_command(label="Cut", command=self.directory_cut)
+        self.dir_context_menu.add_command(label="Copy", command=self.directory_copy)
+        self.dir_context_menu.add_command(label="Paste", command=self.directory_paste)
+        self.dir_context_menu.add_command(label="Delete", command=self.directory_delete)
+        self.dir_context_menu.add_command(label="Clear", command=self.directory_clear)
+        self.directory_entry.bind("<Button-3>", self.open_directory_context_menu)
+        self.directory_button = Button(top_button_frame, overrelief="groove", text="Browse...", command=self.choose_working_directory)
+        self.directory_button.pack(side="left", fill="x", pady=2)
+        self.directory_button = Button(top_button_frame, overrelief="groove", text="Open", command=lambda: self.open_directory(self.directory_entry.get()))
+        self.directory_button.pack(side="left", fill="x", pady=2)
+
+
+        # Image Index
+        self.index_frame = Frame(self.master_control_frame)
+        self.index_frame.pack(side="top", fill="both")
+        self.current_images_label = Label(self.index_frame, text="Pair", state="disabled")
+        self.current_images_label.pack(side="left", fill="both")
+        self.image_index_entry = Entry(self.index_frame, width=5, state="disabled")
+        self.image_index_entry.bind("<Return>", self.jump_to_image)
+        self.image_index_entry.pack(side="left", fill="both")
+
+        self.index_context_menu = Menu(self.directory_entry, tearoff=0)
+        self.index_context_menu.add_command(label="First", command=self.index_goto_first)
+        self.index_context_menu.add_command(label="Random", command=self.index_goto_random)
+        self.index_context_menu.add_command(label="Next Empty", command=self.index_goto_next_empty)
+        self.image_index_entry.bind("<Button-3>", self.open_index_context_menu)
+
+        self.total_images_label = Label(self.index_frame, text=f"of {len(self.image_files)}", state="disabled")
+        self.total_images_label.pack(side="left", fill="both")
 
 
         # Save Button
-        self.save_button = Button(top_button_frame, overrelief="groove", text="Save", fg="blue", state="disabled", command=self.save_text_file)
-        self.save_button.pack(side="top", fill="x", pady=2)
-        ToolTip.create(self.save_button, "CTRL+S ", 1000, 6, 4)
+        self.save_button = Button(self.index_frame, height=1, overrelief="groove", text="Save", fg="blue", state="disabled", command=self.save_text_file)
+        self.save_button.pack(fill="x", side="left", expand=True, pady=2)
+        ToolTip.create(self.save_button, "CTRL+S to save\n\nRight-Click to make the save button larger", 1000, 6, 4)
+        self.auto_save_checkbutton = Checkbutton(self.index_frame, overrelief="groove", width=10, text="Auto-save", state="disabled", variable=self.auto_save_var, command=self.change_label)
+        self.auto_save_checkbutton.pack(side="left", fill="both")
+        self.save_button.bind('<Button-3>', self.toggle_save_button_height)
 
 
         # Navigation Buttons
@@ -579,22 +590,8 @@ class ImgTxtViewer:
         # Saved Label / Autosave
         saved_label_frame = Frame(self.master_control_frame)
         saved_label_frame.pack(pady=2)
-        self.auto_save_checkbutton = Checkbutton(saved_label_frame, overrelief="groove", text="Auto-save", state="disabled", variable=self.auto_save_var, command=self.change_label)
-        self.auto_save_checkbutton.pack(side="right")
-        self.saved_label = Label(saved_label_frame, text="No Changes", state="disabled", width=23)
+        self.saved_label = Label(saved_label_frame, text="No Changes", state="disabled", width=35)
         self.saved_label.pack()
-
-
-        # Image Index
-        self.index_frame = Frame(self.master_control_frame)
-        self.index_frame.pack(side="top", expand="no")
-        self.current_images_label = Label(self.index_frame, text="Pair", state="disabled")
-        self.current_images_label.pack(side="left", expand="yes")
-        self.image_index_entry = Entry(self.index_frame, width=5, state="disabled")
-        self.image_index_entry.bind("<Return>", self.jump_to_image)
-        self.image_index_entry.pack(side="left", expand="no")
-        self.total_images_label = Label(self.index_frame, text=f"of {len(self.image_files)}", state="disabled")
-        self.total_images_label.pack(side="left", expand="yes")
 
 
         # Suggestion text
@@ -608,8 +605,8 @@ class ImgTxtViewer:
         for header, section in zip(AboutWindow.info_headers, AboutWindow.info_content):
             self.info_text.insert("end", header + "\n", "header")
             self.info_text.insert("end", section + "\n", "section")
-        self.info_text.tag_config("header", font=("Segoe UI", 10, "bold"))
-        self.info_text.tag_config("section", font=("Segoe UI", 10))
+        self.info_text.tag_config("header", font=("Segoe UI", 9, "bold"))
+        self.info_text.tag_config("section", font=("Segoe UI", 9))
         self.info_text.bind("<Button-3>", self.show_textContext_menu)
         self.info_text.config(state='disabled', wrap="word")
 
@@ -669,7 +666,6 @@ class ImgTxtViewer:
         self.text_widget_frame = Frame(self.master_control_frame)
         self.text_pane.add(self.text_widget_frame, stretch="never")
         self.text_pane.paneconfigure(self.text_widget_frame)
-        # Create the notebook and tabs
         self.text_notebook = ttk.Notebook(self.text_widget_frame)
         self.tab1 = Frame(self.text_notebook)
         self.tab2 = Frame(self.text_notebook)
@@ -679,13 +675,12 @@ class ImgTxtViewer:
         self.tab6 = Frame(self.text_notebook)
         self.tab7 = Frame(self.text_notebook)
         self.text_notebook.add(self.tab1, text='Search & Replace')
-        self.text_notebook.add(self.tab2, text='Prefix Text')
-        self.text_notebook.add(self.tab3, text='Append Text')
-        self.text_notebook.add(self.tab4, text='Filter Pairs')
-        self.text_notebook.add(self.tab5, text='Active Highlights')
-        self.text_notebook.add(self.tab6, text='Font Settings')
-        self.text_notebook.add(self.tab7, text='Custom Dictionary')
-
+        self.text_notebook.add(self.tab2, text='Prefix')
+        self.text_notebook.add(self.tab3, text='Append')
+        self.text_notebook.add(self.tab4, text='Filter')
+        self.text_notebook.add(self.tab5, text='Highlight')
+        self.text_notebook.add(self.tab6, text='Font')
+        self.text_notebook.add(self.tab7, text='My Tags')
         self.text_notebook.pack(fill='both')
         self.create_search_and_replace_widgets_tab1()
         self.create_prefix_text_widgets_tab2()
@@ -700,96 +695,166 @@ class ImgTxtViewer:
         def clear_all():
             self.search_entry.delete(0, 'end')
             self.replace_entry.delete(0, 'end')
-        self.search_label = Label(self.tab1, text="Search for:")
+        self.tab1_frame = Frame(self.tab1)
+        self.tab1_frame.pack(side='top', fill='both')
+        self.tab1_button_frame = Frame(self.tab1_frame)
+        self.tab1_button_frame.pack(side='top', fill='x')
+        self.search_label = Label(self.tab1_button_frame, width=11, text="Search for:")
         self.search_label.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.search_label, "Enter the EXACT text you want to search for", 200, 6, 4)
-        self.search_entry = Entry(self.tab1, textvariable=self.search_string_var, width=4)
-        self.search_entry.pack(side='left', anchor="n", pady=4, fill='x', expand=True)
-        self.replace_label = Label(self.tab1, text="Replace with:")
+        self.search_entry = Entry(self.tab1_button_frame, textvariable=self.search_string_var, width=4)
+        self.search_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
+        self.replace_label = Label(self.tab1_button_frame, width=11, text="Replace with:")
         self.replace_label.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.replace_label, "Enter the text you want to replace the searched text with\n\nLeave empty to replace with nothing (delete)", 200, 6, 4)
-        self.replace_entry = Entry(self.tab1, textvariable=self.replace_string_var, width=4)
-        self.replace_entry.pack(side='left', anchor="n", pady=4, fill='x', expand=True)
+        self.replace_entry = Entry(self.tab1_button_frame, textvariable=self.replace_string_var, width=4)
+        self.replace_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
         self.replace_entry.bind('<Return>', lambda event: self.search_and_replace())
-        self.replace_button = Button(self.tab1, text="Go!", overrelief="groove", width=4, command=self.search_and_replace)
+        self.replace_button = Button(self.tab1_button_frame, text="Go!", overrelief="groove", width=4, command=self.search_and_replace)
         self.replace_button.pack(side='left', anchor="n", pady=4, padx=1)
         ToolTip.create(self.replace_button, "Text files will be backup up", 200, 6, 4)
-        self.clear_button = Button(self.tab1, text="Clear", overrelief="groove", width=4, command=clear_all)
+        self.clear_button = Button(self.tab1_button_frame, text="Clear", overrelief="groove", width=4, command=clear_all)
         self.clear_button.pack(side='left', anchor="n", pady=4, padx=1)
-        self.undo_button = Button(self.tab1, text="Undo", overrelief="groove", width=4, command=self.restore_backup)
+        self.undo_button = Button(self.tab1_button_frame, text="Undo", overrelief="groove", width=4, command=self.restore_backup)
         self.undo_button.pack(side='left', anchor="n", pady=4, padx=1)
         ToolTip.create(self.undo_button, "Revert last action", 200, 6, 4)
+        self.tab1_text_frame = Frame(self.tab1_frame, borderwidth=0)
+        self.tab1_text_frame.pack(side='top', fill="both")
+        description_textbox = ScrolledText(self.tab1_text_frame)
+        description_textbox.pack(side='bottom', fill='both')
+        description_textbox.insert("1.0", "Use this tool to search for a string of text across all text files in the selected directory.\n\n"
+                                   "If a match is found, it will be replaced exactly with the given text.\n\n"
+                                   "Example:\n"
+                                   "Search for: the big brown dog\n"
+                                   "Replace with: the big red dog\n\n"
+                                   "This will replace all instances of 'the big brown dog' with 'the big red dog'.")
+        description_textbox.config(state="disabled", wrap="word")
 
 
     def create_prefix_text_widgets_tab2(self):
         def clear():
             self.prefix_entry.delete(0, 'end')
-        self.prefix_label = Label(self.tab2, text="Prefix text:")
+        self.tab2_frame = Frame(self.tab2)
+        self.tab2_frame.pack(side='top', fill='both')
+        self.tab2_button_frame = Frame(self.tab2_frame)
+        self.tab2_button_frame.pack(side='top', fill='x')
+        self.prefix_label = Label(self.tab2_button_frame, width=11, text="Prefix text:")
         self.prefix_label.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.prefix_label, "Enter the text you want to insert at the START of all text files\n\nCommas will be inserted as needed", 200, 6, 4)
-        self.prefix_entry = Entry(self.tab2, textvariable=self.prefix_string_var, width=4)
-        self.prefix_entry.pack(side='left', anchor="n", pady=4, fill='x', expand=True)
+        self.prefix_entry = Entry(self.tab2_button_frame, textvariable=self.prefix_string_var, width=4)
+        self.prefix_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
         self.prefix_entry.bind('<Return>', lambda event: self.prefix_text_files())
-        self.prefix_button = Button(self.tab2, text="Go!", overrelief="groove", width=4, command=self.prefix_text_files)
+        self.prefix_button = Button(self.tab2_button_frame, text="Go!", overrelief="groove", width=4, command=self.prefix_text_files)
         self.prefix_button.pack(side='left', anchor="n", pady=4, padx=1)
         ToolTip.create(self.prefix_button, "Text files will be backup up", 200, 6, 4)
-        self.clear_button = Button(self.tab2, text="Clear", overrelief="groove", width=4, command=clear)
+        self.clear_button = Button(self.tab2_button_frame, text="Clear", overrelief="groove", width=4, command=clear)
         self.clear_button.pack(side='left', anchor="n", pady=4, padx=1)
-        self.undo_button = Button(self.tab2, text="Undo", overrelief="groove", width=4, command=self.restore_backup)
+        self.undo_button = Button(self.tab2_button_frame, text="Undo", overrelief="groove", width=4, command=self.restore_backup)
         self.undo_button.pack(side='left', anchor="n", pady=4, padx=1)
         ToolTip.create(self.undo_button, "Revert last action", 200, 6, 4)
+        self.tab2_text_frame = Frame(self.tab2_frame, borderwidth=0)
+        self.tab2_text_frame.pack(side='top', fill="both")
+        description_textbox = ScrolledText(self.tab2_text_frame)
+        description_textbox.pack(side='bottom', fill='both')
+        description_textbox.insert("1.0", "Use this tool to prefix all text files in the selected directory with the entered text.\n\n"
+                                   "This means that the entered text will appear at the start of each text file.")
+        description_textbox.config(state="disabled", wrap="word")
 
 
     def create_append_text_widgets_tab3(self):
         def clear():
             self.append_entry.delete(0, 'end')
-        self.append_label = Label(self.tab3, text="Append text:")
+        self.tab3_frame = Frame(self.tab3)
+        self.tab3_frame.pack(side='top', fill='both')
+        self.tab3_button_frame = Frame(self.tab3_frame)
+        self.tab3_button_frame.pack(side='top', fill='x')
+        self.append_label = Label(self.tab3_button_frame, width=11, text="Append text:")
         self.append_label.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.append_label, "Enter the text you want to insert at the END of all text files\n\nCommas will be inserted as needed", 200, 6, 4)
-        self.append_entry = Entry(self.tab3, textvariable=self.append_string_var, width=4)
-        self.append_entry.pack(side='left', anchor="n", pady=4, fill='x', expand=True)
+        self.append_entry = Entry(self.tab3_button_frame, textvariable=self.append_string_var, width=4)
+        self.append_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
         self.append_entry.bind('<Return>', lambda event: self.append_text_files())
-        self.append_button = Button(self.tab3, text="Go!", overrelief="groove", width=4, command=self.append_text_files)
+        self.append_button = Button(self.tab3_button_frame, text="Go!", overrelief="groove", width=4, command=self.append_text_files)
         self.append_button.pack(side='left', anchor="n", pady=4, padx=1)
         ToolTip.create(self.append_button, "Text files will be backup up", 200, 6, 4)
-        self.clear_button = Button(self.tab3, text="Clear", overrelief="groove", width=4, command=clear)
+        self.clear_button = Button(self.tab3_button_frame, text="Clear", overrelief="groove", width=4, command=clear)
         self.clear_button.pack(side='left', anchor="n", pady=4, padx=1)
-        self.undo_button = Button(self.tab3, text="Undo", overrelief="groove", width=4, command=self.restore_backup)
+        self.undo_button = Button(self.tab3_button_frame, text="Undo", overrelief="groove", width=4, command=self.restore_backup)
         self.undo_button.pack(side='left', anchor="n", pady=4, padx=1)
         ToolTip.create(self.undo_button, "Revert last action", 200, 6, 4)
+        self.tab3_text_frame = Frame(self.tab3_frame, borderwidth=0)
+        self.tab3_text_frame.pack(side='top', fill="both")
+        description_textbox = ScrolledText(self.tab3_text_frame)
+        description_textbox.pack(side='bottom', fill='both')
+        description_textbox.insert("1.0", "Use this tool to append all text files in the selected directory with the entered text.\n\n"
+                                   "This means that the entered text will appear at the end of each text file.")
+        description_textbox.config(state="disabled", wrap="word")
 
 
     def create_filter_text_image_pairs_widgets_tab4(self):
-        self.filter_label = Label(self.tab4, text="Filter by:")
+        self.tab4_frame = Frame(self.tab4)
+        self.tab4_frame.pack(side='top', fill='both')
+        self.tab4_button_frame = Frame(self.tab4_frame)
+        self.tab4_button_frame.pack(side='top', fill='x')
+        self.filter_label = Label(self.tab4_button_frame, width=11, text="Filter pairs by:")
         self.filter_label.pack(side='left', anchor="n", pady=4)
-        ToolTip.create(self.filter_label, "Enter the EXACT text you want to filter by\nThis will search all text files for the exact string of text and only display img-txt pairs containing that text", 200, 6, 4)
-        self.filter_entry = Entry(self.tab4, textvariable=self.filter_string_var, width=4)
-        self.filter_entry.pack(side='left', anchor="n", pady=4, fill='x', expand=True)
-        self.filter_button = Button(self.tab4, text="Go!", overrelief="groove", width=4, command=self.filter_text_image_pairs)
+        ToolTip.create(self.filter_label, "Enter the EXACT text you want to filter by\nThis will filter all img-txt pairs based on the provided text, see below for more info", 200, 6, 4)
+        self.filter_entry = Entry(self.tab4_button_frame, textvariable=self.filter_string_var, width=4)
+        self.filter_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
+        self.filter_button = Button(self.tab4_button_frame, text="Go!", overrelief="groove", width=4, command=self.filter_text_image_pairs)
         self.filter_button.pack(side='left', anchor="n", pady=4, padx=1)
         ToolTip.create(self.filter_button, "Text files will be filtered based on the entered text", 200, 6, 4)
-        self.revert_button = Button(self.tab4, text="Clear Filter", overrelief="groove", width=8, command=self.revert_text_image_filter)
+        self.revert_button = Button(self.tab4_button_frame, text="Clear", overrelief="groove", width=4, command=self.revert_text_image_filter)
         self.revert_button.pack(side='left', anchor="n", pady=4, padx=1)
         ToolTip.create(self.revert_button, "Clear any filtering applied", 200, 6, 4)
         self.filter_use_regex = BooleanVar()
-        self.regex_checkbutton = Checkbutton(self.tab4, text="Use Regex", overrelief="groove", variable=self.filter_use_regex)
+        self.regex_checkbutton = Checkbutton(self.tab4_button_frame, text="Use Regex", overrelief="groove", variable=self.filter_use_regex)
         self.regex_checkbutton.pack(side='left', anchor="n", pady=4, padx=1)
-        ToolTip.create(self.regex_checkbutton, "Check this if you want to use regular expressions for filtering", 200, 6, 4)
+        ToolTip.create(self.regex_checkbutton, "Check this to use regular expressions for filtering", 200, 6, 4)
+        self.filter_empty_files = BooleanVar()
+        self.empty_files_checkbutton = Checkbutton(self.tab4_button_frame, text="Empty Files", overrelief="groove", variable=self.filter_empty_files, command=self.toggle_empty_files_filter)
+        self.empty_files_checkbutton.pack(side='left', anchor="n", pady=4, padx=1)
+        ToolTip.create(self.empty_files_checkbutton, "Check this to show only empty text files", 200, 6, 4)
+        self.tab4_text_frame = Frame(self.tab4_frame, borderwidth=0)
+        self.tab4_text_frame.pack(side='top', fill="both")
+        description_textbox = ScrolledText(self.tab4_text_frame)
+        description_textbox.pack(side='bottom', fill='both')
+        description_textbox.insert("1.0", "This tool will filter all img-txt pairs based on the provided text.\n\n"
+                                   "Enter any string of text to display only img-txt pairs containing that text.\n"
+                                   "Use ' + ' to include multiple strings when filtering.\n"
+                                   "Use '!' before the text to exclude any pairs containing that text.\n\n"
+                                   "Examples:\n"
+                                   "'dog' (shows only pairs containing the text dog)\n"
+                                   "'!dog' (removes all pairs containing the text dog)\n"
+                                   "'!dog + cat' (remove dog pairs, display cat pairs)")
+        description_textbox.config(state="disabled", wrap="word")
 
 
     def create_custom_active_highlight_widgets_tab5(self):
         def clear():
             self.custom_entry.delete(0, 'end')
-        self.custom_label = Label(self.tab5, text="Highlight Text:")
+        self.tab5_frame = Frame(self.tab5)
+        self.tab5_frame.pack(side='top', fill='both')
+        self.tab5_button_frame = Frame(self.tab5_frame)
+        self.tab5_button_frame.pack(side='top', fill='x')
+        self.custom_label = Label(self.tab5_button_frame, width=11, text="Highlight Text:")
         self.custom_label.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.custom_label, "Enter the text you want to highlight\nUse ' + ' to highlight multiple strings of text\n\nExample: dog + cat", 200, 6, 4)
-        self.custom_entry = Entry(self.tab5, textvariable=self.custom_highlight_string, width=4)
-        self.custom_entry.pack(side='left', anchor="n", pady=4, fill='x', expand=True)
+        self.custom_entry = Entry(self.tab5_button_frame, textvariable=self.custom_highlight_string, width=4)
+        self.custom_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
         self.custom_entry.bind('<KeyRelease>', lambda event: self.highlight_custom_string())
-        self.highlight_button = Button(self.tab5, text="Highlight", overrelief="groove", width=8, command=self.highlight_custom_string)
+        self.highlight_button = Button(self.tab5_button_frame, text="Go!", overrelief="groove", width=4, command=self.highlight_custom_string)
         self.highlight_button.pack(side='left', anchor="n", pady=4, padx=1)
-        self.clear_button = Button(self.tab5, text="Clear", overrelief="groove", width=4, command=clear)
+        self.clear_button = Button(self.tab5_button_frame, text="Clear", overrelief="groove", width=4, command=clear)
         self.clear_button.pack(side='left', anchor="n", pady=4, padx=1)
+        self.tab5_text_frame = Frame(self.tab5_frame, borderwidth=0)
+        self.tab5_text_frame.pack(side='top', fill="both")
+        description_textbox = ScrolledText(self.tab5_text_frame)
+        description_textbox.pack(side='bottom', fill='both')
+        description_textbox.insert("1.0", "Enter the text you want to highlight each time you move to a new img-txt pair.\n\n"
+                                   "Use ' + ' to highlight multiple strings of text\n\n"
+                                   "Example: dog + cat")
+        description_textbox.config(state="disabled", wrap="word")
 
 
     def create_font_widgets_tab6(self, event=None):
@@ -831,13 +896,13 @@ class ImgTxtViewer:
         def save_content():
             with open('my_tags.csv', 'w') as file:
                 file.write(self.custom_dictionary_textbox.get("1.0", "end-1c"))
-                self.change_autocomplete_dictionary()
+                self.update_autocomplete_dictionary()
         def refresh_content():
             with open('my_tags.csv', 'r') as file:
                 content = file.read()
                 self.custom_dictionary_textbox.delete("1.0", 'end')
                 self.custom_dictionary_textbox.insert('end', content)
-                self.change_autocomplete_dictionary()
+                self.update_autocomplete_dictionary()
         self.create_custom_dictionary()
         self.tab7_frame = Frame(self.tab7)
         self.tab7_frame.pack(side='top', fill='both')
@@ -852,7 +917,7 @@ class ImgTxtViewer:
         self.refresh_button = Button(self.tab7_button_frame, text="Refresh", overrelief="groove", takefocus=False, command=refresh_content)
         ToolTip.create(self.refresh_button, "Refresh the suggestion dictionary after saving your changes", 200, 6, 4)
         self.refresh_button.pack(side='left', padx=1, fill='x', expand=True)
-        self.custom_dictionary_textbox = ScrolledText(self.tab7_frame)
+        self.custom_dictionary_textbox = ScrolledText(self.tab7_frame, wrap="word")
         self.custom_dictionary_textbox.pack(side='bottom', fill='both')
         with open('my_tags.csv', 'r') as file:
             content = file.read()
@@ -886,6 +951,10 @@ class ImgTxtViewer:
         self.text_box.bind("<Tab>", self.disable_button)
         self.text_box.bind("<Alt_L>", self.disable_button)
         self.text_box.bind("<Alt_R>", self.disable_button)
+        # Show next empty text file
+        self.text_box.bind("<Control-e>", self.index_goto_next_empty)
+        # Refresh text box
+        self.text_box.bind("<F5>", lambda event: self.refresh_text_box())
 
 
     # Text Box context menu
@@ -895,22 +964,30 @@ class ImgTxtViewer:
         if widget_in_focus == self.info_text:
             textContext_menu.add_command(label="Copy", command=lambda: widget_in_focus.event_generate('<<Copy>>'))
         elif widget_in_focus == self.text_box:
+            try:
+                selected_text = self.text_box.get("sel.first", "sel.last")
+                current_state = "normal" if len(selected_text) >= 3 else "disabled"
+            except TclError:
+                current_state = "disabled"
             textContext_menu.add_command(label="Cut", accelerator="Ctrl+X", command=lambda: (widget_in_focus.event_generate('<<Cut>>'), self.change_label()))
             textContext_menu.add_command(label="Copy", accelerator="Ctrl+C", command=lambda: widget_in_focus.event_generate('<<Copy>>'))
             textContext_menu.add_command(label="Paste", accelerator="Ctrl+V", command=lambda: (widget_in_focus.event_generate('<<Paste>>'), self.change_label()))
             textContext_menu.add_command(label="Delete", accelerator="Del", command=lambda: (widget_in_focus.event_generate('<<Clear>>'), self.change_label()))
+            textContext_menu.add_command(label="Refresh", accelerator="F5", command=self.refresh_text_box)
             textContext_menu.add_separator()
             textContext_menu.add_command(label="Undo", accelerator="Ctrl+Z", command=lambda: (widget_in_focus.event_generate('<<Undo>>'), self.change_label()))
             textContext_menu.add_command(label="Redo", accelerator="Ctrl+Y", command=lambda: (widget_in_focus.event_generate('<<Redo>>'), self.change_label()))
             textContext_menu.add_separator()
             textContext_menu.add_command(label="Open Text Directory...", command=self.open_current_directory)
+            textContext_menu.add_command(label="Add Selected Text to My Tags", state=current_state, command=self.add_to_custom_dictionary)
             textContext_menu.add_separator()
             textContext_menu.add_command(label="Highlight all Duplicates", accelerator="Ctrl+F", command=self.highlight_all_duplicates)
+            textContext_menu.add_command(label="Next Empty Text File", accelerator="Ctrl+E", command=self.index_goto_next_empty)
             textContext_menu.add_separator()
-            textContext_menu.add_checkbutton(label="Highlighting Duplicates", variable=self.highlighting_duplicates)
+            textContext_menu.add_checkbutton(label="Highlighting Selected Duplicates", variable=self.highlighting_duplicates)
             textContext_menu.add_checkbutton(label="Clean Text on Save", variable=self.cleaning_text)
-            textContext_menu.add_checkbutton(label="Big Comma Mode", variable=self.bold_commas, command=self.toggle_big_comma_mode)
-            textContext_menu.add_checkbutton(label="List View", variable=self.list_mode, command=self.toggle_list_mode)
+            textContext_menu.add_checkbutton(label="Big Comma Mode", variable=self.bold_comma_var, command=self.toggle_big_comma_mode)
+            textContext_menu.add_checkbutton(label="List View", variable=self.list_mode_var, command=self.toggle_list_mode)
         textContext_menu.tk_popup(e.x_root, e.y_root)
 
 
@@ -920,14 +997,22 @@ class ImgTxtViewer:
         imageContext_menu.add_command(label="Open Current Directory...", command=self.open_current_directory)
         imageContext_menu.add_command(label="Open Current Image...", command=self.open_current_image)
         imageContext_menu.add_separator()
-        imageContext_menu.add_command(label="Delete img-txt Pair", accelerator="Del", command=self.delete_pair)
+        imageContext_menu.add_command(label="Duplicate img-txt pair", command=self.duplicate_pair)
+        imageContext_menu.add_command(label="Delete img-txt Pair", accelerator="Shift+Del", command=self.delete_pair)
         imageContext_menu.add_command(label="Undo Delete", command=self.undo_delete_pair, state=self.undo_state.get())
+        imageContext_menu.add_separator()
+        imageContext_menu.add_command(label="Crop Image...", command=self.open_crop_tool)
+        imageContext_menu.add_command(label="Expand Image", command=self.expand_image)
+        imageContext_menu.add_command(label="Rotate Image", command=self.rotate_current_image)
+        imageContext_menu.add_command(label="Flip Image", command=self.flip_current_image)
+
+
         imageContext_menu.add_separator()
         imageContext_menu.add_checkbutton(label="Vertical View", command=self.swap_pane_orientation)
         imageContext_menu.add_command(label="Swap img-txt - Sides", command=self.swap_pane_sides)
         imageContext_menu.add_separator()
         imageContext_menu.add_command(label="Max Image Size", state="disabled", activebackground="#f0f0f0", activeforeground="black")
-        for size in self.sizes:
+        for size in self.max_img_size_value:
             imageContext_menu.add_radiobutton(label=size[0], variable=self.max_img_width, value=size[1], command=lambda s=size: self.save_text_file())
         imageContext_menu.tk_popup(event.x_root, event.y_root)
 
@@ -938,6 +1023,103 @@ class ImgTxtViewer:
 #                                     #
 #region -  Additional Interface Setup #
 #                                     #
+
+
+####### Directory entry context menu ##################################################
+
+
+    def open_directory_context_menu(self, event):
+        try:
+            self.dir_context_menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            self.dir_context_menu.grab_release()
+
+
+    def directory_copy(self):
+        try:
+            selected_text = self.directory_entry.selection_get()
+            self.directory_entry.clipboard_clear()
+            self.directory_entry.clipboard_append(selected_text)
+        except TclError: pass
+
+
+    def directory_cut(self):
+        try:
+            selected_text = self.directory_entry.selection_get()
+            self.directory_entry.clipboard_clear()
+            self.directory_entry.clipboard_append(selected_text)
+            start = self.directory_entry.index(SEL_FIRST)
+            end = self.directory_entry.index(SEL_LAST)
+            self.directory_entry.delete(start, end)
+        except TclError: pass
+
+
+    def directory_paste(self):
+        try:
+            self.directory_entry.insert(INSERT, self.directory_entry.clipboard_get())
+        except TclError: pass
+
+
+    def directory_delete(self):
+        try:
+            start = self.directory_entry.index(SEL_FIRST)
+            end = self.directory_entry.index(SEL_LAST)
+            self.directory_entry.delete(start, end)
+        except TclError: pass
+
+
+    def directory_clear(self):
+        self.directory_entry.delete(0, END)
+
+
+####### Index entry context menu ##################################################
+
+
+    def open_index_context_menu(self, event):
+        try:
+            self.index_context_menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            self.index_context_menu.grab_release()
+
+
+    def index_goto_first(self):
+            self.image_index_entry.delete(0, "end")
+            self.image_index_entry.insert(0, 1)
+            self.jump_to_image()
+
+
+    def index_goto_random(self):
+        total_images = len(self.text_files)
+        current_time = time.time()
+        random_index = hash(current_time) % total_images
+        self.image_index_entry.delete(0, "end")
+        self.image_index_entry.insert(0, random_index + 1)
+        self.jump_to_image()
+
+
+    def index_goto_next_empty(self, event=None):
+            next_empty = self.get_next_empty_file_index()
+            if next_empty is not None:
+                self.image_index_entry.delete(0, "end")
+                self.image_index_entry.insert(0, next_empty + 1)
+                self.jump_to_image()
+
+
+    def get_next_empty_file_index(self):
+        start_index = (self.current_index + 1) % len(self.text_files)
+        for i in range(len(self.text_files)):
+            index = (start_index + i) % len(self.text_files)
+            text_file = self.text_files[index]
+            try:
+                with open(text_file, 'r') as file:
+                    if file.read().strip() == "":
+                        return index
+            except FileNotFoundError:
+                return index
+        return None
+
+
+####### Misc setup ##################################################
 
 
     def set_icon(self):
@@ -955,17 +1137,25 @@ class ImgTxtViewer:
         tool_commands =    [
                            "Open Current Directory...",
                            "Open Current Image...",
-                           "Cleanup Text",
-                           "Delete img-txt Pair"
+                           "Next Empty Text File",
+                           "Cleanup all Text Files",
+                           "Delete img-txt Pair",
+                           "Rename and Convert img-txt Pairs...",
+                           "Crop Current Image...",
+                           "Expand Current Image",
+                           "Rotate Current Image",
+                           "Flip Current Image",
+                           "Duplicate img-txt pair"
                            ]
         options_commands = [
                             "Suggestion Dictionary",
                             "Suggestion Quantity",
                             "Max Image Size",
-                            "Highlighting Duplicates",
+                            "Highlighting Selected Duplicates",
                             "Cleaning Text on Save",
                             "Colored Suggestions",
                             "Big Comma Mode",
+                            "Big Save Button",
                             "List View",
                             "Vertical View",
                             "Swap img-txt Sides"
@@ -984,7 +1174,20 @@ class ImgTxtViewer:
         self.auto_save_checkbutton.configure(state="normal")
 
 
+    def toggle_save_button_height(self, event=None):
+        current_height = self.save_button.cget('height')
+        if current_height == 2:
+            self.big_save_button_var.set(False)
+            new_height = 1
+        else:
+            self.big_save_button_var.set(True)
+            new_height = 2
+        self.save_button.config(height=new_height)
+
+
 ####### PanedWindow ##################################################
+
+
     def configure_pane_position(self):
         window_width = self.master.winfo_width()
         self.primary_paned_window.sash_place(0, window_width // 2, 0)
@@ -1039,6 +1242,8 @@ class ImgTxtViewer:
 
 
 ### Display Suggestions ##################################################
+
+
     def handle_suggestion_event(self, event):
         if event.keysym == "Tab":
             if self.selected_suggestion_index < len(self.suggestions):
@@ -1079,13 +1284,13 @@ class ImgTxtViewer:
             return
         text = self.text_box.get("1.0", "insert")
         self.clear_suggestions()
-        if self.list_mode.get():
+        if self.list_mode_var.get():
             elements = [element.strip() for element in text.split('\n')]
         else:
             elements = [element.strip() for element in text.split(',')]
         current_word = elements[-1]
         current_word = current_word.strip()
-        if current_word:
+        if current_word and len(self.selected_csv_files) >= 1:
             suggestions = self.autocomplete.autocomplete(current_word)
             suggestions.sort(key=lambda x: self.autocomplete.get_score(x[0], current_word), reverse=True)
             self.suggestions = [(suggestion[0].replace("_", " ") if suggestion[0] not in tags_with_underscore else suggestion[0], suggestion[1]) for suggestion in suggestions]
@@ -1122,7 +1327,7 @@ class ImgTxtViewer:
     def cursor_inside_tag(self, cursor_position):
         line, column = map(int, cursor_position.split('.'))
         line_text = self.text_box.get(f"{line}.0", f"{line}.end")
-        if self.list_mode.get():
+        if self.list_mode_var.get():
             inside_tag = column not in (0, len(line_text))
         else:
             inside_tag = not (column == 0 or line_text[column-1:column] in (',', ' ') or line_text[column:column+1] in (',', ' ') or column == len(line_text))
@@ -1139,25 +1344,27 @@ class ImgTxtViewer:
 
 
 ### Insert Suggestion ##################################################
+
+
     def insert_selected_suggestion(self, selected_suggestion):
         selected_suggestion = selected_suggestion.strip()
         text = self.text_box.get("1.0", "insert").rstrip()
-        elements = [element.strip() for element in text.split('\n' if self.list_mode.get() else ',')]
+        elements = [element.strip() for element in text.split('\n' if self.list_mode_var.get() else ',')]
         current_word = elements[-1]
         remaining_text = self.text_box.get("insert", "end").rstrip('\n')
         start_of_current_word = "1.0 + {} chars".format(len(text) - len(current_word))
         self.text_box.delete(start_of_current_word, "insert")
-        if not remaining_text.startswith(('\n' if self.list_mode.get() else ',')):
-            self.text_box.insert(start_of_current_word, selected_suggestion + ('\n' if self.list_mode.get() else ', '))
+        if not remaining_text.startswith(('\n' if self.list_mode_var.get() else ',')):
+            self.text_box.insert(start_of_current_word, selected_suggestion + ('\n' if self.list_mode_var.get() else ', '))
         else:
             self.text_box.insert(start_of_current_word, selected_suggestion)
         cleaned_text = self.cleanup_text(self.text_box.get("1.0", "end"))
-        if not self.list_mode.get():
+        if not self.list_mode_var.get():
             cleaned_text = cleaned_text.rstrip() + ', '
         self.text_box.delete("1.0", "end")
         self.text_box.insert("1.0", cleaned_text)
         self.position_cursor(start_of_current_word, selected_suggestion)
-        if self.list_mode.get():
+        if self.list_mode_var.get():
             self.insert_newline_listmode(called_from_insert=True)
 
 
@@ -1171,7 +1378,7 @@ class ImgTxtViewer:
 
 
     def insert_newline_listmode(self, event=None, called_from_insert=False):
-        if self.list_mode.get():
+        if self.list_mode_var.get():
             self.text_box.insert(INSERT, '\n')
             if called_from_insert and self.text_box.index(INSERT) != self.text_box.index("end-1c"):
                 self.text_box.mark_set("insert", "insert-1l")
@@ -1181,23 +1388,49 @@ class ImgTxtViewer:
 ### Suggestion Settings ##################################################
 
 
-    def change_autocomplete_dictionary(self):
-        if self.use_colored_suggestions.get() == True:
-            self.suggestion_colors = {0: "black", 1: "#c00004", 2: "black", 3: "#a800aa", 4: "#00ab2c", 5: "#fd9200"} #0=General tags, 1=Artists, 2=UNUSED, 3=Copyright, 4=Character, 5=Meta
+    def update_autocomplete_dictionary(self):
+        csv_vars = {
+            'danbooru.csv': self.csv_danbooru,
+            'e621.csv': self.csv_e621,
+            'dictionary.csv': self.csv_english_dictionary
+            }
+        self.selected_csv_files = [csv_file for csv_file, var in csv_vars.items() if var.get()]
+        if len(self.selected_csv_files) == 0:
+              self.autocomplete = Autocomplete("None")
+              self.clear_suggestions()
+        if len(self.selected_csv_files) == 1:
+            self.autocomplete = Autocomplete(self.selected_csv_files[0])
+            if self.selected_csv_files[0] == 'danbooru.csv':
+                self.set_suggestion_color('danbooru.csv')
+                self.clear_suggestions()
+            elif self.selected_csv_files[0] == 'e621.csv':
+                self.set_suggestion_color('e621.csv')
+                self.clear_suggestions()
+            elif self.selected_csv_files[0] == 'dictionary.csv':
+                self.set_suggestion_color('dictionary.csv')
+                self.clear_suggestions()
         else:
-            self.suggestion_colors = {0: "black", 1: "black", 2: "black", 3: "black", 4: "black", 5: "black"}
-        if self.csv_var.get() == 'all':
-            self.autocomplete = Autocomplete('danbooru.csv')
-            self.autocomplete.data.update(Autocomplete('dictionary.csv').data)
-            self.autocomplete.data.update(Autocomplete('e621.csv').data)
-        elif self.csv_var.get() == 'e621.csv':
-            self.autocomplete = Autocomplete(self.csv_var.get())
-            if self.use_colored_suggestions.get() == True:
-                self.suggestion_colors = {-1: "black", 0: "black", 1: "#f2ac08", 3: "#dd00dd", 4: "#00aa00", 5: "#ed5d1f", 6: "#ff3d3d", 7: "#ff3d3d", 8: "#228822"}
-            else:
-                self.suggestion_colors = {0: "black", 1: "black", 2: "black", 3: "black", 4: "black", 5: "black", 6: "black", 7: "black", 8: "black"}
-        else:
-            self.autocomplete = Autocomplete(self.csv_var.get())
+            for csv_file in self.selected_csv_files:
+                self.autocomplete.data.update(Autocomplete(csv_file).data)
+                if csv_file == 'danbooru.csv':
+                    self.set_suggestion_color('danbooru.csv')
+                    self.clear_suggestions()
+                elif csv_file == 'e621.csv':
+                    self.set_suggestion_color('e621.csv')
+                    self.clear_suggestions()
+                elif csv_file == 'dictionary.csv':
+                    self.set_suggestion_color('dictionary.csv')
+                    self.clear_suggestions()
+
+
+    def set_suggestion_color(self, csv_file):
+        color_mappings = {
+            'dictionary.csv': {0: "black", 1: "black", 2: "black", 3: "black", 4: "black", 5: "black", 6: "black", 7: "black", 8: "black"},
+            'danbooru.csv': {0: "black", 1: "#c00004", 2: "black", 3: "#a800aa", 4: "#00ab2c", 5: "#fd9200"},
+            'e621.csv': {-1: "black", 0: "black", 1: "#f2ac08", 3: "#dd00dd", 4: "#00aa00", 5: "#ed5d1f", 6: "#ff3d3d", 7: "#ff3d3d", 8: "#228822"}
+            }
+        black_mappings = {key: "black" for key in color_mappings[csv_file].keys()}
+        self.suggestion_colors = color_mappings[csv_file] if self.use_colored_suggestions.get() else black_mappings
 
 
     def set_suggestion_quantity(self, suggestion_quantity):
@@ -1305,7 +1538,7 @@ class ImgTxtViewer:
         self.highlighting_all_duplicates.set(False)
         for tag in self.text_box.tag_names():
             self.text_box.tag_remove(tag, "1.0", "end")
-        if self.bold_commas.get():
+        if self.bold_comma_var.get():
             self.toggle_big_comma_mode()
 
 
@@ -1335,17 +1568,14 @@ class ImgTxtViewer:
                 self.text_files.append(text_file_path)
         self.original_image_files = list(self.image_files)
         self.original_text_files = list(self.text_files)
+        self.saved_label.config(text="No Changes", bg="#f0f0f0", fg="black")
         self.enable_menu_options()
         self.create_text_box()
         self.show_pair()
-        self.saved_label.config(text="No Changes", bg="#f0f0f0", fg="black")
         self.configure_pane_position()
-        self.directory_button.config(relief="groove", overrelief="ridge")
         if hasattr(self, 'total_images_label'):
             self.total_images_label.config(text=f"of {len(self.image_files)}")
         self.prev_num_files = len(files_in_dir)
-        if not self.watching_files:
-            self.start_watching_file()
 
 
     def show_pair(self):
@@ -1357,18 +1587,18 @@ class ImgTxtViewer:
                 text_file = None
             image = Image.open(self.image_file)
             max_img_width = self.max_img_width.get()
-            max_height = 2000
+            max_height = 1536
             image, _ = self.resize_and_scale_image(image, max_img_width, max_height)
             self.image_preview.config(width=max_img_width, height=max_height)
             self.image_preview.bind("<Configure>", lambda event: self.resize_and_scale_image(image, max_img_width, max_height, event))
             self.text_box.config(undo=False)
-            self.text_box.delete("1.0", "end")
+            self.text_box.delete("1.0", END)
             if text_file and os.path.isfile(text_file):
                 with open(text_file, "r") as f:
-                    self.text_box.insert("end", f.read())
+                    self.text_box.insert(END, f.read())
             self.text_modified = False
             self.text_box.config(undo=True)
-            self.image_index_entry.delete(0, "end")
+            self.image_index_entry.delete(0, END)
             self.image_index_entry.insert(0, f"{self.current_index + 1}")
             window_height = self.image_preview.winfo_height()
             window_width = self.image_preview.winfo_width()
@@ -1376,28 +1606,29 @@ class ImgTxtViewer:
             event.height = window_height
             event.width = window_width
             self.resize_and_scale_image(image, max_img_width, max_height, event)
-
         self.toggle_big_comma_mode()
         self.toggle_list_mode()
         self.clear_suggestions()
         self.highlight_custom_string()
+        self.update_imageinfo()
         self.highlighting_all_duplicates.set(False)
-
 
 
     def resize_and_scale_image(self, image, max_img_width, max_height, event=None):
         w, h = image.size
         aspect_ratio = w / h
-        new_width = min(max_img_width, w)
-        new_height = int(new_width / aspect_ratio)
-        if new_height > max_height:
-            new_height = max_height
-            new_width = int(new_height * aspect_ratio)
-        image = image.resize((new_width, new_height))
-        if event:
+        if w > max_img_width or h > max_height:
+            if w > h:
+                new_width = min(max_img_width, w)
+                new_height = int(new_width / aspect_ratio)
+            else:
+                new_height = min(max_height, h)
+                new_width = int(new_height * aspect_ratio)
+            image = image.resize((new_width, new_height))
+        if event and self.scale_img_up:
             window_height = event.height
             window_width = event.width
-            new_height = min(window_height, new_height)
+            new_height = window_height
             new_width = int(new_height * aspect_ratio)
             if new_width > window_width:
                 new_width = window_width
@@ -1409,34 +1640,45 @@ class ImgTxtViewer:
         return image, aspect_ratio
 
 
-    def start_watching_file(self):
-        if not self.text_files:
-            return
-        if self.current_index >= len(self.text_files):
-            return
-        thread = threading.Thread(target=self.watch_file)
-        thread.start()
+    def handle_no_image_files(self):
+        if not self.image_files:
+            self.image_index_entry.delete(0, "end")
+            self.image_index_entry.insert(0, "0")
+            self.text_box.delete("1.0", "end")
+            image = Image.new('RGB', (1, 1))
+            photo = ImageTk.PhotoImage(image)
+            self.image_preview.config(image=photo)
+            self.image_preview.image = photo
+            self.saved_label.config(text="No Images!", bg="#FD8A8A", fg="white")
+            return True
+        return False
 
 
-    def watch_file(self):
-        text_file = self.text_files[self.current_index]
-        if not os.path.exists(text_file):
-            return
-        try:
-            last_modified = os.path.getmtime(text_file)
-        except OSError:
-            return
-        while not self.stop_thread:
-            time.sleep(2)
-            if not os.path.exists(text_file):
-                return
-            try:
-                current_modified = os.path.getmtime(text_file)
-            except OSError:
-                return
-            if current_modified != last_modified:
-                self.show_pair()
-                last_modified = current_modified
+    def update_imageinfo(self):
+        if self.image_files:
+            self.image_file = self.image_files[self.current_index]
+            image_info = self.get_image_info(self.image_file)
+            self.image_label.config(text=f"{image_info['filename']}  |  {image_info['resolution']}  |  {image_info['size']}", anchor="w")
+
+
+    def get_image_info(self, image_file):
+        image = Image.open(image_file)
+        width, height = image.size
+        size = os.path.getsize(image_file)
+        size_kb = size / 1024
+        if size_kb < 1024:
+            size_str = f"{round(size_kb)} KB"
+        else:
+            size_mb = size_kb / 1024
+            size_str = f"{round(size_mb, 2)} MB"
+        filename, extension = os.path.splitext(os.path.basename(image_file))
+        if len(filename) > 64:
+            filename = filename[:61] + '(...)'
+        return {
+                "filename": filename + extension,
+                "resolution": f"{width} x {height}",
+                "size": size_str
+                }
 
 
 #endregion
@@ -1448,13 +1690,10 @@ class ImgTxtViewer:
 
 
     def update_pair(self, direction):
-        if self.image_dir.get() == "Choose Directory...":
+        if self.image_dir.get() == "Choose Directory..." or len(self.image_files) == 0:
             return
         self.is_alt_arrow_pressed = True
-        num_files_in_dir = len(os.listdir(self.image_dir.get()))
-        if num_files_in_dir != self.prev_num_files:
-            self.update_image_file_count()
-            self.prev_num_files = num_files_in_dir
+        self.check_image_dir()
         if not self.text_modified:
             self.saved_label.config(text="No Changes", bg="#f0f0f0", fg="black")
         self.text_box.config(undo=False)
@@ -1476,7 +1715,7 @@ class ImgTxtViewer:
         self.update_pair('prev')
 
 
-    def jump_to_image(self, event):
+    def jump_to_image(self, event=None):
         try:
             index = int(self.image_index_entry.get()) - 1
             if index < 0:
@@ -1492,9 +1731,20 @@ class ImgTxtViewer:
         except ValueError: pass
 
 
+    def check_image_dir(self):
+        try:
+            num_files_in_dir = len(os.listdir(self.image_dir.get()))
+        except Exception:
+            return
+        if num_files_in_dir != self.prev_num_files:
+            self.update_image_file_count()
+            self.prev_num_files = num_files_in_dir
+
+
     def update_image_file_count(self):
         extensions = ['.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp']
         self.image_files = [file for ext in extensions for file in glob.glob(f"{self.image_dir.get()}/*{ext}")]
+        self.image_files.sort(key=self.natural_sort)
         self.text_files = [os.path.splitext(file)[0] + '.txt' for file in self.image_files]
         self.total_images_label.config(text=f"of {len(self.image_files)}")
 
@@ -1514,9 +1764,19 @@ class ImgTxtViewer:
 #                       #
 
 
+    def refresh_text_box(self):
+        text_file = self.text_files[self.current_index]
+        self.text_box.delete("1.0", END)
+        if text_file and os.path.isfile(text_file):
+            with open(text_file, "r") as f:
+                self.text_box.insert(END, f.read())
+        self.text_modified = False
+        self.saved_label.config(text="No Changes", bg="#f0f0f0", fg="black")
+
+
     def toggle_list_mode(self, event=None):
         self.text_box.config(undo=False)
-        if self.list_mode.get():
+        if self.list_mode_var.get():
             contents = self.text_box.get("1.0", "end").strip().split(',')
             formatted_contents = '\n'.join([item.strip() for item in contents if item.strip()])
             self.text_box.delete("1.0", "end")
@@ -1531,7 +1791,7 @@ class ImgTxtViewer:
 
 
     def toggle_big_comma_mode(self, event=None):
-        if self.bold_commas.get():
+        if self.bold_comma_var.get():
             self.text_box.tag_remove("bold", "1.0", "end")
             index = "1.0"
             while True:
@@ -1655,9 +1915,10 @@ class ImgTxtViewer:
     def filter_text_image_pairs(self):
         if not self.check_current_directory():
             return
-        self.revert_text_image_filter()
+        if self.filter_empty_files.get() == False:
+            self.revert_text_image_filter()
         filter_string = self.filter_string_var.get()
-        if not filter_string:
+        if not filter_string and not self.filter_empty_files.get():
             return
         self.filtered_image_files = []
         self.filtered_text_files = []
@@ -1665,14 +1926,27 @@ class ImgTxtViewer:
             try:
                 with open(text_file, 'r') as file:
                     filedata = file.read()
-                if self.filter_use_regex:
-                    if re.search(filter_string, filedata):
+                if self.filter_empty_files.get():
+                    if not filedata.strip():
                         self.filtered_image_files.append(image_file)
                         self.filtered_text_files.append(text_file)
                 else:
-                    if filter_string in filedata:
+                    filters = filter_string.split(' + ')
+                    match = True
+                    for filter in filters:
+                        if filter.startswith('!'):
+                            if filter[1:] in filedata:
+                                match = False
+                                break
+                        elif filter not in filedata:
+                            match = False
+                            break
+                    if match:
                         self.filtered_image_files.append(image_file)
                         self.filtered_text_files.append(text_file)
+            except FileNotFoundError:
+                if self.filter_empty_files.get():
+                    self.filtered_image_files.append(image_file)
             except Exception: pass
         self.image_files = self.filtered_image_files
         self.text_files = self.filtered_text_files
@@ -1680,7 +1954,7 @@ class ImgTxtViewer:
             self.total_images_label.config(text=f"of {len(self.image_files)}")
         self.current_index = 0
         self.show_pair()
-        self.saved_label.config(text="Filter Complete!", bg="#6ca079", fg="white")
+        self.saved_label.config(text="Filter Applied!", bg="#6ca079", fg="white")
 
 
     def revert_text_image_filter(self):
@@ -1688,6 +1962,7 @@ class ImgTxtViewer:
         self.current_index = 0
         self.show_pair()
         self.saved_label.config(text="Filter Cleared!", bg="#6ca079", fg="white")
+        self.filter_empty_files.set(False)
 
 
     def delete_tag_under_mouse(self, event):
@@ -1724,6 +1999,128 @@ class ImgTxtViewer:
 #                     #
 
 
+    def expand_image(self):
+        if not self.check_current_directory():
+            return
+        supported_formats = {".jpg", ".jpeg", ".png", ".jfif", ".jpg_large", ".webp", ".bmp"}
+        filename = self.image_files[self.current_index]
+        base_filename, file_extension = os.path.splitext(filename)
+        if file_extension not in supported_formats:
+            return
+        new_filename = f"{base_filename}_ex{file_extension}"
+        new_filepath = os.path.join(self.image_dir.get(), new_filename)
+        if os.path.exists(new_filepath):
+            messagebox.showerror("Error", f'Output file:\n\n{os.path.normpath(new_filename)}\n\nAlready exists.')
+            return
+        with Image.open(os.path.join(self.image_dir.get(), filename)) as im:
+            width, height = im.size
+            if width == height:
+                messagebox.showwarning("Warning", "The image is already a square aspect ratio.")
+                return
+        confirmation_message = (
+            "Are you sure you want to expand the current image?\n\n"
+            "This tool works by expanding the shorter side to a square resolution divisible by 8 "
+            "and stretching the pixels around the long side to fill the space.\n\n"
+            "A new image will be saved in the same format and with '_ex' appended to the filename."
+            )
+        if not messagebox.askyesno("Confirmation", confirmation_message):
+            return
+        try:
+            text_filename = f"{base_filename}.txt"
+            text_filepath = os.path.join(self.image_dir.get(), text_filename)
+            if os.path.exists(text_filepath):
+                new_text_filename = f"{base_filename}_ex.txt"
+                new_text_filepath = os.path.join(self.image_dir.get(), new_text_filename)
+                shutil.copy2(text_filepath, new_text_filepath)
+            with Image.open(os.path.join(self.image_dir.get(), filename)) as im:
+                max_dim = max(width, height)
+                new_im = Image.new("RGB", (max_dim, max_dim))
+                x_offset = (max_dim - width) // 2
+                y_offset = (max_dim - height) // 2
+                new_im.paste(im, (x_offset, y_offset))
+                np_image = np.array(new_im)
+                np_image[:, :x_offset] = np_image[:, x_offset:x_offset+1]
+                np_image[:, x_offset+width:] = np_image[:, x_offset+width-1:x_offset+width]
+                np_image[:y_offset, :] = np_image[y_offset:y_offset+1, :]
+                np_image[y_offset+height:, :] = np_image[y_offset+height-1:y_offset+height, :]
+                filled_im = Image.fromarray(np_image)
+                filled_im.save(new_filepath, quality=100 if file_extension in {".jpg", ".jpeg", ".jfif", ".jpg_large"} else None)
+            self.update_pair("next")
+        except Exception as e:
+            messagebox.showerror("Error", f'Failed to process {filename}. Reason: {e}')
+
+
+    def rename_and_convert_images(self):
+        if not self.check_current_directory():
+            return
+        try:
+            confirmation = messagebox.askyesno("Confirm: Rename Files",
+                "Are you sure you want to rename and convert all images and text files in the current directory?\n\n"
+                "img-txt pairs will be saved to a 'Renamed Output' folder.\nNothing is overwritten.\n\n"
+                "Images are converted to '.jpg' and then each pair is renamed in sequential order using padded zeros.\n\n"
+                "Example input: aH15520.jpg, aH15520.txt\n"
+                "Example output: 00001.jpg, 00001.txt"
+                )
+            if not confirmation:
+                return
+            target_dir = os.path.join(self.image_dir.get(), "Renamed Output")
+            os.makedirs(target_dir, exist_ok=True)
+            files = sorted(f for f in os.listdir(self.image_dir.get()) if f.endswith(tuple([".txt", ".jpg", ".jpeg", ".png", ".jfif", ".jpg_large", ".webp", ".bmp"])))
+            base_names = {}
+            for i, filename in enumerate(files, start=1):
+                base_name, extension = os.path.splitext(filename)
+                base_names.setdefault(base_name, str(i).zfill(5))
+                new_name = base_names[base_name] + (".jpg" if extension in [".jpeg", ".png", ".jfif", ".jpg_large", ".webp", ".bmp"] else extension)
+                original_path = os.path.join(self.image_dir.get(), filename)
+                new_path = os.path.join(target_dir, new_name)
+                if extension in [".jpeg", ".png", ".jfif", ".jpg_large", ".webp", ".bmp"]:
+                    img = Image.open(original_path)
+                    img.save(new_path, "JPEG", quality=100)
+                else:
+                    shutil.copy(original_path, new_path)
+            messagebox.showinfo("Success", "Files renamed and converted successfully!")
+        except FileNotFoundError:
+            messagebox.showerror("Error", "The specified directory does not exist.")
+        except PermissionError:
+            messagebox.showerror("Error", "You do not have the necessary permissions to perform this operation.")
+        except Exception as e:
+            messagebox.showerror("Error", f"An unexpected error occurred: {str(e)}")
+
+
+    def flip_current_image(self):
+        filename = self.image_files[self.current_index]
+        with Image.open(filename) as img:
+            flipped_img = img.transpose(Image.FLIP_LEFT_RIGHT)
+            flipped_img.save(filename)
+        self.show_pair()
+
+
+    def rotate_current_image(self):
+        filename = self.image_files[self.current_index]
+        with Image.open(filename) as img:
+            rotated_img = img.transpose(Image.ROTATE_270)
+            rotated_img.save(filename)
+        self.show_pair()
+
+
+    def open_crop_tool(self):
+        filepath = self.image_files[self.current_index]
+        crop_image.Crop(self.master, filepath)
+
+
+    def duplicate_pair(self):
+        self.save_text_file()
+        filename = self.image_files[self.current_index]
+        base_filename, file_extension = os.path.splitext(filename)
+        new_filename = f"{base_filename}_dup{file_extension}"
+        shutil.copy2(filename, new_filename)
+        text_filename = f"{base_filename}.txt"
+        if os.path.exists(text_filename):
+            new_text_filename = f"{base_filename}_dup.txt"
+            shutil.copy2(text_filename, new_text_filename)
+        self.update_pair("next")
+
+
     def resize_images(self):
         if os.path.isfile('resize_images.py'):
             command = f'python resize_images.py --folder_path "{self.image_dir.get()}"'
@@ -1731,6 +2128,13 @@ class ImgTxtViewer:
             command = f'resize_images.exe --folder_path "{self.image_dir.get()}"'
         subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW)
 
+
+    def find_duplicate_files(self):
+        if os.path.isfile('find_dupe_file.py'):
+            command = f'python find_dupe_file.py --path "{self.image_dir.get()}"'
+        else:
+            command = f'find_dupe_file.exe --path "{self.image_dir.get()}"'
+        subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW)
 
 #endregion
 ################################################################################################################################################
@@ -1740,16 +2144,6 @@ class ImgTxtViewer:
 #                        #
 
 
-    # Used to position new windows beside the main window.
-    def position_dialog(self, dialog, window_width, window_height):
-        root_x = self.master.winfo_rootx()
-        root_y = self.master.winfo_rooty()
-        root_width = self.master.winfo_width()
-        position_right = root_x + root_width
-        position_top = root_y + -50
-        dialog.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
-
-
     def change_label(self):
         if self.auto_save_var.get():
             self.saved_label.config(text="Changes are autosaved", bg="#5da9be", fg="white")
@@ -1757,19 +2151,29 @@ class ImgTxtViewer:
             self.saved_label.config(text="Changes not saved", bg="#FD8A8A", fg="white")
 
 
-    def copy_to_clipboard(self, event):
-        try:
-            self.master.clipboard_clear()
-            image_dir = self.image_dir.get()
-            if image_dir != "Copied!":
-                self.master.clipboard_append(image_dir)
-                self.image_dir.set("Copied!")
-                self.master.after(400, lambda: self.image_dir.set(image_dir))
-        except Exception: pass
-
-
     def disable_button(self, event):
         return "break"
+
+
+    def toggle_empty_files_filter(self):
+        if self.filter_empty_files.get():
+            self.filter_text_image_pairs()
+            for widget in [
+                           self.filter_label,
+                           self.filter_entry,
+                           self.filter_button,
+                           self.regex_checkbutton
+                           ]:
+                widget.config(state="disabled")
+        else:
+            self.revert_text_image_filter()
+            for widget in [
+                           self.filter_label,
+                           self.filter_entry,
+                           self.filter_button,
+                           self.regex_checkbutton
+                           ]:
+                widget.config(state="normal")
 
 
     def toggle_always_on_top(self):
@@ -1799,7 +2203,7 @@ class ImgTxtViewer:
         main_window_width = root.winfo_width()
         main_window_height = root.winfo_height()
         main_window_x = root.winfo_x() - 425 + main_window_width // 2
-        main_window_y = root.winfo_y() - 275 + main_window_height // 2
+        main_window_y = root.winfo_y() - 315 + main_window_height // 2
         self.about_window.geometry("+{}+{}".format(main_window_x, main_window_y))
 
 
@@ -1821,9 +2225,9 @@ class ImgTxtViewer:
             return
         if show_confirmation:
             user_confirmation = messagebox.askokcancel("Confirmation", "This operation will clean all text files from typos like:\nDuplicate tags, Extra commas, Extra spaces, trailing commas/spaces, commas without spaces, and more.\n\nExample Cleanup:\n  From: dog,solo,  ,happy  ,,\n       To: dog, solo, happy")
-            self.saved_label.config(text="Text Files Cleaned Up!", bg="#6ca079", fg="white")
             if not user_confirmation:
                 return
+            self.saved_label.config(text="Text Files Cleaned Up!", bg="#6ca079", fg="white")
         for text_file in self.text_files:
             if os.path.exists(text_file):
                 with open(text_file, "r+", encoding="utf-8") as f:
@@ -1840,7 +2244,7 @@ class ImgTxtViewer:
     def cleanup_text(self, text):
         if self.cleaning_text.get():
             text = self.remove_duplicates(text)
-            if self.list_mode.get():
+            if self.list_mode_var.get():
                 text = re.sub(r'\.\s', '\n', text)  # replace period and space with newline
                 text = re.sub(' *\n *', '\n', text)  # replace one or more spaces surrounded by optional newlines with a single newline
             else:
@@ -1858,17 +2262,83 @@ class ImgTxtViewer:
 
 
     def remove_duplicates(self, text):
-        if self.list_mode.get():
+        if self.list_mode_var.get():
             text = text.lower().split('\n')
         else:
             text = text.lower().split(',')
         text = [item.strip() for item in text]
         text = list(dict.fromkeys(text))
-        if self.list_mode.get():
+        if self.list_mode_var.get():
             text = '\n'.join(text)
         else:
             text = ','.join(text)
         return text
+
+
+#endregion
+################################################################################################################################################
+################################################################################################################################################
+#                                 #
+#region -  Read and save settings #
+#                                 #
+
+
+    def save_settings(self):
+        try:
+            if self.check_current_directory():
+                if not self.config.has_section("Path"):
+                    self.config.add_section("Path")
+                self.config.set("Path", "last_directory", self.image_dir.get())
+                self.config.set("Path", "last_index", str(self.current_index))
+                if not self.config.has_section("Autocomplete"):
+                    self.config.add_section("Autocomplete")
+                self.config.set("Autocomplete", "csv_danbooru", str(self.csv_danbooru.get()))
+                self.config.set("Autocomplete", "csv_e621", str(self.csv_e621.get()))
+                self.config.set("Autocomplete", "csv_english_dictionary", str(self.csv_english_dictionary.get()))
+                self.config.set("Autocomplete", "suggestion_quantity", str(self.suggestion_quantity.get()))
+                self.config.set("Autocomplete", "use_colored_suggestions", str(self.use_colored_suggestions.get()))
+                with open("settings.cfg", "w") as f:
+                    self.config.write(f)
+        except Exception: pass
+
+
+    def read_settings(self):
+            if os.path.exists("settings.cfg"):
+                self.config.read("settings.cfg")
+                self.read_last_directory_settings()
+                self.read_autocomplete_settings()
+
+
+    def read_last_directory_settings(self):
+        if self.config.has_option("Path", "last_directory"):
+            last_directory = self.config.get("Path", "last_directory")
+            if os.path.exists(last_directory):
+                proceed = messagebox.askyesno("Confirmation", "Reload last directory?")
+            if proceed:
+                self.image_dir.set(last_directory)
+                self.set_working_directory()
+                if self.config.has_option("Path", "last_index"):
+                    last_index = int(self.config.get("Path", "last_index")) + 1
+                    num_files = len([name for name in os.listdir(last_directory) if os.path.isfile(os.path.join(last_directory, name))])
+                    if num_files < last_index:
+                        last_index = 1
+                    self.image_index_entry.delete(0, "end")
+                    self.image_index_entry.insert(0, str(last_index))
+                    self.jump_to_image()
+
+
+    def read_autocomplete_settings(self):
+        if self.config.has_option("Autocomplete", "csv_danbooru"):
+            self.csv_danbooru.set(value=self.config.getboolean("Autocomplete", "csv_danbooru"))
+        if self.config.has_option("Autocomplete", "csv_e621"):
+            self.csv_e621.set(value=self.config.getboolean("Autocomplete", "csv_e621"))
+        if self.config.has_option("Autocomplete", "csv_english_dictionary"):
+            self.csv_english_dictionary.set(value=self.config.getboolean("Autocomplete", "csv_english_dictionary"))
+        if self.config.has_option("Autocomplete", "suggestion_quantity"):
+            self.suggestion_quantity.set(value=self.config.getint("Autocomplete", "suggestion_quantity"))
+        if self.config.has_option("Autocomplete", "use_colored_suggestions"):
+            self.use_colored_suggestions.set(value=self.config.getboolean("Autocomplete", "use_colored_suggestions"))
+        self.update_autocomplete_dictionary()
 
 
 #endregion
@@ -1894,19 +2364,28 @@ class ImgTxtViewer:
             if os.path.exists(text_file):
                 os.remove(text_file)
             return
-        with open(text_file, "w", encoding="utf-8") as f:
+        with open(text_file, "w+", encoding="utf-8") as f:
             if self.cleaning_text.get():
                 text = self.cleanup_text(text)
-            if self.list_mode.get():
+            if self.list_mode_var.get():
                 text = ', '.join(text.split('\n'))
             f.write(text)
 
 
     def on_closing(self):
-        self.stop_thread = True
-        if not os.path.isdir(self.image_dir.get()):
-            root.destroy()
-        elif self.saved_label.cget("text") in ["No Changes", "Saved", "Changes Saved!", "Text Files Cleaned up!"]:
+        try:
+            self.save_settings()
+            self.delete_text_backup()
+            if os.path.isdir(os.path.join(self.image_dir.get(), 'Trash')):
+                self.delete_trash_folder()
+                self.check_saved_and_quit()
+            else:
+                self.check_saved_and_quit()
+        except TclError: pass
+
+
+    def check_saved_and_quit(self):
+        if self.saved_label.cget("text") in ["No Changes", "Saved", "Changes Saved!", "Text Files Cleaned up!", "Filter Cleared!", "Filter Applied!"]:
             root.destroy()
         elif self.auto_save_var.get():
             self.cleanup_all_text_files(show_confirmation=False)
@@ -1917,8 +2396,6 @@ class ImgTxtViewer:
                 if messagebox.askyesno("Quit", "Quit without saving?"):
                     root.destroy()
             except Exception: pass
-        self.delete_text_backup()
-        self.delete_trash_folder()
 
 
 #endregion
@@ -1936,6 +2413,8 @@ class ImgTxtViewer:
 
     def choose_working_directory(self):
         try:
+            if self.auto_save_var.get():
+                self.save_text_file()
             directory = askdirectory()
             if directory and directory != self.image_dir.get():
                 if any(fname.lower().endswith(('.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp')) for fname in os.listdir(directory)):
@@ -1949,6 +2428,23 @@ class ImgTxtViewer:
         except Exception: pass
 
 
+    def set_working_directory(self, event=None):
+        try:
+            if self.auto_save_var.get():
+                self.save_text_file()
+            self.image_dir.set(self.directory_entry.get())
+            self.load_pairs()
+        except FileNotFoundError:
+            messagebox.showwarning("Invalid Directory", f"The system cannot find the path specified:\n\n{self.directory_entry.get()}")
+
+
+    def open_directory(self, directory):
+        try:
+            if os.path.isdir(directory):
+                os.startfile(directory)
+        except Exception: pass
+
+
     def open_current_directory(self, event=None):
         try:
             os.startfile(self.image_dir.get())
@@ -1956,14 +2452,14 @@ class ImgTxtViewer:
 
 
     def open_current_image(self, event=None):
-        try:
-            os.startfile(self.image_file)
-        except Exception: pass
+        if self.image_files:
+            try:
+                os.startfile(self.image_file)
+            except Exception: pass
 
 
     def check_current_directory(self):
-        if not os.path.isdir(self.image_dir.get()):
-            messagebox.showerror("Error!", "Invalid or No directory selected.\n\n Select a directory before using this tool.")
+        if not os.path.isdir(self.image_dir.get()) or self.image_dir.get() == "Choose Directory...":
             return False
         return True
 
@@ -1978,7 +2474,17 @@ class ImgTxtViewer:
                 writer.writerow(["### Tags near the top of the list have a higher priority than lower tags."])
                 writer.writerow([])
                 writer.writerow(["supercalifragilisticexpialidocious"])
-        self.change_autocomplete_dictionary()
+        self.update_autocomplete_dictionary()
+
+
+    def add_to_custom_dictionary(self):
+        try:
+            selected_text = self.text_box.get("sel.first", "sel.last")
+            with open('my_tags.csv', 'a', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow([selected_text])
+            self.update_autocomplete_dictionary()
+        except TclError: pass
 
 
     def rename_odd_files(self, filename):
@@ -2049,9 +2555,11 @@ class ImgTxtViewer:
 
 
     def delete_trash_folder(self):
-        trash_dir = os.path.join(self.image_dir.get(), "Trash")
-        if os.path.exists(trash_dir) and not os.listdir(trash_dir):
-            shutil.rmtree(trash_dir)
+        try:
+            if messagebox.askyesno("Trash Folder Found", "A 'Trash' folder was found in the image directory.\n\nWould you like to delete this folder?"):
+                shutil.rmtree(os.path.join(self.image_dir.get(), 'Trash'))
+            root.destroy()
+        except TclError: pass
 
 
     def delete_pair(self):
@@ -2072,7 +2580,10 @@ class ImgTxtViewer:
                 self.total_images_label.config(text=f"of {len(self.image_files)}")
                 if self.current_index >= len(self.image_files):
                     self.current_index = len(self.image_files) - 1
-                self.show_pair()
+                if self.current_index >= 1:
+                    self.update_pair("prev")
+                else:
+                    self.show_pair()
                 self.undo_state.set("normal")
                 self.toolsMenu.entryconfig("Undo Delete", state="normal")
             else: pass
@@ -2109,9 +2620,9 @@ class ImgTxtViewer:
 
 
     def set_window_size(self, master):
-        master.minsize(600, 300) # Width x Height
+        master.minsize(750, 395) # Width x Height
         window_width = 1280
-        window_height = 660
+        window_height = 681
         position_right = root.winfo_screenwidth()//2 - window_width//2
         position_top = root.winfo_screenheight()//2 - window_height//2
         root.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
@@ -2123,6 +2634,7 @@ app.toggle_always_on_top()
 root.attributes('-topmost', 0)
 root.protocol("WM_DELETE_WINDOW", app.on_closing)
 root.title(f"{VERSION} - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
+app.read_settings()
 root.mainloop()
 
 
@@ -2137,24 +2649,99 @@ root.mainloop()
 '''
 
 
-[v1.85 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.85)
+[v1.90 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.90)
+
+I'm very happy to announce img-txt_viewer is 1 year old!
+
+I love knowing that this app has helped at least a few people work faster and easier. I want to thank everyone so much for your interest and support.
+
+Here's some new tools, fixes, and changes for version 1.90:
 
   - New:
-    - New Text Tool `Filter Pairs`: Use this to search all text files and filter the img-txt pairs to display only those that include the matched text.
-      - Also supports regular expressions.
-    - New Text Tool `Active Highlights`: Use this to always highlight certain text.
-      - Use ` + ` to highlight multiple strings of text, *(Note the spaces!)*. Example: dog + cat
+
+    - `Find Duplicate Files`: Quickly find and separate duplicate images in your dataset.
+      - This works by checking cross checking file hash - 2GB file limit. Can be used for all files
+      - Built as a stand alone tool.
+
+    - `Rename/convert img-txt Pairs`: Easily rename and convert your dataset in a clean format.
+      - All images are converted to ".jpg" format to prevent duplicate filename issues.
+      - JPG conversion quality is set to 100, this ensures a small file size and no visible compression will be added for most conversions.
+      - Example: 00001.jpg, 00001.txt.
+
+    - `Expand Current Image`: Expand images to a square resolution without cropping.
+      - This tool makes an image square by extending its shorter side to match the length of its longer side, after rounding that length down to the nearest multiple of 8.
+      - The empty space is then filled by expanding the border of pixels from the long side.
+
+    - `Crop Image`: Crop the currently displayed image.
+      - Currently only supports cropping by square (1:1) or freeform.
+      - Double click to quickly create a 512x512 or 1024x1024 rectangle (automatically decided based on image size)
+      - Right the image to open the context menu and select either Crop, Clear, or Open Directory.
+      - Mousewheel to resize the rectangle.
+
+    - `Flip Image`: Flip the currently displayed image horizontally.
+    - `Rotate Image`: Rotate the the currently displayed image 90 degrees.
+    - `Duplicate Pair`: Duplicate the currently displayed img-txt pair.
+
+    - `Filter Pairs` Changes:
+      - New option to display only empty text files.
+      - Use `!` before the text to exclude any pairs containing that text.
+      - Use `+` between text to include multiple strings when filtering.
+      - Example: `!dog + cat` (remove dog pairs, display cat pairs)
+
+    - `Resize Images` v1.01 Changes:
+      - You can now choose image filetype for the resized output.
+      - You can now set the `Resize Condition` to the following modes:
+        - `Upscale and Downscale`, Resize the image to the new dimensions regardless of whether they are larger or smaller than the original dimensions.
+        - `Upscale Only`, Resize the image if the new dimensions are larger than the original dimensions.
+        - `Downscale Only`, Resize the image if the new dimensions are smaller than the original dimensions
+
+    - `Batch Tag Delete` v1.07 Changes:
+        - Significantly improved the speed tags are deleted.
+        - You can now choose a new directory after opening the app.
+
+    - Text Box changes:
+        - The displayed text can now be refreshed from the right-click text_box context menu. (Hotkey: F5)
+        - You can now select text and add it to the custom dictionary with the right click context menu.
+
+    - Image info is now displayed above the current image (filename, resolution, size)
+    - The last directory and index can now be quickly restored when launching the app. #21
 
 
 <br>
+
 
   - Fixed:
-    -
+
+    - Fixed image scaling regression that prevented images from scaling to fill the frame.
+    - Fixed issue where the image index would no longer sort correctly after files were added or removed from the working directory.
+    - Fixed issue where a new text file wasn't being created when saving the text box.
+    - Fixed Auto-Save not triggering when loading a new directory.
+
 
 <br>
 
+
   - Other changes:
-    -
+
+    - "file_watcher" logic has been removed.
+      - This was used to update the index or text box when changes occured outside the apps influence.
+      - It was easier to remove then fix the issues with threading...
+
+    - Removed the following from the script. These changes do not effect exe users:
+        - Automatic check and install of Pillow.
+        - Automatic check and download of dictionary files.
+        - `threading` and `requests` imports removed.
+
+    - UI changes.
+        - The directory button is replaced with a text entry, browse/open buttons, and a right-click context menu.
+        - Added descriptions below each tool along the bottom toolbar.
+        - The save button can now be set to double height by right clicking it, or from the Options menu. #19
+        - And other small changes.
+
+    - Max Image size values have been slightly reduced to improve performance when scaling the image within the UI.
+    - "Delete Pair" keyboard shortcut changed from `Del` to `Shift+Del`. #19
+    - You can now pick any combination of autocomplete dictionaries.
+
 
 
 <!-- New -->
@@ -2181,13 +2768,12 @@ root.mainloop()
 
 
 - Todo
-  - Add "Add selected text to custom dictionary" button to text box context menu.
+  -
 
 - Tofix
   -
 
   - **Minor** Undo should be less jarring when inserting a suggestion.
-  - **Minor** After deleting or Undo Delete. PanedWindow sash moves position.
 
 
 '''
