@@ -72,8 +72,8 @@ To install Pillow, run this from the terminal: `pip install pillow`
 
 [v1.90 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.90)
 
-I'm very happy to announce img-txt_viewer is 1 year old!
+I'm very happy to announce **img-txt_viewer is 1 year old!** 🎉🎈
 
 I love knowing that this app has helped at least a few people work faster and easier. I want to thank everyone so much for your interest and support.
 
-There's a lot to cover this releease, so please see the [v1.90 release page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.90) for the change notes.
+There's a lot to cover this release, so please see the [v1.90 release page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.90) for the change notes.
