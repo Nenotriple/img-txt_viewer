@@ -64,9 +64,10 @@ ___
 
 You must have **Python 3.10+** installed to the system PATH.
 
-You will need `Pillow` installed to the system.
+You will need `Pillow` and `NumPy` installed to your system or create a venv for it.
 
-To install Pillow, run this from the terminal: `pip install pillow`
+ - To install Pillow, run this from the terminal: `pip install pillow`
+ - To install NumPy, run this from the terminal: `pip install numpy`
 
 # 📜 Version History
 
