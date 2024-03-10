@@ -62,12 +62,14 @@ You don't need to worry about anything if you're using the [portable/executable]
 
 ___
 
-You must have **Python 3.10+** installed to the system PATH.
+**Python 3.10+**
 
-You will need `Pillow` and `NumPy` installed to your system or create a venv for it.
+You will need `Pillow` and `NumPy`.
 
- - To install Pillow, run this from the terminal: `pip install pillow`
- - To install NumPy, run this from the terminal: `pip install numpy`
+ - To install Pillow: `pip install pillow`
+ - To install NumPy: `pip install numpy`
+
+Or use the included `requirements.txt` when setting up your venv.
 
 # 📜 Version History
 
