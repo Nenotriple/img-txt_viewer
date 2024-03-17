@@ -3,7 +3,7 @@
 #                                      #
 #          batch_tag_delete            #
 #                                      #
-#   Version : v1.07                    #
+#   Version : v1.08                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -307,6 +307,22 @@ def on_closing(directory, root):
 ################################################################################################################################################
 ################################################################################################################################################
 #      #
+# Misc #
+#      #
+
+
+def truncate_path(directory, max_length=80):
+    if len(directory) <= max_length:
+        return directory
+    else:
+        head, tail = os.path.split(directory)
+        truncated_head = head[:max_length - len(tail) - 5]  # 5 for "/...\"
+        return os.path.join(truncated_head, '...', tail)
+
+
+################################################################################################################################################
+################################################################################################################################################
+#      #
 # Main #
 #      #
 
@@ -408,9 +424,12 @@ def main(directory=None, main_window_x=None, main_window_y=None, change_director
     menubar.add_separator()
     menubar.add_command(label="Undo All", command=lambda: restore_backup(directory, scrollable_frame))
 
+
     # Display current directory
-    directory_label = tk.Label(root, text=directory)
-    directory_label.pack(anchor="w")
+    truncated_directory = os.path.normpath(truncate_path(directory))
+    directory_label = tk.Message(root, text=truncated_directory, anchor="nw", width=500)
+    directory_label.pack(fill="x")
+
 
     # Initialize filter entry
     filter_entry = tk.Entry(root)
@@ -469,17 +488,15 @@ if __name__ == "__main__":
 
 '''
 
-v1.07 changes:
+v1.08 changes:
 
   - New:
-    - Significantly improved the speed tags are deleted.
-    - You can now choose a new directory after opening the app.
 
 
 <br>
 
   - Fixed:
-    -
+    - Long folder paths are now displayed better in the UI.
 
   - Other:
 
