@@ -7,7 +7,7 @@
 #                                      #
 #           Find Dupe files            #
 #                                      #
-#   Version : v1.00                    #
+#   Version : v1.01                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -40,7 +40,6 @@ import ctypes
 import hashlib
 import argparse
 import threading
-from PIL import Image
 from tkinter import Tk, ttk, Menu, Text, Label, StringVar, simpledialog, BooleanVar, filedialog, messagebox, Toplevel, TclError
 
 
@@ -459,13 +458,18 @@ class DuplicateFinder:
 
 
     def is_image(self, file_path):
-        try:
-            Image.open(file_path)
-            return True
-        except IOError:
-            return False
-        except Image.DecompressionBombError:
-            return False
+        image_file_extensions = ['.blp', '.bmp', '.dds','.dib', '.eps',
+                                 '.gif', '.icns', '.ico', '.im', '.jpg',
+                                 '.jpeg', '.jfif', '.jp2', '.jpx', '.msp',
+                                 '.pcx', '.png', '.apng', '.ppm', '.sgi',
+                                 '.spider', '.tga', '.tif', '.tiff', '.webp',
+                                 '.xbm', '.cur', '.dcx', '.fits', '.fli',
+                                 '.flc', '.fpx', '.ftex', '.gbr', '.gd',
+                                 '.imt', '.naa', '.mcidas', '.mic', '.mpo',
+                                 '.pcd', '.pixar', '.psd', '.qoi', '.sun',
+                                 '.wal', '.wmf', '.emf', '.xpm', '.palm', '.pdf', '.xv']
+        _, file_extension = os.path.splitext(file_path)
+        return file_extension.lower() in image_file_extensions
 
 
     def get_file_hash(self, file_path):
@@ -478,19 +482,6 @@ class DuplicateFinder:
                     return hashlib.sha256(f.read()).hexdigest()
         except IOError:
             self.insert_to_textlog(f"\nERROR - get_file_hash: Cannot open file at {file_path}")
-            return None
-
-
-    def get_image_hash(self, image_path):
-        try:
-            self.tray_label_status.config(text=" Comparing...")
-            with Image.open(image_path) as img:
-                if self.process_mode.get() == "md5":
-                    return hashlib.md5(img.tobytes()).hexdigest()
-                elif self.process_mode.get() == "sha-256":
-                    return hashlib.sha256(img.tobytes()).hexdigest()
-        except IOError:
-            self.insert_to_textlog(f"\nERROR - get_image_hash: Cannot open image at {image_path}")
             return None
 
 
@@ -785,3 +776,28 @@ root.mainloop()
 
 
 #endregion
+
+'''
+
+v1.01 changes:
+
+  - New:
+    -
+
+
+<br>
+
+  - Fixed:
+    -
+
+<br>
+
+  - Other changes:
+    - Removed `Pillow` Import, this makes the executable file ~75% smaller.
+
+<br>
+
+  - To fix:
+    -
+
+'''

@@ -1,17 +1,18 @@
 """
 ########################################
 #                                      #
-#             Resize Image             #
+#          Batch Resize Images         #
 #                                      #
-#   Version : v1.01                    #
+#   Version : v1.02                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
 
 Description:
 -------------
-This script allows you to select a directory and resize all images in the selected directory.
-Resize operations include: Resize to Resolution, Resize to Width, Resize to Height, Resize to Shorter Side, Resize to Longer Side
+This GUI script allows you to select a directory and resize all images in the selected directory.
+Resize operations: Resize to Resolution, Percentage, Resize to Width, Resize to Height, Resize to Shorter Side, Resize to Longer Side
+Resize conditions: Upscale and Downscale, Upscale Only, Downscale Only
 
 
 """
@@ -38,7 +39,7 @@ ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 #region -  Main
 
 
-class Resize_Image(tk.Frame):
+class Resize_Images(tk.Frame):
     def __init__(self, master=None, folder_path=None):
         super().__init__(master)
         self.master = master
@@ -87,7 +88,7 @@ class Resize_Image(tk.Frame):
         self.resize_mode_label.pack(side="left", anchor="w", padx=2, pady=2)
 
         self.resize_mode_var = tk.StringVar()
-        self.resize_mode = ttk.Combobox(resize_mode_frame, width=11, textvariable=self.resize_mode_var, values=["Resolution", "Width", "Height", "Shorter Side", "Longer Side"], state="readonly")
+        self.resize_mode = ttk.Combobox(resize_mode_frame, width=11, textvariable=self.resize_mode_var, values=["Resolution", "Percentage", "Width", "Height", "Shorter Side", "Longer Side"], state="readonly")
         self.resize_mode.set("Resolution")
         self.resize_mode.pack(side="left", fill="x", padx=2, pady=2)
 
@@ -117,7 +118,7 @@ class Resize_Image(tk.Frame):
         # Width Frame
         width_frame = tk.Frame(widget_frame)
         width_frame.pack(fill="x", anchor="w")
-        self.width_label = tk.Label(width_frame, text="Width: ")
+        self.width_label = tk.Label(width_frame, text="Width:", width=5)
         self.width_label.pack(side="left", anchor="w", padx=2, pady=2)
         self.width_entry = tk.Entry(width_frame, width=10)
         self.width_entry.pack(side="right", fill="x", expand=True, padx=2, pady=2)
@@ -126,7 +127,7 @@ class Resize_Image(tk.Frame):
         # Height Frame
         height_frame = tk.Frame(widget_frame)
         height_frame.pack(fill="x", anchor="w")
-        self.height_label = tk.Label(height_frame, text="Height:")
+        self.height_label = tk.Label(height_frame, text="Height:", width=5)
         self.height_label.pack(side="left", anchor="w", padx=2, pady=2)
         self.height_entry = tk.Entry(height_frame, width=10)
         self.height_entry.pack(side="right", fill="x", expand=True, padx=2, pady=2)
@@ -150,6 +151,7 @@ class Resize_Image(tk.Frame):
         self.text_box.pack(fill="both", expand=True, padx=2, pady=2)
         descriptions = ["Resize to Resolution: Resize to specific width and height\n\n"
                         "Preserves aspect ratio:\n\n"
+                        "Resize to Percentage: Resize the image by a percent scale\n\n"
                         "Resize to Width: Resize the image width\n\n"
                         "Resize to Height: Resize the image height\n\n"
                         "Resize to Shorter side: Resize the shorter side of the image\n\n"
@@ -179,19 +181,46 @@ class Resize_Image(tk.Frame):
             self.width_label.config(state="normal")
             self.height_entry.config(state="normal")
             self.height_label.config(state="normal")
-        elif mode in ["Width", "Shorter Side"]:
+            self.resize_condition_label.config(state="normal")
+            self.resize_condition.config(state="readonly")
+            self.width_label.config(text="Width:")
+            self.height_label.config(text="Heigth:")
+
+        elif mode == "Percentage":
             self.width_entry.config(state="normal")
             self.width_label.config(state="normal")
             self.height_entry.delete(0, 'end')
             self.height_entry.config(state="disabled")
             self.height_label.config(state="disabled")
-        elif mode in ["Height", "Longer Side"]:
+            self.resize_condition_label.config(state="normal")
+            self.resize_condition.config(state="disabled")
+            self.width_label.config(text="%")
+            self.height_label.config(text="-")
+
+        elif mode in ["Width", "Shorter Side", "Longer Side"]:
+            self.width_entry.config(state="normal")
+            self.width_label.config(state="normal")
+            self.height_entry.delete(0, 'end')
+            self.height_entry.config(state="disabled")
+            self.height_label.config(state="disabled")
+            self.resize_condition_label.config(state="normal")
+            self.resize_condition.config(state="readonly")
+            if mode == "Width":
+                self.width_label.config(text="Width:")
+            else:
+                self.width_label.config(text="Size")
+            self.height_label.config(text="-")
+
+        elif mode in ["Height"]:
             self.width_entry.delete(0, 'end')
             self.width_entry.config(state="disabled")
             self.width_label.config(state="disabled")
             self.height_entry.config(state="normal")
             self.height_label.config(state="normal")
-
+            self.resize_condition_label.config(state="normal")
+            self.resize_condition.config(state="readonly")
+            self.width_label.config(text="-")
+            self.height_label.config(text="Height:")
 
     def select_folder(self):
         new_folder_path = filedialog.askdirectory()
@@ -233,6 +262,20 @@ class Resize_Image(tk.Frame):
         return img
 
 
+    def resize_to_percentage(self, img, percentage):
+        if percentage is None:
+            messagebox.showinfo("Error", "Please enter a valid percentage")
+            return
+        if not isinstance(percentage, (int, float)):
+            raise TypeError("Percentage must be a number.")
+        if percentage <= 0:
+            raise ValueError("Percentage must be greater than 0.")
+        width = int(img.size[0] * percentage)
+        height = int(img.size[1] * percentage)
+        img = img.resize((width, height), Image.LANCZOS)
+        return img
+
+
     def resize_to_width(self, img, width):
         if width is None:
             messagebox.showinfo("Error", "Please enter a valid width")
@@ -263,12 +306,12 @@ class Resize_Image(tk.Frame):
 
     def resize_to_shorter_side(self, img, width):
         if width is None:
-            messagebox.showinfo("Error", "Please enter a valid width")
+            messagebox.showinfo("Error", "Please enter a valid size")
             return
         if not isinstance(width, int):
-            raise TypeError("Width must be an integer.")
+            raise TypeError("Size must be an integer.")
         if width <= 0:
-            raise ValueError("Width must be greater than 0.")
+            raise ValueError("Size must be greater than 0.")
         if img.size[0] < img.size[1]:
             wpercent = (width/float(img.size[0]))
             hsize = int((float(img.size[1])*float(wpercent)))
@@ -280,22 +323,22 @@ class Resize_Image(tk.Frame):
         return img
 
 
-    def resize_to_longer_side(self, img, height):
-        if height is None:
-            messagebox.showinfo("Error", "Please enter a valid height")
+    def resize_to_longer_side(self, img, width):
+        if width is None:
+            messagebox.showinfo("Error", "Please enter a valid size")
             return
-        if not isinstance(height, int):
-            raise TypeError("Height must be an integer.")
-        if height <= 0:
-            raise ValueError("Height must be greater than 0.")
+        if not isinstance(width, int):
+            raise TypeError("Size must be an integer.")
+        if width <= 0:
+            raise ValueError("Size must be greater than 0.")
         if img.size[0] > img.size[1]:
-            wpercent = (height/float(img.size[0]))
+            wpercent = (width/float(img.size[0]))
             hsize = int((float(img.size[1])*float(wpercent)))
-            img = img.resize((height, hsize), Image.LANCZOS)
+            img = img.resize((width, hsize), Image.LANCZOS)
         else:
-            hpercent = (height/float(img.size[1]))
+            hpercent = (width/float(img.size[1]))
             wsize = int((float(img.size[0])*float(hpercent)))
-            img = img.resize((wsize, height), Image.LANCZOS)
+            img = img.resize((wsize, width), Image.LANCZOS)
         return img
 
 
@@ -305,6 +348,8 @@ class Resize_Image(tk.Frame):
             return new_size > original_size
         elif resize_condition == "Downscale Only":
             return new_size < original_size
+        elif resize_condition == "Percentage":
+            return True
         else:  # "Upscale and Downscale"
             return True
 
@@ -315,6 +360,11 @@ class Resize_Image(tk.Frame):
             new_size = (width, height)
             if self.should_resize(original_size, new_size):
                 img = self.resize_to_resolution(img, width, height)
+        elif resize_mode == "Percentage":
+            percentage = width / 100
+            new_size = (int(original_size[0] * percentage), int(original_size[1] * percentage))
+            if self.should_resize(original_size, new_size):
+                img = self.resize_to_percentage(img, percentage)
         elif resize_mode == "Width":
             new_size = (width, original_size[1])
             if self.should_resize(original_size, new_size):
@@ -330,7 +380,7 @@ class Resize_Image(tk.Frame):
         elif resize_mode == "Longer Side":
             new_size = (height, height)
             if self.should_resize(original_size, new_size):
-                img = self.resize_to_longer_side(img, height)
+                img = self.resize_to_longer_side(img, width)
         return img
 
 
@@ -395,7 +445,7 @@ def parse_arguments():
 def setup_root():
     root = tk.Tk()
     root.title("Resize Images")
-    root.geometry("610x425")
+    root.geometry("650x425")
     root.minsize(610,165)
     root.maxsize(2000,500)
     root.update_idletasks()
@@ -422,7 +472,7 @@ def center_window(root):
 
 
 def create_app(root, folder_path):
-    app = Resize_Image(master=root, folder_path=folder_path)
+    app = Resize_Images(master=root, folder_path=folder_path)
 
 
 if __name__ == "__main__":
@@ -437,14 +487,11 @@ if __name__ == "__main__":
 
 '''
 
-v1.01 changes:
+v1.02 changes:
 
   - New:
-    - You can now choose image filetype.
-    - You can now set the `Resize Condition` to the following modes:
-      - `Upscale and Downscale`, Resize the image to the new dimensions regardless of whether they are larger or smaller than the original dimensions.
-      - `Upscale Only`, Resize the image if the new dimensions are larger than the original dimensions.
-      - `Downscale Only`, Resize the image if the new dimensions are smaller than the original dimensions
+    - New resize mode: Resize to: `Percentage`. Use this to resize images by a percent scaling percentage.
+    - The input labels now change depending on the resize mode.
 
 
 <br>
@@ -455,7 +502,11 @@ v1.01 changes:
 <br>
 
   - Other changes:
-    -
+    - Renamed to `batch_resize_images`.
 
+<br>
+
+  - To fix:
+    - Files with the same basename but different extension may be overwritten when being resized.
 
 '''
