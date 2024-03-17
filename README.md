@@ -1,7 +1,7 @@
 # img-txt_viewer
 Display an image and text file side-by-side for easy manual captioning. + Tons of features to help you work faster!
 
-![v1.83_img-txt_viewer](https://github.com/Nenotriple/img-txt_viewer/assets/70049990/0c98427f-bbe7-478c-8972-a10a7df0fd86)
+![v1 91_img-txt_viewer](https://github.com/Nenotriple/img-txt_viewer/assets/70049990/d7d9c754-aae4-4add-882d-fef105cd0531)
 
 # 📝 Usage
 
