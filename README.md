@@ -6,10 +6,38 @@ Display an image and text file side-by-side for easy manual captioning. + Tons o
 # 📝 Usage
 
 - Prepare Your Files:
-  - Put each image and its matching text file in the same folder.
-  - If you choose to include a text pair for an image, ensure they are located in the same folder and have identical basenames.
-  - For example: `01.png` and `01.txt`, `02.jpg` and `02.txt`...
+  - If you choose to include a text pair for an image, ensure they share the same basenames.
+  - For example: `01.png` and `01.txt`, `02.jpg` and `02.txt`, etc.
   - Supported image types: `.png` `.jpg` `.jpeg` `.jfif` `.jpg_large` `.webp` `.bmp` `.gif`
+
+---
+
+Images and text files can be loaded from different folder paths.
+
+By default, text files are loaded from the chosen path. To load text files from a different path, first select a directory as usual, then right-click the `Browse...` button and select `Set Text File Path`. An indicator to the left of the Directory entry will turn blue when a different path is chosen, and hovering the mouse over the indicator will display the selected text path.
+
+ - Example folder structures:
+```
+.
+└── dataset/
+    ├── 01.png
+    ├── 01.txt
+    ├── 02.jpg
+    └── 02.txt
+```
+*(Images and text files in same folder)*
+
+```
+.
+└── dataset/
+    ├── images/
+    │   ├── 01.png
+    │   └── 02.jpg
+    └── captions/
+        ├── 01.txt
+        └── 02.txt
+```
+*(Images and text files in separate folder)*
 
 
 # 💡 Tips and Features
