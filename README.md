@@ -9,7 +9,7 @@ Display an image and text file side-by-side for easy manual captioning. + Tons o
   - Put each image and its matching text file in the same folder.
   - If you choose to include a text pair for an image, ensure they are located in the same folder and have identical basenames.
   - For example: `01.png` and `01.txt`, `02.jpg` and `02.txt`...
-  - Supported image types: `.png` `.jpg` `.jpeg` `.jfif` `.jpg_large` `.webp` `.bmp`
+  - Supported image types: `.png` `.jpg` `.jpeg` `.jfif` `.jpg_large` `.webp` `.bmp` `.gif`
 
 
 # 💡 Tips and Features
@@ -77,8 +77,55 @@ Or use the included `requirements.txt` when setting up your venv.
 
 # 📜 Version History
 
-[v1.91 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.91)
+[v1.92 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.92)
 
-This release comes with several new tools, speedups for displaying images, new features, many issues were fixed, and much more.
 
-Please see the [v1.91 release page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.91) for the change complete notes.
+  - New:
+    - New tag list `Derpibooru`: Created from the top ~100k Derpibooru imageboard tags with additional filtering.
+    - Image Grid: View all images as thumbnails in an overview. Access it from the 'Tools' menu, or from the right-click image menu.
+      - Click an image to quickly jump to it.
+      - Images without a text pair will have a small red flag added to them.
+    - GIF support has been added to these tools: Upscale, Resize, Rotate, and Flip.
+    - Alternate text path:
+      - If an alternate text path has been set, that path will be restored when reloading the last directory on startup.
+      - A small indicator to the left of the directory entry changes to blue when an alternate text path is set.
+        - Hovering the mouse over this indicator will display a tooltip showing the text path.
+    - The mouse wheel can now be used on the index entry to cycle through img-txt pairs.
+
+
+<br>
+
+
+  - Fixed:
+    - Fixed issue where "rename_and_convert_images" would save JPG in RGBA mode, which isn't supported.
+    - Fixed error that occurred when double-clicking the image preview to drag the window.
+    - Tons of small fixes.
+
+<br>
+
+
+  - Other changes:
+    - Small UI tweaks.
+
+
+<br>
+
+
+  - Project Changes:
+    - Refactored img_txt_viewer repo structure.
+    - `Upscale`: (v1.01):
+      - GIF support added.
+      - After upscaling, the index is updated to the upscaled image.
+      - Fixed a minor typo in UI.
+    - `Resize Image`: (v1.01):
+      - GIF support added.
+      - After upscaling, the index is updated to the resized image.
+      - Improved error handling when processing an image.
+    - `Batch Resize Images`: (v1.03):
+      - New output type: `Filetype: AUTO`, use this to output with the same filetype as the input image.
+      - New options: `Overwrite Output`, when disabled, conflicting files will have "_#" appended to the filename.
+      - Cancel button: Stop the resize operation without closing the window.
+      - An image counter now displays the number of images in the selected path along with a running count of all resized images.
+      - Fixed issue where files with the same basename but different extensions would be overwritten when converting to the same type.
+      - Text descriptions are now consolidated into a help button/popup.
+      - Many small UI tweaks and adjustments.
