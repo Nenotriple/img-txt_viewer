@@ -88,7 +88,7 @@ By default, text files are loaded from the chosen path. To load text files from 
    - Text is cleaned when saved, so you can ignore typos such as duplicate tokens, multiple spaces or commas, missing spaces, and more.
    - `Clean text on save` Can be disabled from the options menu.
 
-Please see the [Tools](https://github.com/Nenotriple/img-txt_viewer/wiki/Tools) section of the wiki for a more comprehensive breakdown of the various features.
+Please see the [✨Tools](https://github.com/Nenotriple/img-txt_viewer/wiki/Tools) section of the wiki for a more comprehensive breakdown of the various features.
 
 # 🚩 Requirements
 
