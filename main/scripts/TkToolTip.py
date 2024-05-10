@@ -4,7 +4,7 @@
 #                                      #
 #           Tkinter ToolTips           #
 #                                      #
-#   Version : v1.00                    #
+#   Version : v1.01                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -68,7 +68,6 @@ class TkToolTip:
         Configures the tooltip's text, delay, and position offsets.
     """
 
-
     def __init__(self, widget, text="", delay=0, x_offset=0, y_offset=0):
         """
         Constructs all the necessary attributes for the TkToolTip object.
@@ -96,7 +95,13 @@ class TkToolTip:
         self.delay = delay
         self.x_offset = x_offset
         self.y_offset = y_offset
-        self.tip_window = None
+        self.tip_window = Toplevel(self.widget)
+        self.tip_window.wm_overrideredirect(True)
+        self.tip_window.wm_attributes("-topmost", True)
+        self.tip_window.wm_attributes("-disabled", True)
+        self.label = Label(self.tip_window, background="#ffffee", relief="ridge", borderwidth=1, justify="left", padx=4, pady=4)
+        self.label.pack()
+        self.tip_window.withdraw()
         self.widget_id = None
         self.hide_id = None
         self.hide_time = 0
@@ -117,17 +122,13 @@ class TkToolTip:
                 The y-coordinate of the pointer.
         """
 
-        if self.tip_window or not self.text:
+        if not self.text or self.tip_window.winfo_viewable():
             return
         x += self.x_offset
         y += self.y_offset
-        self.tip_window = tw = Toplevel(self.widget)
-        tw.wm_overrideredirect(True)
-        tw.wm_geometry(f"+{x}+{y}")
-        tw.wm_attributes("-topmost", True)
-        tw.wm_attributes("-disabled", True)
-        label = Label(tw, text=self.text, background="#ffffee", relief="ridge", borderwidth=1, justify="left", padx=4, pady=4)
-        label.pack()
+        self.tip_window.wm_geometry(f"+{x}+{y}")
+        self.label.config(text=self.text)
+        self.tip_window.deiconify()
         self.hide_id = self.widget.after(10000, self.hide_tip)
 
 
@@ -138,9 +139,8 @@ class TkToolTip:
         If the tooltip is not shown, this method does nothing.
         """
 
-        if self.tip_window:
-            self.tip_window.destroy()
-            self.tip_window = None
+        if self.tip_window.winfo_viewable():
+            self.tip_window.withdraw()
         self.hide_time = time.time()
 
 
@@ -211,6 +211,7 @@ class TkToolTip:
             y_offset : int, optional
                 The new y-coordinate offset of the tooltip from the pointer (default is None).
         """
+
         if text is not None:
             self.text = text
         if delay is not None:
