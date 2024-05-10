@@ -1,19 +1,19 @@
 """
+
 ########################################
 #                                      #
 #          Batch Resize Images         #
 #                                      #
-#   Version : v1.03                    #
+#   Version : v1.06                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
 
 Description:
 -------------
-This GUI script allows you to select a directory and resize all images in the selected directory.
-Resize operations: Resize to Resolution, Percentage, Resize to Width, Resize to Height, Resize to Shorter Side, Resize to Longer Side
+This GUI script allows you to resize all images in the selected directory.
+Resize operations: Resize to* Resolution, Percentage, Width, Height, Shorter Side, Longer Side
 Resize conditions: Upscale and Downscale, Upscale Only, Downscale Only
-
 
 """
 
@@ -29,7 +29,11 @@ import argparse
 import tkinter as tk
 from tkinter import ttk, Toplevel, filedialog, messagebox, TclError
 from tkinter.scrolledtext import ScrolledText
+from PIL.PngImagePlugin import PngInfo
 from PIL import Image
+
+import subprocess
+
 
 myappid = 'ImgTxtViewer.Nenotriple'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
@@ -53,13 +57,17 @@ class AboutWindow(Toplevel):
         "Resize to Shorter side:":  "Resize the shorter side of the image.",
         "Resize to Longer side:":   "Resize the longer side of the image.\n",
 
+        "Quality:":                 "Used to control the output quality of JPG and WEBP images. A higher value results in a higher quality output. (Ignored for PNG)\n",
+
         "Upscale and Downscale:":   "Resize the image to the new dimensions regardless of whether they're larger or smaller than the original dimensions.",
         "Upscale Only:":            "Resize the image if the new dimensions are larger than the original dimensions.",
         "Downscale Only:":          "Resize the image if the new dimensions are smaller than the original dimensions.\n",
 
         "Filetype:":                "Select 'AUTO' to output with the same filetype as the input image. Alternatively, choose a specific filetype to force all images to be saved with the chosen type.\n",
 
-        "Overwrite Files:":         "When disabled conflicting files will have '_#' appened to the filename, If enabled files with the same basename will be overwritten."
+        "Use Output Folder:":       "When enabled, a new folder will be created in the image directory called 'Resize Output' where images will be saved.",
+        "Overwrite Files:":         "When disabled, conflicting files will have '_#' append to the filename. If enabled, files with the same basename will be overwritten.",
+        "Save PNG Info:":           "When enabled, this option will automatically save any PNG chunk info to the resized output if saving as PNG. If converting from PNG to another type, then a text file will be created containing the PNG info."
     }
 
 
@@ -82,7 +90,7 @@ class AboutWindow(Toplevel):
                 self.info_text.insert("end", header + "\n", "header")
             self.info_text.insert("end", section + "\n", "section")
         self.info_text.tag_config("first_header", font=("Segoe UI Semibold", 18), justify='center')
-        self.info_text.tag_config("header", font=("Segoe UI", 10, "bold"))
+        self.info_text.tag_config("header", font=("Segoe UI", 9, "bold"))
         self.info_text.tag_config("section", font=("Segoe UI", 9))
         self.info_text.config(state='disabled', wrap="word", height=1)
 
@@ -100,7 +108,7 @@ class AboutWindow(Toplevel):
 #region - CLASS: ResizeImages
 
 
-class Resize_Images(tk.Frame):
+class ResizeImages(tk.Frame):
     def __init__(self, master=None, folder_path=None):
         super().__init__(master)
         self.master = master
@@ -109,6 +117,8 @@ class Resize_Images(tk.Frame):
 
         self.about_window = None
         self.files_processed = 0
+
+        self.supported_filetypes = (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff")
 
         self.setup_ui()
 
@@ -137,6 +147,7 @@ class Resize_Images(tk.Frame):
         self.entry_directory.insert(0, os.path.normpath(self.folder_path) if self.folder_path else "...")
         self.entry_directory.pack(side="left", fill="x", expand=True, padx=2, pady=2)
         self.entry_directory.bind("<Return>", lambda event: self.select_folder(self.entry_directory.get()))
+        self.entry_directory.bind("<Button-1>", lambda event: self.entry_directory.delete(0, "end") if self.entry_directory.get() == "..." else None)
 
         self.select_button = tk.Button(self.frame_top_row, width=8, overrelief="groove", text="Browse...", command=self.select_folder)
         self.select_button.pack(side="left", padx=2, pady=2)
@@ -166,6 +177,11 @@ class Resize_Images(tk.Frame):
         self.overwrite_files_var = tk.IntVar(value=0)
         self.use_output_folder_checkbutton = tk.Checkbutton(self.frame_checkbuttons, overrelief="groove", text="Overwrite Output", variable=self.overwrite_files_var)
         self.use_output_folder_checkbutton.pack(side="left", fill="x", padx=2, pady=2)
+
+            # Save Chunk Info
+        self.save_png_info_var = tk.BooleanVar(value=False)
+        self.save_png_info_checkbutton = tk.Checkbutton(self.frame_checkbuttons, overrelief="groove", text="Save PNG Info", variable=self.save_png_info_var)
+        self.save_png_info_checkbutton.pack(side="left", fill="x", padx=2, pady=2)
 
 
         ##### Resize Settings
@@ -207,6 +223,7 @@ class Resize_Images(tk.Frame):
         self.filetype = ttk.Combobox(self.frame_filetype, width=6, textvariable=self.filetype_var, values=["AUTO", "JPEG", "PNG", "WEBP"], state="readonly")
         self.filetype.set("AUTO")
         self.filetype.pack(side="left", padx=2, pady=2)
+        self.filetype_var.trace_add("write", self.update_quality_widgets)
 
 
         ##### Sizes
@@ -228,6 +245,18 @@ class Resize_Images(tk.Frame):
         self.height_label.pack(side="left", padx=2, pady=2)
         self.height_entry = tk.Entry(self.height_frame, width=20)
         self.height_entry.pack(side="left", padx=2, pady=2)
+
+            # Quality Frame
+        self.frame_quality = tk.Frame(self.frame_sizes)
+        self.frame_quality.pack(fill="x")
+        self.quality_label = tk.Label(self.frame_quality, text="Quality:", width=5)
+        self.quality_label.pack(side="left", padx=2, pady=2)
+        self.quality_var = tk.IntVar(value=100)
+        self.original_quality = self.quality_var.get()
+        self.quality_scale = tk.Scale(self.frame_quality, length=1, showvalue=False, variable=self.quality_var, orient="horizontal", from_=20, to=100)
+        self.quality_scale.pack(side="left", fill="x", expand=True)
+        self.quality_value_label = tk.Label(self.frame_quality, textvariable=self.quality_var, width=3)
+        self.quality_value_label.pack(side="left", padx=2, pady=2)
 
 
     def create_bottom_row(self):
@@ -274,6 +303,20 @@ class Resize_Images(tk.Frame):
 #region -  Misc
 
 
+    def update_quality_widgets(self, *args):
+        if self.filetype_var.get() == "PNG":
+            self.original_quality = self.quality_var.get()
+            self.quality_scale.config(state="disabled")
+            self.quality_label.config(state="disabled")
+            self.quality_value_label.config(state="disabled")
+            self.quality_var.set(100)
+        else:
+            self.quality_scale.config(state="normal")
+            self.quality_label.config(state="normal")
+            self.quality_value_label.config(state="normal")
+            self.quality_var.set(self.original_quality)
+
+
     def update_entries(self, *args):
         mode = self.resize_mode_var.get()
         if mode == "Resolution":
@@ -284,7 +327,7 @@ class Resize_Images(tk.Frame):
             self.resize_condition_label.config(state="normal")
             self.resize_condition.config(state="readonly")
             self.width_label.config(text="Width:")
-            self.height_label.config(text="Heigth:")
+            self.height_label.config(text="Height:")
 
         elif mode == "Percentage":
             self.width_entry.config(state="normal")
@@ -325,7 +368,7 @@ class Resize_Images(tk.Frame):
 
     def update_message_text(self, filecount=None, text=None):
         if filecount:
-            count = sum(1 for file in os.listdir(self.folder_path) if file.endswith((".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff")))
+            count = sum(1 for file in os.listdir(self.folder_path) if file.endswith(self.supported_filetypes))
             self.label_message.config(text=f"{count} {'Image' if count == 1 else 'Images'} Found")
         if text:
             self.label_message.config(text=text)
@@ -342,6 +385,7 @@ class Resize_Images(tk.Frame):
                 self.entry_directory.delete(0, "end")
                 self.entry_directory.insert(0, new_folder_path)
                 self.update_message_text(filecount=True)
+                self.button_resize.config(state="normal")
         except FileNotFoundError:
             self.update_message_text(text="The system cannot find the path specified.")
 
@@ -461,6 +505,8 @@ class Resize_Images(tk.Frame):
 
 
     def should_resize(self, original_size, new_size):
+        if original_size == new_size:
+            return False
         resize_condition = self.resize_condition_var.get()
         if resize_condition == "Upscale Only":
             return new_size > original_size
@@ -498,34 +544,46 @@ class Resize_Images(tk.Frame):
         elif resize_mode == "Longer Side":
             new_size = (height, height)
             if self.should_resize(original_size, new_size):
-                img = self.resize_to_longer_side(img, width)
+                img = self.resize_to_longer_side(img, height)
         return img
+
+
+    def get_resize_confirmation(self, output_folder_path):
+        output_folder_message = f"Images will be saved to:\n{os.path.normpath(output_folder_path)}"
+        default_message = "Are you sure you want to continue?"
+        confirm_message = output_folder_message if self.use_output_folder_var.get() == 1 else default_message
+        return confirm_message
+
+
+    def get_entry_values(self):
+        resize_mode = self.resize_mode_var.get()
+        width_entry = self.width_entry.get()
+        height_entry = self.height_entry.get()
+        width = int(width_entry) if width_entry else None
+        height = int(height_entry) if height_entry else None
+        if (resize_mode == "Resolution" and (width is None or height is None)) or \
+           (resize_mode in ["Percentage", "Width", "Height", "Shorter Side", "Longer Side"] and width is None):
+            return
+        return resize_mode, width, height
 
 
     def resize(self):
         self.percent_complete.set(0)
         self.stop = False
         self.files_processed = 0
-        if not self.stop:
-            self.button_cancel.config(state="normal")
-            self.button_resize.config(state="disabled")
         if self.folder_path is not None:
+            if not self.stop:
+                self.button_cancel.config(state="normal")
+                self.button_resize.config(state="disabled")
             try:
-                resize_mode = self.resize_mode_var.get()
-                width_entry = self.width_entry.get()
-                height_entry = self.height_entry.get()
-                width = int(width_entry) if width_entry else None
-                height = int(height_entry) if height_entry else None
-                image_files = [f for f in os.listdir(self.folder_path) if f.endswith((".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff"))]
+                resize_mode, width, height = self.get_entry_values()
+                image_files = [file for file in os.listdir(self.folder_path) if file.endswith(self.supported_filetypes)]
                 total_images = len(image_files)
                 output_folder_path = self.get_output_folder_path()
-                if self.use_output_folder_var.get() == 1:
-                    confirm_message = f"Images will be saved to:\n{os.path.normpath(output_folder_path)}"
-                else:
-                    confirm_message = "Are you sure you want to continue?"
+                confirm_message = self.get_resize_confirmation(output_folder_path)
                 if messagebox.askokcancel("Confirmation", confirm_message):
                     self.master.focus_force()
-                    for i, filename in enumerate(image_files):
+                    for image_index, filename in enumerate(image_files):
                         if self.stop:
                             self.button_cancel.config(state="disabled")
                             break
@@ -537,8 +595,10 @@ class Resize_Images(tk.Frame):
                             img = self.calculate_resize_mode(img, resize_mode, width, height)
                             if img is None:
                                 return
-                            self.save_image(img, output_folder_path, filename, total_images)
-                            self.percent_complete.set((i+1)/total_images*100)
+                            dest_image_path = self.save_image(img, output_folder_path, filename, total_images)
+                            src_image_path = os.path.join(self.folder_path, filename)
+                            self.handle_metadata(filename, src_image_path, dest_image_path)
+                            self.percent_complete.set((image_index + 1) / total_images * 100)
                             self.percent_bar['value'] = self.percent_complete.get()
                             self.percent_bar.update()
                         except Exception as e:
@@ -548,7 +608,8 @@ class Resize_Images(tk.Frame):
                         self.master.focus_force()
             except Exception as e:
                 print(f"Error in resize function: {str(e)}")
-            self.button_resize.config(state="normal")
+            finally:
+                self.button_resize.config(state="normal")
 
 
     def save_image(self, img, output_folder_path, filename, total_images):
@@ -565,11 +626,106 @@ class Resize_Images(tk.Frame):
             while os.path.exists(os.path.join(output_folder_path, filename_with_new_extension)):
                 filename_with_new_extension = f"{base_filename}_{counter}.{filetype}"
                 counter += 1
-        img.save(os.path.join(output_folder_path, filename_with_new_extension), quality=100, optimize=True)
+        img.save(os.path.join(output_folder_path, filename_with_new_extension), quality=self.quality_var.get(), optimize=True)
         self.update_message_text(text=f"Processed: {self.files_processed} of {total_images} images")
         if self.files_processed >= total_images:
             self.files_processed = 0
             self.update_message_text(text="Done!")
+        return os.path.join(output_folder_path, filename_with_new_extension)
+
+
+#endregion
+################################################################################################################################################
+#region -  Handle Metadata
+
+
+    def handle_metadata(self, filename, src_image_path, output_image_path):
+        if self.save_png_info_var.get():
+            if filename.lower().endswith(".png"):
+                if output_image_path.lower().endswith(".webp"):
+                    self.copy_png_to_webp(src_image_path, output_image_path)
+                else:
+                    self.copy_png_metadata(src_image_path, output_image_path)
+            if filename.lower().endswith(".webp"):
+                self.copy_webp_metadata(src_image_path, output_image_path)
+
+
+    # PNG
+    def read_png_metadata(self, src_image_path):
+        src_image = Image.open(src_image_path)
+        metadata = src_image.info
+        metadata_text = ""
+        pnginfo = PngInfo()
+        for key in metadata:
+            if isinstance(metadata[key], bytes):
+                value = metadata[key].decode('utf-8')
+                pnginfo.add_text(key, value, 0)
+            else:
+                value = str(metadata[key])
+                pnginfo.add_text(key, value, 0)
+            metadata_text += f"{key}: {value}\n"
+        return pnginfo, metadata_text
+
+
+    def write_png_metadata(self, pnginfo, metadata_text, dest_image_path):
+        dest_image = Image.open(dest_image_path)
+        dest_image.save(dest_image_path, pnginfo=pnginfo)
+        base_filename = os.path.basename(dest_image_path)
+        dir_path = os.path.dirname(dest_image_path)
+        if not base_filename.endswith('.png'):
+            with open(os.path.join(dir_path, f"{base_filename}.txt"), "w", encoding="utf-8") as f:
+                f.write(metadata_text)
+
+
+    def copy_png_metadata(self, src_image_path, dest_image_path):
+        pnginfo, metadata_text = self.read_png_metadata(src_image_path)
+        self.write_png_metadata(pnginfo, metadata_text, dest_image_path)
+
+
+    def copy_png_to_webp(self, src_image_path, dest_image_path):
+        exiftool_path = "exiftool.exe"
+        if os.path.exists(exiftool_path):
+            src_image = Image.open(src_image_path)
+            metadata = src_image.info
+            metadata_str = ', '.join(f'{key}: {value}' for key, value in metadata.items())
+            subprocess.run([exiftool_path, '-overwrite_original', f'-UserComment={metadata_str}', dest_image_path], check=True, creationflags=subprocess.CREATE_NO_WINDOW)
+        else:
+            self.stop = True
+            messagebox.showerror("Error!",
+                                    "Could not copy metadata from PNG-to-WEBP."
+                                    "\n\nexiftool.exe does not exist in the root path. (Check spelling)"
+                                    "\n\nDownload the Windows executable from exiftool.org and place in the same folder as batch_resize_images.exe, restart the program and try again."
+                                    "\n\nThe resize operation will now stop.")
+
+
+    # WEBP
+    def read_webp_metadata(self, src_image_path):
+        process = subprocess.run(["exiftool.exe", '-UserComment', '-b', src_image_path], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+        user_comment = process.stdout.strip()
+        print(user_comment)
+        return user_comment
+
+
+    def write_webp_metadata(self, user_comment, dest_image_path):
+        base_filename = os.path.basename(dest_image_path)
+        subprocess.run(["exiftool.exe", '-overwrite_original', f'-UserComment={user_comment}', dest_image_path], check=True, creationflags=subprocess.CREATE_NO_WINDOW)
+        if not base_filename.endswith('.webp'):
+            with open(f"{base_filename}.txt", "w", encoding="utf-8") as f:
+                f.write(user_comment)
+
+
+    def copy_webp_metadata(self, src_image_path, dest_image_path):
+        if os.path.exists("exiftool.exe"):
+            user_comment = self.read_webp_metadata(src_image_path)
+            self.write_webp_metadata(user_comment, dest_image_path)
+        else:
+            self.stop = True
+            messagebox.showerror("Error!",
+                                    "Could not copy metadata from WEBP-to-WEBP."
+                                    "\n\nexiftool.exe does not exist in the root path. (Check spelling)"
+                                    "\n\nDownload the Windows executable from exiftool.org and place in the same folder as batch_resize_images.exe, restart the program and try again."
+                                    "\n\nThe resize operation will now stop.")
+
 
 
 #endregion
@@ -616,7 +772,7 @@ def check_path():
 
 def setup_root():
     root = tk.Tk()
-    root.title("Batch Resize Images")
+    root.title("v1.06 - Batch Resize Images --- github.com/Nenotriple")
     root.geometry("480x250")
     root.resizable(False, False)
     root.update_idletasks()
@@ -646,7 +802,7 @@ if __name__ == "__main__":
     root = setup_root()
     path = check_path()
     center_window(root)
-    Resize_Images(root, path)
+    ResizeImages(root, path)
     root.mainloop()
 
 
@@ -657,24 +813,23 @@ if __name__ == "__main__":
 
 '''
 
-v1.03 changes:
+[v1.06 changes:](https://github.com/Nenotriple/batch_resize_images/releases/tag/v1.06)
 
   - New:
-    - New output type: `Filetype: AUTO`, use this to output with the same filetype as the input image.
-    - New options: `Overwrite Output`, when disabled, conflicting files will have "_#" appened to the filename.
-    - Cancel button: Stop the resize operation without closing the window.
-    - An image counter now displays the amount of images in the selected path along with a running count of all resized images.
-    - Text descriptions are now consolidated into a help button/popup.
+      - Metadata can now be copied between PNG and WEBP images.
+        - Copying metadata from PNG-to-WEBP and WEBP-to-PNG requires `ExifTool.exe` to be in the same folder as `batch_resize_images.exe`.
+        - ExifTool (2003-2024) is created by Phil Harvey and can be downloaded from https://exiftool.org/
 
 <br>
 
   - Fixed:
-    - Fixed issue where files with the same basename but different extensions would be overwritten when converting to the same type.
+    -
 
 <br>
 
   - Other changes:
-    - Many small UI tweaks and adjustments.
+    - Clicking on the directory entry when it's displaying the default `...` will now clear the entry.
+    - Minor UI tweaks.
 
 
 '''
