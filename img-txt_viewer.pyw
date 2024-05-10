@@ -283,12 +283,12 @@ class ImgTxtViewer:
         self.text_modified = False
         self.is_alt_arrow_pressed = False
         self.filepath_contains_images = False
-        self.is_resizing = False
         self.is_resizing_id = None
 
 
         # GIF animation variables
         self.gif_frames = []
+        self.gif_frame_cache = {}
         self.frame_durations = []
         self.current_frame = 0
         self.current_gif_frame_image = None
@@ -1702,8 +1702,13 @@ class ImgTxtViewer:
                 scale_factor = min(self.image_preview.winfo_width() / start_width, self.image_preview.winfo_height() / start_height)
                 new_width = int(start_width * scale_factor)
                 new_height = int(start_height * scale_factor)
-                self.current_frame = self.current_frame.convert("RGBA")
-                self.current_frame = self.current_frame.resize((new_width, new_height), Image.LANCZOS)
+                cache_key = (self.current_frame_index, new_width, new_height)
+                if cache_key not in self.gif_frame_cache:
+                    self.current_frame = self.current_frame.convert("RGBA")
+                    self.current_frame = self.current_frame.resize((new_width, new_height), Image.LANCZOS)
+                    self.gif_frame_cache[cache_key] = self.current_frame
+                else:
+                    self.current_frame = self.gif_frame_cache[cache_key]
                 self.current_gif_frame_image = ImageTk.PhotoImage(self.current_frame)
                 self.image_preview.config(image=self.current_gif_frame_image)
                 self.image_preview.image = self.current_gif_frame_image
@@ -1746,7 +1751,13 @@ class ImgTxtViewer:
     def refresh_image(self):
         if self.image_files:
             self.display_image()
-        self.is_resizing = False
+
+
+    def on_resize(self, event): # Window resize
+        if hasattr(self, 'text_box'):
+            if self.is_resizing_id:
+                root.after_cancel(self.is_resizing_id)
+            self.is_resizing_id = root.after(100, self.refresh_image)
 
 
     def update_imageinfo(self, percent_scale):
@@ -2403,15 +2414,6 @@ class ImgTxtViewer:
         self.refresh_image()
 
 
-    def on_resize(self, event): # Window resize
-        if hasattr(self, 'text_box'):
-            if not self.is_resizing:
-                self.is_resizing = True
-            if self.is_resizing_id:
-                root.after_cancel(self.is_resizing_id)
-            self.is_resizing_id = root.after(100, self.refresh_image)
-
-
 #endregion
 ################################################################################################################################################
 #region - Window drag setup
@@ -2974,9 +2976,10 @@ root.mainloop()
 
 
   - New:
-    - New autocomplete matching modes: `Match Whole String`, and `Match Last Word`
+    - New autocomplete matching modes: `Match Whole String`, and `Match Last Word` [732120e]()
       - `Match Whole String`, This option works exactly as before. All characters in the selected tag are considered for matching.
       - `Match Last Word`, This option will only match (and replace) the last word typed. This allows you to use autocomplete with natural sentences. You can type using an underscore as space to join words together.
+    - New option for image grid view: `Auto-Close`, Unchecking this option allows you to keep the image grid open after making a selection. [67593f4]()
 
 
 <br>
@@ -2989,7 +2992,9 @@ root.mainloop()
 
 
   - Other changes:
-    -
+    - Slightly faster image loading by using PIL's thumbnail function to reduce aspect ratio calculation. [921b4d3]()
+    - Improved performance of TkToolTip class by reusing tooltip widgets, adding visibility checks, and reducing unnecessary method calls. [8b6c0dc]()
+    - Improved performance of animated GIFs by resizing all frames to the required size and caching them.
 
 
 <br>
