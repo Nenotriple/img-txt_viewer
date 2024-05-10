@@ -3,7 +3,7 @@
 #                                      #
 #              Image Grid              #
 #                                      #
-#   Version : v1.00                    #
+#   Version : v1.01                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -22,7 +22,7 @@ Images without a text pair have a red flag placed over them.
 
 import os
 import re
-from tkinter import ttk, Toplevel, IntVar, StringVar, Frame, Label, Button, Radiobutton, Scale, Scrollbar, Canvas
+from tkinter import ttk, Toplevel, IntVar, StringVar, BooleanVar, Frame, Label, Button, Radiobutton, Checkbutton, Scale, Scrollbar, Canvas
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 
 from main.scripts.TkToolTip import TkToolTip as ToolTip # type: ignore
@@ -68,6 +68,9 @@ class ImageGrid:
 
         # Default thumbnail size. Range=(1,2,3). Set to 3 if total_images is less than 25.
         self.image_size = IntVar(value=3) if self.num_total_images < 25 else IntVar(value=2)
+
+        # Toggle window auto-close when selecting an image
+        self.auto_close = BooleanVar(value=True)
 
         # Interface creation
         self.create_interface()
@@ -116,11 +119,12 @@ class ImageGrid:
 
         self.canvas_thumbnails = Canvas(self.frame_thumbnails, yscrollcommand=self.scrollbar.set)
         self.canvas_thumbnails.pack(side="top", fill="both", expand=True)
-        self.canvas_thumbnails.bind_all("<MouseWheel>", self.on_mousewheel)
+        self.canvas_thumbnails.bind("<MouseWheel>", self.on_mousewheel)
 
         self.scrollbar.config(command=self.canvas_thumbnails.yview)
 
         self.frame_image_grid = Frame(self.canvas_thumbnails)
+        self.frame_image_grid.bind("<MouseWheel>", self.on_mousewheel)
 
 
     def create_control_row(self):
@@ -139,10 +143,6 @@ class ImageGrid:
         self.grip_window_size = ttk.Sizegrip(self.frame_bottom)
         self.grip_window_size.pack(side="right", padx=(5,0))
         ToolTip.create(self.grip_window_size, "Adjust window size", 500, 6, 12)
-
-        #self.button_load_more = Button(self.frame_bottom, text="Load More", overrelief="groove", command=self.load_images)
-        #self.button_load_more.pack(side="right", padx=5)
-        #ToolTip.create(self.button_load_more, "Load the next 150 images", 500, 6, 12)
 
         self.button_load_all = Button(self.frame_bottom, text="Load All", overrelief="groove", command=lambda: self.load_images(all_images=True))
         self.button_load_all.pack(side="right", padx=5)
@@ -164,6 +164,10 @@ class ImageGrid:
         self.radiobutton_unpaired = Radiobutton(self.frame_bottom, text="Unpaired", variable=self.image_filter, value="Unpaired", command=self.reload_grid)
         self.radiobutton_unpaired.pack(side="left", padx=5)
         ToolTip.create(self.radiobutton_unpaired, "Display images without text pairs", 500, 6, 12)
+
+        self.checkbutton_auto_close = Checkbutton(self.frame_bottom, text="Auto-Close", variable=self.auto_close, command=self.toggle_auto_close)
+        self.checkbutton_auto_close.pack(side="left", padx=5)
+        ToolTip.create(self.checkbutton_auto_close, "Uncheck this to keep the window open after selecting an image", 500, 6, 12)
 
 
 #endregion
@@ -210,6 +214,7 @@ class ImageGrid:
                     thumbnail = Button(self.frame_image_grid, relief="flat", overrelief="groove", image=image, command=lambda  path=filepath: self.on_mouse_click(path))
                     thumbnail.image = image
                     thumbnail.grid(row=row_index, column=col_index)
+                    thumbnail.bind("<MouseWheel>", self.on_mousewheel)
                     ToolTip.create(thumbnail, f"#{image_index + 1}, {os.path.basename(filepath)}", 200, 6, 12)
         scroll_index = self.loaded_images / self.cols
         scroll_index *= 1.2
@@ -225,12 +230,20 @@ class ImageGrid:
     def on_mouse_click(self, path):
         index = self.get_image_index(self.folder, path)
         self.ImgTxt_jump_to_image(index)
-        self.close_window()
+        if self.auto_close.get() == True:
+            self.close_window()
 
 
     def on_mousewheel(self, event):
         if self.canvas_thumbnails.winfo_exists():
             self.canvas_thumbnails.yview_scroll(int(-1*(event.delta/120)), "units")
+
+
+    def toggle_auto_close(self):
+        if self.auto_close.get():
+            self.top.grab_set()
+        else:
+            self.top.grab_release()
 
 
 #endregion
@@ -435,18 +448,20 @@ class ImageGrid:
 
 '''
 
-v1.00 changes:
+v1.01 changes:
 
   - New:
-    -
+    - New option: `Auto-Close`, Unchecking this option allows you to keep the image grid open after making a selection.
+
 <br>
 
   - Fixed:
     -
+
 <br>
 
   - Other changes:
-    -
+    - Mousewheel is now bound to only the needed widgets.
 
 
 '''
