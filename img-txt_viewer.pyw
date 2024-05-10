@@ -3,7 +3,7 @@
 #                                      #
 #            IMG-TXT VIEWER            #
 #                                      #
-#   Version : v1.92                    #
+#   Version : v1.93                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -17,7 +17,7 @@ More info here: https://github.com/Nenotriple/img-txt_viewer
 """
 
 
-VERSION = "v1.92"
+VERSION = "v1.93"
 
 
 ################################################################################################################################################
@@ -324,6 +324,7 @@ class ImgTxtViewer:
         self.use_colored_suggestions = BooleanVar(value=True)
         self.suggestion_quantity = IntVar(value=4)
         self.suggestion_threshold = StringVar(value="Normal")
+        self.last_word_match_var = BooleanVar(value=False)
         self.selected_suggestion_index = 0
         self.suggestions = []
 
@@ -390,6 +391,14 @@ class ImgTxtViewer:
         self.optionsMenu.add_cascade(label="Suggestion Quantity", underline=11, state="disable", menu=suggestion_quantity_menu)
         for quantity in range(0, 10):
             suggestion_quantity_menu.add_radiobutton(label=str(quantity), variable=self.suggestion_quantity, value=quantity, command=lambda suggestion_quantity=quantity: self.set_suggestion_quantity(suggestion_quantity))
+
+
+        # Match Mode Menu
+        match_mode_menu = Menu(self.optionsMenu, tearoff=0)
+        self.optionsMenu.add_cascade(label="Match Mode", menu=match_mode_menu)
+        match_modes = {"Match Whole String": False, "Match Last Word": True}
+        for mode, value in match_modes.items():
+            match_mode_menu.add_radiobutton(label=mode, variable=self.last_word_match_var, value=value)
         self.optionsMenu.add_separator()
 
 
@@ -1006,6 +1015,12 @@ class ImgTxtViewer:
         suggestionContext_menu.add_cascade(label="Suggestion Quantity", menu=suggestion_quantity_menu)
         for quantity in range(0, 10):
             suggestion_quantity_menu.add_radiobutton(label=str(quantity), variable=self.suggestion_quantity, value=quantity, command=lambda suggestion_quantity=quantity: self.set_suggestion_quantity(suggestion_quantity))
+        # Match Mode Menu
+        match_mode_menu = Menu(suggestionContext_menu, tearoff=0)
+        suggestionContext_menu.add_cascade(label="Match Mode", menu=match_mode_menu)
+        match_modes = {"Match Whole String": False, "Match Last Word": True}
+        for mode, value in match_modes.items():
+            match_mode_menu.add_radiobutton(label=mode, variable=self.last_word_match_var, value=value)
         suggestionContext_menu.tk_popup(event.x_root, event.y_root)
 
 
@@ -1323,11 +1338,15 @@ class ImgTxtViewer:
             return
         text = self.text_box.get("1.0", "insert")
         self.clear_suggestions()
-        if self.list_mode_var.get():
-            elements = [element.strip() for element in text.split('\n')]
+        if self.last_word_match_var.get():
+            words = text.split()
+            current_word = words[-1] if words else ''
         else:
-            elements = [element.strip() for element in text.split(',')]
-        current_word = elements[-1]
+            if self.list_mode_var.get():
+                elements = [element.strip() for element in text.split('\n')]
+            else:
+                elements = [element.strip() for element in text.split(',')]
+            current_word = elements[-1]
         current_word = current_word.strip()
         if current_word and len(self.selected_csv_files) >= 1:
             suggestions = self.autocomplete.get_suggestion(current_word)
@@ -1388,12 +1407,16 @@ class ImgTxtViewer:
     def insert_selected_suggestion(self, selected_suggestion):
         selected_suggestion = selected_suggestion.strip()
         text = self.text_box.get("1.0", "insert").rstrip()
-        elements = [element.strip() for element in text.split('\n' if self.list_mode_var.get() else ',')]
-        current_word = elements[-1]
+        if self.last_word_match_var.get():
+            words = text.split()
+            current_word = words[-1] if words else ''
+        else:
+            elements = [element.strip() for element in text.split('\n' if self.list_mode_var.get() else ',')]
+            current_word = elements[-1]
         remaining_text = self.text_box.get("insert", "end").rstrip('\n')
         start_of_current_word = "1.0 + {} chars".format(len(text) - len(current_word))
         self.text_box.delete(start_of_current_word, "insert")
-        if not remaining_text.startswith(('\n' if self.list_mode_var.get() else ',')):
+        if not remaining_text.startswith(('\n' if self.list_mode_var.get() else ',')) and not self.last_word_match_var.get():
             self.text_box.insert(start_of_current_word, selected_suggestion + ('\n' if self.list_mode_var.get() else ','))
         else:
             self.text_box.insert(start_of_current_word, selected_suggestion)
@@ -2955,58 +2978,33 @@ root.mainloop()
 '''
 
 
-[v1.92 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.92)
+[v1.93 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.93)
 
 
   - New:
-    - New tag list `Derpibooru`: Created from the top ~100k Derpibooru imageboard tags with additional filtering.
-    - Image Grid: View all images as thumbnails in an overview. Access it from the 'Tools' menu, or from the right-click image menu.
-      - Click an image to quickly jump to it.
-      - Images without a text pair will have a small red flag added to them.
-    - GIF support has been added to these tools: Upscale, Resize, Rotate, and Flip.
-    - Alternate text path:
-      - If an alternate text path has been set, that path will be restored when reloading the last directory on startup.
-      - A small indicator to the left of the directory entry changes to blue when an alternate text path is set.
-        - Hovering the mouse over this indicator will display a tooltip showing the text path.
-    - The mouse wheel can now be used on the index entry to cycle through img-txt pairs.
+    - New autocomplete matching modes: `Match Whole String`, and `Match Last Word`
+      - `Match Whole String`, This option works exactly as before. All characters in the selected tag are considered for matching.
+      - `Match Last Word`, This option will only match (and replace) the last word typed. This allows you to use autocomplete with natural sentences. You can type using an underscore as space to join words together.
 
 
 <br>
 
 
   - Fixed:
-    - Fixed issue where "rename_and_convert_images" would save JPG in RGBA mode, which isn't supported.
-    - Fixed error that occurred when double-clicking the image preview to drag the window.
-    - Tons of small fixes.
+    -
 
 <br>
 
 
   - Other changes:
-    - Small UI tweaks.
+    -
 
 
 <br>
 
 
   - Project Changes:
-    - Refactored img_txt_viewer repo structure.
-    - `Upscale`: (v1.01):
-      - GIF support added.
-      - After upscaling, the index is updated to the upscaled image.
-      - Fixed a minor typo in UI.
-    - `Resize Image`: (v1.01):
-      - GIF support added.
-      - After upscaling, the index is updated to the resized image.
-      - Improved error handling when processing an image.
-    - `Batch Resize Images`: (v1.03):
-      - New output type: `Filetype: AUTO`, use this to output with the same filetype as the input image.
-      - New options: `Overwrite Output`, when disabled, conflicting files will have "_#" appended to the filename.
-      - Cancel button: Stop the resize operation without closing the window.
-      - An image counter now displays the number of images in the selected path along with a running count of all resized images.
-      - Fixed issue where files with the same basename but different extensions would be overwritten when converting to the same type.
-      - Text descriptions are now consolidated into a help button/popup.
-      - Many small UI tweaks and adjustments.
+    -
 
 
 <!-- New -->
