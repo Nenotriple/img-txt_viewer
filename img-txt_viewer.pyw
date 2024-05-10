@@ -1651,16 +1651,8 @@ class ImgTxtViewer:
         try:
             with Image.open(self.image_file) as image_file:
                 self.original_image_size = image_file.size
-                max_size = self.quality_max_size
-                if image_file.size[0] > max_size or image_file.size[1] > max_size:
-                    aspect_ratio = image_file.size[0] / image_file.size[1]
-                    if aspect_ratio >= 1:
-                        new_width = max_size
-                        new_height = int(max_size / aspect_ratio)
-                    else:
-                        new_height = max_size
-                        new_width = int(max_size * aspect_ratio)
-                    image_file = image_file.resize((new_width, new_height), Image.LANCZOS)
+                max_size = (self.quality_max_size, self.quality_max_size)
+                image_file.thumbnail(max_size, Image.NEAREST)
                 if image_file.format == 'GIF':
                     self.gif_frames = [frame.copy() for frame in ImageSequence.Iterator(image_file)]
                     self.frame_durations = [frame.info['duration'] for frame in ImageSequence.Iterator(image_file)]
