@@ -2696,8 +2696,13 @@ class ImgTxtViewer:
 
     def choose_working_directory(self):
         try:
-            if self.auto_save_var.get():
-                self.save_text_file()
+            original_auto_save_var = None
+            if hasattr(self, 'text_box'):
+                original_auto_save_var = self.auto_save_var.get()
+                if original_auto_save_var:
+                    self.save_text_file()
+            else:
+                self.auto_save_var.set(value=False)
             directory = askdirectory()
             if directory and directory != self.image_dir.get():
                 if self.check_if_contains_images(directory):
@@ -2706,6 +2711,8 @@ class ImgTxtViewer:
                     self.current_index = 0
                     self.load_pairs()
                     self.set_text_file_path(directory)
+            if original_auto_save_var is not None:
+                self.auto_save_var.set(original_auto_save_var)
         except Exception: return
 
 
@@ -2986,22 +2993,24 @@ root.mainloop()
 
 
   - Fixed:
-    -
+    - Fixed an issue where loading a directory could result in the first text file displayed being erased.
+
 
 <br>
 
 
   - Other changes:
     - Slightly faster image loading by using PIL's thumbnail function to reduce aspect ratio calculation. [921b4d3]()
-    - Improved performance of TkToolTip class by reusing tooltip widgets, adding visibility checks, and reducing unnecessary method calls. [8b6c0dc]()
-    - Improved performance of animated GIFs by resizing all frames to the required size and caching them.
+    - Improved performance of TkToolTip by reusing tooltip widgets, adding visibility checks, and reducing unnecessary method calls. [8b6c0dc]()
+    - Improved performance when viewing animated GIFs by first resizing all frames to the required size and caching them. [c8bd32a]()
 
 
 <br>
 
 
   - Project Changes:
-    -
+    - `Batch Resize Images`: v1.06 [19d5b4d]()
+      - See full list of changes here: https://github.com/Nenotriple/batch_resize_images/releases
 
 
 <!-- New -->
