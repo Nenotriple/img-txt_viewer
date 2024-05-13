@@ -199,22 +199,23 @@ class Autocomplete:
         text_with_underscores = text.replace(" ", "_")
         text_with_asterisks = re.escape(text_with_underscores).replace("\\*", ".*")
         pattern = re.compile(text_with_asterisks)
-        suggestions = []
+        suggestions = {}
         suggestion_threshold = 25000 if not self.previous_suggestions else self.suggestion_threshold
         for true_name, (classifier_id, similar_names) in itertools.islice(self.data.items(), suggestion_threshold):
             if pattern.match(true_name):
-                suggestions.append((true_name, classifier_id, similar_names))
+                suggestions[true_name] = (classifier_id, similar_names)
         for sim_name in self.similar_names_dict:
             if pattern.match(sim_name):
                 for true_name in self.similar_names_dict[sim_name]:
                     classifier_id, similar_names = self.data[true_name]
-                    suggestions.append((true_name, classifier_id, similar_names))
+                    suggestions[true_name] = (classifier_id, similar_names)
+        suggestions = list(suggestions.items())
         suggestions.sort(key=lambda x: self.get_score(x[0], text_with_underscores), reverse=True)
         self.previous_text = text
         self.previous_suggestions = suggestions
         self.previous_pattern = pattern
         return suggestions[:self.max_suggestions]
-
+    
 
     def get_score(self, suggestion, text):
         score = 0
@@ -1377,6 +1378,7 @@ class ImgTxtViewer:
         self.suggestion_textbox.config(state='normal')
         self.suggestion_textbox.delete('1.0', 'end')
         for i, (s, classifier_id) in enumerate(self.suggestions):
+            classifier_id = classifier_id[0]
             if classifier_id and classifier_id.isdigit():
                 color_id = int(classifier_id) % len(self.suggestion_colors)
             else:
@@ -3060,7 +3062,7 @@ root.mainloop()
   - Other changes:
     - Improved performance of Autocomplete, by handling similar names my efficiently. Up to 40% faster than before.
     - Improved performance when viewing animated GIFs by first resizing all frames to the required size and caching them. [c8bd32a]()
-    - Improved efficieny of TkToolTip by reusing tooltip widgets, adding visibility checks, and reducing unnecessary method calls. [8b6c0dc]()    
+    - Improved efficieny of TkToolTip by reusing tooltip widgets, adding visibility checks, and reducing unnecessary method calls. [8b6c0dc]()
     - Slightly faster image loading by using PIL's thumbnail function to reduce aspect ratio calculation. [921b4d3]()
 
 
