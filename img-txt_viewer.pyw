@@ -76,7 +76,7 @@ class AboutWindow(Toplevel):
         " ⦁Highlight matching words by selecting text.\n"
         " ⦁Quickly create text pairs by loading the image and saving the text.\n"
         " ⦁List Mode: Display tags in a list format while saving in standard format.\n"
-        " ⦁Use an asterisk * while typing to return suggestions using 'fuzzy search'.\n",
+        " ⦁Use an asterisk * while typing to return suggestions using fuzzy search.\n",
 
         # Text Tools
         " ⦁Search and Replace: Edit all text files at once.\n"
@@ -112,6 +112,7 @@ class AboutWindow(Toplevel):
         self.github_url = "https://github.com/Nenotriple/img-txt_viewer"
         self.create_info_text()
         self.create_other_widgets()
+        self.focus_force()
 
 
     def create_info_text(self):
@@ -3026,7 +3027,7 @@ app = ImgTxtViewer(root)
 app.toggle_always_on_top()
 root.attributes('-topmost', 0)
 root.protocol("WM_DELETE_WINDOW", app.on_closing)
-root.title(f"{VERSION} - img-txt_viewer  ---  github.com/Nenotriple/img-txt_viewer")
+root.title(f"{VERSION} - img-txt Viewer")
 app.read_settings()
 root.mainloop()
 
@@ -3041,50 +3042,44 @@ root.mainloop()
 
 [v1.93 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.93)
 
+<details>
+  <summary>Click here to view release notes!</summary>
 
   - New:
-    - New autocomplete matching modes: `Match Whole String`, and `Match Last Word` [732120e]()
+    - New autocomplete matching modes: `Match Whole String`, and `Match Last Word` [732120e](https://github.com/Nenotriple/img-txt_viewer/commit/732120e61dbe0758f8f00c4852edf3f435b32c29)
       - `Match Whole String`, This option works exactly as before. All characters in the selected tag are considered for matching.
       - `Match Last Word`, This option will only match (and replace) the last word typed. This allows you to use autocomplete with natural sentences. You can type using an underscore as a space to join words together.
-    - New option for image grid view: `Auto-Close`, Unchecking this option allows you to keep the image grid open after making a selection. [67593f4]()
-    - New Tool: `Rename img-txt pairs`, Use this to clean-up the filenames of your dataset without converting the image types. [8f24a7e]()
-    - You can now choose the crop anchor point when using `Batch Crop Images`. [9d247ea]()
+    - New option for image grid view: `Auto-Close`, Unchecking this option allows you to keep the image grid open after making a selection. [67593f4](https://github.com/Nenotriple/img-txt_viewer/commit/67593f4876daf0cdbc6170dbb7c8820b99d8636d)
+    - New Tool: `Rename img-txt pairs`, Use this to clean-up the filenames of your dataset without converting the image types. [8f24a7e](https://github.com/Nenotriple/img-txt_viewer/commit/8f24a7e41a4fb4770fb5bd06d9dd2337b31c6270)
+    - You can now choose the crop anchor point when using `Batch Crop Images`. [9d247ea](https://github.com/Nenotriple/img-txt_viewer/commit/9d247ea582218366be7969b4c30d20fb7e8fbe87)
 
 <br>
 
 
   - Fixed:
-    - Fixed an issue where initially loading a directory could result in the first text file displayed being erased. [ae56143]()
-    - Fixed the issue where certain GIF image caches would be used in place of other similar images.
+    - Fixed issue #23 where initially loading a directory could result in the first text file displayed being erased. [ae56143](https://github.com/Nenotriple/img-txt_viewer/commit/ae561433a8a98fbcbbb3c1a1a6a35c05b412d9cc)
 
 
 <br>
 
 
   - Other changes:
-    - Improved performance of Autocomplete, by handling similar names more efficiently. Up to 40% faster than before.
-    - Improved performance when viewing animated GIFs by first resizing all frames to the required size and caching them. [c8bd32a]()
-    - Improved efficieny of TkToolTip by reusing tooltip widgets, adding visibility checks, and reducing unnecessary method calls. [8b6c0dc]()
-    - Slightly faster image loading by using PIL's thumbnail function to reduce aspect ratio calculation. [921b4d3]()
+    - Improved performance of Autocomplete, by handling similar names more efficiently. Up to 40% faster than before. [d8be0f2](https://github.com/Nenotriple/img-txt_viewer/commit/d8be0f28ff681be45beb8ca7694e9fc4fb4aa55c)
+    - Improved performance when viewing animated GIFs by first resizing all frames to the required size and caching them. [c8bd32a](https://github.com/Nenotriple/img-txt_viewer/commit/c8bd32a408213fab5cba0dd5842c9f9bb050e4fa)
+    - Improved efficiency of TkToolTip by reusing tooltip widgets, adding visibility checks, and reducing unnecessary method calls. [8b6c0dc](https://github.com/Nenotriple/img-txt_viewer/commit/8b6c0dc70c7547bbb0c873cbc9e02235a8725cdd)
+    - Slightly faster image loading by using PIL's thumbnail function to reduce aspect ratio calculation. [921b4d3](https://github.com/Nenotriple/img-txt_viewer/commit/921b4d38132e82078c34316fd12b45fc4e61694b)
 
 
 <br>
 
 
   - Project Changes:
-    - `Batch Resize Images`: v1.06 [19d5b4d]()
+    - `Batch Resize Images`: v1.06 [19d5b4d](https://github.com/Nenotriple/img-txt_viewer/commit/19d5b4d5fbe3ac6629d0755e24f3b560be800125)
       - See full list of changes here: https://github.com/Nenotriple/batch_resize_images/releases
+    - `Upscale`: v1.02 [616ddaa](https://github.com/Nenotriple/img-txt_viewer/commit/616ddaa6ebd897b3f63cf921406f0e5ed958f930)
+      - The current and total GIF frames are now displayed in the UI.
 
-
-<!-- New -->
-[]:
-
-<!-- Fixed -->
-[]:
-
-<!-- Other changes -->
-[]:
-
+</details>
 
 '''
 
