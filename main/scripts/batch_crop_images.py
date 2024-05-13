@@ -3,7 +3,7 @@
 #                                      #
 #           Batch Crop Images          #
 #                                      #
-#   Version : v1.00                    #
+#   Version : v1.01                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -14,7 +14,9 @@ Crop a folder of images by resizing (ensuring they are larger than the target) t
 
 """
 
-####### Imports #############################################
+
+################################################################################################################################################
+#region - Imports
 
 
 import os
@@ -24,8 +26,9 @@ from tkinter import ttk, messagebox
 from PIL import Image
 
 
-####### Class Setup #########################################
-
+#endregion
+################################################################################################################################################
+#region - CLASS: BatchCrop
 
 class BatchCrop:
     def __init__(self, master, filepath, window_x, window_y):
@@ -40,6 +43,11 @@ class BatchCrop:
         self.supported_formats = {".jpg", ".jpeg", ".png", ".jfif", ".jpg_large", ".bmp", ".webp"}
 
         self.create_interface()
+
+
+#endregion
+################################################################################################################################################
+#region - Create Interface
 
 
     def create_interface(self):
@@ -88,6 +96,18 @@ class BatchCrop:
         self.entry_height.bind("<Return>", self.process_images)
 
 
+        # Crop Anchor Combobox
+        self.frame_anchor = Frame(self.top)
+        self.frame_anchor.pack(side="top", padx=10, pady=10)
+
+        self.label_anchor = Label(self.frame_anchor, text="Crop Anchor")
+        self.label_anchor.pack(side="left", padx=5, pady=5)
+
+        self.combo_anchor = ttk.Combobox(self.frame_anchor, values=['Center', 'North', 'East', 'South', 'West', 'North-East',  'North-West', 'South-East', 'South-West'], state="readonly")
+        self.combo_anchor.set("Center")
+        self.combo_anchor.pack(side="left", padx=5, pady=5)
+
+
         # Primary Buttons
         self.frame_primary_buttons = Frame(self.top)
         self.frame_primary_buttons.pack(side="top", fill="x")
@@ -99,7 +119,9 @@ class BatchCrop:
         self.button_cancel.pack(side="left", expand=True, fill="x", padx=5, pady=5)
 
 
-####### Primary Functions #######################################
+#endregion
+################################################################################################################################################
+#region - Primary Functions
 
 
     def resize_image(self, image, resolution):
@@ -115,13 +137,41 @@ class BatchCrop:
         return image
 
 
-    def crop_image(self, image, resolution):
+    def crop_image(self, image, resolution, anchor='Center'):
         width, height = image.size
         new_width, new_height = resolution
-        left = (width - new_width) / 2
-        top = (height - new_height) / 2
-        right = (width + new_width) / 2
-        bottom = (height + new_height) / 2
+
+        if anchor == 'Center':
+            left = (width - new_width) / 2
+            top = (height - new_height) / 2
+        elif anchor == 'North':
+            left = (width - new_width) / 2
+            top = 0
+        elif anchor == 'South':
+            left = (width - new_width) / 2
+            top = height - new_height
+        elif anchor == 'West':
+            left = 0
+            top = (height - new_height) / 2
+        elif anchor == 'East':
+            left = width - new_width
+            top = (height - new_height) / 2
+        elif anchor == 'North-West':
+            left = 0
+            top = 0
+        elif anchor == 'North-East':
+            left = width - new_width
+            top = 0
+        elif anchor == 'South-West':
+            left = 0
+            top = height - new_height
+        elif anchor == 'South-East':
+            left = width - new_width
+            top = height - new_height
+        else:
+            raise ValueError(f"Invalid anchor point: {anchor}")
+        right = left + new_width
+        bottom = top + new_height
         return image.crop((left, top, right, bottom))
 
 
@@ -144,10 +194,10 @@ class BatchCrop:
             for filename in os.listdir(self.filepath):
                 if any(filename.endswith(format) for format in self.supported_formats):
                     image = Image.open(os.path.join(self.filepath, filename))
-                    resolution = (int(self.entry_width_var.get()),
-                                  int(self.entry_height_var.get()))
+                    anchor = self.combo_anchor.get()
+                    resolution = (int(self.entry_width_var.get()), int(self.entry_height_var.get()))
                     resized_image = self.resize_image(image, resolution)
-                    cropped_image = self.crop_image(resized_image, resolution)
+                    cropped_image = self.crop_image(resized_image, resolution, anchor)
                     if cropped_image.mode == 'RGBA':
                         cropped_image = cropped_image.convert('RGB')
                     cropped_image.save(os.path.join(new_directory, f'{os.path.splitext(filename)[0]}_{resolution[0]}x{resolution[1]}.jpg'), quality=100)
@@ -163,8 +213,9 @@ class BatchCrop:
             self.close_window()
 
 
-
-####### Window drag bar setup #######################################
+#endregion
+################################################################################################################################################
+#region - Window drag bar setup
 
 
     def start_drag(self, event):
@@ -185,7 +236,9 @@ class BatchCrop:
         self.top.geometry(f"+{x}+{y}")
 
 
-####### Widget highlighting setup #######################################
+#endregion
+################################################################################################################################################
+#region - Widget highlight setup
 
 
     def bind_widget_highlight(self, widget, add=False, color=None):
@@ -206,8 +259,61 @@ class BatchCrop:
         event.widget['background'] = 'SystemButtonFace'
 
 
-####### Misc #######################################
+#endregion
+################################################################################################################################################
+#region - Misc
 
 
     def close_window(self, event=None):
         self.top.destroy()
+
+
+#endregion
+################################################################################################################################################
+#region - Changelog
+
+
+'''
+
+
+v1.01 changes:
+
+
+  - New:
+    - You can now choose the crop anchor point.
+
+
+<br>
+
+
+  - Fixed:
+    -
+
+<br>
+
+
+  - Other changes:
+    -
+
+'''
+
+
+#endregion
+################################################################################################################################################
+#region - Todo
+
+
+'''
+
+
+- Todo
+  -
+
+
+- Tofix
+  -
+
+
+'''
+
+#endregion
