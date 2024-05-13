@@ -215,7 +215,7 @@ class Autocomplete:
         self.previous_suggestions = suggestions
         self.previous_pattern = pattern
         return suggestions[:self.max_suggestions]
-    
+
 
     def get_score(self, suggestion, text):
         score = 0
@@ -268,7 +268,7 @@ class ImgTxtViewer:
         self.replace_string_var = StringVar()
         self.prefix_string_var = StringVar()
         self.append_string_var = StringVar()
-        self.custom_highlight_string = StringVar()
+        self.custom_highlight_string_var = StringVar()
 
 
         # Filter variables
@@ -285,11 +285,11 @@ class ImgTxtViewer:
 
 
         # Misc variables
-        self.about_window = None
-        self.panes_swapped = False
-        self.text_modified = False
+        self.about_window_open = None
+        self.panes_swapped_var = False
+        self.text_modified_var = False
         self.is_alt_arrow_pressed = False
-        self.filepath_contains_images = False
+        self.filepath_contains_images_var = False
         self.is_resizing_id = None
 
 
@@ -309,11 +309,11 @@ class ImgTxtViewer:
         self.font_size_var = 10
         self.undo_state = StringVar(value="disabled")
         self.list_mode_var = BooleanVar(value=False)
-        self.cleaning_text = BooleanVar(value=True)
+        self.cleaning_text_var = BooleanVar(value=True)
         self.auto_save_var = BooleanVar(value=False)
         self.big_save_button_var = BooleanVar(value=False)
-        self.highlighting_duplicates = BooleanVar(value=True)
-        self.highlighting_all_duplicates = BooleanVar(value=False)
+        self.highlight_selection_var = BooleanVar(value=True)
+        self.highlight_all_duplicates_var = BooleanVar(value=False)
 
 
         # Image Quality
@@ -328,9 +328,9 @@ class ImgTxtViewer:
         self.csv_derpibooru = BooleanVar(value=False)
         self.csv_e621 = BooleanVar(value=False)
         self.csv_english_dictionary = BooleanVar(value=False)
-        self.use_colored_suggestions = BooleanVar(value=True)
-        self.suggestion_quantity = IntVar(value=4)
-        self.suggestion_threshold = StringVar(value="Normal")
+        self.colored_suggestion_var = BooleanVar(value=True)
+        self.suggestion_quantity_var = IntVar(value=4)
+        self.suggestion_threshold_var = StringVar(value="Normal")
         self.last_word_match_var = BooleanVar(value=False)
         self.selected_suggestion_index = 0
         self.suggestions = []
@@ -390,14 +390,14 @@ class ImgTxtViewer:
         suggestion_threshold_menu = Menu(self.optionsMenu, tearoff=0)
         self.optionsMenu.add_cascade(label="Suggestion Threshold", underline=11, state="disable", menu=suggestion_threshold_menu)
         for level in ["Slow", "Normal", "Fast", "Faster"]:
-            suggestion_threshold_menu.add_radiobutton(label=level, variable=self.suggestion_threshold, value=level, command=self.set_suggestion_threshold)
+            suggestion_threshold_menu.add_radiobutton(label=level, variable=self.suggestion_threshold_var, value=level, command=self.set_suggestion_threshold)
 
 
         # Suggestion Quantity Menu
         suggestion_quantity_menu = Menu(self.optionsMenu, tearoff=0)
         self.optionsMenu.add_cascade(label="Suggestion Quantity", underline=11, state="disable", menu=suggestion_quantity_menu)
         for quantity in range(0, 10):
-            suggestion_quantity_menu.add_radiobutton(label=str(quantity), variable=self.suggestion_quantity, value=quantity, command=lambda suggestion_quantity=quantity: self.set_suggestion_quantity(suggestion_quantity))
+            suggestion_quantity_menu.add_radiobutton(label=str(quantity), variable=self.suggestion_quantity_var, value=quantity, command=lambda suggestion_quantity=quantity: self.set_suggestion_quantity(suggestion_quantity))
 
 
         # Match Mode Menu
@@ -410,9 +410,9 @@ class ImgTxtViewer:
 
 
         # Options
-        self.optionsMenu.add_checkbutton(label="Highlighting Selected Duplicates", underline=0, state="disable", variable=self.highlighting_duplicates)
-        self.optionsMenu.add_checkbutton(label="Cleaning Text on Save", underline=0, state="disable", variable=self.cleaning_text, command=self.toggle_list_menu)
-        self.optionsMenu.add_checkbutton(label="Colored Suggestions", underline=1, state="disable", variable=self.use_colored_suggestions, command=self.update_autocomplete_dictionary)
+        self.optionsMenu.add_checkbutton(label="Cleaning Text on Save", underline=0, state="disable", variable=self.cleaning_text_var, command=self.toggle_list_menu)
+        self.optionsMenu.add_checkbutton(label="Colored Suggestions", underline=1, state="disable", variable=self.colored_suggestion_var, command=self.update_autocomplete_dictionary)
+        self.optionsMenu.add_checkbutton(label="Highlight Selection", underline=0, state="disable", variable=self.highlight_selection_var)
         self.optionsMenu.add_checkbutton(label="Big Save Button", underline=4, state="disable", variable=self.big_save_button_var, command=self.toggle_save_button_height)
         self.optionsMenu.add_checkbutton(label="List View", underline=0, state="disable", variable=self.list_mode_var, command=self.toggle_list_mode)
         self.optionsMenu.add_separator()
@@ -816,7 +816,7 @@ class ImgTxtViewer:
         self.custom_label = Label(self.tab5_button_frame, width=8, text="Highlight:")
         self.custom_label.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.custom_label, "Enter the text you want to highlight\nUse ' + ' to highlight multiple strings of text\n\nExample: dog + cat", 200, 6, 12)
-        self.custom_entry = Entry(self.tab5_button_frame, textvariable=self.custom_highlight_string)
+        self.custom_entry = Entry(self.tab5_button_frame, textvariable=self.custom_highlight_string_var)
         self.custom_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
         self.custom_entry.bind('<KeyRelease>', lambda event: self.highlight_custom_string())
         self.highlight_button = Button(self.tab5_button_frame, text="Go!", overrelief="groove", width=4, command=self.highlight_custom_string)
@@ -940,7 +940,7 @@ class ImgTxtViewer:
             widget_in_focus.focus_set()
             if widget_in_focus == getattr(self, 'text_box', None):
                 select_state = "disabled"
-                cleaning_state = "normal" if self.cleaning_text.get() else "disabled"
+                cleaning_state = "normal" if self.cleaning_text_var.get() else "disabled"
                 try:
                     selected_text = self.text_box.get("sel.first", "sel.last")
                     if len(selected_text) >= 3:
@@ -961,8 +961,8 @@ class ImgTxtViewer:
                 textContext_menu.add_command(label="Highlight all Duplicates", accelerator="Ctrl+F", command=self.highlight_all_duplicates)
                 textContext_menu.add_command(label="Next Empty Text File", accelerator="Ctrl+E", command=self.index_goto_next_empty)
                 textContext_menu.add_separator()
-                textContext_menu.add_checkbutton(label="Highlighting Selected Duplicates", variable=self.highlighting_duplicates)
-                textContext_menu.add_checkbutton(label="Clean Text on Save", variable=self.cleaning_text, command=self.toggle_list_menu)
+                textContext_menu.add_checkbutton(label="Highlight Selection", variable=self.highlight_selection_var)
+                textContext_menu.add_checkbutton(label="Clean Text on Save", variable=self.cleaning_text_var, command=self.toggle_list_menu)
                 textContext_menu.add_checkbutton(label="List View", variable=self.list_mode_var, state=cleaning_state, command=self.toggle_list_mode)
             elif widget_in_focus == self.info_text:
                 textContext_menu.add_command(label="Copy", command=lambda: widget_in_focus.event_generate('<<Copy>>'))
@@ -1022,12 +1022,12 @@ class ImgTxtViewer:
         suggestionContext_menu.add_cascade(label="Suggestion Threshold", menu=suggestion_threshold_menu)
         threshold_levels = ["Slow", "Normal", "Fast", "Faster"]
         for level in threshold_levels:
-            suggestion_threshold_menu.add_radiobutton(label=level, variable=self.suggestion_threshold, value=level, command=self.set_suggestion_threshold)
+            suggestion_threshold_menu.add_radiobutton(label=level, variable=self.suggestion_threshold_var, value=level, command=self.set_suggestion_threshold)
         # Suggestion Quantity
         suggestion_quantity_menu = Menu(suggestionContext_menu, tearoff=0)
         suggestionContext_menu.add_cascade(label="Suggestion Quantity", menu=suggestion_quantity_menu)
         for quantity in range(0, 10):
-            suggestion_quantity_menu.add_radiobutton(label=str(quantity), variable=self.suggestion_quantity, value=quantity, command=lambda suggestion_quantity=quantity: self.set_suggestion_quantity(suggestion_quantity))
+            suggestion_quantity_menu.add_radiobutton(label=str(quantity), variable=self.suggestion_quantity_var, value=quantity, command=lambda suggestion_quantity=quantity: self.set_suggestion_quantity(suggestion_quantity))
         # Match Mode
         match_mode_menu = Menu(suggestionContext_menu, tearoff=0)
         suggestionContext_menu.add_cascade(label="Match Mode", menu=match_mode_menu)
@@ -1218,7 +1218,7 @@ class ImgTxtViewer:
                               "Suggestion Threshold",
                               "Suggestion Quantity",
                               "Image Display Quality",
-                              "Highlighting Selected Duplicates",
+                              "Highlight Selection",
                               "Cleaning Text on Save",
                               "Colored Suggestions",
                               "Big Save Button",
@@ -1268,7 +1268,7 @@ class ImgTxtViewer:
     def swap_pane_sides(self):
         self.primary_paned_window.remove(self.master_image_frame)
         self.primary_paned_window.remove(self.master_control_frame)
-        if not self.panes_swapped:
+        if not self.panes_swapped_var:
             self.primary_paned_window.add(self.master_control_frame)
             self.primary_paned_window.add(self.master_image_frame)
         else:
@@ -1276,7 +1276,7 @@ class ImgTxtViewer:
             self.primary_paned_window.add(self.master_control_frame)
         self.master.after_idle(self.configure_pane_position)
         self.configure_pane()
-        self.panes_swapped = not self.panes_swapped
+        self.panes_swapped_var = not self.panes_swapped_var
 
 
     def swap_pane_orientation(self):
@@ -1488,7 +1488,7 @@ class ImgTxtViewer:
             'derpibooru.csv':   {0: "black",    1: "#e5b021",   3: "#fd9961",   4: "#cf5bbe",   5: "#3c8ad9",   6: "#a6a6a6",   7: "#47abc1",   8: "#7871d0",   9: "#df3647",   10: "#c98f2b",  11: "#e87ebe"}
             }
         black_mappings = {key: "black" for key in color_mappings[csv_file].keys()}
-        self.suggestion_colors = color_mappings[csv_file] if self.use_colored_suggestions.get() else black_mappings
+        self.suggestion_colors = color_mappings[csv_file] if self.colored_suggestion_var.get() else black_mappings
 
 
     def set_suggestion_quantity(self, suggestion_quantity):
@@ -1503,7 +1503,7 @@ class ImgTxtViewer:
             "Fast"  : 50000,
             "Faster": 25000
             }
-        self.autocomplete.suggestion_threshold = thresholds.get(self.suggestion_threshold.get())
+        self.autocomplete.suggestion_threshold = thresholds.get(self.suggestion_threshold_var.get())
 
 
     def clear_dictionary_csv_selection(self):
@@ -1522,7 +1522,7 @@ class ImgTxtViewer:
 
 
     def highlight_duplicates(self, event, mouse=True):
-        if not self.highlighting_duplicates.get():
+        if not self.highlight_selection_var.get():
             return
         self.text_box.after_idle(self._highlight_duplicates, mouse)
 
@@ -1549,8 +1549,8 @@ class ImgTxtViewer:
 
 
     def toggle_highlight_all_duplicates(self):
-        self.highlighting_all_duplicates.set(not self.highlighting_all_duplicates.get())
-        if self.highlighting_all_duplicates.get():
+        self.highlight_all_duplicates_var.set(not self.highlight_all_duplicates_var.get())
+        if self.highlight_all_duplicates_var.get():
             self.highlight_all_duplicates()
         else:
             self.remove_highlight()
@@ -1587,9 +1587,9 @@ class ImgTxtViewer:
 
     def highlight_custom_string(self):
         self.text_box.tag_remove("highlight", "1.0", "end")
-        if not self.custom_highlight_string.get():
+        if not self.custom_highlight_string_var.get():
             return
-        words = self.custom_highlight_string.get().split('+')
+        words = self.custom_highlight_string_var.get().split('+')
         for word in words:
             pattern = re.escape(word.strip())
             matches = [match for match in re.finditer(pattern, self.text_box.get("1.0", "end"))]
@@ -1606,7 +1606,7 @@ class ImgTxtViewer:
 
 
     def remove_tag(self):
-        self.highlighting_all_duplicates.set(False)
+        self.highlight_all_duplicates_var.set(False)
         for tag in self.text_box.tag_names():
             self.text_box.tag_remove(tag, "1.0", "end")
 
@@ -1658,7 +1658,7 @@ class ImgTxtViewer:
         if text_file and os.path.isfile(text_file):
             with open(text_file, "r", encoding="utf-8") as f:
                 self.text_box.insert("end", f.read())
-        self.text_modified = False
+        self.text_modified_var = False
         self.text_box.config(undo=True)
 
 
@@ -1717,7 +1717,7 @@ class ImgTxtViewer:
                 scale_factor = min(self.image_preview.winfo_width() / start_width, self.image_preview.winfo_height() / start_height)
                 new_width = int(start_width * scale_factor)
                 new_height = int(start_height * scale_factor)
-                cache_key = (self.current_frame_index, new_width, new_height)
+                cache_key = (id(self.current_frame), self.current_frame_index, new_width, new_height)
                 if cache_key not in self.gif_frame_cache:
                     self.current_frame = self.current_frame.convert("RGBA")
                     self.current_frame = self.current_frame.resize((new_width, new_height), Image.LANCZOS)
@@ -1734,6 +1734,7 @@ class ImgTxtViewer:
                 self.frame_iterator = iter(self.gif_frames)
                 self.current_frame_index = 0
                 self.display_animated_gif()
+
 
 
     def resize_and_scale_image(self, input_image, max_img_width, max_img_height, event, quality_filter=Image.LANCZOS):
@@ -1760,7 +1761,7 @@ class ImgTxtViewer:
             self.toggle_list_mode()
             self.clear_suggestions()
             self.highlight_custom_string()
-            self.highlighting_all_duplicates.set(False)
+            self.highlight_all_duplicates_var.set(False)
 
 
     def refresh_image(self):
@@ -1809,7 +1810,7 @@ class ImgTxtViewer:
             return
         self.is_alt_arrow_pressed = True
         self.check_image_dir()
-        if not self.text_modified:
+        if not self.text_modified_var:
             self.message_label.config(text="No Change", bg="#f0f0f0", fg="black")
         self.text_box.config(undo=False)
         self.text_box.edit_reset()
@@ -1849,7 +1850,7 @@ class ImgTxtViewer:
                 self.save_text_file()
             self.current_index = index
             self.show_pair()
-            if not self.text_modified:
+            if not self.text_modified_var:
                 self.message_label.config(text="No Change", bg="#f0f0f0", fg="black")
             self.image_index_entry.delete(0, "end")
             self.image_index_entry.insert(0, index + 1)
@@ -1900,14 +1901,14 @@ class ImgTxtViewer:
         if text_file and os.path.isfile(text_file):
             with open(text_file, "r", encoding="utf-8") as f:
                 self.text_box.insert("end", f.read())
-        self.text_modified = False
+        self.text_modified_var = False
         self.message_label.config(text="No Change", bg="#f0f0f0", fg="black")
         self.toggle_list_mode()
 
 
     def toggle_list_mode(self, skip=False, event=None):
         self.text_box.config(undo=False)
-        if self.cleaning_text.get() or skip:
+        if self.cleaning_text_var.get() or skip:
             if self.list_mode_var.get():
                 contents = self.text_box.get("1.0", "end").strip().split(',')
                 formatted_contents = '\n'.join([item.strip() for item in contents if item.strip()])
@@ -2122,7 +2123,7 @@ class ImgTxtViewer:
 
 
     def delete_tag_under_mouse(self, event):
-        if self.cleaning_text.get() == False:
+        if self.cleaning_text_var.get() == False:
             return
         cursor_pos = self.text_box.index(f"@{event.x},{event.y}")
         line_start = self.text_box.index(f"{cursor_pos} linestart")
@@ -2449,14 +2450,14 @@ class ImgTxtViewer:
 
 
     def toggle_list_menu(self):
-        if self.cleaning_text.get():
+        if self.cleaning_text_var.get():
             self.optionsMenu.entryconfig("List View", state="normal")
         else:
             self.optionsMenu.entryconfig("List View", state="disabled")
             if self.list_mode_var.get():
                 self.toggle_list_mode(skip=True)
             if self.message_label.cget("text") in ["No Change", "Saved", "Changes Saved!", "Text Files Cleaned up!", "Filter Cleared!", "Filter Applied!"]:
-                if self.filepath_contains_images:
+                if self.filepath_contains_images_var:
                     self.refresh_text_box()
             self.list_mode_var.set(False)
 
@@ -2505,25 +2506,25 @@ class ImgTxtViewer:
 
 
     def toggle_about_window(self):
-        if self.about_window is not None:
+        if self.about_window_open is not None:
             self.close_about_window()
         else:
             self.open_about_window()
 
 
     def open_about_window(self):
-        self.about_window = AboutWindow(self.master)
-        self.about_window.protocol("WM_DELETE_WINDOW", self.close_about_window)
+        self.about_window_open = AboutWindow(self.master)
+        self.about_window_open.protocol("WM_DELETE_WINDOW", self.close_about_window)
         main_window_width = root.winfo_width()
         main_window_height = root.winfo_height()
         main_window_x = root.winfo_x() - 425 + main_window_width // 2
         main_window_y = root.winfo_y() - 315 + main_window_height // 2
-        self.about_window.geometry("+{}+{}".format(main_window_x, main_window_y))
+        self.about_window_open.geometry("+{}+{}".format(main_window_x, main_window_y))
 
 
     def close_about_window(self):
-        self.about_window.destroy()
-        self.about_window = None
+        self.about_window_open.destroy()
+        self.about_window_open = None
 
 
 #endregion
@@ -2553,7 +2554,7 @@ class ImgTxtViewer:
 
 
     def cleanup_text(self, text):
-        if self.cleaning_text.get():
+        if self.cleaning_text_var.get():
             text = self.remove_duplicates(text)
             if self.list_mode_var.get():
                 text = re.sub(r'\.\s', '\n', text)  # replace period and space with newline
@@ -2608,13 +2609,13 @@ class ImgTxtViewer:
             self.config.set("Autocomplete", "csv_derpibooru", str(self.csv_derpibooru.get()))
             self.config.set("Autocomplete", "csv_e621", str(self.csv_e621.get()))
             self.config.set("Autocomplete", "csv_english_dictionary", str(self.csv_english_dictionary.get()))
-            self.config.set("Autocomplete", "suggestion_quantity", str(self.suggestion_quantity.get()))
-            self.config.set("Autocomplete", "use_colored_suggestions", str(self.use_colored_suggestions.get()))
+            self.config.set("Autocomplete", "suggestion_quantity", str(self.suggestion_quantity_var.get()))
+            self.config.set("Autocomplete", "use_colored_suggestions", str(self.colored_suggestion_var.get()))
             add_section("Other")
             self.config.set("Other", "auto_save", str(self.auto_save_var.get()))
-            self.config.set("Other", "cleaning_text", str(self.cleaning_text.get()))
+            self.config.set("Other", "cleaning_text", str(self.cleaning_text_var.get()))
             self.config.set("Other", "big_save_button", str(self.big_save_button_var.get()))
-            self.config.set("Other", "highlighting_duplicates", str(self.highlighting_duplicates.get()))
+            self.config.set("Other", "highlighting_duplicates", str(self.highlight_selection_var.get()))
             with open("settings.cfg", "w", encoding="utf-8") as f:
                 self.config.write(f)
         except (PermissionError, IOError) as e:
@@ -2662,16 +2663,16 @@ class ImgTxtViewer:
         self.csv_derpibooru.set(value=self.config.getboolean("Autocomplete", "csv_derpibooru", fallback=False))
         self.csv_e621.set(value=self.config.getboolean("Autocomplete", "csv_e621", fallback=False))
         self.csv_english_dictionary.set(value=self.config.getboolean("Autocomplete", "csv_english_dictionary", fallback=False))
-        self.suggestion_quantity.set(value=self.config.getint("Autocomplete", "suggestion_quantity", fallback=4))
-        self.use_colored_suggestions.set(value=self.config.getboolean("Autocomplete", "use_colored_suggestions", fallback=True))
+        self.suggestion_quantity_var.set(value=self.config.getint("Autocomplete", "suggestion_quantity", fallback=4))
+        self.colored_suggestion_var.set(value=self.config.getboolean("Autocomplete", "use_colored_suggestions", fallback=True))
         self.update_autocomplete_dictionary()
 
 
     def read_other_settings(self):
         self.auto_save_var.set(value=self.config.getboolean("Other", "auto_save", fallback=False))
-        self.cleaning_text.set(value=self.config.getboolean("Other", "cleaning_text", fallback=True))
+        self.cleaning_text_var.set(value=self.config.getboolean("Other", "cleaning_text", fallback=True))
         self.big_save_button_var.set(value=self.config.getboolean("Other", "big_save_button", fallback=False))
-        self.highlighting_duplicates.set(value=self.config.getboolean("Other", "highlighting_duplicates", fallback=True))
+        self.highlight_selection_var.set(value=self.config.getboolean("Other", "highlighting_duplicates", fallback=True))
 
 
 #endregion
@@ -2684,7 +2685,7 @@ class ImgTxtViewer:
             if self.image_dir.get() != "Choose Directory..." and self.check_if_directory() and self.text_files:
                 self.save_file()
                 self.message_label.config(text="Saved", bg="#6ca079", fg="white")
-                if self.cleaning_text.get():
+                if self.cleaning_text_var.get():
                     self.save_file()
                 self.show_pair()
         except (PermissionError, IOError, TclError) as e:
@@ -2699,7 +2700,7 @@ class ImgTxtViewer:
                 os.remove(text_file)
             return
         with open(text_file, "w+", encoding="utf-8") as f:
-            if self.cleaning_text.get():
+            if self.cleaning_text_var.get():
                 text = self.cleanup_text(text)
             if self.list_mode_var.get():
                 text = ', '.join(text.split('\n'))
@@ -2745,10 +2746,10 @@ class ImgTxtViewer:
 
     def check_if_contains_images(self, directory):
         if any(fname.lower().endswith(('.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif')) for fname in os.listdir(directory)):
-            self.filepath_contains_images = True
+            self.filepath_contains_images_var = True
             return True
         else:
-            self.filepath_contains_images = False
+            self.filepath_contains_images_var = False
             messagebox.showwarning("No Images", "The selected directory does not contain any images.")
             return False
 
@@ -3044,7 +3045,7 @@ root.mainloop()
   - New:
     - New autocomplete matching modes: `Match Whole String`, and `Match Last Word` [732120e]()
       - `Match Whole String`, This option works exactly as before. All characters in the selected tag are considered for matching.
-      - `Match Last Word`, This option will only match (and replace) the last word typed. This allows you to use autocomplete with natural sentences. You can type using an underscore as space to join words together.
+      - `Match Last Word`, This option will only match (and replace) the last word typed. This allows you to use autocomplete with natural sentences. You can type using an underscore as a space to join words together.
     - New option for image grid view: `Auto-Close`, Unchecking this option allows you to keep the image grid open after making a selection. [67593f4]()
     - New Tool: `Rename img-txt pairs`, Use this to clean-up the filenames of your dataset without converting the image types. [8f24a7e]()
     - You can now choose the crop anchor point when using `Batch Crop Images`. [9d247ea]()
@@ -3053,14 +3054,15 @@ root.mainloop()
 
 
   - Fixed:
-    - Fixed an issue where loading a directory could result in the first text file displayed being erased. [ae56143]()
+    - Fixed an issue where initially loading a directory could result in the first text file displayed being erased. [ae56143]()
+    - Fixed the issue where certain GIF image caches would be used in place of other similar images.
 
 
 <br>
 
 
   - Other changes:
-    - Improved performance of Autocomplete, by handling similar names my efficiently. Up to 40% faster than before.
+    - Improved performance of Autocomplete, by handling similar names more efficiently. Up to 40% faster than before.
     - Improved performance when viewing animated GIFs by first resizing all frames to the required size and caching them. [c8bd32a]()
     - Improved efficieny of TkToolTip by reusing tooltip widgets, adding visibility checks, and reducing unnecessary method calls. [8b6c0dc]()
     - Slightly faster image loading by using PIL's thumbnail function to reduce aspect ratio calculation. [921b4d3]()
