@@ -52,7 +52,6 @@ class Upscale:
         self.start_y = None
 
         self.original_filepath = filepath
-        print(self.original_filepath)
         self.converted_filepath = None
 
         self.total_gif_frames = None
