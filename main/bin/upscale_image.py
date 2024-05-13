@@ -3,7 +3,8 @@
 #                                      #
 #             Upscale Image            #
 #                                      #
-#   Version : v1.01                    #
+#   Version : v1.02
+#                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -52,14 +53,18 @@ class Upscale:
         self.start_y = None
 
         self.original_filepath = filepath
+        print(self.original_filepath)
         self.converted_filepath = None
+
+        self.total_gif_frames = None
+        self.current_gif_frame = None
 
         self.is_window_closed = False
 
 
         self.get_image_info()
         self.create_interface()
-        self.update_info_label()
+        self.update_size_info_label()
 
 
 #endregion
@@ -113,7 +118,7 @@ class Upscale:
         self.label_size.pack(anchor="w", side="top", padx=5, pady=5)
         self.entry_size = ttk.Combobox(frame_model, width=5, state="readonly", values=["1x", "2x", "3x", "4x"])
         self.entry_size.pack(side="top", anchor="w", padx=5, pady=5)
-        self.entry_size.bind("<<ComboboxSelected>>", self.update_info_label)
+        self.entry_size.bind("<<ComboboxSelected>>", self.update_size_info_label)
         self.entry_size.set("2x")
 
 
@@ -134,6 +139,9 @@ class Upscale:
         label_current.pack(anchor="w", side="top", padx=5, pady=5)
         label_new = Label(self.frame_labels, text="New Size:")
         label_new.pack(anchor="w", side="top", padx=5, pady=5)
+        if self.original_filepath.lower().endswith(".gif"):
+            label_frames = Label(self.frame_labels, text="Frames:")
+            label_frames.pack(anchor="w", side="top", padx=5, pady=5)
 
 
         self.frame_dimensions = Frame(self.frame_info)
@@ -144,6 +152,10 @@ class Upscale:
         self.label_current_dimensions.pack(anchor="w", side="top", padx=5, pady=5)
         self.label_new_dimensions = Label(self.frame_dimensions, text="0 x 0", width=20)
         self.label_new_dimensions.pack(anchor="w", side="top", padx=5, pady=5)
+        if self.original_filepath.lower().endswith(".gif"):
+            self.label_framecount = Label(self.frame_dimensions, text=f"{self.current_gif_frame} of {self.total_gif_frames}", width=20)
+            self.label_framecount.pack(anchor="w", side="top", padx=5, pady=5)
+
 
 
 ####### Primary Buttons ##################################################
@@ -211,6 +223,8 @@ class Upscale:
                     upscaled_frame = Image.open(upscaled_frame_path).convert("RGB")
                     upscaled_frames.append((upscaled_frame, duration))
                 self.update_progress((i+1)/total_frames*90)
+                padded_frame_number = str(i+1).zfill(len(str(total_frames)))
+                self.label_framecount.config(text=f"{padded_frame_number} of {total_frames}")
             directory, filename = os.path.split(gif_path)
             filename, extension = os.path.splitext(filename)
             upscaled_gif_path = os.path.join(directory, f"{filename}_upscaled{extension}")
@@ -348,12 +362,19 @@ class Upscale:
         try:
             image = Image.open(self.original_filepath)
             self.original_image_width, self.original_image_height = image.size
+            if self.original_filepath.lower().endswith(".gif"):
+                frames = [frame for frame in ImageSequence.Iterator(image)]
+                self.total_gif_frames = len(frames)
+                self.current_gif_frame = format(1, f'0{len(str(self.total_gif_frames))}d')
+            else:
+                self.total_gif_frames = None
+                self.current_gif_frame = None
         except Exception as e:
             messagebox.showerror("Error", f"Unexpected error while opening image.\n\n{e}")
             self.close_window()
 
 
-    def update_info_label(self, event=None):
+    def update_size_info_label(self, event=None):
         selected_scaling_factor = int(self.entry_size.get().strip("x"))
         new_width = self.original_image_width * selected_scaling_factor
         new_height = self.original_image_height * selected_scaling_factor
@@ -415,19 +436,18 @@ class Upscale:
 '''
 
 
-v1.01 changes:
+v1.02 changes:
 
 
   - New:
-    - Gif support added.
-    - After upscaling, the index is updated to the upscaled image.
+    - The current and total GIF frames are now displayed in the UI.
 
 
 <br>
 
 
   - Fixed:
-    - Minor typo in UI.
+    -
 
 
 <br>
