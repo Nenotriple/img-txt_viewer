@@ -37,6 +37,7 @@ import itertools
 import webbrowser
 import subprocess
 import configparser
+from collections import defaultdict
 
 import tkinter.font
 from tkinter import ttk, Tk, Toplevel, messagebox, StringVar, BooleanVar, IntVar, Menu, PanedWindow, Frame, Label, Button, Entry, Checkbutton, Text, Event, TclError
@@ -148,12 +149,12 @@ class AboutWindow(Toplevel):
 
 class Autocomplete:
     def __init__(self, data_file, max_suggestions=4, suggestion_threshold=115000):
-        self.data = self.load_data(data_file)
         self.max_suggestions = max_suggestions
         self.suggestion_threshold = suggestion_threshold
         self.previous_text = None
         self.previous_suggestions = None
         self.previous_pattern = None
+        self.data, self.similar_names_dict = self.load_data(data_file)
 
 
     def load_data(self, data_file, additional_file='my_tags.csv'):
@@ -164,16 +165,18 @@ class Autocomplete:
         data_file_path = os.path.join(application_path, "main/dict", data_file)
         additional_file_path = os.path.join(application_path, additional_file)
         data = {}
-        if not os.path.isfile(data_file_path):
-            return None
-        with open(data_file_path, newline='', encoding='utf-8') as csvfile:
-            reader = csv.reader(csvfile)
-            for row in reader:
-                if row and not row[0].startswith('###'):
-                    true_name = row[0]
-                    classifier_id = row[1]
-                    similar_names = set(row[3].split(',')) if len(row) > 3 else set()
-                    data[true_name] = (classifier_id, similar_names)
+        similar_names_dict = defaultdict(list)
+        if os.path.isfile(data_file_path):
+            with open(data_file_path, newline='', encoding='utf-8') as csvfile:
+                reader = csv.reader(csvfile)
+                for row in reader:
+                    if row and not row[0].startswith('###'):
+                        true_name = row[0]
+                        classifier_id = row[1]
+                        similar_names = set(row[3].split(',')) if len(row) > 3 else set()
+                        data[true_name] = (classifier_id, similar_names)
+                        for sim_name in similar_names:
+                            similar_names_dict[sim_name].append(true_name)
         if os.path.isfile(additional_file_path):
             with open(additional_file_path, newline='', encoding='utf-8') as csvfile:
                 reader = csv.reader(csvfile)
@@ -185,11 +188,13 @@ class Autocomplete:
                             data[true_name][1].extend(similar_names)
                         else:
                             data[true_name] = ('', similar_names)
-        return data
+                        for sim_name in similar_names:
+                            similar_names_dict[sim_name].append(true_name)
+        return data, similar_names_dict
 
 
     def get_suggestion(self, text):
-        if not hasattr(self, 'data') or not self.data:
+        if not self.data:
             return None
         text_with_underscores = text.replace(" ", "_")
         text_with_asterisks = re.escape(text_with_underscores).replace("\\*", ".*")
@@ -199,11 +204,11 @@ class Autocomplete:
         for true_name, (classifier_id, similar_names) in itertools.islice(self.data.items(), suggestion_threshold):
             if pattern.match(true_name):
                 suggestions.append((true_name, classifier_id, similar_names))
-            else:
-                for sim_name in similar_names:
-                    if pattern.match(sim_name):
-                        suggestions.append((true_name, classifier_id, similar_names))
-                        break
+        for sim_name in self.similar_names_dict:
+            if pattern.match(sim_name):
+                for true_name in self.similar_names_dict[sim_name]:
+                    classifier_id, similar_names = self.data[true_name]
+                    suggestions.append((true_name, classifier_id, similar_names))
         suggestions.sort(key=lambda x: self.get_score(x[0], text_with_underscores), reverse=True)
         self.previous_text = text
         self.previous_suggestions = suggestions
@@ -233,10 +238,10 @@ class Autocomplete:
 
 class ImgTxtViewer:
     def __init__(self, master):
+
+
+        # Window Setup
         self.master = master
-
-
-        # Window settings
         self.set_appid()
         self.set_window_size(master)
         self.set_icon()
@@ -412,7 +417,7 @@ class ImgTxtViewer:
         self.optionsMenu.add_separator()
         self.optionsMenu.add_checkbutton(label="Always On Top", underline=0, command=self.toggle_always_on_top)
         self.optionsMenu.add_checkbutton(label="Vertical View", underline=0, state="disable", command=self.swap_pane_orientation)
-        self.optionsMenu.add_command(label="Swap img-txt Sides", underline=0, state="disable", command=self.swap_pane_sides)
+        self.optionsMenu.add_checkbutton(label="Swap img-txt Sides", underline=0, state="disable", command=self.swap_pane_sides)
 
 
         # Image Display Quality Menu
@@ -966,14 +971,17 @@ class ImgTxtViewer:
     # Image context menu
     def show_imageContext_menu(self, event):
         imageContext_menu = Menu(self.master, tearoff=0)
+        # Open
         imageContext_menu.add_command(label="Open Current Directory...", command=self.open_current_directory)
         imageContext_menu.add_command(label="Open Current Image...", command=self.open_current_image)
         imageContext_menu.add_command(label="Open Image Grid...", command=self.view_image_grid)
         imageContext_menu.add_separator()
+        # File
         imageContext_menu.add_command(label="Duplicate img-txt pair", command=self.duplicate_pair)
         imageContext_menu.add_command(label="Delete img-txt Pair", accelerator="Shift+Del", command=self.delete_pair)
         imageContext_menu.add_command(label="Undo Delete", command=self.undo_delete_pair, state=self.undo_state.get())
         imageContext_menu.add_separator()
+        # Edit
         imageContext_menu.add_command(label="Upscale...", command=self.upscale_image)
         imageContext_menu.add_command(label="Resize...", command=self.resize_image)
         if not self.image_file.lower().endswith('.gif'):
@@ -985,8 +993,9 @@ class ImgTxtViewer:
         imageContext_menu.add_command(label="Rotate", command=self.rotate_current_image)
         imageContext_menu.add_command(label="Flip", command=self.flip_current_image)
         imageContext_menu.add_separator()
+        # Misc
         imageContext_menu.add_checkbutton(label="Vertical View", command=self.swap_pane_orientation)
-        imageContext_menu.add_command(label="Swap img-txt Sides", command=self.swap_pane_sides)
+        imageContext_menu.add_checkbutton(label="Swap img-txt Sides", command=self.swap_pane_sides)
         # Image Display Quality
         image_quality_menu = Menu(self.optionsMenu, tearoff=0)
         imageContext_menu.add_cascade(label="Image Display Quality", menu=image_quality_menu)
@@ -998,6 +1007,7 @@ class ImgTxtViewer:
     # Suggestion context menu
     def show_suggestionContext_menu(self, event):
         suggestionContext_menu = Menu(self.master, tearoff=0)
+        # Selected Dictionary
         dictionaryMenu = Menu(suggestionContext_menu, tearoff=0)
         suggestionContext_menu.add_cascade(label="Suggestion Dictionary", menu=dictionaryMenu)
         dictionaryMenu.add_checkbutton(label="English Dictionary", underline=0, variable=self.csv_english_dictionary, command=self.update_autocomplete_dictionary)
@@ -1006,18 +1016,18 @@ class ImgTxtViewer:
         dictionaryMenu.add_checkbutton(label="e621", underline=0, variable=self.csv_e621, command=self.update_autocomplete_dictionary)
         dictionaryMenu.add_separator()
         dictionaryMenu.add_command(label="Clear Selection", underline=0, command=self.clear_dictionary_csv_selection)
-        # Suggestion Threshold Menu
+        # Suggestion Threshold
         suggestion_threshold_menu = Menu(suggestionContext_menu, tearoff=0)
         suggestionContext_menu.add_cascade(label="Suggestion Threshold", menu=suggestion_threshold_menu)
         threshold_levels = ["Slow", "Normal", "Fast", "Faster"]
         for level in threshold_levels:
             suggestion_threshold_menu.add_radiobutton(label=level, variable=self.suggestion_threshold, value=level, command=self.set_suggestion_threshold)
-        # Suggestion Quantity Menu
+        # Suggestion Quantity
         suggestion_quantity_menu = Menu(suggestionContext_menu, tearoff=0)
         suggestionContext_menu.add_cascade(label="Suggestion Quantity", menu=suggestion_quantity_menu)
         for quantity in range(0, 10):
             suggestion_quantity_menu.add_radiobutton(label=str(quantity), variable=self.suggestion_quantity, value=quantity, command=lambda suggestion_quantity=quantity: self.set_suggestion_quantity(suggestion_quantity))
-        # Match Mode Menu
+        # Match Mode
         match_mode_menu = Menu(suggestionContext_menu, tearoff=0)
         suggestionContext_menu.add_cascade(label="Match Mode", menu=match_mode_menu)
         match_modes = {"Match Whole String": False, "Match Last Word": True}
@@ -1790,6 +1800,8 @@ class ImgTxtViewer:
 #region -  Navigation
 
 
+# Can we improve this?
+
     def update_pair(self, direction=None):
         if self.image_dir.get() == "Choose Directory..." or len(self.image_files) == 0:
             return
@@ -1862,7 +1874,7 @@ class ImgTxtViewer:
 
     def mouse_scroll(self, event):
         current_time = time.time()
-        scroll_delay = 0.09
+        scroll_delay = 0.05
         if current_time - self.last_scroll_time < scroll_delay:
             return
         self.last_scroll_time = current_time
@@ -2291,9 +2303,6 @@ class ImgTxtViewer:
             messagebox.showerror("Error", "You do not have the necessary permissions to perform this operation.")
         except Exception as e:
             messagebox.showerror("Error", f"An unexpected error occurred: {str(e)}")
-
-
-
 
 
     def flip_current_image(self):
@@ -3035,8 +3044,8 @@ root.mainloop()
       - `Match Whole String`, This option works exactly as before. All characters in the selected tag are considered for matching.
       - `Match Last Word`, This option will only match (and replace) the last word typed. This allows you to use autocomplete with natural sentences. You can type using an underscore as space to join words together.
     - New option for image grid view: `Auto-Close`, Unchecking this option allows you to keep the image grid open after making a selection. [67593f4]()
-    - New Tool: `Rename img-txt pairs`, Use this to clean-up the filenames of your dataset without converting the image types.
-
+    - New Tool: `Rename img-txt pairs`, Use this to clean-up the filenames of your dataset without converting the image types. [8f24a7e]()
+    - You can now choose the crop anchor point when using `Batch Crop Images`. [9d247ea]()
 
 <br>
 
@@ -3049,9 +3058,10 @@ root.mainloop()
 
 
   - Other changes:
-    - Slightly faster image loading by using PIL's thumbnail function to reduce aspect ratio calculation. [921b4d3]()
-    - Improved performance of TkToolTip by reusing tooltip widgets, adding visibility checks, and reducing unnecessary method calls. [8b6c0dc]()
+    - Improved performance of Autocomplete, by handling similar names my efficiently. Up to 40% faster than before.
     - Improved performance when viewing animated GIFs by first resizing all frames to the required size and caching them. [c8bd32a]()
+    - Improved efficieny of TkToolTip by reusing tooltip widgets, adding visibility checks, and reducing unnecessary method calls. [8b6c0dc]()    
+    - Slightly faster image loading by using PIL's thumbnail function to reduce aspect ratio calculation. [921b4d3]()
 
 
 <br>
