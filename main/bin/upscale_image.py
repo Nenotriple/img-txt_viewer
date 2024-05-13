@@ -3,8 +3,7 @@
 #                                      #
 #             Upscale Image            #
 #                                      #
-#   Version : v1.02
-#                    #
+#   Version : v1.02                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
