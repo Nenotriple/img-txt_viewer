@@ -264,6 +264,7 @@ class ImgTxtViewer:
         self.append_string_var = StringVar()
         self.custom_highlight_string = StringVar()
 
+
         # Filter variables
         self.original_image_files = []
         self.original_text_files = []
@@ -429,7 +430,8 @@ class ImgTxtViewer:
         self.toolsMenu.add_command(label="Batch Resize Images...", underline=10, command=self.batch_resize_images)
         self.toolsMenu.add_command(label="Batch Crop Images...", underline=8, state="disable", command=self.batch_crop_images)
         self.toolsMenu.add_command(label="Find Duplicate Files...", underline=0, command=self.find_duplicate_files)
-        self.toolsMenu.add_command(label="Rename and Convert img-txt Pairs...", underline=2, state="disable", command=self.rename_and_convert_images)
+        self.toolsMenu.add_command(label="Rename img-txt Pairs...", underline=2, state="disable", command=self.rename_pairs)
+        self.toolsMenu.add_command(label="Rename and Convert img-txt Pairs...", underline=3, state="disable", command=self.rename_and_convert_pairs)
         self.toolsMenu.add_separator()
         self.toolsMenu.add_command(label="Upscale...", underline=0, state="disable", command=self.upscale_image)
         self.toolsMenu.add_command(label="Crop...", underline=0, state="disable", command=self.open_crop_tool)
@@ -1190,6 +1192,7 @@ class ImgTxtViewer:
                              "Cleanup all Text Files",
                              "Delete img-txt Pair",
                              "Batch Crop Images...",
+                             "Rename img-txt Pairs...",
                              "Rename and Convert img-txt Pairs...",
                              "Upscale...",
                              "Crop...",
@@ -2192,7 +2195,7 @@ class ImgTxtViewer:
             messagebox.showerror("Error", f'Failed to process {filename}. Reason: {e}')
 
 
-    def rename_and_convert_images(self):
+    def rename_and_convert_pairs(self):
         if not self.check_if_directory():
             return
         try:
@@ -2246,6 +2249,51 @@ class ImgTxtViewer:
             messagebox.showerror("Error", "You do not have the necessary permissions to perform this operation.")
         except Exception as e:
             messagebox.showerror("Error", f"An unexpected error occurred: {str(e)}")
+
+
+    def rename_pairs(self):
+        if not self.check_if_directory():
+            return
+        try:
+            confirmation = messagebox.askyesno("Confirm: Rename Files",
+                "Are you sure you want to rename all image and text files in the current directory?\n\n"
+                "img-txt pairs will be saved to a 'Renamed Output' folder.\nNothing is overwritten.\n\n"
+                "Each pair is renamed in sequential order using padded zeros.\n\n"
+                "Example input: aH15520.jpg, aH15520.txt\n"
+                "Example output: 00001.jpg, 00001.txt"
+                )
+            if not confirmation:
+                return
+            self.check_working_directory()
+            target_dir = os.path.join(self.image_dir.get(), "Renamed Output")
+            os.makedirs(target_dir, exist_ok=True)
+            files = sorted(f for f in os.listdir(self.image_dir.get()) if f.endswith(tuple([".txt", ".jpg", ".jpeg", ".png", ".jfif", ".jpg_large", ".webp", ".bmp", ".gif"])))
+            counter = 1
+            base_names = {}
+            for filename in files:
+                base_name, extension = os.path.splitext(filename)
+                if base_name in base_names:
+                    new_name = base_names[base_name] + extension
+                else:
+                    new_name = str(counter).zfill(5) + extension
+                    base_names[base_name] = str(counter).zfill(5)
+                    counter += 1
+                original_path = os.path.join(self.image_dir.get(), filename)
+                new_path = os.path.join(target_dir, new_name)
+                shutil.copy(original_path, new_path)
+            set_path = messagebox.askyesno("Success", "Files renamed successfully!\n\nDo you want to set the path to the output folder?")
+            if set_path:
+                self.image_dir.set(os.path.normpath(target_dir))
+                self.set_working_directory()
+        except FileNotFoundError:
+            messagebox.showerror("Error", "The specified directory does not exist.")
+        except PermissionError:
+            messagebox.showerror("Error", "You do not have the necessary permissions to perform this operation.")
+        except Exception as e:
+            messagebox.showerror("Error", f"An unexpected error occurred: {str(e)}")
+
+
+
 
 
     def flip_current_image(self):
@@ -2987,13 +3035,14 @@ root.mainloop()
       - `Match Whole String`, This option works exactly as before. All characters in the selected tag are considered for matching.
       - `Match Last Word`, This option will only match (and replace) the last word typed. This allows you to use autocomplete with natural sentences. You can type using an underscore as space to join words together.
     - New option for image grid view: `Auto-Close`, Unchecking this option allows you to keep the image grid open after making a selection. [67593f4]()
+    - New Tool: `Rename img-txt pairs`, Use this to clean-up the filenames of your dataset without converting the image types.
 
 
 <br>
 
 
   - Fixed:
-    - Fixed an issue where loading a directory could result in the first text file displayed being erased.
+    - Fixed an issue where loading a directory could result in the first text file displayed being erased. [ae56143]()
 
 
 <br>
