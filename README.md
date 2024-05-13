@@ -157,7 +157,7 @@ Or use the included `requirements.txt` when setting up your venv.
   - Project Changes:
     - `Batch Resize Images`: v1.06 [19d5b4d](https://github.com/Nenotriple/img-txt_viewer/commit/19d5b4d5fbe3ac6629d0755e24f3b560be800125)
       - See full list of changes here: https://github.com/Nenotriple/batch_resize_images/releases
-    - `Upscale`: v1.02 []()
+    - `Upscale`: v1.02 [616ddaa](https://github.com/Nenotriple/img-txt_viewer/commit/616ddaa6ebd897b3f63cf921406f0e5ed958f930)
       - The current and total GIF frames are now displayed in the UI.
 
 </details>
