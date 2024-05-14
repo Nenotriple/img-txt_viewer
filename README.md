@@ -138,6 +138,7 @@ Or use the included `requirements.txt` when setting up your venv.
 
 
   - Fixed:
+    - Fixed issue where Autocomplete was broken from the executable version.
     - Fixed an issue where initially loading a directory could result in the first text file displayed being erased. [ae56143](https://github.com/Nenotriple/img-txt_viewer/commit/ae561433a8a98fbcbbb3c1a1a6a35c05b412d9cc)
 
 
