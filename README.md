@@ -121,7 +121,7 @@ Or use the included `requirements.txt` when setting up your venv.
 
 # 📜 Version History
 
-[v1.93 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.93)
+[v1.93.1 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.93.1)
 
 <details>
   <summary>Click here to view release notes!</summary>
@@ -140,6 +140,7 @@ Or use the included `requirements.txt` when setting up your venv.
   - Fixed:
     - Fixed issue where Autocomplete was broken from the executable version.
     - Fixed an issue where initially loading a directory could result in the first text file displayed being erased. [ae56143](https://github.com/Nenotriple/img-txt_viewer/commit/ae561433a8a98fbcbbb3c1a1a6a35c05b412d9cc)
+    - Fixed issue where manually setting a directory, the text box and image index were not reset. [7874a13](https://github.com/Nenotriple/img-txt_viewer/commit/7874a13b6892bab36dc0de9163bd24e391961377)
 
 
 <br>
