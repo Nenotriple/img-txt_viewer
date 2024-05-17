@@ -3,7 +3,7 @@
 #                                      #
 #            IMG-TXT VIEWER            #
 #                                      #
-#   Version : v1.93.1                  #
+#   Version : v1.93.2                  #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -17,7 +17,7 @@ More info here: https://github.com/Nenotriple/img-txt_viewer
 """
 
 
-VERSION = "v1.93.1"
+VERSION = "v1.93.2"
 
 
 ################################################################################################################################################
@@ -1629,7 +1629,7 @@ class ImgTxtViewer:
         self.message_label.config(text="No Change", bg="#f0f0f0", fg="black")
         self.enable_menu_options()
         self.create_text_box()
-        self.update_pair()
+        self.update_pair(save=False)
         self.configure_pane_position()
         if hasattr(self, 'total_images_label'):
             self.total_images_label.config(text=f"of {len(self.image_files)}")
@@ -1804,9 +1804,7 @@ class ImgTxtViewer:
 #region -  Navigation
 
 
-# Can we improve this?
-
-    def update_pair(self, direction=None):
+    def update_pair(self, direction=None, save=True):
         if self.image_dir.get() == "Choose Directory..." or len(self.image_files) == 0:
             return
         self.is_alt_arrow_pressed = True
@@ -1815,7 +1813,7 @@ class ImgTxtViewer:
             self.message_label.config(text="No Change", bg="#f0f0f0", fg="black")
         self.text_box.config(undo=False)
         self.text_box.edit_reset()
-        if self.auto_save_var.get():
+        if self.auto_save_var.get() and save:
             self.save_text_file()
         if direction == 'next':
             self.current_index = (self.current_index + 1) % len(self.image_files)
@@ -3041,7 +3039,7 @@ root.mainloop()
 '''
 
 
-[v1.93.1 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.93.1)
+[v1.93.2 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.93.2)
 
 <details>
   <summary>Click here to view release notes!</summary>
@@ -3052,7 +3050,7 @@ root.mainloop()
 
 
   - Fixed:
-    - Fixed issue where manually setting a directory the text box and image index were not reset.
+    - Fixed issue where the text box would be copied to another img-txt pair when changing directory.
 
 <br>
 
