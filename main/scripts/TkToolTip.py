@@ -202,6 +202,7 @@ class TkToolTip:
         widget.bind('<Enter>', enter, add="+")
         widget.bind('<Leave>', leave, add="+")
         widget.bind('<Motion>', motion, add="+")
+        widget.bind("<Button-1>", leave, add="+")
         widget.bind('<B1-Motion>', leave, add="+")
         return tool_tip
 
