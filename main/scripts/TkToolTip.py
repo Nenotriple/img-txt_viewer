@@ -1,10 +1,9 @@
-
 """
 ########################################
 #                                      #
 #           Tkinter ToolTips           #
 #                                      #
-#   Version : v1.01                    #
+#   Version : v1.02                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -41,6 +40,9 @@ class TkToolTip:
     y_offset : int
         The y-coordinate offset of the tooltip from the pointer.
 
+    state : str, optional
+        Set the visible state of the tooltip. Options are "normal", "disabled", and None (default is None).
+
     tip_window : Toplevel
         The Toplevel window used to display the tooltip.
 
@@ -64,11 +66,17 @@ class TkToolTip:
     create(widget, text="", delay=0, x_offset=0, y_offset=0):
         Creates a tooltip for the specified widget.
 
-    config(text=None, delay=None, x_offset=None, y_offset=None):
-        Configures the tooltip's text, delay, and position offsets.
+    config(text=None, delay=None, x_offset=None, y_offset=None, state=None):
+        Configures the tooltip's text, delay, position offsets, and state.
+
+    Usage
+    -----
+    TkToolTip.create(widget=your_widget_here, text="Your text here", delay=0, x_offset=0, y_offset=0, state="normal")
+        delay, x_offset, y_offset, and state are optional when creating the tooltip.
+        A good starting point is: (delay=1000, x_offset=12, y_offset=18), this puts the tooltip South-East of the mouse with a 1 second delay.
     """
 
-    def __init__(self, widget, text="", delay=0, x_offset=0, y_offset=0):
+    def __init__(self, widget, text="", delay=0, x_offset=0, y_offset=0, state="normal"):
         """
         Constructs all the necessary attributes for the TkToolTip object.
 
@@ -88,6 +96,9 @@ class TkToolTip:
 
             y_offset : int, optional
                 The y-coordinate offset of the tooltip from the pointer (default is 0).
+
+            state : str, optional
+                Set the visible state of the tooltip. Options are "normal", "disabled", and None (default is None).
         """
 
         self.widget = widget
@@ -95,6 +106,8 @@ class TkToolTip:
         self.delay = delay
         self.x_offset = x_offset
         self.y_offset = y_offset
+        self.state = state
+
         self.tip_window = Toplevel(self.widget)
         self.tip_window.wm_overrideredirect(True)
         self.tip_window.wm_attributes("-topmost", True)
@@ -111,7 +124,7 @@ class TkToolTip:
         """
         Shows the tooltip at the specified screen coordinates.
 
-        If the tooltip is already shown or if the text is empty, this method does nothing.
+        If the tooltip is already shown, if the text is empty, or if the state is not "normal", this method does nothing.
 
         Parameters
         ----------
@@ -122,7 +135,7 @@ class TkToolTip:
                 The y-coordinate of the pointer.
         """
 
-        if not self.text or self.tip_window.winfo_viewable():
+        if not self.text or self.tip_window.winfo_viewable() or self.state != "normal":
             return
         x += self.x_offset
         y += self.y_offset
@@ -193,9 +206,9 @@ class TkToolTip:
         return tool_tip
 
 
-    def config(self, text=None, delay=None, x_offset=None, y_offset=None):
+    def config(self, text=None, delay=None, x_offset=None, y_offset=None, state=None):
         """
-        Configures the tooltip's text, delay, and position offsets.
+        Configures the tooltip's text, delay, position offsets, and state.
 
         Parameters
         ----------
@@ -210,6 +223,10 @@ class TkToolTip:
 
             y_offset : int, optional
                 The new y-coordinate offset of the tooltip from the pointer (default is None).
+
+            state : str, optional
+                Set the visible state of the tooltip. Options are "normal", "disabled", and None (default is None).
+
         """
 
         if text is not None:
@@ -220,3 +237,6 @@ class TkToolTip:
             self.x_offset = x_offset
         if y_offset is not None:
             self.y_offset = y_offset
+        if state is not None:
+            assert state in ["normal", "disabled"], "Invalid state"
+            self.state = state
