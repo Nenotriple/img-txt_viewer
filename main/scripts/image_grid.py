@@ -34,6 +34,8 @@ from main.scripts.TkToolTip import TkToolTip as ToolTip # type: ignore
 
 
 class ImageGrid:
+    image_cache = {1: {}, 2: {}, 3: {}}  # Cache for each thumbnail size
+
     def __init__(self, master, filepath, window_x, window_y, jump_to_image):
 
         # Window configuration
@@ -57,9 +59,8 @@ class ImageGrid:
         self.loaded_images = 0  # Num of images loaded to the UI
         self.filtered_images = 0  # Num of images displayed after filtering
 
-        # Image flag and cache
+        # Image flag
         self.image_flag = self.create_image_flag()
-        self.image_cache = {1: {}, 2: {}, 3: {}}  # Cache for each thumbnail size
 
         # Image files in the folder
         self.all_file_list = self.get_all_files()
@@ -180,59 +181,64 @@ class ImageGrid:
         self.update_shown_images()
         self.update_button_state()
 
-
     def update_shown_images(self):
         shown_images = min(self.filtered_images, self.loaded_images)
         self.label_image_info.config(text=f"{shown_images} : {self.loaded_images}, of {self.num_total_images}")
 
-
     def update_button_state(self):
-        if self.loaded_images == self.num_total_images:
-            self.button_load_all.config(state="disabled")
-
+        self.button_load_all.config(state="disabled" if self.loaded_images == self.num_total_images else "normal")
 
     def reload_grid(self):
-        for widget in self.frame_image_grid.winfo_children():
+        self.clear_frame(self.frame_image_grid)
+        self.set_size_settings()
+        self.update_image_info_label()
+        self.create_image_grid()
+
+    def clear_frame(self, frame):
+        for widget in frame.winfo_children():
             widget.destroy()
+
+    def set_size_settings(self):
         size_settings = {
             1: (50, 50, 13),
             2: (85, 85, 8),
             3: (175, 175, 4)
-            }
+        }
         self.max_width, self.max_height, self.cols = size_settings.get(self.image_size.get(), (85, 85, 8))
-        self.update_image_info_label()
-        self.create_image_grid()
-
 
     def create_image_grid(self):
-        self.canvas_thumbnails.create_window((0,0), window=self.frame_image_grid, anchor='nw')
+        self.canvas_thumbnails.create_window((0, 0), window=self.frame_image_grid, anchor='nw')
         self.images = self.load_image_set()
-        for row_index in range(self.rows):
-            for col_index in range(self.cols):
-                if self.images and row_index * self.cols + col_index < self.loaded_images:
-                    image, filepath, image_index = self.images.pop(0)
-                    thumbnail = Button(self.frame_image_grid, relief="flat", overrelief="groove", image=image, command=lambda  path=filepath: self.on_mouse_click(path))
-                    thumbnail.image = image
-                    thumbnail.grid(row=row_index, column=col_index)
-                    thumbnail.bind("<MouseWheel>", self.on_mousewheel)
-                    ToolTip.create(thumbnail, f"#{image_index + 1}, {os.path.basename(filepath)}", 200, 6, 12)
-        scroll_index = self.loaded_images / self.cols
-        scroll_index *= 1.2
+        self.populate_image_grid()
+        self.configure_scroll_region()
+        self.add_load_more_button()
+
+    def populate_image_grid(self):
+        for index, (image, filepath, image_index) in enumerate(self.images):
+            row, col = divmod(index, self.cols)
+            thumbnail = Button(self.frame_image_grid, relief="flat", overrelief="groove", image=image,
+                               command=lambda path=filepath: self.on_mouse_click(path))
+            thumbnail.image = image
+            thumbnail.grid(row=row, column=col)
+            thumbnail.bind("<MouseWheel>", self.on_mousewheel)
+            ToolTip.create(thumbnail, f"#{image_index + 1}, {os.path.basename(filepath)}", 200, 6, 12)
+
+    def configure_scroll_region(self):
+        scroll_index = self.loaded_images / self.cols * 1.2
         scrollregion_height = scroll_index * self.max_height
         self.canvas_thumbnails.config(scrollregion=(0, 0, 750, scrollregion_height))
-        if self.image_filter.get() == "All":
-            if self.loaded_images < self.num_total_images:
-                load_more_button = Button(self.frame_image_grid, text="Load More...", height=2, command=self.load_images)
-                load_more_button.grid(row=self.rows, column=0, columnspan=self.cols, sticky="ew", pady=5)
-                ToolTip.create(load_more_button, "Load the next 150 images", 500, 6, 12)
 
+    def add_load_more_button(self):
+        if self.image_filter.get() == "All" and self.loaded_images < self.num_total_images:
+            load_more_button = Button(self.frame_image_grid, text="Load More...", height=2, command=self.load_images)
+            load_more_button.grid(row=self.rows, column=0, columnspan=self.cols, sticky="ew", pady=5)
+            ToolTip.create(load_more_button, "Load the next 150 images", 500, 6, 12)
 
     def on_mouse_click(self, path):
         index = self.get_image_index(self.folder, path)
         self.ImgTxt_jump_to_image(index)
-        if self.auto_close.get() == True:
+        if self.auto_close.get():
             self.close_window()
-
 
     def on_mousewheel(self, event):
         if self.canvas_thumbnails.winfo_exists():
@@ -259,44 +265,43 @@ class ImageGrid:
 
     def load_image_set(self):
         images = []
-        image_count = 0
-        for image_index, filename in enumerate(sorted(self.image_file_list, key=self.natural_sort)):
-            if not self.filter_images(filename):
-                continue
+        for image_index, filename in enumerate(filter(self.filter_images, sorted(self.image_file_list, key=self.natural_sort))):
+            if len(images) >= self.loaded_images:
+                break
             img_path = os.path.join(self.folder, filename)
             txt_path = os.path.splitext(img_path)[0] + '.txt'
-            new_img = self.image_cache[self.image_size.get()].get(img_path)
-            if new_img is None:
-                new_img = Image.new("RGBA", (self.max_width, self.max_height))
-                new_img = self.paste_image_flag(new_img, img_path, txt_path)
+            new_img = self.image_cache[self.image_size.get()].get(img_path) or self.create_new_image(img_path, txt_path)
             images.append((ImageTk.PhotoImage(new_img), img_path, image_index))
-            image_count += 1
-            if image_count >= self.loaded_images:
-                break
         return images
+
+
+    def create_new_image(self, img_path, txt_path):
+        new_img = Image.new("RGBA", (self.max_width, self.max_height))
+        img = Image.open(img_path)
+        img.thumbnail((self.max_width, self.max_height))
+        position = ((self.max_width - img.width) // 2, (self.max_height - img.height) // 2)
+        new_img.paste(img, position)
+        if not os.path.exists(txt_path) or os.path.getsize(txt_path) == 0:
+            flag_position = (self.max_width - self.image_flag.width, self.max_height - self.image_flag.height)
+            new_img.paste(self.image_flag, flag_position, mask=self.image_flag)
+        self.image_cache[self.image_size.get()][img_path] = new_img
+        return new_img
 
 
     def filter_images(self, filename):
         if not filename.lower().endswith(self.supported_filetypes):
             return False
-        img_path = os.path.join(self.folder, filename)
-        txt_path = os.path.splitext(img_path)[0] + '.txt'
-        try:
-            file_info = os.stat(txt_path)
-            file_size = file_info.st_size
-        except FileNotFoundError:
-            file_size = 0
-        if self.image_filter.get() == "All":
-            return True
-        elif self.image_filter.get() == "Paired" and file_size != 0:
-            return True
-        elif self.image_filter.get() == "Unpaired" and file_size == 0:
-            return True
-        return False
+        txt_path = os.path.splitext(os.path.join(self.folder, filename))[0] + '.txt'
+        file_size = os.path.getsize(txt_path) if os.path.exists(txt_path) else 0
+        return (
+            self.image_filter.get() == "All" or
+            (self.image_filter.get() == "Paired" and file_size != 0) or
+            (self.image_filter.get() == "Unpaired" and file_size == 0)
+        )
 
 
     def update_filtered_images(self):
-        self.filtered_images = sum(1 for filename in filter(self.filter_images, sorted(self.image_file_list, key=self.natural_sort)))
+        self.filtered_images = sum(1 for _ in filter(self.filter_images, sorted(self.image_file_list, key=self.natural_sort)))
 
 
     def paste_image_flag(self, new_img, img_path, txt_path):
@@ -363,6 +368,7 @@ class ImageGrid:
 
 
     def create_image_flag(self):
+        '''Create a small red 'flag' in the bottom right corner of any image without a matching text pair.'''
         flag_size = 15
         outline_width = 1
         left, top = [dim - flag_size - outline_width for dim in (self.max_width, self.max_height)]
@@ -456,12 +462,13 @@ v1.02 changes:
 <br>
 
   - Fixed:
-    - Fixed issue where supported filetypes were case sensitive.
+    - Fixed issue where supported file types were case sensitive.
 
 <br>
 
   - Other changes:
-    -
+    - Reuse image_cache across instances, speeding up image loading while slightly increasing memory usage.
+    - Internal refactoring.
 
 
 '''
