@@ -3,7 +3,7 @@
 #                                      #
 #              Image Grid              #
 #                                      #
-#   Version : v1.01                    #
+#   Version : v1.02                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -277,7 +277,7 @@ class ImageGrid:
 
 
     def filter_images(self, filename):
-        if not filename.endswith(self.supported_filetypes):
+        if not filename.lower().endswith(self.supported_filetypes):
             return False
         img_path = os.path.join(self.folder, filename)
         txt_path = os.path.splitext(img_path)[0] + '.txt'
@@ -386,7 +386,7 @@ class ImageGrid:
     def get_image_index(self, directory, filename):
         filename = os.path.basename(filename)
         files = os.listdir(directory)
-        image_files = [file for file in files if file.endswith(self.supported_filetypes)]
+        image_files = [file for file in files if file.lower().endswith(self.supported_filetypes)]
         image_files.sort(key=self.natural_sort)
         indexed_files = list(enumerate(image_files))
         for index, file in indexed_files:
@@ -402,7 +402,7 @@ class ImageGrid:
 
 
     def get_image_files(self):
-        return [name for name in self.all_file_list if os.path.isfile(os.path.join(self.folder, name)) and name.endswith(self.supported_filetypes)]
+        return [name for name in self.all_file_list if os.path.isfile(os.path.join(self.folder, name)) and name.lower().endswith(self.supported_filetypes)]
 
 
     def natural_sort(self, string):
@@ -448,20 +448,20 @@ class ImageGrid:
 
 '''
 
-v1.01 changes:
+v1.02 changes:
 
   - New:
-    - New option: `Auto-Close`, Unchecking this option allows you to keep the image grid open after making a selection.
-
-<br>
-
-  - Fixed:
     -
 
 <br>
 
+  - Fixed:
+    - Fixed issue where supported filetypes were case sensitive.
+
+<br>
+
   - Other changes:
-    - Mousewheel is now bound to only the needed widgets.
+    -
 
 
 '''
