@@ -3,7 +3,7 @@
 #                                      #
 #            IMG-TXT VIEWER            #
 #                                      #
-#   Version : v1.93.2                  #
+#   Version : v1.94                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -17,7 +17,7 @@ More info here: https://github.com/Nenotriple/img-txt_viewer
 """
 
 
-VERSION = "v1.93.2"
+VERSION = "v1.94"
 
 
 ################################################################################################################################################
@@ -40,7 +40,7 @@ import configparser
 from collections import defaultdict
 
 import tkinter.font
-from tkinter import ttk, Tk, Toplevel, messagebox, StringVar, BooleanVar, IntVar, Menu, PanedWindow, Frame, Label, Button, Entry, Checkbutton, Text, Event, TclError
+from tkinter import ttk, Tk, Toplevel, messagebox, StringVar, BooleanVar, IntVar, Menu, PanedWindow, Frame, Label, Button, Entry, Checkbutton, Text, Event, Canvas, TclError
 from tkinter.filedialog import askdirectory
 from tkinter.scrolledtext import ScrolledText
 
@@ -141,6 +141,161 @@ class AboutWindow(Toplevel):
 
     def open_url(self):
         webbrowser.open(f"{self.github_url}")
+
+
+#endregion
+################################################################################################################################################
+#region - CLASS: PopUpZoom
+
+
+class PopUpZoom:
+    def __init__(self, widget):
+        # Initialize the PopUpZoom class
+        self.widget = widget  # The widget to which this zoom functionality is bound.
+        self.zoom_factor = 1.75  # The initial zoom level for the image.
+        self.min_zoom_factor = 0.5  # The minimum zoom level allowed.
+        self.max_zoom_factor = 10.0  # The maximum zoom level allowed.
+        self.max_image_size = 4096  # The maximum size (in pixels) of the image that can be displayed. Larger images will be downsampled to this size.
+
+        # Initialize image attributes
+        self.image = None
+        self.image_path = None
+        self.original_image = None
+        self.resized_image = None
+        self.resized_width = 0
+        self.resized_height = 0
+
+        # Initialize zoom enabled variable
+        self.zoom_enabled = BooleanVar(value=False)
+
+        # Set up the zoom window
+        self.popup_size = 400  # The size (in pixels) of the popup window that shows the zoomed image.
+        self.min_popup_size = 100  # Minimum popup size
+        self.max_popup_size = 600  # Maximum popup size
+
+        self.zoom_window = Toplevel(widget)  # Create a new top-level window for the zoomed image.
+        self.zoom_window.withdraw()  # Hide the zoom window until it's needed.
+        self.zoom_window.overrideredirect(True)  # Remove the window decorations (like title bar, close button, etc.)
+        self.zoom_canvas = Canvas(self.zoom_window, width=self.popup_size, height=self.popup_size, highlightthickness=0)  # Create a canvas in the zoom window. This is where the zoomed image will be drawn.
+        self.zoom_canvas.pack()  # Make the canvas fill the zoom window.
+
+        # Bind events to the widget
+        self.widget.bind("<Motion>", self.update_zoom, add="+")
+        self.widget.bind("<Leave>", self.hide_zoom, add="+")
+        self.widget.bind("<Button-1>", self.hide_zoom, add="+")
+        self.widget.bind("<MouseWheel>", self.zoom, add="+")
+
+
+    def set_image(self, image, path):
+        '''Set the image and its path'''
+        if self.image == image and self.image_path == path:
+            return
+        self.image = image
+        self.image_path = path
+        self.original_image = Image.open(self.image_path)
+        self.resize_original_image()
+
+
+    def resize_original_image(self):
+        '''Resize the original image if it's too large'''
+        max_size = self.max_image_size
+        if self.original_image.width > max_size or self.original_image.height > max_size:
+            aspect_ratio = self.original_image.width / self.original_image.height
+            if self.original_image.width > self.original_image.height:
+                new_width = max_size
+                new_height = int(max_size / aspect_ratio)
+            else:
+                new_height = max_size
+                new_width = int(max_size * aspect_ratio)
+            self.original_image = self.original_image.resize((new_width, new_height), Image.LANCZOS)
+
+
+    def set_resized_image(self, resized_image, resized_width, resized_height):
+        '''Set the resized image and its dimensions'''
+        self.resized_image = resized_image
+        self.resized_width = resized_width
+        self.resized_height = resized_height
+
+
+    def create_zoomed_image(self, left, top, right, bottom):
+        '''Create and display the zoomed image in the zoom window'''
+        cropped_image = self.original_image.crop((left, top, right, bottom))
+        aspect_ratio = cropped_image.width / cropped_image.height
+        if aspect_ratio > 1:
+            new_width = self.popup_size
+            new_height = int(self.popup_size / aspect_ratio)
+        else:
+            new_height = self.popup_size
+            new_width = int(self.popup_size * aspect_ratio)
+        resize_method = Image.NEAREST if self.zoom_factor >= 4 else Image.LANCZOS
+        zoomed_image = cropped_image.resize((new_width, new_height), resize_method)
+        self.zoom_photo_image = ImageTk.PhotoImage(zoomed_image)
+        self.zoom_canvas.delete("all")
+        x = (self.popup_size - new_width) // 2
+        y = (self.popup_size - new_height) // 2
+        self.zoom_canvas.create_image(x, y, anchor="nw", image=self.zoom_photo_image)
+
+
+    def calculate_coordinates(self, img_x, img_y):
+        '''Calculate the coordinates for the zoomed image'''
+        half_size = self.popup_size // (2 * self.zoom_factor)
+        left = max(0, int(img_x - half_size))
+        right = min(self.original_image.width, int(img_x + half_size))
+        top = max(0, int(img_y - half_size))
+        bottom = min(self.original_image.height, int(img_y + half_size))
+        # Ensure the coordinates are within bounds
+        if right - left < self.popup_size // self.zoom_factor:
+            left = max(0, right - self.popup_size // self.zoom_factor)
+            right = min(self.original_image.width, left + self.popup_size // self.zoom_factor)
+        if bottom - top < self.popup_size // self.zoom_factor:
+            top = max(0, bottom - self.popup_size // self.zoom_factor)
+            bottom = min(self.original_image.height, top + self.popup_size // self.zoom_factor)
+        return left, top, right, bottom
+
+
+    def update_zoom(self, event):
+        '''Update the zoom window with the zoomed image'''
+        if event is None:
+            return
+        if not self.zoom_enabled.get() or not (self.image and self.resized_image):
+            return
+        x, y = event.x, event.y
+        screen_width, screen_height = self.widget.winfo_screenwidth(), self.widget.winfo_screenheight()
+        new_x, new_y = event.x_root + 20, event.y_root + 20
+        if new_x + self.popup_size > screen_width:
+            new_x = event.x_root - self.popup_size - 20
+        if new_y + self.popup_size > screen_height:
+            new_y = event.y_root - self.popup_size - 20
+        self.zoom_window.geometry(f"+{new_x}+{new_y}")
+        pad_x = (self.widget.winfo_width() - self.resized_width) / 2
+        pad_y = (self.widget.winfo_height() - self.resized_height) / 2
+        img_x = (x - pad_x) * self.original_image.width / self.resized_width
+        img_y = (y - pad_y) * self.original_image.height / self.resized_height
+        left, top, right, bottom = self.calculate_coordinates(img_x, img_y)
+        if left < right and top < bottom:
+            self.create_zoomed_image(left, top, right, bottom)
+            self.zoom_window.deiconify()
+        else:
+            self.zoom_window.withdraw()
+
+
+    def zoom(self, event):
+        '''Adjust the zoom factor or popup size based on the mouse wheel event'''
+        if event.state & 0x0001:  # Shift key is held
+            self.popup_size += 20 if event.delta > 0 else -20
+            self.popup_size = max(self.min_popup_size, min(self.popup_size, self.max_popup_size))
+            self.zoom_canvas.config(width=self.popup_size, height=self.popup_size)
+        else:
+            min_zoom = self.min_zoom_factor
+            max_zoom = self.max_zoom_factor
+            self.zoom_factor += min_zoom if event.delta > 0 else -min_zoom
+            self.zoom_factor = max(min_zoom, min(self.zoom_factor, max_zoom))
+        self.update_zoom(event)
+
+
+    def hide_zoom(self, event):
+        '''Hide the zoom window'''
+        self.zoom_window.withdraw()
 
 
 #endregion
@@ -292,6 +447,7 @@ class ImgTxtViewer:
         self.is_alt_arrow_pressed = False
         self.filepath_contains_images_var = False
         self.is_resizing_id = None
+        self.toggle_zoom_var = None
 
 
         # GIF animation variables
@@ -344,6 +500,8 @@ class ImgTxtViewer:
         master.bind("<Alt-Left>", lambda event: self.prev_pair(event))
         master.bind('<Shift-Delete>', lambda event: self.delete_pair())
         master.bind('<Configure>', lambda event: self.on_resize(event))
+        master.bind('<F1>', lambda event: self.toggle_zoom_popup(event))
+        master.bind('<F2>', lambda event: self.view_image_grid(event))
 
 
 #endregion
@@ -418,6 +576,7 @@ class ImgTxtViewer:
         self.optionsMenu.add_checkbutton(label="List View", underline=0, state="disable", variable=self.list_mode_var, command=self.toggle_list_mode)
         self.optionsMenu.add_separator()
         self.optionsMenu.add_checkbutton(label="Always On Top", underline=0, command=self.toggle_always_on_top)
+        #self.optionsMenu.add_checkbutton(label="Toggle Zoom", accelerator="F1", command=self.toggle_zoom_popup, variable=self.toggle_zoom_var) # Disabled because this checkbutton state isn't staying in sync with the "imageContext_menu" checkbutton.
         self.optionsMenu.add_checkbutton(label="Vertical View", underline=0, state="disable", command=self.swap_pane_orientation)
         self.optionsMenu.add_checkbutton(label="Swap img-txt Sides", underline=0, state="disable", command=self.swap_pane_sides)
 
@@ -453,7 +612,7 @@ class ImgTxtViewer:
         self.toolsMenu.add_separator()
         self.toolsMenu.add_command(label="Open Current Directory...", underline=13, state="disable", command=self.open_current_directory)
         self.toolsMenu.add_command(label="Open Current Image...", underline=13, state="disable", command=self.open_current_image)
-        self.toolsMenu.add_command(label="Open Image Grid...", underline=11, state="disabled", command=self.view_image_grid)
+        self.toolsMenu.add_command(label="Open Image Grid...", accelerator="F2", underline=11, state="disabled", command=self.view_image_grid)
 
         self.toolsMenu.add_separator()
         self.toolsMenu.add_command(label="Duplicate img-txt pair", underline=2, state="disable", command=self.duplicate_pair)
@@ -498,7 +657,9 @@ class ImgTxtViewer:
         self.image_preview.bind("<ButtonPress-1>", self.start_drag)
         self.image_preview.bind("<ButtonRelease-1>", self.stop_drag)
         self.image_preview.bind("<B1-Motion>", self.dragging_window)
-        ToolTip.create(self.image_preview, "Double-Click to open in system image viewer \n\nMiddle click to open in file explorer\n\nALT+Left/Right or Mouse-Wheel to move between img-txt pairs", 1000, 6, 12)
+        self.popup_zoom = PopUpZoom(self.image_preview)
+        self.toggle_zoom_var = BooleanVar(value=self.popup_zoom.zoom_enabled.get())
+        self.image_preview_tooltip = ToolTip.create(self.image_preview, "Double-Click to open in system image viewer \n\nMiddle click to open in file explorer\n\nALT+Left/Right or Mouse-Wheel to move between img-txt pairs", 1000, 6, 12)
 
 
         # Directory Selection
@@ -532,8 +693,8 @@ class ImgTxtViewer:
         # Image Index
         self.index_frame = Frame(self.master_control_frame)
         self.index_frame.pack(side="top", fill="x")
-        self.current_gif_frame_images_label = Label(self.index_frame, text="Pair", state="disabled")
-        self.current_gif_frame_images_label.pack(side="left")
+        self.index_pair_label = Label(self.index_frame, text="Pair", state="disabled")
+        self.index_pair_label.pack(side="left")
         self.image_index_entry = Entry(self.index_frame, width=5, state="disabled")
         self.image_index_entry.bind("<Return>", self.jump_to_image)
         self.image_index_entry.pack(side="left")
@@ -543,7 +704,6 @@ class ImgTxtViewer:
         self.index_context_menu.add_command(label="First", command=self.index_goto_first)
         self.index_context_menu.add_command(label="Random", accelerator="Ctrl+R", command=self.index_goto_random)
         self.index_context_menu.add_command(label="Next Empty", accelerator="Ctrl+E", command=self.index_goto_next_empty)
-
 
         self.total_images_label = Label(self.index_frame, text=f"of {len(self.image_files)}", state="disabled")
         self.total_images_label.pack(side="left", padx=(0, 2))
@@ -976,7 +1136,7 @@ class ImgTxtViewer:
         # Open
         imageContext_menu.add_command(label="Open Current Directory...", command=self.open_current_directory)
         imageContext_menu.add_command(label="Open Current Image...", command=self.open_current_image)
-        imageContext_menu.add_command(label="Open Image Grid...", command=self.view_image_grid)
+        imageContext_menu.add_command(label="Open Image Grid...", accelerator="F2", command=self.view_image_grid)
         imageContext_menu.add_separator()
         # File
         imageContext_menu.add_command(label="Duplicate img-txt pair", command=self.duplicate_pair)
@@ -996,6 +1156,7 @@ class ImgTxtViewer:
         imageContext_menu.add_command(label="Flip", command=self.flip_current_image)
         imageContext_menu.add_separator()
         # Misc
+        imageContext_menu.add_checkbutton(label="Toggle Zoom", accelerator="F1", command=self.toggle_zoom_popup, variable=self.toggle_zoom_var)
         imageContext_menu.add_checkbutton(label="Vertical View", command=self.swap_pane_orientation)
         imageContext_menu.add_checkbutton(label="Swap img-txt Sides", command=self.swap_pane_sides)
         # Image Display Quality
@@ -1233,7 +1394,7 @@ class ImgTxtViewer:
             self.optionsMenu.entryconfig(o_command, state="normal")
         self.browse_context_menu.entryconfig("Set Text File Path...", state="normal")
         self.browse_context_menu.entryconfig("Clear Text File Path", state="normal")
-        self.current_gif_frame_images_label.configure(state="normal")
+        self.index_pair_label.configure(state="normal")
         self.image_index_entry.configure(state="normal")
         self.total_images_label.configure(state="normal")
         self.message_label.configure(state="normal")
@@ -1255,6 +1416,19 @@ class ImgTxtViewer:
             self.big_save_button_var.set(True)
             new_height = 2
         self.save_button.config(height=new_height)
+
+
+    def toggle_zoom_popup(self, event=None):
+        new_state = not self.popup_zoom.zoom_enabled.get()
+        self.popup_zoom.zoom_enabled.set(new_state)
+        self.toggle_zoom_var.set(new_state)
+        state, text = ("disabled", "") if new_state else ("normal", "Double-Click to open in system image viewer \n\nMiddle click to open in file explorer\n\nALT+Left/Right or Mouse-Wheel to move between img-txt pairs")
+        self.image_preview_tooltip.config(state=state, text=text)
+        if new_state:
+            self.popup_zoom.update_zoom(event)
+        else:
+            self.popup_zoom.hide_zoom(event)
+
 
 
 ####### PanedWindow ##################################################
@@ -1499,10 +1673,10 @@ class ImgTxtViewer:
 
     def set_suggestion_threshold(self):
         thresholds = {
-            "Slow"  : 200000,
-            "Normal": 115000,
-            "Fast"  : 50000,
-            "Faster": 25000
+            "Slow"  : 275000,
+            "Normal": 130000,
+            "Fast"  : 75000,
+            "Faster": 40000
             }
         self.autocomplete.suggestion_threshold = thresholds.get(self.suggestion_threshold_var.get())
 
@@ -1514,7 +1688,7 @@ class ImgTxtViewer:
 
 
     def get_tags_with_underscore(self):
-        return {"0_0", "o_o", ">_o", "x_x", "|_|", "._.", "^_^", ">_<", "@_@", ">_@", "+_+", "+_-", "=_=", "<o>_<o>", "<|>_<|>", "ಠ_ಠ"}
+        return {"0_0", "(o)_(o)", "o_o", ">_o", "u_u", "x_x", "|_|", "||_||", "._.", "^_^", ">_<", "@_@", ">_@", "+_+", "+_-", "=_=", "<o>_<o>", "<|>_<|>", "ಠ_ಠ", "3_3", "6_9"}
 
 
 #endregion
@@ -1694,7 +1868,7 @@ class ImgTxtViewer:
             resize_event = Event()
             resize_event.height = self.image_preview.winfo_height()
             resize_event.width = self.image_preview.winfo_width()
-            self.resize_and_scale_image(image, max_img_width, max_img_height, resize_event)
+            resized_image, resized_width, resized_height = self.resize_and_scale_image(image, max_img_width, max_img_height, resize_event)
             if image.format == 'GIF':
                 self.frame_iterator = iter(self.gif_frames)
                 self.current_frame_index = 0
@@ -1702,6 +1876,8 @@ class ImgTxtViewer:
             else:
                 self.frame_iterator = None
                 self.current_frame_index = 0
+            self.popup_zoom.set_image(image=image, path=self.image_file)
+            self.popup_zoom.set_resized_image(resized_image, resized_width, resized_height)
             return text_file, image, max_img_height, max_img_width
         except ValueError:
             self.check_image_dir()
@@ -1737,10 +1913,9 @@ class ImgTxtViewer:
                 self.display_animated_gif()
 
 
-
     def resize_and_scale_image(self, input_image, max_img_width, max_img_height, event, quality_filter=Image.LANCZOS):
         if input_image is None:
-            return None, None
+            return None, None, None
         start_width, start_height = self.original_image_size
         scale_factor = min(event.width / start_width, event.height / start_height)
         new_width = min(int(start_width * scale_factor), max_img_width)
@@ -1751,6 +1926,7 @@ class ImgTxtViewer:
         self.image_preview.image = output_image
         percent_scale = int((new_width / start_width) * 100)
         self.update_imageinfo(percent_scale)
+        return resized_image, new_width, new_height
 
 
     def show_pair(self):
@@ -1875,6 +2051,8 @@ class ImgTxtViewer:
 
 
     def mouse_scroll(self, event):
+        if self.popup_zoom.zoom_enabled.get():
+            return
         current_time = time.time()
         scroll_delay = 0.05
         if current_time - self.last_scroll_time < scroll_delay:
@@ -2395,7 +2573,6 @@ class ImgTxtViewer:
             command = f'python ./main/bin/batch_resize_images.py --path "{self.image_dir.get()}"'
         else:
             command = f'./batch_resize_images.exe --path "{self.image_dir.get()}"'
-            print(command)
         subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW)
 
 
@@ -2408,7 +2585,7 @@ class ImgTxtViewer:
         subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW)
 
 
-    def view_image_grid(self):
+    def view_image_grid(self, event=None):
         main_window_width = root.winfo_width()
         main_window_height = root.winfo_height()
         window_x = root.winfo_x() + -330 + main_window_width // 2
@@ -3039,24 +3216,31 @@ root.mainloop()
 '''
 
 
-[v1.93.2 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.93.2)
+[v1.94 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.94)
 
 <details>
   <summary>Click here to view release notes!</summary>
 
   - New:
-    -
+    - New option: `Toggle Zoom`, This allows you to hover the mouse over the current image and display a zoomed in preview.
+      - Use the Mouse-Wheel to zoom in and out.
+      - Use Shift+Mouse-Wheel to increase or decrease the popup size.
+
+
 <br>
 
 
   - Fixed:
-    - Fixed issue where the text box would be copied to another img-txt pair when changing directory.
+    - `Image Grid`, Fixed issue where supported file types were case sensitive, leading to images not appearing, and indexing issues.
+
 
 <br>
 
 
   - Other changes:
-    -
+    - Improved performance of Autocomplete by optimizing: data loading, similar names, string operations, and suggestion retrieval. Up to 50% faster than v1.92
+    - `Image Grid`, Now reuses image cache across instances to speed up loading.
+
 
 <br>
 
@@ -3082,7 +3266,7 @@ root.mainloop()
 
 
 - Tofix
-  -
+  - Toggle Zoom checkbutton state isn't being reflected in either menu when making changes.
 
 
 '''
