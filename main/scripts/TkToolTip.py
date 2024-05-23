@@ -3,17 +3,17 @@
 #                                      #
 #           Tkinter ToolTips           #
 #                                      #
-#   Version : v1.02                    #
+#   Version : v1.03                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
 
 Description:
 -------------
-This library provides a simple way to add tooltips to any tkinter widget.
-It allows customization of the tooltip's delay, position, and text.
-"""
+This script provides a simple way to add tooltips to any tkinter widget.
+It allows customization of the tooltip's text, delay, position, state, and style.
 
+"""
 
 import time
 from tkinter import Toplevel, Label
@@ -23,8 +23,8 @@ class TkToolTip:
     """
     Create a tooltip for any tkinter widget.
 
-    Attributes
-    ----------
+    Widget Attributes
+    -----------------
     widget : widget
         The tkinter widget to which the tooltip is attached.
 
@@ -40,8 +40,26 @@ class TkToolTip:
     y_offset : int
         The y-coordinate offset of the tooltip from the pointer.
 
-    state : str, optional
-        Set the visible state of the tooltip. Options are "normal", "disabled", and None (default is None).
+    state : str
+        Set the visible state of the tooltip
+
+    bg : str
+        Background color of the tooltip.
+
+    fg : str
+        Foreground (text) color of the tooltip.
+
+    font : tuple
+        Font of the tooltip text.
+
+    borderwidth : int
+        Border width of the tooltip.
+
+    relief : str
+        Border style of the tooltip.
+
+    Other Attributes
+    ----------------
 
     tip_window : Toplevel
         The Toplevel window used to display the tooltip.
@@ -55,181 +73,97 @@ class TkToolTip:
     hide_time : float
         The time when the tooltip was hidden.
 
-    Methods
-    -------
-    show_tip(x, y):
-        Shows the tooltip at the specified screen coordinates.
-
-    hide_tip():
-        Hides the tooltip.
-
-    create(widget, text="", delay=0, x_offset=0, y_offset=0):
-        Creates a tooltip for the specified widget.
-
-    config(text=None, delay=None, x_offset=None, y_offset=None, state=None):
-        Configures the tooltip's text, delay, position offsets, and state.
-
-    Usage
-    -----
-    TkToolTip.create(widget=your_widget_here, text="Your text here", delay=0, x_offset=0, y_offset=0, state="normal")
-        delay, x_offset, y_offset, and state are optional when creating the tooltip.
-        A good starting point is: (delay=1000, x_offset=12, y_offset=18), this puts the tooltip South-East of the mouse with a 1 second delay.
     """
 
-    def __init__(self, widget, text="", delay=0, x_offset=0, y_offset=0, state="normal"):
+    def __init__(self, widget, text="", delay=0, x_offset=0, y_offset=0, state=None,
+                 bg="#ffffe0", fg="black", font=("TkDefaultFont", "8", "normal"), borderwidth=1, relief="solid"):
         """
-        Constructs all the necessary attributes for the TkToolTip object.
-
-        Parameters
-        ----------
-            widget : widget
-                The tkinter widget to which the tooltip is attached.
-
-            text : str, optional
-                The text displayed when the tooltip is shown (default is "").
-
-            delay : int, optional
-                The delay (in ms) before the tooltip is shown (default is 0).
-
-            x_offset : int, optional
-                The x-coordinate offset of the tooltip from the pointer (default is 0).
-
-            y_offset : int, optional
-                The y-coordinate offset of the tooltip from the pointer (default is 0).
-
-            state : str, optional
-                Set the visible state of the tooltip. Options are "normal", "disabled", and None (default is None).
+        Initialize the tooltip with the given parameters.
         """
-
         self.widget = widget
         self.text = text
         self.delay = delay
         self.x_offset = x_offset
         self.y_offset = y_offset
         self.state = state
+        self.bg = bg
+        self.fg = fg
+        self.font = font
+        self.borderwidth = borderwidth
+        self.relief = relief
 
+        self.tip_window = None  # The window that displays the tooltip; None when no tooltip is shown
+        self.widget_id = None  # ID for the scheduled tooltip display event; None if no event is scheduled
+        self.hide_id = None  # ID for the scheduled tooltip hide event; None if no event is scheduled
+        self.hide_time = None  # Timestamp of the last time the tooltip was hidden; None if never hidden
+
+        self._bind_widget()
+
+    def _bind_widget(self):
+        """Setup event bindings for the widget."""
+        self.widget.bind('<Enter>', self._enter, add="+")
+        self.widget.bind('<Leave>', self._leave, add="+")
+        self.widget.bind('<Motion>', self._motion, add="+")
+        self.widget.bind("<Button-1>", self._leave, add="+")
+        self.widget.bind('<B1-Motion>', self._leave, add="+")
+
+    def _enter(self, event):
+        """Schedule tooltip display after the specified delay."""
+        self._schedule_show_tip(event)
+
+    def _leave(self, event):
+        """Hide the tooltip and cancel any scheduled events."""
+        self._cancel_tip()
+        self._hide_tip()
+
+    def _motion(self, event):
+        """Reschedule the tooltip display when the cursor moves within the widget."""
+        self._schedule_show_tip(event)
+
+    def _schedule_show_tip(self, event):
+        """Schedule the tooltip to be shown after the specified delay."""
+        if self.widget_id:
+            self.widget.after_cancel(self.widget_id)
+        self.widget_id = self.widget.after(self.delay, lambda: self._show_tip(event))
+
+    def _show_tip(self, event):
+        """Display the tooltip at the specified position."""
+        if self.state == "disabled":
+            return
+        x = event.x_root + self.x_offset
+        y = event.y_root + self.y_offset
+        self._create_tip_window(x, y)
+
+    def _create_tip_window(self, x, y):
+        """Create and display the tooltip window."""
+        if self.tip_window or not self.text:
+            return
         self.tip_window = Toplevel(self.widget)
         self.tip_window.wm_overrideredirect(True)
-        self.tip_window.wm_attributes("-topmost", True)
-        self.tip_window.wm_attributes("-disabled", True)
-        self.label = Label(self.tip_window, background="#ffffee", relief="ridge", borderwidth=1, justify="left", padx=4, pady=4)
-        self.label.pack()
-        self.tip_window.withdraw()
-        self.widget_id = None
-        self.hide_id = None
-        self.hide_time = 0
-
-
-    def show_tip(self, x, y):
-        """
-        Shows the tooltip at the specified screen coordinates.
-
-        If the tooltip is already shown, if the text is empty, or if the state is not "normal", this method does nothing.
-
-        Parameters
-        ----------
-            x : int
-                The x-coordinate of the pointer.
-
-            y : int
-                The y-coordinate of the pointer.
-        """
-
-        if not self.text or self.tip_window.winfo_viewable() or self.state != "normal":
-            return
-        x += self.x_offset
-        y += self.y_offset
         self.tip_window.wm_geometry(f"+{x}+{y}")
-        self.label.config(text=self.text)
-        self.tip_window.deiconify()
-        self.hide_id = self.widget.after(10000, self.hide_tip)
+        self.tip_window.wm_geometry(f"+{x}+{y}")
+        label = Label(self.tip_window, text=self.text, background=self.bg, foreground=self.fg,
+                      font=self.font, relief=self.relief, borderwidth=self.borderwidth)
+        label.pack()
 
+    def _hide_tip(self):
+        """Destroy the tooltip window if it exists."""
+        if self.tip_window:
+            self.tip_window.destroy()
+            self.tip_window = None
+            self.hide_time = time.time()
 
-    def hide_tip(self):
+    def _cancel_tip(self):
+        """Cancel the scheduled display of the tooltip."""
+        if self.widget_id:
+            self.widget.after_cancel(self.widget_id)
+            self.widget_id = None
+
+    def config(self, text=None, delay=None, x_offset=None, y_offset=None, state=None,
+               bg=None, fg=None, font=None, borderwidth=None, relief=None):
         """
-        Hides the tooltip.
-
-        If the tooltip is not shown, this method does nothing.
+        Update the tooltip configuration with the given parameters.
         """
-
-        if self.tip_window.winfo_viewable():
-            self.tip_window.withdraw()
-        self.hide_time = time.time()
-
-
-    @staticmethod
-    def create(widget, text="", delay=0, x_offset=0, y_offset=0):
-        """
-        Creates a tooltip for the specified widget.
-
-        Parameters
-        ----------
-            widget : widget
-                The tkinter widget to which the tooltip is attached.
-
-            text : str, optional
-                The text displayed when the tooltip is shown (default is "").
-
-            delay : int, optional
-                The delay (in ms) before the tooltip is shown (default is 0).
-
-            x_offset : int, optional
-                The x-coordinate offset of the tooltip from the pointer (default is 0).
-
-            y_offset : int, optional
-                The y-coordinate offset of the tooltip from the pointer (default is 0).
-
-        Returns
-        -------
-            TkToolTip
-                The created TkToolTip object.
-        """
-
-        tool_tip = TkToolTip(widget, text, delay, x_offset, y_offset)
-        def enter(event):
-            if tool_tip.widget_id:
-                widget.after_cancel(tool_tip.widget_id)
-            if time.time() - tool_tip.hide_time > 0.1:
-                tool_tip.widget_id = widget.after(tool_tip.delay, lambda: tool_tip.show_tip(widget.winfo_pointerx(), widget.winfo_pointery()))
-        def leave(event):
-            if tool_tip.widget_id:
-                widget.after_cancel(tool_tip.widget_id)
-            tool_tip.hide_tip()
-        def motion(event):
-            if tool_tip.widget_id:
-                widget.after_cancel(tool_tip.widget_id)
-            tool_tip.widget_id = widget.after(tool_tip.delay, lambda: tool_tip.show_tip(widget.winfo_pointerx(), widget.winfo_pointery()))
-        widget.bind('<Enter>', enter, add="+")
-        widget.bind('<Leave>', leave, add="+")
-        widget.bind('<Motion>', motion, add="+")
-        widget.bind("<Button-1>", leave, add="+")
-        widget.bind('<B1-Motion>', leave, add="+")
-        return tool_tip
-
-
-    def config(self, text=None, delay=None, x_offset=None, y_offset=None, state=None):
-        """
-        Configures the tooltip's text, delay, position offsets, and state.
-
-        Parameters
-        ----------
-            text : str, optional
-                The new text displayed when the tooltip is shown (default is None).
-
-            delay : int, optional
-                The new delay (in ms) before the tooltip is shown (default is None).
-
-            x_offset : int, optional
-                The new x-coordinate offset of the tooltip from the pointer (default is None).
-
-            y_offset : int, optional
-                The new y-coordinate offset of the tooltip from the pointer (default is None).
-
-            state : str, optional
-                Set the visible state of the tooltip. Options are "normal", "disabled", and None (default is None).
-
-        """
-
         if text is not None:
             self.text = text
         if delay is not None:
@@ -241,3 +175,51 @@ class TkToolTip:
         if state is not None:
             assert state in ["normal", "disabled"], "Invalid state"
             self.state = state
+        if bg is not None:
+            self.bg = bg
+        if fg is not None:
+            self.fg = fg
+        if font is not None:
+            self.font = font
+        if borderwidth is not None:
+            self.borderwidth = borderwidth
+        if relief is not None:
+            self.relief = relief
+
+    @classmethod
+    def create(cls, widget, text="", delay=0, x_offset=0, y_offset=0, state=None,
+               bg="#ffffe0", fg="black", font=("tahoma", "8", "normal"), borderwidth=1, relief="solid"):
+        """
+        Create a tooltip for the specified widget with the given parameters.
+
+        Parameters
+        ----------
+        widget : tkinter.Widget
+            The widget to which the tooltip will be attached.
+        text : str, optional
+            The text displayed in the tooltip (default is an empty string).
+        delay : int, optional
+            Delay in milliseconds before showing the tooltip (default is 0).
+        x_offset : int, optional
+            Horizontal offset of the tooltip from the cursor (default is 0).
+        y_offset : int, optional
+            Vertical offset of the tooltip from the cursor (default is 0).
+        state : str, optional
+            State of the tooltip; can be "normal" or "disabled" (default is None).
+        bg : str, optional
+            Background color of the tooltip (default is "#ffffe0").
+        fg : str, optional
+            Foreground (text) color of the tooltip (default is "black").
+        font : tuple, optional
+            Font of the tooltip text (default is ("tahoma", "8", "normal")).
+        borderwidth : int, optional
+            Border width of the tooltip (default is 1).
+        relief : str, optional
+            Border style of the tooltip (default is "solid").
+
+        Returns
+        -------
+        Tooltip
+            A new instance of the Tooltip class.
+        """
+        return cls(widget, text, delay, x_offset, y_offset, state, bg, fg, font, borderwidth, relief)
