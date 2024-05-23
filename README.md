@@ -121,45 +121,29 @@ Or use the included `requirements.txt` when setting up your venv.
 
 # 📜 Version History
 
-[v1.93.1 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.93.1)
+[v1.94 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.94)
 
 <details>
   <summary>Click here to view release notes!</summary>
 
   - New:
-    - New autocomplete matching modes: `Match Whole String`, and `Match Last Word` [732120e](https://github.com/Nenotriple/img-txt_viewer/commit/732120e61dbe0758f8f00c4852edf3f435b32c29)
-      - `Match Whole String`, This option works exactly as before. All characters in the selected tag are considered for matching.
-      - `Match Last Word`, This option will only match (and replace) the last word typed. This allows you to use autocomplete with natural sentences. You can type using an underscore as a space to join words together.
-    - New option for image grid view: `Auto-Close`, Unchecking this option allows you to keep the image grid open after making a selection. [67593f4](https://github.com/Nenotriple/img-txt_viewer/commit/67593f4876daf0cdbc6170dbb7c8820b99d8636d)
-    - New Tool: `Rename img-txt pairs`, Use this to clean-up the filenames of your dataset without converting the image types. [8f24a7e](https://github.com/Nenotriple/img-txt_viewer/commit/8f24a7e41a4fb4770fb5bd06d9dd2337b31c6270)
-    - You can now choose the crop anchor point when using `Batch Crop Images`. [9d247ea](https://github.com/Nenotriple/img-txt_viewer/commit/9d247ea582218366be7969b4c30d20fb7e8fbe87)
+    - New option: `Toggle Zoom`, This allows you to hover the mouse over the current image and display a zoomed in preview.
+      - Use the Mouse-Wheel to zoom in and out.
+      - Use Shift+Mouse-Wheel to increase or decrease the popup size.
+
 
 <br>
 
 
   - Fixed:
-    - Fixed issue where Autocomplete was broken from the executable version.
-    - Fixed an issue where initially loading a directory could result in the first text file displayed being erased. [ae56143](https://github.com/Nenotriple/img-txt_viewer/commit/ae561433a8a98fbcbbb3c1a1a6a35c05b412d9cc)
-    - Fixed issue where manually setting a directory, the text box and image index were not reset. [7874a13](https://github.com/Nenotriple/img-txt_viewer/commit/7874a13b6892bab36dc0de9163bd24e391961377)
+    - `Image Grid`, Fixed issue where supported file types were case sensitive, leading to images not appearing, and indexing issues.
 
 
 <br>
 
 
   - Other changes:
-    - Improved performance of Autocomplete, by handling similar names more efficiently. Up to 40% faster than before. [d8be0f2](https://github.com/Nenotriple/img-txt_viewer/commit/d8be0f28ff681be45beb8ca7694e9fc4fb4aa55c)
-    - Improved performance when viewing animated GIFs by first resizing all frames to the required size and caching them. [c8bd32a](https://github.com/Nenotriple/img-txt_viewer/commit/c8bd32a408213fab5cba0dd5842c9f9bb050e4fa)
-    - Improved efficiency of TkToolTip by reusing tooltip widgets, adding visibility checks, and reducing unnecessary method calls. [8b6c0dc](https://github.com/Nenotriple/img-txt_viewer/commit/8b6c0dc70c7547bbb0c873cbc9e02235a8725cdd)
-    - Slightly faster image loading by using PIL's thumbnail function to reduce aspect ratio calculation. [921b4d3](https://github.com/Nenotriple/img-txt_viewer/commit/921b4d38132e82078c34316fd12b45fc4e61694b)
-
-
-<br>
-
-
-  - Project Changes:
-    - `Batch Resize Images`: v1.06 [19d5b4d](https://github.com/Nenotriple/img-txt_viewer/commit/19d5b4d5fbe3ac6629d0755e24f3b560be800125)
-      - See full list of changes here: https://github.com/Nenotriple/batch_resize_images/releases
-    - `Upscale`: v1.02 [616ddaa](https://github.com/Nenotriple/img-txt_viewer/commit/616ddaa6ebd897b3f63cf921406f0e5ed958f930)
-      - The current and total GIF frames are now displayed in the UI.
+    - Improved performance of Autocomplete by optimizing: data loading, similar names, string operations, and suggestion retrieval. Up to 50% faster than v1.92
+    - `Image Grid`, Now reuses image cache across instances to speed up loading.
 
 </details>
