@@ -840,12 +840,12 @@ v1.03 changes:
     - You can now filter images by `Resolution`, `Aspect Ratio`, `Filesize`, `Filename`, `Filetype`, and `Tags`.
       - Along with these operators, `=`, `<`, `>`, `*`
     - Resolution and Filesize are now displayed in the image tooltip.
-    - `Auto-Close`: This setting is now saved to the `settings.cfg` file.
+    - `Auto-Close`: This setting is now saved to the `settings.cfg` file. #24
 
 <br>
 
   - Fixed:
-    - Fixed the issue of not being able to focus on the image grid window when selecting the it from the taskbar.
+    - Fixed the issue of not being able to focus on the image grid window when selecting the it from the taskbar. #24
 
 <br>
 
