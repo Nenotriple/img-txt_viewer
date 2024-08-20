@@ -3,7 +3,7 @@
 #                                      #
 #             Upscale Image            #
 #                                      #
-#   Version : v1.02                    #
+#   Version : v1.03                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -11,8 +11,6 @@
 Description:
 -------------
 Upscale a single image using realesrgan-ncnn-vulkan.exe
-
-Supported filetypes: .jpg, .jpeg, .png, .webp, .bmp, .gif
 
 """
 
@@ -36,7 +34,7 @@ from PIL import Image, ImageSequence
 
 
 class Upscale:
-    def __init__(self, master, filepath, window_x, window_y, update_pair, jump_to_image):
+    def __init__(self, master, img_txt_viewer, filepath, window_x, window_y, update_pair, jump_to_image):
         self.top = Toplevel(master, borderwidth=2, relief="groove")
         self.top.overrideredirect("true")
         self.top.geometry("+{}+{}".format(window_x, window_y))
@@ -44,6 +42,10 @@ class Upscale:
         self.top.focus_force()
         self.top.bind("<Escape>", self.close_window)
 
+        self.supported_filetypes = (".png", ".webp", ".jpg", ".jpeg", ".jpg_large", ".jfif", ".tif", ".tiff", ".bmp", ".gif")
+
+        self.img_txt_viewer = img_txt_viewer
+        self.sort_key = self.img_txt_viewer.get_file_sort_key()
         self.ImgTxt_update_pair = update_pair
         self.ImgTxt_jump_to_image = jump_to_image
 
@@ -277,13 +279,8 @@ class Upscale:
 
     def get_image_index(self, directory, filename):
         filename = os.path.basename(filename)
-        files = os.listdir(directory)
-        image_files = [file for file in files if file.endswith((".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif"))]
-        image_files.sort(key=self.natural_sort)
-        indexed_files = list(enumerate(image_files))
-        for index, file in indexed_files:
-            if file == filename:
-                return index
+        image_files = sorted((file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)), key=self.sort_key)
+        return image_files.index(filename) if filename in image_files else -1
 
 
     def delete_converted_image(self):
@@ -397,11 +394,6 @@ class Upscale:
         return extension
 
 
-    def natural_sort(self, s):
-        return [int(text) if text.isdigit() else text.lower()
-                for text in re.split(r'(\d+)', s)]
-
-
     def update_progress(self, progress):
         if not self.top.winfo_exists():
             return
@@ -434,11 +426,11 @@ class Upscale:
 '''
 
 
-v1.02 changes:
+v1.03 changes:
 
 
   - New:
-    - The current and total GIF frames are now displayed in the UI.
+    - Added more supported filetypes
 
 
 <br>
@@ -452,7 +444,7 @@ v1.02 changes:
 
 
   - Other changes:
-    -
+    - Update index logic to support new loading order options
 
 
 '''
