@@ -20,10 +20,11 @@
 
 # 📝 Usage
 
-- Prepare Your Files:
-  - If you choose to include a text pair for an image, ensure they share the same basenames.
-  - For example: `01.png` and `01.txt`, `02.jpg` and `02.txt`, etc.
-  - Supported image types: `.png` `.jpg` `.jpeg` `.jfif` `.jpg_large` `.webp` `.bmp` `.gif`
+> [!NOTE]
+> - Prepare Your Files:
+>    - If you choose to include a text pair for an image, ensure they share the same basenames.
+>      - For example: `01.png, 01.txt`, `02.jpg, 02.txt`, etc.
+>  - Supported image types: `.png` `.jpg` `.jpeg` `.jfif` `.jpg_large` `.webp` `.bmp` `.gif`
 
 ---
 
