@@ -10,11 +10,12 @@
   <img src="https://github.com/Nenotriple/img-txt_viewer/assets/70049990/d7d9c754-aae4-4add-882d-fef105cd0531" alt="cover">
 </p>
 
-- [Usage](https://github.com/Nenotriple/img-txt_viewer/tree/Dev?tab=readme-ov-file#-usage)
-- [Tips and Features](https://github.com/Nenotriple/img-txt_viewer/tree/Dev?tab=readme-ov-file#-tips-and-features)
-- [Requirements](https://github.com/Nenotriple/img-txt_viewer/tree/Dev?tab=readme-ov-file#-requirements)
-- [Version History](https://github.com/Nenotriple/img-txt_viewer/tree/Dev?tab=readme-ov-file#-version-history)
+- [📝Usage](https://github.com/Nenotriple/img-txt_viewer/tree/Dev?tab=readme-ov-file#-usage)
+- [💡Tips and Features](https://github.com/Nenotriple/img-txt_viewer/tree/Dev?tab=readme-ov-file#-tips-and-features)
+- [🚩Requirements](https://github.com/Nenotriple/img-txt_viewer/tree/Dev?tab=readme-ov-file#-requirements)
+- [📜Version History](https://github.com/Nenotriple/img-txt_viewer/tree/Dev?tab=readme-ov-file#-version-history)
 - [✨Wiki](https://github.com/Nenotriple/img-txt_viewer/wiki/Tools)
+- [💾Download](https://github.com/Nenotriple/img-txt_viewer/releases?q=executable&expanded=true)
 
 
 # 📝 Usage
@@ -115,7 +116,7 @@ Please see the [✨Tools](https://github.com/Nenotriple/img-txt_viewer/wiki/Tool
 # 🚩 Requirements
 
 > [!TIP]
-> You don't need to worry about any requirements with the Windows [portable/executable](https://github.com/Nenotriple/img-txt_viewer/releases?q=executable&expanded=true) version.
+> You don't need to worry about any requirements with the Windows [💾portable/executable](https://github.com/Nenotriple/img-txt_viewer/releases?q=executable&expanded=true) version.
 
 <details>
   <summary>Python requirements...</summary>
@@ -130,7 +131,7 @@ Or use the included `requirements.txt` when setting up your venv.
 
 # 📜 Version History
 
-[v1.95 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.95)
+[💾v1.95 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.95)
 
 <details>
   <summary>Click here to view release notes!</summary>
