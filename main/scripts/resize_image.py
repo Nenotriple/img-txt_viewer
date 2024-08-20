@@ -3,7 +3,7 @@
 #                                      #
 #             Resize Image             #
 #                                      #
-#   Version : v1.01                    #
+#   Version : v1.02                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -32,7 +32,7 @@ from PIL import Image, ImageSequence
 
 
 class ResizeTool:
-    def __init__(self, master, filepath, window_x, window_y, update_pair, jump_to_image):
+    def __init__(self, master, img_txt_viewer, filepath, window_x, window_y, update_pair, jump_to_image):
         self.top = Toplevel(master, borderwidth=2, relief="groove")
         self.top.overrideredirect("true")
         self.top.geometry("+{}+{}".format(window_x, window_y))
@@ -45,6 +45,11 @@ class ResizeTool:
         self.image = Image.open(self.filepath)
 
 
+        self.supported_filetypes = (".png", ".webp", ".jpg", ".jpeg", ".jpg_large", ".jfif", ".tif", ".tiff", ".bmp", ".gif")
+
+
+        self.img_txt_viewer = img_txt_viewer
+        self.sort_key = self.img_txt_viewer.get_file_sort_key()
         self.ImgTxt_update_pair = update_pair
         self.ImgTxt_jump_to_image = jump_to_image
 
@@ -436,20 +441,10 @@ class ResizeTool:
 #region - Misc
 
 
-    def natural_sort(self, s):
-        return [int(text) if text.isdigit() else text.lower()
-                for text in re.split(r'(\d+)', s)]
-
-
     def get_image_index(self, directory, filename):
         filename = os.path.basename(filename)
-        files = os.listdir(directory)
-        image_files = [file for file in files if file.endswith((".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif"))]
-        image_files.sort(key=self.natural_sort)
-        indexed_files = list(enumerate(image_files))
-        for index, file in indexed_files:
-            if file == filename:
-                return index
+        image_files = sorted((file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)), key=self.sort_key)
+        return image_files.index(filename) if filename in image_files else -1
 
 
     def get_current_image_details(self):
@@ -645,21 +640,21 @@ class ResizeTool:
 '''
 
 
-v1.01 changes:
+v1.02 changes:
 
   - New:
-    - `GIF` Support added.
-    - The resized image is now automaticaly displayed after resizing.
+    - Added more supported filetypes.
 
 
 <br>
 
 
   - Fixed:
-    - Improved error handling when processing an image.
+    -
 
 
   - Other:
+    - Update index logic to support new loading order options.
 
 
 '''
