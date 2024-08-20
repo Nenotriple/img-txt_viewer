@@ -3373,9 +3373,13 @@ root.mainloop()
         - You can now filter images by `Resolution`, `Aspect Ratio`, `Filesize`, `Filename`, `Filetype`, and `Tags`.
           - Along with these operators, `=`, `<`, `>`, `*`
         - Resolution and Filesize are now displayed in the image tooltip.
-        - `Auto-Close`: This setting is now saved to the `settings.cfg` file.
+        - `Auto-Close`: This setting is now saved to the `settings.cfg` file. #24
       - Fixed:
-        - Fixed the issue of not being able to focus on the image grid window when selecting it from the taskbar.
+        - Fixed the issue of not being able to focus on the image grid window when selecting the it from the taskbar. #24
+      - Other changes:
+        - Increased the default number of images loaded from 150 to 250.
+        - Improved image and text cache.
+        - Update index logic to support new loading order options.
 
 </details>
 
