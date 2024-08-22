@@ -34,10 +34,11 @@ import numpy
 import shutil
 import ctypes
 import itertools
+import statistics
 import webbrowser
 import subprocess
 import configparser
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 import tkinter.font
 from tkinter import ttk, Tk, Toplevel, messagebox, simpledialog, StringVar, BooleanVar, IntVar, Menu, PanedWindow, Frame, Label, Button, Entry, Checkbutton, Text, Event, TclError
@@ -321,6 +322,8 @@ class ImgTxtViewer:
         self.big_save_button_var = BooleanVar(value=False)
         self.highlight_selection_var = BooleanVar(value=True)
         self.highlight_all_duplicates_var = BooleanVar(value=False)
+        self.truncate_stat_captions_var = IntVar(value=1)
+        self.process_image_stats_var = IntVar(value=0)
 
         #self.load_order_object_var = StringVar(value="Image") # Not implemented
         self.load_order_var = StringVar(value="Name (default)")
@@ -693,6 +696,7 @@ class ImgTxtViewer:
         self.tab5 = Frame(self.text_notebook)
         self.tab6 = Frame(self.text_notebook)
         self.tab7 = Frame(self.text_notebook)
+        self.tab8 = Frame(self.text_notebook)
         self.text_notebook.add(self.tab1, text='Search & Replace')
         self.text_notebook.add(self.tab2, text='Prefix')
         self.text_notebook.add(self.tab3, text='Append')
@@ -700,7 +704,8 @@ class ImgTxtViewer:
         self.text_notebook.add(self.tab5, text='Highlight')
         self.text_notebook.add(self.tab6, text='Font')
         self.text_notebook.add(self.tab7, text='My Tags')
-        self.text_notebook.pack(fill='both')
+        self.text_notebook.add(self.tab8, text='Stats', )
+        self.text_notebook.pack(fill='both', expand=True)
         self.create_search_and_replace_widgets_tab1()
         self.create_prefix_text_widgets_tab2()
         self.create_append_text_widgets_tab3()
@@ -708,6 +713,7 @@ class ImgTxtViewer:
         self.create_custom_active_highlight_widgets_tab5()
         self.create_font_widgets_tab6()
         self.create_custom_dictionary_widgets_tab7()
+        self.create_stats_widgets_tab8()
 
 
     def create_search_and_replace_widgets_tab1(self):
@@ -936,7 +942,7 @@ class ImgTxtViewer:
         self.save_dictionary_button = Button(self.tab7_button_frame, text="Save", overrelief="groove", takefocus=False, command=save_content)
         ToolTip.create(self.save_dictionary_button, "Save the current changes to the 'my_tags.csv' file", 200, 6, 12)
         self.save_dictionary_button.pack(side='left', padx=1, fill='x', expand=True)
-        self.tab7_label = Label(self.tab7_button_frame, text="^^^Expand this frame to view the text box^^^")
+        self.tab7_label = Label(self.tab7_button_frame, text="^^^Expand this frame!^^^")
         self.tab7_label.pack(side='left')
         ToolTip.create(self.tab7_label, "Click and drag the gray bar up to reveal the text box", 200, 6, 12)
         self.refresh_button = Button(self.tab7_button_frame, text="Refresh", overrelief="groove", takefocus=False, command=refresh_content)
@@ -948,6 +954,26 @@ class ImgTxtViewer:
             content = file.read()
             self.custom_dictionary_textbox.insert('end', content)
         self.custom_dictionary_textbox.configure(undo=True)
+
+
+    def create_stats_widgets_tab8(self):
+        self.tab8_frame = Frame(self.tab8)
+        self.tab8_frame.pack(fill='both', expand=True)
+        self.tab8_button_frame = Frame(self.tab8_frame)
+        self.tab8_button_frame.pack(side='top', fill='x', pady=4)
+        self.tab8_label = Label(self.tab8_button_frame, text="^^^Expand this frame!^^^")
+        self.tab8_label.pack(side='left')
+        self.tab8_refresh_stats_button = Button(self.tab8_button_frame, width=10, text="Refresh", overrelief="groove", takefocus=False, command=lambda: self.calculate_file_stats(manual_refresh=True))
+        self.tab8_refresh_stats_button.pack(side='right', padx=1)
+        ToolTip.create(self.tab8_refresh_stats_button, "Refresh the file stats", 200, 6, 12)
+        self.tab8_truncate_checkbutton = Checkbutton(self.tab8_button_frame, text="Truncate Captions", overrelief="groove", takefocus=False, variable=self.truncate_stat_captions_var)
+        self.tab8_truncate_checkbutton.pack(side='right', padx=1)
+        ToolTip.create(self.tab8_truncate_checkbutton, "Limit the displayed captions to 8 words", 200, 6, 12)
+        self.tab8_process_images_checkbutton = Checkbutton(self.tab8_button_frame, text="Process Image Stats", overrelief="groove", takefocus=False, variable=self.process_image_stats_var)
+        self.tab8_process_images_checkbutton.pack(side='right', padx=1)
+        ToolTip.create(self.tab8_process_images_checkbutton, "Enable/Disable image stat processing (Can be slow with many HD images)", 200, 6, 12)
+        self.tab8_stats_textbox = ScrolledText(self.tab8_frame, wrap="word", state="disabled")
+        self.tab8_stats_textbox.pack(fill='both', expand=True)
 
 
     def set_text_box_binds(self):
@@ -1753,6 +1779,7 @@ class ImgTxtViewer:
         self.create_text_box()
         self.update_pair(save=False)
         self.configure_pane_position()
+        self.calculate_file_stats()
 
     def refresh_file_lists(self):
         self.image_files = []
@@ -2628,6 +2655,164 @@ class ImgTxtViewer:
         self.refresh_image()
 
 
+    def calculate_file_stats(self, manual_refresh=None):
+        total_chars = total_words = total_captions = 0
+        total_sentences = total_paragraphs = 0
+        total_text_filesize = total_image_filesize = total_ppi = 0
+        word_counter, char_counter, caption_counter = Counter(), Counter(), Counter()
+        image_resolutions_counter, aspect_ratios_counter = Counter(), Counter()
+        unique_words, image_formats, longest_words = set(), set(), set()
+        word_lengths, sentence_lengths = [], []
+        file_word_counts, file_char_counts, file_caption_counts = [], [], []
+        square_images = portrait_images = landscape_images = 0
+        self.text_files = [text_file for text_file in self.text_files if os.path.exists(text_file)]
+        num_txt_files, num_img_files = len(self.text_files), len(self.image_files)
+        num_total_files = num_img_files + num_txt_files
+
+        for text_file in self.text_files:
+            try:
+                with open(text_file, 'r', encoding="utf-8") as file:
+                    filedata = file.read()
+                    total_chars += len(filedata)
+                    words = re.findall(r'\b\w+\b', filedata.lower())
+                    total_words += len(words)
+                    word_counter.update(words)
+                    unique_words.update(words)
+                    char_counter.update(filedata)
+                    word_lengths.extend(len(word) for word in words)
+                    sentences = re.split(r'[.!?]', filedata)
+                    total_sentences += len(sentences)
+                    sentence_lengths.extend(len(re.findall(r'\b\w+\b', sentence)) for sentence in sentences)
+                    paragraphs = filedata.split('\n\n')
+                    total_paragraphs += len(paragraphs)
+                    captions = [cap.strip() for cap in filedata.split(',')]
+                    for caption in captions:
+                        caption_words = caption.split()
+                        if self.truncate_stat_captions_var.get() and len(caption_words) > 8:
+                            caption = ' '.join(caption_words[:8]) + "..."
+                        caption_counter[caption] += 1
+                    captions_count = len(captions)
+                    total_captions += captions_count
+                    file_word_counts.append((os.path.basename(text_file), len(words)))
+                    file_char_counts.append((os.path.basename(text_file), len(filedata)))
+                    file_caption_counts.append((os.path.basename(text_file), captions_count))
+                    for word in words:
+                        longest_words.add(word)
+                        if len(longest_words) > 5:
+                            longest_words = set(sorted(longest_words, key=len, reverse=True)[:5])
+                    total_text_filesize += os.path.getsize(text_file)
+            except Exception as e:
+                print(f"Error reading {text_file}: {e}")
+
+        if self.process_image_stats_var.get():
+            for image_file in self.image_files:
+                try:
+                    with Image.open(image_file) as image:
+                        width, height = image.size
+                        total_image_filesize += os.path.getsize(image_file)
+                        image_formats.add(image.format)
+                        dpi = image.info.get('dpi', (0, 0))
+                        if dpi[0] == 0 or dpi[1] == 0:
+                            diagonal_pixels = (width**2 + height**2)**0.5
+                            diagonal_inches = 10
+                            dpi = (diagonal_pixels / diagonal_inches, diagonal_pixels / diagonal_inches)
+                        total_ppi += dpi[0]
+                        image_resolutions_counter[image.size] += 1
+                        aspect_ratio = width / height
+                        aspect_ratios_counter[round(aspect_ratio, 2)] += 1
+                        if aspect_ratio == 1:
+                            square_images += 1
+                        elif aspect_ratio > 1:
+                            landscape_images += 1
+                        else:
+                            portrait_images += 1
+                except Exception as e:
+                    print(f"Error reading {image_file}: {e}")
+
+        def format_filesize(size):
+            if size >= 1_000_000:
+                return f"{size} bytes ({size / 1_000_000:.2f} MB)"
+            elif size >= 1_000:
+                return f"{size} bytes ({size / 1_000:.2f} KB)"
+            else:
+                return f"{size} bytes"
+
+        avg_chars = total_chars / num_txt_files if num_txt_files > 0 else 0
+        avg_words = total_words / num_txt_files if num_txt_files > 0 else 0
+        avg_ppi = total_ppi / num_img_files if num_img_files > 0 else 0
+        avg_word_length = sum(word_lengths) / len(word_lengths) if word_lengths else 0
+        median_word_length = statistics.median(word_lengths) if word_lengths else 0
+        avg_sentence_length = sum(sentence_lengths) / len(sentence_lengths) if sentence_lengths else 0
+        most_common_words = word_counter.most_common(50)
+        formatted_common_words = "\n".join([f"{count:03}x, {word}" for word, count in most_common_words])
+        most_common_chars = char_counter.most_common()
+        formatted_common_chars = "\n".join([f"{count:03}x, {char}" for char, count in most_common_chars])
+        sorted_captions = caption_counter.most_common()
+        sorted_captions = sorted(sorted_captions, key=lambda x: (-x[1], x[0]))
+        formatted_captions = "\n".join([f"{count:03}x, {caption}" for caption, count in sorted_captions])
+        sorted_resolutions = sorted(image_resolutions_counter.items(), key=lambda x: (-x[1], -(x[0][0] * x[0][1])))
+        formatted_resolutions = "\n".join([f"{count:03}x, {res[0]}x{res[1]}" for res, count in sorted_resolutions])
+        sorted_aspect_ratios = sorted(aspect_ratios_counter.items(), key=lambda x: -x[1])
+        formatted_aspect_ratios = "\n".join([f"{count:03}x, {aspect_ratio}" for aspect_ratio, count in sorted_aspect_ratios])
+        formatted_longest_words = "\n".join([f"- {word}" for word in sorted(longest_words, key=len, reverse=True)])
+        top_5_files_words = sorted(file_word_counts, key=lambda x: x[1], reverse=True)[:5]
+        formatted_top_5_files_words = "\n".join([f"{count}x, {file}" for file, count in top_5_files_words])
+        top_5_files_chars = sorted(file_char_counts, key=lambda x: x[1], reverse=True)[:5]
+        formatted_top_5_files_chars = "\n".join([f"{count}x, {file}" for file, count in top_5_files_chars])
+        top_5_files_captions = sorted(file_caption_counts, key=lambda x: x[1], reverse=True)[:5]
+        formatted_top_5_files_captions = "\n".join([f"{count}x, {file}" for file, count in top_5_files_captions])
+        word_page_count = total_words / 500 if total_words > 0 else 0
+
+        stats_text = (
+            f"--- File Statistics ---\n"
+            f"Total Files: {num_total_files} (Text: {num_txt_files}, Images: {num_img_files})\n"
+            f"Total Characters: {total_chars}\n"
+            f"Total Words: {total_words} ({word_page_count:.2f} pages)\n"
+            f"Total Captions: {total_captions}\n"
+            f"Total Sentences: {total_sentences}\n"
+            f"Total Paragraphs: {total_paragraphs}\n"
+            f"Total Text Filesize: {format_filesize(total_text_filesize)}\n"
+            f"Total Image Filesize: {format_filesize(total_image_filesize)}\n"
+            f"\n--- Average Statistics ---\n"
+            f"Average Characters per File: {avg_chars:.2f}\n"
+            f"Average Words per File: {avg_words:.2f}\n"
+            f"Average Word Length: {avg_word_length:.2f}\n"
+            f"Median Word Length: {median_word_length:.2f}\n"
+            f"Average Sentence Length: {avg_sentence_length:.2f}\n"
+            f"Unique Words: {len(unique_words)}\n"
+            f"Average PPI for All Images: {avg_ppi:.2f}\n"
+            f"\n--- Top 5 Files by Word Count ---\n"
+            f"{formatted_top_5_files_words}\n"
+            f"\n--- Top 5 Files by Character Count ---\n"
+            f"{formatted_top_5_files_chars}\n"
+            f"\n--- Top 5 Files by Caption Count ---\n"
+            f"{formatted_top_5_files_captions}\n"
+            f"\n--- Image Information ---\n"
+            f"Image File Formats: {', '.join(image_formats)}\n"
+            f"Square Images: {square_images}\n"
+            f"Portrait Images: {portrait_images}\n"
+            f"Landscape Images: {landscape_images}\n"
+            f"\n--- Image Resolutions ---\n"
+            f"{formatted_resolutions}\n"
+            f"\n--- Image Aspect Ratios ---\n"
+            f"{formatted_aspect_ratios}\n"
+            f"\n--- Top 5 Longest Words ---\n"
+            f"{formatted_longest_words}\n"
+            f"\n--- Top 50 Most Common Words ---\n"
+            f"{formatted_common_words}\n"
+            f"\n--- Character Occurrence ---\n"
+            f"{formatted_common_chars}\n"
+            f"\n--- Unique Captions ---\n"
+            f"{formatted_captions}\n"
+        )
+        self.tab8_stats_textbox.config(state="normal")
+        self.tab8_stats_textbox.delete("1.0", "end")
+        self.tab8_stats_textbox.insert("1.0", stats_text)
+        self.tab8_stats_textbox.config(state="disabled")
+        if manual_refresh:
+            self.message_label.config(text="Stats Calculated!", bg="#6ca079", fg="white")
+
+
 #endregion
 ################################################################################################################################################
 #region - Window drag setup
@@ -2824,10 +3009,7 @@ class ImgTxtViewer:
         self.highlight_selection_var.set(True)
         self.highlight_all_duplicates_var.set(False)
         self.toggle_highlight_all_duplicates()
-
         self.create_custom_dictionary(reset=True)
-
-
         # Font
         if hasattr(self, 'text_box'):
             self.font_var.set("Courier New")
@@ -2986,6 +3168,7 @@ class ImgTxtViewer:
                 if original_auto_save_var:
                     self.save_text_file()
             else:
+                original_auto_save_var = self.auto_save_var.get()
                 self.auto_save_var.set(value=False)
             directory = askdirectory()
             if directory and directory != self.image_dir.get():
@@ -2997,7 +3180,8 @@ class ImgTxtViewer:
                     self.set_text_file_path(directory)
             if original_auto_save_var is not None:
                 self.auto_save_var.set(original_auto_save_var)
-        except Exception: return
+        except Exception as e:
+            messagebox.showwarning("Error", f"There was an unexpected issue setting the folder path:\n\n{e}")
 
 
     def set_working_directory(self, event=None):
@@ -3336,6 +3520,7 @@ root.mainloop()
   <summary>Click here to view release notes!</summary>
 
   - New:
+    - New tab `Stats`: Use this tab to view stats about the text and image files like "Caption list", "Total Captions", "Most Common Words", "Unique Words", "Image Resolution List", and plenty more.
     - New option `Loading Order`: Use this option to set the loading order based on the name, file size, date, ascending/descending, etc.
     - New option `Reset Settings`: This will reset all user settings to their default parameters.
     - New tool `Rename Pair`: Use this tool to manually rename a single img-txt pair.
@@ -3360,6 +3545,7 @@ root.mainloop()
   - Other changes:
     - Toggle Zoom - The popup is now centered beside the mouse and behaves better around the screen edges.
     - You can now set a filter by using the enter/return key with the filter widget in focus.
+    - Ensured auto_save_var is properly restored to its original value if the text box does not exist when changing the working directory.
     - Minor code refactoring.
 
 
@@ -3375,7 +3561,7 @@ root.mainloop()
         - Resolution and Filesize are now displayed in the image tooltip.
         - `Auto-Close`: This setting is now saved to the `settings.cfg` file. #24
       - Fixed:
-        - Fixed the issue of not being able to focus on the image grid window when selecting the it from the taskbar. #24
+        - Fixed the issue of not being able to focus on the image grid window when selecting it from the taskbar. #24
       - Other changes:
         - Increased the default number of images loaded from 150 to 250.
         - Improved image and text cache.
@@ -3407,3 +3593,6 @@ root.mainloop()
 '''
 
 #endregion
+
+
+
