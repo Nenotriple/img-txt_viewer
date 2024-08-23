@@ -4,7 +4,7 @@
   img-txt Viewer
 </h1>
 
-<p align="center">Display an image and text file side-by-side for easy manual captioning or tagging. +Tons of features to help you work faster!</p>
+<p align="center">A Windows application to display an image and text file side-by-side for easy manual captioning or tagging. +Tons of features to help you work faster!</p>
 
 <p align="center">
   <img src="https://github.com/Nenotriple/img-txt_viewer/assets/70049990/d7d9c754-aae4-4add-882d-fef105cd0531" alt="cover">
