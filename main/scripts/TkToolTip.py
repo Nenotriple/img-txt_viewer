@@ -3,7 +3,7 @@
 #                                      #
 #           Tkinter ToolTips           #
 #                                      #
-#   Version : v1.03                    #
+#   Version : v1.04                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -34,11 +34,17 @@ class TkToolTip:
     delay : int
         The delay (in ms) before the tooltip is shown.
 
-    x_offset : int
+    padx : int
         The x-coordinate offset of the tooltip from the pointer.
 
-    y_offset : int
+    pady : int
         The y-coordinate offset of the tooltip from the pointer.
+
+    ipadx : int
+        The horizontal internal padding of the tooltip.
+
+    ipady : int
+        The vertical internal padding of the tooltip.
 
     state : str
         Set the visible state of the tooltip
@@ -75,7 +81,7 @@ class TkToolTip:
 
     """
 
-    def __init__(self, widget, text="", delay=0, x_offset=0, y_offset=0, state=None,
+    def __init__(self, widget, text="", delay=0, padx=0, pady=0, ipadx=0, ipady=0, state=None,
                  bg="#ffffe0", fg="black", font=("TkDefaultFont", "8", "normal"), borderwidth=1, relief="solid"):
         """
         Initialize the tooltip with the given parameters.
@@ -83,8 +89,10 @@ class TkToolTip:
         self.widget = widget
         self.text = text
         self.delay = delay
-        self.x_offset = x_offset
-        self.y_offset = y_offset
+        self.padx = padx
+        self.pady = pady
+        self.ipadx = ipadx
+        self.ipady = ipady
         self.state = state
         self.bg = bg
         self.fg = fg
@@ -130,8 +138,8 @@ class TkToolTip:
         """Display the tooltip at the specified position."""
         if self.state == "disabled":
             return
-        x = event.x_root + self.x_offset
-        y = event.y_root + self.y_offset
+        x = event.x_root + self.padx
+        y = event.y_root + self.pady
         self._create_tip_window(x, y)
 
     def _create_tip_window(self, x, y):
@@ -141,10 +149,9 @@ class TkToolTip:
         self.tip_window = Toplevel(self.widget)
         self.tip_window.wm_overrideredirect(True)
         self.tip_window.wm_geometry(f"+{x}+{y}")
-        self.tip_window.wm_geometry(f"+{x}+{y}")
         label = Label(self.tip_window, text=self.text, background=self.bg, foreground=self.fg,
                       font=self.font, relief=self.relief, borderwidth=self.borderwidth)
-        label.pack()
+        label.pack(ipadx=self.ipadx, ipady=self.ipady)
 
     def _hide_tip(self):
         """Destroy the tooltip window if it exists."""
@@ -159,7 +166,7 @@ class TkToolTip:
             self.widget.after_cancel(self.widget_id)
             self.widget_id = None
 
-    def config(self, text=None, delay=None, x_offset=None, y_offset=None, state=None,
+    def config(self, text=None, delay=None, padx=None, pady=None, ipadx=None, ipady=None, state=None,
                bg=None, fg=None, font=None, borderwidth=None, relief=None):
         """
         Update the tooltip configuration with the given parameters.
@@ -168,10 +175,14 @@ class TkToolTip:
             self.text = text
         if delay is not None:
             self.delay = delay
-        if x_offset is not None:
-            self.x_offset = x_offset
-        if y_offset is not None:
-            self.y_offset = y_offset
+        if padx is not None:
+            self.padx = padx
+        if pady is not None:
+            self.pady = pady
+        if ipadx is not None:
+            self.ipadx = ipadx
+        if ipady is not None:
+            self.ipady = ipady
         if state is not None:
             assert state in ["normal", "disabled"], "Invalid state"
             self.state = state
@@ -187,7 +198,7 @@ class TkToolTip:
             self.relief = relief
 
     @classmethod
-    def create(cls, widget, text="", delay=0, x_offset=0, y_offset=0, state=None,
+    def create(cls, widget, text="", delay=0, padx=0, pady=0, ipadx=2, ipady=2, state=None,
                bg="#ffffe0", fg="black", font=("tahoma", "8", "normal"), borderwidth=1, relief="solid"):
         """
         Create a tooltip for the specified widget with the given parameters.
@@ -200,10 +211,14 @@ class TkToolTip:
             The text displayed in the tooltip (default is an empty string).
         delay : int, optional
             Delay in milliseconds before showing the tooltip (default is 0).
-        x_offset : int, optional
+        padx : int, optional
             Horizontal offset of the tooltip from the cursor (default is 0).
-        y_offset : int, optional
+        pady : int, optional
             Vertical offset of the tooltip from the cursor (default is 0).
+        ipadx : int, optional
+            Horizontal internal padding of the tooltip (default is 2).
+        ipady : int, optional
+            Vertical internal padding of the tooltip (default is 2).
         state : str, optional
             State of the tooltip; can be "normal" or "disabled" (default is None).
         bg : str, optional
@@ -222,4 +237,34 @@ class TkToolTip:
         Tooltip
             A new instance of the Tooltip class.
         """
-        return cls(widget, text, delay, x_offset, y_offset, state, bg, fg, font, borderwidth, relief)
+        return cls(widget, text, delay, padx, pady, ipadx, ipady, state, bg, fg, font, borderwidth, relief)
+
+#endregion
+################################################################################################################################################
+#region -  Changelog
+
+'''
+
+
+v1.04 changes:
+
+
+  - New:
+    - Now supports an ipadx, or ipady value for interior spacing. The default value is 2.
+
+<br>
+
+
+  - Fixed:
+    -
+
+
+<br>
+
+
+  - Other changes:
+    - x_offset, and y_offset have been renamed to padx, and pady.
+
+
+'''
+#endregion
