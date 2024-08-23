@@ -132,16 +132,17 @@ Or use the included `requirements.txt` when setting up your venv.
 
 # 📜 Version History
 
-[💾v1.95 changes:](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.95)
+[💾v1.95](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.95)
 
 <details>
-  <summary>Click here to view release notes!</summary>
+  <summary>Click here to view release notes for v1.95</summary>
 
   - New:
+    - New tab `Stats`: View file stats related to the current directory, such as: total files/characters/captions, average characters/words/captions per file, and lists of captions/resolutions/common words, and more.
     - New option `Loading Order`: Use this option to set the loading order based on the name, file size, date, ascending/descending, etc.
-    - New option `Reset Settings`: This will reset all user settings to their default parameters.
+    - New option `Reset Settings`: This will reset all user settings to their default parameters, and optionally reset "My Tags". 
     - New tool `Rename Pair`: Use this tool to manually rename a single img-txt pair.
-    - Improved text selection logic for the primary text box and most text entries, treating common punctuation and symbols as word boundaries on double-click and allowing you to select entire entry text strings with a triple-click.
+    - Improved text selection logic for the primary text box and most text entries, treating common punctuation and symbols as word boundaries on double-click and allowing you to select entire entry text strings with a triple-click. #26
     - New text box right-click menu option: `Open Text File...`
 
 
@@ -149,19 +150,21 @@ Or use the included `requirements.txt` when setting up your venv.
 
 
   - Fixed:
-    - Filtering using regex patterns should now work as intended.
+    - Filtering using regex patterns now works as intended. #27
     - Fixed right-click not triggering the primary text box context menu if the text box wasn't initially focused with a left-click.
     - Fixed AttributeError when refreshing the custom dictionary.
     - Improved image loading to prevent [WinError 32]. This also fixes the "Delete Pair" tool.
-    - Improved handling of situations where filtering would result in zero matches
+    - Improved UI handling of situations where filtering would result in zero matches.
 
 
 <br>
 
 
   - Other changes:
-    - Toggle Zoom - The popup is now centered beside the mouse and behaves better around the screen edges.
+    - Toggle Zoom - The popup is now centered next to the mouse and behaves better around the screen edges.
     - You can now set a filter by using the enter/return key with the filter widget in focus.
+    - Ensured auto_save_var is properly restored to its original value if the text box does not exist when changing the working directory.
+    - The "Clear" button in the Filter tab now turns red when the filter is active, and the tooltip also changes to show the filter state.
     - Minor code refactoring.
 
 
@@ -169,18 +172,101 @@ Or use the included `requirements.txt` when setting up your venv.
 
 
   - Project Changes:
-    - `Image Grid`: v1.03
+    - **Image Grid:** v1.03
       - New:
         - Filtering options are now moved to a new menu.
         - You can now filter images by `Resolution`, `Aspect Ratio`, `Filesize`, `Filename`, `Filetype`, and `Tags`.
           - Along with these operators, `=`, `<`, `>`, `*`
         - Resolution and Filesize are now displayed in the image tooltip.
-        - `Auto-Close`: This setting is now saved to the `settings.cfg` file.
+        - `Auto-Close`: This setting is now saved to the `settings.cfg` file. #24
       - Fixed:
-        - Fixed the issue of not being able to focus on the image grid window when selecting it from the taskbar.
+        - Fixed the issue of not being able to focus on the image grid window when selecting it from the taskbar. #24
       - Other changes:
         - Increased the default number of images loaded from 150 to 250.
         - Improved image and text cache.
         - Update index logic to support new loading order options.
+    - **Upscale Image:** v1.04
+      - New:
+        - The `Upscale Factor` widget is now a slider allowing you to select `from 0.25`, `to 8.0`, in `0.25 increments`.
+        - New settings: `Strength` Set this from 0%, to 100% to define how much of the original image is visible after upscaling.
+      - Fixed:
+        - Settings are now disabled while upscaling to prevent them from being adjusted while upscaling.
+        - Fixed issues with opening and holding-up images in the process.
+    - **TkToolTip:** v1.04
+      - New:
+        - Now supports an ipadx, or ipady value for interior spacing. The default value is 2.
+      - Other changes:
+        - x_offset, and y_offset have been renamed to padx, and pady.
 
 </details>
+<br>
+
+[💾v1.94](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.94)
+
+<details>
+  <summary>Click here to view release notes for v1.94</summary>
+
+  - New:
+    - New option: `Toggle Zoom`, This allows you to hover the mouse over the current image and display a zoomed in preview.
+      - Use the Mouse-Wheel to zoom in and out.
+      - Use Shift+Mouse-Wheel to increase or decrease the popup size.
+
+
+<br>
+
+
+  - Fixed:
+    - `Image Grid`, Fixed issue where supported file types were case sensitive, leading to images not appearing, and indexing issues.
+
+
+<br>
+
+
+  - Other changes:
+    - Improved performance of Autocomplete by optimizing: data loading, similar names, string operations, and suggestion retrieval. Up to 50% faster than v1.92
+    - `Image Grid`, Now reuses image cache across instances to speed up loading.
+
+</details>
+<br>
+
+[💾v1.93.1](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.93.1)
+
+<details>
+  <summary>Click here to view release notes for v1.93.1</summary>
+
+  - New:
+    - New autocomplete matching modes: `Match Whole String`, and `Match Last Word` [732120e](https://github.com/Nenotriple/img-txt_viewer/commit/732120e61dbe0758f8f00c4852edf3f435b32c29)
+      - `Match Whole String`, This option works exactly as before. All characters in the selected tag are considered for matching.
+      - `Match Last Word`, This option will only match (and replace) the last word typed. This allows you to use autocomplete with natural sentences. You can type using an underscore as a space to join words together.
+    - New option for image grid view: `Auto-Close`, Unchecking this option allows you to keep the image grid open after making a selection. [67593f4](https://github.com/Nenotriple/img-txt_viewer/commit/67593f4876daf0cdbc6170dbb7c8820b99d8636d)
+    - New Tool: `Rename img-txt pairs`, Use this to clean-up the filenames of your dataset without converting the image types. [8f24a7e](https://github.com/Nenotriple/img-txt_viewer/commit/8f24a7e41a4fb4770fb5bd06d9dd2337b31c6270)
+    - You can now choose the crop anchor point when using `Batch Crop Images`. [9d247ea](https://github.com/Nenotriple/img-txt_viewer/commit/9d247ea582218366be7969b4c30d20fb7e8fbe87)
+
+<br>
+
+
+  - Fixed:
+    - Fixed issue #23 where initially loading a directory could result in the first text file displayed being erased. [ae56143](https://github.com/Nenotriple/img-txt_viewer/commit/ae561433a8a98fbcbbb3c1a1a6a35c05b412d9cc)
+
+
+<br>
+
+
+  - Other changes:
+    - Improved performance of Autocomplete, by handling similar names more efficiently. Up to 40% faster than before. [d8be0f2](https://github.com/Nenotriple/img-txt_viewer/commit/d8be0f28ff681be45beb8ca7694e9fc4fb4aa55c)
+    - Improved performance when viewing animated GIFs by first resizing all frames to the required size and caching them. [c8bd32a](https://github.com/Nenotriple/img-txt_viewer/commit/c8bd32a408213fab5cba0dd5842c9f9bb050e4fa)
+    - Improved efficiency of TkToolTip by reusing tooltip widgets, adding visibility checks, and reducing unnecessary method calls. [8b6c0dc](https://github.com/Nenotriple/img-txt_viewer/commit/8b6c0dc70c7547bbb0c873cbc9e02235a8725cdd)
+    - Slightly faster image loading by using PIL's thumbnail function to reduce aspect ratio calculation. [921b4d3](https://github.com/Nenotriple/img-txt_viewer/commit/921b4d38132e82078c34316fd12b45fc4e61694b)
+
+
+<br>
+
+
+  - Project Changes:
+    - **Batch Resize Images:** v1.06 [19d5b4d](https://github.com/Nenotriple/img-txt_viewer/commit/19d5b4d5fbe3ac6629d0755e24f3b560be800125)
+      - See full list of changes here: https://github.com/Nenotriple/batch_resize_images/releases
+    - **Upscale:** v1.02 [616ddaa](https://github.com/Nenotriple/img-txt_viewer/commit/616ddaa6ebd897b3f63cf921406f0e5ed958f930)
+      - The current and total GIF frames are now displayed in the UI.
+
+</details>
+<br>
