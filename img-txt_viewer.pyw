@@ -491,7 +491,7 @@ class ImgTxtViewer:
         self.optionsMenu.add_separator()
         self.optionsMenu.add_command(label="Reset Settings", underline=1, state="disable", command=self.reset_settings)
         self.optionsMenu.add_command(label="Open Settings File...", underline=1, command=lambda: self.open_textfile(self.app_settings_cfg))
-        self.optionsMenu.add_command(label="Open My Tags File...", underline=1, command=lambda: self.open_textfile("my_tags.csv"))
+        self.optionsMenu.add_command(label="Open My Tags File...", underline=1, command=lambda: self.open_textfile(self.my_tags_csv))
 
 ####### Tools Menu ##################################################
 
@@ -745,9 +745,6 @@ class ImgTxtViewer:
 
 
     def create_search_and_replace_widgets_tab1(self):
-        def clear_all():
-            self.search_entry.delete(0, 'end')
-            self.replace_entry.delete(0, 'end')
         self.tab1_frame = Frame(self.tab1)
         self.tab1_frame.pack(side='top', fill='both')
         self.tab1_button_frame = Frame(self.tab1_frame)
@@ -770,7 +767,7 @@ class ImgTxtViewer:
         self.replace_button = Button(self.tab1_button_frame, text="Go!", overrelief="groove", width=4, command=self.search_and_replace)
         self.replace_button.pack(side='left', anchor="n", pady=4, padx=1)
         ToolTip.create(self.replace_button, "Text files will be backup up", 200, 6, 12)
-        self.clear_button = Button(self.tab1_button_frame, text="Clear", overrelief="groove", width=4, command=clear_all)
+        self.clear_button = Button(self.tab1_button_frame, text="Clear", overrelief="groove", width=4, command=self.clear_search_and_replace_tab)
         self.clear_button.pack(side='left', anchor="n", pady=4, padx=1)
         self.undo_button = Button(self.tab1_button_frame, text="Undo", overrelief="groove", width=4, command=self.restore_backup)
         self.undo_button.pack(side='left', anchor="n", pady=4, padx=1)
@@ -791,9 +788,13 @@ class ImgTxtViewer:
         description_textbox.config(state="disabled", wrap="word")
 
 
+    def clear_search_and_replace_tab(self):
+        self.search_entry.delete(0, 'end')
+        self.replace_entry.delete(0, 'end')
+        self.search_and_replace_regex.set(False)
+
+
     def create_prefix_text_widgets_tab2(self):
-        def clear():
-            self.prefix_entry.delete(0, 'end')
         self.tab2_frame = Frame(self.tab2)
         self.tab2_frame.pack(side='top', fill='both')
         self.tab2_button_frame = Frame(self.tab2_frame)
@@ -809,7 +810,7 @@ class ImgTxtViewer:
         self.prefix_button = Button(self.tab2_button_frame, text="Go!", overrelief="groove", width=4, command=self.prefix_text_files)
         self.prefix_button.pack(side='left', anchor="n", pady=4, padx=1)
         ToolTip.create(self.prefix_button, "Text files will be backup up", 200, 6, 12)
-        self.clear_button = Button(self.tab2_button_frame, text="Clear", overrelief="groove", width=4, command=clear)
+        self.clear_button = Button(self.tab2_button_frame, text="Clear", overrelief="groove", width=4, command=self.clear_prefix_tab)
         self.clear_button.pack(side='left', anchor="n", pady=4, padx=1)
         self.undo_button = Button(self.tab2_button_frame, text="Undo", overrelief="groove", width=4, command=self.restore_backup)
         self.undo_button.pack(side='left', anchor="n", pady=4, padx=1)
@@ -823,9 +824,11 @@ class ImgTxtViewer:
         description_textbox.config(state="disabled", wrap="word")
 
 
+    def clear_prefix_tab(self):
+        self.prefix_entry.delete(0, 'end')
+
+
     def create_append_text_widgets_tab3(self):
-        def clear():
-            self.append_entry.delete(0, 'end')
         self.tab3_frame = Frame(self.tab3)
         self.tab3_frame.pack(side='top', fill='both')
         self.tab3_button_frame = Frame(self.tab3_frame)
@@ -841,7 +844,7 @@ class ImgTxtViewer:
         self.append_button = Button(self.tab3_button_frame, text="Go!", overrelief="groove", width=4, command=self.append_text_files)
         self.append_button.pack(side='left', anchor="n", pady=4, padx=1)
         ToolTip.create(self.append_button, "Text files will be backup up", 200, 6, 12)
-        self.clear_button = Button(self.tab3_button_frame, text="Clear", overrelief="groove", width=4, command=clear)
+        self.clear_button = Button(self.tab3_button_frame, text="Clear", overrelief="groove", width=4, command=self.clear_append_tab)
         self.clear_button.pack(side='left', anchor="n", pady=4, padx=1)
         self.undo_button = Button(self.tab3_button_frame, text="Undo", overrelief="groove", width=4, command=self.restore_backup)
         self.undo_button.pack(side='left', anchor="n", pady=4, padx=1)
@@ -853,6 +856,10 @@ class ImgTxtViewer:
         description_textbox.insert("1.0", "Use this tool to append all text files in the selected directory with the entered text.\n\n"
                                    "This means that the entered text will appear at the end of each text file.")
         description_textbox.config(state="disabled", wrap="word")
+
+
+    def clear_append_tab(self):
+        self.append_entry.delete(0, 'end')
 
 
     def create_filter_text_image_pairs_widgets_tab4(self):
@@ -896,8 +903,6 @@ class ImgTxtViewer:
 
 
     def create_custom_active_highlight_widgets_tab5(self):
-        def clear():
-            self.custom_entry.delete(0, 'end')
         self.tab5_frame = Frame(self.tab5)
         self.tab5_frame.pack(side='top', fill='both')
         self.tab5_button_frame = Frame(self.tab5_frame)
@@ -912,7 +917,7 @@ class ImgTxtViewer:
         self.custom_entry.bind('<KeyRelease>', lambda event: self.highlight_custom_string())
         self.highlight_button = Button(self.tab5_button_frame, text="Go!", overrelief="groove", width=4, command=self.highlight_custom_string)
         self.highlight_button.pack(side='left', anchor="n", pady=4, padx=1)
-        self.clear_button = Button(self.tab5_button_frame, text="Clear", overrelief="groove", width=4, command=clear)
+        self.clear_button = Button(self.tab5_button_frame, text="Clear", overrelief="groove", width=4, command=self.clear_highlight_tab)
         self.clear_button.pack(side='left', anchor="n", pady=4, padx=1)
         self.regex_highlight_checkbutton = Checkbutton(self.tab5_button_frame, text="Regex", overrelief="groove", variable=self.highlight_use_regex_var)
         self.regex_highlight_checkbutton.pack(side='left', anchor="n", pady=4, padx=1)
@@ -925,6 +930,11 @@ class ImgTxtViewer:
                                    "Use ' + ' to highlight multiple strings of text\n\n"
                                    "Example: dog + cat")
         description_textbox.config(state="disabled", wrap="word")
+
+
+    def clear_highlight_tab(self):
+        self.custom_entry.delete(0, 'end')
+        self.highlight_use_regex_var.set(False)
 
 
     def create_font_widgets_tab6(self, event=None):
@@ -3126,13 +3136,13 @@ class ImgTxtViewer:
             self.config.set("Other", "truncate_stat_captions", str(self.truncate_stat_captions_var.get()))
             self.config.set("Other", "process_image_stats", str(self.process_image_stats_var.get()))
             self.config.set("Other", "use_mytags", str(self.use_mytags_var.get()))
+            self.config.set("Other", "auto_delete_blank_files", str(self.auto_delete_blank_files_var.get()))
 
             # Write updated settings back to file
             with open(self.app_settings_cfg, "w", encoding="utf-8") as f:
                 self.config.write(f)
         except (PermissionError, IOError) as e:
             messagebox.showerror("Error", f"An error occurred while saving the user settings.\n\n{e}")
-
 
 
     def read_settings(self):
@@ -3152,44 +3162,42 @@ class ImgTxtViewer:
     def reset_settings(self):
         if not messagebox.askokcancel("Confirm Reset", "Reset all settings to their default parameters?"):
             return
-        reset_dictionary_confirm = messagebox.askokcancel("Confirm Reset", "Reset 'My Tags' to default?")
-        if not reset_dictionary_confirm:
-            return
-        with open(self.app_settings_cfg, 'w', encoding="utf-8") as cfg_file:
-            cfg_file.write("")
         # Path
         self.set_text_file_path(str(self.image_dir.get()))
-        self.load_order_var.set("Name (default)")
-        self.load_order_direction_var.set("Ascending")
+        self.load_order_var.set(value="Name (default)")
+        self.load_order_direction_var.set(value="Ascending")
         # Autocomplete
-        self.csv_danbooru.set(True)
-        self.csv_derpibooru.set(False)
-        self.csv_e621.set(False)
-        self.csv_english_dictionary.set(False)
-        self.colored_suggestion_var.set(True)
-        self.suggestion_quantity_var.set(4)
-        self.suggestion_threshold_var.set("Normal")
-        self.last_word_match_var.set(False)
+        self.csv_danbooru.set(value=True)
+        self.csv_derpibooru.set(value=False)
+        self.csv_e621.set(value=False)
+        self.csv_english_dictionary.set(value=False)
+        self.colored_suggestion_var.set(value=True)
+        self.suggestion_quantity_var.set(value=4)
+        self.suggestion_threshold_var.set(value="Normal")
+        self.last_word_match_var.set(value=False)
         # Other
+        self.clear_search_and_replace_tab()
+        self.clear_prefix_tab()
+        self.clear_append_tab()
         self.revert_text_image_filter(clear=True)
-        self.list_mode_var.set(False)
+        self.clear_highlight_tab()
+        self.list_mode_var.set(value=False)
         self.toggle_list_mode()
-        self.cleaning_text_var.set(True)
-        self.auto_save_var.set(False)
+        self.cleaning_text_var.set(value=True)
+        self.auto_save_var.set(value=False)
         self.toggle_save_button_height(reset=True)
-        self.highlight_selection_var.set(True)
-        self.highlight_all_duplicates_var.set(False)
+        self.highlight_selection_var.set(value=True)
+        self.highlight_all_duplicates_var.set(value=False)
         self.toggle_highlight_all_duplicates()
-        if reset_dictionary_confirm:
-            self.create_custom_dictionary(reset=True)
         self.truncate_stat_captions_var.set(value=True)
         self.process_image_stats_var.set(value=False)
         self.use_mytags_var.set(value=True)
+        self.auto_delete_blank_files_var.set(value=False)
         # Font
         if hasattr(self, 'text_box'):
-            self.font_var.set("Courier New")
+            self.font_var.set(value="Courier New")
             self.font_size_var = 10
-            self.size_scale.set(10)
+            self.size_scale.set(value=10)
             self.font_size_tab6.config(text=f"Size: 10")
             current_text = self.text_box.get("1.0", "end-1c")
             self.text_box.config(font=(self.default_font, self.default_font_size))
@@ -3198,6 +3206,10 @@ class ImgTxtViewer:
         if hasattr(self, 'text_box'):
             self.text_box.delete("1.0", "end")
             self.text_box.insert("1.0", current_text)
+        if messagebox.askokcancel("Confirm Reset", "Reset 'My Tags' to default?"):
+            with open(self.app_settings_cfg, 'w', encoding="utf-8") as cfg_file:
+                cfg_file.write("")
+            self.create_custom_dictionary(reset=True)
         self.message_label.config(text="All settings reset!", bg="#6ca079", fg="white")
 
 
@@ -3242,6 +3254,7 @@ class ImgTxtViewer:
         self.truncate_stat_captions_var.set(value=self.config.getboolean("Other", "truncate_stat_captions", fallback=True))
         self.process_image_stats_var.set(value=self.config.getboolean("Other", "process_image_stats", fallback=False))
         self.use_mytags_var.set(value=self.config.getboolean("Other", "use_mytags", fallback=True))
+        self.auto_delete_blank_files_var.set(value=self.config.getboolean("Other", "auto_delete_blank_files", fallback=False))
 
 
 #endregion
@@ -3840,6 +3853,7 @@ root.mainloop()
     - Improved UI handling of situations where filtering would result in zero matches.
     - Prevented the Image-Grid from opening when there aren't any images to display.
     - The file filter is now cleared when changing the selected directory.
+    - Fixed issue where settings were not reset when clicking NO to reset "my_tags"
 
 
 <br>
@@ -3910,6 +3924,7 @@ root.mainloop()
 
 - Todo
   - Add new options to settings.cfg and "reset settings"
+
   - Find Dupe Files, could/should automatically move captions if they are found.
   - Go through all tools that touch text files and make sure they work with alt-text paths.
 
