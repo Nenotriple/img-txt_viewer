@@ -1,7 +1,7 @@
 """
 ########################################
 #                                      #
-#              Image Grid              #
+#              Image-Grid              #
 #                                      #
 #   Version : v1.03                    #
 #   Author  : github.com/Nenotriple    #
@@ -109,7 +109,7 @@ class ImageGrid:
         self.frame_top_Handle = Frame(self.top)
         self.frame_top_Handle.pack(fill="both")
 
-        title = Label(self.frame_top_Handle, cursor="size", text="Image Grid", font=("", 16))
+        title = Label(self.frame_top_Handle, cursor="size", text="Image-Grid", font=("", 16))
         title.pack(side="top", fill="x", padx=5, pady=5)
         title.bind("<ButtonPress-1>", self.start_drag)
         title.bind("<ButtonRelease-1>", self.stop_drag)
@@ -791,7 +791,7 @@ class ImageGrid:
         self.transparent_top = Toplevel(master)
         self.transparent_top.attributes('-alpha', 0.0)
         self.transparent_top.iconify()
-        self.transparent_top.title("Image Grid")
+        self.transparent_top.title("Image-Grid")
 
         # Redirect focus to the top-level window when the transparent window is focused
         self.transparent_top.bind("<FocusIn>", lambda event: self.top.focus_force())
