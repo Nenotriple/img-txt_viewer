@@ -3466,7 +3466,10 @@ class ImgTxtViewer:
     def open_current_directory(self, event=None):
         try:
             self.check_working_directory()
-            os.startfile(self.image_dir.get())
+            if self.image_files:
+                subprocess.run(['explorer', '/select,', self.image_file])
+            else:
+                os.startfile(self.image_dir.get())
         except Exception: return
 
 
