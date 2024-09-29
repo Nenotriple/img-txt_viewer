@@ -3727,7 +3727,7 @@ class ImgTxtViewer:
                     if self.current_index >= len(self.image_files):
                         self.current_index = len(self.image_files) - 1
                     if self.current_index >= 1:
-                        self.update_pair("prev")
+                        self.update_pair("prev", save=False)
                     else:
                         self.show_pair()
                     self.undo_state.set("normal")
@@ -3751,7 +3751,7 @@ class ImgTxtViewer:
                     if self.current_index >= len(self.image_files):
                         self.current_index = len(self.image_files) - 1
                     if self.current_index >= 1:
-                        self.update_pair("prev")
+                        self.update_pair("prev", save=False)
                     else:
                         self.show_pair()
                 else:
