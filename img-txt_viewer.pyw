@@ -3,7 +3,7 @@
 #                                      #
 #            IMG-TXT VIEWER            #
 #                                      #
-#   Version : v1.95                    #
+#   Version : v1.96                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -17,7 +17,7 @@ More info here: https://github.com/Nenotriple/img-txt_viewer
 """
 
 
-VERSION = "v1.95"
+VERSION = "v1.96"
 
 
 ################################################################################################################################################
@@ -3466,7 +3466,10 @@ class ImgTxtViewer:
     def open_current_directory(self, event=None):
         try:
             self.check_working_directory()
-            os.startfile(self.image_dir.get())
+            if self.image_files:
+                subprocess.run(['explorer', '/select,', self.image_file])
+            else:
+                os.startfile(self.image_dir.get())
         except Exception: return
 
 
@@ -3724,7 +3727,7 @@ class ImgTxtViewer:
                     if self.current_index >= len(self.image_files):
                         self.current_index = len(self.image_files) - 1
                     if self.current_index >= 1:
-                        self.update_pair("prev")
+                        self.update_pair("prev", save=False)
                     else:
                         self.show_pair()
                     self.undo_state.set("normal")
@@ -3748,7 +3751,7 @@ class ImgTxtViewer:
                     if self.current_index >= len(self.image_files):
                         self.current_index = len(self.image_files) - 1
                     if self.current_index >= 1:
-                        self.update_pair("prev")
+                        self.update_pair("prev", save=False)
                     else:
                         self.show_pair()
                 else:
@@ -3822,90 +3825,31 @@ root.mainloop()
 '''
 
 
-[💾v1.95](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.95)
+[💾v1.96](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.96)
 
 <details>
-  <summary>Click here to view release notes for v1.95</summary>
+  <summary>Click here to view release notes for v1.96</summary>
 
   - New:
-    - New tab `Stats`: View file stats related to the current directory, including total files, characters, captions, average characters, words, captions per file, lists of captions, resolutions, common words, and more.
-    - New option `Loading Order`: Set the loading order based on name, file size, date, ascending/descending, etc.
-    - New option `Reset Settings`: Reset all user settings to their default parameters, with an option to reset “My Tags”.
-    - New option `Auto-Delete Blank Files`: Enable this setting to automatically remove blank text files when they're saved. #25
-    - New tool `Rename Pair`: Manually rename a single img-txt pair.
-    - New tool `Create Blank Text Pairs`: This tool will create a text file for any un-paired image.
-    - New tool `Archive Dataset`: Use this to quickly zip the current working folder.
-    - New Tool `Batch Upscale`: Same as 'Upscale Image', but this can upscale an entire folder of images.
-    - Enhanced text selection for the primary text box and most text entries, treating common punctuation and symbols as word boundaries on double-click and allowing selection of entire entry text strings with a triple-click. #26
-    - New text box right-click menu option: `Open Text File...`
-
+    -
 
 <br>
 
 
   - Fixed:
-    - Filtering using regex patterns now works as intended. #27
-    - Fixed right-click not triggering the primary text box context menu if the textbox wasn't initially focused with a left-click.
-    - Fixed AttributeError when refreshing the custom dictionary.
-    - Fixed the issue where using the `CTRL+S` hotkey to save the text wouldn't display *Saved* in the message label.
-    - Fixed `Rename and Convert` improperly naming text file pairs.
-    - Improved image loading to prevent [WinError 32], also fixing issues with the “Delete Pair” tool.
-    - Improved UI handling of situations where filtering would result in zero matches.
-    - Prevented the Image-Grid from opening when there aren't any images to display.
-    - The file filter is now cleared when changing the selected directory.
-    - Fixed issue where settings were not reset when clicking NO to reset "my_tags"
-
+    - Fixed issue where the `Delete Pair` tool would overwrite the next index with the deleted text.
 
 <br>
 
 
   - Other changes:
-    - Toggle Zoom - The popup is now centered next to the mouse and behaves better around the screen edges.
-    - `Delete img-txt Pair` now allows you to send the pair to the recycle bin.
-    - Navigating pairs while auto-save is enabled is now much faster.
-    - You can now set a filter by using the enter/return key with the filter widget in focus.
-    - You can now quickly open the "settings.cfg", and "my_tags.csv" files in your default system app.
-    - You can now use Regex patterns in the `Search` field of the Search and Replace tool, along with the Highlight tool.
-    - You can now use the Up/Down arrow keys to navigate while the img-txt index entry is focus.
-    - You can now hold Shift when navigating (all methods) to advance by 5 instead of 1.
-    - This message label now displays "No Changes" when attempting to save a file without making changes to it.
-    - Ensured auto_save_var is properly restored to its original value if the text box does not exist when changing the working directory.
-    - The "Clear" button in the Filter tab now turns red when the filter is active, and the tooltip also changes to show the filter state.
-    - The tools *'Rename img-txt Pairs'* and *'Rename and Convert img-txt Pairs'* have been combined into a single tool called `Batch Rename and/or Convert`.
-    - Using Undo after S&R/Prefix/Append, will now delete text files that previously didn't exist at the time when those tools were ran.
-    - This version comes with many small UI tweaks and updates, along with some minor internal code refactoring.
-
+    - Using `Open Current Directory...` will now automatically select the current image in the file explorer.
 
 <br>
 
 
   - Project Changes:
-    - **Image-Grid:** v1.03
-      - New:
-        - Filtering options are now moved to a new menu.
-        - You can now filter images by `Resolution`, `Aspect Ratio`, `Filesize`, `Filename`, `Filetype`, and `Tags`.
-          - Along with these operators, `=`, `<`, `>`, `*`
-        - Resolution and Filesize are now displayed in the image tooltip.
-        - `Auto-Close`: This setting is now saved to the `settings.cfg` file. #24
-      - Fixed:
-        - Fixed the issue of not being able to focus on the image grid window when selecting it from the taskbar. #24
-      - Other changes:
-        - Increased the default number of images loaded from 150 to 250.
-        - Improved image and text cache.
-        - Update index logic to support new loading order options.
-    - **Upscale Image:** v1.04
-      - New:
-        - Now supports batch upscaling a folder of  images.
-        - The `Upscale Factor` widget is now a slider allowing you to select `from 0.25`, `to 8.0`, in `0.25 increments`.
-        - New settings: `Strength` Set this from 0%, to 100% to define how much of the original image is visible after upscaling.
-      - Fixed:
-        - Settings are now disabled while upscaling to prevent them from being adjusted while upscaling.
-        - Fixed issues with opening and holding-up images in the process.
-    - **TkToolTip:** v1.04
-      - New:
-        - Now supports an ipadx, or ipady value for interior spacing. The default value is 2.
-      - Other changes:
-        - x_offset, and y_offset have been renamed to padx, and pady.
+    -
 
 
 </details>
@@ -3931,7 +3875,6 @@ root.mainloop()
 
 - Tofix
   - When using Batch Tag Delete and then returning to the main app, the text box isn't updated, and if the user has "Auto-Save" enabled, it will overwrite any changes made by BTD for that file.
-  - Sometimes when using `delete pair`, the contents of the text box seem to automatically get saved to that index. For example: I delete index 4 and now index 5 has the text saved to it instead.
 
   - The "self.sort_key" isn't being used correctly with "Upscale", and "Resize" image tools for their first use. Adjusting the sort key and running the tools again works as intended.
   - STATS: Image PPI calculation is sometimes 0.00
