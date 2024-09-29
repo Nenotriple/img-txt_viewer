@@ -3461,13 +3461,36 @@ class ImgTxtViewer:
             if os.path.isdir(directory):
                 os.startfile(directory)
         except Exception: return
-
+            
+    def reveal_in_file_manager(self, file_path):
+        if os.path.exists(file_path):
+            try:
+                if sys.platform.startswith('win32'):  # Windows
+                    subprocess.run(['explorer', '/select,', file_path])
+                elif sys.platform.startswith('darwin'):  # macOS
+                    subprocess.run(['open', '-R', file_path])
+                elif sys.platform.startswith('linux'):  # Linux
+                    # Try with gio, nautilus, or xdg-open
+                    try:
+                        subprocess.run(['gio', 'open', f'file://{os.path.dirname(file_path)}'])
+                    except FileNotFoundError:
+                        try:
+                            subprocess.run(['nautilus', file_path])
+                        except FileNotFoundError:
+                            subprocess.run(['xdg-open', os.path.dirname(file_path)])
+                else:
+                    print("Unsupported operating system.")
+            except Exception as e:
+                print(f"An error occurred while revealing to file in file manager: {e}\nFallback to os.startfile.")
+                os.startfile(self.image_dir.get())
+        else:
+            print("File does not exist.")
 
     def open_current_directory(self, event=None):
         try:
             self.check_working_directory()
             if self.image_files:
-                subprocess.run(['explorer', '/select,', self.image_file])
+                self.reveal_in_file_manager(self.image_file)
             else:
                 os.startfile(self.image_dir.get())
         except Exception: return
