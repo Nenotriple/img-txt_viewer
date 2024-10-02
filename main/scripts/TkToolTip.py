@@ -22,14 +22,14 @@ It allows customization of the tooltip's text, delay, position, state, style, an
 Usage:
 ------
 A) Creating a tooltip directly:
-    TkToolTip.create(widget, text="example")
+     TkToolTip.create(widget, text="example")
 
 B) Creating a tooltip and storing it in a variable for later configuration:
-   - Create and store the tooltip in a variable
-     - tooltip = TkToolTip.create(widget, text="example")
+   # Create and store the tooltip in a variable:
+       tooltip = TkToolTip.create(widget, text="example")
 
-   - Configure the tooltip later
-     - tooltip.config(text="Example!")
+   # Configure the tooltip later:
+       tooltip.config(text="Example!")
 
 
 """
