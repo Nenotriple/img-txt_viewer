@@ -4,7 +4,7 @@
 #                                      #
 #          Batch Resize Images         #
 #                                      #
-#   Version : v1.06                    #
+#   Version : v1.07                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -24,6 +24,7 @@ Resize conditions: Upscale and Downscale, Upscale Only, Downscale Only
 
 import os
 import sys
+import time
 import ctypes
 import argparse
 import tkinter as tk
@@ -160,7 +161,6 @@ class ResizeImages(tk.Frame):
         self.frame_control_row = tk.Frame(self.frame_main, borderwidth=2, relief="groove")
         self.frame_control_row.pack(side="top", fill="x", padx=2, pady=2)
 
-
         ##### Checkbuttons
         self.frame_checkbuttons = tk.Frame(self.frame_control_row)
         self.frame_checkbuttons.pack(side="bottom", fill="x", padx=2, pady=2)
@@ -182,7 +182,6 @@ class ResizeImages(tk.Frame):
         self.save_png_info_var = tk.BooleanVar(value=False)
         self.save_png_info_checkbutton = tk.Checkbutton(self.frame_checkbuttons, overrelief="groove", text="Save PNG Info", variable=self.save_png_info_var)
         self.save_png_info_checkbutton.pack(side="left", fill="x", padx=2, pady=2)
-
 
         ##### Resize Settings
         self.frame_resize_settings = tk.Frame(self.frame_control_row)
@@ -225,7 +224,6 @@ class ResizeImages(tk.Frame):
         self.filetype.pack(side="left", padx=2, pady=2)
         self.filetype_var.trace_add("write", self.update_quality_widgets)
 
-
         ##### Sizes
         self.frame_sizes = tk.Frame(self.frame_control_row)
         self.frame_sizes.pack(side="left", anchor="center", expand=True, padx=2, pady=2)
@@ -263,25 +261,22 @@ class ResizeImages(tk.Frame):
         self.frame_bottom_row = tk.Frame(self.frame_main)
         self.frame_bottom_row.pack(side="bottom", fill="both", expand=True)
 
-
         ##### Buttons
         self.frame_buttons = tk.Frame(self.frame_bottom_row)
         self.frame_buttons.pack(fill="x")
 
             # Resize Button
-        self.button_resize = tk.Button(self.frame_buttons, overrelief="groove", text="Resize!", command=self.resize)
+        self.button_resize = tk.Button(self.frame_buttons, overrelief="groove", text="Resize!", command=self._resize)
         self.button_resize.pack(side="left", fill="x", expand=True, padx=2, pady=2)
 
             # Cancel Button
         self.button_cancel = tk.Button(self.frame_buttons, overrelief="groove", width=8, state="disabled", text="Cancel", command=lambda: setattr(self, 'stop', True))
         self.button_cancel.pack(side="left", fill="x", padx=2, pady=2)
 
-
         # Percent Bar
         self.percent_complete = tk.StringVar()
         self.percent_bar = ttk.Progressbar(self.frame_bottom_row, value=0)
         self.percent_bar.pack(fill="x", padx=2, pady=2)
-
 
         #### Message row
         self.frame_message_row = tk.Frame(self.frame_bottom_row)
@@ -328,7 +323,6 @@ class ResizeImages(tk.Frame):
             self.resize_condition.config(state="readonly")
             self.width_label.config(text="Width:")
             self.height_label.config(text="Height:")
-
         elif mode == "Percentage":
             self.width_entry.config(state="normal")
             self.width_label.config(state="normal")
@@ -339,7 +333,6 @@ class ResizeImages(tk.Frame):
             self.resize_condition.config(state="disabled")
             self.width_label.config(text="%")
             self.height_label.config(text="-")
-
         elif mode in ["Width", "Shorter Side", "Longer Side"]:
             self.width_entry.config(state="normal")
             self.width_label.config(state="normal")
@@ -353,7 +346,6 @@ class ResizeImages(tk.Frame):
             else:
                 self.width_label.config(text="Size")
             self.height_label.config(text="-")
-
         elif mode in ["Height"]:
             self.width_entry.delete(0, 'end')
             self.width_entry.config(state="disabled")
@@ -386,6 +378,8 @@ class ResizeImages(tk.Frame):
                 self.entry_directory.insert(0, new_folder_path)
                 self.update_message_text(filecount=True)
                 self.button_resize.config(state="normal")
+                self.percent_complete.set(0)
+                self.percent_bar['value'] = self.percent_complete.get()
         except FileNotFoundError:
             self.update_message_text(text="The system cannot find the path specified.")
 
@@ -413,25 +407,15 @@ class ResizeImages(tk.Frame):
 
 
     def resize_to_resolution(self, img, width, height):
-        if width is None or height is None:
-            messagebox.showinfo("Error", "Please enter a valid width and height.")
+        if not self.validate_dimensions(width, height):
             return
-        if not isinstance(width, int) or not isinstance(height, int):
-            raise TypeError("Width and height must be integers.")
-        if width <= 0 or height <= 0:
-            raise ValueError("Width and height must be greater than 0.")
         img = img.resize((width, height), Image.LANCZOS)
         return img
 
 
     def resize_to_percentage(self, img, percentage):
-        if percentage is None:
-            messagebox.showinfo("Error", "Please enter a valid percentage")
+        if not self.validate_percentage(percentage):
             return
-        if not isinstance(percentage, (int, float)):
-            raise TypeError("Percentage must be a number.")
-        if percentage <= 0:
-            raise ValueError("Percentage must be greater than 0.")
         width = int(img.size[0] * percentage)
         height = int(img.size[1] * percentage)
         img = img.resize((width, height), Image.LANCZOS)
@@ -439,69 +423,83 @@ class ResizeImages(tk.Frame):
 
 
     def resize_to_width(self, img, width):
-        if width is None:
-            messagebox.showinfo("Error", "Please enter a valid width")
+        if not self.validate_dimension(width):
             return
-        if not isinstance(width, int):
-            raise TypeError("Width must be an integer.")
-        if width <= 0:
-            raise ValueError("Width must be greater than 0.")
-        wpercent = (width/float(img.size[0]))
-        hsize = int((float(img.size[1])*float(wpercent)))
+        wpercent = (width / float(img.size[0]))
+        hsize = int((float(img.size[1]) * float(wpercent)))
         img = img.resize((width, hsize), Image.LANCZOS)
         return img
 
 
     def resize_to_height(self, img, height):
-        if height is None:
-            messagebox.showinfo("Error", "Please enter a valid height")
+        if not self.validate_dimension(height):
             return
-        if not isinstance(height, int):
-            raise TypeError("Height must be an integer.")
-        if height <= 0:
-            raise ValueError("Height must be greater than 0.")
-        hpercent = (height/float(img.size[1]))
-        wsize = int((float(img.size[0])*float(hpercent)))
+        hpercent = (height / float(img.size[1]))
+        wsize = int((float(img.size[0]) * float(hpercent)))
         img = img.resize((wsize, height), Image.LANCZOS)
         return img
 
 
-    def resize_to_shorter_side(self, img, width):
-        if width is None:
-            messagebox.showinfo("Error", "Please enter a valid size")
+    def resize_to_shorter_side(self, img, size):
+        if not self.validate_dimension(size):
             return
-        if not isinstance(width, int):
-            raise TypeError("Size must be an integer.")
-        if width <= 0:
-            raise ValueError("Size must be greater than 0.")
         if img.size[0] < img.size[1]:
-            wpercent = (width/float(img.size[0]))
-            hsize = int((float(img.size[1])*float(wpercent)))
-            img = img.resize((width, hsize), Image.LANCZOS)
+            wpercent = (size / float(img.size[0]))
+            hsize = int((float(img.size[1]) * float(wpercent)))
+            img = img.resize((size, hsize), Image.LANCZOS)
         else:
-            hpercent = (width/float(img.size[1]))
-            wsize = int((float(img.size[0])*float(hpercent)))
-            img = img.resize((wsize, width), Image.LANCZOS)
+            hpercent = (size / float(img.size[1]))
+            wsize = int((float(img.size[0]) * float(hpercent)))
+            img = img.resize((wsize, size), Image.LANCZOS)
         return img
 
 
-    def resize_to_longer_side(self, img, width):
-        if width is None:
-            messagebox.showinfo("Error", "Please enter a valid size")
+    def resize_to_longer_side(self, img, size):
+        if not self.validate_dimension(size):
             return
-        if not isinstance(width, int):
-            raise TypeError("Size must be an integer.")
-        if width <= 0:
-            raise ValueError("Size must be greater than 0.")
         if img.size[0] > img.size[1]:
-            wpercent = (width/float(img.size[0]))
-            hsize = int((float(img.size[1])*float(wpercent)))
-            img = img.resize((width, hsize), Image.LANCZOS)
+            wpercent = (size / float(img.size[0]))
+            hsize = int((float(img.size[1]) * float(wpercent)))
+            img = img.resize((size, hsize), Image.LANCZOS)
         else:
-            hpercent = (width/float(img.size[1]))
-            wsize = int((float(img.size[0])*float(hpercent)))
-            img = img.resize((wsize, width), Image.LANCZOS)
+            hpercent = (size / float(img.size[1]))
+            wsize = int((float(img.size[0]) * float(hpercent)))
+            img = img.resize((wsize, size), Image.LANCZOS)
         return img
+
+
+    def validate_dimensions(self, width, height):
+        if width is None or height is None:
+            messagebox.showinfo("Error", "Please enter a valid width and height.")
+            return False
+        if not isinstance(width, int) or not isinstance(height, int):
+            raise TypeError("Width and height must be integers.")
+        if width <= 0 or height <= 0:
+            raise ValueError("Width and height must be greater than 0.")
+        return True
+
+
+    def validate_dimension(self, dimension):
+        if dimension is None:
+            messagebox.showinfo("Error", "Please enter a valid size.")
+            return False
+        if not isinstance(dimension, int):
+            raise TypeError("Size must be an integer.")
+        if dimension <= 0:
+            raise ValueError("Size must be greater than 0.")
+        return True
+
+
+    def validate_percentage(self, percentage):
+        if percentage is None:
+            messagebox.showinfo("Error", "Please enter a valid percentage.")
+            return False
+        if not isinstance(percentage, (int, float)):
+            raise TypeError("Percentage must be a number.")
+        if percentage <= 0:
+            raise ValueError("Percentage must be greater than 0.")
+        return True
+
 
 
     def should_resize(self, original_size, new_size):
@@ -544,7 +542,7 @@ class ResizeImages(tk.Frame):
         elif resize_mode == "Longer Side":
             new_size = (height, height)
             if self.should_resize(original_size, new_size):
-                img = self.resize_to_longer_side(img, height)
+                img = self.resize_to_longer_side(img, width)
         return img
 
 
@@ -561,16 +559,26 @@ class ResizeImages(tk.Frame):
         height_entry = self.height_entry.get()
         width = int(width_entry) if width_entry else None
         height = int(height_entry) if height_entry else None
-        if (resize_mode == "Resolution" and (width is None or height is None)) or \
-           (resize_mode in ["Percentage", "Width", "Height", "Shorter Side", "Longer Side"] and width is None):
-            return
+        if resize_mode == "Resolution" and (width is None or height is None):
+            messagebox.showinfo("Error", "Please enter a valid width and height.")
+            return None
+        elif resize_mode == "Percentage" and width is None:
+            messagebox.showinfo("Error", "Please enter a valid percentage.")
+            return None
+        elif resize_mode in ["Width", "Shorter Side", "Longer Side"] and width is None:
+            messagebox.showinfo("Error", "Please enter a valid width.")
+            return None
+        elif resize_mode == "Height" and height is None:
+            messagebox.showinfo("Error", "Please enter a valid height.")
+            return None
         return resize_mode, width, height
 
 
-    def resize(self):
+    def _resize(self):
         self.percent_complete.set(0)
         self.stop = False
         self.files_processed = 0
+        start_time = time.time()
         if self.folder_path is not None:
             if not self.stop:
                 self.button_cancel.config(state="normal")
@@ -601,6 +609,14 @@ class ResizeImages(tk.Frame):
                             self.percent_complete.set((image_index + 1) / total_images * 100)
                             self.percent_bar['value'] = self.percent_complete.get()
                             self.percent_bar.update()
+                            elapsed_time = time.time() - start_time
+                            eta = (elapsed_time / (image_index + 1)) * (total_images - (image_index + 1))
+                            elapsed_time_str = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
+                            eta_str = time.strftime('%H:%M:%S', time.gmtime(eta))
+                            self.update_message_text(text=f"Processed: {self.files_processed} of {total_images} images | Elapsed Time: {elapsed_time_str} | ETA: {eta_str}")
+                            if self.files_processed >= total_images:
+                                self.files_processed = 0
+                                self.update_message_text(text=f"Done processing: {total_images} images | Elapsed Time: {elapsed_time_str}")
                         except Exception as e:
                             print(f"Error processing file {filename}: {str(e)}")
                     if not self.stop:
@@ -627,10 +643,6 @@ class ResizeImages(tk.Frame):
                 filename_with_new_extension = f"{base_filename}_{counter}.{filetype}"
                 counter += 1
         img.save(os.path.join(output_folder_path, filename_with_new_extension), quality=self.quality_var.get(), optimize=True)
-        self.update_message_text(text=f"Processed: {self.files_processed} of {total_images} images")
-        if self.files_processed >= total_images:
-            self.files_processed = 0
-            self.update_message_text(text="Done!")
         return os.path.join(output_folder_path, filename_with_new_extension)
 
 
@@ -772,7 +784,7 @@ def check_path():
 
 def setup_root():
     root = tk.Tk()
-    root.title("v1.06 - Batch Resize Images --- github.com/Nenotriple")
+    root.title("v1.07 - Batch Resize Images --- github.com/Nenotriple")
     root.geometry("480x250")
     root.resizable(False, False)
     root.update_idletasks()
@@ -813,23 +825,20 @@ if __name__ == "__main__":
 
 '''
 
-[v1.06 changes:](https://github.com/Nenotriple/batch_resize_images/releases/tag/v1.06)
+[v1.07 changes:](https://github.com/Nenotriple/batch_resize_images/releases/tag/v1.07)
 
   - New:
-      - Metadata can now be copied between PNG and WEBP images.
-        - Copying metadata from PNG-to-WEBP and WEBP-to-PNG requires `ExifTool.exe` to be in the same folder as `batch_resize_images.exe`.
-        - ExifTool (2003-2024) is created by Phil Harvey and can be downloaded from https://exiftool.org/
+      - A timer is now displayed in the bottom row.
 
 <br>
 
   - Fixed:
-    -
+    - Fixed the following resize modes not working/causing an error: `Longer Side`, and `Height`
 
 <br>
 
   - Other changes:
-    - Clicking on the directory entry when it's displaying the default `...` will now clear the entry.
-    - Minor UI tweaks.
+    -
 
 
 '''
@@ -842,7 +851,7 @@ if __name__ == "__main__":
 '''
 
 - Todo
-  -
+  - Needs improved error handling when enter an incorrect input.
 
 - Tofix
   -

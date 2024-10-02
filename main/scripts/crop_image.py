@@ -55,6 +55,7 @@ class Crop:
 
 
         self.top.bind('<space>', self.crop_image)
+        self.top.bind('<Escape>', lambda e: self.top.destroy())
 
 
 #endregion
@@ -79,13 +80,13 @@ class Crop:
         self.max_size = (1024, 1024)
         self.scale_factor = max(1, max([round(original_dim / max_dim) for original_dim, max_dim in zip(self.original_image.size, self.max_size)]))
         self.image.thumbnail((self.original_image.size[0] // self.scale_factor, self.original_image.size[1] // self.scale_factor), Image.LANCZOS)
-        self.tk_image = ImageTk.PhotoImage(self.image)
+        self.image_object = ImageTk.PhotoImage(self.image)
 
 
     def create_canvas(self):
-        self.canvas = tk.Canvas(self.top, width=self.tk_image.width(), height=self.tk_image.height())
+        self.canvas = tk.Canvas(self.top, width=self.image_object.width(), height=self.image_object.height())
         self.canvas.pack()
-        self.canvas.create_image(0, 0, anchor='nw', image=self.tk_image)
+        self.canvas.create_image(0, 0, anchor='nw', image=self.image_object)
         self.canvas.bind("<ButtonPress-1>", self.on_button_press)
         self.canvas.bind("<B1-Motion>", self.on_move_press)
         self.canvas.bind("<Double-1>", self.on_double_click)
@@ -108,17 +109,18 @@ class Crop:
     def setup_window(self):
         self.top.resizable(False, False)
         self.top.update_idletasks()
-        x = (self.top.winfo_screenwidth() - self.tk_image.width()) / 2
-        y = (self.top.winfo_screenheight() - self.tk_image.height()) / 2
+        x = (self.top.winfo_screenwidth() - self.image_object.width()) / 2
+        y = (self.top.winfo_screenheight() - self.image_object.height()) / 2
         self.top.geometry("+%d+%d" % (x, y))
         self.top.title(f"Crop Image  |  {os.path.basename(self.image_path)}  |  (0 x 0)")
+        self.top.focus_force()
 
 
     def update_title(self):
         if self.rect:
             rect_coords = self.canvas.coords(self.rect)
-            x_scale = self.original_image.width / self.tk_image.width()
-            y_scale = self.original_image.height / self.tk_image.height()
+            x_scale = self.original_image.width / self.image_object.width()
+            y_scale = self.original_image.height / self.image_object.height()
             width = abs(rect_coords[2] - rect_coords[0]) * x_scale
             height = abs(rect_coords[3] - rect_coords[1]) * y_scale
             if self.free_crop_var:
@@ -192,14 +194,14 @@ class Crop:
             cur_width = event.x - self.start_x
             cur_height = event.y - self.start_y
             if self.free_crop_var.get() == True:
-                curX = min(max(0, self.start_x + cur_width), self.tk_image.width())
-                curY = min(max(0, self.start_y + cur_height), self.tk_image.height())
+                curX = min(max(0, self.start_x + cur_width), self.image_object.width())
+                curY = min(max(0, self.start_y + cur_height), self.image_object.height())
             else:
                 cur_size = min(abs(cur_width), abs(cur_height))
                 cur_size = self.snap_to_points(cur_size)
-                curX = min(max(0, self.start_x + (cur_size if cur_width >= 0 else -cur_size)), self.tk_image.width())
-                curY = min(max(0, self.start_y + (cur_size if cur_height >= 0 else -cur_size)), self.tk_image.height())
-            if curX <= 0 or curY <= 0 or curX >= self.tk_image.width() or curY >= self.tk_image.height():
+                curX = min(max(0, self.start_x + (cur_size if cur_width >= 0 else -cur_size)), self.image_object.width())
+                curY = min(max(0, self.start_y + (cur_size if cur_height >= 0 else -cur_size)), self.image_object.height())
+            if curX <= 0 or curY <= 0 or curX >= self.image_object.width() or curY >= self.image_object.height():
                 return
             self.canvas.coords(self.rect, self.start_x, self.start_y, curX, curY)
 
@@ -231,10 +233,10 @@ class Crop:
         dy = event.y - self.start_y - self.rect_center[1]
         rect_coords = self.canvas.coords(self.rect)
         new_coords = [rect_coords[0] + dx, rect_coords[1] + dy, rect_coords[2] + dx, rect_coords[3] + dy]
-        new_coords[0] = max(min(new_coords[0], self.tk_image.width() - (rect_coords[2] - rect_coords[0])), 0)
-        new_coords[1] = max(min(new_coords[1], self.tk_image.height() - (rect_coords[3] - rect_coords[1])), 0)
-        new_coords[2] = min(max(new_coords[2], rect_coords[2] - rect_coords[0]), self.tk_image.width())
-        new_coords[3] = min(max(new_coords[3], rect_coords[3] - rect_coords[1]), self.tk_image.height())
+        new_coords[0] = max(min(new_coords[0], self.image_object.width() - (rect_coords[2] - rect_coords[0])), 0)
+        new_coords[1] = max(min(new_coords[1], self.image_object.height() - (rect_coords[3] - rect_coords[1])), 0)
+        new_coords[2] = min(max(new_coords[2], rect_coords[2] - rect_coords[0]), self.image_object.width())
+        new_coords[3] = min(max(new_coords[3], rect_coords[3] - rect_coords[1]), self.image_object.height())
         dx = new_coords[0] - rect_coords[0]
         dy = new_coords[1] - rect_coords[1]
         self.canvas.move(self.rect, dx, dy)
@@ -266,18 +268,30 @@ class Crop:
     def create_rectangle_based_on_image_size(self):
         self.destroy_rectangle()
         original_width, original_height = self.original_image.size
-        if original_width <= 511 or original_height <= 511:
-            return
-        size = 256 if self.scale_factor == 2 else 512
-        if original_width >= 1024 and original_height >= 1024:
-            size = 512 if self.scale_factor == 2 else 1024
-        self.create_rectangle(size)
+        canvas_width, canvas_height = self.image_object.width(), self.image_object.height()
+        x_scale = original_width / canvas_width
+        y_scale = original_height / canvas_height
+        scale_factor = max(x_scale, y_scale)
+        if max(original_width, original_height) <= 1024:
+            rect_size = 512  # Small to medium images
+        else:
+            rect_size = 1024  # Large images
+        scaled_rect_size = rect_size / scale_factor
+        rect_x1 = max(0, (canvas_width - scaled_rect_size) // 2)
+        rect_y1 = max(0, (canvas_height - scaled_rect_size) // 2)
+        rect_x2 = rect_x1 + scaled_rect_size
+        rect_y2 = rect_y1 + scaled_rect_size
+        self.rect = self.canvas.create_rectangle(rect_x1, rect_y1, rect_x2, rect_y2, outline='red', width=4)
+        self.canvas.itemconfig(self.rect, fill='black', stipple='gray12')
+        self.update_title()
+
+
 
 
     def create_rectangle(self, size):
         rect_size = size
-        canvas_width = self.tk_image.width()
-        canvas_height = self.tk_image.height()
+        canvas_width = self.image_object.width()
+        canvas_height = self.image_object.height()
         rect_x1 = max(0, (canvas_width - rect_size) // 2)
         rect_y1 = max(0, (canvas_height - rect_size) // 2)
         rect_x2 = min(canvas_width, rect_x1 + rect_size)
@@ -329,8 +343,8 @@ class Crop:
     def crop_image(self, event=None):
         if self.rect:
             rect_coords = self.canvas.coords(self.rect)
-            x_scale = self.original_image.width / self.tk_image.width()
-            y_scale = self.original_image.height / self.tk_image.height()
+            x_scale = self.original_image.width / self.image_object.width()
+            y_scale = self.original_image.height / self.image_object.height()
             rect_coords = [int(coord * x_scale) if i % 2 == 0 else int(coord * y_scale) for i, coord in enumerate(rect_coords)]
             width = abs(rect_coords[2] - rect_coords[0])
             height = abs(rect_coords[3] - rect_coords[1])

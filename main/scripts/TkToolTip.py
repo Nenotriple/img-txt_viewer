@@ -1,19 +1,39 @@
 """
+
+
 ########################################
 #                                      #
 #           Tkinter ToolTips           #
 #                                      #
-#   Version : v1.04                    #
+#   Version : v1.06                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
 
+
+------------
 Description:
--------------
+------------
 This script provides a simple way to add tooltips to any tkinter widget.
-It allows customization of the tooltip's text, delay, position, state, and style.
+It allows customization of the tooltip's text, delay, position, state, style, and justification.
+
+
+------
+Usage:
+------
+A) Creating a tooltip directly:
+    TkToolTip.create(widget, text="example")
+
+B) Creating a tooltip and storing it in a variable for later configuration:
+   - Create and store the tooltip in a variable
+     - tooltip = TkToolTip.create(widget, text="example")
+
+   - Configure the tooltip later
+     - tooltip.config(text="Example!")
+
 
 """
+
 
 import time
 from tkinter import Toplevel, Label
@@ -23,66 +43,59 @@ class TkToolTip:
     """
     Create a tooltip for any tkinter widget.
 
-    Widget Attributes
-    -----------------
-    widget : widget
+    Parameters
+    ----------
+    widget : tkinter.Widget
         The tkinter widget to which the tooltip is attached.
+    text : str, optional
+        The text displayed when the tooltip is shown (default is an empty string).
+    delay : int, optional
+        The delay (in milliseconds) before the tooltip is shown (default is 0).
+    padx : int, optional
+        The x-coordinate offset of the tooltip from the pointer (default is 0).
+    pady : int, optional
+        The y-coordinate offset of the tooltip from the pointer (default is 0).
+    ipadx : int, optional
+        The horizontal internal padding of the tooltip (default is 0).
+    ipady : int, optional
+        The vertical internal padding of the tooltip (default is 0).
+    state : str, optional
+        Set the visible state of the tooltip; can be "normal" or "disabled" (default is None).
+    bg : str, optional
+        Background color of the tooltip (default is "#ffffe0").
+    fg : str, optional
+        Foreground (text) color of the tooltip (default is "black").
+    font : tuple, optional
+        Font of the tooltip text (default is ("TkDefaultFont", "8", "normal")).
+    borderwidth : int, optional
+        Border width of the tooltip (default is 1).
+    relief : str, optional
+        Border style of the tooltip (default is "solid").
+    justify : str, optional
+        Text justification of the tooltip (default is "center").
 
-    text : str
-        The text displayed when the tooltip is shown.
-
-    delay : int
-        The delay (in ms) before the tooltip is shown.
-
-    padx : int
-        The x-coordinate offset of the tooltip from the pointer.
-
-    pady : int
-        The y-coordinate offset of the tooltip from the pointer.
-
-    ipadx : int
-        The horizontal internal padding of the tooltip.
-
-    ipady : int
-        The vertical internal padding of the tooltip.
-
-    state : str
-        Set the visible state of the tooltip
-
-    bg : str
-        Background color of the tooltip.
-
-    fg : str
-        Foreground (text) color of the tooltip.
-
-    font : tuple
-        Font of the tooltip text.
-
-    borderwidth : int
-        Border width of the tooltip.
-
-    relief : str
-        Border style of the tooltip.
-
-    Other Attributes
-    ----------------
-
+    Attributes
+    ----------
     tip_window : Toplevel
         The Toplevel window used to display the tooltip.
-
     widget_id : int
-        The id returned by the widget's `after` method.
-
+        The id returned by the widget's `after` method for showing the tooltip.
     hide_id : int
         The id returned by the widget's `after` method for hiding the tooltip.
-
     hide_time : float
         The time when the tooltip was hidden.
 
+    Methods
+    -------
+    config(**kwargs)
+        Update the tooltip configuration with the given parameters.
+    create(cls, widget, **kwargs)
+        Create a tooltip for the specified widget with the given parameters.
     """
 
+
     def __init__(self, widget, text="", delay=0, padx=0, pady=0, ipadx=0, ipady=0, state=None,
-                 bg="#ffffe0", fg="black", font=("TkDefaultFont", "8", "normal"), borderwidth=1, relief="solid"):
+                 bg="#ffffe0", fg="black", font=("TkDefaultFont", "8", "normal"), borderwidth=1, relief="solid", justify="center"):
         """
         Initialize the tooltip with the given parameters.
         """
@@ -99,6 +112,7 @@ class TkToolTip:
         self.font = font
         self.borderwidth = borderwidth
         self.relief = relief
+        self.justify = justify
 
         self.tip_window = None  # The window that displays the tooltip; None when no tooltip is shown
         self.widget_id = None  # ID for the scheduled tooltip display event; None if no event is scheduled
@@ -106,6 +120,7 @@ class TkToolTip:
         self.hide_time = None  # Timestamp of the last time the tooltip was hidden; None if never hidden
 
         self._bind_widget()
+
 
     def _bind_widget(self):
         """Setup event bindings for the widget."""
@@ -115,24 +130,29 @@ class TkToolTip:
         self.widget.bind("<Button-1>", self._leave, add="+")
         self.widget.bind('<B1-Motion>', self._leave, add="+")
 
+
     def _enter(self, event):
         """Schedule tooltip display after the specified delay."""
         self._schedule_show_tip(event)
+
 
     def _leave(self, event):
         """Hide the tooltip and cancel any scheduled events."""
         self._cancel_tip()
         self._hide_tip()
 
+
     def _motion(self, event):
         """Reschedule the tooltip display when the cursor moves within the widget."""
         self._schedule_show_tip(event)
+
 
     def _schedule_show_tip(self, event):
         """Schedule the tooltip to be shown after the specified delay."""
         if self.widget_id:
             self.widget.after_cancel(self.widget_id)
         self.widget_id = self.widget.after(self.delay, lambda: self._show_tip(event))
+
 
     def _show_tip(self, event):
         """Display the tooltip at the specified position."""
@@ -142,6 +162,7 @@ class TkToolTip:
         y = event.y_root + self.pady
         self._create_tip_window(x, y)
 
+
     def _create_tip_window(self, x, y):
         """Create and display the tooltip window."""
         if self.tip_window or not self.text:
@@ -150,15 +171,17 @@ class TkToolTip:
         self.tip_window.wm_overrideredirect(True)
         self.tip_window.wm_geometry(f"+{x}+{y}")
         label = Label(self.tip_window, text=self.text, background=self.bg, foreground=self.fg,
-                      font=self.font, relief=self.relief, borderwidth=self.borderwidth)
+                      font=self.font, relief=self.relief, borderwidth=self.borderwidth, justify=self.justify)
         label.pack(ipadx=self.ipadx, ipady=self.ipady)
+
 
     def _hide_tip(self):
         """Destroy the tooltip window if it exists."""
         if self.tip_window:
-            self.tip_window.destroy()
+            self.tip_window.withdraw()
             self.tip_window = None
             self.hide_time = time.time()
+
 
     def _cancel_tip(self):
         """Cancel the scheduled display of the tooltip."""
@@ -166,10 +189,40 @@ class TkToolTip:
             self.widget.after_cancel(self.widget_id)
             self.widget_id = None
 
+
     def config(self, text=None, delay=None, padx=None, pady=None, ipadx=None, ipady=None, state=None,
-               bg=None, fg=None, font=None, borderwidth=None, relief=None):
+               bg=None, fg=None, font=None, borderwidth=None, relief=None, justify=None):
         """
         Update the tooltip configuration with the given parameters.
+
+        Parameters
+        ----------
+        text : str, optional
+            The text displayed when the tooltip is shown.
+        delay : int, optional
+            The delay (in milliseconds) before the tooltip is shown.
+        padx : int, optional
+            The x-coordinate offset of the tooltip from the pointer.
+        pady : int, optional
+            The y-coordinate offset of the tooltip from the pointer.
+        ipadx : int, optional
+            The horizontal internal padding of the tooltip.
+        ipady : int, optional
+            The vertical internal padding of the tooltip.
+        state : str, optional
+            Set the visible state of the tooltip; can be "normal" or "disabled".
+        bg : str, optional
+            Background color of the tooltip.
+        fg : str, optional
+            Foreground (text) color of the tooltip.
+        font : tuple, optional
+            Font of the tooltip text.
+        borderwidth : int, optional
+            Border width of the tooltip.
+        relief : str, optional
+            Border style of the tooltip.
+        justify : str, optional
+            Text justification of the tooltip.
         """
         if text is not None:
             self.text = text
@@ -196,10 +249,13 @@ class TkToolTip:
             self.borderwidth = borderwidth
         if relief is not None:
             self.relief = relief
+        if justify is not None:
+            self.justify = justify
+
 
     @classmethod
     def create(cls, widget, text="", delay=0, padx=0, pady=0, ipadx=2, ipady=2, state=None,
-               bg="#ffffe0", fg="black", font=("tahoma", "8", "normal"), borderwidth=1, relief="solid"):
+               bg="#ffffe0", fg="black", font=("TkDefaultFont", "8", "normal"), borderwidth=1, relief="solid", justify="center"):
         """
         Create a tooltip for the specified widget with the given parameters.
 
@@ -226,31 +282,36 @@ class TkToolTip:
         fg : str, optional
             Foreground (text) color of the tooltip (default is "black").
         font : tuple, optional
-            Font of the tooltip text (default is ("tahoma", "8", "normal")).
+            Font of the tooltip text (default is ("TkDefaultFont", "8", "normal")).
         borderwidth : int, optional
             Border width of the tooltip (default is 1).
         relief : str, optional
             Border style of the tooltip (default is "solid").
+        justify : str, optional
+            Text justification of the tooltip (default is "center").
 
         Returns
         -------
-        Tooltip
-            A new instance of the Tooltip class.
+        TkToolTip
+            A new instance of the TkToolTip class.
         """
-        return cls(widget, text, delay, padx, pady, ipadx, ipady, state, bg, fg, font, borderwidth, relief)
+        return cls(widget, text, delay, padx, pady, ipadx, ipady, state, bg, fg, font, borderwidth, relief, justify)
+
 
 #endregion
 ################################################################################################################################################
 #region -  Changelog
 
+
 '''
 
 
-v1.04 changes:
+v1.06 changes:
 
 
   - New:
-    - Now supports an ipadx, or ipady value for interior spacing. The default value is 2.
+    - Added `justify` parameter to allow defining/configuring text justification in the tooltip.
+
 
 <br>
 
@@ -263,8 +324,10 @@ v1.04 changes:
 
 
   - Other changes:
-    - x_offset, and y_offset have been renamed to padx, and pady.
+    - Now uses `TkDefaultFont` instead of Tahoma as the default font for the tooltip text.
 
 
 '''
+
+
 #endregion

@@ -45,9 +45,10 @@ class ImageGrid:
         # Window configuration
         self.create_window(master, window_x, window_y)
 
-        # Initilize ImgTxtViewer variables and methods
+        # Initialize ImgTxtViewer variables and methods
         self.img_txt_viewer = img_txt_viewer
         self.sort_key = self.img_txt_viewer.get_file_sort_key()
+        self.reverse_sort_direction_var = self.img_txt_viewer.reverse_load_order_var.get()
         self.working_folder = self.img_txt_viewer.image_dir.get()
 
         # Setup configparser and settings file
@@ -283,7 +284,7 @@ class ImageGrid:
 
     def update_image_cache(self):
         image_size_key = self.image_size.get()
-        filtered_sorted_files = list(filter(self.filter_images, sorted(self.image_file_list, key=self.sort_key)))
+        filtered_sorted_files = list(filter(self.filter_images, sorted(self.image_file_list, key=self.sort_key, reverse=self.reverse_sort_direction_var)))
         current_text_file_sizes = {
             os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt': os.path.getsize(os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt') if os.path.exists(os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt') else 0
             for filename in filtered_sorted_files}
@@ -354,7 +355,7 @@ class ImageGrid:
     def load_image_set(self):
         images = []
         image_size_key = self.image_size.get()
-        filtered_sorted_files = list(filter(self.filter_images, sorted(self.image_file_list, key=self.sort_key)))
+        filtered_sorted_files = list(filter(self.filter_images, sorted(self.image_file_list, key=self.sort_key, reverse=self.reverse_sort_direction_var)))
         current_text_file_sizes = {
             os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt': os.path.getsize(os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt') if os.path.exists(os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt') else 0
             for filename in filtered_sorted_files}
@@ -536,7 +537,7 @@ class ImageGrid:
 
 
     def update_filtered_images(self):
-        self.filtered_images = sum(1 for _ in filter(self.filter_images, sorted(self.image_file_list, key=self.sort_key)))
+        self.filtered_images = sum(1 for _ in filter(self.filter_images, sorted(self.image_file_list, key=self.sort_key, reverse=self.reverse_sort_direction_var)))
 
 
     def get_image_and_text_paths(self, filename):
@@ -582,7 +583,7 @@ class ImageGrid:
 
     def get_image_index(self, directory, filename):
         filename = os.path.basename(filename)
-        image_files = sorted((file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)), key=self.sort_key)
+        image_files = sorted((file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)), key=self.sort_key, reverse=self.reverse_sort_direction_var)
         return image_files.index(filename) if filename in image_files else -1
 
 

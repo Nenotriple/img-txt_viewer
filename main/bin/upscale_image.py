@@ -3,7 +3,7 @@
 #                                      #
 #             Upscale Image            #
 #                                      #
-#   Version : v1.04                    #
+#   Version : v1.05                    #
 #   Author  : github.com/Nenotriple    #
 #                                      #
 ########################################
@@ -49,6 +49,7 @@ class Upscale:
 
         self.ImgTxtViewer = ImgTxtViewer
         self.sort_key = self.ImgTxtViewer.get_file_sort_key()
+        self.reverse_sort_direction_var = self.ImgTxtViewer.reverse_load_order_var.get()
         self.ImgTxt_update_pair = update_pair
         self.ImgTxt_jump_to_image = jump_to_image
 
@@ -292,7 +293,7 @@ class Upscale:
                 temp_frame_path = os.path.join(temp_dir, f"frame_{i}.png")
                 frame.save(temp_frame_path)
                 upscaled_frame_path = os.path.join(temp_dir, f"frame_{i}_upscaled.png")
-                print(f"Upscaling frame {i+1}/{total_frames}")
+                self.top.update()
                 subprocess.run(["main/bin/resrgan/realesrgan-ncnn-vulkan.exe",
                                 "-i", temp_frame_path,
                                 "-o", upscaled_frame_path,
@@ -381,7 +382,7 @@ class Upscale:
 
     def get_image_index(self, directory, filename):
         filename = os.path.basename(filename)
-        image_files = sorted((file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)), key=self.sort_key)
+        image_files = sorted((file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)), key=self.sort_key, reverse=self.reverse_sort_direction_var)
         return image_files.index(filename) if filename in image_files else -1
 
 
@@ -572,21 +573,17 @@ class Upscale:
 '''
 
 
-v1.04 changes:
+v1.05 changes:
 
 
   - New:
-    - Now supports batch upscaling a folder of  images.
-    - The `Upscale Factor` widget is now a slider allowing you to select `from 0.25`, `to 8.0`, in `0.25 increments`.
-    - New settings: `Strength` Set this from 0%, to 100% to define how much of the original image is visible after upscaling.
-
+    -
 
 <br>
 
 
   - Fixed:
-    - Settings are now disabled while upscaling to prevent them from being adjusted while upscaling.
-    - Fixed issues with opening and holding-up images in the process.
+    - Prevent the app from hanging while upscaling a GIF.
 
 
 <br>
@@ -614,3 +611,4 @@ v1.04 changes:
 '''
 
 #endregion
+

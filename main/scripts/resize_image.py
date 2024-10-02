@@ -50,6 +50,7 @@ class ResizeTool:
 
         self.img_txt_viewer = img_txt_viewer
         self.sort_key = self.img_txt_viewer.get_file_sort_key()
+        self.reverse_sort_direction_var = self.img_txt_viewer.reverse_load_order_var.get()
         self.ImgTxt_update_pair = update_pair
         self.ImgTxt_jump_to_image = jump_to_image
 
@@ -443,7 +444,7 @@ class ResizeTool:
 
     def get_image_index(self, directory, filename):
         filename = os.path.basename(filename)
-        image_files = sorted((file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)), key=self.sort_key)
+        image_files = sorted((file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)), key=self.sort_key, reverse=self.reverse_sort_direction_var)
         return image_files.index(filename) if filename in image_files else -1
 
 

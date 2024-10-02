@@ -46,7 +46,7 @@ from tkinter import ttk, Tk, Toplevel, messagebox, filedialog, simpledialog, Str
 from tkinter.filedialog import askdirectory
 from tkinter.scrolledtext import ScrolledText
 
-from PIL import Image, ImageTk, ImageSequence, UnidentifiedImageError
+from PIL import Image, ImageTk, ImageSequence, ImageOps, UnidentifiedImageError
 
 from main.scripts import crop_image, batch_crop_images, resize_image, image_grid
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
@@ -83,7 +83,7 @@ class AboutWindow(Toplevel):
         " ⦁List Mode: Display tags in a list format while saving in standard format.\n"
         " ⦁Use an asterisk * while typing to return autocomplete suggestions using a fuzzy search.\n"
         " ⦁Use the Match Mode option: 'Last Word' to allow for more natural autocomplete.\n"
-        " ⦁Right-vlick the 'Browse...' button to set or clear the alternate text path, allowing you to load text files from a separate folder than images.\n",
+        " ⦁Right-click the 'Browse...' button to set or clear the alternate text path, allowing you to load text files from a separate folder than images.\n",
 
         # Text Tools
         " ⦁Search and Replace: Search for a specific string of text and replace it with another.\n"
@@ -294,6 +294,8 @@ class ImgTxtViewer:
         self.image_files = []
         self.deleted_pairs = []
         self.new_text_files = []
+        self.image_info_cache = {}
+        self.thumbnail_cache = {}
 
 
         # Blank image
@@ -309,6 +311,12 @@ class ImgTxtViewer:
         self.filepath_contains_images_var = False
         self.is_resizing_id = None
         self.toggle_zoom_var = None
+
+
+        # Image Resize Variables
+        self.current_image = None
+        self.current_max_img_height = None
+        self.current_max_img_width = None
 
 
         # GIF animation variables
@@ -339,22 +347,27 @@ class ImgTxtViewer:
         self.truncate_stat_captions_var = BooleanVar(value=True)
         self.search_and_replace_regex = BooleanVar(value=False)
         self.process_image_stats_var = BooleanVar(value=True)
+
         self.use_mytags_var = BooleanVar(value=True)
         self.filter_empty_files_var = BooleanVar(value=False)
         self.filter_use_regex_var = BooleanVar(value=False)
 
 
-        #self.load_order_object_var = StringVar(value="Image") # Not implemented
+        # Thumbnail Panel
+        self.update_thumbnail_id = None
+        self.thumbnails_visible = BooleanVar(value=True)
+        self.thumbnail_width = IntVar(value=50)
+
+
         self.load_order_var = StringVar(value="Name (default)")
-        self.load_order_direction_var = StringVar(value="Ascending")
+        self.reverse_load_order_var = BooleanVar(value=False)
 
 
         # Image Quality
-        self.image_qualtiy_var = StringVar(value="Normal")
-        #self.quality_filter_dict = {"LANCZOS": Image.LANCZOS, "BILINEAR": Image.BILINEAR} # Not implemented
+        self.image_quality_var = StringVar(value="Normal")
         self.quality_max_size = 1280
-        self.quality_filter = "BILINEAR"
-        Image.MAX_IMAGE_PIXELS = 300000000 # Set max image size in pixels, roughly 17320x17320
+        self.quality_filter = Image.BILINEAR
+        Image.MAX_IMAGE_PIXELS = 300000000 # ~(17320x17320)px
 
 
         # Autocomplete
@@ -376,9 +389,12 @@ class ImgTxtViewer:
         master.bind("<Alt-Right>", lambda event: self.next_pair(event))
         master.bind("<Alt-Left>", lambda event: self.prev_pair(event))
         master.bind('<Shift-Delete>', lambda event: self.delete_pair())
-        master.bind('<Configure>', lambda event: self.on_resize(event))
+        master.bind('<Configure>', lambda event: self.on_resize(event) if event.widget == master else None)
         master.bind('<F1>', lambda event: self.toggle_zoom_popup(event))
-        master.bind('<F2>', lambda event: self.view_image_grid(event))
+        master.bind('<F2>', lambda event: self.open_image_grid(event))
+
+        # Print window size on resize:
+        #master.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == master else None, add="+")
 
 
 #endregion
@@ -386,7 +402,7 @@ class ImgTxtViewer:
 #region - Menubar
 
 
-####### Initilize Menu Bar ############################################
+####### Initialize Menu Bar ############################################
 
 
         # Main
@@ -411,9 +427,64 @@ class ImgTxtViewer:
 ####### Options Menu ##################################################
 
 
+# --------------------------------------
+# Options
+# --------------------------------------
+        # Options
+        self.options_subMenu = Menu(self.optionsMenu, tearoff=0)
+        self.optionsMenu.add_cascade(label="Options", underline=0, state="disable", menu=self.options_subMenu)
+        self.options_subMenu.add_checkbutton(label="Clean-Text", underline=0, variable=self.cleaning_text_var, command=self.toggle_list_menu)
+        self.options_subMenu.add_checkbutton(label="Auto-Delete Blank Files", underline=0, variable=self.auto_delete_blank_files_var)
+        self.options_subMenu.add_checkbutton(label="Colored Suggestions", underline=1, variable=self.colored_suggestion_var, command=self.update_autocomplete_dictionary)
+        self.options_subMenu.add_checkbutton(label="Highlight Selection", underline=0, variable=self.highlight_selection_var)
+        self.options_subMenu.add_checkbutton(label="Big Save Button", underline=0, variable=self.big_save_button_var, command=self.toggle_save_button_height)
+        self.options_subMenu.add_checkbutton(label="List View", underline=0, variable=self.list_mode_var, command=self.toggle_list_mode)
+        self.options_subMenu.add_separator()
+        self.options_subMenu.add_checkbutton(label="Always On Top", underline=0, command=self.toggle_always_on_top)
+        self.options_subMenu.add_checkbutton(label="Toggle Zoom", accelerator="F1", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
+        self.options_subMenu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.update_thumbnail_panel)
+        self.options_subMenu.add_checkbutton(label="Vertical View", underline=0, command=self.swap_pane_orientation)
+        self.options_subMenu.add_checkbutton(label="Swap img-txt Sides", underline=0, command=self.swap_pane_sides)
+
+
+        # Image Display Quality Menu
+        image_quality_menu = Menu(self.options_subMenu, tearoff=0)
+        self.options_subMenu.add_cascade(label="Image Display Quality", underline=1, menu=image_quality_menu)
+        for value in ["High", "Normal", "Low"]:
+            image_quality_menu.add_radiobutton(label=value, variable=self.image_quality_var, value=value, command=self.set_image_quality)
+
+
+# --------------------------------------
+# Loading Order
+# --------------------------------------
+        # Loading Order Menu
+        load_order_menu = Menu(self.optionsMenu, tearoff=0)
+        self.optionsMenu.add_cascade(label="Loading Order", underline=6, state="disable", menu=load_order_menu)
+
+
+        # Loading Order Options
+        order_options = ["Name (default)", "File size", "Date created", "Extension", "Last Access time", "Last write time"]
+        for option in order_options:
+            load_order_menu.add_radiobutton(label=option, variable=self.load_order_var, value=option, command=self.load_pairs)
+
+
+        # Loading Order Direction
+        load_order_menu.add_separator()
+        load_order_menu.add_radiobutton(label="Ascending", variable=self.reverse_load_order_var, value=False, command=self.load_pairs)
+        load_order_menu.add_radiobutton(label="Descending", variable=self.reverse_load_order_var, value=True, command=self.load_pairs)
+
+
+# --------------------------------------
+# Autocomplete
+# --------------------------------------
+        # Autocomplete Settings Menu
+        autocompleteSettingsMenu = Menu(self.optionsMenu, tearoff=0)
+        self.optionsMenu.add_cascade(label="Autocomplete", underline=11, state="disable", menu=autocompleteSettingsMenu)
+
+
         # Suggestion Dictionary Menu
-        dictionaryMenu = Menu(self.optionsMenu, tearoff=0)
-        self.optionsMenu.add_cascade(label="Suggestion Dictionary", underline=11, state="disable", menu=dictionaryMenu)
+        dictionaryMenu = Menu(autocompleteSettingsMenu, tearoff=0)
+        autocompleteSettingsMenu.add_cascade(label="Dictionary", underline=11, menu=dictionaryMenu)
         dictionaryMenu.add_checkbutton(label="English Dictionary", underline=0, variable=self.csv_english_dictionary, command=self.update_autocomplete_dictionary)
         dictionaryMenu.add_checkbutton(label="Danbooru", underline=0, variable=self.csv_danbooru, command=self.update_autocomplete_dictionary)
         dictionaryMenu.add_checkbutton(label="Derpibooru", underline=0, variable=self.csv_derpibooru, command=self.update_autocomplete_dictionary)
@@ -423,109 +494,84 @@ class ImgTxtViewer:
 
 
         # Suggestion Threshold Menu
-        suggestion_threshold_menu = Menu(self.optionsMenu, tearoff=0)
-        self.optionsMenu.add_cascade(label="Suggestion Threshold", underline=11, state="disable", menu=suggestion_threshold_menu)
+        suggestion_threshold_menu = Menu(autocompleteSettingsMenu, tearoff=0)
+        autocompleteSettingsMenu.add_cascade(label="Threshold", underline=11, menu=suggestion_threshold_menu)
         for level in ["Slow", "Normal", "Fast", "Faster"]:
             suggestion_threshold_menu.add_radiobutton(label=level, variable=self.suggestion_threshold_var, value=level, command=self.set_suggestion_threshold)
 
 
         # Suggestion Quantity Menu
-        suggestion_quantity_menu = Menu(self.optionsMenu, tearoff=0)
-        self.optionsMenu.add_cascade(label="Suggestion Quantity", underline=11, state="disable", menu=suggestion_quantity_menu)
+        suggestion_quantity_menu = Menu(autocompleteSettingsMenu, tearoff=0)
+        autocompleteSettingsMenu.add_cascade(label="Quantity", underline=11, menu=suggestion_quantity_menu)
         for quantity in range(0, 10):
             suggestion_quantity_menu.add_radiobutton(label=str(quantity), variable=self.suggestion_quantity_var, value=quantity, command=lambda suggestion_quantity=quantity: self.set_suggestion_quantity(suggestion_quantity))
 
 
         # Match Mode Menu
-        match_mode_menu = Menu(self.optionsMenu, tearoff=0)
-        self.optionsMenu.add_cascade(label="Match Mode", state="disable", menu=match_mode_menu)
+        match_mode_menu = Menu(autocompleteSettingsMenu, tearoff=0)
+        autocompleteSettingsMenu.add_cascade(label="Match Mode", menu=match_mode_menu)
         match_modes = {"Match Whole String": False, "Match Last Word": True}
         for mode, value in match_modes.items():
             match_mode_menu.add_radiobutton(label=mode, variable=self.last_word_match_var, value=value)
-        self.optionsMenu.add_separator()
 
 
-        # Options
-        self.optionsMenu.add_checkbutton(label="Clean-Text", underline=0, state="disable", variable=self.cleaning_text_var, command=self.toggle_list_menu)
-        self.optionsMenu.add_checkbutton(label="Auto-Delete Blank Files", underline=0, state="disable", variable=self.auto_delete_blank_files_var)
-        self.optionsMenu.add_checkbutton(label="Colored Suggestions", underline=1, state="disable", variable=self.colored_suggestion_var, command=self.update_autocomplete_dictionary)
-        self.optionsMenu.add_checkbutton(label="Highlight Selection", underline=0, state="disable", variable=self.highlight_selection_var)
-        self.optionsMenu.add_checkbutton(label="Big Save Button", underline=0, state="disable", variable=self.big_save_button_var, command=self.toggle_save_button_height)
-        self.optionsMenu.add_checkbutton(label="List View", underline=0, state="disable", variable=self.list_mode_var, command=self.toggle_list_mode)
-        self.optionsMenu.add_separator()
-        self.optionsMenu.add_checkbutton(label="Always On Top", underline=0, command=self.toggle_always_on_top)
-        self.optionsMenu.add_checkbutton(label="Toggle Zoom", accelerator="F1", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup) # Disabled because this checkbutton state isn't staying in sync with the "imageContext_menu" checkbutton.
-        self.optionsMenu.add_checkbutton(label="Vertical View", underline=0, state="disable", command=self.swap_pane_orientation)
-        self.optionsMenu.add_checkbutton(label="Swap img-txt Sides", underline=0, state="disable", command=self.swap_pane_sides)
-
-
-        # Image Display Quality Menu
-        image_quality_menu = Menu(self.optionsMenu, tearoff=0)
-        self.optionsMenu.add_cascade(label="Image Display Quality", underline=1, state="disable", menu=image_quality_menu)
-        for value in ["High", "Normal", "Low"]:
-            image_quality_menu.add_radiobutton(label=value, variable=self.image_qualtiy_var, value=value, command=self.set_image_quality)
-
-
-        # Loading Order Menu
-        load_order_menu = Menu(self.optionsMenu, tearoff=0)
-        self.optionsMenu.add_cascade(label="Loading Order", underline=6, state="disable", menu=load_order_menu)
-
-
-        # Loading Order Objects  # Not implemented
-        #load_order_menu.add_radiobutton(label="Image", variable=self.load_order_object_var, value="Images", command=self.load_pairs)
-        #load_order_menu.add_radiobutton(label="Text", variable=self.load_order_object_var, value="Text", command=self.load_pairs)
-        #load_order_menu.add_separator()
-
-
-        # Loading Order Options
-        order_options = ["Name (default)", "File size", "Date created", "Extension", "Last Access time", "Last write time"]
-        for option in order_options:
-            load_order_menu.add_radiobutton(label=option, variable=self.load_order_var, value=option, command=self.load_pairs)
-
-        # Loading Order Direction
-        load_order_menu.add_separator()
-        load_order_menu.add_radiobutton(label="Ascending", variable=self.load_order_direction_var, value="Ascending", command=self.load_pairs)
-        load_order_menu.add_radiobutton(label="Descending", variable=self.load_order_direction_var, value="Descending", command=self.load_pairs)
-
-        # Reset Settings
+# --------------------------------------
+# Open/Reset Settings
+# --------------------------------------
+        # Settings Menu
         self.optionsMenu.add_separator()
         self.optionsMenu.add_command(label="Reset Settings", underline=1, state="disable", command=self.reset_settings)
         self.optionsMenu.add_command(label="Open Settings File...", underline=1, command=lambda: self.open_textfile(self.app_settings_cfg))
         self.optionsMenu.add_command(label="Open My Tags File...", underline=1, command=lambda: self.open_textfile(self.my_tags_csv))
 
+
 ####### Tools Menu ##################################################
 
 
-        # Tools
-        self.toolsMenu.add_command(label="Batch Tag Delete...", underline=0, command=self.batch_tag_delete)
-        self.toolsMenu.add_command(label="Batch Resize Images...", underline=10, command=self.batch_resize_images)
-        self.toolsMenu.add_command(label="Batch Crop Images...", underline=8, state="disable", command=self.batch_crop_images)
-        self.toolsMenu.add_command(label="Find Duplicate Files...", underline=0, command=self.find_duplicate_files)
-        self.toolsMenu.add_command(label="Batch Rename and/or Convert...", underline=3, state="disable", command=self.rename_and_convert_pairs)
-        self.toolsMenu.add_command(label="Batch Upscale...", underline=0, state="disable", command=lambda: self.upscale_image(batch=True))
-        self.toolsMenu.add_command(label="Create Blank Text Pairs...", underline=0, state="disabled", command=self.create_blank_text_files)
-        self.toolsMenu.add_command(label="Zip dataset...", underline=0, state="disable", command=self.archive_dataset)
-        self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Rename Pair", underline=0, state="disable", command=self.manually_rename_single_pair)
-        self.toolsMenu.add_command(label="Upscale...", underline=0, state="disable", command=lambda: self.upscale_image(batch=False))
-        self.toolsMenu.add_command(label="Crop...", underline=0, state="disable", command=self.open_crop_tool)
-        self.toolsMenu.add_command(label="Resize...", underline=0, state="disable", command=self.resize_image)
-        self.toolsMenu.add_command(label="Expand", underline=1, state="disable", command=self.expand_image)
-        self.toolsMenu.add_command(label="Rotate", underline=1, state="disable", command=self.rotate_current_image)
-        self.toolsMenu.add_command(label="Flip", underline=1, state="disable", command=self.flip_current_image)
+# --------------------------------------
+# Batch Operations
+# --------------------------------------
+        batch_operations_menu = Menu(self.toolsMenu, tearoff=0)
+        self.toolsMenu.add_cascade(label="Batch Operations", underline=0, state="disable", menu=batch_operations_menu)
+        batch_operations_menu.add_command(label="Batch Rename And/Or Convert...", underline=3, command=self.rename_and_convert_pairs)
+        batch_operations_menu.add_command(label="Batch Resize Images...", underline=10, command=self.batch_resize_images)
+        batch_operations_menu.add_command(label="Batch Crop Images...", underline=8, command=self.batch_crop_images)
+        batch_operations_menu.add_command(label="Batch Tag Delete...", underline=0, command=self.batch_tag_delete)
+        batch_operations_menu.add_command(label="Batch Upscale...", underline=0, command=lambda: self.upscale_image(batch=True))
+        batch_operations_menu.add_separator()
+        batch_operations_menu.add_command(label="Zip Dataset...", underline=0, command=self.archive_dataset)
+        batch_operations_menu.add_command(label="Find Duplicate Files...", underline=0, command=self.find_duplicate_files)
+        batch_operations_menu.add_command(label="Cleanup All Text Files...", underline=1, command=self.cleanup_all_text_files)
+        batch_operations_menu.add_command(label="Create Blank Text Pairs...", underline=0, command=self.create_blank_text_files)
 
-        self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Next Empty Text File", accelerator="Ctrl+E", state="disable", command=self.index_goto_next_empty)
-        self.toolsMenu.add_command(label="Cleanup all Text Files", underline=1, state="disable", command=self.cleanup_all_text_files)
-        self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Open Current Directory...", underline=13, state="disable", command=self.open_current_directory)
-        self.toolsMenu.add_command(label="Open Current Image...", underline=13, state="disable", command=self.open_current_image)
-        self.toolsMenu.add_command(label="Open Image-Grid...", accelerator="F2", underline=11, state="disabled", command=self.view_image_grid)
 
+# --------------------------------------
+# Individual Operations
+# --------------------------------------
+        self.individual_operations_menu = Menu(self.toolsMenu, tearoff=0)
+        self.toolsMenu.add_cascade(label="Edit Current pair", underline=0, state="disable", menu=self.individual_operations_menu)
+        self.individual_operations_menu.add_command(label="Rename Pair", underline=0, command=self.manually_rename_single_pair)
+        self.individual_operations_menu.add_command(label="Upscale...", underline=0, command=lambda: self.upscale_image(batch=False))
+        self.individual_operations_menu.add_command(label="Crop...", underline=0, command=self.open_crop_tool)
+        self.individual_operations_menu.add_command(label="Resize...", underline=0, command=self.resize_image)
+        self.individual_operations_menu.add_command(label="Expand", underline=1, command=self.expand_image)
+        self.individual_operations_menu.add_command(label="Rotate", underline=1, command=self.rotate_current_image)
+        self.individual_operations_menu.add_command(label="Flip", underline=1, command=self.flip_current_image)
+        self.individual_operations_menu.add_separator()
+        self.individual_operations_menu.add_command(label="Duplicate img-txt Pair", underline=2, command=self.duplicate_pair)
+        self.individual_operations_menu.add_command(label="Delete img-txt Pair", accelerator="Shift+Del", command=self.delete_pair)
+        self.individual_operations_menu.add_command(label="Undo Delete", underline=0, state="disable", command=self.undo_delete_pair)
+
+
+# --------------------------------------
+# Misc
+# --------------------------------------
         self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Duplicate img-txt pair", underline=2, state="disable", command=self.duplicate_pair)
-        self.toolsMenu.add_command(label="Delete img-txt Pair", accelerator="Shift+Del", state="disable", command=self.delete_pair)
-        self.toolsMenu.add_command(label="Undo Delete", underline=0, command=self.undo_delete_pair, state="disabled")
+        self.toolsMenu.add_command(label="Open Current Directory...", underline=13, command=self.open_image_directory)
+        self.toolsMenu.add_command(label="Open Current Image...", underline=13, command=self.open_image)
+        self.toolsMenu.add_separator()
+        self.toolsMenu.add_command(label="Next Empty Text File", accelerator="Ctrl+E", command=self.index_goto_next_empty)
+        self.toolsMenu.add_command(label="Open Image-Grid...", accelerator="F2", underline=11, command=self.open_image_grid)
 
 
 #endregion
@@ -539,9 +585,10 @@ class ImgTxtViewer:
         self.primary_paned_window.bind('<ButtonRelease-1>', self.snap_sash_to_half)
 
 
-        # This frame is exclusively used for the displayed image and image info.
+        # This frame is exclusively used for the displayed image, thumbnails, image info.
         self.master_image_frame = Frame(master)
         self.primary_paned_window.add(self.master_image_frame, stretch="always")
+        self.master_image_frame.bind('<Configure>', lambda event: self.debounce_update_thumbnail_panel(event))
 
 
         # This frame serves as a container for all primary UI frames, with the exception of the master_image_frame.
@@ -551,23 +598,37 @@ class ImgTxtViewer:
         self.primary_paned_window.update(); self.primary_paned_window.sash_place(0, 0, 0)
 
 
-        # Image Label
+        # Image stats
         self.stats_frame = Frame(self.master_image_frame)
-        self.stats_frame.pack(side="top", fill="x")
-        self.image_label = Label(self.stats_frame, text="...")
-        self.image_label.pack(side="top", fill="x")
-        self.image_preview = Button(self.master_image_frame, relief="flat", cursor="hand2")
-        self.image_preview.pack(side="left")
-        self.image_preview.bind("<Double-1>", self.open_current_image)
-        self.image_preview.bind('<Button-2>', self.open_current_directory)
-        self.image_preview.bind("<MouseWheel>", self.mouse_scroll)
-        self.image_preview.bind("<Button-3>", self.show_imageContext_menu)
-        self.image_preview.bind("<ButtonPress-1>", self.start_drag)
-        self.image_preview.bind("<ButtonRelease-1>", self.stop_drag)
-        self.image_preview.bind("<B1-Motion>", self.dragging_window)
-        self.popup_zoom = PopUpZoom(self.image_preview)
+        self.stats_frame.grid(row=0, column=0, sticky="ew")
+        self.label_image_stats = Label(self.stats_frame, text="...")
+        self.label_image_stats.grid(row=0, column=0, sticky="ew")
+
+        # Primary Image
+        self.primary_display_image = Button(self.master_image_frame, relief="flat", cursor="hand2")
+        self.primary_display_image.grid(row=1, column=0, sticky="nsew")
+
+        # Thumbnail Panel
+        self.set_custom_ttk_button_highlight_style()
+        self.thumbnail_panel = Frame(self.master_image_frame)
+        self.thumbnail_panel.grid(row=2, column=0, sticky="ew")
+        self.thumbnail_panel.bind("<MouseWheel>", self.mouse_scroll)
+
+
+        # Configure grid weights so that the image preview expands as needed
+        self.master_image_frame.grid_rowconfigure(1, weight=1)
+        self.master_image_frame.grid_columnconfigure(0, weight=1)
+
+        self.primary_display_image.bind("<Double-1>", self.open_image)
+        self.primary_display_image.bind('<Button-2>', self.open_image_directory)
+        self.primary_display_image.bind("<MouseWheel>", self.mouse_scroll)
+        self.primary_display_image.bind("<Button-3>", self.show_imageContext_menu)
+        self.primary_display_image.bind("<ButtonPress-1>", self.start_drag)
+        self.primary_display_image.bind("<ButtonRelease-1>", self.stop_drag)
+        self.primary_display_image.bind("<B1-Motion>", self.dragging_window)
+        self.popup_zoom = PopUpZoom(self.primary_display_image)
         self.toggle_zoom_var = BooleanVar(value=self.popup_zoom.zoom_enabled.get())
-        self.image_preview_tooltip = ToolTip.create(self.image_preview, "Double-Click to open in system image viewer \n\nMiddle click to open in file explorer\n\nALT+Left/Right or Mouse-Wheel to move between img-txt pairs", 1000, 6, 12)
+        self.image_preview_tooltip = ToolTip.create(self.primary_display_image, "Double-Click to open in system image viewer \n\nMiddle click to open in file explorer\n\nALT+Left/Right or Mouse-Wheel to move between img-txt pairs", 1000, 6, 12)
 
 
         # Directory Selection
@@ -621,7 +682,7 @@ class ImgTxtViewer:
 
         # Save Button
         self.save_button = Button(self.index_frame, height=1, overrelief="groove", text="Save", fg="blue", state="disabled", command=self.save_text_file)
-        self.save_button.pack(fill="x", side="left", expand=True, padx=2, pady=2)
+        self.save_button.pack(side="left", padx=2, pady=2, fill="x", expand=True)
         ToolTip.create(self.save_button, "CTRL+S to save\n\nRight-Click to make the save button larger", 1000, 6, 12)
         self.auto_save_checkbutton = Checkbutton(self.index_frame, overrelief="groove", width=10, text="Auto-save", state="disabled", variable=self.auto_save_var, command=self.change_message_label)
         self.auto_save_checkbutton.pack(side="left")
@@ -630,13 +691,11 @@ class ImgTxtViewer:
 
         # Navigation Buttons
         nav_button_frame = Frame(self.master_control_frame)
-        nav_button_frame.pack()
-        self.next_button = Button(nav_button_frame, overrelief="groove", text="Next--->", width=22, state="disabled")
-        self.next_button.bind("<Button-1>", lambda event: self.next_pair(event))
-        self.prev_button = Button(nav_button_frame, overrelief="groove", text="<---Previous", width=22, state="disabled")
-        self.prev_button.bind("<Button-1>", lambda event: self.prev_pair(event))
-        self.next_button.pack(side="right", pady=2)
-        self.prev_button.pack(side="right", padx=2, pady=2)
+        nav_button_frame.pack(fill="x")
+        self.next_button = Button(nav_button_frame, overrelief="groove", text="Next--->", width=12, state="disabled", command=lambda: self.update_pair("next"))
+        self.prev_button = Button(nav_button_frame, overrelief="groove", text="<---Previous", width=12, state="disabled", command=lambda: self.update_pair("prev"))
+        self.next_button.pack(side="right", padx=2, pady=2, fill="x", expand=True)
+        self.prev_button.pack(side="right", padx=2, pady=2, fill="x", expand=True)
         ToolTip.create(self.next_button, "Hold shift to advance by 5\nHotkey: ALT+R", 1000, 6, 12)
         ToolTip.create(self.prev_button, "Hold shift to advance by 5\nHotkey: ALT+L", 1000, 6, 12)
 
@@ -725,7 +784,7 @@ class ImgTxtViewer:
         self.tab6 = Frame(self.text_notebook)
         self.tab7 = Frame(self.text_notebook)
         self.tab8 = Frame(self.text_notebook)
-        self.text_notebook.add(self.tab1, text='Search & Replace')
+        self.text_notebook.add(self.tab1, text='S&R')
         self.text_notebook.add(self.tab2, text='Prefix')
         self.text_notebook.add(self.tab3, text='Append')
         self.text_notebook.add(self.tab4, text='Filter')
@@ -886,7 +945,7 @@ class ImgTxtViewer:
         ToolTip.create(self.regex_filter_checkbutton, "Use Regular Expressions for filtering", 200, 6, 12)
         self.empty_files_checkbutton = Checkbutton(self.tab4_button_frame, text="Empty", overrelief="groove", variable=self.filter_empty_files_var, command=self.toggle_empty_files_filter)
         self.empty_files_checkbutton.pack(side='left', anchor="n", pady=4, padx=1)
-        ToolTip.create(self.empty_files_checkbutton, "Check this to show only empty text files\n\nImages without a text pair are also consided as empty", 200, 6, 12)
+        ToolTip.create(self.empty_files_checkbutton, "Check this to show only empty text files\n\nImages without a text pair are also considered as empty", 200, 6, 12)
         self.tab4_text_frame = Frame(self.tab4_frame, borderwidth=0)
         self.tab4_text_frame.pack(side='top', fill="both")
         description_textbox = ScrolledText(self.tab4_text_frame, bg="#f0f0f0")
@@ -1049,7 +1108,7 @@ class ImgTxtViewer:
         self.text_box.bind("<Left>", lambda event: self.remove_highlight())
         self.text_box.bind("<Right>", lambda event: self.remove_highlight())
         self.text_box.bind("<BackSpace>", lambda event: (self.remove_highlight(), self.change_message_label()))
-        # Sets the "message_label" whenver a key is pressed.
+        # Sets the "message_label" whenever a key is pressed.
         self.text_box.bind("<Key>", lambda event: self.change_message_label(event))
         # Disable normal button behavior
         self.text_box.bind("<Tab>", self.disable_button)
@@ -1080,6 +1139,7 @@ class ImgTxtViewer:
                 except TclError:
                     pass
                 textContext_menu.add_command(label="Cut", accelerator="Ctrl+X", command=lambda: (widget_in_focus.event_generate('<<Cut>>'), self.change_message_label()))
+                textContext_menu.add_command(label="Copy", accelerator="Ctrl+C", command=lambda: (widget_in_focus.event_generate('<<Copy>>')))
                 textContext_menu.add_command(label="Paste", accelerator="Ctrl+V", command=lambda: (widget_in_focus.event_generate('<<Paste>>'), self.change_message_label()))
                 textContext_menu.add_command(label="Delete", accelerator="Del", command=lambda: (widget_in_focus.event_generate('<<Clear>>'), self.change_message_label()))
                 textContext_menu.add_command(label="Refresh", accelerator="F5", command=self.refresh_text_box)
@@ -1087,7 +1147,7 @@ class ImgTxtViewer:
                 textContext_menu.add_command(label="Undo", accelerator="Ctrl+Z", command=lambda: (widget_in_focus.event_generate('<<Undo>>'), self.change_message_label()))
                 textContext_menu.add_command(label="Redo", accelerator="Ctrl+Y", command=lambda: (widget_in_focus.event_generate('<<Redo>>'), self.change_message_label()))
                 textContext_menu.add_separator()
-                textContext_menu.add_command(label="Open Text Directory...", command=self.open_current_directory)
+                textContext_menu.add_command(label="Open Text Directory...", command=self.open_text_directory)
                 textContext_menu.add_command(label="Open Text File...", command=self.open_textfile)
                 textContext_menu.add_command(label="Add Selected Text to My Tags", state=select_state, command=self.add_to_custom_dictionary)
                 textContext_menu.add_separator()
@@ -1106,9 +1166,9 @@ class ImgTxtViewer:
     def show_imageContext_menu(self, event):
         self.imageContext_menu = Menu(self.master, tearoff=0)
         # Open
-        self.imageContext_menu.add_command(label="Open Current Directory...", command=self.open_current_directory)
-        self.imageContext_menu.add_command(label="Open Current Image...", command=self.open_current_image)
-        self.imageContext_menu.add_command(label="Open Image-Grid...", accelerator="F2", command=self.view_image_grid)
+        self.imageContext_menu.add_command(label="Open Current Directory...", command=self.open_image_directory)
+        self.imageContext_menu.add_command(label="Open Current Image...", command=self.open_image)
+        self.imageContext_menu.add_command(label="Open Image-Grid...", accelerator="F2", command=self.open_image_grid)
         self.imageContext_menu.add_separator()
         # File
         self.imageContext_menu.add_command(label="Duplicate img-txt pair", command=self.duplicate_pair)
@@ -1130,13 +1190,14 @@ class ImgTxtViewer:
         self.imageContext_menu.add_separator()
         # Misc
         self.imageContext_menu.add_checkbutton(label="Toggle Zoom", accelerator="F1", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
+        self.imageContext_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.update_thumbnail_panel)
         self.imageContext_menu.add_checkbutton(label="Vertical View", command=self.swap_pane_orientation)
         self.imageContext_menu.add_checkbutton(label="Swap img-txt Sides", command=self.swap_pane_sides)
         # Image Display Quality
         image_quality_menu = Menu(self.optionsMenu, tearoff=0)
         self.imageContext_menu.add_cascade(label="Image Display Quality", menu=image_quality_menu)
         for value in ["High", "Normal", "Low"]:
-            image_quality_menu.add_radiobutton(label=value, variable=self.image_qualtiy_var, value=value, command=self.set_image_quality)
+            image_quality_menu.add_radiobutton(label=value, variable=self.image_quality_var, value=value, command=self.set_image_quality)
         self.imageContext_menu.tk_popup(event.x_root, event.y_root)
 
 
@@ -1145,7 +1206,7 @@ class ImgTxtViewer:
         suggestionContext_menu = Menu(self.master, tearoff=0)
         # Selected Dictionary
         dictionaryMenu = Menu(suggestionContext_menu, tearoff=0)
-        suggestionContext_menu.add_cascade(label="Suggestion Dictionary", menu=dictionaryMenu)
+        suggestionContext_menu.add_cascade(label="Dictionary", menu=dictionaryMenu)
         dictionaryMenu.add_checkbutton(label="English Dictionary", underline=0, variable=self.csv_english_dictionary, command=self.update_autocomplete_dictionary)
         dictionaryMenu.add_checkbutton(label="Danbooru", underline=0, variable=self.csv_danbooru, command=self.update_autocomplete_dictionary)
         dictionaryMenu.add_checkbutton(label="Derpibooru", underline=0, variable=self.csv_derpibooru, command=self.update_autocomplete_dictionary)
@@ -1154,13 +1215,13 @@ class ImgTxtViewer:
         dictionaryMenu.add_command(label="Clear Selection", underline=0, command=self.clear_dictionary_csv_selection)
         # Suggestion Threshold
         suggestion_threshold_menu = Menu(suggestionContext_menu, tearoff=0)
-        suggestionContext_menu.add_cascade(label="Suggestion Threshold", menu=suggestion_threshold_menu)
+        suggestionContext_menu.add_cascade(label="Threshold", menu=suggestion_threshold_menu)
         threshold_levels = ["Slow", "Normal", "Fast", "Faster"]
         for level in threshold_levels:
             suggestion_threshold_menu.add_radiobutton(label=level, variable=self.suggestion_threshold_var, value=level, command=self.set_suggestion_threshold)
         # Suggestion Quantity
         suggestion_quantity_menu = Menu(suggestionContext_menu, tearoff=0)
-        suggestionContext_menu.add_cascade(label="Suggestion Quantity", menu=suggestion_quantity_menu)
+        suggestionContext_menu.add_cascade(label="Quantity", menu=suggestion_quantity_menu)
         for quantity in range(0, 10):
             suggestion_quantity_menu.add_radiobutton(label=str(quantity), variable=self.suggestion_quantity_var, value=quantity, command=lambda suggestion_quantity=quantity: self.set_suggestion_quantity(suggestion_quantity))
         # Match Mode
@@ -1398,42 +1459,17 @@ class ImgTxtViewer:
 
     def enable_menu_options(self):
         tool_commands =       [
+                             "Batch Operations",
+                             "Edit Current pair",
                              "Open Current Directory...",
                              "Open Current Image...",
-                             "Open Image-Grid...",
                              "Next Empty Text File",
-                             "Cleanup all Text Files",
-                             "Delete img-txt Pair",
-                             "Batch Crop Images...",
-                             "Batch Rename and/or Convert...",
-                             "Batch Upscale...",
-                             "Create Blank Text Pairs...",
-                             "Zip dataset...",
-                             "Rename Pair",
-                             "Upscale...",
-                             "Crop...",
-                             "Resize...",
-                             "Expand",
-                             "Rotate",
-                             "Flip",
-                             "Duplicate img-txt pair"
+                             "Open Image-Grid...",
                              ]
         options_commands =   [
-                              "Suggestion Dictionary",
-                              "Suggestion Threshold",
-                              "Suggestion Quantity",
-                              "Match Mode",
-                              "Clean-Text",
-                              "Auto-Delete Blank Files",
-                              "Colored Suggestions",
-                              "Highlight Selection",
-                              "Big Save Button",
-                              "List View",
-                              #"Alway On Top",
-                              "Vertical View",
-                              "Swap img-txt Sides",
-                              "Image Display Quality",
+                              "Options",
                               "Loading Order",
+                              "Autocomplete",
                               "Reset Settings"
                               ]
         for t_command in tool_commands:
@@ -1508,24 +1544,27 @@ class ImgTxtViewer:
         new_orient = 'vertical' if current_orient == 'horizontal' else 'horizontal'
         self.primary_paned_window.configure(orient=new_orient)
         if new_orient == 'horizontal':
-            self.master.minsize(600, 300)
+            self.master.minsize(0, 300)
         else:
-            self.master.minsize(300, 600)
+            self.master.minsize(300, 0)
         self.master.after_idle(self.configure_pane_position)
 
 
     def snap_sash_to_half(self, event):
         total_width = self.primary_paned_window.winfo_width()
-        half_point = int(total_width / 2)
+        half_point = total_width // 2
         sash_pos = self.primary_paned_window.sash_coord(0)[0]
-        if abs(sash_pos - half_point) < 75:
+        snap_threshold = 75
+        if abs(sash_pos - half_point) < snap_threshold:
             self.primary_paned_window.sash_place(0, half_point, 0)
         self.configure_pane()
+        self.primary_paned_window.after(250, self.refresh_image)
 
 
     def configure_pane(self):
         self.primary_paned_window.paneconfigure(self.master_image_frame, minsize=300, stretch="always")
         self.primary_paned_window.paneconfigure(self.master_control_frame, minsize=300, stretch="always")
+
 
 
 #endregion
@@ -1870,8 +1909,7 @@ class ImgTxtViewer:
         self.text_files = []
         self.new_text_files = []
         sort_key = self.get_file_sort_key()
-        direction = self.load_order_direction_var.get() == "Descending"
-        files_in_dir = sorted(os.listdir(self.image_dir.get()), key=sort_key, reverse=direction)
+        files_in_dir = sorted(os.listdir(self.image_dir.get()), key=sort_key, reverse=self.reverse_load_order_var.get())
         self.validate_files(files_in_dir)
         self.original_image_files = list(self.image_files)
         self.original_text_files = list(self.text_files)
@@ -1912,7 +1950,7 @@ class ImgTxtViewer:
             with Image.open(self.image_file) as image_file:
                 self.original_image_size = image_file.size
                 max_size = (self.quality_max_size, self.quality_max_size)
-                image_file.thumbnail(max_size, Image.NEAREST)
+                image_file.thumbnail(max_size, self.quality_filter)
                 if image_file.format == 'GIF':
                     self.gif_frames = [frame.copy() for frame in ImageSequence.Iterator(image_file)]
                     self.frame_durations = [frame.info['duration'] for frame in ImageSequence.Iterator(image_file)]
@@ -1936,8 +1974,8 @@ class ImgTxtViewer:
             max_img_width = 1280
             max_img_height = 1280
             resize_event = Event()
-            resize_event.height = self.image_preview.winfo_height()
-            resize_event.width = self.image_preview.winfo_width()
+            resize_event.height = self.primary_display_image.winfo_height()
+            resize_event.width = self.primary_display_image.winfo_width()
             resized_image, resized_width, resized_height = self.resize_and_scale_image(image, max_img_width, max_img_height, resize_event)
             if image.format == 'GIF':
                 self.frame_iterator = iter(self.gif_frames)
@@ -1961,7 +1999,7 @@ class ImgTxtViewer:
             try:
                 self.current_frame = next(self.frame_iterator)
                 start_width, start_height = self.current_frame.size
-                scale_factor = min(self.image_preview.winfo_width() / start_width, self.image_preview.winfo_height() / start_height)
+                scale_factor = min(self.primary_display_image.winfo_width() / start_width, self.primary_display_image.winfo_height() / start_height)
                 new_width = int(start_width * scale_factor)
                 new_height = int(start_height * scale_factor)
                 cache_key = (id(self.current_frame), self.current_frame_index, new_width, new_height)
@@ -1972,8 +2010,8 @@ class ImgTxtViewer:
                 else:
                     self.current_frame = self.gif_frame_cache[cache_key]
                 self.current_gif_frame_image = ImageTk.PhotoImage(self.current_frame)
-                self.image_preview.config(image=self.current_gif_frame_image)
-                self.image_preview.image = self.current_gif_frame_image
+                self.primary_display_image.config(image=self.current_gif_frame_image)
+                self.primary_display_image.image = self.current_gif_frame_image
                 delay = self.frame_durations[self.current_frame_index] if self.frame_durations[self.current_frame_index] else 100
                 self.animation_job = root.after(delay, self.display_animated_gif)
                 self.current_frame_index = (self.current_frame_index + 1) % len(self.gif_frames)
@@ -1987,13 +2025,17 @@ class ImgTxtViewer:
         if input_image is None:
             return None, None, None
         start_width, start_height = self.original_image_size
+        aspect_ratio = start_width / start_height
         scale_factor = min(event.width / start_width, event.height / start_height)
         new_width = min(int(start_width * scale_factor), max_img_width)
-        new_height = min(int(start_height * scale_factor), max_img_height)
+        new_height = int(new_width / aspect_ratio)
+        if new_height > max_img_height:
+            new_height = max_img_height
+            new_width = int(new_height * aspect_ratio)
         resized_image = input_image.resize((new_width, new_height), quality_filter)
         output_image = ImageTk.PhotoImage(resized_image)
-        self.image_preview.config(image=output_image)
-        self.image_preview.image = output_image
+        self.primary_display_image.config(image=output_image)
+        self.primary_display_image.image = output_image
         percent_scale = int((new_width / start_width) * 100)
         self.update_imageinfo(percent_scale)
         return resized_image, new_width, new_height
@@ -2003,19 +2045,29 @@ class ImgTxtViewer:
         if self.image_files:
             text_file, image, max_img_height, max_img_width = self.display_image()
             self.load_text_file(text_file)
-            self.image_preview.config(width=max_img_width, height=max_img_height)
-            self.image_preview.bind("<Configure>", lambda event: self.resize_and_scale_image(image, max_img_width, max_img_height, event, Image.NEAREST))
+            self.primary_display_image.config(width=max_img_width, height=max_img_height)
+            self.current_image = image
+            self.current_max_img_height = max_img_height
+            self.current_max_img_width = max_img_width
+            self.primary_display_image.unbind("<Configure>")
+            self.primary_display_image.bind("<Configure>", self.resize_and_scale_image_event)
             self.toggle_list_mode()
             self.clear_suggestions()
             self.highlight_custom_string()
             self.highlight_all_duplicates_var.set(False)
+            self.update_thumbnail_panel()
         else:
-            self.image_preview.unbind("<Configure>")
+            self.primary_display_image.unbind("<Configure>")
+
+
+    def resize_and_scale_image_event(self, event):
+        self.resize_and_scale_image(self.current_image, self.current_max_img_width, self.current_max_img_height, event, Image.NEAREST)
 
 
     def refresh_image(self):
         if self.image_files:
             self.display_image()
+            self.update_thumbnail_panel()
 
 
     def on_resize(self, event): # Window resize
@@ -2028,28 +2080,102 @@ class ImgTxtViewer:
     def update_imageinfo(self, percent_scale):
         if self.image_files:
             self.image_file = self.image_files[self.current_index]
-            image_info = self.get_image_info(self.image_file)
-            self.image_label.config(text=f"{image_info['filename']}  |  {image_info['resolution']}  |  {percent_scale}%  |  {image_info['size']}", anchor="w")
+            if self.image_file not in self.image_info_cache:
+                self.image_info_cache[self.image_file] = self.get_image_info(self.image_file)
+            image_info = self.image_info_cache[self.image_file]
+            self.label_image_stats.config(text=f"{image_info['filename']}  |  {image_info['resolution']}  |  {percent_scale}%  |  {image_info['size']}  |  {image_info['color_mode']}", anchor="w")
 
 
     def get_image_info(self, image_file):
         with Image.open(image_file) as image:
             width, height = image.size
+            color_mode = image.mode
         size = os.path.getsize(image_file)
         size_kb = size / 1024
         size_str = f"{round(size_kb)} KB" if size_kb < 1024 else f"{round(size_kb / 1024, 2)} MB"
         filename = os.path.basename(image_file)
         filename = (filename[:61] + '(...)') if len(filename) > 64 else filename
-        return {
-            "filename": filename,
-            "resolution": f"{width} x {height}",
-            "size": size_str
-        }
+        return {"filename": filename, "resolution": f"{width} x {height}", "size": size_str, "color_mode": color_mode}
+
+
+#endregion
+################################################################################################################################################
+#region - Thumbnail Panel
+
+
+    def debounce_update_thumbnail_panel(self, event):
+        if self.update_thumbnail_id is not None:
+            self.master.after_cancel(self.update_thumbnail_id)
+        self.update_thumbnail_id = self.master.after(250, self.update_thumbnail_panel)
+
+
+    def update_thumbnail_panel(self):
+        for widget in self.thumbnail_panel.winfo_children():
+            widget.destroy()
+        if not self.thumbnails_visible.get() or len(self.image_files) == 0:
+            self.thumbnail_panel.grid_remove()
+            return
+        self.thumbnail_panel.grid()
+        thumbnail_width = self.thumbnail_width.get()
+        panel_width = self.thumbnail_panel.winfo_width() or self.master_image_frame.winfo_width()
+        num_thumbnails = panel_width // (thumbnail_width + 10) -1
+        start_index = max(0, self.current_index - num_thumbnails // 2)
+        for i in range(num_thumbnails):
+            index = (start_index + i) % len(self.image_files)
+            image_file = self.image_files[index]
+            if image_file not in self.image_info_cache:
+                self.image_info_cache[image_file] = self.get_image_info(image_file)
+            image_info = self.image_info_cache[image_file]
+            cache_key = (image_file, thumbnail_width)
+            if cache_key in self.thumbnail_cache:
+                thumbnail_photo = self.thumbnail_cache[cache_key]
+            else:
+                with Image.open(image_file) as thumbnail_image:
+                    thumbnail_image.thumbnail((thumbnail_width, thumbnail_width))
+                    if thumbnail_image.mode != "RGBA":
+                        thumbnail_image = thumbnail_image.convert("RGBA")
+                    padded_image = ImageOps.pad(thumbnail_image, (thumbnail_width, thumbnail_width), color=(0, 0, 0, 0))
+                    thumbnail_photo = ImageTk.PhotoImage(padded_image, Image.LANCZOS)
+                    self.thumbnail_cache[cache_key] = thumbnail_photo
+            thumbnail_button = ttk.Button(self.thumbnail_panel, image=thumbnail_photo, command=lambda idx=index: self.jump_to_image(idx))
+            thumbnail_button.image = thumbnail_photo
+            if index == self.current_index:
+                thumbnail_button.config(style="Highlighted.TButton")
+            thumbnail_button.grid(row=0, column=i, padx=5)
+            thumbnail_button.bind("<Button-3>", lambda event, btn=thumbnail_button, idx=index: self.show_thumbContext_menu(btn, event, idx))
+            thumbnail_button.bind("<MouseWheel>", self.mouse_scroll)
+            ToolTip.create(thumbnail_button, f"#{index + 1} | {image_info['filename']} | {image_info['resolution']} | {image_info['size']} | {image_info['color_mode']}", 400, 6, 12)
+        self.thumbnail_panel.update_idletasks()
+        frame_width = self.thumbnail_panel.winfo_width()
+        horizontal_padding = max(0, (panel_width - frame_width) // 2)
+        self.thumbnail_panel.grid_configure(padx=horizontal_padding)
+
+
+    def show_thumbContext_menu(self, thumbnail_button, event, index):
+        thumb_menu = Menu(thumbnail_button, tearoff=0)
+        # Open Image
+        thumb_menu.add_command(label="Open Image", command=lambda: self.open_image(index=index))
+        thumb_menu.add_separator()
+        # Toggle Thumbnail Panel
+        thumb_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.update_thumbnail_panel)
+        # Thumbnail Size
+        thumbnail_size_menu = Menu(thumb_menu, tearoff=0)
+        thumb_menu.add_cascade(label="Thumbnail Size", menu=thumbnail_size_menu)
+        thumbnail_sizes = {"Small": 25, "Medium": 50, "Large": 100}
+        for label, size in thumbnail_sizes.items():
+            thumbnail_size_menu.add_radiobutton(label=label, variable=self.thumbnail_width, value=size, command=self.update_thumbnail_panel)
+        thumb_menu.tk_popup(event.x_root, event.y_root)
+
+
+    def set_custom_ttk_button_highlight_style(self):
+        style = ttk.Style(self.master)
+        style.configure("Highlighted.TButton", background="#005dd7")
 
 
 #endregion
 ################################################################################################################################################
 #region - Navigation
+
 
 
     def update_pair(self, direction=None, save=True, step=1):
@@ -2063,13 +2189,14 @@ class ImgTxtViewer:
         self.text_box.edit_reset()
         if self.auto_save_var.get() and save:
             self.save_text_file()
-        if direction == 'next':
-            self.current_index = (self.current_index + step) % len(self.image_files)
-        elif direction == 'prev':
-            self.current_index = (self.current_index - step) % len(self.image_files)
-        self.show_pair()
-        self.image_index_entry.delete(0, "end")
-        self.image_index_entry.insert(0, f"{self.current_index + 1}")
+        if len(self.image_files) > 0:
+            if direction == 'next':
+                self.current_index = (self.current_index + step) % len(self.image_files)
+            elif direction == 'prev':
+                self.current_index = (self.current_index - step) % len(self.image_files)
+            self.show_pair()
+            self.image_index_entry.delete(0, "end")
+            self.image_index_entry.insert(0, f"{self.current_index + 1}")
 
 
     def next_pair(self, event=None, step=1):
@@ -2088,6 +2215,7 @@ class ImgTxtViewer:
 
     def jump_to_image(self, index=None, event=None):
         try:
+            self.check_image_dir()
             self.check_working_directory()
             if isinstance(index, Event):
                 index = None
@@ -2121,7 +2249,7 @@ class ImgTxtViewer:
     def update_image_file_count(self):
         extensions = ['.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif']
         self.image_files = [file for ext in extensions for file in glob.glob(f"{self.image_dir.get()}/*{ext}")]
-        self.image_files.sort(key=self.natural_sort)
+        self.image_files.sort(key=self.get_file_sort_key(), reverse=self.reverse_load_order_var.get())
         self.text_files = [os.path.splitext(file)[0] + '.txt' for file in self.image_files]
         self.total_images_label.config(text=f"of {len(self.image_files)}")
 
@@ -2343,10 +2471,10 @@ class ImgTxtViewer:
         if not self.image_files:
             self.image_index_entry.delete(0, "end")
             self.image_index_entry.insert(0, "0")
-            self.image_preview.config(image=self.blank_image)
+            self.primary_display_image.config(image=self.blank_image)
             self.text_box.delete("1.0", "end")
             self.message_label.config(text="No matches found", bg="#fd8a8a", fg="white")
-            self.image_label.config(text="No image! -- Check filters?", anchor="w")
+            self.label_image_stats.config(text="No image! -- Check filters?", anchor="w")
 
 
     def revert_text_image_filter(self, clear=None): # Filter
@@ -2640,7 +2768,7 @@ class ImgTxtViewer:
         subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW)
 
 
-    def view_image_grid(self, event=None):
+    def open_image_grid(self, event=None):
         if not self.image_files:
             return
         main_window_width = root.winfo_width()
@@ -2696,9 +2824,9 @@ class ImgTxtViewer:
 
     def toggle_list_menu(self):
         if self.cleaning_text_var.get():
-            self.optionsMenu.entryconfig("List View", state="normal")
+            self.options_subMenu.entryconfig("List View", state="normal")
         else:
-            self.optionsMenu.entryconfig("List View", state="disabled")
+            self.options_subMenu.entryconfig("List View", state="disabled")
             if self.list_mode_var.get():
                 self.toggle_list_mode(skip=True)
             if self.message_label.cget("text") in ["No Change", "Saved", "Changes Saved!", "Text Files Cleaned up!", "Filter Cleared!", "Filter Applied!"]:
@@ -2709,13 +2837,14 @@ class ImgTxtViewer:
 
     def set_image_quality(self):
         quality_settings = {
-            "High"  : (1536, "LANCZOS"),
-            "Normal": (1280, "LANCZOS"),
-            "Low"   : (768,  "LANCZOS")
+            "High"  : (1536, Image.LANCZOS),
+            "Normal": (1280, Image.BILINEAR),
+            "Low"   : (768,  Image.NEAREST)
             }
-        var = self.image_qualtiy_var.get()
+        var = self.image_quality_var.get()
         if var in quality_settings:
             self.quality_max_size, self.quality_filter = quality_settings[var]
+        print(self.quality_filter)
         self.refresh_image()
 
 
@@ -2955,18 +3084,19 @@ class ImgTxtViewer:
 
     def process_image_file(self, image_file):
         with Image.open(image_file) as image:
+            diagonal_inches = 10
             width, height = image.size
             dpi = image.info.get('dpi', (0, 0))
             if isinstance(dpi, tuple) and len(dpi) == 2:
                 try:
                     dpi = (float(dpi[0]), float(dpi[1]))
+                    if dpi[0] == 0 or dpi[1] == 0:
+                        raise ValueError("Invalid DPI value")
                 except ValueError:
                     diagonal_pixels = (width**2 + height**2)**0.5
-                    diagonal_inches = 10
                     dpi = (diagonal_pixels / diagonal_inches, diagonal_pixels / diagonal_inches)
             else:
                 diagonal_pixels = (width**2 + height**2)**0.5
-                diagonal_inches = 10
                 dpi = (diagonal_pixels / diagonal_inches, diagonal_pixels / diagonal_inches)
             aspect_ratio = width / height
         return width, height, dpi, aspect_ratio, image.format
@@ -2989,13 +3119,13 @@ class ImgTxtViewer:
     def start_drag(self, event):
         self.drag_x = event.x
         self.drag_y = event.y
-        self.image_preview.config(cursor="size")
+        self.primary_display_image.config(cursor="size")
 
 
     def stop_drag(self, event):
         self.drag_x = None
         self.drag_y = None
-        self.image_preview.config(cursor="hand2")
+        self.primary_display_image.config(cursor="hand2")
 
 
     def dragging_window(self, event):
@@ -3118,7 +3248,7 @@ class ImgTxtViewer:
             self.config.set("Path", "last_directory", str(self.image_dir.get()))
             self.config.set("Path", "new_text_path", str(os.path.normpath(self.new_text_path)))
             self.config.set("Path", "load_order", str(self.load_order_var.get()))
-            self.config.set("Path", "load_order_direction", str(self.load_order_direction_var.get()))
+            self.config.set("Path", "reverse_load_order", str(self.reverse_load_order_var.get()))
 
             add_section("Autocomplete")
             self.config.set("Autocomplete", "csv_danbooru", str(self.csv_danbooru.get()))
@@ -3165,7 +3295,7 @@ class ImgTxtViewer:
         # Path
         self.set_text_file_path(str(self.image_dir.get()))
         self.load_order_var.set(value="Name (default)")
-        self.load_order_direction_var.set(value="Ascending")
+        self.reverse_load_order_var.set(value=False)
         # Autocomplete
         self.csv_danbooru.set(value=True)
         self.csv_derpibooru.set(value=False)
@@ -3227,7 +3357,7 @@ class ImgTxtViewer:
         last_directory = self.config.get("Path", "last_directory", fallback=None)
         if last_directory and os.path.exists(last_directory) and messagebox.askyesno("Confirmation", "Reload last directory?"):
             self.load_order_var.set(value=self.config.get("Path", "load_order", fallback="Name (default)"))
-            self.load_order_direction_var.set(value=self.config.get("Path", "load_order_direction", fallback="Ascending"))
+            self.reverse_load_order_var.set(value=self.config.getboolean("Path", "reverse_load_order", fallback=False))
             self.image_dir.set(last_directory)
             self.set_working_directory()
             self.set_text_file_path(str(self.config.get("Path", "new_text_path", fallback=last_directory)))
@@ -3448,22 +3578,43 @@ class ImgTxtViewer:
             if hasattr(self, 'text_box'):
                 self.revert_text_image_filter(clear=True)
             directory = self.directory_entry.get()
-            self.image_dir.set(os.path.normpath(directory))
-            self.current_index = 0
-            self.load_pairs()
-            self.set_text_file_path(directory)
+            if self.check_if_contains_images(directory):
+                self.image_dir.set(os.path.normpath(directory))
+                self.current_index = 0
+                self.load_pairs()
+                self.set_text_file_path(directory)
+            else:
+                if hasattr(self, 'image_file'):
+                    self.image_dir.set(os.path.dirname(self.image_file))
+                    self.set_working_directory()
         except FileNotFoundError:
             messagebox.showwarning("Invalid Directory", f"The system cannot find the path specified:\n\n{self.directory_entry.get()}")
+            if hasattr(self, 'image_file'):
+                self.image_dir.set(os.path.dirname(self.image_file))
+                self.set_working_directory()
 
 
     def open_directory(self, directory):
         try:
-            if os.path.isdir(directory):
-                os.startfile(directory)
+            if directory == os.path.dirname(self.image_file):
+                subprocess.run(['explorer', '/select,', self.image_file])
+            else:
+                if os.path.isdir(directory):
+                    os.startfile(directory)
         except Exception: return
 
 
-    def open_current_directory(self, event=None):
+    def open_text_directory(self, event=None):
+        try:
+            self.check_working_directory()
+            if self.text_files:
+                subprocess.run(['explorer', '/select,', os.path.normpath(self.text_files[self.current_index])])
+            else:
+                os.startfile(os.path.dirname(self.text_files[self.current_index]))
+        except Exception: return
+
+
+    def open_image_directory(self, event=None):
         try:
             self.check_working_directory()
             if self.image_files:
@@ -3473,8 +3624,16 @@ class ImgTxtViewer:
         except Exception: return
 
 
-    def open_current_image(self, event=None):
-        if self.image_files:
+    def open_image(self, path=None, index=None, event=None):
+        if path is not None:
+            try:
+                os.startfile(path)
+            except Exception: return
+        elif index is not None:
+            try:
+                os.startfile(self.image_files[index])
+            except Exception: return
+        elif self.image_files:
             try:
                 os.startfile(self.image_file)
             except Exception: return
@@ -3484,13 +3643,11 @@ class ImgTxtViewer:
         if text_file is not None:
             try:
                 os.startfile(text_file)
-            except Exception:
-                return
+            except Exception: return
         elif self.text_files:
             try:
                 os.startfile(self.text_files[self.current_index])
-            except Exception:
-                return
+            except Exception: return
 
 
     def check_working_directory(self):
@@ -3525,18 +3682,13 @@ class ImgTxtViewer:
         if not zip_filename:
             return
         allowed_extensions = [".txt", ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif", ".jfif", ".jpg_large"]
-        file_list = []
-        for root, dirs, files in os.walk(folder_path):
-            for file in files:
-                if any(file.lower().endswith(ext) for ext in allowed_extensions):
-                    file_path = os.path.join(root, file)
-                    file_list.append(file_path)
+        file_list = [os.path.join(folder_path, file) for file in os.listdir(folder_path) if any(file.lower().endswith(ext) for ext in allowed_extensions)]
         num_images = sum(1 for file in file_list if file.lower().endswith(('.jpg', '.jpeg', '.png', '.webp', '.bmp', '.gif', '.jfif', '.jpg_large')))
         num_texts = sum(1 for file in file_list if file.lower().endswith('.txt'))
-        with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_STORED) as zipf:
+        with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_STORED) as zip_file:
             for file_path in file_list:
-                arcname = os.path.relpath(file_path, folder_path)
-                zipf.write(file_path, arcname)
+                archive_name = os.path.relpath(file_path, folder_path)
+                zip_file.write(file_path, archive_name)
         messagebox.showinfo("Success", f"The archive has been successfully zipped!\nNumber of image files: {num_images}\nNumber of text files: {num_texts}")
 
 
@@ -3727,11 +3879,11 @@ class ImgTxtViewer:
                     if self.current_index >= len(self.image_files):
                         self.current_index = len(self.image_files) - 1
                     if self.current_index >= 1:
-                        self.update_pair("prev", save=False)
+                        self.update_pair(direction="prev", save=False)
                     else:
                         self.show_pair()
                     self.undo_state.set("normal")
-                    self.toolsMenu.entryconfig("Undo Delete", state="normal")
+                    self.individual_operations_menu.entryconfig("Undo Delete", state="normal")
                 else:
                     pass
             else:  # No, Recycle
@@ -3751,7 +3903,7 @@ class ImgTxtViewer:
                     if self.current_index >= len(self.image_files):
                         self.current_index = len(self.image_files) - 1
                     if self.current_index >= 1:
-                        self.update_pair("prev", save=False)
+                        self.update_pair(direction="prev", save=False)
                     else:
                         self.show_pair()
                 else:
@@ -3783,7 +3935,7 @@ class ImgTxtViewer:
             self.total_images_label.config(text=f"of {len(self.image_files)}")
             if not self.deleted_pairs:
                 self.undo_state.set("disabled")
-                self.toolsMenu.entryconfig("Undo Delete", state="disabled")
+                self.individual_operations_menu.entryconfig("Undo Delete", state="disabled")
         except (PermissionError, ValueError, IOError, TclError) as e:
             messagebox.showerror("Error", f"An error occurred while restoring the img-txt pair.\n\n{e}")
 
@@ -3799,9 +3951,9 @@ class ImgTxtViewer:
 
 
     def set_window_size(self, master):
-        master.minsize(751, 396) # Width x Height
-        window_width = 1280
-        window_height = 681
+        master.minsize(545, 200) # Width x Height
+        window_width = 1125
+        window_height = 660
         position_right = root.winfo_screenwidth()//2 - window_width//2
         position_top = root.winfo_screenheight()//2 - window_height//2
         root.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
@@ -3827,29 +3979,57 @@ root.mainloop()
 
 [💾v1.96](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.96)
 
+
 <details>
   <summary>Click here to view release notes for v1.96</summary>
 
+
   - New:
-    -
+    - New feature `Thumbnail Panel`: Displayed below the current image.
+    - Added `Copy` command to the right-click textbox context menu.
 
 <br>
 
 
   - Fixed:
     - Fixed issue where the `Delete Pair` tool would overwrite the next index with the deleted text.
+    - Fixed an issue that was degrading the quality of the displayed image and not respecting the `Image Display Quality` setting.
+    - Fixed a memory leak that could occur whenever the primary image is displayed.
+    - Fixed Next/Previous button not properly displaying their relief when clicked.
+    - Fixed an issue where landscape images were improperly scaled, leading to an incorrect aspect ratio.
+    - Fixed `Open Text Directory...` not respecting the actual filepath if set by `Set Text File Path...`.
+    - Fixed issue where the file lists were not updated when using the internal function "jump_to_image()".
+    - Fixed the following tools not respecting the `Loading Order > Descending` setting, causing them to jump to the wrong index.
+      - `Image Grid`, `Upscale Image`, `Resize Image`
+    - Potential fix for the `Stats > PPI` calculation returning "0.00".
+    - Small improvements to the directory entry logic that make it more robust and less annoying.
 
 <br>
 
 
   - Other changes:
     - Using `Open Current Directory...` will now automatically select the current image in the file explorer.
+      - The `Open` button will also select the current image if the path being opened is the same as the image path.
+    - The Image info (the stats displayed above the image) is now cached for quicker access.
+    - `Zip Dataset...` Now only zips images and text files in the selected directory, omitting subfolders.
+    - The `Options`, and `Tools` menus have been reorganized.
+    - The color mode is now displayed in the image info panel.
+    - You can now close the `Crop Image` window with the `Escape` key.
+
 
 <br>
 
 
   - Project Changes:
-    -
+    - `Upscale`: v1.05:
+      - FIXED: Prevent the app from hanging while upscaling a GIF.
+    - `Batch Resize`: v1.07:
+      - NEW: A timer is now displayed in the bottom row.
+      - FIXED: The following resize modes not working/causing an error: `Longer Side`, and `Height`
+    - `TkToolTip`: v1.06:
+      - NEW: Added `justify` parameter to allow defining/configuring text justification in the tooltip.
+      - FIXED: Issue where the underlying widget would be impossible to interact with after hiding the tooltip.
+      - CHANGE: Now uses `TkDefaultFont` instead of Tahoma as the default font for the tooltip text.
 
 
 </details>
@@ -3867,19 +4047,39 @@ root.mainloop()
 
 
 - Todo
-  - Add new options to settings.cfg and "reset settings"
+  - Add new (and old) options to settings.cfg and "reset_settings()"
 
   - Find Dupe Files, could/should automatically move captions if they are found.
+
   - Go through all tools that touch text files and make sure they work with alt-text paths.
+    - I'm sure that some processes are currently broken when using alt-text paths.
+
+  - Batch Upscale:
+    - Entry widgets should have their cursor position moved to the right to see the end of the text.
+    - The Upscale command may be able to be improved by building a list of files and using that file list with realesrgan. It appears to be launching realesrgan for each image.
+    - The UI should display the number of images that will be upscaled, and the number of images that have been upscaled.
+    - Should display a timer along with an ETA.
+
+  - Batch Resize:
+    - Widgets should be disabled during the operation.
+    - Should display a timer along with an ETA.
 
 
 - Tofix
+  - Sometimes after navigating (perhaps only when using the ALT+Arrow-keys bind), the suggestion navigation fails to register on the first press of ALT.
+
+  - Running "Crop" Doesn't update the file lists when closing the crop window.
   - When using Batch Tag Delete and then returning to the main app, the text box isn't updated, and if the user has "Auto-Save" enabled, it will overwrite any changes made by BTD for that file.
 
-  - The "self.sort_key" isn't being used correctly with "Upscale", and "Resize" image tools for their first use. Adjusting the sort key and running the tools again works as intended.
-  - STATS: Image PPI calculation is sometimes 0.00
+  - THUMBNAILS:
+    - An error can occur when using the Mouse Wheel while scrolling over the thumbnail panel.
+      - It appears to be related to the ToolTip binding.
+
+  - Batch Upscale:
+    - The app hangs during processing if you try to interact with it.
 
 
   '''
 
 #endregion
+
