@@ -48,7 +48,7 @@ from tkinter import ttk, Tk, Toplevel, messagebox, filedialog, simpledialog, Str
 from tkinter.filedialog import askdirectory
 from tkinter.scrolledtext import ScrolledText
 
-from PIL import Image, ImageTk, ImageSequence, UnidentifiedImageError
+from PIL import Image, ImageTk, ImageSequence, ImageOps, UnidentifiedImageError
 from PIL.PngImagePlugin import PngInfo
 
 from main.scripts import crop_image, batch_crop_images, resize_image, image_grid
