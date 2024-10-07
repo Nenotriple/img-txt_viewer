@@ -21,6 +21,7 @@ Upscale a single/batch image using realesrgan-ncnn-vulkan.exe
 import os
 import time
 import shutil
+import threading
 import subprocess
 from tkinter import ttk, Toplevel, messagebox, Frame, Entry, Label, Button, IntVar, DoubleVar, StringVar, TclError
 from tkinter.filedialog import askdirectory
@@ -53,9 +54,11 @@ class Upscale:
         self.ImgTxt_update_pair = update_pair
         self.ImgTxt_jump_to_image = jump_to_image
 
+        self.total_images = len([file for file in os.listdir(self.batch_filepath) if file.lower().endswith(self.supported_filetypes)])
+
         self.ToolTip = ToolTip
 
-        self.process = None
+        self.batch_thread = False
         self.start_x = None
         self.start_y = None
 
@@ -115,9 +118,10 @@ class Upscale:
             self.batch_upscale_path = StringVar(value=self.batch_filepath)
             self.entry_batch_upscale_path = Entry(frame_input_batch_directory, width=50, textvariable=self.batch_upscale_path)
             self.entry_batch_upscale_path.pack(side="left", fill="x", padx=5, pady=5)
-            self.ToolTip.create(self.entry_batch_upscale_path, f"The input path\n\n{self.batch_filepath}", 250, 6, 12)
+            self.entry_batch_upscale_path.config()
+            self.input_tooltip = self.ToolTip.create(self.entry_batch_upscale_path, self.batch_upscale_path.get(), 250, 6, 12)
 
-            self.button_browse_batch_input = Button(frame_input_batch_directory, overrelief="groove", text="Browse...", command=lambda: self.choose_directory(self.batch_upscale_path))
+            self.button_browse_batch_input = Button(frame_input_batch_directory, overrelief="groove", text="Browse...", command=lambda: self.choose_directory(self.batch_upscale_path, self.input_tooltip))
             self.button_browse_batch_input.pack(side="left", fill="x", padx=2, pady=2)
 
             self.button_open_batch_input = Button(frame_input_batch_directory, overrelief="groove", text="Open", command=lambda: self.open_directory(self.batch_upscale_path.get()))
@@ -130,13 +134,13 @@ class Upscale:
             self.label_batch_output_path = Label(frame_output_batch_directory, text="Output Path")
             self.label_batch_output_path.pack(anchor="w", side="top", padx=5, pady=5)
 
-            self.batch_output_path = StringVar(value=os.path.join(self.batch_upscale_path.get(), "Output"))
+            self.batch_output_path = StringVar(value=os.path.join(self.batch_upscale_path.get(), "Upscale_Output"))
 
             self.entry_batch_output_path = Entry(frame_output_batch_directory, width=50, textvariable=self.batch_output_path)
             self.entry_batch_output_path.pack(side="left", fill="x", padx=5, pady=5)
-            self.ToolTip.create(self.entry_batch_output_path, "The output path", 250, 6, 12)
+            self.output_tooltip = self.ToolTip.create(self.entry_batch_output_path, self.batch_output_path.get(), 250, 6, 12)
 
-            self.browse_batch_output_button = Button(frame_output_batch_directory, overrelief="groove", text="Browse...", command=lambda: self.choose_directory(self.batch_output_path))
+            self.browse_batch_output_button = Button(frame_output_batch_directory, overrelief="groove", text="Browse...", command=lambda: self.choose_directory(self.batch_output_path, self.output_tooltip))
             self.browse_batch_output_button.pack(side="left", fill="x", padx=2, pady=2)
 
             self.open_batch_output_button = Button(frame_output_batch_directory, overrelief="groove", text="Open", command=lambda: self.open_directory(self.batch_output_path.get()))
@@ -183,7 +187,37 @@ class Upscale:
 
 ####### Info ##################################################
 
-        if not self.batch_mode:
+
+        if self.batch_mode:
+            self.frame_info = Frame(self.top)
+            self.frame_info.pack(side="top", expand=True, fill="x", padx=10, pady=10)
+
+
+            separator = ttk.Separator(self.frame_info)
+            separator.pack(side="top", fill="x")
+
+
+            self.frame_labels = Frame(self.frame_info)
+            self.frame_labels.pack(side="left", expand=True, fill="x", padx=10, pady=10)
+
+            label_num_images = Label(self.frame_labels, text="Upscaled:")
+            label_num_images.pack(anchor="w", side="top", padx=5, pady=5)
+
+            self.label_timer = Label(self.frame_labels, text="Timer: 00:00:00")
+            self.label_timer.pack(anchor="w", side="top", padx=5, pady=5)
+
+
+            self.frame_dimensions = Frame(self.frame_info)
+            self.frame_dimensions.pack(side="left", expand=True, fill="x", padx=10, pady=10)
+
+            self.label_number_of_images = Label(self.frame_dimensions, text=f"0 of {self.total_images}", width=20)
+            self.label_number_of_images.pack(anchor="w", side="top", padx=5, pady=5)
+
+            self.label_timer_eta = Label(self.frame_dimensions, text="ETA: 00:00:00", width=20)
+            self.label_timer_eta.pack(anchor="w", side="top", padx=5, pady=5)
+
+
+        else:
             self.frame_info = Frame(self.top)
             self.frame_info.pack(side="top", expand=True, fill="x", padx=10, pady=10)
 
@@ -226,7 +260,6 @@ class Upscale:
         self.progress_bar.pack(side="top", expand=True, fill="x", padx=10, pady=10)
 
 
-        #button_command = self.determine_image_type if not self.batch_mode else self.batch_upscale
         button_command = self.determine_image_type
         self.button_upscale = Button(self.frame_primary_buttons, overrelief="groove", text="Upscale", command=button_command)
         self.button_upscale.pack(side="left", expand=True, fill="x", padx=5, pady=5)
@@ -255,26 +288,69 @@ class Upscale:
 
 
     def batch_upscale(self):
+        self.batch_thread = True
+        thread = threading.Thread(target=self._batch_upscale)
+        thread.start()
+        self.set_widget_state(state="disabled")
+
+
+    def batch_upscale_cancel_message(self, count):
+        messagebox.showinfo("Batch Upscaled Canceled", f"Batch Upscaling canceled early.\n\n{count} of {self.total_images} images upscaled.")
+
+
+    def _batch_upscale(self):
         input_path = self.batch_upscale_path.get()
         output_path = self.batch_output_path.get()
-        if not os.path.exists(output_path):
-            os.makedirs(output_path)
-
         count = 0
-        for filename in os.listdir(input_path):
-            file_path = os.path.join(input_path, filename)
-            if os.path.isfile(file_path) and filename.lower().endswith(self.supported_filetypes):
-                self.original_filepath = file_path
-                if filename.lower().endswith('.gif'):
-                    print(f"Upscaling GIF: {file_path}")
-                    self._upscale_gif(file_path, batch_mode=True, output_path=output_path)
-                else:
-                    print(f"Upscaling Image: {file_path}")
-                    self.upscale_image(batch_mode=True, output_path=output_path)
-                count += 1
-        self.update_progress(100)
-        messagebox.showinfo("Success", f"Successfully upscaled {count} images!")
-        self.close_window()
+        start_time = time.time()
+        try:
+            if not os.path.exists(output_path):
+                os.makedirs(output_path)
+            for filename in os.listdir(input_path):
+                self.top.update()
+                self.top.update_idletasks()
+                if not self.batch_thread:
+                    self.batch_upscale_cancel_message(count)
+                    break
+                file_path = os.path.join(input_path, filename)
+                if os.path.isfile(file_path) and filename.lower().endswith(self.supported_filetypes):
+                    self.original_filepath = file_path
+                    if filename.lower().endswith('.gif'):
+                        if not self.batch_thread:
+                            self.batch_upscale_cancel_message(count)
+                            break
+                        self._upscale_gif(file_path, batch_mode=True, output_path=output_path)
+                    else:
+                        if not self.batch_thread:
+                            self.batch_upscale_cancel_message(count)
+                            break
+                        self.upscale_image(batch_mode=True, output_path=output_path)
+                    count += 1
+                    elapsed_time = time.time() - start_time
+                    avg_time_per_image = elapsed_time / count
+                    remaining_images = self.total_images - count
+                    eta = avg_time_per_image * remaining_images
+                    self.top.update()
+                    self.top.update_idletasks()
+                    if not self.batch_thread:
+                        self.batch_upscale_cancel_message(count)
+                        break
+                    self.label_timer.config(text=f"Timer: {time.strftime('%H:%M:%S', time.gmtime(elapsed_time))}")
+                    if not self.batch_thread:
+                        self.batch_upscale_cancel_message(count)
+                        break
+                    self.label_timer_eta.config(text=f"ETA: {time.strftime('%H:%M:%S', time.gmtime(eta))}")
+                    if not self.batch_thread:
+                        self.batch_upscale_cancel_message(count)
+                        break
+                    self.label_number_of_images.config(text=f"{count} of {self.total_images}")
+            self.update_progress(100)
+            if self.batch_thread:
+                messagebox.showinfo("Success", f"Successfully upscaled {count} images!")
+        except Exception as e:
+            messagebox.showerror("Error: _batch_upscale()", f"An error occurred during batch upscaling.\n\n{e}")
+        finally:
+            self.close_window()
 
 
     def _upscale_gif(self, gif_path, batch_mode=None, output_path=None):
@@ -328,7 +404,7 @@ class Upscale:
             print(f"Error: {e}")
             return
         except Exception as e:
-            messagebox.showerror("Error", f"An error occurred.\n\n{e}")
+            messagebox.showerror("Error: _upscale_gif()", f"An error occurred.\n\n{e}")
             self.close_window()
 
     def upscale_image(self, batch_mode=False, output_path=None):
@@ -365,7 +441,7 @@ class Upscale:
                 if result:
                    os.startfile(output_image_path)
         except (Exception) as e:
-            messagebox.showerror("Error", f"An error occurred.\n\n{e}")
+            messagebox.showerror("Error: upscale_image()", f"An error occurred.\n\n{e}")
             self.close_window()
 
 
@@ -470,7 +546,7 @@ class Upscale:
                     self.total_gif_frames = None
                     self.current_gif_frame = None
         except Exception as e:
-            messagebox.showerror("Error", f"Unexpected error while opening image.\n\n{e}")
+            messagebox.showerror("Error: get_image_info()", f"Unexpected error while opening image.\n\n{e}")
             self.close_window()
 
 
@@ -512,6 +588,17 @@ class Upscale:
             "label_upscale_factor_value",
             "label_upscale_strength_percent"
         ]
+        if self.batch_mode:
+            widget_names.extend([
+                "label_batch_upscale_path",
+                "entry_batch_upscale_path",
+                "button_browse_batch_input",
+                "button_open_batch_input",
+                "label_batch_output_path",
+                "entry_batch_output_path",
+                "browse_batch_output_button",
+                "open_batch_output_button"
+            ])
         for widget_name in widget_names:
             widget = getattr(self, widget_name, None)
             if widget is not None:
@@ -545,9 +632,11 @@ class Upscale:
             return
 
 
-    def choose_directory(self, path_variable):
-        directory = askdirectory()
-        path_variable.set(directory)
+    def choose_directory(self, entry_path_var, tooltip):
+        directory = os.path.normpath(askdirectory())
+        if directory:
+            entry_path_var.set(directory)
+            tooltip.config(text=directory)
 
 
     def open_directory(self, directory):
@@ -558,6 +647,7 @@ class Upscale:
 
 
     def close_window(self, index=None, event=None):
+        self.batch_thread = False
         self.is_window_closed = True
         self.delete_temp_dir()
         if index:
@@ -577,7 +667,8 @@ v1.05 changes:
 
 
   - New:
-    -
+    - Batch Upscale: Added a label to display the number of images upscaled and the total number of images.
+    - Batch Upscale: Added a timer and ETA label to show the total time taken and the estimated time remaining.
 
 <br>
 
@@ -590,7 +681,7 @@ v1.05 changes:
 
 
   - Other changes:
-    -
+    - Batch Upscale: Entry path ToolTips are now updated when the path is changed.
 
 
 '''

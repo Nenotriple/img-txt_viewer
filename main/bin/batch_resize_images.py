@@ -27,6 +27,7 @@ import sys
 import time
 import ctypes
 import argparse
+import threading
 import tkinter as tk
 from tkinter import ttk, Toplevel, filedialog, messagebox, TclError
 from tkinter.scrolledtext import ScrolledText
@@ -175,8 +176,8 @@ class ResizeImages(tk.Frame):
 
             # Overwrite files
         self.overwrite_files_var = tk.IntVar(value=0)
-        self.use_output_folder_checkbutton = tk.Checkbutton(self.frame_checkbuttons, overrelief="groove", text="Overwrite Output", variable=self.overwrite_files_var)
-        self.use_output_folder_checkbutton.pack(side="left", fill="x", padx=2, pady=2)
+        self.overwrite_files_checkbutton = tk.Checkbutton(self.frame_checkbuttons, overrelief="groove", text="Overwrite Output", variable=self.overwrite_files_var)
+        self.overwrite_files_checkbutton.pack(side="left", fill="x", padx=2, pady=2)
 
             # Save Chunk Info
         self.save_png_info_var = tk.BooleanVar(value=False)
@@ -296,6 +297,37 @@ class ResizeImages(tk.Frame):
 #endregion
 ################################################################################################################################################
 #region -  Misc
+
+
+    def toggle_widgets(self, state):
+            if state == "disabled":
+                self.select_button.config(state=state)
+                #self.open_button.config(state=state)
+                self.entry_directory.config(state=state)
+                self.resize_mode.config(state=state)
+                self.resize_condition.config(state=state)
+                self.filetype.config(state=state)
+                self.width_entry.config(state=state)
+                self.height_entry.config(state=state)
+                self.quality_scale.config(state=state)
+                self.use_output_folder_checkbutton.config(state=state)
+                self.overwrite_files_checkbutton.config(state=state)
+                self.save_png_info_checkbutton.config(state=state)
+                self.button_resize.config(state=state)
+                self.button_help.config(state=state)
+            else:
+                self.select_button.config(state=state)
+                #self.open_button.config(state=state)
+                self.entry_directory.config(state=state)
+                self.resize_mode.config(state="readonly")
+                self.filetype.config(state="readonly")
+                self.update_entries()
+                self.update_quality_widgets()
+                self.use_output_folder_checkbutton.config(state=state)
+                self.overwrite_files_checkbutton.config(state=state)
+                self.save_png_info_checkbutton.config(state=state)
+                self.button_resize.config(state=state)
+                self.button_help.config(state=state)
 
 
     def update_quality_widgets(self, *args):
@@ -575,14 +607,18 @@ class ResizeImages(tk.Frame):
 
 
     def _resize(self):
+        thread = threading.Thread(target=self.resize_thread)
+        thread.start()
+
+    def resize_thread(self):
         self.percent_complete.set(0)
         self.stop = False
         self.files_processed = 0
         start_time = time.time()
         if self.folder_path is not None:
             if not self.stop:
+                self.toggle_widgets(state="disabled")
                 self.button_cancel.config(state="normal")
-                self.button_resize.config(state="disabled")
             try:
                 resize_mode, width, height = self.get_entry_values()
                 image_files = [file for file in os.listdir(self.folder_path) if file.endswith(self.supported_filetypes)]
@@ -626,6 +662,7 @@ class ResizeImages(tk.Frame):
                 print(f"Error in resize function: {str(e)}")
             finally:
                 self.button_resize.config(state="normal")
+                self.toggle_widgets(state="normal")
 
 
     def save_image(self, img, output_folder_path, filename, total_images):
@@ -784,7 +821,7 @@ def check_path():
 
 def setup_root():
     root = tk.Tk()
-    root.title("v1.07 - Batch Resize Images --- github.com/Nenotriple")
+    root.title("v1.07 - Batch Resize Images")
     root.geometry("480x250")
     root.resizable(False, False)
     root.update_idletasks()

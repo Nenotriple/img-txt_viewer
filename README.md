@@ -23,7 +23,7 @@
 
 > [!NOTE]
 > - Prepare Your Files:
->    - If you choose to include a text pair for an image, ensure they share the same basenames.
+>    - If you choose to include a text pair for an image, ensure they share the same basename.
 >      - For example: `01.png, 01.txt`, `02.jpg, 02.txt`, etc.
 >  - Supported image types: `.png` `.jpg` `.jpeg` `.jfif` `.jpg_large` `.webp` `.bmp` `.gif`
 
@@ -111,7 +111,7 @@ By default, text files are loaded from the chosen path. To load text files from 
    - Text is cleaned when saved, so you can ignore typos such as duplicate tokens, multiple spaces or commas, missing spaces, and more.
    - `Clean text on save` Can be disabled from the options menu.
 
-_<sup>[1]</sup>These are stand alone tools and/or not availiable in the Lite version._
+_<sup>[1]</sup>These are stand alone tools and/or not available in the Lite version._
 
 Please see the [✨Tools](https://github.com/Nenotriple/img-txt_viewer/wiki/Tools) section of the wiki for a more comprehensive breakdown of the various features.
 
@@ -122,7 +122,7 @@ Please see the [✨Tools](https://github.com/Nenotriple/img-txt_viewer/wiki/Tool
 
 <details>
   <summary>Python requirements...</summary>
-  
+
 **Python 3.10+**
 
 You will need `Pillow` and `NumPy`:
