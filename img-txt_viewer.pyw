@@ -1,11 +1,8 @@
 """
 ########################################
-#                                      #
 #            IMG-TXT VIEWER            #
-#                                      #
 #   Version : v1.96                    #
 #   Author  : github.com/Nenotriple    #
-#                                      #
 ########################################
 
 Description:
@@ -46,7 +43,7 @@ from tkinter import ttk, Tk, Toplevel, messagebox, filedialog, simpledialog, Str
 from tkinter.filedialog import askdirectory
 from tkinter.scrolledtext import ScrolledText
 
-from PIL import Image, ImageTk, ImageSequence, ImageOps, ImageEnhance, UnidentifiedImageError
+from PIL import Image, ImageTk, ImageSequence, ImageOps, ImageEnhance, ImageFilter, UnidentifiedImageError
 
 from main.scripts import crop_image, batch_crop_images, resize_image, image_grid
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
@@ -374,7 +371,9 @@ class ImgTxtViewer:
 
         # Edit Panel
         self.edit_panel_visible = BooleanVar(value=False)
-        self.edit_image_slider_values = {"Brightness": 0, "Contrast": 0, "Saturation": 0, "Sharpen": 0}
+        self.edit_image_slider_values = {"Brightness": 0, "Contrast": 0, "Saturation": 0, "Sharpness": 0, "AutoContrast": 0, "Highlights": 0, "Shadows": 0}
+        self.is_reverted = False  # Track if edits are currently reverted
+        self.last_edit_values = {}  # Store the last non-zero edits
         self.cumulative_edit = BooleanVar(value=False)
 
         # Image Quality
@@ -586,6 +585,7 @@ class ImgTxtViewer:
         self.toolsMenu.add_command(label="Open Current Directory...", underline=13, command=self.open_image_directory)
         self.toolsMenu.add_command(label="Open Current Image...", underline=13, command=self.open_image)
         self.toolsMenu.add_command(label="Edit Image...", underline=6, accelerator="F4", command=self.open_image_in_editor)
+        self.toolsMenu.add_command(label="Open With...", underline=5, command=self.open_with_dialog)
         self.toolsMenu.add_separator()
         self.toolsMenu.add_command(label="Next Empty Text File", accelerator="Ctrl+E", command=self.index_goto_next_empty)
         self.toolsMenu.add_command(label="Open Image-Grid...", accelerator="F2", underline=11, command=self.open_image_grid)
@@ -632,7 +632,7 @@ class ImgTxtViewer:
         self.thumbnail_panel.bind("<MouseWheel>", self.mouse_scroll)
 
         # Image Control Panel
-        self.image_control_panel = Frame(self.master_image_frame, relief="groove", bd=1)
+        self.image_control_panel = Frame(self.master_image_frame, relief="ridge", bd=1)
         #self.image_control_panel.grid(row=2, column=0, padx=5, pady=5, sticky="ew")
 
         # Configure grid weights so that the image preview expands as needed
@@ -1191,6 +1191,7 @@ class ImgTxtViewer:
         self.imageContext_menu.add_command(label="Open Current Image...", command=self.open_image)
         self.imageContext_menu.add_command(label="Open Image-Grid...", accelerator="F2", command=self.open_image_grid)
         self.imageContext_menu.add_command(label="Edit Image...", accelerator="F4", command=self.open_image_in_editor)
+        self.imageContext_menu.add_command(label="Open With...", command=self.open_with_dialog)
         self.imageContext_menu.add_separator()
         # File
         self.imageContext_menu.add_command(label="Duplicate img-txt pair", command=self.duplicate_pair)
@@ -1678,42 +1679,109 @@ class ImgTxtViewer:
 
     def toggle_edit_panel(self):
         if not self.edit_panel_visible.get():
-            self.image_control_panel.grid_remove()
+            if hasattr(self, 'image_control_panel') and self.image_control_panel.winfo_exists():
+                self.image_control_panel.grid_remove()
+            if hasattr(self, 'highlights_spinbox_frame') and self.highlights_spinbox_frame.winfo_exists():
+                self.highlights_spinbox_frame.grid_remove()
+            if hasattr(self, 'shadows_spinbox_frame') and self.shadows_spinbox_frame.winfo_exists():
+                self.shadows_spinbox_frame.grid_remove()
         else:
             self.image_control_panel.grid(row=2, column=0, padx=5, pady=5, sticky="ew")
             self.create_edit_panel_widgets()
+        self.refresh_image()
 
 
     def create_edit_panel_widgets(self):
-        self.edit_combobox = ttk.Combobox(self.image_control_panel, values=["Brightness", "Contrast", "Saturation", "Sharpen"], width=10, state="readonly")
+        # Edit Mode Combobox
+        self.edit_combobox = ttk.Combobox(self.image_control_panel, values=["Brightness", "Contrast", "Saturation", "Sharpness", "AutoContrast", "Highlights", "Shadows"], width=12, state="readonly")
         self.edit_combobox.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
         self.edit_combobox.set("Brightness")
         self.edit_combobox.bind("<<ComboboxSelected>>", self.update_slider_value)
 
+        # Edit Slider
         self.edit_slider = ttk.Scale(self.image_control_panel, from_=-100, to=100, orient="horizontal", command=self.update_edit_value)
         self.edit_slider.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.edit_slider.bind("<MouseWheel>", self.adjust_slider_with_mouse_wheel)
         self.image_control_panel.columnconfigure(1, weight=1)
 
+        # Edit Value Label
         self.edit_value_label = Label(self.image_control_panel, text="0", width=3)
         self.edit_value_label.grid(row=0, column=2, padx=5, pady=5, sticky="ew")
 
+        # Cumulative Edit Checkbutton
         self.cumulative_edit_checkbutton = Checkbutton(self.image_control_panel, variable=self.cumulative_edit, overrelief="groove", command=self.apply_image_edit)
         self.cumulative_edit_checkbutton.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
-        ToolTip.create(self.cumulative_edit_checkbutton, "If enabled, all edits will be done cumulatively, otherwise only the selected option will be used.", 50, 6, 12, wraplength=200)
+        ToolTip.create(self.cumulative_edit_checkbutton, "If enabled, all edits will be done cumulatively; otherwise, only the selected option will be used.", 25, 6, 12, wraplength=200)
 
-        self.edit_revert_image_button = Button(self.image_control_panel, text="Revert", overrelief="groove", width=5, command=self.revert_image_edit)
+        # Revert Button
+        self.edit_revert_image_button = Button(self.image_control_panel, text="Revert", overrelief="groove", width=6, command=self.revert_image_edit)
         self.edit_revert_image_button.grid(row=0, column=4, padx=5, pady=5, sticky="ew")
-        ToolTip.create(self.edit_revert_image_button, "Cancel changes and refresh the displayed image", 500, 6, 12)
+        self.edit_revert_image_button.bind("<Button-3>", self._reset_edit)
+        ToolTip.create(self.edit_revert_image_button, "Cancel changes and refresh the displayed image.\nRight-Click to reset the edit panel.", 500, 6, 12)
 
-        self.edit_save_image_button = Button(self.image_control_panel, text="Save", overrelief="groove", width=5, command=self.save_image_edit)
+        # Save Button
+        self.edit_save_image_button = Button(self.image_control_panel, text="Save", overrelief="groove", width=6, command=self.save_image_edit)
         self.edit_save_image_button.grid(row=0, column=5, padx=5, pady=5, sticky="ew")
         ToolTip.create(self.edit_save_image_button, "Save the current changes.\nOptionally overwrite the current image.", 500, 6, 12)
+
+        # Spinbox Frame - Highlights
+        self.highlights_spinbox_frame = ttk.Frame(self.image_control_panel)
+        self.highlights_spinbox_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+
+        # Threshold
+        self.highlights_threshold_label = ttk.Label(self.highlights_spinbox_frame, text="Threshold:")
+        self.highlights_threshold_spinbox = ttk.Spinbox(self.highlights_spinbox_frame, from_=0, to=255, width=5, command=self.apply_image_edit)
+        self.highlights_threshold_spinbox.set(127)
+        self.highlights_threshold_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.highlights_threshold_spinbox.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.highlights_threshold_spinbox.bind("<KeyRelease>", self.apply_image_edit)
+
+        # Blur Radius
+        self.highlights_blur_radius_label = ttk.Label(self.highlights_spinbox_frame, text="Blur Radius:")
+        self.highlights_blur_radius_spinbox = ttk.Spinbox(self.highlights_spinbox_frame, from_=0, to=100, width=5, command=self.apply_image_edit)
+        self.highlights_blur_radius_spinbox.set(30)
+        self.highlights_blur_radius_label.grid(row=0, column=2, padx=5, pady=5, sticky="w")
+        self.highlights_blur_radius_spinbox.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
+        self.highlights_blur_radius_spinbox.bind("<KeyRelease>", self.apply_image_edit)
+
+        # Spinbox Frame - Shadows
+        self.shadows_spinbox_frame = ttk.Frame(self.image_control_panel)
+        self.shadows_spinbox_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+
+        # Threshold
+        self.shadows_threshold_label = ttk.Label(self.shadows_spinbox_frame, text="Threshold:")
+        self.shadows_threshold_spinbox = ttk.Spinbox(self.shadows_spinbox_frame, from_=0, to=255, width=5, command=self.apply_image_edit)
+        self.shadows_threshold_spinbox.set(48)
+        self.shadows_threshold_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.shadows_threshold_spinbox.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.shadows_threshold_spinbox.bind("<KeyRelease>", self.apply_image_edit)
+
+        # Blur Radius
+        self.shadows_blur_radius_label = ttk.Label(self.shadows_spinbox_frame, text="Blur Radius:")
+        self.shadows_blur_radius_spinbox = ttk.Spinbox(self.shadows_spinbox_frame, from_=0, to=100, width=5, command=self.apply_image_edit)
+        self.shadows_blur_radius_spinbox.set(4)
+        self.shadows_blur_radius_label.grid(row=0, column=2, padx=5, pady=5, sticky="w")
+        self.shadows_blur_radius_spinbox.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
+        self.shadows_blur_radius_spinbox.bind("<KeyRelease>", self.apply_image_edit)
+
+        # Hide the spinbox frame
+        self.highlights_spinbox_frame.grid_remove()
+        self.shadows_spinbox_frame.grid_remove()
 
 
     def update_slider_value(self, event):
         current_option = self.edit_combobox.get()
         self.edit_slider.set(self.edit_image_slider_values[current_option])
         self.edit_value_label.config(text=str(self.edit_image_slider_values[current_option]))
+        if current_option == "Highlights":
+            self.shadows_spinbox_frame.grid_remove()
+            self.highlights_spinbox_frame.grid()
+        elif current_option == "Shadows":
+            self.highlights_spinbox_frame.grid_remove()
+            self.shadows_spinbox_frame.grid()
+        else:
+            self.highlights_spinbox_frame.grid_remove()
+            self.shadows_spinbox_frame.grid_remove()
 
 
     def update_edit_value(self, value):
@@ -1724,13 +1792,28 @@ class ImgTxtViewer:
         self.apply_image_edit()
 
 
-    def apply_image_edit(self):
+    def adjust_slider_with_mouse_wheel(self, event):
+        current_value = self.edit_slider.get()
+        new_value = current_value + (event.delta / 120) * (self.edit_slider.cget('to') - self.edit_slider.cget('from')) / 100
+        self.edit_slider.set(new_value)
+        self.update_edit_value(new_value)
+
+
+    def apply_image_edit(self, event=None):
+        if hasattr(self, 'apply_image_edit_id'):
+            self.master.after_cancel(self.apply_image_edit_id)
+        self.apply_image_edit_id = self.master.after(50, self._apply_image_edit)
+
+    def _apply_image_edit(self):
         self.current_image = self.original_image.copy()
         adjustment_methods = {
             "Brightness": self.adjust_brightness,
             "Contrast": self.adjust_contrast,
             "Saturation": self.adjust_saturation,
-            "Sharpen": self.adjust_sharpen
+            "Sharpness": self.adjust_sharpness,
+            "AutoContrast": self.adjust_autocontrast,
+            "Highlights": self.adjust_highlights,
+            "Shadows": self.adjust_shadows
         }
 
         if self.cumulative_edit.get():
@@ -1743,6 +1826,7 @@ class ImgTxtViewer:
             if option in adjustment_methods:
                 adjustment_methods[option](value, image_type="display")
         self.update_edited_image()
+
 
 
     def edit_image(self, value, enhancer_class, image_type="display", image=None):
@@ -1768,8 +1852,61 @@ class ImgTxtViewer:
         return self.edit_image(value, ImageEnhance.Color, image_type=image_type, image=image)
 
 
-    def adjust_sharpen(self, value, image_type="display", image=None):
+    def adjust_sharpness(self, value, image_type="display", image=None):
         return self.edit_image(value, ImageEnhance.Sharpness, image_type=image_type, image=image)
+
+
+    def adjust_autocontrast(self, value=None, image_type="display", image=None):
+        if value is not None and value <= 0:
+            return image
+        iterations = max(1, (value - 1) // 20)
+        if image_type == "display":
+            for i in range(iterations):
+                self.current_image = ImageOps.autocontrast(self.current_image)
+                if value > 20:
+                    enhancer = ImageEnhance.Contrast(self.current_image)
+                    self.current_image = enhancer.enhance(1.025)
+        elif image_type == "original" and image:
+            for i in range(iterations):
+                image = ImageOps.autocontrast(image)
+                if value > 20:
+                    enhancer = ImageEnhance.Contrast(image)
+                    image = enhancer.enhance(1.025)
+            return image
+        return image
+
+
+    def adjust_highlights(self, value, image_type="display", image=None):
+        old_min, old_max = -100, 100
+        new_min, new_max = -30, 30
+        value = ((value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
+        factor = (value + 100) / 100.0
+        threshold = int(self.highlights_threshold_spinbox.get())
+        blur_radius = int(self.highlights_blur_radius_spinbox.get())
+        if image_type == "display":
+            mask = self.current_image.convert("L").point(lambda p: p < threshold and 255)
+            blurred_mask = mask.filter(ImageFilter.GaussianBlur(radius=blur_radius))
+            self.current_image = Image.composite(self.current_image, ImageEnhance.Brightness(self.current_image).enhance(factor), blurred_mask)
+        elif image_type == "original" and image:
+            mask = image.convert("L").point(lambda p: p < threshold and 255)
+            blurred_mask = mask.filter(ImageFilter.GaussianBlur(radius=blur_radius))
+            return Image.composite(image, ImageEnhance.Brightness(image).enhance(factor), blurred_mask)
+        return image
+
+
+    def adjust_shadows(self, value, image_type="display", image=None):
+        factor = (value + 100) / 100.0
+        threshold = int(self.shadows_threshold_spinbox.get())
+        blur_radius = int(self.shadows_blur_radius_spinbox.get())
+        if image_type == "display":
+            mask = self.current_image.convert("L").point(lambda p: p >= threshold and 255)
+            blurred_mask = mask.filter(ImageFilter.GaussianBlur(radius=blur_radius))
+            self.current_image = Image.composite(self.current_image, ImageEnhance.Brightness(self.current_image).enhance(factor), blurred_mask)
+        elif image_type == "original" and image:
+            mask = image.convert("L").point(lambda p: p >= threshold and 255)
+            blurred_mask = mask.filter(ImageFilter.GaussianBlur(radius=blur_radius))
+            return Image.composite(image, ImageEnhance.Brightness(image).enhance(factor), blurred_mask)
+        return image
 
 
     def update_edited_image(self):
@@ -1782,13 +1919,21 @@ class ImgTxtViewer:
 
 
     def save_image_edit(self):
+        if all(value == 0 for value in self.edit_image_slider_values.values()):
+            messagebox.showinfo("No Changes", "No changes to save.")
+            return
+        if not messagebox.askyesno("Save Image", "Do you want to save the edited image?"):
+            return
         original_filepath = self.image_files[self.current_index]
         with Image.open(original_filepath) as original_image:
             adjustment_methods = {
                 "Brightness": self.adjust_brightness,
                 "Contrast": self.adjust_contrast,
                 "Saturation": self.adjust_saturation,
-                "Sharpen": self.adjust_sharpen
+                "Sharpness": self.adjust_sharpness,
+                "AutoContrast": self.adjust_autocontrast,
+                "Highlights": self.adjust_highlights,
+                "Shadows": self.adjust_shadows
             }
             if self.cumulative_edit.get():
                 for option, value in self.edit_image_slider_values.items():
@@ -1809,11 +1954,40 @@ class ImgTxtViewer:
 
 
     def revert_image_edit(self):
-        self.refresh_image()
-        for option in self.edit_image_slider_values:
-            self.edit_image_slider_values[option] = 0
-        self.edit_slider.set(0)
-        self.edit_value_label.config(text="0")
+        if self.is_reverted:
+            self.edit_revert_image_button.config(text="Revert", overrelief="groove")
+            self.edit_image_slider_values.update(self.last_edit_values)
+            for option, value in self.edit_image_slider_values.items():
+                if value != 0:
+                    self.edit_combobox.set(option)
+                    self.edit_slider.set(value)
+                    self.edit_value_label.config(text=str(value))
+                    self.apply_image_edit()
+            self.is_reverted = False
+        else:
+            self.edit_revert_image_button.config(text="Restore", overrelief="groove")
+            self.last_edit_values = {option: value for option, value in self.edit_image_slider_values.items() if value != 0}
+            self.refresh_image()
+            for option in self.edit_image_slider_values:
+                self.edit_image_slider_values[option] = 0
+            self.edit_slider.set(0)
+            self.edit_value_label.config(text="0")
+            self.is_reverted = True
+
+
+    def _reset_edit(self, event=None):
+            self.is_reverted = False
+            self.edit_revert_image_button.config(text="Revert", overrelief="groove")
+            for option in self.edit_image_slider_values:
+                self.edit_image_slider_values[option] = 0
+            self.last_edit_values = self.edit_image_slider_values.copy()
+            self.edit_slider.set(0)
+            self.edit_value_label.config(text="0")
+            self.highlights_threshold_spinbox.set(127)
+            self.highlights_blur_radius_spinbox.set(30)
+            self.shadows_threshold_spinbox.set(48)
+            self.shadows_blur_radius_spinbox.set(4)
+            self.refresh_image()
 
 
 #endregion
@@ -2979,8 +3153,21 @@ class ImgTxtViewer:
                 subprocess.Popen([app_path, image_path])
         except FileNotFoundError:
             messagebox.showerror("Error", f"The specified image editor was not found:\n\n{app_path}")
+        except PermissionError as e:
+            messagebox.showerror("Error", f"Permission denied: {e}")
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred while opening the image in the editor:\n\n{e}")
+
+
+    def open_with_dialog(self):
+        try:
+            if self.image_files:
+                image_path = self.image_files[self.current_index]
+                subprocess.run(['rundll32', 'shell32.dll,OpenAs_RunDLL', image_path])
+        except PermissionError as e:
+            messagebox.showerror("Error", f"Permission denied: {e}")
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred while opening the file:\n\n{e}")
 
 
     def set_external_image_editor_path(self):
@@ -3368,6 +3555,7 @@ class ImgTxtViewer:
 
     def open_about_window(self):
         self.about_window_open = AboutWindow(self.master)
+        self.about_window_open.iconphoto(False, self.blank_image)
         self.about_window_open.protocol("WM_DELETE_WINDOW", self.close_about_window)
         main_window_width = root.winfo_width()
         main_window_height = root.winfo_height()
@@ -3439,6 +3627,86 @@ class ImgTxtViewer:
         else:
             text = ','.join(text)
         return text
+
+
+#endregion
+################################################################################################################################################
+#region - User Setup
+
+
+    def prompt_first_time_setup(self):
+        dict_var = StringVar(value="English Dictionary")
+        last_word_match_var = StringVar(value="Match Last Word")
+        match_modes = {"Match Whole String": False, "Match Last Word": True}
+        dictionaries = ["English Dictionary", "Danbooru", "e621", "Derpibooru"]
+
+        def save_and_continue(close=False, back=False):
+            selected_dict = dict_var.get()
+            self.csv_danbooru.set(selected_dict == "Danbooru")
+            self.csv_derpibooru.set(selected_dict == "Derpibooru")
+            self.csv_e621.set(selected_dict == "e621")
+            self.csv_english_dictionary.set(selected_dict == "English Dictionary")
+            self.last_word_match_var.set(match_modes.get(last_word_match_var.get(), False))
+            if close:
+                save_and_close()
+            elif back:
+                clear_widgets()
+                create_dictionary_selection_widgets()
+                setup_window.geometry("400x200")
+            else:
+                self.save_settings()
+                clear_widgets()
+                setup_last_word_match_frame()
+                setup_window.geometry("400x250")
+
+        def clear_widgets():
+            for widget in setup_window.winfo_children():
+                widget.destroy()
+
+        def setup_last_word_match_frame():
+            options = [
+                ("Match only the last word", "Matches only the last word typed.\nExample: Typing 'blue sky' matches 'sky'.", "Match Last Word"),
+                ("Match entire tag", "Matches the entire tag, including multiple words.\nExample: Typing 'blue sky' matches 'blue sky'.", "Match Whole String")
+            ]
+            Label(setup_window, text="Select tag matching method").pack(pady=5)
+            ttk.Separator(setup_window, orient="horizontal").pack(fill="x", padx=5, pady=5)
+            for text, description, value in options:
+                ttk.Radiobutton(setup_window, text=text, variable=last_word_match_var, value=value).pack(pady=5)
+                Label(setup_window, text=description).pack(pady=5)
+            ttk.Separator(setup_window, orient="horizontal").pack(fill="x", padx=5, pady=5)
+            Button(setup_window, text="Back", overrelief="groove", width=10, command=lambda: save_and_continue(back=True)).pack(side="left", anchor="w", pady=5, padx=10)
+            Button(setup_window, text="Done", overrelief="groove", width=10, command=lambda: save_and_continue(close=True)).pack(side="right", anchor="e", pady=5, padx=10)
+
+        def save_and_close():
+            self.save_settings()
+            setup_window.destroy()
+
+        def create_setup_window():
+            setup_window = Toplevel(self.master)
+            setup_window.title("First Time Setup")
+            setup_window.iconphoto(False, self.blank_image)
+            window_width, window_height = 400, 200
+            position_right = root.winfo_screenwidth() // 2 - window_width // 2
+            position_top = root.winfo_screenheight() // 2 - window_height // 2
+            setup_window.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
+            setup_window.resizable(False, False)
+            setup_window.grab_set()
+            setup_window.protocol("WM_DELETE_WINDOW", save_and_close)
+            return setup_window
+
+        def create_dictionary_selection_widgets():
+            Label(setup_window, text="Please pick your preferred autocomplete dictionary").pack(pady=5)
+            ttk.Separator(setup_window, orient="horizontal").pack(fill="x", padx=5, pady=5)
+            frame = Frame(setup_window)
+            frame.pack(padx=5, pady=5)
+            for i, dictionary in enumerate(dictionaries):
+                ttk.Radiobutton(frame, text=dictionary, variable=dict_var, value=dictionary).grid(row=i // 2, column=i % 2, padx=5, pady=5)
+            ttk.Separator(setup_window, orient="horizontal").pack(fill="x", padx=5, pady=5)
+            Label(setup_window, text="The autocomplete dictionary and settings can be changed at any time.").pack(pady=5)
+            Button(setup_window, text="Next", overrelief="groove", width=10, command=save_and_continue).pack(side="bottom", anchor="e", pady=5, padx=10)
+
+        setup_window = create_setup_window()
+        create_dictionary_selection_widgets()
 
 
 #endregion
@@ -3559,6 +3827,8 @@ class ImgTxtViewer:
                 self.read_config_settings()
                 if hasattr(self, 'text_box'):
                     self.show_pair()
+            else:
+                self.prompt_first_time_setup()
         except Exception as e:
             messagebox.showerror("Error: read_settings()", f"An unexpected error occurred.\n\n{e}")
 
@@ -3592,9 +3862,6 @@ class ImgTxtViewer:
 
 
     def read_window_settings(self):
-        # Retrieve the current minsize values
-        current_min_width = self.master.minsize()[0]
-        current_min_height = self.master.minsize()[1]
         # Restore the panes swap state
         self.panes_swap_ew_var.set(value=self.config.getboolean("Window", "panes_swap_ew_var", fallback=False))
         self.panes_swap_ns_var.set(value=self.config.getboolean("Window", "panes_swap_ns_var", fallback=False))
@@ -3603,16 +3870,18 @@ class ImgTxtViewer:
         self.always_on_top_var.set(value=self.config.getboolean("Window", "always_on_top_var", fallback=False))
         self.set_always_on_top()
         # Restore the window size and position
-        window_size = self.config.get("Window", "window_size", fallback=None)
-        window_position = self.config.get("Window", "window_position", fallback=None)
-        if window_size:
-            width, height = map(int, window_size.split('x'))
-            self.master.geometry(f"{width}x{height}")
-        if window_position:
-            x, y = map(int, window_position.split('+'))
-            self.master.geometry(f"+{x}+{y}")
+        #window_size = self.config.get("Window", "window_size", fallback=None)
+        #window_position = self.config.get("Window", "window_position", fallback=None)
+        #if window_size:
+        #    width, height = map(int, window_size.split('x'))
+        #    self.master.geometry(f"{width}x{height}")
+        #if window_position:
+        #    x, y = map(int, window_position.split('+'))
+        #    self.master.geometry(f"+{x}+{y}")
         # Restore the minsize values
-        self.master.minsize(current_min_width, current_min_height)
+        #current_min_width = self.master.minsize()[0]
+        #current_min_height = self.master.minsize()[1]
+        #self.master.minsize(current_min_width, current_min_height)
 
 
     def read_autocomplete_settings(self):
@@ -3638,6 +3907,7 @@ class ImgTxtViewer:
         self.auto_delete_blank_files_var.set(value=self.config.getboolean("Other", "auto_delete_blank_files", fallback=False))
         self.thumbnails_visible.set(value=self.config.getboolean("Other", "thumbnails_visible", fallback=True))
         self.edit_panel_visible.set(value=self.config.getboolean("Other", "edit_panel_visible", fallback=False))
+        self.toggle_edit_panel()
         self.image_quality_var.set(value=self.config.get("Other", "image_quality", fallback="Normal"))
         self.set_image_quality()
         self.font_var.set(value=self.config.get("Other", "font", fallback="Courier New"))
@@ -3692,7 +3962,7 @@ class ImgTxtViewer:
         self.panes_swap_ns_var.set(value=False)
         self.swap_pane_sides(swap_state=False)
         self.swap_pane_orientation(swap_state=False)
-        self.set_window_size(self.master);self.set_window_size(self.master)
+        self.set_window_size(self.master)
         # Font and text_box
         if hasattr(self, 'text_box'):
             self.font_var.set(value="Courier New")
@@ -3705,7 +3975,7 @@ class ImgTxtViewer:
         if hasattr(self, 'text_box'):
             self.text_box.delete("1.0", "end")
             self.text_box.insert("1.0", current_text)
-        if messagebox.askokcancel("Confirm Reset", "Reset 'My Tags' to default?"):
+        if messagebox.askyesno("Confirm Reset", "Reset 'My Tags' to default?"):
             with open(self.app_settings_cfg, 'w', encoding="utf-8") as cfg_file:
                 cfg_file.write("")
             self.create_custom_dictionary(reset=True)
@@ -4317,14 +4587,17 @@ root.mainloop()
 
 
   - New:
-    - New feature `Thumbnail Panel`: Displayed below the current image.
-    - New feature `Edit Image Panel`: Enabled from the options/image menu, this section allows you to edit the `Brightness`, `Contrast`, `Saturation`, and `Sharpness` of the current image.
-    - New Feature `Edit Image...`: Open the current image in an external editor, the default is MS Paint.
+    - New feature `Thumbnail Panel`: Displayed below the current image for quick navigation.
+    - New feature `Edit Image Panel`: Enabled from the options/image menu, this section allows you to edit the `Brightness`, `Contrast`, `Saturation`, `Sharpness`, `Highlights`, and `Shadows` of the current image.
+    - New feature `Edit Image...`: Open the current image in an external editor, the default is MS Paint.
       - Running `Set Default Image Editor` will open a dialog to select the executable (or `.py`, `.pyw`) path to use as the default image editor.
       - This should work with any app that accepts a file path as a launch argument. (Gimp, Krita, Photoshop, etc.)
+    - New feature `Open With`: Trigger the _Open With_ dialog to pick and choose a specific application to open the image with.
     - New tool `Create Wildcard From Captions`: Combine all image captions into a single text file, each set of image captions separated by a newline.
     - Added `Copy` command to the right-click textbox context menu.
     - Added `Last` to the index entry right-click context menu to quickly jump to the last img-txt pair.
+    - A quick guided setup will run on the app's first launch, or if the settings file is deleted.
+      - This will set the preferred autocomplete dictionaries and matching settings.
     - You can now press `CTRL+W` to close the current window.
 
 
@@ -4359,7 +4632,6 @@ root.mainloop()
     - The `Options`, and `Tools` menus have been reorganized.
     - The color mode is now displayed in the image info panel.
     - You can now close the `Crop Image` window with the `Escape` key.
-    - Windows size and position can be recalled when reloading the previous directory on startup.
 
 
 <br>
@@ -4406,6 +4678,8 @@ root.mainloop()
   - (Very Low) Both crop_image, and batch_tag_delete should be re-made from scratch with better practices in mind.
     - batch_tag_delete should be built directly into the primary UI instead of a standalone tool that opens in a new window.
     - crop_image should work directly on the currently displayed image.
+
+  - (Very Low) Create a `Danbooru (safe)` autocomplete dictionary.
 
 
 - Tofix
