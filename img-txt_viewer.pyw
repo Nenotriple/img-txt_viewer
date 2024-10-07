@@ -1783,27 +1783,27 @@ class ImgTxtViewer:
 
     def save_image_edit(self):
         original_filepath = self.image_files[self.current_index]
-        original_image = Image.open(original_filepath)
-        adjustment_methods = {
-            "Brightness": self.adjust_brightness,
-            "Contrast": self.adjust_contrast,
-            "Saturation": self.adjust_saturation,
-            "Sharpen": self.adjust_sharpen
-        }
-        if self.cumulative_edit.get():
-            for option, value in self.edit_image_slider_values.items():
+        with Image.open(original_filepath) as original_image:
+            adjustment_methods = {
+                "Brightness": self.adjust_brightness,
+                "Contrast": self.adjust_contrast,
+                "Saturation": self.adjust_saturation,
+                "Sharpen": self.adjust_sharpen
+            }
+            if self.cumulative_edit.get():
+                for option, value in self.edit_image_slider_values.items():
+                    if option in adjustment_methods:
+                        original_image = adjustment_methods[option](value, image_type="original", image=original_image)
+            else:
+                option = self.edit_combobox.get()
+                value = self.edit_image_slider_values.get(option)
                 if option in adjustment_methods:
                     original_image = adjustment_methods[option](value, image_type="original", image=original_image)
-        else:
-            option = self.edit_combobox.get()
-            value = self.edit_image_slider_values.get(option)
-            if option in adjustment_methods:
-                original_image = adjustment_methods[option](value, image_type="original", image=original_image)
-        directory, filename = os.path.split(original_filepath)
-        name, ext = os.path.splitext(filename)
-        new_filename = f"{name}_edit{ext}"
-        new_filepath = os.path.join(directory, new_filename)
-        original_image.save(new_filepath)
+            directory, filename = os.path.split(original_filepath)
+            name, ext = os.path.splitext(filename)
+            new_filename = f"{name}_edit{ext}"
+            new_filepath = os.path.join(directory, new_filename)
+            original_image.save(new_filepath)
         self.refresh_file_lists()
         messagebox.showinfo("Image Saved", f"Image saved as {new_filename}")
 
