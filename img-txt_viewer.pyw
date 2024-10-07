@@ -2577,7 +2577,9 @@ class ImgTxtViewer:
                 self.message_label.config(text="No Change", bg="#f0f0f0", fg="black")
             self.image_index_entry.delete(0, "end")
             self.image_index_entry.insert(0, index + 1)
-        except ValueError: pass
+        except ValueError:
+            self.image_index_entry.delete(0, "end")
+            self.image_index_entry.insert(0, self.current_index + 1)
 
 
     def check_image_dir(self):
