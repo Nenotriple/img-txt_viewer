@@ -246,13 +246,8 @@ class Autocomplete:
 
 class ImgTxtViewer:
     def __init__(self, master):
-
-        # Window Setup
         self.master = master
-        self.set_appid()
-        self.set_window_size(master)
-        self.set_icon()
-
+        self.application_path = self.get_app_path()
 
 # --------------------------------------
 # General Setup
@@ -292,6 +287,7 @@ class ImgTxtViewer:
         self.thumbnail_cache = {}
 
         # Blank image
+        self.icon_path = os.path.join(self.application_path, "icon.ico")
         with Image.open(self.icon_path) as img:
             self.blank_image = ImageTk.PhotoImage(img)
 
@@ -1470,17 +1466,6 @@ class ImgTxtViewer:
 ####### Misc setup ##################################################
 
 
-    def set_icon(self):
-        if getattr(sys, 'frozen', False):
-            application_path = sys._MEIPASS
-        elif __file__:
-            application_path = os.path.dirname(__file__)
-        self.icon_path = os.path.join(application_path, "icon.ico")
-        try:
-            self.master.iconbitmap(self.icon_path)
-        except TclError: pass
-
-
     def enable_menu_options(self):
         tool_commands =       [
                              "Batch Operations",
@@ -1685,6 +1670,8 @@ class ImgTxtViewer:
                 self.highlights_spinbox_frame.grid_remove()
             if hasattr(self, 'shadows_spinbox_frame') and self.shadows_spinbox_frame.winfo_exists():
                 self.shadows_spinbox_frame.grid_remove()
+            if hasattr(self, 'sharpness_spinbox_frame') and self.sharpness_spinbox_frame.winfo_exists():
+                self.sharpness_spinbox_frame.grid_remove()
         else:
             self.image_control_panel.grid(row=2, column=0, padx=5, pady=5, sticky="ew")
             self.create_edit_panel_widgets()
@@ -1764,9 +1751,22 @@ class ImgTxtViewer:
         self.shadows_blur_radius_spinbox.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
         self.shadows_blur_radius_spinbox.bind("<KeyRelease>", self.apply_image_edit)
 
+        # Spinbox Frame - Sharpness
+        self.sharpness_spinbox_frame = ttk.Frame(self.image_control_panel)
+        self.sharpness_spinbox_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+
+        # Boost
+        self.sharpness_boost_label = ttk.Label(self.sharpness_spinbox_frame, text="Boost:")
+        self.sharpness_boost_spinbox = ttk.Spinbox(self.sharpness_spinbox_frame, from_=1, to=5, width=5, command=self.apply_image_edit)
+        self.sharpness_boost_spinbox.set(1)
+        self.sharpness_boost_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.sharpness_boost_spinbox.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.sharpness_boost_spinbox.bind("<KeyRelease>", self.apply_image_edit)
+
         # Hide the spinbox frame
         self.highlights_spinbox_frame.grid_remove()
         self.shadows_spinbox_frame.grid_remove()
+        self.sharpness_spinbox_frame.grid_remove()
 
 
     def update_slider_value(self, event):
@@ -1775,13 +1775,20 @@ class ImgTxtViewer:
         self.edit_value_label.config(text=str(self.edit_image_slider_values[current_option]))
         if current_option == "Highlights":
             self.shadows_spinbox_frame.grid_remove()
+            self.sharpness_spinbox_frame.grid_remove()
             self.highlights_spinbox_frame.grid()
         elif current_option == "Shadows":
             self.highlights_spinbox_frame.grid_remove()
+            self.sharpness_spinbox_frame.grid_remove()
             self.shadows_spinbox_frame.grid()
-        else:
+        elif current_option == "Sharpness":
             self.highlights_spinbox_frame.grid_remove()
             self.shadows_spinbox_frame.grid_remove()
+            self.sharpness_spinbox_frame.grid()
+        else:
+            self.shadows_spinbox_frame.grid_remove()
+            self.highlights_spinbox_frame.grid_remove()
+            self.sharpness_spinbox_frame.grid_remove()
 
 
     def update_edit_value(self, value):
@@ -1852,11 +1859,15 @@ class ImgTxtViewer:
         return self.edit_image(value, ImageEnhance.Color, image_type=image_type, image=image)
 
 
-    def adjust_sharpness(self, value, image_type="display", image=None):
-        return self.edit_image(value, ImageEnhance.Sharpness, image_type=image_type, image=image)
+    def adjust_sharpness(self, value, image_type="display", image=None, boost=None):
+        if boost is None:
+            boost = int(self.sharpness_boost_spinbox.get())
+        for _ in range(boost):
+            image = self.edit_image(value, ImageEnhance.Sharpness, image_type=image_type, image=image)
+        return image
 
 
-    def adjust_autocontrast(self, value=None, image_type="display", image=None):
+    def adjust_autocontrast(self, value=None, image_type="display", image=None): # Could include the 'preserve_tone' parameter
         if value is not None and value <= 0:
             return image
         iterations = max(1, (value - 1) // 20)
@@ -1987,6 +1998,7 @@ class ImgTxtViewer:
             self.highlights_blur_radius_spinbox.set(30)
             self.shadows_threshold_spinbox.set(48)
             self.shadows_blur_radius_spinbox.set(4)
+            self.sharpness_boost_spinbox.set(1)
             self.refresh_image()
 
 
@@ -3842,7 +3854,7 @@ class ImgTxtViewer:
     def read_config_settings(self):
         if not self.read_directory_settings():
             return
-        self.read_window_settings()
+        #self.read_window_settings()
         self.read_autocomplete_settings()
         self.read_other_settings()
 
@@ -4563,13 +4575,39 @@ class ImgTxtViewer:
         root.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
 
 
+    def set_icon(self):
+        self.icon_path = os.path.join(self.application_path, "icon.ico")
+        try:
+            self.master.iconbitmap(self.icon_path)
+        except TclError: pass
+
+
+    def get_app_path(self):
+        if getattr(sys, 'frozen', False):
+            return sys._MEIPASS
+        elif __file__:
+            return os.path.dirname(__file__)
+        return ""
+
+# --------------------------------------
+# Mainloop and settings
+# --------------------------------------
 root = Tk()
 app = ImgTxtViewer(root)
+
+# Setup the main window
+app.set_appid()
+app.set_icon()
+app.set_window_size(root)
 app.set_always_on_top()
 root.attributes('-topmost', 0)
 root.protocol("WM_DELETE_WINDOW", app.on_closing)
 root.title(f"{VERSION} - img-txt Viewer")
+
+# Load user settings
 app.read_settings()
+
+# Start the mainloop
 root.mainloop()
 
 

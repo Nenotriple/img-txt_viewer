@@ -1,13 +1,9 @@
 """
 
-
 ########################################
-#                                      #
 #           Tkinter ToolTips           #
-#                                      #
 #   Version : v1.06                    #
 #   Author  : github.com/Nenotriple    #
-#                                      #
 ########################################
 
 
@@ -23,7 +19,6 @@ A) Directly create a tooltip:
 B) Create and store a tooltip for later configuration:
    tooltip = TkToolTip.create(widget, text="example")
    tooltip.config(text="Example!")
-
 
 """
 
