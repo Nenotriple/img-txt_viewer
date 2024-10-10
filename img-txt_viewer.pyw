@@ -39,13 +39,13 @@ import configparser
 from collections import defaultdict, Counter
 
 import tkinter.font
-from tkinter import ttk, Tk, Toplevel, messagebox, filedialog, simpledialog, StringVar, BooleanVar, IntVar, Menu, PanedWindow, Frame, Label, Button, Entry, Checkbutton, Text, Event, TclError
+from tkinter import ttk, Tk, Toplevel, messagebox, filedialog, simpledialog, StringVar, BooleanVar, IntVar, Menu, PanedWindow, Frame, Label, Button, Entry, Checkbutton, Text, Listbox, Scrollbar, Event, TclError
 from tkinter.filedialog import askdirectory
 from tkinter.scrolledtext import ScrolledText
 
 from PIL import Image, ImageTk, ImageSequence, ImageOps, ImageEnhance, ImageFilter, UnidentifiedImageError
 
-from main.scripts import crop_image, batch_crop_images, resize_image, image_grid
+from main.scripts import crop_image, batch_crop_images, resize_image, image_grid, TagEditor
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
 from main.scripts.TkToolTip import TkToolTip as ToolTip
 from main.bin import upscale_image
@@ -89,7 +89,7 @@ class AboutWindow(Toplevel):
         " ⦁Filter: Filter pairs based on matching text, blank or missing txt files, and more. Can also be used in relation with: S&R, Prefix, and Append. \n"
         " ⦁Highlight: Always highlight certain text.\n"
         " ⦁My Tags: Quickly add you own tags to be used as autocomplete suggestions.\n"
-        " ⦁Batch Tag Delete: View all tags in a directory as a list, and quickly delete them.\n"
+        " ⦁Batch Tag Edit: View all tags in a directory as a list, and quickly delete or edit them.\n"
         " ⦁Cleanup Text: Fix typos in all text files of the selected folder, such as duplicate tags, multiple spaces or commas, missing spaces, and more.\n",
 
         # Other Tools
@@ -241,6 +241,494 @@ class Autocomplete:
 
 #endregion
 ################################################################################################################################################
+#region - CLASS: BatchTagEdit
+
+
+class BatchTagEdit:
+    def __init__(self, master, text_files, menu):
+        self.master = master
+        self.text_files = text_files
+        self.menu = menu
+        self.batch_tag_edit_frame = None
+
+        self.tag_counts = 0
+        self.total_unique_tags = 0
+        self.visible_tags = 0
+        self.selected_tags = 0
+        self.pending_delete = 0
+        self.pending_edit = 0
+
+        self.setup_window()
+
+
+#endregion
+################################################################################################################################################
+#region -   Setup - UI
+
+    def setup_window(self):
+        self.master.minsize(750, 250) # Width x Height
+        self.master.title(f"{VERSION} - img-txt Viewer - Batch Tag Edit")
+        tag_dict = self.analyze_tags()
+        self.tag_counts, self.total_unique_tags = self.count_file_tags(tag_dict)
+        self.master.bind('<F5>', self.close_batch_tag_edit)
+        self.menu.entryconfig("Batch Tag Edit...", command=self.close_batch_tag_edit)
+        self.original_tags = []
+        self.create_ui()
+        self.sort_tags(self.tag_counts.items(), "Occurrence", False)
+
+
+    def create_ui(self):
+        self.setup_primary_frame()
+        self.setup_top_frame()
+        self.setup_listbox_frame()
+        self.setup_listbox_context_menu()
+        self.setup_option_frame()
+
+
+    def setup_primary_frame(self):
+        app.hide_primary_paned_window()
+        self.batch_tag_edit_frame = Frame(self.master)
+        self.batch_tag_edit_frame.grid(row=0, column=0, sticky="nsew")
+        self.batch_tag_edit_frame.grid_rowconfigure(1, weight=1)
+        self.batch_tag_edit_frame.grid_columnconfigure(1, weight=1)
+
+
+    def setup_top_frame(self):
+        self.top_frame = Frame(self.batch_tag_edit_frame)
+        self.top_frame.grid(row=0, column=0, columnspan=99, padx=10, pady=(10, 0), sticky="nsew")
+        self.top_frame.grid_columnconfigure(3, weight=1)
+
+        Button(self.top_frame, text="<---Close", width=15, overrelief="groove", command=self.close_batch_tag_edit).grid(row=0, column=0, sticky="w")
+        Button(self.top_frame, text="Save Changes", fg="blue", width=15, overrelief="groove", command=self.apply_tag_edits).grid(row=0, column=1, padx=10, sticky="w")
+
+        self.info_label = Label(self.top_frame, anchor="w", text=f"Total: {self.total_unique_tags}  | Visible: {self.visible_tags}  |  Selected: {self.selected_tags}  |  Pending Delete: {self.pending_delete}  |  Pending Edit: {self.pending_edit}")
+        self.info_label.grid(row=0, column=2, padx=10, sticky="ew")
+
+        self.help_button = Button(self.top_frame, text="?", overrelief="groove", width=2, command=self.toggle_info_message)
+        self.help_button.grid(row=0, column=3, padx=2, pady=2, sticky="e")
+        ToolTip.create(self.help_button, "Show/Hide Help", 50, 6, 12)
+
+
+    def setup_listbox_frame(self):
+        self.listbox_frame = Frame(self.batch_tag_edit_frame)
+        self.listbox_frame.grid(row=1, column=0, padx=(10, 0), pady=10, sticky="nsew")
+
+        self.listbox = Listbox(self.listbox_frame, width=50, selectmode="extended", exportselection=False)
+        self.listbox.grid(row=0, column=0, sticky="nsew")
+        self.listbox.bind("<Button-3>", self.show_context_menu)
+        self.listbox.bind("<<ListboxSelect>>", self.count_listbox_tags)
+        self.listbox_frame.grid_rowconfigure(0, weight=1)
+
+        self.vertical_scrollbar = Scrollbar(self.listbox_frame, orient="vertical", command=self.listbox.yview)
+        self.vertical_scrollbar.grid(row=0, column=1, sticky="ns")
+        self.horizontal_scrollbar = Scrollbar(self.listbox_frame, orient="horizontal", command=self.listbox.xview)
+        self.horizontal_scrollbar.grid(row=1, column=0, sticky="ew")
+        self.listbox.config(yscrollcommand=self.vertical_scrollbar.set, xscrollcommand=self.horizontal_scrollbar.set)
+        self.setup_listbox_sub_frame(self.listbox_frame)
+
+
+    def setup_listbox_context_menu(self):
+        self.context_menu = Menu(self.master, tearoff=0)
+        self.context_menu.add_command(label="Delete", command=lambda: self.apply_commands_to_listbox(delete=True))
+        self.context_menu.add_command(label="Replace...", command=self.context_menu_edit_tag)
+        self.context_menu.add_separator()
+        self.context_menu.add_command(label="Select All", command=lambda: self.listbox_selection("all"))
+        self.context_menu.add_command(label="Invert Selection", command=lambda: self.listbox_selection("invert"))
+        self.context_menu.add_command(label="Clear Selection", command=lambda: self.listbox_selection("clear"))
+        self.context_menu.add_separator()
+        self.context_menu.add_command(label="Revert Selection", command=self.revert_listbox_changes)
+        self.context_menu.add_command(label="Revert All", command=self.clear_filter)
+
+
+    def setup_listbox_sub_frame(self, listbox_frame):
+        self.listbox_sub_frame = Frame(listbox_frame)
+        self.listbox_sub_frame.grid(row=2, column=0, sticky="ew")
+        self.listbox_sub_frame.grid_columnconfigure(0, weight=1)
+        self.listbox_sub_frame.grid_columnconfigure(1, weight=1)
+        self.listbox_sub_frame.grid_columnconfigure(2, weight=1)
+        Button(self.listbox_sub_frame, text="All", width=8, overrelief="groove", command=lambda: self.listbox_selection("all")).grid(row=0, column=0, padx=2, pady=2, sticky="ew")
+        Button(self.listbox_sub_frame, text="Invert", width=8, overrelief="groove", command=lambda: self.listbox_selection("invert")).grid(row=0, column=1, padx=2, pady=2, sticky="ew")
+        Button(self.listbox_sub_frame, text="Clear", width=8, overrelief="groove", command=lambda: self.listbox_selection("clear")).grid(row=0, column=2, padx=2, pady=2, sticky="ew")
+        Button(self.listbox_sub_frame, text="Revert Sel", width=8, overrelief="groove", command=self.revert_listbox_changes).grid(row=1, column=0, padx=2, pady=2, sticky="ew")
+        Button(self.listbox_sub_frame, text="Revert All", width=8, overrelief="groove", command=self.clear_filter).grid(row=1, column=1, padx=2, pady=2, sticky="ew")
+        self.count_listbox_tags()
+
+
+    def setup_option_frame(self):
+        self.option_frame = Frame(self.batch_tag_edit_frame, borderwidth=1, relief="groove")
+        self.option_frame.grid(row=1, column=1, padx=(0, 10), pady=10, sticky="nsew")
+        self.option_frame.grid_columnconfigure(0, weight=1)
+        self.setup_sort_frame()
+        self.setup_filter_frame()
+        self.setup_edit_frame()
+        self.setup_help_frame()
+
+
+    def setup_sort_frame(self):
+        self.sort_frame = Frame(self.option_frame)
+        self.sort_frame.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
+
+        self.sort_label = Label(self.sort_frame, text="Sort by:", width=6)
+        self.sort_label.grid(row=0, column=0, padx=2)
+        ToolTip.create(self.sort_label, "Sort the visible tags", 250, 6, 12)
+
+        self.sort_options_combobox = ttk.Combobox(self.sort_frame, values=["Occurrence", "Name", "Length"], state="readonly", width=12)
+        self.sort_options_combobox.set("Occurrence")
+        self.sort_options_combobox.grid(row=0, column=1, padx=2, sticky="e")
+        self.sort_options_combobox.bind("<<ComboboxSelected>>", self.warn_before_sort)
+
+        self.reverse_sort_var = BooleanVar()
+        self.reverse_sort_checkbutton = Checkbutton(self.sort_frame, text="Reverse Order", overrelief="groove", variable=self.reverse_sort_var, command=self.warn_before_sort)
+        self.reverse_sort_checkbutton.grid(row=0, column=2, padx=2, sticky="e")
+
+
+    def setup_filter_frame(self):
+        self.filter_frame = Frame(self.option_frame)
+        self.filter_frame.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
+        self.filter_frame.grid_columnconfigure(2, weight=1)
+
+        self.filter_label = Label(self.filter_frame, text="Filter :", width=6)
+        self.filter_label.grid(row=0, column=0, padx=2)
+        ToolTip.create(self.filter_label, "Tag : Filter tags by the input text\n!Tag : Filter tags that do not contain the input text\n== : Filter tags equal to the given value\n!= : Filter tags not equal to the given value\n< : Filter tags less than the given value\n> : Filter tags greater than the given value", 250, 6, 12)
+
+        self.filter_combobox = ttk.Combobox(self.filter_frame, values=["Tag", "!Tag", "==", "!=", "<", ">"], state="readonly", width=12)
+        self.filter_combobox.set("Tag")
+        self.filter_combobox.grid(row=0, column=1, padx=2, sticky="e")
+        self.filter_combobox.bind("<<ComboboxSelected>>", self.warn_before_filter)
+
+        self.filter_entry = Entry(self.filter_frame, width=20)
+        self.filter_entry.grid(row=0, column=2, padx=2, sticky="ew")
+        self.filter_entry.bind("<KeyRelease>", self.warn_before_filter)
+
+        self.filter_apply_button = Button(self.filter_frame, text="Apply", overrelief="groove", width=6, command=self.warn_before_filter)
+        self.filter_apply_button.grid(row=0, column=3, padx=2, sticky="e")
+
+        self.filter_clear_button = Button(self.filter_frame, text="Reset", overrelief="groove", width=6, command=self.clear_filter)
+        self.filter_clear_button.grid(row=0, column=4, padx=2, sticky="e")
+        ToolTip.create(self.filter_clear_button, "Clear any filters or pending changes", 250, 6, 12)
+
+        ttk.Separator(self.filter_frame, orient="horizontal").grid(row=1, column=0, columnspan=5, sticky="ew", pady=(20,0))
+
+
+    def setup_edit_frame(self):
+        self.edit_frame = Frame(self.option_frame)
+        self.edit_frame.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
+        self.edit_frame.grid_columnconfigure(2, weight=1)
+
+        self.edit_label = Label(self.edit_frame, text="Edit :", width=6)
+        self.edit_label.grid(row=0, column=0, padx=2)
+        ToolTip.create(self.edit_label, "Select an option and enter text to apply to the selected tags", 250, 6, 12, justify="left")
+
+        self.edit_combobox = ttk.Combobox(self.edit_frame, values=["Replace", "Delete"], state="readonly", width=12)
+        self.edit_combobox.set("Replace")
+        self.edit_combobox.grid(row=0, column=1, padx=2, sticky="e")
+        self.edit_combobox.bind("<<ComboboxSelected>>", self.toggle_edit_entry_state)
+
+        self.edit_entry = Entry(self.edit_frame, width=20)
+        self.edit_entry.grid(row=0, column=2, padx=2, sticky="ew")
+        self.edit_entry.bind("<Return>", self.apply_commands_to_listbox)
+
+        self.edit_apply_button = Button(self.edit_frame, text="Apply", overrelief="groove", width=6, command=self.apply_commands_to_listbox)
+        self.edit_apply_button.grid(row=0, column=3, padx=2, sticky="e")
+        ToolTip.create(self.edit_apply_button, "Apply the selected changes to the listbox. This does not apply the changes to the text files!", 250, 6, 12)
+
+        self.edit_reset_button = Button(self.edit_frame, text="Reset", overrelief="groove", width=6, command=self.clear_filter)
+        self.edit_reset_button.grid(row=0, column=4, padx=2, sticky="e")
+        ToolTip.create(self.edit_reset_button, "Clear any filters or pending changes", 250, 6, 12)
+
+
+    def setup_help_frame(self):
+        self.help_frame = Frame(self.option_frame)
+        self.help_frame.grid(row=3, column=0, padx=(20,10), pady=10, sticky="nw")
+        self.help_message = Label(self.help_frame, text="Help:\n"
+                                      "Press F5 to open and close Batch Tag Edit.\n\n"
+                                      "1) Use the filter or sort options to refine the tag list.\n"
+                                      "2) Select the tags you want to modify from the listbox.\n"
+                                      "3) Choose an edit option:\n"
+                                      "   - Replace: Enter the new text to replace the selected tags.\n"
+                                      "   - Delete: If the entry is empty, or the Delete option is selected, the selected tags will be deleted.\n\n"
+                                      "4) Click *Edit > Apply* to see the changes in the listbox. This does not apply the changes to the text files.\n"
+                                      "5) Click *Save Changes* to apply the modifications to the text files. This action cannot be undone, so make sure to backup your files.\n"
+                                      "6) Use the *Reset* buttons to clear any pending changes or filters.\n"
+                                      "7) Use the buttons below the listbox to:\n"
+                                      "   - Select All: Select all tags in the listbox.\n"
+                                      "   - Invert Selection: Invert the current selection of tags.\n"
+                                      "   - Clear Selection: Clear the current selection of tags.\n"
+                                      "   - Revert Sel: Revert the selected tags to their original state.\n"
+                                      "   - Revert All: Revert all tags to their original state. (Reset)\n\n"
+                                      "8) Click the *Close* button to exit the Batch Tag Edit without saving and pending changes.\n",
+                                      justify="left")
+        self.help_message.grid(row=1, column=0, padx=2, pady=2, sticky="nw")
+        self.help_frame.grid_remove()
+
+
+#endregion
+################################################################################################################################################
+#region -   Primary Functions
+
+
+    def analyze_tags(self):
+        tag_dict = TagEditor.analyze_tags(self.text_files)
+        return tag_dict
+
+
+    def count_file_tags(self, tags):
+        tag_counts = Counter()
+        for tag, positions in tags.items():
+            tag_counts[tag] = len(positions)
+        total_unique_tags = len(tag_counts)
+        return tag_counts, total_unique_tags
+
+
+    def refresh_counts(self):
+        self.original_tags = []
+        tag_dict = self.analyze_tags()
+        self.tag_counts, self.total_unique_tags = self.count_file_tags(tag_dict)
+        self.sort_tags(self.tag_counts.items(), self.sort_options_combobox.get(), self.reverse_sort_var.get())
+        self.toggle_filter_and_sort_widgets()
+
+
+    def sort_tags(self, tags, option, reverse):
+        if option == "Occurrence":
+            sorted_tags = sorted(tags, key=lambda tag: tag[1], reverse=not reverse)
+        elif option == "Name":
+            sorted_tags = sorted(tags, reverse=reverse)
+        elif option == "Length":
+            sorted_tags = sorted(tags, key=lambda tag: len(tag[0]), reverse=not reverse)
+        self.update_listbox(sorted_tags)
+
+
+    def filter_tags(self, filter_option, filter_value):
+        try:
+            if not filter_value:
+                filtered_tags = self.tag_counts.items()
+            else:
+                filter_value = filter_value.lower()
+                filter_functions = {
+                    "Tag": lambda tag, count: filter_value in tag.lower(),
+                    "!Tag": lambda tag, count: filter_value not in tag.lower(),
+                    "<": lambda tag, count: count < int(filter_value),
+                    ">": lambda tag, count: count > int(filter_value),
+                    "!=": lambda tag, count: count != int(filter_value),
+                    "==": lambda tag, count: count == int(filter_value)
+                }
+                filtered_tags = [(tag, count) for tag, count in self.tag_counts.items() if filter_functions[filter_option](tag, count)]
+            self.sort_tags(filtered_tags, self.sort_options_combobox.get(), self.reverse_sort_var.get())
+        except ValueError:
+            messagebox.showinfo("Error", "Invalid filter value. Please enter a number.")
+            self.filter_entry.delete(0, "end")
+            return
+
+
+    def apply_commands_to_listbox(self, event=None, delete=False, edit=None):
+        tags = self.listbox.curselection()  # Get the selected tags
+        selected_items = [self.original_tags[i][0] for i in tags]  # Get tag names
+        if edit is None:  # If None, use the edit entry
+            edit = self.edit_entry.get()
+        if edit == "":  # If empty, delete the tags
+            delete = True
+        for i, item in zip(reversed(tags), reversed(selected_items)):
+            # Get the current text from the listbox
+            current_text = self.listbox.get(i)
+            # If the item is already altered, remove the previous alteration
+            if current_text.startswith("DELETE :") or current_text.startswith("EDIT :"):
+                # Strip away "DELETE :" or "EDIT :" to get the original item
+                item = current_text.split(":", 1)[1].strip().split(">", 1)[0].strip()
+            # Apply the new commands (delete or edit)
+            if delete:  # If the delete, add delete command
+                self.listbox.delete(i)
+                self.listbox.insert(i, f"DELETE : {item}")
+                self.listbox.itemconfig(i, {'fg': 'red'})  # Change font color to red
+            else:  # If not delete, add edit command
+                self.listbox.delete(i)
+                self.listbox.insert(i, f"EDIT : {item} > {edit}")
+                self.listbox.itemconfig(i, {'fg': 'green'})  # Change font color to green
+        self.count_listbox_tags()
+
+
+    def revert_listbox_changes(self):
+        padding_width = len(str(self.total_unique_tags))
+        tags = self.listbox.curselection()
+        for i in tags:
+            current_text = self.listbox.get(i)
+            if current_text.startswith("DELETE :") or current_text.startswith("EDIT :"):
+                original_item = current_text.split(":", 1)[1].strip().split(">", 1)[0].strip()
+                for tag, count in self.tag_counts.items():
+                    if tag == original_item:
+                        padded_count = str(count).zfill(padding_width)
+                        reverted_text = f" {padded_count}, {tag}"
+                        self.listbox.delete(i)
+                        self.listbox.insert(i, reverted_text)
+                        self.listbox.itemconfig(i, {'fg': 'black'})
+                        self.count_listbox_tags()
+                        break
+
+
+    def apply_tag_edits(self):
+        if self.pending_delete or self.pending_edit:
+            confirm = messagebox.askyesno("Save Changes", f"Commit pending changes to text files?\nThis action cannot be undone, you should make backups!\n\nPending Edits: {self.pending_edit}\nPending Deletes: {self.pending_delete}")
+            if not confirm:
+                return
+        delete_tags = []
+        edit_tags = {}
+        for i in range(self.listbox.size()):
+            current_text = self.listbox.get(i)
+            if current_text.startswith("DELETE :"):
+                tag = current_text.split(":", 1)[1].strip()
+                delete_tags.append(tag)
+            elif current_text.startswith("EDIT :"):
+                original_tag, new_tag = current_text.split(":", 1)[1].strip().split(">", 1)
+                original_tag = original_tag.strip()
+                new_tag = new_tag.strip()
+                edit_tags[original_tag] = new_tag
+        if delete_tags:
+            TagEditor.edit_tags(self.text_files, delete_tags, delete=True)
+        if edit_tags:
+            for original_tag, new_tag in edit_tags.items():
+                TagEditor.edit_tags(self.text_files, [original_tag], edit=new_tag)
+        self.clear_filter(warn=False)
+
+
+# --------------------------------------
+# Listbox
+# --------------------------------------
+    def update_listbox(self, tags):
+        self.listbox.delete(0, "end")
+        padding_width = len(str(self.total_unique_tags))
+        self.original_tags = tags
+        for tag, count in tags:
+            padded_count = str(count).zfill(padding_width)
+            self.listbox.insert("end", f" {padded_count}, {tag}")
+        self.count_listbox_tags()
+        return tags
+
+
+    def count_listbox_tags(self, event=None):
+        self.pending_delete = 0
+        self.pending_edit = 0
+        for i in range(self.listbox.size()):
+            item = self.listbox.get(i)
+            if item.startswith("DELETE :"):
+                self.pending_delete += 1
+            elif item.startswith("EDIT :"):
+                self.pending_edit += 1
+        self.visible_tags = self.listbox.size()
+        self.selected_tags = len(self.listbox.curselection())
+        padding_width = len(str(self.total_unique_tags))
+        pending_delete_str = str(self.pending_delete).zfill(padding_width)
+        pending_edit_str = str(self.pending_edit).zfill(padding_width)
+        visible_tags_str = str(self.visible_tags).zfill(padding_width)
+        selected_tags_str = str(self.selected_tags).zfill(padding_width)
+        self.info_label.config(text=f"Total: {self.total_unique_tags}  | Visible: {visible_tags_str}  |  Selected: {selected_tags_str}  |  Pending Delete: {pending_delete_str}  |  Pending Edit: {pending_edit_str}")
+        self.toggle_filter_and_sort_widgets()
+
+
+    def listbox_selection(self, action):
+        if action == "all":
+            self.listbox.selection_set(0, "end")
+        elif action == "invert":
+            selected_indices = self.listbox.curselection()
+            all_indices = set(range(self.listbox.size()))
+            new_selection = all_indices - set(selected_indices)
+            self.listbox.selection_clear(0, "end")
+            for index in new_selection:
+                self.listbox.selection_set(index)
+        elif action == "clear":
+            self.listbox.selection_anchor(0)
+            self.listbox.selection_clear(0, "end")
+        self.count_listbox_tags()
+
+
+    def context_menu_edit_tag(self):
+        edit_string = simpledialog.askstring("Edit Tag", "Enter new tag:", parent=self.master)
+        if edit_string is not None:
+            self.apply_commands_to_listbox(edit=edit_string)
+
+
+    def show_context_menu(self, event):
+        if self.listbox.curselection():
+            self.context_menu.post(event.x_root, event.y_root)
+
+
+# --------------------------------------
+# UI Helpers
+# --------------------------------------
+
+
+    def toggle_filter_and_sort_widgets(self, event=None):
+        try:
+            widgets = [self.sort_label,
+                       self.sort_options_combobox,
+                       self.reverse_sort_checkbutton,
+                       self.filter_label,
+                       self.filter_combobox,
+                       self.filter_entry,
+                       self.filter_apply_button]
+            state = "disabled" if self.pending_delete or self.pending_edit else "normal"
+            for widget in widgets:
+                if isinstance(widget, ttk.Combobox):
+                    widget.configure(state="readonly" if state == "normal" else state)
+                else:
+                    widget.configure(state=state)
+        except AttributeError:
+            pass
+
+
+    def clear_filter(self, warn=True):
+        if warn and (self.pending_delete or self.pending_edit):
+            if not messagebox.askyesno("Warning", "Clear all pending changes.\n\nContinue?"):
+                return
+        self.filter_entry.delete(0, "end")
+        self.refresh_counts()
+
+
+    def toggle_edit_entry_state(self, event=None):
+        if self.edit_combobox.get() == "Delete":
+            self.edit_entry.config(state="disabled")
+        else:
+            self.edit_entry.config(state="normal")
+
+
+    def toggle_info_message(self):
+        if self.help_frame.winfo_viewable():
+            self.help_frame.grid_remove()
+        else:
+            self.help_frame.grid()
+
+
+# --------------------------------------
+# Misc
+# --------------------------------------
+    def warn_before_sort(self, event=None):
+        if self.pending_delete or self.pending_edit:
+            if not messagebox.askyesno("Warning", "Adjusting this option will clear all pending changes. Continue?"):
+                return
+            self.sort_tags(self.tag_counts.items(), self.sort_options_combobox.get(), self.reverse_sort_var.get())
+        else:
+            self.sort_tags(self.tag_counts.items(), self.sort_options_combobox.get(), self.reverse_sort_var.get())
+
+
+    def warn_before_filter(self, event=None):
+        if self.pending_delete or self.pending_edit:
+            if not messagebox.askyesno("Warning", "Adjusting this option will clear all pending changes. Continue?"):
+                return
+            self.filter_tags(self.filter_combobox.get(), self.filter_entry.get())
+        else:
+            self.filter_tags(self.filter_combobox.get(), self.filter_entry.get())
+
+
+    def close_batch_tag_edit(self, event=None):
+        self.master.minsize(545, 200) # Width x Height
+        self.master.title(f"{VERSION} - img-txt Viewer")
+        self.batch_tag_edit_frame.grid_remove()
+        self.master.bind('<F5>', app.show_batch_tag_edit)
+        self.menu.entryconfig("Batch Tag Edit...", command=app.show_batch_tag_edit)
+        app.show_primary_paned_window()
+        app.refresh_text_box()
+
+
+#endregion
+################################################################################################################################################
 #region - CLASS: ImgTxtViewer
 
 
@@ -248,6 +736,10 @@ class ImgTxtViewer:
     def __init__(self, master):
         self.master = master
         self.application_path = self.get_app_path()
+        self.set_appid()
+        self.set_window_size(master)
+        self.set_icon()
+
 
 # --------------------------------------
 # General Setup
@@ -366,11 +858,11 @@ class ImgTxtViewer:
         self.thumbnail_width = IntVar(value=50)
 
         # Edit Panel
-        self.edit_panel_visible = BooleanVar(value=False)
-        self.edit_image_slider_values = {"Brightness": 0, "Contrast": 0, "Saturation": 0, "Sharpness": 0, "AutoContrast": 0, "Highlights": 0, "Shadows": 0}
-        self.is_reverted = False  # Track if edits are currently reverted
-        self.last_edit_values = {}  # Store the last non-zero edits
-        self.cumulative_edit = BooleanVar(value=False)
+        self.edit_panel_visible_var = BooleanVar(value=False)
+        self.edit_slider_dict = {"Brightness": 0, "Contrast": 0, "AutoContrast": 0, "Highlights": 0, "Shadows": 0, "Saturation": 0, "Sharpness": 0, "Hue": 0, "Color Temperature": 0}
+        self.edit_last_slider_dict = {}
+        self.edit_is_reverted_var = False
+        self.edit_cumulative_var = BooleanVar(value=False)
 
         # Image Quality
         self.image_quality_var = StringVar(value="Normal")
@@ -403,15 +895,16 @@ class ImgTxtViewer:
         master.bind('<F1>', lambda event: self.toggle_zoom_popup(event))
         master.bind('<F2>', lambda event: self.open_image_grid(event))
         master.bind('<F4>', lambda event: self.open_image_in_editor(event))
+        master.bind('<F5>', lambda event: self.show_batch_tag_edit(event))
         master.bind('<Control-w>', lambda event: self.on_closing(event))
 
         # Print window size on resize:
-        #master.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == master else None, add="+")
+        master.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == master else None, add="+")
 
 
 #endregion
 ################################################################################################################################################
-#region - Menubar
+#region -   Menubar
 
 
 # --------------------------------------
@@ -453,7 +946,7 @@ class ImgTxtViewer:
         self.options_subMenu.add_checkbutton(label="Always On Top", underline=0, variable=self.always_on_top_var, command=self.set_always_on_top)
         self.options_subMenu.add_checkbutton(label="Toggle Zoom", accelerator="F1", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
         self.options_subMenu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.update_thumbnail_panel)
-        self.options_subMenu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible, command=self.toggle_edit_panel)
+        self.options_subMenu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.toggle_edit_panel)
         self.options_subMenu.add_checkbutton(label="Vertical View", underline=0, variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
         self.options_subMenu.add_checkbutton(label="Swap img-txt Sides", underline=0, variable=self.panes_swap_ew_var, command=self.swap_pane_sides)
         self.options_subMenu.add_command(label="Set Default Image Editor", underline=0, command=self.set_external_image_editor_path)
@@ -541,19 +1034,19 @@ class ImgTxtViewer:
 # --------------------------------------
 # Batch Operations
 # --------------------------------------
-        batch_operations_menu = Menu(self.toolsMenu, tearoff=0)
-        self.toolsMenu.add_cascade(label="Batch Operations", underline=0, state="disable", menu=batch_operations_menu)
-        batch_operations_menu.add_command(label="Batch Rename And/Or Convert...", underline=3, command=self.rename_and_convert_pairs)
-        batch_operations_menu.add_command(label="Batch Resize Images...", underline=10, command=self.batch_resize_images)
-        batch_operations_menu.add_command(label="Batch Crop Images...", underline=8, command=self.batch_crop_images)
-        batch_operations_menu.add_command(label="Batch Tag Delete...", underline=0, command=self.batch_tag_delete)
-        batch_operations_menu.add_command(label="Batch Upscale...", underline=0, command=lambda: self.upscale_image(batch=True))
-        batch_operations_menu.add_separator()
-        batch_operations_menu.add_command(label="Zip Dataset...", underline=0, command=self.archive_dataset)
-        batch_operations_menu.add_command(label="Find Duplicate Files...", underline=0, command=self.find_duplicate_files)
-        batch_operations_menu.add_command(label="Cleanup All Text Files...", underline=1, command=self.cleanup_all_text_files)
-        batch_operations_menu.add_command(label="Create Blank Text Pairs...", underline=0, command=self.create_blank_text_files)
-        batch_operations_menu.add_command(label="Create Wildcard From Captions...", underline=0, command=self.collate_captions)
+        self.batch_operations_menu = Menu(self.toolsMenu, tearoff=0)
+        self.toolsMenu.add_cascade(label="Batch Operations", underline=0, state="disable", menu=self.batch_operations_menu)
+        self.batch_operations_menu.add_command(label="Batch Rename And/Or Convert...", underline=3, command=self.rename_and_convert_pairs)
+        self.batch_operations_menu.add_command(label="Batch Resize Images...", underline=10, command=self.batch_resize_images)
+        self.batch_operations_menu.add_command(label="Batch Crop Images...", underline=8, command=self.batch_crop_images)
+        self.batch_operations_menu.add_command(label="Batch Tag Edit...", underline=0, accelerator="F5", command=self.show_batch_tag_edit)
+        self.batch_operations_menu.add_command(label="Batch Upscale...", underline=0, command=lambda: self.upscale_image(batch=True))
+        self.batch_operations_menu.add_separator()
+        self.batch_operations_menu.add_command(label="Zip Dataset...", underline=0, command=self.archive_dataset)
+        self.batch_operations_menu.add_command(label="Find Duplicate Files...", underline=0, command=self.find_duplicate_files)
+        self.batch_operations_menu.add_command(label="Cleanup All Text Files...", underline=1, command=self.cleanup_all_text_files)
+        self.batch_operations_menu.add_command(label="Create Blank Text Pairs...", underline=0, command=self.create_blank_text_files)
+        self.batch_operations_menu.add_command(label="Create Wildcard From Captions...", underline=0, command=self.collate_captions)
 
 
 # --------------------------------------
@@ -589,12 +1082,16 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Buttons, Labels, and more
+#region -   Buttons, Labels, and more
 
 
-        # This PanedWindow holds both master image/control frames.
+        # Configure the grid weights for the master window
+        master.grid_rowconfigure(0, weight=1)
+        master.grid_columnconfigure(0, weight=1)
+
+
         self.primary_paned_window = PanedWindow(master, orient="horizontal", sashwidth=6, bg="#d0d0d0", bd=0)
-        self.primary_paned_window.pack(fill="both", expand=1)
+        self.primary_paned_window.grid(row=0, column=0, sticky="nsew")
         self.primary_paned_window.bind('<ButtonRelease-1>', self.snap_sash_to_half)
 
 
@@ -606,9 +1103,10 @@ class ImgTxtViewer:
 
         # This frame serves as a container for all primary UI frames, with the exception of the master_image_frame.
         self.master_control_frame = Frame(master)
-        self.primary_paned_window.add(self.master_control_frame, stretch="always", )
+        self.primary_paned_window.add(self.master_control_frame, stretch="always")
         self.primary_paned_window.paneconfigure(self.master_control_frame, minsize=300)
-        self.primary_paned_window.update(); self.primary_paned_window.sash_place(0, 0, 0)
+        self.primary_paned_window.update()
+        self.primary_paned_window.sash_place(0, 0, 0)
 
 
         # Image stats
@@ -617,24 +1115,10 @@ class ImgTxtViewer:
         self.label_image_stats = Label(self.stats_frame, text="...")
         self.label_image_stats.grid(row=0, column=0, sticky="ew")
 
+
         # Primary Image
         self.primary_display_image = Button(self.master_image_frame, relief="flat", cursor="hand2")
         self.primary_display_image.grid(row=1, column=0, sticky="nsew")
-
-        # Thumbnail Panel
-        self.set_custom_ttk_button_highlight_style()
-        self.thumbnail_panel = Frame(self.master_image_frame)
-        self.thumbnail_panel.grid(row=3, column=0, sticky="ew")
-        self.thumbnail_panel.bind("<MouseWheel>", self.mouse_scroll)
-
-        # Image Control Panel
-        self.image_control_panel = Frame(self.master_image_frame, relief="ridge", bd=1)
-        #self.image_control_panel.grid(row=2, column=0, padx=5, pady=5, sticky="ew")
-
-        # Configure grid weights so that the image preview expands as needed
-        self.master_image_frame.grid_rowconfigure(1, weight=1)
-        self.master_image_frame.grid_columnconfigure(0, weight=1)
-
         self.primary_display_image.bind("<Double-1>", lambda event: self.open_image(index=self.current_index, event=event))
         self.primary_display_image.bind('<Button-2>', self.open_image_directory)
         self.primary_display_image.bind("<MouseWheel>", self.mouse_scroll)
@@ -645,6 +1129,24 @@ class ImgTxtViewer:
         self.popup_zoom = PopUpZoom(self.primary_display_image)
         self.toggle_zoom_var = BooleanVar(value=self.popup_zoom.zoom_enabled.get())
         self.image_preview_tooltip = ToolTip.create(self.primary_display_image, "Right-Click for more\nMiddle-click to open in file explorer\nDouble-Click to open in your system image viewer\nALT+Left/Right or Mouse-Wheel to move between pairs", 1000, 6, 12)
+
+
+        # Thumbnail Panel
+        self.set_custom_ttk_button_highlight_style()
+        self.thumbnail_panel = Frame(self.master_image_frame)
+        self.thumbnail_panel.grid(row=3, column=0, sticky="ew")
+        self.thumbnail_panel.bind("<MouseWheel>", self.mouse_scroll)
+
+
+        # Edit Image Panel
+        self.edit_image_panel = Frame(self.master_image_frame, relief="ridge", bd=1)
+        self.edit_image_panel.grid(row=2, column=0, padx=5, pady=5, sticky="ew")
+        self.edit_image_panel.grid_remove()
+
+
+        # Configure grid weights so that the image preview expands as needed
+        self.master_image_frame.grid_rowconfigure(1, weight=1)
+        self.master_image_frame.grid_columnconfigure(0, weight=1)
 
 
         # Directory Selection
@@ -763,7 +1265,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Text Box setup
+#region -   Text Box setup
 
 
     def create_text_pane(self):
@@ -1210,7 +1712,7 @@ class ImgTxtViewer:
         # Misc
         self.imageContext_menu.add_checkbutton(label="Toggle Zoom", accelerator="F1", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
         self.imageContext_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.update_thumbnail_panel)
-        self.imageContext_menu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible, command=self.toggle_edit_panel)
+        self.imageContext_menu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.toggle_edit_panel)
         self.imageContext_menu.add_checkbutton(label="Vertical View", underline=0, variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
         self.imageContext_menu.add_checkbutton(label="Swap img-txt Sides", underline=0, variable=self.panes_swap_ew_var, command=self.swap_pane_sides)
         # Image Display Quality
@@ -1323,7 +1825,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Additional Interface Setup
+#region -   Additional Interface Setup
 
 
 ####### Browse button context menu ##################################################
@@ -1582,7 +2084,24 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Thumbnail Panel
+#region -   Alt-UI Setup
+
+
+    def show_batch_tag_edit(self, event=None):
+        BatchTagEdit(self.master, self.text_files, menu=self.batch_operations_menu)
+
+
+    def show_primary_paned_window(self, event=None):
+        self.primary_paned_window.grid()
+
+
+    def hide_primary_paned_window(self, event=None):
+        self.primary_paned_window.grid_remove()
+
+
+#endregion
+################################################################################################################################################
+#region -   Thumbnail Panel
 
 
     def debounce_update_thumbnail_panel(self, event):
@@ -1659,13 +2178,13 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Edit Panel
+#region -   Edit Panel
 
 
     def toggle_edit_panel(self):
-        if not self.edit_panel_visible.get():
-            if hasattr(self, 'image_control_panel') and self.image_control_panel.winfo_exists():
-                self.image_control_panel.grid_remove()
+        if not self.edit_panel_visible_var.get():
+            if hasattr(self, 'image_control_panel') and self.edit_image_panel.winfo_exists():
+                self.edit_image_panel.grid_remove()
             if hasattr(self, 'highlights_spinbox_frame') and self.highlights_spinbox_frame.winfo_exists():
                 self.highlights_spinbox_frame.grid_remove()
             if hasattr(self, 'shadows_spinbox_frame') and self.shadows_spinbox_frame.winfo_exists():
@@ -1673,46 +2192,46 @@ class ImgTxtViewer:
             if hasattr(self, 'sharpness_spinbox_frame') and self.sharpness_spinbox_frame.winfo_exists():
                 self.sharpness_spinbox_frame.grid_remove()
         else:
-            self.image_control_panel.grid(row=2, column=0, padx=5, pady=5, sticky="ew")
+            self.edit_image_panel.grid()
             self.create_edit_panel_widgets()
         self.refresh_image()
 
 
     def create_edit_panel_widgets(self):
         # Edit Mode Combobox
-        self.edit_combobox = ttk.Combobox(self.image_control_panel, values=["Brightness", "Contrast", "Saturation", "Sharpness", "AutoContrast", "Highlights", "Shadows"], width=12, state="readonly")
+        self.edit_combobox = ttk.Combobox(self.edit_image_panel, values=["Brightness", "Contrast", "AutoContrast", "Highlights", "Shadows", "Saturation", "Sharpness", "Hue", "Color Temperature"], width=18, state="readonly")
         self.edit_combobox.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
         self.edit_combobox.set("Brightness")
         self.edit_combobox.bind("<<ComboboxSelected>>", self.update_slider_value)
 
         # Edit Slider
-        self.edit_slider = ttk.Scale(self.image_control_panel, from_=-100, to=100, orient="horizontal", command=self.update_edit_value)
+        self.edit_slider = ttk.Scale(self.edit_image_panel, from_=-100, to=100, orient="horizontal", command=self.update_edit_value)
         self.edit_slider.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
         self.edit_slider.bind("<MouseWheel>", self.adjust_slider_with_mouse_wheel)
-        self.image_control_panel.columnconfigure(1, weight=1)
+        self.edit_image_panel.columnconfigure(1, weight=1)
 
         # Edit Value Label
-        self.edit_value_label = Label(self.image_control_panel, text="0", width=3)
+        self.edit_value_label = Label(self.edit_image_panel, text="0", width=3)
         self.edit_value_label.grid(row=0, column=2, padx=5, pady=5, sticky="ew")
 
         # Cumulative Edit Checkbutton
-        self.cumulative_edit_checkbutton = Checkbutton(self.image_control_panel, variable=self.cumulative_edit, overrelief="groove", command=self.apply_image_edit)
+        self.cumulative_edit_checkbutton = Checkbutton(self.edit_image_panel, variable=self.edit_cumulative_var, overrelief="groove", command=self.apply_image_edit)
         self.cumulative_edit_checkbutton.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
         ToolTip.create(self.cumulative_edit_checkbutton, "If enabled, all edits will be done cumulatively; otherwise, only the selected option will be used.", 25, 6, 12, wraplength=200)
 
         # Revert Button
-        self.edit_revert_image_button = Button(self.image_control_panel, text="Revert", overrelief="groove", width=6, command=self.revert_image_edit)
+        self.edit_revert_image_button = Button(self.edit_image_panel, text="Revert", overrelief="groove", width=6, command=self.revert_image_edit)
         self.edit_revert_image_button.grid(row=0, column=4, padx=5, pady=5, sticky="ew")
         self.edit_revert_image_button.bind("<Button-3>", self._reset_edit)
         ToolTip.create(self.edit_revert_image_button, "Cancel changes and refresh the displayed image.\nRight-Click to reset the edit panel.", 500, 6, 12)
 
         # Save Button
-        self.edit_save_image_button = Button(self.image_control_panel, text="Save", overrelief="groove", width=6, command=self.save_image_edit)
+        self.edit_save_image_button = Button(self.edit_image_panel, text="Save", overrelief="groove", width=6, command=self.save_image_edit)
         self.edit_save_image_button.grid(row=0, column=5, padx=5, pady=5, sticky="ew")
         ToolTip.create(self.edit_save_image_button, "Save the current changes.\nOptionally overwrite the current image.", 500, 6, 12)
 
         # Spinbox Frame - Highlights
-        self.highlights_spinbox_frame = ttk.Frame(self.image_control_panel)
+        self.highlights_spinbox_frame = ttk.Frame(self.edit_image_panel)
         self.highlights_spinbox_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
 
         # Threshold
@@ -1732,7 +2251,7 @@ class ImgTxtViewer:
         self.highlights_blur_radius_spinbox.bind("<KeyRelease>", self.apply_image_edit)
 
         # Spinbox Frame - Shadows
-        self.shadows_spinbox_frame = ttk.Frame(self.image_control_panel)
+        self.shadows_spinbox_frame = ttk.Frame(self.edit_image_panel)
         self.shadows_spinbox_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
 
         # Threshold
@@ -1752,7 +2271,7 @@ class ImgTxtViewer:
         self.shadows_blur_radius_spinbox.bind("<KeyRelease>", self.apply_image_edit)
 
         # Spinbox Frame - Sharpness
-        self.sharpness_spinbox_frame = ttk.Frame(self.image_control_panel)
+        self.sharpness_spinbox_frame = ttk.Frame(self.edit_image_panel)
         self.sharpness_spinbox_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
 
         # Boost
@@ -1771,8 +2290,8 @@ class ImgTxtViewer:
 
     def update_slider_value(self, event):
         current_option = self.edit_combobox.get()
-        self.edit_slider.set(self.edit_image_slider_values[current_option])
-        self.edit_value_label.config(text=str(self.edit_image_slider_values[current_option]))
+        self.edit_slider.set(self.edit_slider_dict[current_option])
+        self.edit_value_label.config(text=str(self.edit_slider_dict[current_option]))
         if current_option == "Highlights":
             self.shadows_spinbox_frame.grid_remove()
             self.sharpness_spinbox_frame.grid_remove()
@@ -1795,7 +2314,7 @@ class ImgTxtViewer:
         value = int(float(value))
         self.edit_value_label.config(text=value)
         current_option = self.edit_combobox.get()
-        self.edit_image_slider_values[current_option] = value
+        self.edit_slider_dict[current_option] = value
         self.apply_image_edit()
 
 
@@ -1811,26 +2330,29 @@ class ImgTxtViewer:
             self.master.after_cancel(self.apply_image_edit_id)
         self.apply_image_edit_id = self.master.after(50, self._apply_image_edit)
 
+
     def _apply_image_edit(self):
         self.current_image = self.original_image.copy()
         adjustment_methods = {
             "Brightness": self.adjust_brightness,
             "Contrast": self.adjust_contrast,
-            "Saturation": self.adjust_saturation,
-            "Sharpness": self.adjust_sharpness,
             "AutoContrast": self.adjust_autocontrast,
             "Highlights": self.adjust_highlights,
-            "Shadows": self.adjust_shadows
+            "Shadows": self.adjust_shadows,
+            "Saturation": self.adjust_saturation,
+            "Sharpness": self.adjust_sharpness,
+            "Hue": self.adjust_hue,
+            "Color Temperature": self.adjust_color_temperature
         }
 
-        if self.cumulative_edit.get():
-            for option, value in self.edit_image_slider_values.items():
-                if option in adjustment_methods:
+        if self.edit_cumulative_var.get():
+            for option, value in self.edit_slider_dict.items():
+                if option in adjustment_methods and value != 0:
                     adjustment_methods[option](value, image_type="display")
         else:
             option = self.edit_combobox.get()
-            value = self.edit_image_slider_values.get(option)
-            if option in adjustment_methods:
+            value = self.edit_slider_dict.get(option)
+            if option in adjustment_methods and value != 0:
                 adjustment_methods[option](value, image_type="display")
         self.update_edited_image()
 
@@ -1920,6 +2442,35 @@ class ImgTxtViewer:
         return image
 
 
+    def adjust_hue(self, value, image_type="display", image=None):
+        factor = (value + 100) / 100.0
+        if image_type == "display":
+            hsv_image = self.current_image.convert('HSV')
+            channels = list(hsv_image.split())
+            channels[0] = channels[0].point(lambda p: (p + factor * 255) % 255)
+            self.current_image = Image.merge('HSV', channels).convert('RGB')
+        elif image_type == "original" and image:
+            hsv_image = image.convert('HSV')
+            channels = list(hsv_image.split())
+            channels[0] = channels[0].point(lambda p: (p + factor * 255) % 255)
+            return Image.merge('HSV', channels).convert('RGB')
+        return image
+
+
+    def adjust_color_temperature(self, value, image_type="display", image=None):
+        factor = value / 100.0
+        def _adjust_color_temperature(image, adjustment_factor):
+            red_channel, green_channel, blue_channel = image.split()
+            red_channel = red_channel.point(lambda intensity: intensity * (1 + 0.2 * adjustment_factor))
+            blue_channel = blue_channel.point(lambda intensity: intensity * (1 - 0.2 * adjustment_factor))
+            return Image.merge('RGB', (red_channel, green_channel, blue_channel))
+        if image_type == "display":
+            self.current_image = _adjust_color_temperature(self.current_image, factor)
+        elif image_type == "original" and image:
+            return _adjust_color_temperature(image, factor)
+        return image
+
+
     def update_edited_image(self):
         display_width = self.primary_display_image.winfo_width()
         display_height = self.primary_display_image.winfo_height()
@@ -1930,7 +2481,7 @@ class ImgTxtViewer:
 
 
     def save_image_edit(self):
-        if all(value == 0 for value in self.edit_image_slider_values.values()):
+        if all(value == 0 for value in self.edit_slider_dict.values()):
             messagebox.showinfo("No Changes", "No changes to save.")
             return
         if not messagebox.askyesno("Save Image", "Do you want to save the edited image?"):
@@ -1940,19 +2491,21 @@ class ImgTxtViewer:
             adjustment_methods = {
                 "Brightness": self.adjust_brightness,
                 "Contrast": self.adjust_contrast,
-                "Saturation": self.adjust_saturation,
-                "Sharpness": self.adjust_sharpness,
                 "AutoContrast": self.adjust_autocontrast,
                 "Highlights": self.adjust_highlights,
-                "Shadows": self.adjust_shadows
+                "Shadows": self.adjust_shadows,
+                "Saturation": self.adjust_saturation,
+                "Sharpness": self.adjust_sharpness,
+                "Hue": self.adjust_hue,
+                "Color Temperature": self.adjust_color_temperature
             }
-            if self.cumulative_edit.get():
-                for option, value in self.edit_image_slider_values.items():
+            if self.edit_cumulative_var.get():
+                for option, value in self.edit_slider_dict.items():
                     if option in adjustment_methods:
                         original_image = adjustment_methods[option](value, image_type="original", image=original_image)
             else:
                 option = self.edit_combobox.get()
-                value = self.edit_image_slider_values.get(option)
+                value = self.edit_slider_dict.get(option)
                 if option in adjustment_methods:
                     original_image = adjustment_methods[option](value, image_type="original", image=original_image)
             directory, filename = os.path.split(original_filepath)
@@ -1965,33 +2518,33 @@ class ImgTxtViewer:
 
 
     def revert_image_edit(self):
-        if self.is_reverted:
+        if self.edit_is_reverted_var:
             self.edit_revert_image_button.config(text="Revert", overrelief="groove")
-            self.edit_image_slider_values.update(self.last_edit_values)
-            for option, value in self.edit_image_slider_values.items():
+            self.edit_slider_dict.update(self.edit_last_slider_dict)
+            for option, value in self.edit_slider_dict.items():
                 if value != 0:
                     self.edit_combobox.set(option)
                     self.edit_slider.set(value)
                     self.edit_value_label.config(text=str(value))
                     self.apply_image_edit()
-            self.is_reverted = False
+            self.edit_is_reverted_var = False
         else:
             self.edit_revert_image_button.config(text="Restore", overrelief="groove")
-            self.last_edit_values = {option: value for option, value in self.edit_image_slider_values.items() if value != 0}
+            self.edit_last_slider_dict = {option: value for option, value in self.edit_slider_dict.items() if value != 0}
             self.refresh_image()
-            for option in self.edit_image_slider_values:
-                self.edit_image_slider_values[option] = 0
+            for option in self.edit_slider_dict:
+                self.edit_slider_dict[option] = 0
             self.edit_slider.set(0)
             self.edit_value_label.config(text="0")
-            self.is_reverted = True
+            self.edit_is_reverted_var = True
 
 
     def _reset_edit(self, event=None):
-            self.is_reverted = False
+            self.edit_is_reverted_var = False
             self.edit_revert_image_button.config(text="Revert", overrelief="groove")
-            for option in self.edit_image_slider_values:
-                self.edit_image_slider_values[option] = 0
-            self.last_edit_values = self.edit_image_slider_values.copy()
+            for option in self.edit_slider_dict:
+                self.edit_slider_dict[option] = 0
+            self.edit_last_slider_dict = self.edit_slider_dict.copy()
             self.edit_slider.set(0)
             self.edit_value_label.config(text="0")
             self.highlights_threshold_spinbox.set(127)
@@ -2004,7 +2557,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Autocomplete
+#region -   Autocomplete
 
 
 ### Display Suggestions ##################################################
@@ -2207,7 +2760,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - TextBox Highlights
+#region -   TextBox Highlights
 
 
     def highlight_duplicates(self, event, mouse=True):
@@ -2306,7 +2859,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Primary Functions
+#region -   Primary Functions
 
 
     def load_pairs(self):
@@ -2531,7 +3084,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Navigation
+#region -   Navigation
 
 
     def update_pair(self, direction=None, save=True, step=1):
@@ -2628,7 +3181,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Text Options
+#region -   Text Options
 
 
     def refresh_text_box(self):
@@ -2667,26 +3220,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Text Tools
-
-
-    def batch_tag_delete(self):
-        if self.auto_save_var.get():
-            if not messagebox.askokcancel("A word of caution...", "This tool works best with comma separated format captions. Using it with non-CSV text may ruin the formatting. Continue?"):
-                return
-        main_window_width = root.winfo_width()
-        main_window_height = root.winfo_height()
-        main_window_x = root.winfo_x() + 250 + main_window_width // 2
-        main_window_y = root.winfo_y() - 300 + main_window_height // 2
-        self.check_working_directory()
-        directory = self.image_dir.get()
-        python_script_path = "./main/bin/batch_tag_delete.py"
-        if os.path.isfile(python_script_path):
-            command = ["python", python_script_path, str(directory), str(main_window_x), str(main_window_y)]
-        else:
-            executable_path = "./batch_tag_delete.exe"
-            command = [executable_path, str(directory), str(main_window_x), str(main_window_y)]
-        subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW)
+#region -   Text Tools
 
 
     def search_and_replace(self):
@@ -2941,7 +3475,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Image Tools
+#region -   Image Tools
 
 
     def expand_image(self):
@@ -3200,7 +3734,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Misc Functions
+#region -   Misc Functions
 
 
     def change_message_label(self, event=None):
@@ -3267,7 +3801,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Calculate File Stats
+#region -   Calculate File Stats
 
 
     def calculate_file_stats(self, manual_refresh=None):
@@ -3530,7 +4064,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Window drag setup
+#region -   Window drag setup
 
 
     def start_drag(self, event):
@@ -3557,7 +4091,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - About Window
+#region -   About Window
 
 
     def toggle_about_window(self):
@@ -3585,7 +4119,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Text Cleanup
+#region -   Text Cleanup
 
 
     def cleanup_all_text_files(self, show_confirmation=True):
@@ -3645,7 +4179,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - User Setup
+#region -   User Setup
 
 
     def prompt_first_time_setup(self):
@@ -3725,7 +4259,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Save/Read/Reset Settings
+#region -   Save/Read/Reset Settings
 
 
 # --------------------------------------
@@ -3816,7 +4350,7 @@ class ImgTxtViewer:
         self.config.set("Other", "use_mytags", str(self.use_mytags_var.get()))
         self.config.set("Other", "auto_delete_blank_files", str(self.auto_delete_blank_files_var.get()))
         self.config.set("Other", "thumbnails_visible", str(self.thumbnails_visible.get()))
-        self.config.set("Other", "edit_panel_visible", str(self.edit_panel_visible.get()))
+        self.config.set("Other", "edit_panel_visible", str(self.edit_panel_visible_var.get()))
         self.config.set("Other", "image_quality", str(self.image_quality_var.get()))
         self.config.set("Other", "font", str(self.font_var.get()))
         self.config.set("Other", "font_size", str(self.font_size_var))
@@ -3920,7 +4454,7 @@ class ImgTxtViewer:
         self.use_mytags_var.set(value=self.config.getboolean("Other", "use_mytags", fallback=True))
         self.auto_delete_blank_files_var.set(value=self.config.getboolean("Other", "auto_delete_blank_files", fallback=False))
         self.thumbnails_visible.set(value=self.config.getboolean("Other", "thumbnails_visible", fallback=True))
-        self.edit_panel_visible.set(value=self.config.getboolean("Other", "edit_panel_visible", fallback=False))
+        self.edit_panel_visible_var.set(value=self.config.getboolean("Other", "edit_panel_visible", fallback=False))
         self.toggle_edit_panel()
         self.image_quality_var.set(value=self.config.get("Other", "image_quality", fallback="Normal"))
         self.set_image_quality()
@@ -3996,7 +4530,7 @@ class ImgTxtViewer:
         # Extra panels
         self.thumbnails_visible.set(value=True)
         self.update_thumbnail_panel()
-        self.edit_panel_visible.set(value=False)
+        self.edit_panel_visible_var.set(value=False)
         self.toggle_edit_panel()
         # Done
         self.message_label.config(text="All settings reset!", bg="#6ca079", fg="white")
@@ -4005,7 +4539,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Save and close
+#region -   Save and close
 
 
     def save_text_file(self):
@@ -4075,7 +4609,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Custom Dictionary
+#region -   Custom Dictionary
 
 
     def refresh_custom_dictionary(self):
@@ -4128,7 +4662,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - File Management
+#region -   File Management
 
 
     def natural_sort(self, string):
@@ -4558,7 +5092,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Framework
+#region -   Framework
 
 
     def set_appid(self):
@@ -4589,25 +5123,19 @@ class ImgTxtViewer:
             return os.path.dirname(__file__)
         return ""
 
+
 # --------------------------------------
 # Mainloop and settings
 # --------------------------------------
 root = Tk()
 app = ImgTxtViewer(root)
 
-# Setup the main window
-app.set_appid()
-app.set_icon()
-app.set_window_size(root)
 app.set_always_on_top()
 root.attributes('-topmost', 0)
 root.protocol("WM_DELETE_WINDOW", app.on_closing)
 root.title(f"{VERSION} - img-txt Viewer")
 
-# Load user settings
 app.read_settings()
-
-# Start the mainloop
 root.mainloop()
 
 
@@ -4626,7 +5154,14 @@ root.mainloop()
   <summary>Click here to view release notes for v1.96</summary>
 
 
+This release incorporates several new features, including a reworked Batch Tag Edit tool, a Thumbnail Panel for quick navigation, and an Edit Image Panel for adjusting image properties. Additionally, numerous bugs have been fixed, such as issues with the Delete Pair tool, image quality degradation, and memory leaks.
+
+
   - New:
+    - `Batch Tag Delete` has been renamed to `Batch Tag Edit`.
+      - This tool has been completely reworked to allow for more versatile tag editing.
+      - The interface is now more convenient and user-friendly, allowing you to see all pending changes before committing them.
+      - It is no longer supported as a stand-alone tool.
     - New feature `Thumbnail Panel`: Displayed below the current image for quick navigation.
     - New feature `Edit Image Panel`: Enabled from the options/image menu, this section allows you to edit the `Brightness`, `Contrast`, `Saturation`, `Sharpness`, `Highlights`, and `Shadows` of the current image.
     - New feature `Edit Image...`: Open the current image in an external editor, the default is MS Paint.
@@ -4715,16 +5250,13 @@ root.mainloop()
 
   - (Low) Find Dupe Files, could/should automatically move captions if they are found.
 
-  - (Very Low) Both crop_image, and batch_tag_delete should be re-made from scratch with better practices in mind.
-    - batch_tag_delete should be built directly into the primary UI instead of a standalone tool that opens in a new window.
-    - crop_image should work directly on the currently displayed image.
-
   - (Very Low) Create a `Danbooru (safe)` autocomplete dictionary.
+
+  - New interface ideas:
+    - Compare image and create before/after images.
 
 
 - Tofix
-  - (Med) When using Batch Tag Delete and then returning to the main app, the text box isn't updated, and if the user has "Auto-Save" enabled, it will overwrite any changes made by BTD for that file.
-
   - (Low) Sometimes after navigating (perhaps only when using the ALT+Arrow-keys bind), the suggestion navigation fails to register on the first press of ALT.
     - Related to how (Alt-L, and Alt-R) are bound to disable_button()
 
