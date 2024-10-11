@@ -11,13 +11,15 @@
   <img src="https://github.com/Nenotriple/img-txt_viewer/assets/70049990/d7d9c754-aae4-4add-882d-fef105cd0531" alt="cover">
 </p>
 
-- [📝Usage](https://github.com/Nenotriple/img-txt_viewer/tree/Dev?tab=readme-ov-file#-usage)
-- [💡Tips and Features](https://github.com/Nenotriple/img-txt_viewer/tree/Dev?tab=readme-ov-file#-tips-and-features)
-- [🚩Requirements](https://github.com/Nenotriple/img-txt_viewer/tree/Dev?tab=readme-ov-file#-requirements)
-- [📜Version History](https://github.com/Nenotriple/img-txt_viewer/tree/Dev?tab=readme-ov-file#-version-history)
+- [📝Usage](#-usage)
+- [💡Tips and Features](#-tips-and-features)
+- [🔒 Privacy](#-privacy) 
+- [🚩Requirements](#-requirements)
+- [📜Version History](#-version-history)
 - [✨Wiki](https://github.com/Nenotriple/img-txt_viewer/wiki/Tools)
 - [💾Download](https://github.com/Nenotriple/img-txt_viewer/releases?q=executable&expanded=true)
 
+---
 
 # 📝 Usage
 
@@ -27,7 +29,6 @@
 >      - For example: `01.png, 01.txt`, `02.jpg, 02.txt`, etc.
 >  - Supported image types: `.png` `.jpg` `.jpeg` `.jfif` `.jpg_large` `.webp` `.bmp` `.gif`
 
----
 
 Images and text files can be loaded from different folder paths. Expand the section below to learn more.
 
@@ -114,6 +115,14 @@ By default, text files are loaded from the chosen path. To load text files from 
 _<sup>[1]</sup>These are stand alone tools and/or not available in the Lite version._
 
 Please see the [✨Tools](https://github.com/Nenotriple/img-txt_viewer/wiki/Tools) section of the wiki for a more comprehensive breakdown of the various features.
+
+
+# 🔒 Privacy
+
+img-txt Viewer is completely private, in every sense of the word.
+- The app runs entirely on your device, so your data stays with you.
+- It does not collect any data, or require an internet connection.
+
 
 # 🚩 Requirements
 
