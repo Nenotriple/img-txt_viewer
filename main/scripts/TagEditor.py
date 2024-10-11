@@ -48,7 +48,7 @@ def edit_tags(text_files, tags, delete=False, edit=None):
     Args:
         tags (list): List of tags (str)
         delete (bool): Flag to delete tags (default: False)
-        edit (str): String to replace tags (if None, no replacement)
+        edit (str): String to replace tags (if None, delete tags)
     """
     text_files = _validate_files(text_files)
     for file_index, file_path in enumerate(text_files):

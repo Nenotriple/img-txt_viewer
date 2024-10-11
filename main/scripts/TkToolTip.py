@@ -117,12 +117,27 @@ class TkToolTip:
     """
 
 
-    def __init__(self, widget, text=TEXT, delay=DELAY, padx=PADX, pady=PADY, ipadx=IPADX, ipady=IPADY,
-                 state=STATE, bg=BG, fg=FG, font=FONT, borderwidth=BORDERWIDTH, relief=RELIEF,
-                 justify=JUSTIFY, wraplength=WRAPLENGTH, fade_in=FADE_IN, fade_out=FADE_OUT, origin=ORIGIN):
-        """
-        Initialize the tooltip with the given parameters.
-        """
+    def __init__(self,
+                 widget,
+                 text=TEXT,
+                 delay=DELAY,
+                 padx=PADX,
+                 pady=PADY,
+                 ipadx=IPADX,
+                 ipady=IPADY,
+                 state=STATE,
+                 bg=BG,
+                 fg=FG,
+                 font=FONT,
+                 borderwidth=BORDERWIDTH,
+                 relief=RELIEF,
+                 justify=JUSTIFY,
+                 wraplength=WRAPLENGTH,
+                 fade_in=FADE_IN,
+                 fade_out=FADE_OUT,
+                 origin=ORIGIN
+                 ):
+
         self.widget = widget
         self.text = text
         self.delay = delay
@@ -142,37 +157,27 @@ class TkToolTip:
         self.fade_out = fade_out
         self.origin = origin
 
-        self.tip_window = None  # Window; None if not shown
-        self.widget_id = None  # Display event ID; None if not scheduled
-        self.hide_id = None  # Hide event ID; None if not scheduled
-        self.hide_time = None  # Last hidden timestamp; None if never hidden
+        self.tip_window = None
+        self.widget_id = None
+        self.hide_id = None
+        self.hide_time = None
 
         self._bind_widget()
 
 
     def _bind_widget(self):
         """Setup event bindings for the widget."""
-        self.widget.bind('<Enter>', self._enter, add="+")
-        self.widget.bind('<Leave>', self._leave, add="+")
-        self.widget.bind('<Motion>', self._motion, add="+")
-        self.widget.bind("<Button-1>", self._leave, add="+")
-        self.widget.bind('<B1-Motion>', self._leave, add="+")
+        self.widget.bind('<Motion>', self._schedule_show_tip, add="+")
+        self.widget.bind('<Enter>', self._schedule_show_tip, add="+")
+        self.widget.bind('<Leave>', self._leave_event, add="+")
+        self.widget.bind("<Button-1>", self._leave_event, add="+")
+        self.widget.bind('<B1-Motion>', self._leave_event, add="+")
 
 
-    def _enter(self, event):
-        """Schedule tooltip display after the specified delay."""
-        self._schedule_show_tip(event)
-
-
-    def _leave(self, event):
+    def _leave_event(self, event):
         """Hide the tooltip and cancel any scheduled events."""
         self._cancel_tip()
         self._hide_tip()
-
-
-    def _motion(self, event):
-        """Reschedule the tooltip display when the cursor moves within the widget."""
-        self._schedule_show_tip(event)
 
 
     def _schedule_show_tip(self, event):
@@ -184,74 +189,45 @@ class TkToolTip:
 
     def _show_tip(self, event):
         """Display the tooltip at the specified position."""
-        if self.state == "disabled":
+        if self.state == "disabled" or not self.text:
             return
-        if self.origin == "mouse":
-            x = event.x_root + self.padx
-            y = event.y_root + self.pady
-        else:
-            x = self.widget.winfo_rootx() + self.padx
-            y = self.widget.winfo_rooty() + self.pady
+        x, y = (event.x_root + self.padx, event.y_root + self.pady) if self.origin == "mouse" else \
+               (self.widget.winfo_rootx() + self.padx, self.widget.winfo_rooty() + self.pady)
         self._create_tip_window(x, y)
 
 
     def _create_tip_window(self, x, y):
         """Create and display the tooltip window."""
-        if self.tip_window or not self.text:
+        if self.tip_window:
             return
         self.tip_window = Toplevel(self.widget)
         self.tip_window.wm_overrideredirect(True)
         self.tip_window.wm_geometry(f"+{x}+{y}")
-        if self.fade_in > 0:
-            self.tip_window.attributes("-alpha", 0.0)
-        label = Label(self.tip_window, text=self.text, background=self.bg, foreground=self.fg,
-                      font=self.font, relief=self.relief, borderwidth=self.borderwidth, justify=self.justify,
-                      wraplength=self.wraplength)
-        label.pack(ipadx=self.ipadx, ipady=self.ipady)
-        if self.fade_in > 0:
-            self._fade_in()
-        else:
-            self.tip_window.attributes("-alpha", 1.0)
+        self.tip_window.attributes("-alpha", 0.0 if self.fade_in else 1.0)
+        label = Label(self.tip_window,
+                      text=self.text,
+                      background=self.bg,
+                      foreground=self.fg,
+                      font=self.font,
+                      relief=self.relief,
+                      borderwidth=self.borderwidth,
+                      justify=self.justify,
+                      wraplength=self.wraplength
+                      )
+        label.pack(ipadx=self.ipadx,
+                   ipady=self.ipady
+                   )
+        if self.fade_in:
+            self._fade(self.fade_in, 0.0, 1.0)
 
 
     def _hide_tip(self):
-        """Destroy the tooltip window if it exists."""
+        """Hide or fade out the tooltip window."""
         if self.tip_window:
-            if self.fade_out > 0:
-                self._fade_out()
+            if self.fade_out:
+                self._fade(self.fade_out, 1.0, 0.0, on_complete=self._remove_tip_window)
             else:
-                self.tip_window.withdraw()
-                self.tip_window = None
-                self.hide_time = time.time()
-
-
-    def _fade_in(self):
-        """Gradually fade in the tooltip window."""
-        if self.fade_in > 0:
-            self._fade_step(0.0, 1.0, self.fade_in, self.tip_window, "in")
-
-
-    def _fade_out(self):
-        """Gradually fade out the tooltip window."""
-        if self.fade_out > 0:
-            self._fade_step(1.0, 0.0, self.fade_out, self.tip_window, "out")
-
-
-    def _fade_step(self, start_alpha, end_alpha, duration, window, direction):
-        step_duration = max(1, duration // 10)
-        alpha_increment = (end_alpha - start_alpha) / step_duration
-
-        def step(current_step):
-            alpha = start_alpha + current_step * alpha_increment
-            window.attributes("-alpha", alpha)
-            if current_step < step_duration:
-                window.after(10, step, current_step + 1)
-            else:
-                if direction == "out":
-                    window.withdraw()
-                    self.tip_window = None
-                    self.hide_time = time.time()
-        step(0)
+                self._remove_tip_window()
 
 
     def _cancel_tip(self):
@@ -261,9 +237,49 @@ class TkToolTip:
             self.widget_id = None
 
 
-    def config(self, text=None, delay=None, padx=None, pady=None, ipadx=None, ipady=None, state=None,
-               bg=None, fg=None, font=None, borderwidth=None,
-               relief=None, justify=None, wraplength=None, fade_in=None, fade_out=None, origin=None):
+    def _remove_tip_window(self):
+        """Withdraw and remove the tooltip window."""
+        if self.tip_window:
+            self.tip_window.withdraw()
+            self.tip_window = None
+            self.hide_time = time.time()
+
+
+    def _fade(self, duration, start_alpha, end_alpha, on_complete=None):
+        """Fade the tooltip window in or out."""
+        steps = max(1, duration // 10)
+        alpha_step = (end_alpha - start_alpha) / steps
+
+        def step(current_step):
+            alpha = start_alpha + current_step * alpha_step
+            self.tip_window.attributes("-alpha", alpha)
+            if current_step < steps:
+                self.tip_window.after(10, step, current_step + 1)
+            else:
+                if on_complete:
+                    on_complete()
+        step(0)
+
+
+    def config(self,
+               text=None,
+               delay=None,
+               padx=None,
+               pady=None,
+               ipadx=None,
+               ipady=None,
+               state=None,
+               bg=None,
+               fg=None,
+               font=None,
+               borderwidth=None,
+               relief=None,
+               justify=None,
+               wraplength=None,
+               fade_in=None,
+               fade_out=None,
+               origin=None
+               ):
         """Update the tooltip configuration with the given parameters."""
         for param, value in locals().items():
             if value is not None:
@@ -273,9 +289,26 @@ class TkToolTip:
 
 
     @classmethod
-    def create(cls, widget, text=TEXT, delay=DELAY, padx=PADX, pady=PADY, ipadx=IPADX, ipady=IPADY,
-                 state=STATE, bg=BG, fg=FG, font=FONT, borderwidth=BORDERWIDTH, relief=RELIEF,
-                 justify=JUSTIFY, wraplength=WRAPLENGTH, fade_in=FADE_IN, fade_out=FADE_OUT, origin=ORIGIN):
+    def create(cls,
+               widget,
+               text=TEXT,
+               delay=DELAY,
+               padx=PADX,
+               pady=PADY,
+               ipadx=IPADX,
+               ipady=IPADY,
+               state=STATE,
+               bg=BG,
+               fg=FG,
+               font=FONT,
+               borderwidth=BORDERWIDTH,
+               relief=RELIEF,
+               justify=JUSTIFY,
+               wraplength=WRAPLENGTH,
+               fade_in=FADE_IN,
+               fade_out=FADE_OUT,
+               origin=ORIGIN
+               ):
         """Create a tooltip for the specified widget with the given parameters."""
         return cls(widget, text, delay, padx, pady, ipadx, ipady, state, bg, fg, font, borderwidth, relief, justify, wraplength, fade_in, fade_out, origin)
 
@@ -310,6 +343,7 @@ v1.06 changes:
 
   - Other changes:
     - Now uses `TkDefaultFont` instead of Tahoma as the default font for the tooltip text.
+    - Refactored the code to be more readable and maintainable.
 
 
 '''
@@ -321,9 +355,14 @@ v1.06 changes:
 
 
 - Todo
-  - It would be handy to configure where the tooltip "origin" is. Currently it's always the mouse x/y position, but it could be based on the widget's position, or a custom x/y position, etc.
-    - Having the ability to configure the "origin" and anchor point would allow for more flexibility in the tooltip's positioning.
-    - The anchor point would be the point on a widget where the tooltip is positioned relative to.
+  - In addition to the 'origin' parameter, it would be handy to set the 'anchor' for the origin.
+    - The anchor would dictate the starting (x,y) position inside the origin.
+    - For example, the anchor could be considered to already by "ne" (north east), or "top left" for the current logic.
+    - Changing the anchor to "se" would set the tooltip to appear in the bottom right when 'origin=widget'.
+  - When (origin="mouse") allow for a 'follow' parameter to make the tooltip follow the mouse.
+  - Add a 'hide_delay' parameter to keep the tooltip visible for a set amount of time after the mouse leaves the widget.
+  - Stop the tooltip from being created outside the screen bounds.
+  - Add a 'shadow' parameter that adds a soft drop shadow under the tooltip.
 
 
 - Tofix

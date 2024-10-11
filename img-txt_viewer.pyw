@@ -274,15 +274,15 @@ class BatchTagEdit:
         self.menu.entryconfig("Batch Tag Edit...", command=self.close_batch_tag_edit)
         self.original_tags = []
         self.create_ui()
-        self.sort_tags(self.tag_counts.items(), "Occurrence", False)
+        self.sort_tags(self.tag_counts.items(), "Frequency", False)
 
 
     def create_ui(self):
         self.setup_primary_frame()
         self.setup_top_frame()
         self.setup_listbox_frame()
-        self.setup_listbox_context_menu()
         self.setup_option_frame()
+        self.count_listbox_tags()
 
 
     def setup_primary_frame(self):
@@ -299,7 +299,8 @@ class BatchTagEdit:
         self.top_frame.grid_columnconfigure(3, weight=1)
 
         Button(self.top_frame, text="<---Close", width=15, overrelief="groove", command=self.close_batch_tag_edit).grid(row=0, column=0, sticky="w")
-        Button(self.top_frame, text="Save Changes", fg="blue", width=15, overrelief="groove", command=self.apply_tag_edits).grid(row=0, column=1, padx=10, sticky="w")
+        self.button_save_changes = Button(self.top_frame, text="Save Changes", fg="blue", width=15, overrelief="groove", state="disabled", command=self.apply_tag_edits)
+        self.button_save_changes.grid(row=0, column=1, padx=10, sticky="w")
 
         self.info_label = Label(self.top_frame, anchor="w", text=f"Total: {self.total_unique_tags}  | Visible: {self.visible_tags}  |  Selected: {self.selected_tags}  |  Pending Delete: {self.pending_delete}  |  Pending Edit: {self.pending_edit}")
         self.info_label.grid(row=0, column=2, padx=10, sticky="ew")
@@ -315,7 +316,8 @@ class BatchTagEdit:
 
         self.listbox = Listbox(self.listbox_frame, width=50, selectmode="extended", exportselection=False)
         self.listbox.grid(row=0, column=0, sticky="nsew")
-        self.listbox.bind("<Button-3>", self.show_context_menu)
+        self.listbox.bind("<Control-c>", self.copy_listbox_selection)
+        self.listbox.bind("<Button-3>", self.show_listbox_context_menu)
         self.listbox.bind("<<ListboxSelect>>", self.count_listbox_tags)
         self.listbox_frame.grid_rowconfigure(0, weight=1)
 
@@ -327,31 +329,31 @@ class BatchTagEdit:
         self.setup_listbox_sub_frame(self.listbox_frame)
 
 
-    def setup_listbox_context_menu(self):
-        self.context_menu = Menu(self.master, tearoff=0)
-        self.context_menu.add_command(label="Delete", command=lambda: self.apply_commands_to_listbox(delete=True))
-        self.context_menu.add_command(label="Replace...", command=self.context_menu_edit_tag)
-        self.context_menu.add_separator()
-        self.context_menu.add_command(label="Select All", command=lambda: self.listbox_selection("all"))
-        self.context_menu.add_command(label="Invert Selection", command=lambda: self.listbox_selection("invert"))
-        self.context_menu.add_command(label="Clear Selection", command=lambda: self.listbox_selection("clear"))
-        self.context_menu.add_separator()
-        self.context_menu.add_command(label="Revert Selection", command=self.revert_listbox_changes)
-        self.context_menu.add_command(label="Revert All", command=self.clear_filter)
-
-
     def setup_listbox_sub_frame(self, listbox_frame):
         self.listbox_sub_frame = Frame(listbox_frame)
         self.listbox_sub_frame.grid(row=2, column=0, sticky="ew")
         self.listbox_sub_frame.grid_columnconfigure(0, weight=1)
         self.listbox_sub_frame.grid_columnconfigure(1, weight=1)
         self.listbox_sub_frame.grid_columnconfigure(2, weight=1)
-        Button(self.listbox_sub_frame, text="All", width=8, overrelief="groove", command=lambda: self.listbox_selection("all")).grid(row=0, column=0, padx=2, pady=2, sticky="ew")
-        Button(self.listbox_sub_frame, text="Invert", width=8, overrelief="groove", command=lambda: self.listbox_selection("invert")).grid(row=0, column=1, padx=2, pady=2, sticky="ew")
-        Button(self.listbox_sub_frame, text="Clear", width=8, overrelief="groove", command=lambda: self.listbox_selection("clear")).grid(row=0, column=2, padx=2, pady=2, sticky="ew")
-        Button(self.listbox_sub_frame, text="Revert Sel", width=8, overrelief="groove", command=self.revert_listbox_changes).grid(row=1, column=0, padx=2, pady=2, sticky="ew")
-        Button(self.listbox_sub_frame, text="Revert All", width=8, overrelief="groove", command=self.clear_filter).grid(row=1, column=1, padx=2, pady=2, sticky="ew")
-        self.count_listbox_tags()
+
+        self.button_all = Button(self.listbox_sub_frame, text="All", width=8, overrelief="groove", command=lambda: self.listbox_selection("all"))
+        self.button_all.grid(row=0, column=0, padx=2, pady=2, sticky="ew")
+        ToolTip.create(self.button_all, "Select all tags in the listbox", 150, 6, 12)
+        self.button_invert = Button(self.listbox_sub_frame, text="Invert", width=8, overrelief="groove", command=lambda: self.listbox_selection("invert"))
+        self.button_invert.grid(row=0, column=1, padx=2, pady=2, sticky="ew")
+        ToolTip.create(self.button_invert, "Invert the current selection of tags", 150, 6, 12)
+        self.button_clear = Button(self.listbox_sub_frame, text="Clear", width=8, overrelief="groove", command=lambda: self.listbox_selection("clear"))
+        self.button_clear.grid(row=0, column=2, padx=2, pady=2, sticky="ew")
+        ToolTip.create(self.button_clear, "Clear the current selection of tags", 150, 6, 12)
+        self.button_revert_sel = Button(self.listbox_sub_frame, text="Revert Sel", width=8, overrelief="groove", command=self.revert_listbox_changes)
+        self.button_revert_sel.grid(row=1, column=0, padx=2, pady=2, sticky="ew")
+        ToolTip.create(self.button_revert_sel, "Revert the selected tags to their original state", 150, 6, 12)
+        self.button_revert_all = Button(self.listbox_sub_frame, text="Revert All", width=8, overrelief="groove", command=self.clear_filter)
+        self.button_revert_all.grid(row=1, column=1, padx=2, pady=2, sticky="ew")
+        ToolTip.create(self.button_revert_all, "Revert all tags to their original state. (Reset)", 150, 6, 12)
+        self.button_copy = Button(self.listbox_sub_frame, text="Copy", width=8, overrelief="groove", command=self.copy_listbox_selection)
+        self.button_copy.grid(row=1, column=2, padx=2, pady=2, sticky="ew")
+        ToolTip.create(self.button_copy, "Copy the selected tags to the clipboard", 150, 6, 12)
 
 
     def setup_option_frame(self):
@@ -372,13 +374,13 @@ class BatchTagEdit:
         self.sort_label.grid(row=0, column=0, padx=2)
         ToolTip.create(self.sort_label, "Sort the visible tags", 250, 6, 12)
 
-        self.sort_options_combobox = ttk.Combobox(self.sort_frame, values=["Occurrence", "Name", "Length"], state="readonly", width=12)
-        self.sort_options_combobox.set("Occurrence")
+        self.sort_options_combobox = ttk.Combobox(self.sort_frame, values=["Frequency", "Name", "Length"], state="readonly", width=12)
+        self.sort_options_combobox.set("Frequency")
         self.sort_options_combobox.grid(row=0, column=1, padx=2, sticky="e")
-        self.sort_options_combobox.bind("<<ComboboxSelected>>", self.warn_before_sort)
+        self.sort_options_combobox.bind("<<ComboboxSelected>>", lambda event: self.warn_before_action(action="sort"))
 
         self.reverse_sort_var = BooleanVar()
-        self.reverse_sort_checkbutton = Checkbutton(self.sort_frame, text="Reverse Order", overrelief="groove", variable=self.reverse_sort_var, command=self.warn_before_sort)
+        self.reverse_sort_checkbutton = Checkbutton(self.sort_frame, text="Reverse Order", overrelief="groove", variable=self.reverse_sort_var, command=lambda: self.warn_before_action(action="sort"))
         self.reverse_sort_checkbutton.grid(row=0, column=2, padx=2, sticky="e")
 
 
@@ -389,18 +391,19 @@ class BatchTagEdit:
 
         self.filter_label = Label(self.filter_frame, text="Filter :", width=6)
         self.filter_label.grid(row=0, column=0, padx=2)
-        ToolTip.create(self.filter_label, "Tag : Filter tags by the input text\n!Tag : Filter tags that do not contain the input text\n== : Filter tags equal to the given value\n!= : Filter tags not equal to the given value\n< : Filter tags less than the given value\n> : Filter tags greater than the given value", 250, 6, 12)
+        ToolTip.create(self.filter_label, "All options except <, and >, support multiple values separated by commas.\n\nTag : Filter tags by the input text\n!Tag : Filter tags that do not contain the input text\n== : Filter tags equal to the given value\n!= : Filter tags not equal to the given value\n< : Filter tags less than the given value\n> : Filter tags greater than the given value", 250, 6, 12)
 
         self.filter_combobox = ttk.Combobox(self.filter_frame, values=["Tag", "!Tag", "==", "!=", "<", ">"], state="readonly", width=12)
         self.filter_combobox.set("Tag")
         self.filter_combobox.grid(row=0, column=1, padx=2, sticky="e")
-        self.filter_combobox.bind("<<ComboboxSelected>>", self.warn_before_filter)
+        self.filter_combobox.bind("<<ComboboxSelected>>", lambda event: self.warn_before_action(action="filter"))
 
         self.filter_entry = Entry(self.filter_frame, width=20)
         self.filter_entry.grid(row=0, column=2, padx=2, sticky="ew")
-        self.filter_entry.bind("<KeyRelease>", self.warn_before_filter)
+        self.filter_entry.bind("<KeyRelease>", lambda event: self.warn_before_action(action="filter"))
+        self.filter_entry.bind("<Button-3>", self.show_entry_context_menu)
 
-        self.filter_apply_button = Button(self.filter_frame, text="Apply", overrelief="groove", width=6, command=self.warn_before_filter)
+        self.filter_apply_button = Button(self.filter_frame, text="Apply", overrelief="groove", width=6, command=lambda: self.warn_before_action(action="filter"))
         self.filter_apply_button.grid(row=0, column=3, padx=2, sticky="e")
 
         self.filter_clear_button = Button(self.filter_frame, text="Reset", overrelief="groove", width=6, command=self.clear_filter)
@@ -427,6 +430,7 @@ class BatchTagEdit:
         self.edit_entry = Entry(self.edit_frame, width=20)
         self.edit_entry.grid(row=0, column=2, padx=2, sticky="ew")
         self.edit_entry.bind("<Return>", self.apply_commands_to_listbox)
+        self.edit_entry.bind("<Button-3>", self.show_entry_context_menu)
 
         self.edit_apply_button = Button(self.edit_frame, text="Apply", overrelief="groove", width=6, command=self.apply_commands_to_listbox)
         self.edit_apply_button.grid(row=0, column=3, padx=2, sticky="e")
@@ -441,12 +445,17 @@ class BatchTagEdit:
         self.help_frame = Frame(self.option_frame)
         self.help_frame.grid(row=3, column=0, padx=(20,10), pady=10, sticky="nw")
         self.help_message = Label(self.help_frame, text="Help:\n"
-                                      "Press F5 to open and close Batch Tag Edit.\n\n"
+                                      "Press F5 to open and close Batch Tag Edit.\n"
+                                      "The number next to the tag indicates its frequency in the dataset.\n"
+                                      "This tool is not perfect; it may not work as expected with certain combinations of characters or text or formats.\n"
+                                      "You should always make backups of your text files before saving any changes.\n\n"
+                                      "Instructions:\n"
                                       "1) Use the filter or sort options to refine the tag list.\n"
+                                      "   - You can input multiple filter values separated by commas.\n"
                                       "2) Select the tags you want to modify from the listbox.\n"
                                       "3) Choose an edit option:\n"
                                       "   - Replace: Enter the new text to replace the selected tags.\n"
-                                      "   - Delete: If the entry is empty, or the Delete option is selected, the selected tags will be deleted.\n\n"
+                                      "   - Delete: If the entry is empty, or the Delete option is selected, the selected tags will be deleted.\n"
                                       "4) Click *Edit > Apply* to see the changes in the listbox. This does not apply the changes to the text files.\n"
                                       "5) Click *Save Changes* to apply the modifications to the text files. This action cannot be undone, so make sure to backup your files.\n"
                                       "6) Use the *Reset* buttons to clear any pending changes or filters.\n"
@@ -455,7 +464,7 @@ class BatchTagEdit:
                                       "   - Invert Selection: Invert the current selection of tags.\n"
                                       "   - Clear Selection: Clear the current selection of tags.\n"
                                       "   - Revert Sel: Revert the selected tags to their original state.\n"
-                                      "   - Revert All: Revert all tags to their original state. (Reset)\n\n"
+                                      "   - Revert All: Revert all tags to their original state. (Reset)\n"
                                       "8) Click the *Close* button to exit the Batch Tag Edit without saving and pending changes.\n",
                                       justify="left")
         self.help_message.grid(row=1, column=0, padx=2, pady=2, sticky="nw")
@@ -489,7 +498,7 @@ class BatchTagEdit:
 
 
     def sort_tags(self, tags, option, reverse):
-        if option == "Occurrence":
+        if option == "Frequency":
             sorted_tags = sorted(tags, key=lambda tag: tag[1], reverse=not reverse)
         elif option == "Name":
             sorted_tags = sorted(tags, reverse=reverse)
@@ -503,14 +512,14 @@ class BatchTagEdit:
             if not filter_value:
                 filtered_tags = self.tag_counts.items()
             else:
-                filter_value = filter_value.lower()
+                filter_values = [val.strip().lower() for val in filter_value.split(',') if val.strip()]
                 filter_functions = {
-                    "Tag": lambda tag, count: filter_value in tag.lower(),
-                    "!Tag": lambda tag, count: filter_value not in tag.lower(),
-                    "<": lambda tag, count: count < int(filter_value),
-                    ">": lambda tag, count: count > int(filter_value),
-                    "!=": lambda tag, count: count != int(filter_value),
-                    "==": lambda tag, count: count == int(filter_value)
+                    "Tag": lambda tag, count: any(val in tag.lower() for val in filter_values),
+                    "!Tag": lambda tag, count: all(val not in tag.lower() for val in filter_values),
+                    "<": lambda tag, count: count < int(filter_values[0]),
+                    ">": lambda tag, count: count > int(filter_values[0]),
+                    "!=": lambda tag, count: all(count != int(val) for val in filter_values),
+                    "==": lambda tag, count: any(count == int(val) for val in filter_values)
                 }
                 filtered_tags = [(tag, count) for tag, count in self.tag_counts.items() if filter_functions[filter_option](tag, count)]
             self.sort_tags(filtered_tags, self.sort_options_combobox.get(), self.reverse_sort_var.get())
@@ -620,6 +629,10 @@ class BatchTagEdit:
         visible_tags_str = str(self.visible_tags).zfill(padding_width)
         selected_tags_str = str(self.selected_tags).zfill(padding_width)
         self.info_label.config(text=f"Total: {self.total_unique_tags}  | Visible: {visible_tags_str}  |  Selected: {selected_tags_str}  |  Pending Delete: {pending_delete_str}  |  Pending Edit: {pending_edit_str}")
+        if self.pending_delete > 0 or self.pending_edit > 0:
+            self.button_save_changes.config(state="normal")
+        else:
+            self.button_save_changes.config(state="disabled")
         self.toggle_filter_and_sort_widgets()
 
 
@@ -639,15 +652,16 @@ class BatchTagEdit:
         self.count_listbox_tags()
 
 
+    def copy_listbox_selection(self, event=None):
+        selected_tags = [self.listbox.get(i).split(", ", 1)[1].strip() for i in self.listbox.curselection()]
+        self.master.clipboard_clear()
+        self.master.clipboard_append(", ".join(selected_tags))
+
+
     def context_menu_edit_tag(self):
         edit_string = simpledialog.askstring("Edit Tag", "Enter new tag:", parent=self.master)
         if edit_string is not None:
             self.apply_commands_to_listbox(edit=edit_string)
-
-
-    def show_context_menu(self, event):
-        if self.listbox.curselection():
-            self.context_menu.post(event.x_root, event.y_root)
 
 
 # --------------------------------------
@@ -696,24 +710,54 @@ class BatchTagEdit:
             self.help_frame.grid()
 
 
+    def show_listbox_context_menu(self, event):
+        listbox = event.widget
+        if not listbox.curselection():
+            return
+        context_menu = Menu(self.master, tearoff=0)
+        context_menu.add_command(label="Delete", command=lambda: self.apply_commands_to_listbox(delete=True))
+        context_menu.add_command(label="Replace...", command=self.context_menu_edit_tag)
+        context_menu.add_command(label="Copy", command=self.copy_listbox_selection)
+        context_menu.add_separator()
+        context_menu.add_command(label="Select All", command=lambda: self.listbox_selection("all"))
+        context_menu.add_command(label="Invert Selection", command=lambda: self.listbox_selection("invert"))
+        context_menu.add_command(label="Clear Selection", command=lambda: self.listbox_selection("clear"))
+        context_menu.add_separator()
+        context_menu.add_command(label="Revert Selection", command=self.revert_listbox_changes)
+        context_menu.add_command(label="Revert All", command=self.clear_filter)
+        context_menu.post(event.x_root, event.y_root)
+
+
+    def show_entry_context_menu(self, event):
+        widget = event.widget
+        if isinstance(widget, Entry):
+            context_menu = Menu(self.master, tearoff=0)
+            try:
+                widget.selection_get()
+                has_selection = True
+            except TclError:
+                has_selection = False
+            has_text = bool(widget.get())
+            context_menu.add_command(label="Cut", command=lambda: widget.event_generate("<Control-x>"), state="normal" if has_selection else "disabled")
+            context_menu.add_command(label="Copy", command=lambda: widget.event_generate("<Control-c>"), state="normal" if has_selection else "disabled")
+            context_menu.add_command(label="Paste", command=lambda: widget.event_generate("<Control-v>"))
+            context_menu.add_separator()
+            context_menu.add_command(label="Delete", command=lambda: widget.delete("sel.first", "sel.last"), state="normal" if has_selection else "disabled")
+            context_menu.add_command(label="Clear", command=lambda: widget.delete(0, "end"), state="normal" if has_text else "disabled")
+            context_menu.post(event.x_root, event.y_root)
+
+
 # --------------------------------------
 # Misc
 # --------------------------------------
-    def warn_before_sort(self, event=None):
+    def warn_before_action(self, event=None, action=None):
         if self.pending_delete or self.pending_edit:
             if not messagebox.askyesno("Warning", "Adjusting this option will clear all pending changes. Continue?"):
                 return
+        if action == "sort":
             self.sort_tags(self.tag_counts.items(), self.sort_options_combobox.get(), self.reverse_sort_var.get())
-        else:
-            self.sort_tags(self.tag_counts.items(), self.sort_options_combobox.get(), self.reverse_sort_var.get())
-
-
-    def warn_before_filter(self, event=None):
-        if self.pending_delete or self.pending_edit:
-            if not messagebox.askyesno("Warning", "Adjusting this option will clear all pending changes. Continue?"):
-                return
             self.filter_tags(self.filter_combobox.get(), self.filter_entry.get())
-        else:
+        elif action == "filter":
             self.filter_tags(self.filter_combobox.get(), self.filter_entry.get())
 
 
@@ -793,6 +837,7 @@ class ImgTxtViewer:
         self.is_resizing_id = None
         self.toggle_zoom_var = None
         self.undo_state = StringVar(value="disabled")
+        self.previous_window_size = (master.winfo_width(), master.winfo_height())
 
         # Image Resize Variables
         self.current_image = None # ImageTk.PhotoImage object
@@ -891,7 +936,7 @@ class ImgTxtViewer:
         master.bind("<Alt-Right>", lambda event: self.next_pair(event))
         master.bind("<Alt-Left>", lambda event: self.prev_pair(event))
         master.bind('<Shift-Delete>', lambda event: self.delete_pair())
-        master.bind('<Configure>', lambda event: self.on_resize(event) if event.widget == master else None)
+        master.bind('<Configure>', self.handle_window_configure)
         master.bind('<F1>', lambda event: self.toggle_zoom_popup(event))
         master.bind('<F2>', lambda event: self.open_image_grid(event))
         master.bind('<F4>', lambda event: self.open_image_in_editor(event))
@@ -899,7 +944,7 @@ class ImgTxtViewer:
         master.bind('<Control-w>', lambda event: self.on_closing(event))
 
         # Print window size on resize:
-        master.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == master else None, add="+")
+        #master.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == master else None, add="+")
 
 
 #endregion
@@ -1085,23 +1130,25 @@ class ImgTxtViewer:
 #region -   Buttons, Labels, and more
 
 
-        # Configure the grid weights for the master window
+        # Configure the grid weights for the master window frame
         master.grid_rowconfigure(0, weight=1)
         master.grid_columnconfigure(0, weight=1)
 
-
+        # primary_paned_window : is used to contain the ImgTxtViewer UI.
         self.primary_paned_window = PanedWindow(master, orient="horizontal", sashwidth=6, bg="#d0d0d0", bd=0)
         self.primary_paned_window.grid(row=0, column=0, sticky="nsew")
         self.primary_paned_window.bind('<ButtonRelease-1>', self.snap_sash_to_half)
 
 
-        # This frame is exclusively used for the displayed image, thumbnails, image info.
+        # master_image_frame : is exclusively used for the displayed image, thumbnails, image info.
         self.master_image_frame = Frame(master)
-        self.primary_paned_window.add(self.master_image_frame, stretch="always")
         self.master_image_frame.bind('<Configure>', lambda event: self.debounce_update_thumbnail_panel(event))
+        self.master_image_frame.grid_rowconfigure(1, weight=1)
+        self.master_image_frame.grid_columnconfigure(0, weight=1)
+        self.primary_paned_window.add(self.master_image_frame, stretch="always")
 
 
-        # This frame serves as a container for all primary UI frames, with the exception of the master_image_frame.
+        # master_control_frame : serves as a container for all primary UI frames, with the exception of the master_image_frame.
         self.master_control_frame = Frame(master)
         self.primary_paned_window.add(self.master_control_frame, stretch="always")
         self.primary_paned_window.paneconfigure(self.master_control_frame, minsize=300)
@@ -1142,11 +1189,6 @@ class ImgTxtViewer:
         self.edit_image_panel = Frame(self.master_image_frame, relief="ridge", bd=1)
         self.edit_image_panel.grid(row=2, column=0, padx=5, pady=5, sticky="ew")
         self.edit_image_panel.grid_remove()
-
-
-        # Configure grid weights so that the image preview expands as needed
-        self.master_image_frame.grid_rowconfigure(1, weight=1)
-        self.master_image_frame.grid_columnconfigure(0, weight=1)
 
 
         # Directory Selection
@@ -1215,11 +1257,11 @@ class ImgTxtViewer:
         self.prev_button = Button(nav_button_frame, overrelief="groove", text="<---Previous", width=12, state="disabled", command=lambda: self.update_pair("prev"))
         self.next_button.pack(side="right", padx=2, pady=2, fill="x", expand=True)
         self.prev_button.pack(side="right", padx=2, pady=2, fill="x", expand=True)
-        ToolTip.create(self.next_button, "Hold shift to advance by 5\nHotkey: ALT+R", 1000, 6, 12)
-        ToolTip.create(self.prev_button, "Hold shift to advance by 5\nHotkey: ALT+L", 1000, 6, 12)
+        ToolTip.create(self.next_button, "Hotkey: ALT+R\nHold shift to advance by 5", 1000, 6, 12)
+        ToolTip.create(self.prev_button, "Hotkey: ALT+L\nHold shift to advance by 5", 1000, 6, 12)
 
 
-        # Saved Label
+        # message Label
         message_label_frame = Frame(self.master_control_frame)
         message_label_frame.pack(pady=2)
         self.message_label = Label(message_label_frame, text="No Change", state="disabled", width=35)
@@ -2183,7 +2225,7 @@ class ImgTxtViewer:
 
     def toggle_edit_panel(self):
         if not self.edit_panel_visible_var.get():
-            if hasattr(self, 'image_control_panel') and self.edit_image_panel.winfo_exists():
+            if hasattr(self, 'edit_image_panel') and self.edit_image_panel.winfo_exists():
                 self.edit_image_panel.grid_remove()
             if hasattr(self, 'highlights_spinbox_frame') and self.highlights_spinbox_frame.winfo_exists():
                 self.highlights_spinbox_frame.grid_remove()
@@ -2194,6 +2236,10 @@ class ImgTxtViewer:
         else:
             self.edit_image_panel.grid()
             self.create_edit_panel_widgets()
+            if self.image_file.lower().endswith('.gif'):
+                self.toggle_edit_panel_widgets("disabled")
+            else:
+                self.toggle_edit_panel_widgets("normal")
         self.refresh_image()
 
 
@@ -2236,8 +2282,8 @@ class ImgTxtViewer:
 
         # Threshold
         self.highlights_threshold_label = ttk.Label(self.highlights_spinbox_frame, text="Threshold:")
-        self.highlights_threshold_spinbox = ttk.Spinbox(self.highlights_spinbox_frame, from_=0, to=255, width=5, command=self.apply_image_edit)
-        self.highlights_threshold_spinbox.set(127)
+        self.highlights_threshold_spinbox = ttk.Spinbox(self.highlights_spinbox_frame, from_=1, to=256, width=5, command=self.apply_image_edit)
+        self.highlights_threshold_spinbox.set(128)
         self.highlights_threshold_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
         self.highlights_threshold_spinbox.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
         self.highlights_threshold_spinbox.bind("<KeyRelease>", self.apply_image_edit)
@@ -2245,7 +2291,7 @@ class ImgTxtViewer:
         # Blur Radius
         self.highlights_blur_radius_label = ttk.Label(self.highlights_spinbox_frame, text="Blur Radius:")
         self.highlights_blur_radius_spinbox = ttk.Spinbox(self.highlights_spinbox_frame, from_=0, to=100, width=5, command=self.apply_image_edit)
-        self.highlights_blur_radius_spinbox.set(30)
+        self.highlights_blur_radius_spinbox.set(0)
         self.highlights_blur_radius_label.grid(row=0, column=2, padx=5, pady=5, sticky="w")
         self.highlights_blur_radius_spinbox.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
         self.highlights_blur_radius_spinbox.bind("<KeyRelease>", self.apply_image_edit)
@@ -2256,8 +2302,8 @@ class ImgTxtViewer:
 
         # Threshold
         self.shadows_threshold_label = ttk.Label(self.shadows_spinbox_frame, text="Threshold:")
-        self.shadows_threshold_spinbox = ttk.Spinbox(self.shadows_spinbox_frame, from_=0, to=255, width=5, command=self.apply_image_edit)
-        self.shadows_threshold_spinbox.set(48)
+        self.shadows_threshold_spinbox = ttk.Spinbox(self.shadows_spinbox_frame, from_=1, to=256, width=5, command=self.apply_image_edit)
+        self.shadows_threshold_spinbox.set(128)
         self.shadows_threshold_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
         self.shadows_threshold_spinbox.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
         self.shadows_threshold_spinbox.bind("<KeyRelease>", self.apply_image_edit)
@@ -2265,7 +2311,7 @@ class ImgTxtViewer:
         # Blur Radius
         self.shadows_blur_radius_label = ttk.Label(self.shadows_spinbox_frame, text="Blur Radius:")
         self.shadows_blur_radius_spinbox = ttk.Spinbox(self.shadows_spinbox_frame, from_=0, to=100, width=5, command=self.apply_image_edit)
-        self.shadows_blur_radius_spinbox.set(4)
+        self.shadows_blur_radius_spinbox.set(0)
         self.shadows_blur_radius_label.grid(row=0, column=2, padx=5, pady=5, sticky="w")
         self.shadows_blur_radius_spinbox.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
         self.shadows_blur_radius_spinbox.bind("<KeyRelease>", self.apply_image_edit)
@@ -2357,7 +2403,6 @@ class ImgTxtViewer:
         self.update_edited_image()
 
 
-
     def edit_image(self, value, enhancer_class, image_type="display", image=None):
         factor = (value + 100) / 100.0
         if image_type == "display":
@@ -2383,13 +2428,13 @@ class ImgTxtViewer:
 
     def adjust_sharpness(self, value, image_type="display", image=None, boost=None):
         if boost is None:
-            boost = int(self.sharpness_boost_spinbox.get())
+            boost = self.validate_spinbox_value(self.sharpness_boost_spinbox, min_value=1, max_value=5, integer=True)
         for _ in range(boost):
             image = self.edit_image(value, ImageEnhance.Sharpness, image_type=image_type, image=image)
         return image
 
 
-    def adjust_autocontrast(self, value=None, image_type="display", image=None): # Could include the 'preserve_tone' parameter
+    def adjust_autocontrast(self, value=None, image_type="display", image=None):
         if value is not None and value <= 0:
             return image
         iterations = max(1, (value - 1) // 20)
@@ -2414,31 +2459,27 @@ class ImgTxtViewer:
         new_min, new_max = -30, 30
         value = ((value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
         factor = (value + 100) / 100.0
-        threshold = int(self.highlights_threshold_spinbox.get())
-        blur_radius = int(self.highlights_blur_radius_spinbox.get())
+        threshold = self.validate_spinbox_value(self.highlights_threshold_spinbox, min_value=1, max_value=256, integer=True)
+        blur_radius = self.validate_spinbox_value(self.highlights_blur_radius_spinbox, min_value=0, max_value=100, integer=True)
         if image_type == "display":
-            mask = self.current_image.convert("L").point(lambda p: p < threshold and 255)
-            blurred_mask = mask.filter(ImageFilter.GaussianBlur(radius=blur_radius))
-            self.current_image = Image.composite(self.current_image, ImageEnhance.Brightness(self.current_image).enhance(factor), blurred_mask)
+            mask = self.create_gradient_mask(self.current_image, threshold, blur_radius, invert=True)
+            self.current_image = Image.composite(self.current_image, ImageEnhance.Brightness(self.current_image).enhance(factor), mask)
         elif image_type == "original" and image:
-            mask = image.convert("L").point(lambda p: p < threshold and 255)
-            blurred_mask = mask.filter(ImageFilter.GaussianBlur(radius=blur_radius))
-            return Image.composite(image, ImageEnhance.Brightness(image).enhance(factor), blurred_mask)
+            mask = self.create_gradient_mask(image, threshold, blur_radius, invert=True)
+            return Image.composite(image, ImageEnhance.Brightness(image).enhance(factor), mask)
         return image
 
 
     def adjust_shadows(self, value, image_type="display", image=None):
         factor = (value + 100) / 100.0
-        threshold = int(self.shadows_threshold_spinbox.get())
-        blur_radius = int(self.shadows_blur_radius_spinbox.get())
+        threshold = self.validate_spinbox_value(self.shadows_threshold_spinbox, min_value=1, max_value=256, integer=True)
+        blur_radius = self.validate_spinbox_value(self.shadows_blur_radius_spinbox, min_value=0, max_value=100, integer=True)
         if image_type == "display":
-            mask = self.current_image.convert("L").point(lambda p: p >= threshold and 255)
-            blurred_mask = mask.filter(ImageFilter.GaussianBlur(radius=blur_radius))
-            self.current_image = Image.composite(self.current_image, ImageEnhance.Brightness(self.current_image).enhance(factor), blurred_mask)
+            mask = self.create_gradient_mask(self.current_image, threshold, blur_radius)
+            self.current_image = Image.composite(self.current_image, ImageEnhance.Brightness(self.current_image).enhance(factor), mask)
         elif image_type == "original" and image:
-            mask = image.convert("L").point(lambda p: p >= threshold and 255)
-            blurred_mask = mask.filter(ImageFilter.GaussianBlur(radius=blur_radius))
-            return Image.composite(image, ImageEnhance.Brightness(image).enhance(factor), blurred_mask)
+            mask = self.create_gradient_mask(image, threshold, blur_radius)
+            return Image.composite(image, ImageEnhance.Brightness(image).enhance(factor), mask)
         return image
 
 
@@ -2447,12 +2488,12 @@ class ImgTxtViewer:
         if image_type == "display":
             hsv_image = self.current_image.convert('HSV')
             channels = list(hsv_image.split())
-            channels[0] = channels[0].point(lambda p: (p + factor * 255) % 255)
+            channels[0] = channels[0].point(lambda p: (p + factor * 256) % 256)
             self.current_image = Image.merge('HSV', channels).convert('RGB')
         elif image_type == "original" and image:
             hsv_image = image.convert('HSV')
             channels = list(hsv_image.split())
-            channels[0] = channels[0].point(lambda p: (p + factor * 255) % 255)
+            channels[0] = channels[0].point(lambda p: (p + factor * 256) % 256)
             return Image.merge('HSV', channels).convert('RGB')
         return image
 
@@ -2469,6 +2510,21 @@ class ImgTxtViewer:
         elif image_type == "original" and image:
             return _adjust_color_temperature(image, factor)
         return image
+
+
+    def create_gradient_mask(self, image, threshold, blur_radius, invert=False):
+        def sigmoid(x):
+            return 1 / (1 + numpy.exp(-x))
+        grayscale = ImageOps.grayscale(image)
+        gradient = numpy.array(grayscale).astype(numpy.float32)
+        gradient = (gradient - threshold) / 256.0
+        gradient = sigmoid(gradient * 10)
+        gradient = (gradient * 256).astype(numpy.uint8)
+        mask = Image.fromarray(gradient)
+        if invert:
+            mask = ImageOps.invert(mask)
+        blurred_mask = mask.filter(ImageFilter.GaussianBlur(radius=blur_radius))
+        return blurred_mask
 
 
     def update_edited_image(self):
@@ -2547,12 +2603,40 @@ class ImgTxtViewer:
             self.edit_last_slider_dict = self.edit_slider_dict.copy()
             self.edit_slider.set(0)
             self.edit_value_label.config(text="0")
-            self.highlights_threshold_spinbox.set(127)
-            self.highlights_blur_radius_spinbox.set(30)
-            self.shadows_threshold_spinbox.set(48)
-            self.shadows_blur_radius_spinbox.set(4)
+            self.highlights_threshold_spinbox.set(128)
+            self.highlights_blur_radius_spinbox.set(0)
+            self.shadows_threshold_spinbox.set(128)
+            self.shadows_blur_radius_spinbox.set(0)
             self.sharpness_boost_spinbox.set(1)
             self.refresh_image()
+
+
+    def validate_spinbox_value(self, spinbox, min_value=0, max_value=1, integer=True, float=False):
+        if integer and float:
+            raise ValueError("validate_spinbox_value() - 'integer' and 'float' cannot be True at the same time!")
+        try:
+            value = spinbox.get() or min_value
+            if integer:
+                value = int(value)
+            elif float:
+                value = float(value)
+            value = max(min_value, min(max_value, value))
+        except ValueError:
+            value = min_value
+        spinbox.delete(0, "end")
+        spinbox.insert(0, value)
+        return value
+
+
+    def toggle_edit_panel_widgets(self, state, event=None):
+        for widget in self.edit_image_panel.winfo_children():
+            try:
+                if isinstance(widget, ttk.Combobox) and state == "normal":
+                    widget.config(state="readonly")
+                else:
+                    widget.config(state=state)
+            except TclError:
+                pass
 
 
 #endregion
@@ -2958,9 +3042,13 @@ class ImgTxtViewer:
                 self.frame_iterator = iter(self.gif_frames)
                 self.current_frame_index = 0
                 self.display_animated_gif()
+                if self.edit_panel_visible_var.get():
+                    self.toggle_edit_panel_widgets("disabled")
             else:
                 self.frame_iterator = None
                 self.current_frame_index = 0
+                if self.edit_panel_visible_var.get():
+                    self.toggle_edit_panel_widgets("normal")
             self.popup_zoom.set_image(image=image, path=self.image_file)
             self.popup_zoom.set_resized_image(resized_image, resized_width, resized_height)
             self.current_image = resized_image
@@ -3054,11 +3142,19 @@ class ImgTxtViewer:
             self.update_thumbnail_panel()
 
 
-    def on_resize(self, event):  # Window resize
+    def debounce_refresh_image(self, event):
         if hasattr(self, 'text_box'):
             if self.is_resizing_id:
                 root.after_cancel(self.is_resizing_id)
             self.is_resizing_id = root.after(250, self.refresh_image)
+
+
+    def handle_window_configure(self, event):  # Window resize
+        if event.widget == self.master:
+            current_size = (event.width, event.height)
+            if current_size != self.previous_window_size:
+                self.previous_window_size = current_size
+                self.debounce_refresh_image(event)
 
 
     def update_imageinfo(self, percent_scale):
@@ -4147,19 +4243,19 @@ class ImgTxtViewer:
         if self.cleaning_text_var.get():
             text = self.remove_duplicate_CSV_captions(text)
             if self.list_mode_var.get():
-                text = re.sub(r'\.\s', '\n', text)  # replace period and space with newline
-                text = re.sub(' *\n *', '\n', text)  # replace one or more spaces surrounded by optional newlines with a single newline
+                text = re.sub(r'\.\s', '\n', text)  # Replace period and space with newline
+                text = re.sub(' *\n *', '\n', text)  # Replace spaces around newlines with a single newline
             else:
-                text = re.sub(r'\.\s', ', ', text)  # replace period and space with comma and space
-                text = re.sub(' *, *', ',', text)  # replace one or more spaces surrounded by optional commas with a single comma
-            text = re.sub(' +', ' ', text)  # replace multiple spaces with a single space
-            text = re.sub(",+", ",", text)  # replace multiple commas with a single comma
-            text = re.sub(",(?=[^\s])", ", ", text)  # add a space after a comma if it's not already there
-            text = re.sub(r'\\\\+', r'\\', text)  # replace multiple backslashes with a single backslash
-            text = re.sub(",+$", "", text)  # remove trailing commas
-            text = re.sub(" +$", "", text)  # remove trailing spaces
-            text = text.strip(",")  # remove leading and trailing commas
-            text = text.strip()  # remove leading and trailing spaces
+                text = re.sub(r'\.\s', ', ', text)  # Replace period and space with comma and space
+                text = re.sub(' *, *', ',', text)  # Replace spaces around commas with a single comma
+            text = re.sub(' +', ' ', text)  # Replace multiple spaces with a single space
+            text = re.sub(",+", ",", text)  # Replace multiple commas with a single comma
+            text = re.sub(",(?=[^\s])", ", ", text)  # Add a space after a comma if it's not already there
+            text = re.sub(r'\\\\+', r'\\', text)  # Replace multiple backslashes with a single backslash
+            text = re.sub(",+$", "", text)  # Remove trailing commas
+            text = re.sub(" +$", "", text)  # Remove trailing spaces
+            text = text.strip(",")  # Remove leading and trailing commas
+            text = text.strip()  # Remove leading and trailing spaces
         return text
 
 
@@ -4534,7 +4630,7 @@ class ImgTxtViewer:
         self.toggle_edit_panel()
         # Done
         self.message_label.config(text="All settings reset!", bg="#6ca079", fg="white")
-        self.save_settings()
+        self.prompt_first_time_setup()
 
 
 #endregion
@@ -5257,6 +5353,12 @@ This release incorporates several new features, including a reworked Batch Tag E
 
 
 - Tofix
+  - (Med) When restoring the previous directory: The first image index is initially loaded, and then the last view image is loaded.
+
+  - (Med) When reloading the last directory: The whole process is really messy and should be made more modular.
+    - set_working_directory(), set_text_file_path(), jump_to_image(); need to be optimized.
+    - When reloading the last directory, the displayed image is resized like 8 times because of repeated calls to show_pair(), display_image().
+
   - (Low) Sometimes after navigating (perhaps only when using the ALT+Arrow-keys bind), the suggestion navigation fails to register on the first press of ALT.
     - Related to how (Alt-L, and Alt-R) are bound to disable_button()
 
@@ -5272,6 +5374,3 @@ This release incorporates several new features, including a reworked Batch Tag E
   '''
 
 #endregion
-
-
-
