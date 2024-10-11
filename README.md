@@ -16,7 +16,7 @@
 - [🔒 Privacy](#-privacy) 
 - [🚩Requirements](#-requirements)
 - [📜Version History](#-version-history)
-- [✨Wiki](https://github.com/Nenotriple/img-txt_viewer/wiki/Tools)
+- [✨Wiki](https://github.com/Nenotriple/img-txt_viewer/wiki)
 - [💾Download](https://github.com/Nenotriple/img-txt_viewer/releases?q=executable&expanded=true)
 
 ---
