@@ -1119,7 +1119,7 @@ class ImgTxtViewer:
         self.toolsMenu.add_command(label="Open Current Directory...", underline=13, command=self.open_image_directory)
         self.toolsMenu.add_command(label="Open Current Image...", underline=13, command=self.open_image)
         self.toolsMenu.add_command(label="Edit Image...", underline=6, accelerator="F4", command=self.open_image_in_editor)
-        self.toolsMenu.add_command(label="Open With...", underline=5, command=self.open_with_dialog)
+        self.toolsMenu.add_command(label="Open With...", underline=5, command=self.open_with_dialog) # Not working in Windows 11
         self.toolsMenu.add_separator()
         self.toolsMenu.add_command(label="Next Empty Text File", accelerator="Ctrl+E", command=self.index_goto_next_empty)
         self.toolsMenu.add_command(label="Open Image-Grid...", accelerator="F2", underline=11, command=self.open_image_grid)
@@ -1731,7 +1731,7 @@ class ImgTxtViewer:
         self.imageContext_menu.add_command(label="Open Current Image...", command=self.open_image)
         self.imageContext_menu.add_command(label="Open Image-Grid...", accelerator="F2", command=self.open_image_grid)
         self.imageContext_menu.add_command(label="Edit Image...", accelerator="F4", command=self.open_image_in_editor)
-        self.imageContext_menu.add_command(label="Open With...", command=self.open_with_dialog)
+        self.imageContext_menu.add_command(label="Open With...", command=self.open_with_dialog) # Not working in Windows 11
         self.imageContext_menu.add_separator()
         # File
         self.imageContext_menu.add_command(label="Duplicate img-txt pair", command=self.duplicate_pair)
@@ -2201,6 +2201,8 @@ class ImgTxtViewer:
         thumb_menu = Menu(thumbnail_button, tearoff=0)
         # Open Image
         thumb_menu.add_command(label="Open Image", command=lambda: self.open_image(index=index))
+        thumb_menu.add_command(label="Delete Pair", command=lambda: self.delete_pair(index=index))
+        thumb_menu.add_command(label="Edit Image", command=lambda: self.open_image_in_editor(index=index))
         thumb_menu.add_separator()
         # Toggle Thumbnail Panel
         thumb_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.update_thumbnail_panel)
@@ -2282,18 +2284,20 @@ class ImgTxtViewer:
 
         # Threshold
         self.highlights_threshold_label = ttk.Label(self.highlights_spinbox_frame, text="Threshold:")
-        self.highlights_threshold_spinbox = ttk.Spinbox(self.highlights_spinbox_frame, from_=1, to=256, width=5, command=self.apply_image_edit)
-        self.highlights_threshold_spinbox.set(128)
         self.highlights_threshold_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        ToolTip.create(self.highlights_threshold_label, "From 1 to 256\nLower values affect more pixels", 25, 6, 12)
+        self.highlights_threshold_spinbox = ttk.Spinbox(self.highlights_spinbox_frame, from_=1, to=256, increment=8, width=5, command=self.apply_image_edit)
         self.highlights_threshold_spinbox.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.highlights_threshold_spinbox.set(128)
         self.highlights_threshold_spinbox.bind("<KeyRelease>", self.apply_image_edit)
 
         # Blur Radius
         self.highlights_blur_radius_label = ttk.Label(self.highlights_spinbox_frame, text="Blur Radius:")
-        self.highlights_blur_radius_spinbox = ttk.Spinbox(self.highlights_spinbox_frame, from_=0, to=100, width=5, command=self.apply_image_edit)
-        self.highlights_blur_radius_spinbox.set(0)
         self.highlights_blur_radius_label.grid(row=0, column=2, padx=5, pady=5, sticky="w")
+        ToolTip.create(self.highlights_blur_radius_label, "From 0 to 10\nHigher values increase the blur effect", 25, 6, 12)
+        self.highlights_blur_radius_spinbox = ttk.Spinbox(self.highlights_spinbox_frame, from_=0, to=10, width=5, command=self.apply_image_edit)
         self.highlights_blur_radius_spinbox.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
+        self.highlights_blur_radius_spinbox.set(0)
         self.highlights_blur_radius_spinbox.bind("<KeyRelease>", self.apply_image_edit)
 
         # Spinbox Frame - Shadows
@@ -2302,18 +2306,20 @@ class ImgTxtViewer:
 
         # Threshold
         self.shadows_threshold_label = ttk.Label(self.shadows_spinbox_frame, text="Threshold:")
-        self.shadows_threshold_spinbox = ttk.Spinbox(self.shadows_spinbox_frame, from_=1, to=256, width=5, command=self.apply_image_edit)
-        self.shadows_threshold_spinbox.set(128)
         self.shadows_threshold_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        ToolTip.create(self.shadows_threshold_label, "From 1 to 256\nHigher values affect more pixels", 25, 6, 12)
+        self.shadows_threshold_spinbox = ttk.Spinbox(self.shadows_spinbox_frame, from_=1, to=256, increment=8, width=5, command=self.apply_image_edit)
         self.shadows_threshold_spinbox.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.shadows_threshold_spinbox.set(128)
         self.shadows_threshold_spinbox.bind("<KeyRelease>", self.apply_image_edit)
 
         # Blur Radius
         self.shadows_blur_radius_label = ttk.Label(self.shadows_spinbox_frame, text="Blur Radius:")
-        self.shadows_blur_radius_spinbox = ttk.Spinbox(self.shadows_spinbox_frame, from_=0, to=100, width=5, command=self.apply_image_edit)
-        self.shadows_blur_radius_spinbox.set(0)
         self.shadows_blur_radius_label.grid(row=0, column=2, padx=5, pady=5, sticky="w")
+        ToolTip.create(self.shadows_blur_radius_label, "From 0 to 10\nHigher values increase the blur effect", 25, 6, 12)
+        self.shadows_blur_radius_spinbox = ttk.Spinbox(self.shadows_spinbox_frame, from_=0, to=10, width=5, command=self.apply_image_edit)
         self.shadows_blur_radius_spinbox.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
+        self.shadows_blur_radius_spinbox.set(0)
         self.shadows_blur_radius_spinbox.bind("<KeyRelease>", self.apply_image_edit)
 
         # Spinbox Frame - Sharpness
@@ -2322,10 +2328,11 @@ class ImgTxtViewer:
 
         # Boost
         self.sharpness_boost_label = ttk.Label(self.sharpness_spinbox_frame, text="Boost:")
-        self.sharpness_boost_spinbox = ttk.Spinbox(self.sharpness_spinbox_frame, from_=1, to=5, width=5, command=self.apply_image_edit)
-        self.sharpness_boost_spinbox.set(1)
         self.sharpness_boost_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        ToolTip.create(self.sharpness_boost_label, "From 1 to 5\nHigher values add additional sharpening passes", 25, 6, 12)
+        self.sharpness_boost_spinbox = ttk.Spinbox(self.sharpness_spinbox_frame, from_=1, to=5, width=5, command=self.apply_image_edit)
         self.sharpness_boost_spinbox.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.sharpness_boost_spinbox.set(1)
         self.sharpness_boost_spinbox.bind("<KeyRelease>", self.apply_image_edit)
 
         # Hide the spinbox frame
@@ -2336,6 +2343,11 @@ class ImgTxtViewer:
 
     def update_slider_value(self, event):
         current_option = self.edit_combobox.get()
+        is_rgb = self.current_image.mode == "RGB"
+        rgb_required_options = ["AutoContrast", "Hue", "Color Temperature"]
+        if current_option in rgb_required_options and not is_rgb:
+            messagebox.showwarning("Unsupported Color Mode", f"{current_option} adjustment only supports images in RGB color mode!\n\nImage Color Mode: {self.current_image.mode}\n\nAdjustments will be ignored.")
+            return
         self.edit_slider.set(self.edit_slider_dict[current_option])
         self.edit_value_label.config(text=str(self.edit_slider_dict[current_option]))
         if current_option == "Highlights":
@@ -2379,26 +2391,26 @@ class ImgTxtViewer:
 
     def _apply_image_edit(self):
         self.current_image = self.original_image.copy()
+        is_rgb = self.current_image.mode == "RGB"
         adjustment_methods = {
             "Brightness": self.adjust_brightness,
             "Contrast": self.adjust_contrast,
-            "AutoContrast": self.adjust_autocontrast,
+            "AutoContrast": self.adjust_autocontrast if is_rgb else None,
             "Highlights": self.adjust_highlights,
             "Shadows": self.adjust_shadows,
             "Saturation": self.adjust_saturation,
             "Sharpness": self.adjust_sharpness,
-            "Hue": self.adjust_hue,
-            "Color Temperature": self.adjust_color_temperature
+            "Hue": self.adjust_hue if is_rgb else None,
+            "Color Temperature": self.adjust_color_temperature if is_rgb else None
         }
-
         if self.edit_cumulative_var.get():
             for option, value in self.edit_slider_dict.items():
-                if option in adjustment_methods and value != 0:
+                if option in adjustment_methods and adjustment_methods[option] and value != 0:
                     adjustment_methods[option](value, image_type="display")
         else:
             option = self.edit_combobox.get()
             value = self.edit_slider_dict.get(option)
-            if option in adjustment_methods and value != 0:
+            if option in adjustment_methods and adjustment_methods[option] and value != 0:
                 adjustment_methods[option](value, image_type="display")
         self.update_edited_image()
 
@@ -2544,25 +2556,26 @@ class ImgTxtViewer:
             return
         original_filepath = self.image_files[self.current_index]
         with Image.open(original_filepath) as original_image:
+            is_rgb = original_image.mode == "RGB"
             adjustment_methods = {
                 "Brightness": self.adjust_brightness,
                 "Contrast": self.adjust_contrast,
-                "AutoContrast": self.adjust_autocontrast,
+                "AutoContrast": self.adjust_autocontrast if is_rgb else None,
                 "Highlights": self.adjust_highlights,
                 "Shadows": self.adjust_shadows,
                 "Saturation": self.adjust_saturation,
                 "Sharpness": self.adjust_sharpness,
-                "Hue": self.adjust_hue,
-                "Color Temperature": self.adjust_color_temperature
+                "Hue": self.adjust_hue if is_rgb else None,
+                "Color Temperature": self.adjust_color_temperature if is_rgb else None
             }
             if self.edit_cumulative_var.get():
                 for option, value in self.edit_slider_dict.items():
-                    if option in adjustment_methods:
+                    if option in adjustment_methods and adjustment_methods[option]:
                         original_image = adjustment_methods[option](value, image_type="original", image=original_image)
             else:
                 option = self.edit_combobox.get()
                 value = self.edit_slider_dict.get(option)
-                if option in adjustment_methods:
+                if option in adjustment_methods and adjustment_methods[option]:
                     original_image = adjustment_methods[option](value, image_type="original", image=original_image)
             directory, filename = os.path.split(original_filepath)
             name, ext = os.path.splitext(filename)
@@ -3789,11 +3802,12 @@ class ImgTxtViewer:
         image_grid.ImageGrid(self.master, self, window_x, window_y, self.jump_to_image)
 
 
-    def open_image_in_editor(self, event=None):
+    def open_image_in_editor(self, event=None, index=None):
         try:
             if self.image_files:
                 app_path = self.external_image_editor_path
-                image_path = self.image_files[self.current_index]
+                image_index = index if index is not None else self.current_index
+                image_path = self.image_files[image_index]
                 subprocess.Popen([app_path, image_path])
         except FileNotFoundError:
             messagebox.showerror("Error", f"The specified image editor was not found:\n\n{app_path}")
@@ -3803,15 +3817,17 @@ class ImgTxtViewer:
             messagebox.showerror("Error", f"An error occurred while opening the image in the editor:\n\n{e}")
 
 
+# Not working in Windows 11
+#
     def open_with_dialog(self):
-        try:
+        #try:
             if self.image_files:
                 image_path = self.image_files[self.current_index]
                 subprocess.run(['rundll32', 'shell32.dll,OpenAs_RunDLL', image_path])
-        except PermissionError as e:
-            messagebox.showerror("Error", f"Permission denied: {e}")
-        except Exception as e:
-            messagebox.showerror("Error", f"An error occurred while opening the file:\n\n{e}")
+        #except PermissionError as e:
+        #    messagebox.showerror("Error", f"Permission denied: {e}")
+        #except Exception as e:
+        #    messagebox.showerror("Error", f"An error occurred while opening the file:\n\n{e}")
 
 
     def set_external_image_editor_path(self):
@@ -5085,46 +5101,54 @@ class ImgTxtViewer:
         try:
             if os.path.exists(trash_dir):
                 is_empty = not os.listdir(trash_dir)
-                empty_status = "Empty" if is_empty else "Not Empty"
-                if messagebox.askyesno("Trash Folder Found", f"A 'Trash' folder was found in the image directory. ({empty_status})\n\nWould you like to delete this folder?"):
+                if is_empty:
                     self.check_working_directory()
                     shutil.rmtree(trash_dir)
+                else:
+                    if messagebox.askyesno("Trash Folder Found", f"A 'Trash' folder was found in the image directory. (Not Empty)\n\nWould you like to delete this folder?"):
+                        self.check_working_directory()
+                        shutil.rmtree(trash_dir)
             root.destroy()
         except (PermissionError, IOError, TclError) as e:
             messagebox.showerror("Error: delete_trash_folder()", f"An error occurred while deleting the trash folder.\n\n{e}")
 
 
-    def delete_pair(self):
+    def delete_pair(self, index=None):
         if not self.check_if_directory():
             return
+        if index is None:
+            index = self.current_index
         try:
-            response = messagebox.askyesnocancel("Confirm Delete", "Send to local trash folder (Yes, Keep)\n\nSend to the system recycle bin (No, destroy)\n\nor cancel?")
-            if response is None:  # Cancel
+            image_file = os.path.basename(self.image_files[index])
+            text_file_exists = os.path.exists(self.text_files[index]) if index < len(self.text_files) else False
+            text_file = os.path.basename(self.text_files[index]) if text_file_exists else "N/A"
+            confirm = messagebox.askyesnocancel("Confirm Delete", f"Image file: {image_file}\nText file: {text_file}\n\nSend to local trash folder (Yes, Keep)\n\nDelete permanently (No, Destroy)\n\nor cancel?")
+            if confirm is None:  # Cancel
                 return
-            elif response:  # Yes, Trash
-                if self.current_index < len(self.image_files):
-                    trash_dir = os.path.join(os.path.dirname(self.image_files[self.current_index]), "Trash")
+            elif confirm:  # Yes, Trash
+                if index < len(self.image_files):
+                    trash_dir = os.path.join(os.path.dirname(self.image_files[index]), "Trash")
                     os.makedirs(trash_dir, exist_ok=True)
                     deleted_pair = []
                     for file_list in [self.image_files, self.text_files]:
-                        if os.path.exists(file_list[self.current_index]):
-                            trash_file = os.path.join(trash_dir, os.path.basename(file_list[self.current_index]))
+                        if os.path.exists(file_list[index]):
+                            trash_file = os.path.join(trash_dir, os.path.basename(file_list[index]))
                             try:
-                                os.rename(file_list[self.current_index], trash_file)
+                                os.rename(file_list[index], trash_file)
                             except FileExistsError:
                                 if not trash_file.endswith("txt"):
                                     if messagebox.askokcancel("Warning", "The file already exists in the trash. Do you want to overwrite it?"):
                                         os.remove(trash_file)
-                                        os.rename(file_list[self.current_index], trash_file)
+                                        os.rename(file_list[index], trash_file)
                                     else:
                                         return
-                            deleted_pair.append((file_list, self.current_index, trash_file))
-                            del file_list[self.current_index]
+                            deleted_pair.append((file_list, index, trash_file))
+                            del file_list[index]
                     self.deleted_pairs.append(deleted_pair)
                     self.total_images_label.config(text=f"of {len(self.image_files)}")
-                    if self.current_index >= len(self.image_files):
-                        self.current_index = len(self.image_files) - 1
-                    if self.current_index >= 1:
+                    if index >= len(self.image_files):
+                        index = len(self.image_files) - 1
+                    if index >= 1:
                         self.update_pair(direction="prev", save=False)
                     else:
                         self.show_pair()
@@ -5133,22 +5157,22 @@ class ImgTxtViewer:
                 else:
                     pass
             else:  # No, Recycle
-                if self.current_index < len(self.image_files):
+                if index < len(self.image_files):
                     deleted_pair = []
                     for file_list in [self.image_files, self.text_files]:
-                        if os.path.exists(file_list[self.current_index]):
+                        if os.path.exists(file_list[index]):
                             try:
-                                os.remove(file_list[self.current_index])
+                                os.remove(file_list[index])
                             except (PermissionError, IOError) as e:
                                 messagebox.showerror("Error: delete_pair()", f"An error occurred while deleting the img-txt pair.\n\n{e}")
                                 return
-                            deleted_pair.append((file_list, self.current_index, None))
-                            del file_list[self.current_index]
+                            deleted_pair.append((file_list, index, None))
+                            del file_list[index]
                     self.deleted_pairs = [pair for pair in self.deleted_pairs if pair != deleted_pair]
                     self.total_images_label.config(text=f"of {len(self.image_files)}")
-                    if self.current_index >= len(self.image_files):
-                        self.current_index = len(self.image_files) - 1
-                    if self.current_index >= 1:
+                    if index >= len(self.image_files):
+                        index = len(self.image_files) - 1
+                    if index >= 1:
                         self.update_pair(direction="prev", save=False)
                     else:
                         self.show_pair()
@@ -5250,7 +5274,7 @@ root.mainloop()
   <summary>Click here to view release notes for v1.96</summary>
 
 
-This release incorporates several new features, including a reworked Batch Tag Edit tool, a Thumbnail Panel for quick navigation, and an Edit Image Panel for adjusting image properties. Additionally, numerous bugs have been fixed, such as issues with the Delete Pair tool, image quality degradation, and memory leaks.
+This release brings several new features and improvements, including a revamped Batch Tag Edit tool, a Thumbnail Panel for quick navigation, and an Edit Image Panel with various image adjustment options. Numerous bugs have been fixed, such as image quality issues, memory leaks, and improper scaling of landscape images. Additionally, many small tweaks and improvements have been made throughout the tool.
 
 
   - New:
@@ -5263,11 +5287,10 @@ This release incorporates several new features, including a reworked Batch Tag E
     - New feature `Edit Image...`: Open the current image in an external editor, the default is MS Paint.
       - Running `Set Default Image Editor` will open a dialog to select the executable (or `.py`, `.pyw`) path to use as the default image editor.
       - This should work with any app that accepts a file path as a launch argument. (Gimp, Krita, Photoshop, etc.)
-    - New feature `Open With`: Trigger the _Open With_ dialog to pick and choose a specific application to open the image with.
     - New tool `Create Wildcard From Captions`: Combine all image captions into a single text file, each set of image captions separated by a newline.
     - Added `Copy` command to the right-click textbox context menu.
     - Added `Last` to the index entry right-click context menu to quickly jump to the last img-txt pair.
-    - A quick guided setup will run on the app's first launch, or if the settings file is deleted.
+    - A quick guided setup will run on the app's first launch, or if the settings file is deleted/reset.
       - This will set the preferred autocomplete dictionaries and matching settings.
     - You can now press `CTRL+W` to close the current window.
 
@@ -5303,6 +5326,7 @@ This release incorporates several new features, including a reworked Batch Tag E
     - The `Options`, and `Tools` menus have been reorganized.
     - The color mode is now displayed in the image info panel.
     - You can now close the `Crop Image` window with the `Escape` key.
+    - I've switched to Windows 11, so it's now the target operating system for this project.
 
 
 <br>
@@ -5350,6 +5374,9 @@ This release incorporates several new features, including a reworked Batch Tag E
 
   - New interface ideas:
     - Compare image and create before/after images.
+  - Perhaps the Menubar should include another option for the "rich" tools like Batch Tag Edit, and any new tools that use the full window.
+
+  - Convert all tk.Button widgets to ttk.Button for a more modern look.
 
 
 - Tofix
