@@ -247,10 +247,14 @@ class TkToolTip:
 
     def _fade(self, duration, start_alpha, end_alpha, on_complete=None):
         """Fade the tooltip window in or out."""
+        if self.tip_window is None:
+            return
         steps = max(1, duration // 10)
         alpha_step = (end_alpha - start_alpha) / steps
 
         def step(current_step):
+            if self.tip_window is None:
+                return
             alpha = start_alpha + current_step * alpha_step
             self.tip_window.attributes("-alpha", alpha)
             if current_step < steps:
