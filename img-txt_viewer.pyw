@@ -20,40 +20,48 @@ VERSION = "v1.96"
 ################################################################################################################################################
 #region - Imports
 
-
+# Standard Library
 import os
 import re
 import csv
 import sys
 import glob
 import time
-import numpy
 import shutil
 import ctypes
 import zipfile
+import threading
 import itertools
 import statistics
 import webbrowser
 import subprocess
 import configparser
 from collections import defaultdict, Counter
+from concurrent.futures import ThreadPoolExecutor
 
+# Standard Library - GUI
 import tkinter.font
-from tkinter import ttk, Tk, Toplevel, messagebox, filedialog, simpledialog, StringVar, BooleanVar, IntVar, Menu, PanedWindow, Frame, Label, Button, Entry, Checkbutton, Text, Listbox, Scrollbar, Event, TclError
-from tkinter.filedialog import askdirectory
+from tkinter import (ttk, Tk, Toplevel, messagebox, filedialog, simpledialog,
+                     StringVar, BooleanVar, IntVar,
+                     Frame, PanedWindow, Menu,
+                     Label, Button, Checkbutton, Entry, Text, Listbox, Scrollbar,
+                     Event, TclError
+                     )
 from tkinter.scrolledtext import ScrolledText
 
-from PIL import Image, ImageTk, ImageSequence, ImageOps, ImageEnhance, ImageFilter, UnidentifiedImageError
 
+# Third-Party Libraries
+from PIL import (Image, ImageTk, ImageSequence,
+                 ImageOps, ImageEnhance, ImageFilter,
+                 UnidentifiedImageError, PngImagePlugin
+                 )
+import numpy
+
+# Custom Libraries
 from main.scripts import crop_image, batch_crop_images, resize_image, image_grid, TagEditor
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
 from main.scripts.TkToolTip import TkToolTip as ToolTip
 from main.bin import upscale_image
-
-
-import threading
-from concurrent.futures import ThreadPoolExecutor
-from PIL.PngImagePlugin import PngInfo
 
 
 #endregion
@@ -1128,7 +1136,7 @@ class ImgTxtViewer:
         self.toolsMenu.add_command(label="Open Current Directory...", underline=13, command=self.open_image_directory)
         self.toolsMenu.add_command(label="Open Current Image...", underline=13, command=self.open_image)
         self.toolsMenu.add_command(label="Edit Image...", underline=6, accelerator="F4", command=self.open_image_in_editor)
-        self.toolsMenu.add_command(label="Open With...", underline=5, command=self.open_with_dialog) # Not working in Windows 11
+        self.toolsMenu.add_command(label="Open With...", underline=5, command=self.open_with_dialog)
         self.toolsMenu.add_separator()
         self.toolsMenu.add_command(label="Next Empty Text File", accelerator="Ctrl+E", command=self.index_goto_next_empty)
         self.toolsMenu.add_command(label="Open Image-Grid...", accelerator="F2", underline=11, command=self.open_image_grid)
@@ -1740,7 +1748,7 @@ class ImgTxtViewer:
         self.imageContext_menu.add_command(label="Open Current Image...", command=self.open_image)
         self.imageContext_menu.add_command(label="Open Image-Grid...", accelerator="F2", command=self.open_image_grid)
         self.imageContext_menu.add_command(label="Edit Image...", accelerator="F4", command=self.open_image_in_editor)
-        self.imageContext_menu.add_command(label="Open With...", command=self.open_with_dialog) # Not working in Windows 11
+        self.imageContext_menu.add_command(label="Open With...", command=self.open_with_dialog)
         self.imageContext_menu.add_separator()
         # File
         self.imageContext_menu.add_command(label="Duplicate img-txt pair", command=self.duplicate_pair)
@@ -1891,7 +1899,7 @@ class ImgTxtViewer:
 
     def set_text_file_path(self, path=None):
         if path == None:
-            self.text_dir = askdirectory()
+            self.text_dir = filedialog.askdirectory()
         else:
             self.text_dir = path
         if not self.text_dir:
@@ -3030,27 +3038,6 @@ class ImgTxtViewer:
         self.text_box.config(undo=True)
 
 
-#    def load_image_file(self, image_file, text_file):
-#        try:
-#            with Image.open(image_file) as img:
-#                self.original_image_size = img.size
-#                max_size = (self.quality_max_size, self.quality_max_size)
-#                img.thumbnail(max_size, self.quality_filter)
-#                if img.format == 'GIF':
-#                    self.gif_frames = [frame.copy() for frame in ImageSequence.Iterator(img)]
-#                    self.frame_durations = [frame.info['duration'] for frame in ImageSequence.Iterator(img)]
-#                else:
-#                    self.gif_frames = [img.copy()]
-#                    self.frame_durations = [None]
-#        except (FileNotFoundError, UnidentifiedImageError):
-#            self.update_image_file_count()
-#            self.image_files.remove(image_file)
-#            if text_file in self.text_files:
-#                self.text_files.remove(text_file)
-#            return
-#        return img
-
-
     def load_image_file(self, image_path, text_file):
         if image_path not in self.thread_file_locks:
             self.thread_file_locks[image_path] = threading.Lock()
@@ -3852,17 +3839,15 @@ class ImgTxtViewer:
             messagebox.showerror("Error", f"An error occurred while opening the image in the editor:\n\n{e}")
 
 
-# Not working in Windows 11
-#
-    def open_with_dialog(self):
-        #try:
+    def open_with_dialog(self): # Not working with paths that include spaces. Adding quotes doesn't help.
+        try:
             if self.image_files:
                 image_path = self.image_files[self.current_index]
                 subprocess.run(['rundll32', 'shell32.dll,OpenAs_RunDLL', image_path])
-        #except PermissionError as e:
-        #    messagebox.showerror("Error", f"Permission denied: {e}")
-        #except Exception as e:
-        #    messagebox.showerror("Error", f"An error occurred while opening the file:\n\n{e}")
+        except PermissionError as e:
+            messagebox.showerror("Error", f"Permission denied: {e}")
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred while opening the file:\n\n{e}")
 
 
     def set_external_image_editor_path(self):
@@ -4752,12 +4737,9 @@ class ImgTxtViewer:
                 with Image.open(file_path) as img:
                     if img.format != 'PNG':
                         raise ValueError("The image format must be PNG.")
-                    if img.mode in ("RGBA", "P"):
-                        img = img.convert("RGB")
-                    metadata = PngInfo()
+                    metadata = PngImagePlugin.PngInfo()
                     metadata.add_text(";;img-txt_viewer_caption;;", f"{text};;")
                     img.save(file_path, "PNG", pnginfo=metadata)
-                print(f"Caption added to {file_path}")
             except Exception as e:
                 messagebox.showerror("Error: _save_image()", f"An error occurred while saving the caption metadata to the image file.\n\n{e}")
 
@@ -4888,7 +4870,7 @@ class ImgTxtViewer:
             else:
                 original_auto_save_var = self.auto_save_var.get()
                 self.auto_save_var.set(value=False)
-            directory = askdirectory()
+            directory = filedialog.askdirectory()
             if directory and directory != self.image_dir.get():
                 if hasattr(self, 'text_box'):
                     self.revert_text_image_filter(clear=True)
@@ -5452,6 +5434,11 @@ This release brings several new features and improvements, including a revamped 
 
 
 - Tofix
+  - (Med) Image info, and thumbnail cache doesn't update when the image is changed.
+    - This is because the cache is built using the filename as the key.
+    - The cache dictionary should include the hash of the image file to ensure it's up-to-date.
+    - All cache for that image should be cleared when the hash changes.
+
   - (Med) When restoring the previous directory: The first image index is initially loaded, and then the last view image is loaded.
 
   - (Med) When reloading the last directory: The whole process is really messy and should be made more modular.
