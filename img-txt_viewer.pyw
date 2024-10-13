@@ -20,14 +20,13 @@ VERSION = "v1.96"
 ################################################################################################################################################
 #region - Imports
 
-
+# Standard Library
 import os
 import re
 import csv
 import sys
 import glob
 import time
-import numpy
 import shutil
 import ctypes
 import zipfile
@@ -38,13 +37,25 @@ import subprocess
 import configparser
 from collections import defaultdict, Counter
 
+# Standard Library - GUI
 import tkinter.font
-from tkinter import ttk, Tk, Toplevel, messagebox, filedialog, simpledialog, StringVar, BooleanVar, IntVar, Menu, PanedWindow, Frame, Label, Button, Entry, Checkbutton, Text, Listbox, Scrollbar, Event, TclError
-from tkinter.filedialog import askdirectory
+from tkinter import (ttk, Tk, Toplevel, messagebox, filedialog, simpledialog,
+                     StringVar, BooleanVar, IntVar,
+                     Frame, PanedWindow, Menu,
+                     Label, Button, Checkbutton, Entry, Text, Listbox, Scrollbar,
+                     Event, TclError
+                     )
 from tkinter.scrolledtext import ScrolledText
 
-from PIL import Image, ImageTk, ImageSequence, ImageOps, ImageEnhance, ImageFilter, UnidentifiedImageError
 
+# Third-Party Libraries
+from PIL import (Image, ImageTk, ImageSequence,
+                 ImageOps, ImageEnhance, ImageFilter,
+                 UnidentifiedImageError
+                 )
+import numpy
+
+# Custom Libraries
 from main.scripts import crop_image, batch_crop_images, resize_image, image_grid, TagEditor
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
 from main.scripts.TkToolTip import TkToolTip as ToolTip
@@ -1882,7 +1893,7 @@ class ImgTxtViewer:
 
     def set_text_file_path(self, path=None):
         if path == None:
-            self.text_dir = askdirectory()
+            self.text_dir = filedialog.askdirectory()
         else:
             self.text_dir = path
         if not self.text_dir:
@@ -3817,17 +3828,15 @@ class ImgTxtViewer:
             messagebox.showerror("Error", f"An error occurred while opening the image in the editor:\n\n{e}")
 
 
-# Not working in Windows 11
-#
-    def open_with_dialog(self):
-        #try:
+    def open_with_dialog(self): # Not working with paths that include spaces. Adding quotes doesn't help.
+        try:
             if self.image_files:
                 image_path = self.image_files[self.current_index]
                 subprocess.run(['rundll32', 'shell32.dll,OpenAs_RunDLL', image_path])
-        #except PermissionError as e:
-        #    messagebox.showerror("Error", f"Permission denied: {e}")
-        #except Exception as e:
-        #    messagebox.showerror("Error", f"An error occurred while opening the file:\n\n{e}")
+        except PermissionError as e:
+            messagebox.showerror("Error", f"Permission denied: {e}")
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred while opening the file:\n\n{e}")
 
 
     def set_external_image_editor_path(self):
@@ -4818,7 +4827,7 @@ class ImgTxtViewer:
             else:
                 original_auto_save_var = self.auto_save_var.get()
                 self.auto_save_var.set(value=False)
-            directory = askdirectory()
+            directory = filedialog.askdirectory()
             if directory and directory != self.image_dir.get():
                 if hasattr(self, 'text_box'):
                     self.revert_text_image_filter(clear=True)
@@ -5274,7 +5283,7 @@ root.mainloop()
   <summary>Click here to view release notes for v1.96</summary>
 
 
-This release brings several new features and improvements, including a revamped Batch Tag Edit tool, a Thumbnail Panel for quick navigation, and an Edit Image Panel with various image adjustment options. Numerous bugs have been fixed, such as image quality issues, memory leaks, and improper scaling of landscape images. Additionally, many small tweaks and improvements have been made throughout the tool.
+This release brings several new features and improvements, including a revamped Batch Tag Edit tool, a Thumbnail Panel for quick navigation, and an Edit Image Panel with various image adjustment options. Numerous bugs have been fixed, such as image quality issues, memory leaks, and improper scaling of landscape images. Additionally, _many_ small tweaks and improvements have been made all throughout the app.
 
 
   - New:
@@ -5380,6 +5389,11 @@ This release brings several new features and improvements, including a revamped 
 
 
 - Tofix
+  - (Med) Image info, and thumbnail cache doesn't update when the image is changed.
+    - This is because the cache is built using the filename as the key.
+    - The cache dictionary should include the hash of the image file to ensure it's up-to-date.
+    - All cache for that image should be cleared when the hash changes.
+
   - (Med) When restoring the previous directory: The first image index is initially loaded, and then the last view image is loaded.
 
   - (Med) When reloading the last directory: The whole process is really messy and should be made more modular.
