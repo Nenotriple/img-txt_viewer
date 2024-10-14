@@ -879,10 +879,11 @@ class ImgTxtViewer:
         self.text_dir = ""
         self.external_image_editor_path = "mspaint"
         self.always_on_top_var = BooleanVar(value=False)
+        self.big_save_button_var = BooleanVar(value=True)
 
         # Font Settings
         self.font_var = StringVar()
-        self.font_size_var = 10
+        self.font_size_var = IntVar(value=10)
 
         # List Mode Settings
         self.list_mode_var = BooleanVar(value=False)
@@ -891,7 +892,6 @@ class ImgTxtViewer:
         # Auto Save Settings
         self.auto_save_var = BooleanVar(value=False)
         self.auto_delete_blank_files_var = BooleanVar(value=False)
-        self.big_save_button_var = BooleanVar(value=True)
 
         # Highlight Settings
         self.highlight_selection_var = BooleanVar(value=True)
@@ -1591,7 +1591,7 @@ class ImgTxtViewer:
         font_box.set(self.current_font_name)
         font_box.bind("<<ComboboxSelected>>", lambda event: set_font_and_size(self.font_var.get(), self.size_scale.get()))
         font_box.pack(side="left", anchor="n", pady=4, fill="x", expand=True)
-        self.font_size_tab6 = Label(self.tab6, text=f"Size: {self.font_size_var}", width=14)
+        self.font_size_tab6 = Label(self.tab6, text=f"Size: {self.font_size_var.get()}", width=14)
         self.font_size_tab6.pack(side="left", anchor="n", pady=4)
         ToolTip.create(self.font_size_tab6, "Default size: 10", 200, 6, 12)
         self.size_scale = ttk.Scale(self.tab6, from_=6, to=24, variable=self.font_size_var, takefocus=False)
@@ -4501,7 +4501,7 @@ class ImgTxtViewer:
         self.config.set("Other", "edit_panel_visible", str(self.edit_panel_visible_var.get()))
         self.config.set("Other", "image_quality", str(self.image_quality_var.get()))
         self.config.set("Other", "font", str(self.font_var.get()))
-        self.config.set("Other", "font_size", str(self.font_size_var))
+        self.config.set("Other", "font_size", str(self.font_size_var.get()))
         self.config.set("Other", "list_mode", str(self.list_mode_var.get()))
 
 
@@ -4607,7 +4607,7 @@ class ImgTxtViewer:
         self.image_quality_var.set(value=self.config.get("Other", "image_quality", fallback="Normal"))
         self.set_image_quality()
         self.font_var.set(value=self.config.get("Other", "font", fallback="Courier New"))
-        self.font_size_var = self.config.getint("Other", "font_size", fallback=10)
+        self.font_size_var.set(value=self.config.getint("Other", "font_size", fallback=10))
         self.list_mode_var.set(value=self.config.getboolean("Other", "list_mode", fallback=False))
 
 
@@ -4662,7 +4662,7 @@ class ImgTxtViewer:
         # Font and text_box
         if hasattr(self, 'text_box'):
             self.font_var.set(value="Courier New")
-            self.font_size_var = 10
+            self.font_size_var.set(value=10)
             self.size_scale.set(value=10)
             self.font_size_tab6.config(text=f"Size: 10")
             current_text = self.text_box.get("1.0", "end-1c")
@@ -5407,18 +5407,20 @@ This release brings several new features and improvements, including a revamped 
 
 
 - Todo
+
+  - (High) Convert all appropriate tk widgets to ttk for a more modern look.
+
   - (Med) Go through all tools that touch text files and make sure they work with alt-text paths.
 
   - (Low) Find Dupe Files, could/should automatically move captions if they are found.
-
-  - (Very Low) Create a `Danbooru (safe)` autocomplete dictionary.
 
   - (Low) New interface ideas:
     - Compare image and create before/after images.
 
   - (Low) Perhaps the Menubar should include another option for the "rich" tools like Batch Tag Edit, and any new tools that use the full window.
 
-  - (High) Convert all tk.Button widgets to ttk.Button for a more modern look.
+  - (Very Low) Create a `Danbooru (safe)` autocomplete dictionary. (I have no idea how to effectively filter the naughty words.)
+  - (Very Low) Refactor UI to utilize CustomTkinter.
 
 
 - Tofix

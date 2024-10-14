@@ -13,7 +13,7 @@
 
 - [📝Usage](#-usage)
 - [💡Tips and Features](#-tips-and-features)
-- [🔒 Privacy](#-privacy) 
+- [🔒 Privacy](#-privacy)
 - [🚩Requirements](#-requirements)
 - [📜Version History](#-version-history)
 - [✨Wiki](https://github.com/Nenotriple/img-txt_viewer/wiki)
