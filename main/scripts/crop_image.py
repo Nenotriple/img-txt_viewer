@@ -1,11 +1,8 @@
 """
 ########################################
-#                                      #
 #             Crop Image UI            #
-#                                      #
 #   Version : v1.00                    #
 #   Author  : github.com/Nenotriple    #
-#                                      #
 ########################################
 
 Description:

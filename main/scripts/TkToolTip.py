@@ -1,11 +1,9 @@
 """
-
 ########################################
 #           Tkinter ToolTips           #
 #   Version : v1.06                    #
 #   Author  : github.com/Nenotriple    #
 ########################################
-
 
 Description:
 ------------
@@ -26,7 +24,7 @@ B) Create and store a tooltip for later configuration:
 import time
 from tkinter import Toplevel, Label
 
-
+'''Default tooltip parameters'''
 TEXT = ""
 DELAY = 0
 PADX = 0
@@ -359,6 +357,7 @@ v1.06 changes:
 
 
 - Todo
+  - Rounded corners for the tooltip, and a more modern look theme.
   - In addition to the 'origin' parameter, it would be handy to set the 'anchor' for the origin.
     - The anchor would dictate the starting (x,y) position inside the origin.
     - For example, the anchor could be considered to already by "ne" (north east), or "top left" for the current logic.
