@@ -2294,84 +2294,84 @@ class ImgTxtViewer:
 
         # Edit Slider
         self.edit_slider = ttk.Scale(self.edit_image_panel, from_=-100, to=100, orient="horizontal", command=self.update_edit_value)
-        self.edit_slider.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.edit_slider.grid(row=0, column=1, pady=5, sticky="ew")
         self.edit_slider.bind("<MouseWheel>", self.adjust_slider_with_mouse_wheel)
         self.edit_image_panel.columnconfigure(1, weight=1)
 
         # Edit Value Label
         self.edit_value_label = Label(self.edit_image_panel, text="0", width=3)
-        self.edit_value_label.grid(row=0, column=2, padx=5, pady=5, sticky="ew")
+        self.edit_value_label.grid(row=0, column=2, pady=5, sticky="ew")
 
         # Cumulative Edit Checkbutton
         self.cumulative_edit_checkbutton = ttk.Checkbutton(self.edit_image_panel, variable=self.edit_cumulative_var, command=self.apply_image_edit)
-        self.cumulative_edit_checkbutton.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
+        self.cumulative_edit_checkbutton.grid(row=0, column=3, pady=5, sticky="ew")
         ToolTip.create(self.cumulative_edit_checkbutton, "If enabled, all edits will be done cumulatively; otherwise, only the selected option will be used.", 25, 6, 12, wraplength=200)
 
         # Revert Button
         self.edit_revert_image_button = ttk.Button(self.edit_image_panel, text="Revert", width=6, command=self.revert_image_edit)
-        self.edit_revert_image_button.grid(row=0, column=4, padx=5, pady=5, sticky="ew")
+        self.edit_revert_image_button.grid(row=0, column=4, pady=5, sticky="ew")
         self.edit_revert_image_button.bind("<Button-3>", self._reset_edit)
         ToolTip.create(self.edit_revert_image_button, "Cancel changes and refresh the displayed image.\nRight-Click to reset the edit panel.", 500, 6, 12)
 
         # Save Button
         self.edit_save_image_button = ttk.Button(self.edit_image_panel, text="Save", width=6, command=self.save_image_edit)
-        self.edit_save_image_button.grid(row=0, column=5, padx=5, pady=5, sticky="ew")
+        self.edit_save_image_button.grid(row=0, column=5, padx=(0,5), pady=5, sticky="ew")
         ToolTip.create(self.edit_save_image_button, "Save the current changes.\nOptionally overwrite the current image.", 500, 6, 12)
 
         # Spinbox Frame - Highlights
         self.highlights_spinbox_frame = ttk.Frame(self.edit_image_panel)
-        self.highlights_spinbox_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+        self.highlights_spinbox_frame.grid(row=1, column=0, columnspan=2, pady=(0,5), sticky="ew")
 
         # Threshold
         self.highlights_threshold_label = ttk.Label(self.highlights_spinbox_frame, text="Threshold:")
-        self.highlights_threshold_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.highlights_threshold_label.grid(row=0, column=0, padx=5, sticky="w")
         ToolTip.create(self.highlights_threshold_label, "From 1 to 256\nLower values affect more pixels", 25, 6, 12)
         self.highlights_threshold_spinbox = ttk.Spinbox(self.highlights_spinbox_frame, from_=1, to=256, increment=8, width=5, command=self.apply_image_edit)
-        self.highlights_threshold_spinbox.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.highlights_threshold_spinbox.grid(row=0, column=1, padx=5, sticky="ew")
         self.highlights_threshold_spinbox.set(128)
         self.highlights_threshold_spinbox.bind("<KeyRelease>", self.apply_image_edit)
 
         # Blur Radius
         self.highlights_blur_radius_label = ttk.Label(self.highlights_spinbox_frame, text="Blur Radius:")
-        self.highlights_blur_radius_label.grid(row=0, column=2, padx=5, pady=5, sticky="w")
+        self.highlights_blur_radius_label.grid(row=0, column=2, padx=5, sticky="w")
         ToolTip.create(self.highlights_blur_radius_label, "From 0 to 10\nHigher values increase the blur effect", 25, 6, 12)
         self.highlights_blur_radius_spinbox = ttk.Spinbox(self.highlights_spinbox_frame, from_=0, to=10, width=5, command=self.apply_image_edit)
-        self.highlights_blur_radius_spinbox.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
+        self.highlights_blur_radius_spinbox.grid(row=0, column=3, padx=5, sticky="ew")
         self.highlights_blur_radius_spinbox.set(0)
         self.highlights_blur_radius_spinbox.bind("<KeyRelease>", self.apply_image_edit)
 
         # Spinbox Frame - Shadows
         self.shadows_spinbox_frame = ttk.Frame(self.edit_image_panel)
-        self.shadows_spinbox_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+        self.shadows_spinbox_frame.grid(row=1, column=0, columnspan=2, pady=(0,5), sticky="ew")
 
         # Threshold
         self.shadows_threshold_label = ttk.Label(self.shadows_spinbox_frame, text="Threshold:")
-        self.shadows_threshold_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.shadows_threshold_label.grid(row=0, column=0, padx=5, sticky="w")
         ToolTip.create(self.shadows_threshold_label, "From 1 to 256\nHigher values affect more pixels", 25, 6, 12)
         self.shadows_threshold_spinbox = ttk.Spinbox(self.shadows_spinbox_frame, from_=1, to=256, increment=8, width=5, command=self.apply_image_edit)
-        self.shadows_threshold_spinbox.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.shadows_threshold_spinbox.grid(row=0, column=1, padx=5, sticky="ew")
         self.shadows_threshold_spinbox.set(128)
         self.shadows_threshold_spinbox.bind("<KeyRelease>", self.apply_image_edit)
 
         # Blur Radius
         self.shadows_blur_radius_label = ttk.Label(self.shadows_spinbox_frame, text="Blur Radius:")
-        self.shadows_blur_radius_label.grid(row=0, column=2, padx=5, pady=5, sticky="w")
+        self.shadows_blur_radius_label.grid(row=0, column=2, padx=5, sticky="w")
         ToolTip.create(self.shadows_blur_radius_label, "From 0 to 10\nHigher values increase the blur effect", 25, 6, 12)
         self.shadows_blur_radius_spinbox = ttk.Spinbox(self.shadows_spinbox_frame, from_=0, to=10, width=5, command=self.apply_image_edit)
-        self.shadows_blur_radius_spinbox.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
+        self.shadows_blur_radius_spinbox.grid(row=0, column=3, padx=5, sticky="ew")
         self.shadows_blur_radius_spinbox.set(0)
         self.shadows_blur_radius_spinbox.bind("<KeyRelease>", self.apply_image_edit)
 
         # Spinbox Frame - Sharpness
         self.sharpness_spinbox_frame = ttk.Frame(self.edit_image_panel)
-        self.sharpness_spinbox_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+        self.sharpness_spinbox_frame.grid(row=1, column=0, columnspan=2, pady=(0,5), sticky="ew")
 
         # Boost
         self.sharpness_boost_label = ttk.Label(self.sharpness_spinbox_frame, text="Boost:")
-        self.sharpness_boost_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.sharpness_boost_label.grid(row=0, column=0, padx=5, sticky="w")
         ToolTip.create(self.sharpness_boost_label, "From 1 to 5\nHigher values add additional sharpening passes", 25, 6, 12)
         self.sharpness_boost_spinbox = ttk.Spinbox(self.sharpness_spinbox_frame, from_=1, to=5, width=5, command=self.apply_image_edit)
-        self.sharpness_boost_spinbox.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.sharpness_boost_spinbox.grid(row=0, column=1, padx=5, sticky="ew")
         self.sharpness_boost_spinbox.set(1)
         self.sharpness_boost_spinbox.bind("<KeyRelease>", self.apply_image_edit)
 
@@ -2682,14 +2682,19 @@ class ImgTxtViewer:
 
 
     def toggle_edit_panel_widgets(self, state, event=None):
-        for widget in self.edit_image_panel.winfo_children():
-            try:
-                if isinstance(widget, ttk.Combobox) and state == "normal":
-                    widget.config(state="readonly")
-                else:
-                    widget.config(state=state)
-            except TclError:
-                pass
+        def set_widget_state(frame, state):
+            for widget in frame.winfo_children():
+                try:
+                    if isinstance(widget, ttk.Combobox) and state == "normal":
+                        widget.config(state="readonly")
+                    else:
+                        widget.config(state=state)
+                except TclError:
+                    pass
+                if isinstance(widget, Frame) or isinstance(widget, ttk.Frame):
+                    set_widget_state(widget, state)
+
+        set_widget_state(self.edit_image_panel, state)
 
 
 #endregion
