@@ -2218,7 +2218,7 @@ class ImgTxtViewer:
                     thumbnail_photo = ImageTk.PhotoImage(padded_img)
                     self.thumbnail_cache[cache_key] = thumbnail_photo
             # Create the thumbnail button
-            thumbnail_button = ttk.Button(self.thumbnail_panel, image=thumbnail_photo, command=lambda idx=index: self.jump_to_image(idx))
+            thumbnail_button = ttk.Button(self.thumbnail_panel, image=thumbnail_photo, cursor="hand2", command=lambda idx=index: self.jump_to_image(idx))
             thumbnail_button.image = thumbnail_photo
             # Highlight the current index
             if index == self.current_index:
@@ -5421,6 +5421,7 @@ This release brings several new features and improvements, including a revamped 
 
   - (Low) New interface ideas:
     - Compare image and create before/after images.
+    - Custom script/executable launcher.
 
   - (Low) Perhaps the Menubar should include another option for the "rich" tools like Batch Tag Edit, and any new tools that use the full window.
 
