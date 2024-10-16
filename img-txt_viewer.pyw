@@ -5312,10 +5312,15 @@ root.mainloop()
 
 
 <details>
-  <summary>Click here to view release notes for v1.96</summary>
+  <summary>Release Notes for v1.96</summary>
 
 
-This release brings several new features and improvements, including a revamped Batch Tag Edit tool, a Thumbnail Panel for quick navigation, and an Edit Image Panel with various image adjustment options. Numerous bugs have been fixed, such as image quality issues, memory leaks, and improper scaling of landscape images. Additionally, _many_ small tweaks and improvements have been made all throughout the app.
+**v1.96 Changes**  |  https://github.com/Nenotriple/img-txt_viewer/compare/v1.95...v1.96
+
+
+This release incorporates several new features, including a reworked Batch Tag Edit tool, a Thumbnail Panel for quick navigation, and an Edit Image Panel for adjusting image properties. Additionally, numerous bugs have been fixed, such as issues with the Delete Pair tool, image quality degradation, and memory leaks.
+
+The app now targets Windows 11, and while it doesn't offer an complete `Aero` theme, many widgets have been updated to utilize a more modern theme where appropriate.
 
 
   - New:
