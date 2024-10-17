@@ -5373,6 +5373,7 @@ The app now targets Windows 11, and while it doesn't offer an complete `Aero` th
 - The color mode is now displayed in the image info panel.
 - You can now close the `Crop Image` window with the `Escape` key.
 - I have switched to Windows 11, so that's now the target operating system for this project. You may notice some UI changes.
+  - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
 
 
 <br>
@@ -5398,7 +5399,7 @@ The app now targets Windows 11, and while it doesn't offer an complete `Aero` th
   - CHANGE: Now uses `TkDefaultFont` instead of Tahoma as the default font for the tooltip text.
 - `PopUpZoom`v1.02:
   - New: `Rounded Corners` The popup now supports rounded corners. (Default: 30px)
-- `Batch Crop`(v1.03), `Resize Images`(v1.02), `Image Grid`(v1.04):
+- `Batch Crop`(v1.03), `Resize Images`(v1.02), `Image Grid`(v1.04), `Batch Resize Images`(v1.08):
   - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
 
 
