@@ -1,11 +1,8 @@
 """
 ########################################
-#                                      #
 #           Batch Crop Images          #
-#                                      #
-#   Version : v1.01                    #
+#   Version : v1.02                    #
 #   Author  : github.com/Nenotriple    #
-#                                      #
 ########################################
 
 Description:
@@ -19,10 +16,19 @@ Crop a folder of images by resizing (ensuring they are larger than the target) t
 #region - Imports
 
 
+# Standard Library
 import os
 import shutil
-from tkinter import *
-from tkinter import ttk, messagebox
+
+
+# Standard Library - GUI
+from tkinter import (ttk, Toplevel, messagebox,
+                     StringVar,
+                     Frame, Label, Button,
+                    )
+
+
+# Third-Party Libraries
 from PIL import Image
 
 
@@ -81,7 +87,7 @@ class BatchCrop:
         self.label_width = Label(self.frame_width, text="Width (px)")
         self.label_width.pack(anchor="w", side="top", padx=5, pady=5)
         self.entry_width_var = StringVar()
-        self.entry_width = Entry(self.frame_width, textvariable=self.entry_width_var)
+        self.entry_width = ttk.Entry(self.frame_width, textvariable=self.entry_width_var)
         self.entry_width.pack(side="top", padx=5, pady=5)
         self.entry_width.bind("<Return>", self.process_images)
 
@@ -91,7 +97,7 @@ class BatchCrop:
         self.label_height = Label(self.frame_height, text="Height (px)")
         self.label_height.pack(anchor="w", side="top", padx=5, pady=5)
         self.entry_height_var = StringVar()
-        self.entry_height = Entry(self.frame_height, textvariable=self.entry_height_var)
+        self.entry_height = ttk.Entry(self.frame_height, textvariable=self.entry_height_var)
         self.entry_height.pack(side="top", padx=5, pady=5)
         self.entry_height.bind("<Return>", self.process_images)
 
@@ -112,10 +118,10 @@ class BatchCrop:
         self.frame_primary_buttons = Frame(self.top)
         self.frame_primary_buttons.pack(side="top", fill="x")
 
-        self.button_crop = Button(self.frame_primary_buttons, overrelief="groove", text="Crop", command=self.process_images)
+        self.button_crop = ttk.Button(self.frame_primary_buttons, text="Crop", command=self.process_images)
         self.button_crop.pack(side="left", expand=True, fill="x", padx=5, pady=5)
 
-        self.button_cancel = Button(self.frame_primary_buttons, overrelief="groove", text="Cancel", command=self.close_window)
+        self.button_cancel = ttk.Button(self.frame_primary_buttons, text="Cancel", command=self.close_window)
         self.button_cancel.pack(side="left", expand=True, fill="x", padx=5, pady=5)
 
 
@@ -203,7 +209,7 @@ class BatchCrop:
                     cropped_image.save(os.path.join(new_directory, f'{os.path.splitext(filename)[0]}_{resolution[0]}x{resolution[1]}.jpg'), quality=100)
             self.rename_text_files()
             self.close_window()
-            result = messagebox.askyesno("Crop Successful", f"All images cropped successfuly.\n\nOutput path:\n{new_directory}\n\nOpen output path?")
+            result = messagebox.askyesno("Crop Successful", f"All images cropped successfully.\n\nOutput path:\n{new_directory}\n\nOpen output path?")
             if result:
                os.startfile(new_directory)
         except ValueError:
@@ -276,12 +282,11 @@ class BatchCrop:
 '''
 
 
-v1.01 changes:
+v1.02 changes:
 
 
   - New:
-    - You can now choose the crop anchor point.
-
+    -
 
 <br>
 
@@ -293,7 +298,7 @@ v1.01 changes:
 
 
   - Other changes:
-    -
+    - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
 
 '''
 
