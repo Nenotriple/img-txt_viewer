@@ -17,10 +17,10 @@ Scan a folder for duplicate images and/or all files by comparing their MD5 or SH
 #region -  Imports
 
 
+
 # Standard Library
 import os
 import sys
-import time
 import shutil
 import ctypes
 import hashlib
@@ -29,67 +29,16 @@ import threading
 
 
 # Standard Library - GUI
-from tkinter import Tk, ttk, Menu, Text, Label, StringVar, simpledialog, BooleanVar, filedialog, messagebox, Toplevel, TclError
+from tkinter import (Tk, ttk, messagebox, simpledialog, filedialog,
+                     StringVar, BooleanVar,
+                     Menu, Text,
+                     TclError
+                     )
 
 
-#endregion
-################################################################################################################################################
-#region -  ToolTips
-
-
-''' Example ToolTip: ToolTip.create(WIDGET, "TOOLTIP TEXT", delay=0, x_offset=0, y_offset=0) '''
-
-class ToolTip:
-    def __init__(self, widget, x_offset=0, y_offset=0):
-        self.widget = widget
-        self.tip_window = None
-        self.x_offset = x_offset
-        self.y_offset = y_offset
-        self.id = None
-        self.hide_id = None
-        self.hide_time = 0
-
-    def show_tip(self, tip_text, x, y):
-        if self.tip_window or not tip_text:
-            return
-        x += self.x_offset
-        y += self.y_offset
-        self.tip_window = tw = Toplevel(self.widget)
-        tw.wm_overrideredirect(True)
-        tw.wm_geometry(f"+{x}+{y}")
-        tw.wm_attributes("-topmost", True)
-        tw.wm_attributes("-disabled", True)
-        label = Label(tw, text=tip_text, background="#ffffee", relief="ridge", borderwidth=1, justify="left", padx=4, pady=4)
-        label.pack()
-        self.hide_id = self.widget.after(15000, self.hide_tip)
-
-    def hide_tip(self):
-        tw = self.tip_window
-        self.tip_window = None
-        if tw:
-            tw.destroy()
-        self.hide_time = time.time()
-
-    @staticmethod
-    def create(widget, text, delay=0, x_offset=0, y_offset=0):
-        tool_tip = ToolTip(widget, x_offset, y_offset)
-        def enter(event):
-            if tool_tip.id:
-                widget.after_cancel(tool_tip.id)
-            if time.time() - tool_tip.hide_time > 0.1:
-                tool_tip.id = widget.after(delay, lambda: tool_tip.show_tip(text, widget.winfo_pointerx(), widget.winfo_pointery()))
-        def leave(event):
-            if tool_tip.id:
-                widget.after_cancel(tool_tip.id)
-            tool_tip.hide_tip()
-        def motion(event):
-            if tool_tip.id:
-                widget.after_cancel(tool_tip.id)
-            tool_tip.id = widget.after(delay, lambda: tool_tip.show_tip(text, widget.winfo_pointerx(), widget.winfo_pointery()))
-        widget.bind('<Enter>', enter)
-        widget.bind('<Leave>', leave)
-        widget.bind('<Motion>', motion)
-
+# Custom Libraries
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from scripts.TkToolTip import TkToolTip as ToolTip
 
 
 #endregion
@@ -229,54 +178,54 @@ class DuplicateFinder:
 
         # Button - Browse
         self.browse_button = ttk.Button(self.folder_frame, text="Browse...", command=self.select_folder)
-        ToolTip.create(self.browse_button, "Select a folder to analyze for duplicate files.", delay=150, x_offset=6, y_offset=6)
+        ToolTip.create(self.browse_button, "Select a folder to analyze for duplicate files.", delay=150, padx=6, pady=6)
         self.browse_button.pack(side="left")
 
         # Button - Open
         self.open_button = ttk.Button(self.folder_frame, text="Open", command=self.open_folder)
-        ToolTip.create(self.open_button, "Open path from folder entry.", delay=150, x_offset=6, y_offset=6)
+        ToolTip.create(self.open_button, "Open path from folder entry.", delay=150, padx=6, pady=6)
         self.open_button.pack(side="left")
 
         # Button - Clear
         self.clear_button = ttk.Button(self.folder_frame, text="X", width=2, command=lambda: self.folder_entry.delete(0, 'end'))
-        ToolTip.create(self.clear_button, "Clear folder entry.", delay=150, x_offset=6, y_offset=6)
+        ToolTip.create(self.clear_button, "Clear folder entry.", delay=150, padx=6, pady=6)
         self.clear_button.pack(side="left")
 
 
         # Radio Buttons - Duplicate Handling Mode
         self.radio_single = ttk.Radiobutton(self.widget_frame, text="Single", variable=self.dupe_handling_mode, value="Single")
-        ToolTip.create(self.radio_single, "Move extra duplicate files, leaving a copy behind.\nFiles will be stored in the '_Duplicate__Files' folder located in the parent folder.", delay=150, x_offset=6, y_offset=6)
+        ToolTip.create(self.radio_single, "Move extra duplicate files, leaving a copy behind.\nFiles will be stored in the '_Duplicate__Files' folder located in the parent folder.", delay=150, padx=6, pady=6)
         self.radio_single.pack(side="left")
         self.radio_both = ttk.Radiobutton(self.widget_frame, text="Both", variable=self.dupe_handling_mode, value="Both")
-        ToolTip.create(self.radio_both, "Move all duplicate files, leaving no copy behind.\nFiles will be stored in the '_Duplicate__Files' folder located in the parent folder.\nDuplicates will be grouped into subfolders.", delay=150, x_offset=6, y_offset=6)
+        ToolTip.create(self.radio_both, "Move all duplicate files, leaving no copy behind.\nFiles will be stored in the '_Duplicate__Files' folder located in the parent folder.\nDuplicates will be grouped into subfolders.", delay=150, padx=6, pady=6)
         self.radio_both.pack(side="left")
 
         # Button - Undo
         self.undo_button = ttk.Button(self.widget_frame, text="Undo", width=6, command=self.undo_file_move)
-        ToolTip.create(self.undo_button, "Restore all files to their original path.\nEnable 'Recursive' To also restore all files within subfolders.", delay=150, x_offset=6, y_offset=6)
+        ToolTip.create(self.undo_button, "Restore all files to their original path.\nEnable 'Recursive' To also restore all files within subfolders.", delay=150, padx=6, pady=6)
         self.undo_button.pack(side="left")
 
         # Button - Run
         self.run_button = ttk.Button(self.widget_frame, text="Find Duplicates", command=self.find_duplicates)
-        ToolTip.create(self.run_button, "Process the selected folder.", delay=1000, x_offset=6, y_offset=6)
+        ToolTip.create(self.run_button, "Process the selected folder.", delay=1000, padx=6, pady=6)
         self.run_button.pack(side="left", fill="x", expand=True)
 
         # Button - Stop
         self.stop_button = ttk.Button(self.widget_frame, text="Stop!", width=6, command=self.stop_process)
-        ToolTip.create(self.stop_button, "Stop all running processes.", delay=150, x_offset=6, y_offset=6)
+        ToolTip.create(self.stop_button, "Stop all running processes.", delay=150, padx=6, pady=6)
         self.stop_button.pack(side="left", fill="x")
 
         # Radio Buttons - Scanning Mode
         self.radio_images = ttk.Radiobutton(self.widget_frame, text="Images", variable=self.scanning_mode, value="Images")
-        ToolTip.create(self.radio_images, "Scan only image filetypes.", delay=150, x_offset=6, y_offset=6)
+        ToolTip.create(self.radio_images, "Scan only image filetypes.", delay=150, padx=6, pady=6)
         self.radio_images.pack(side="left")
         self.radio_all_files = ttk.Radiobutton(self.widget_frame, text="All Files", variable=self.scanning_mode, value="All Files")
-        ToolTip.create(self.radio_all_files, "Scan all filetypes.", delay=150, x_offset=6, y_offset=6)
+        ToolTip.create(self.radio_all_files, "Scan all filetypes.", delay=150, padx=6, pady=6)
         self.radio_all_files.pack(side="left")
 
         # Checkbutton - Subfolder Scanning
         self.recursive_checkbutton = ttk.Checkbutton(self.widget_frame, text="Recursive", variable=self.recursive_mode, offvalue=False)
-        ToolTip.create(self.recursive_checkbutton, "Enable to scan subfolders.\nNOTE: This only compares files within the same subfolder, not across all scanned folders.", delay=150, x_offset=6, y_offset=6)
+        ToolTip.create(self.recursive_checkbutton, "Enable to scan subfolders.\nNOTE: This only compares files within the same subfolder, not across all scanned folders.", delay=150, padx=6, pady=6)
         self.recursive_checkbutton.pack(side="left")
 
 
@@ -288,22 +237,22 @@ class DuplicateFinder:
 
         # Label - Tray - Status
         self.tray_label_status = ttk.Label(self.master, width=15, relief="groove", text=" Idle...")
-        ToolTip.create(self.tray_label_status, "App status.", delay=150, x_offset=6, y_offset=6)
+        ToolTip.create(self.tray_label_status, "App status.", delay=150, padx=6, pady=6)
         self.tray_label_status.pack(side="left", padx=2, ipadx=2, ipady=2)
 
         # Label - Tray - Total Duplicates
         self.tray_label_duplicates = ttk.Label(self.master, width=15, relief="groove", text="Duplicates: 00000")
-        ToolTip.create(self.tray_label_duplicates, "Total number of duplicate files across all scanned folders.", delay=150, x_offset=6, y_offset=6)
+        ToolTip.create(self.tray_label_duplicates, "Total number of duplicate files across all scanned folders.", delay=150, padx=6, pady=6)
         self.tray_label_duplicates.pack(side="left", padx=2, ipadx=2, ipady=2)
 
         # Label - Tray - Total Images Checked
         self.tray_label_total_files = ttk.Label(self.master, width=19, relief="groove", text="Files Checked: 000000")
-        ToolTip.create(self.tray_label_total_files, "Total number of files checked across all scanned folders.", delay=150, x_offset=6, y_offset=6)
+        ToolTip.create(self.tray_label_total_files, "Total number of files checked across all scanned folders.", delay=150, padx=6, pady=6)
         self.tray_label_total_files.pack(side="left", padx=2, ipadx=2, ipady=2)
 
         # Progressbar
         self.progress = ttk.Progressbar(self.master, length=100, mode='determinate')
-        ToolTip.create(self.progress, "Progressbar.", delay=150, x_offset=6, y_offset=6)
+        ToolTip.create(self.progress, "Progressbar.", delay=150, padx=6, pady=6)
         self.progress.pack(side="left", fill="x", padx=2, expand=True)
 
 
