@@ -20,6 +20,7 @@ VERSION = "v1.96"
 ################################################################################################################################################
 #region - Imports
 
+
 # Standard Library
 import os
 import re
@@ -39,23 +40,25 @@ import configparser
 from collections import defaultdict, Counter
 from concurrent.futures import ThreadPoolExecutor
 
+
 # Standard Library - GUI
 import tkinter.font
+from tkinter.scrolledtext import ScrolledText
 from tkinter import (ttk, Tk, Toplevel, messagebox, filedialog, simpledialog,
                      StringVar, BooleanVar, IntVar,
                      Frame, PanedWindow, Menu,
-                     Label, Button, Checkbutton, Entry, Text, Listbox, Scrollbar,
+                     Label, Text, Listbox, Scrollbar,
                      Event, TclError
                      )
-from tkinter.scrolledtext import ScrolledText
 
 
 # Third-Party Libraries
+import numpy
 from PIL import (Image, ImageTk, ImageSequence,
                  ImageOps, ImageEnhance, ImageFilter,
                  UnidentifiedImageError, PngImagePlugin
                  )
-import numpy
+
 
 # Custom Libraries
 from main.scripts import crop_image, batch_crop_images, resize_image, image_grid, TagEditor
@@ -149,8 +152,8 @@ class AboutWindow(Toplevel):
         frame = Frame(self)
         frame.pack(fill="x")
 
-        self.url_button = Button(frame, text=f"{self.github_url}", fg="blue", relief="flat", overrelief="groove", command=self.open_url)
-        self.url_button.pack(side="left", fill="x", padx=10)
+        self.url_button = ttk.Button(frame, text=f"{self.github_url}", command=self.open_url)
+        self.url_button.pack(side="left", fill="x", padx=10, ipadx=10)
         ToolTip.create(self.url_button, "Click this button to open the repo in your default browser", 10, 6, 12)
 
         self.made_by_label = Label(frame, text=f"{VERSION} - img-txt_viewer - Created by: Nenotriple (2023-2024)", font=("Segoe UI", 10))
@@ -311,14 +314,14 @@ class BatchTagEdit:
         self.top_frame.grid(row=0, column=0, columnspan=99, padx=10, pady=(10, 0), sticky="nsew")
         self.top_frame.grid_columnconfigure(3, weight=1)
 
-        Button(self.top_frame, text="<---Close", width=15, overrelief="groove", command=self.close_batch_tag_edit).grid(row=0, column=0, sticky="w")
-        self.button_save_changes = Button(self.top_frame, text="Save Changes", fg="blue", width=15, overrelief="groove", state="disabled", command=self.apply_tag_edits)
+        ttk.Button(self.top_frame, text="<---Close", width=15, command=self.close_batch_tag_edit).grid(row=0, column=0, sticky="w")
+        self.button_save_changes = ttk.Button(self.top_frame, text="Save Changes", width=15, state="disabled", command=self.apply_tag_edits)
         self.button_save_changes.grid(row=0, column=1, padx=10, sticky="w")
 
         self.info_label = Label(self.top_frame, anchor="w", text=f"Total: {self.total_unique_tags}  | Visible: {self.visible_tags}  |  Selected: {self.selected_tags}  |  Pending Delete: {self.pending_delete}  |  Pending Edit: {self.pending_edit}")
         self.info_label.grid(row=0, column=2, padx=10, sticky="ew")
 
-        self.help_button = Button(self.top_frame, text="?", overrelief="groove", width=2, command=self.toggle_info_message)
+        self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.toggle_info_message)
         self.help_button.grid(row=0, column=3, padx=2, pady=2, sticky="e")
         ToolTip.create(self.help_button, "Show/Hide Help", 50, 6, 12)
 
@@ -327,7 +330,7 @@ class BatchTagEdit:
         self.listbox_frame = Frame(self.batch_tag_edit_frame)
         self.listbox_frame.grid(row=1, column=0, padx=(10, 0), pady=10, sticky="nsew")
 
-        self.listbox = Listbox(self.listbox_frame, width=50, selectmode="extended", exportselection=False)
+        self.listbox = Listbox(self.listbox_frame, width=50, selectmode="extended", relief="groove", exportselection=False)
         self.listbox.grid(row=0, column=0, sticky="nsew")
         self.listbox.bind("<Control-c>", self.copy_listbox_selection)
         self.listbox.bind("<Button-3>", self.show_listbox_context_menu)
@@ -349,22 +352,22 @@ class BatchTagEdit:
         self.listbox_sub_frame.grid_columnconfigure(1, weight=1)
         self.listbox_sub_frame.grid_columnconfigure(2, weight=1)
 
-        self.button_all = Button(self.listbox_sub_frame, text="All", width=8, overrelief="groove", command=lambda: self.listbox_selection("all"))
+        self.button_all = ttk.Button(self.listbox_sub_frame, text="All", width=8, command=lambda: self.listbox_selection("all"))
         self.button_all.grid(row=0, column=0, padx=2, pady=2, sticky="ew")
         ToolTip.create(self.button_all, "Select all tags in the listbox", 150, 6, 12)
-        self.button_invert = Button(self.listbox_sub_frame, text="Invert", width=8, overrelief="groove", command=lambda: self.listbox_selection("invert"))
+        self.button_invert = ttk.Button(self.listbox_sub_frame, text="Invert", width=8, command=lambda: self.listbox_selection("invert"))
         self.button_invert.grid(row=0, column=1, padx=2, pady=2, sticky="ew")
         ToolTip.create(self.button_invert, "Invert the current selection of tags", 150, 6, 12)
-        self.button_clear = Button(self.listbox_sub_frame, text="Clear", width=8, overrelief="groove", command=lambda: self.listbox_selection("clear"))
+        self.button_clear = ttk.Button(self.listbox_sub_frame, text="Clear", width=8, command=lambda: self.listbox_selection("clear"))
         self.button_clear.grid(row=0, column=2, padx=2, pady=2, sticky="ew")
         ToolTip.create(self.button_clear, "Clear the current selection of tags", 150, 6, 12)
-        self.button_revert_sel = Button(self.listbox_sub_frame, text="Revert Sel", width=8, overrelief="groove", command=self.revert_listbox_changes)
+        self.button_revert_sel = ttk.Button(self.listbox_sub_frame, text="Revert Sel", width=8, command=self.revert_listbox_changes)
         self.button_revert_sel.grid(row=1, column=0, padx=2, pady=2, sticky="ew")
         ToolTip.create(self.button_revert_sel, "Revert the selected tags to their original state", 150, 6, 12)
-        self.button_revert_all = Button(self.listbox_sub_frame, text="Revert All", width=8, overrelief="groove", command=self.clear_filter)
+        self.button_revert_all = ttk.Button(self.listbox_sub_frame, text="Revert All", width=8, command=self.clear_filter)
         self.button_revert_all.grid(row=1, column=1, padx=2, pady=2, sticky="ew")
         ToolTip.create(self.button_revert_all, "Revert all tags to their original state. (Reset)", 150, 6, 12)
-        self.button_copy = Button(self.listbox_sub_frame, text="Copy", width=8, overrelief="groove", command=self.copy_listbox_selection)
+        self.button_copy = ttk.Button(self.listbox_sub_frame, text="Copy", width=8, command=self.copy_listbox_selection)
         self.button_copy.grid(row=1, column=2, padx=2, pady=2, sticky="ew")
         ToolTip.create(self.button_copy, "Copy the selected tags to the clipboard", 150, 6, 12)
 
@@ -393,7 +396,7 @@ class BatchTagEdit:
         self.sort_options_combobox.bind("<<ComboboxSelected>>", lambda event: self.warn_before_action(action="sort"))
 
         self.reverse_sort_var = BooleanVar()
-        self.reverse_sort_checkbutton = Checkbutton(self.sort_frame, text="Reverse Order", overrelief="groove", variable=self.reverse_sort_var, command=lambda: self.warn_before_action(action="sort"))
+        self.reverse_sort_checkbutton = ttk.Checkbutton(self.sort_frame, text="Reverse Order", variable=self.reverse_sort_var, command=lambda: self.warn_before_action(action="sort"))
         self.reverse_sort_checkbutton.grid(row=0, column=2, padx=2, sticky="e")
 
 
@@ -411,15 +414,15 @@ class BatchTagEdit:
         self.filter_combobox.grid(row=0, column=1, padx=2, sticky="e")
         self.filter_combobox.bind("<<ComboboxSelected>>", lambda event: self.warn_before_action(action="filter"))
 
-        self.filter_entry = Entry(self.filter_frame, width=20)
+        self.filter_entry = ttk.Entry(self.filter_frame, width=20)
         self.filter_entry.grid(row=0, column=2, padx=2, sticky="ew")
         self.filter_entry.bind("<KeyRelease>", lambda event: self.warn_before_action(action="filter"))
         self.filter_entry.bind("<Button-3>", self.show_entry_context_menu)
 
-        self.filter_apply_button = Button(self.filter_frame, text="Apply", overrelief="groove", width=6, command=lambda: self.warn_before_action(action="filter"))
+        self.filter_apply_button = ttk.Button(self.filter_frame, text="Apply", width=6, command=lambda: self.warn_before_action(action="filter"))
         self.filter_apply_button.grid(row=0, column=3, padx=2, sticky="e")
 
-        self.filter_clear_button = Button(self.filter_frame, text="Reset", overrelief="groove", width=6, command=self.clear_filter)
+        self.filter_clear_button = ttk.Button(self.filter_frame, text="Reset", width=6, command=self.clear_filter)
         self.filter_clear_button.grid(row=0, column=4, padx=2, sticky="e")
         ToolTip.create(self.filter_clear_button, "Clear any filters or pending changes", 250, 6, 12)
 
@@ -440,16 +443,16 @@ class BatchTagEdit:
         self.edit_combobox.grid(row=0, column=1, padx=2, sticky="e")
         self.edit_combobox.bind("<<ComboboxSelected>>", self.toggle_edit_entry_state)
 
-        self.edit_entry = Entry(self.edit_frame, width=20)
+        self.edit_entry = ttk.Entry(self.edit_frame, width=20)
         self.edit_entry.grid(row=0, column=2, padx=2, sticky="ew")
         self.edit_entry.bind("<Return>", self.apply_commands_to_listbox)
         self.edit_entry.bind("<Button-3>", self.show_entry_context_menu)
 
-        self.edit_apply_button = Button(self.edit_frame, text="Apply", overrelief="groove", width=6, command=self.apply_commands_to_listbox)
+        self.edit_apply_button = ttk.Button(self.edit_frame, text="Apply", width=6, command=self.apply_commands_to_listbox)
         self.edit_apply_button.grid(row=0, column=3, padx=2, sticky="e")
         ToolTip.create(self.edit_apply_button, "Apply the selected changes to the listbox. This does not apply the changes to the text files!", 250, 6, 12)
 
-        self.edit_reset_button = Button(self.edit_frame, text="Reset", overrelief="groove", width=6, command=self.clear_filter)
+        self.edit_reset_button = ttk.Button(self.edit_frame, text="Reset", width=6, command=self.clear_filter)
         self.edit_reset_button.grid(row=0, column=4, padx=2, sticky="e")
         ToolTip.create(self.edit_reset_button, "Clear any filters or pending changes", 250, 6, 12)
 
@@ -460,8 +463,9 @@ class BatchTagEdit:
         self.help_message = Label(self.help_frame, text="Help:\n"
                                       "Press F5 to open and close Batch Tag Edit.\n"
                                       "The number next to the tag indicates its frequency in the dataset.\n"
-                                      "This tool is not perfect; it may not work as expected with certain combinations of characters or text or formats.\n"
-                                      "You should always make backups of your text files before saving any changes.\n\n"
+                                      "This tool is not perfect; it may not work as expected with certain combinations of characters, text or their formatting.\n"
+                                      "   - It works best with CSV-like text files. Both commas and periods are treated as caption delimiters.\n"
+                                      "   - You should always make backups of your text files before saving any changes.\n\n"
                                       "Instructions:\n"
                                       "1) Use the filter or sort options to refine the tag list.\n"
                                       "   - You can input multiple filter values separated by commas.\n"
@@ -743,7 +747,7 @@ class BatchTagEdit:
 
     def show_entry_context_menu(self, event):
         widget = event.widget
-        if isinstance(widget, Entry):
+        if isinstance(widget, ttk.Entry):
             context_menu = Menu(self.master, tearoff=0)
             try:
                 widget.selection_get()
@@ -879,10 +883,11 @@ class ImgTxtViewer:
         self.text_dir = ""
         self.external_image_editor_path = "mspaint"
         self.always_on_top_var = BooleanVar(value=False)
+        self.big_save_button_var = BooleanVar(value=True)
 
         # Font Settings
         self.font_var = StringVar()
-        self.font_size_var = 10
+        self.font_size_var = IntVar(value=10)
 
         # List Mode Settings
         self.list_mode_var = BooleanVar(value=False)
@@ -892,7 +897,6 @@ class ImgTxtViewer:
         self.auto_save_var = BooleanVar(value=False)
         self.auto_delete_blank_files_var = BooleanVar(value=False)
         self.save_caption_to_png_metadata_var = BooleanVar(value=False)
-        self.big_save_button_var = BooleanVar(value=False)
 
         # Highlight Settings
         self.highlight_selection_var = BooleanVar(value=True)
@@ -1181,7 +1185,7 @@ class ImgTxtViewer:
 
 
         # Primary Image
-        self.primary_display_image = Button(self.master_image_frame, relief="flat", cursor="hand2")
+        self.primary_display_image = Label(self.master_image_frame, cursor="hand2")
         self.primary_display_image.grid(row=1, column=0, sticky="nsew")
         self.primary_display_image.bind("<Double-1>", lambda event: self.open_image(index=self.current_index, event=event))
         self.primary_display_image.bind('<Button-2>', self.open_image_directory)
@@ -1204,17 +1208,17 @@ class ImgTxtViewer:
 
         # Edit Image Panel
         self.edit_image_panel = Frame(self.master_image_frame, relief="ridge", bd=1)
-        self.edit_image_panel.grid(row=2, column=0, padx=5, pady=5, sticky="ew")
+        self.edit_image_panel.grid(row=2, column=0, sticky="ew")
         self.edit_image_panel.grid_remove()
 
 
         # Directory Selection
         directory_frame = Frame(self.master_control_frame)
-        directory_frame.pack(side="top", fill="x")
+        directory_frame.pack(side="top", fill="x", padx=(0,2))
         self.text_path_indicator = Label(directory_frame)
         self.text_path_indicator.pack(side="left", fill="y", pady=2)
         self.text_path_tooltip = ToolTip.create(self.text_path_indicator, "Text Path: Same as image path", 10, 6, 12)
-        self.directory_entry = Entry(directory_frame, textvariable=self.image_dir)
+        self.directory_entry = ttk.Entry(directory_frame, textvariable=self.image_dir)
         self.directory_entry.pack(side="left", fill="both", expand=True, pady=2)
         self.directory_entry.bind('<Return>', self.set_working_directory)
         self.directory_entry.bind("<Double-1>", lambda event: self.custom_select_word_for_entry(event, self.directory_entry))
@@ -1227,23 +1231,26 @@ class ImgTxtViewer:
         self.dir_context_menu.add_command(label="Paste", command=self.directory_paste)
         self.dir_context_menu.add_command(label="Delete", command=self.directory_delete)
         self.dir_context_menu.add_command(label="Clear", command=self.directory_clear)
-        self.browse_button = Button(directory_frame, overrelief="groove", text="Browse...", command=self.choose_working_directory)
-        self.browse_button.pack(side="left", fill="x", padx=2, pady=2)
+        self.dir_context_menu.add_separator()
+        self.dir_context_menu.add_command(label="Set Text File Path...", state="disabled", command=self.set_text_file_path)
+        self.dir_context_menu.add_command(label="Reset Text Path To Image Path", state="disabled", command=lambda: self.set_text_file_path(self.image_dir.get()))
+        self.browse_button = ttk.Button(directory_frame, text="Browse...", width=8, command=self.choose_working_directory)
+        self.browse_button.pack(side="left", pady=2)
         ToolTip.create(self.browse_button, "Right click to set an alternate path for text files", 250, 6, 12)
         self.browse_context_menu = Menu(self.browse_button, tearoff=0)
         self.browse_context_menu.add_command(label="Set Text File Path...", state="disabled", command=self.set_text_file_path)
-        self.browse_context_menu.add_command(label="Clear Text File Path", state="disabled", command=lambda: self.set_text_file_path(self.image_dir.get()))
+        self.browse_context_menu.add_command(label="Reset Text Path To Image Path", state="disabled", command=lambda: self.set_text_file_path(self.image_dir.get()))
         self.browse_button.bind("<Button-3>", self.open_browse_context_menu)
-        self.open_button = Button(directory_frame, overrelief="groove", text="Open", command=lambda: self.open_directory(self.directory_entry.get()))
-        self.open_button.pack(side="left", fill="x", padx=2, pady=2)
+        self.open_button = ttk.Button(directory_frame, text="Open", width=8, command=lambda: self.open_directory(self.directory_entry.get()))
+        self.open_button.pack(side="left", pady=2)
 
 
         # Image Index
-        self.index_frame = Frame(self.master_control_frame)
-        self.index_frame.pack(side="top", fill="x")
+        self.index_frame = Frame(self.master_control_frame, relief="raised")
+        self.index_frame.pack(side="top", fill="x", padx=2)
         self.index_pair_label = Label(self.index_frame, text="Pair", state="disabled")
         self.index_pair_label.pack(side="left")
-        self.image_index_entry = Entry(self.index_frame, width=5, state="disabled")
+        self.image_index_entry = ttk.Entry(self.index_frame, width=5, state="disabled")
         self.image_index_entry.pack(side="left")
         self.image_index_entry.bind("<Return>", self.jump_to_image)
         self.image_index_entry.bind("<MouseWheel>", self.mouse_scroll)
@@ -1255,25 +1262,24 @@ class ImgTxtViewer:
         self.index_context_menu.add_command(label="Random", accelerator="Ctrl+R", command=self.index_goto_random)
         self.index_context_menu.add_command(label="Next Empty", accelerator="Ctrl+E", command=self.index_goto_next_empty)
         self.total_images_label = Label(self.index_frame, text=f"of {len(self.image_files)}", state="disabled")
-        self.total_images_label.pack(side="left", padx=(0, 2))
+        self.total_images_label.pack(side="left")
 
 
         # Save Button
-        self.save_button = Button(self.index_frame, height=1, overrelief="groove", text="Save", fg="blue", state="disabled", command=self.save_text_file)
-        self.save_button.pack(side="left", padx=2, pady=2, fill="x", expand=True)
+        self.save_button = ttk.Button(self.index_frame, text="Save", state="disabled", style="Blue.TButton", padding=(5, 5), command=self.save_text_file)
+        self.save_button.pack(side="left", pady=2, fill="x", expand=True)
         ToolTip.create(self.save_button, "CTRL+S to save\n\nRight-Click to make the save button larger", 1000, 6, 12)
-        self.auto_save_checkbutton = Checkbutton(self.index_frame, overrelief="groove", width=10, text="Auto-save", state="disabled", variable=self.auto_save_var, command=self.change_message_label)
+        self.auto_save_checkbutton = ttk.Checkbutton(self.index_frame, width=10, text="Auto-save", state="disabled", variable=self.auto_save_var, command=self.change_message_label)
         self.auto_save_checkbutton.pack(side="left")
-        self.save_button.bind('<Button-3>', self.toggle_save_button_height)
 
 
         # Navigation Buttons
         nav_button_frame = Frame(self.master_control_frame)
-        nav_button_frame.pack(fill="x")
-        self.next_button = Button(nav_button_frame, overrelief="groove", text="Next--->", width=12, state="disabled", command=lambda: self.update_pair("next"))
-        self.prev_button = Button(nav_button_frame, overrelief="groove", text="<---Previous", width=12, state="disabled", command=lambda: self.update_pair("prev"))
-        self.next_button.pack(side="right", padx=2, pady=2, fill="x", expand=True)
-        self.prev_button.pack(side="right", padx=2, pady=2, fill="x", expand=True)
+        nav_button_frame.pack(fill="x", padx=2)
+        self.next_button = ttk.Button(nav_button_frame, text="Next--->", width=12, state="disabled", command=lambda: self.update_pair("next"))
+        self.prev_button = ttk.Button(nav_button_frame, text="<---Previous", width=12, state="disabled", command=lambda: self.update_pair("prev"))
+        self.next_button.pack(side="right", fill="x", expand=True)
+        self.prev_button.pack(side="right", fill="x", expand=True)
         ToolTip.create(self.next_button, "Hotkey: ALT+R\nHold shift to advance by 5", 1000, 6, 12)
         ToolTip.create(self.prev_button, "Hotkey: ALT+L\nHold shift to advance by 5", 1000, 6, 12)
 
@@ -1389,28 +1395,28 @@ class ImgTxtViewer:
         self.search_label = Label(self.tab1_button_frame, width=8, text="Search:")
         self.search_label.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.search_label, "Enter the EXACT text you want to search for", 200, 6, 12)
-        self.search_entry = Entry(self.tab1_button_frame, textvariable=self.search_string_var, width=4)
+        self.search_entry = ttk.Entry(self.tab1_button_frame, textvariable=self.search_string_var, width=4)
         self.search_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
         self.search_entry.bind("<Double-1>", lambda event: self.custom_select_word_for_entry(event, self.search_entry))
         self.search_entry.bind("<Triple-1>", lambda event: self.select_all_in_entry(event, self.search_entry))
         self.replace_label = Label(self.tab1_button_frame, width=8, text="Replace:")
         self.replace_label.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.replace_label, "Enter the text you want to replace the searched text with\n\nLeave empty to replace with nothing (delete)", 200, 6, 12)
-        self.replace_entry = Entry(self.tab1_button_frame, textvariable=self.replace_string_var, width=4)
+        self.replace_entry = ttk.Entry(self.tab1_button_frame, textvariable=self.replace_string_var, width=4)
         self.replace_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
         self.replace_entry.bind("<Double-1>", lambda event: self.custom_select_word_for_entry(event, self.replace_entry))
         self.replace_entry.bind("<Triple-1>", lambda event: self.select_all_in_entry(event, self.replace_entry))
         self.replace_entry.bind('<Return>', lambda event: self.search_and_replace())
-        self.replace_button = Button(self.tab1_button_frame, text="Go!", overrelief="groove", width=4, command=self.search_and_replace)
-        self.replace_button.pack(side='left', anchor="n", pady=4, padx=1)
+        self.replace_button = ttk.Button(self.tab1_button_frame, text="Go!", width=5, command=self.search_and_replace)
+        self.replace_button.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.replace_button, "Text files will be backup up", 200, 6, 12)
-        self.clear_button = Button(self.tab1_button_frame, text="Clear", overrelief="groove", width=4, command=self.clear_search_and_replace_tab)
-        self.clear_button.pack(side='left', anchor="n", pady=4, padx=1)
-        self.undo_button = Button(self.tab1_button_frame, text="Undo", overrelief="groove", width=4, command=self.restore_backup)
-        self.undo_button.pack(side='left', anchor="n", pady=4, padx=1)
+        self.clear_button = ttk.Button(self.tab1_button_frame, text="Clear", width=5, command=self.clear_search_and_replace_tab)
+        self.clear_button.pack(side='left', anchor="n", pady=4)
+        self.undo_button = ttk.Button(self.tab1_button_frame, text="Undo", width=5, command=self.restore_backup)
+        self.undo_button.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.undo_button, "Revert last action", 200, 6, 12)
-        self.regex_search_replace_checkbutton = Checkbutton(self.tab1_button_frame, text="Regex", overrelief="groove", variable=self.search_and_replace_regex)
-        self.regex_search_replace_checkbutton.pack(side='left', anchor="n", pady=4, padx=1)
+        self.regex_search_replace_checkbutton = ttk.Checkbutton(self.tab1_button_frame, text="Regex", variable=self.search_and_replace_regex)
+        self.regex_search_replace_checkbutton.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.undo_button, "Use Regular Expressions in 'Search'", 200, 6, 12)
         self.tab1_text_frame = Frame(self.tab1_frame, borderwidth=0)
         self.tab1_text_frame.pack(side='top', fill="both")
@@ -1439,18 +1445,18 @@ class ImgTxtViewer:
         self.prefix_label = Label(self.tab2_button_frame, width=8, text="Prefix:")
         self.prefix_label.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.prefix_label, "Enter the text you want to insert at the START of all text files\n\nCommas will be inserted as needed", 200, 6, 12)
-        self.prefix_entry = Entry(self.tab2_button_frame, textvariable=self.prefix_string_var)
+        self.prefix_entry = ttk.Entry(self.tab2_button_frame, textvariable=self.prefix_string_var)
         self.prefix_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
         self.prefix_entry.bind("<Double-1>", lambda event: self.custom_select_word_for_entry(event, self.prefix_entry))
         self.prefix_entry.bind("<Triple-1>", lambda event: self.select_all_in_entry(event, self.prefix_entry))
         self.prefix_entry.bind('<Return>', lambda event: self.prefix_text_files())
-        self.prefix_button = Button(self.tab2_button_frame, text="Go!", overrelief="groove", width=4, command=self.prefix_text_files)
-        self.prefix_button.pack(side='left', anchor="n", pady=4, padx=1)
+        self.prefix_button = ttk.Button(self.tab2_button_frame, text="Go!", width=5, command=self.prefix_text_files)
+        self.prefix_button.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.prefix_button, "Text files will be backup up", 200, 6, 12)
-        self.clear_button = Button(self.tab2_button_frame, text="Clear", overrelief="groove", width=4, command=self.clear_prefix_tab)
-        self.clear_button.pack(side='left', anchor="n", pady=4, padx=1)
-        self.undo_button = Button(self.tab2_button_frame, text="Undo", overrelief="groove", width=4, command=self.restore_backup)
-        self.undo_button.pack(side='left', anchor="n", pady=4, padx=1)
+        self.clear_button = ttk.Button(self.tab2_button_frame, text="Clear", width=5, command=self.clear_prefix_tab)
+        self.clear_button.pack(side='left', anchor="n", pady=4)
+        self.undo_button = ttk.Button(self.tab2_button_frame, text="Undo", width=5, command=self.restore_backup)
+        self.undo_button.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.undo_button, "Revert last action", 200, 6, 12)
         self.tab2_text_frame = Frame(self.tab2_frame, borderwidth=0)
         self.tab2_text_frame.pack(side='top', fill="both")
@@ -1473,18 +1479,18 @@ class ImgTxtViewer:
         self.append_label = Label(self.tab3_button_frame, width=8, text="Append:")
         self.append_label.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.append_label, "Enter the text you want to insert at the END of all text files\n\nCommas will be inserted as needed", 200, 6, 12)
-        self.append_entry = Entry(self.tab3_button_frame, textvariable=self.append_string_var)
+        self.append_entry = ttk.Entry(self.tab3_button_frame, textvariable=self.append_string_var)
         self.append_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
         self.append_entry.bind("<Double-1>", lambda event: self.custom_select_word_for_entry(event, self.append_entry))
         self.append_entry.bind("<Triple-1>", lambda event: self.select_all_in_entry(event, self.append_entry))
         self.append_entry.bind('<Return>', lambda event: self.append_text_files())
-        self.append_button = Button(self.tab3_button_frame, text="Go!", overrelief="groove", width=4, command=self.append_text_files)
-        self.append_button.pack(side='left', anchor="n", pady=4, padx=1)
+        self.append_button = ttk.Button(self.tab3_button_frame, text="Go!", width=5, command=self.append_text_files)
+        self.append_button.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.append_button, "Text files will be backup up", 200, 6, 12)
-        self.clear_button = Button(self.tab3_button_frame, text="Clear", overrelief="groove", width=4, command=self.clear_append_tab)
-        self.clear_button.pack(side='left', anchor="n", pady=4, padx=1)
-        self.undo_button = Button(self.tab3_button_frame, text="Undo", overrelief="groove", width=4, command=self.restore_backup)
-        self.undo_button.pack(side='left', anchor="n", pady=4, padx=1)
+        self.clear_button = ttk.Button(self.tab3_button_frame, text="Clear", width=5, command=self.clear_append_tab)
+        self.clear_button.pack(side='left', anchor="n", pady=4)
+        self.undo_button = ttk.Button(self.tab3_button_frame, text="Undo", width=5, command=self.restore_backup)
+        self.undo_button.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.undo_button, "Revert last action", 200, 6, 12)
         self.tab3_text_frame = Frame(self.tab3_frame, borderwidth=0)
         self.tab3_text_frame.pack(side='top', fill="both")
@@ -1507,22 +1513,22 @@ class ImgTxtViewer:
         self.filter_label = Label(self.tab4_button_frame, width=8, text="Filter:")
         self.filter_label.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.filter_label, "Enter the EXACT text you want to filter by\nThis will filter all img-txt pairs based on the provided text, see below for more info", 200, 6, 12)
-        self.filter_entry = Entry(self.tab4_button_frame, width=11, textvariable=self.filter_string_var)
+        self.filter_entry = ttk.Entry(self.tab4_button_frame, width=11, textvariable=self.filter_string_var)
         self.filter_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
         self.filter_entry.bind("<Double-1>", lambda event: self.custom_select_word_for_entry(event, self.filter_entry))
         self.filter_entry.bind("<Triple-1>", lambda event: self.select_all_in_entry(event, self.filter_entry))
         self.filter_entry.bind('<Return>', lambda event: self.filter_text_image_pairs())
-        self.filter_button = Button(self.tab4_button_frame, text="Go!", overrelief="groove", width=4, command=self.filter_text_image_pairs)
-        self.filter_button.pack(side='left', anchor="n", pady=4, padx=1)
+        self.filter_button = ttk.Button(self.tab4_button_frame, text="Go!", width=5, command=self.filter_text_image_pairs)
+        self.filter_button.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.filter_button, "Text files will be filtered based on the entered text", 200, 6, 12)
-        self.revert_filter_button = Button(self.tab4_button_frame, text="Clear", overrelief="groove", width=4, command=lambda: (self.revert_text_image_filter(clear=True)))
-        self.revert_filter_button.pack(side='left', anchor="n", pady=4, padx=1)
+        self.revert_filter_button = ttk.Button(self.tab4_button_frame, text="Clear", width=5, command=lambda: (self.revert_text_image_filter(clear=True)))
+        self.revert_filter_button.pack(side='left', anchor="n", pady=4)
         self.revert_filter_button_tooltip = ToolTip.create(self.revert_filter_button, "Clear any filtering applied", 200, 6, 12)
-        self.regex_filter_checkbutton = Checkbutton(self.tab4_button_frame, text="Regex", overrelief="groove", variable=self.filter_use_regex_var)
-        self.regex_filter_checkbutton.pack(side='left', anchor="n", pady=4, padx=1)
+        self.regex_filter_checkbutton = ttk.Checkbutton(self.tab4_button_frame, text="Regex", variable=self.filter_use_regex_var)
+        self.regex_filter_checkbutton.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.regex_filter_checkbutton, "Use Regular Expressions for filtering", 200, 6, 12)
-        self.empty_files_checkbutton = Checkbutton(self.tab4_button_frame, text="Empty", overrelief="groove", variable=self.filter_empty_files_var, command=self.toggle_empty_files_filter)
-        self.empty_files_checkbutton.pack(side='left', anchor="n", pady=4, padx=1)
+        self.empty_files_checkbutton = ttk.Checkbutton(self.tab4_button_frame, text="Empty", variable=self.filter_empty_files_var, command=self.toggle_empty_files_filter)
+        self.empty_files_checkbutton.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.empty_files_checkbutton, "Check this to show only empty text files\n\nImages without a text pair are also considered as empty", 200, 6, 12)
         self.tab4_text_frame = Frame(self.tab4_frame, borderwidth=0)
         self.tab4_text_frame.pack(side='top', fill="both")
@@ -1547,17 +1553,17 @@ class ImgTxtViewer:
         self.custom_label = Label(self.tab5_button_frame, width=8, text="Highlight:")
         self.custom_label.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.custom_label, "Enter the text you want to highlight\nUse ' + ' to highlight multiple strings of text\n\nExample: dog + cat", 200, 6, 12)
-        self.custom_entry = Entry(self.tab5_button_frame, textvariable=self.custom_highlight_string_var)
+        self.custom_entry = ttk.Entry(self.tab5_button_frame, textvariable=self.custom_highlight_string_var)
         self.custom_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
         self.custom_entry.bind("<Double-1>", lambda event: self.custom_select_word_for_entry(event, self.custom_entry))
         self.custom_entry.bind("<Triple-1>", lambda event: self.select_all_in_entry(event, self.custom_entry))
         self.custom_entry.bind('<KeyRelease>', lambda event: self.highlight_custom_string())
-        self.highlight_button = Button(self.tab5_button_frame, text="Go!", overrelief="groove", width=4, command=self.highlight_custom_string)
-        self.highlight_button.pack(side='left', anchor="n", pady=4, padx=1)
-        self.clear_button = Button(self.tab5_button_frame, text="Clear", overrelief="groove", width=4, command=self.clear_highlight_tab)
-        self.clear_button.pack(side='left', anchor="n", pady=4, padx=1)
-        self.regex_highlight_checkbutton = Checkbutton(self.tab5_button_frame, text="Regex", overrelief="groove", variable=self.highlight_use_regex_var)
-        self.regex_highlight_checkbutton.pack(side='left', anchor="n", pady=4, padx=1)
+        self.highlight_button = ttk.Button(self.tab5_button_frame, text="Go!", width=5, command=self.highlight_custom_string)
+        self.highlight_button.pack(side='left', anchor="n", pady=4)
+        self.clear_button = ttk.Button(self.tab5_button_frame, text="Clear", width=5, command=self.clear_highlight_tab)
+        self.clear_button.pack(side='left', anchor="n", pady=4)
+        self.regex_highlight_checkbutton = ttk.Checkbutton(self.tab5_button_frame, text="Regex", variable=self.highlight_use_regex_var)
+        self.regex_highlight_checkbutton.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.regex_highlight_checkbutton, "Use Regular Expressions for highlighting text", 200, 6, 12)
         self.tab5_text_frame = Frame(self.tab5_frame, borderwidth=0)
         self.tab5_text_frame.pack(side='top', fill="both")
@@ -1591,15 +1597,15 @@ class ImgTxtViewer:
         font_box.set(self.current_font_name)
         font_box.bind("<<ComboboxSelected>>", lambda event: set_font_and_size(self.font_var.get(), self.size_scale.get()))
         font_box.pack(side="left", anchor="n", pady=4, fill="x", expand=True)
-        self.font_size_tab6 = Label(self.tab6, text=f"Size: {self.font_size_var}", width=14)
+        self.font_size_tab6 = Label(self.tab6, text=f"Size: {self.font_size_var.get()}", width=14)
         self.font_size_tab6.pack(side="left", anchor="n", pady=4)
         ToolTip.create(self.font_size_tab6, "Default size: 10", 200, 6, 12)
         self.size_scale = ttk.Scale(self.tab6, from_=6, to=24, variable=self.font_size_var, takefocus=False)
         self.size_scale.set(self.current_font_size)
         self.size_scale.bind("<B1-Motion>", lambda event: set_font_and_size(self.font_var.get(), self.size_scale.get()))
         self.size_scale.pack(side="left", anchor="n", pady=4, fill="x", expand=True)
-        reset_button = Button(self.tab6, text="Reset", overrelief="groove", width=4, command=reset_to_defaults)
-        reset_button.pack(side="left", anchor="n", pady=4, padx=1)
+        reset_button = ttk.Button(self.tab6, text="Reset", width=5, takefocus=False, command=reset_to_defaults)
+        reset_button.pack(side="left", anchor="n", pady=4)
 
 
     def create_custom_dictionary_widgets_tab7(self):
@@ -1617,17 +1623,17 @@ class ImgTxtViewer:
         self.tab7_label = Label(self.tab7_button_frame, text="^^^Expand this frame^^^")
         self.tab7_label.pack(side='left')
         ToolTip.create(self.tab7_label, "Click and drag the gray bar up to reveal the text box", 200, 6, 12)
-        self.open_mytags_button = Button(self.tab7_button_frame, width=10, text="Open", overrelief="groove", takefocus=False, command=lambda: self.open_textfile("my_tags.csv"))
-        self.open_mytags_button.pack(side='right', padx=1, fill='x')
+        self.open_mytags_button = ttk.Button(self.tab7_button_frame, width=10, text="Open", takefocus=False, command=lambda: self.open_textfile("my_tags.csv"))
+        self.open_mytags_button.pack(side='right', fill='x')
         ToolTip.create(self.open_mytags_button, "Open the 'my_tags.csv' file in your default system app.", 200, 6, 12)
-        self.refresh_mytags_button = Button(self.tab7_button_frame, width=10, text="Refresh", overrelief="groove", takefocus=False, command=self.refresh_custom_dictionary)
-        self.refresh_mytags_button.pack(side='right', padx=1, fill='x')
+        self.refresh_mytags_button = ttk.Button(self.tab7_button_frame, width=10, text="Refresh", takefocus=False, command=self.refresh_custom_dictionary)
+        self.refresh_mytags_button.pack(side='right', fill='x')
         ToolTip.create(self.refresh_mytags_button, "Refresh the textbox with the contents of 'my_tags.csv'", 200, 6, 12)
-        self.save_mytags_button = Button(self.tab7_button_frame, width=10, text="Save", overrelief="groove", takefocus=False, command=save)
-        self.save_mytags_button.pack(side='right', padx=1, fill='x')
+        self.save_mytags_button = ttk.Button(self.tab7_button_frame, width=10, text="Save", takefocus=False, command=save)
+        self.save_mytags_button.pack(side='right', fill='x')
         ToolTip.create(self.save_mytags_button, "Save the contents of the textbox to 'my_tags.csv'", 200, 6, 12)
-        self.use_mytags_checkbutton = Checkbutton(self.tab7_button_frame, text="Use My Tags", variable=self.use_mytags_var, overrelief="groove", takefocus=False, command=self.refresh_custom_dictionary)
-        self.use_mytags_checkbutton.pack(side='right', padx=1, fill='x')
+        self.use_mytags_checkbutton = ttk.Checkbutton(self.tab7_button_frame, text="Use My Tags", variable=self.use_mytags_var, takefocus=False, command=self.refresh_custom_dictionary)
+        self.use_mytags_checkbutton.pack(side='right', fill='x')
         ToolTip.create(self.use_mytags_checkbutton, "Enable or disable these tags for use with autocomplete.", 200, 6, 12)
         self.tab7_frame2 = Frame(self.tab7_frame)
         self.tab7_frame2.pack(side='top', fill='both')
@@ -1652,14 +1658,14 @@ class ImgTxtViewer:
         self.tab8_button_frame.pack(side='top', fill='x', pady=4)
         self.tab8_label = Label(self.tab8_button_frame, text="^^^Expand this frame^^^")
         self.tab8_label.pack(side='left')
-        self.tab8_refresh_stats_button = Button(self.tab8_button_frame, width=10, text="Refresh", overrelief="groove", takefocus=False, command=lambda: self.calculate_file_stats(manual_refresh=True))
-        self.tab8_refresh_stats_button.pack(side='right', padx=1)
+        self.tab8_refresh_stats_button = ttk.Button(self.tab8_button_frame, width=10, text="Refresh", takefocus=False, command=lambda: self.calculate_file_stats(manual_refresh=True))
+        self.tab8_refresh_stats_button.pack(side='right')
         ToolTip.create(self.tab8_refresh_stats_button, "Refresh the file stats", 200, 6, 12)
-        self.tab8_truncate_checkbutton = Checkbutton(self.tab8_button_frame, text="Truncate Captions", overrelief="groove", takefocus=False, variable=self.truncate_stat_captions_var)
-        self.tab8_truncate_checkbutton.pack(side='right', padx=1)
+        self.tab8_truncate_checkbutton = ttk.Checkbutton(self.tab8_button_frame, text="Truncate Captions", takefocus=False, variable=self.truncate_stat_captions_var)
+        self.tab8_truncate_checkbutton.pack(side='right')
         ToolTip.create(self.tab8_truncate_checkbutton, "Limit the displayed captions if they exceed either 8 words or 50 characters", 200, 6, 12)
-        self.tab8_process_images_checkbutton = Checkbutton(self.tab8_button_frame, text="Process Image Stats", overrelief="groove", takefocus=False, variable=self.process_image_stats_var)
-        self.tab8_process_images_checkbutton.pack(side='right', padx=1)
+        self.tab8_process_images_checkbutton = ttk.Checkbutton(self.tab8_button_frame, text="Process Image Stats", takefocus=False, variable=self.process_image_stats_var)
+        self.tab8_process_images_checkbutton.pack(side='right')
         ToolTip.create(self.tab8_process_images_checkbutton, "Enable/Disable image stat processing (Can be slow with many HD images)", 200, 6, 12)
         self.tab8_stats_textbox = ScrolledText(self.tab8_frame, wrap="word", state="disabled")
         self.tab8_stats_textbox.pack(fill='both', expand=True)
@@ -1924,7 +1930,7 @@ class ImgTxtViewer:
             self.text_path_tooltip.config("Text Path: Same as image path", 10, 6, 12)
 
 
-####### Directory entry context menu ##################################################
+####### Directory entry context menu helpers ##################################################
 
 
     def open_directory_context_menu(self, event):
@@ -1976,7 +1982,7 @@ class ImgTxtViewer:
             self.directory_entry.delete(0, "end")
 
 
-####### Index entry context menu ##################################################
+####### Index entry context menu helpers ##################################################
 
 
     def open_index_context_menu(self, event):
@@ -2047,7 +2053,9 @@ class ImgTxtViewer:
         for o_command in options_commands:
             self.optionsMenu.entryconfig(o_command, state="normal")
         self.browse_context_menu.entryconfig("Set Text File Path...", state="normal")
-        self.browse_context_menu.entryconfig("Clear Text File Path", state="normal")
+        self.browse_context_menu.entryconfig("Reset Text Path To Image Path", state="normal")
+        self.dir_context_menu.entryconfig("Set Text File Path...", state="normal")
+        self.dir_context_menu.entryconfig("Reset Text Path To Image Path", state="normal")
         self.index_pair_label.configure(state="normal")
         self.image_index_entry.configure(state="normal")
         self.total_images_label.configure(state="normal")
@@ -2064,11 +2072,13 @@ class ImgTxtViewer:
     def toggle_save_button_height(self, event=None, reset=None):
         if reset:
             self.big_save_button_var.set(False)
-            self.save_button.config(height=1)
+            self.save_button.config(padding=(1, 1))
+            return
         else:
-            new_height = 1 if self.save_button.cget('height') == 2 else 2
-            self.big_save_button_var.set(new_height == 2)
-            self.save_button.config(height=new_height)
+            if self.big_save_button_var.get():
+                self.save_button.config(padding=(5, 5))
+            else:
+                self.save_button.config(padding=(1, 1))
 
 
     def toggle_zoom_popup(self, event=None):
@@ -2119,9 +2129,9 @@ class ImgTxtViewer:
         new_orient = 'vertical' if swap_state else 'horizontal'
         self.primary_paned_window.configure(orient=new_orient)
         if new_orient == 'horizontal':
-            self.master.minsize(0, 300)
+            self.master.minsize(0, 200)
         else:
-            self.master.minsize(300, 0)
+            self.master.minsize(200, 0)
         self.master.after_idle(self.configure_pane_position)
 
 
@@ -2137,8 +2147,8 @@ class ImgTxtViewer:
 
 
     def configure_pane(self):
-        self.primary_paned_window.paneconfigure(self.master_image_frame, minsize=300, stretch="always")
-        self.primary_paned_window.paneconfigure(self.master_control_frame, minsize=300, stretch="always")
+        self.primary_paned_window.paneconfigure(self.master_image_frame, minsize=200, stretch="always")
+        self.primary_paned_window.paneconfigure(self.master_control_frame, minsize=200, stretch="always")
 
 
 #endregion
@@ -2170,48 +2180,65 @@ class ImgTxtViewer:
 
 
     def update_thumbnail_panel(self):
-        for widget in self.thumbnail_panel.winfo_children():
-            widget.destroy()
-        if not self.thumbnails_visible.get() or len(self.image_files) == 0:
+        # Clear only if necessary
+        if len(self.thumbnail_panel.winfo_children()) != len(self.image_files):
+            for widget in self.thumbnail_panel.winfo_children():
+                widget.destroy()
+        if not self.thumbnails_visible.get() or not self.image_files:
             self.thumbnail_panel.grid_remove()
             return
         self.thumbnail_panel.grid()
         thumbnail_width = self.thumbnail_width.get()
         panel_width = self.thumbnail_panel.winfo_width() or self.master_image_frame.winfo_width()
-        num_thumbnails = panel_width // (thumbnail_width + 10) - 1
-        start_index = max(0, self.current_index - num_thumbnails // 2)
+        num_thumbnails = max(1, panel_width // (thumbnail_width + 10))
+        # Handle edge cases: Adjust start index to avoid wrapping
+        half_visible = num_thumbnails // 2
+        if self.current_index < half_visible:
+            # If near the start, display from the first image
+            start_index = 0
+        elif self.current_index >= len(self.image_files) - half_visible:
+            # If near the end, shift the view back to fit thumbnails
+            start_index = max(0, len(self.image_files) - num_thumbnails)
+        else:
+            # Otherwise, center the current index
+            start_index = self.current_index - half_visible
+        # Ensure the correct number of thumbnails are displayed
+        total_thumbnails = min(len(self.image_files), num_thumbnails)
         thumbnail_buttons = []
-        for i in range(num_thumbnails):
-            index = (start_index + i) % len(self.image_files)
+        for i in range(total_thumbnails):
+            index = start_index + i
             image_file = self.image_files[index]
+            # Use cached image info or load it if not present
             if image_file not in self.image_info_cache:
                 self.image_info_cache[image_file] = self.get_image_info(image_file)
             image_info = self.image_info_cache[image_file]
+            # Generate or retrieve cached thumbnail
             cache_key = (image_file, thumbnail_width)
-            if cache_key in self.thumbnail_cache:
-                thumbnail_photo = self.thumbnail_cache[cache_key]
-            else:
-                with Image.open(image_file) as thumbnail_image:
-                    thumbnail_image.thumbnail((thumbnail_width, thumbnail_width), self.quality_filter)
-                    if thumbnail_image.mode != "RGBA":
-                        thumbnail_image = thumbnail_image.convert("RGBA")
-                    padded_image = ImageOps.pad(thumbnail_image, (thumbnail_width, thumbnail_width), color=(0, 0, 0, 0))
-                    thumbnail_photo = ImageTk.PhotoImage(padded_image)
+            thumbnail_photo = self.thumbnail_cache.get(cache_key)
+            if not thumbnail_photo:
+                with Image.open(image_file) as img:
+                    img.thumbnail((thumbnail_width, thumbnail_width), self.quality_filter)
+                    if img.mode != "RGBA":
+                        img = img.convert("RGBA")
+                    padded_img = ImageOps.pad(img, (thumbnail_width, thumbnail_width), color=(0, 0, 0, 0))
+                    thumbnail_photo = ImageTk.PhotoImage(padded_img)
                     self.thumbnail_cache[cache_key] = thumbnail_photo
-            thumbnail_button = ttk.Button(self.thumbnail_panel, image=thumbnail_photo, command=lambda idx=index: self.jump_to_image(idx))
+            # Create the thumbnail button
+            thumbnail_button = ttk.Button(self.thumbnail_panel, image=thumbnail_photo, cursor="hand2", command=lambda idx=index: self.jump_to_image(idx))
             thumbnail_button.image = thumbnail_photo
+            # Highlight the current index
             if index == self.current_index:
                 thumbnail_button.config(style="Highlighted.TButton")
-            thumbnail_button.bind("<Button-3>", lambda event, btn=thumbnail_button, idx=index: self.show_thumbContext_menu(btn, event, idx))
+            # Bind events
+            thumbnail_button.bind("<Button-3>", lambda event, btn=thumbnail_button, idx=index:self.show_thumbContext_menu(btn, event, idx))
             thumbnail_button.bind("<MouseWheel>", self.mouse_scroll)
-            ToolTip.create(thumbnail_button, f"#{index + 1} | {image_info['filename']} | {image_info['resolution']} | {image_info['size']} | {image_info['color_mode']}", delay=100, pady=-25, origin='widget')
+            ToolTip.create(thumbnail_button, f"#{index + 1} | {image_info['filename']} | {image_info['resolution']} | "f"{image_info['size']} | {image_info['color_mode']}", delay=100, pady=-25, origin='widget')
+            # Add to the list of thumbnail buttons
             thumbnail_buttons.append(thumbnail_button)
+        # Display the thumbnails
         for i, button in enumerate(thumbnail_buttons):
-            button.grid(row=0, column=i, padx=5)
+            button.grid(row=0, column=i)
         self.thumbnail_panel.update_idletasks()
-        frame_width = self.thumbnail_panel.winfo_width()
-        horizontal_padding = max(0, (panel_width - frame_width) // 2)
-        self.thumbnail_panel.grid_configure(padx=horizontal_padding)
 
 
     def show_thumbContext_menu(self, thumbnail_button, event, index):
@@ -2235,6 +2262,8 @@ class ImgTxtViewer:
     def set_custom_ttk_button_highlight_style(self):
         style = ttk.Style(self.master)
         style.configure("Highlighted.TButton", background="#005dd7")
+        style.configure("Red.TButton", foreground="red")
+        style.configure("Blue.TButton", foreground="blue")
 
 
 #endregion
@@ -2271,84 +2300,84 @@ class ImgTxtViewer:
 
         # Edit Slider
         self.edit_slider = ttk.Scale(self.edit_image_panel, from_=-100, to=100, orient="horizontal", command=self.update_edit_value)
-        self.edit_slider.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.edit_slider.grid(row=0, column=1, pady=5, sticky="ew")
         self.edit_slider.bind("<MouseWheel>", self.adjust_slider_with_mouse_wheel)
         self.edit_image_panel.columnconfigure(1, weight=1)
 
         # Edit Value Label
         self.edit_value_label = Label(self.edit_image_panel, text="0", width=3)
-        self.edit_value_label.grid(row=0, column=2, padx=5, pady=5, sticky="ew")
+        self.edit_value_label.grid(row=0, column=2, pady=5, sticky="ew")
 
         # Cumulative Edit Checkbutton
-        self.cumulative_edit_checkbutton = Checkbutton(self.edit_image_panel, variable=self.edit_cumulative_var, overrelief="groove", command=self.apply_image_edit)
-        self.cumulative_edit_checkbutton.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
+        self.cumulative_edit_checkbutton = ttk.Checkbutton(self.edit_image_panel, variable=self.edit_cumulative_var, command=self.apply_image_edit)
+        self.cumulative_edit_checkbutton.grid(row=0, column=3, pady=5, sticky="ew")
         ToolTip.create(self.cumulative_edit_checkbutton, "If enabled, all edits will be done cumulatively; otherwise, only the selected option will be used.", 25, 6, 12, wraplength=200)
 
         # Revert Button
-        self.edit_revert_image_button = Button(self.edit_image_panel, text="Revert", overrelief="groove", width=6, command=self.revert_image_edit)
-        self.edit_revert_image_button.grid(row=0, column=4, padx=5, pady=5, sticky="ew")
+        self.edit_revert_image_button = ttk.Button(self.edit_image_panel, text="Revert", width=6, command=self.revert_image_edit)
+        self.edit_revert_image_button.grid(row=0, column=4, pady=5, sticky="ew")
         self.edit_revert_image_button.bind("<Button-3>", self._reset_edit)
         ToolTip.create(self.edit_revert_image_button, "Cancel changes and refresh the displayed image.\nRight-Click to reset the edit panel.", 500, 6, 12)
 
         # Save Button
-        self.edit_save_image_button = Button(self.edit_image_panel, text="Save", overrelief="groove", width=6, command=self.save_image_edit)
-        self.edit_save_image_button.grid(row=0, column=5, padx=5, pady=5, sticky="ew")
+        self.edit_save_image_button = ttk.Button(self.edit_image_panel, text="Save", width=6, command=self.save_image_edit)
+        self.edit_save_image_button.grid(row=0, column=5, padx=(0,5), pady=5, sticky="ew")
         ToolTip.create(self.edit_save_image_button, "Save the current changes.\nOptionally overwrite the current image.", 500, 6, 12)
 
         # Spinbox Frame - Highlights
         self.highlights_spinbox_frame = ttk.Frame(self.edit_image_panel)
-        self.highlights_spinbox_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+        self.highlights_spinbox_frame.grid(row=1, column=0, columnspan=2, pady=(0,5), sticky="ew")
 
         # Threshold
         self.highlights_threshold_label = ttk.Label(self.highlights_spinbox_frame, text="Threshold:")
-        self.highlights_threshold_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.highlights_threshold_label.grid(row=0, column=0, padx=5, sticky="w")
         ToolTip.create(self.highlights_threshold_label, "From 1 to 256\nLower values affect more pixels", 25, 6, 12)
         self.highlights_threshold_spinbox = ttk.Spinbox(self.highlights_spinbox_frame, from_=1, to=256, increment=8, width=5, command=self.apply_image_edit)
-        self.highlights_threshold_spinbox.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.highlights_threshold_spinbox.grid(row=0, column=1, padx=5, sticky="ew")
         self.highlights_threshold_spinbox.set(128)
         self.highlights_threshold_spinbox.bind("<KeyRelease>", self.apply_image_edit)
 
         # Blur Radius
         self.highlights_blur_radius_label = ttk.Label(self.highlights_spinbox_frame, text="Blur Radius:")
-        self.highlights_blur_radius_label.grid(row=0, column=2, padx=5, pady=5, sticky="w")
+        self.highlights_blur_radius_label.grid(row=0, column=2, padx=5, sticky="w")
         ToolTip.create(self.highlights_blur_radius_label, "From 0 to 10\nHigher values increase the blur effect", 25, 6, 12)
         self.highlights_blur_radius_spinbox = ttk.Spinbox(self.highlights_spinbox_frame, from_=0, to=10, width=5, command=self.apply_image_edit)
-        self.highlights_blur_radius_spinbox.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
+        self.highlights_blur_radius_spinbox.grid(row=0, column=3, padx=5, sticky="ew")
         self.highlights_blur_radius_spinbox.set(0)
         self.highlights_blur_radius_spinbox.bind("<KeyRelease>", self.apply_image_edit)
 
         # Spinbox Frame - Shadows
         self.shadows_spinbox_frame = ttk.Frame(self.edit_image_panel)
-        self.shadows_spinbox_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+        self.shadows_spinbox_frame.grid(row=1, column=0, columnspan=2, pady=(0,5), sticky="ew")
 
         # Threshold
         self.shadows_threshold_label = ttk.Label(self.shadows_spinbox_frame, text="Threshold:")
-        self.shadows_threshold_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.shadows_threshold_label.grid(row=0, column=0, padx=5, sticky="w")
         ToolTip.create(self.shadows_threshold_label, "From 1 to 256\nHigher values affect more pixels", 25, 6, 12)
         self.shadows_threshold_spinbox = ttk.Spinbox(self.shadows_spinbox_frame, from_=1, to=256, increment=8, width=5, command=self.apply_image_edit)
-        self.shadows_threshold_spinbox.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.shadows_threshold_spinbox.grid(row=0, column=1, padx=5, sticky="ew")
         self.shadows_threshold_spinbox.set(128)
         self.shadows_threshold_spinbox.bind("<KeyRelease>", self.apply_image_edit)
 
         # Blur Radius
         self.shadows_blur_radius_label = ttk.Label(self.shadows_spinbox_frame, text="Blur Radius:")
-        self.shadows_blur_radius_label.grid(row=0, column=2, padx=5, pady=5, sticky="w")
+        self.shadows_blur_radius_label.grid(row=0, column=2, padx=5, sticky="w")
         ToolTip.create(self.shadows_blur_radius_label, "From 0 to 10\nHigher values increase the blur effect", 25, 6, 12)
         self.shadows_blur_radius_spinbox = ttk.Spinbox(self.shadows_spinbox_frame, from_=0, to=10, width=5, command=self.apply_image_edit)
-        self.shadows_blur_radius_spinbox.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
+        self.shadows_blur_radius_spinbox.grid(row=0, column=3, padx=5, sticky="ew")
         self.shadows_blur_radius_spinbox.set(0)
         self.shadows_blur_radius_spinbox.bind("<KeyRelease>", self.apply_image_edit)
 
         # Spinbox Frame - Sharpness
         self.sharpness_spinbox_frame = ttk.Frame(self.edit_image_panel)
-        self.sharpness_spinbox_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
+        self.sharpness_spinbox_frame.grid(row=1, column=0, columnspan=2, pady=(0,5), sticky="ew")
 
         # Boost
         self.sharpness_boost_label = ttk.Label(self.sharpness_spinbox_frame, text="Boost:")
-        self.sharpness_boost_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.sharpness_boost_label.grid(row=0, column=0, padx=5, sticky="w")
         ToolTip.create(self.sharpness_boost_label, "From 1 to 5\nHigher values add additional sharpening passes", 25, 6, 12)
         self.sharpness_boost_spinbox = ttk.Spinbox(self.sharpness_spinbox_frame, from_=1, to=5, width=5, command=self.apply_image_edit)
-        self.sharpness_boost_spinbox.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.sharpness_boost_spinbox.grid(row=0, column=1, padx=5, sticky="ew")
         self.sharpness_boost_spinbox.set(1)
         self.sharpness_boost_spinbox.bind("<KeyRelease>", self.apply_image_edit)
 
@@ -2605,7 +2634,7 @@ class ImgTxtViewer:
 
     def revert_image_edit(self):
         if self.edit_is_reverted_var:
-            self.edit_revert_image_button.config(text="Revert", overrelief="groove")
+            self.edit_revert_image_button.config(text="Revert")
             self.edit_slider_dict.update(self.edit_last_slider_dict)
             for option, value in self.edit_slider_dict.items():
                 if value != 0:
@@ -2615,7 +2644,7 @@ class ImgTxtViewer:
                     self.apply_image_edit()
             self.edit_is_reverted_var = False
         else:
-            self.edit_revert_image_button.config(text="Restore", overrelief="groove")
+            self.edit_revert_image_button.config(text="Restore")
             self.edit_last_slider_dict = {option: value for option, value in self.edit_slider_dict.items() if value != 0}
             self.refresh_image()
             for option in self.edit_slider_dict:
@@ -2627,7 +2656,7 @@ class ImgTxtViewer:
 
     def _reset_edit(self, event=None):
             self.edit_is_reverted_var = False
-            self.edit_revert_image_button.config(text="Revert", overrelief="groove")
+            self.edit_revert_image_button.config(text="Revert")
             for option in self.edit_slider_dict:
                 self.edit_slider_dict[option] = 0
             self.edit_last_slider_dict = self.edit_slider_dict.copy()
@@ -2659,14 +2688,19 @@ class ImgTxtViewer:
 
 
     def toggle_edit_panel_widgets(self, state, event=None):
-        for widget in self.edit_image_panel.winfo_children():
-            try:
-                if isinstance(widget, ttk.Combobox) and state == "normal":
-                    widget.config(state="readonly")
-                else:
-                    widget.config(state=state)
-            except TclError:
-                pass
+        def set_widget_state(frame, state):
+            for widget in frame.winfo_children():
+                try:
+                    if isinstance(widget, ttk.Combobox) and state == "normal":
+                        widget.config(state="readonly")
+                    else:
+                        widget.config(state=state)
+                except TclError:
+                    pass
+                if isinstance(widget, Frame) or isinstance(widget, ttk.Frame):
+                    set_widget_state(widget, state)
+
+        set_widget_state(self.edit_image_panel, state)
 
 
 #endregion
@@ -3467,7 +3501,7 @@ class ImgTxtViewer:
                     self.filtered_image_files.append(image_file)
                     self.filtered_text_files.append(text_file)
             else:
-                if self.filter_use_regex_var:
+                if self.filter_use_regex_var.get():
                     if re.search(filter_string, filedata):
                         self.filtered_image_files.append(image_file)
                         self.filtered_text_files.append(text_file)
@@ -3492,7 +3526,7 @@ class ImgTxtViewer:
         self.current_index = 0
         self.show_pair()
         self.message_label.config(text="Filter Applied!", bg="#6ca079", fg="white")
-        self.revert_filter_button.config(bg="#fd8a8a", fg="white")
+        self.revert_filter_button.config(style="Red.TButton")
         self.revert_filter_button_tooltip.config(text="Filter is active\n\nClear any filtering applied")
         if not self.image_files:
             self.image_index_entry.delete(0, "end")
@@ -3506,15 +3540,14 @@ class ImgTxtViewer:
     def revert_text_image_filter(self, clear=None): # Filter
         if clear:
             self.filter_string_var.set("")
-            self.filter_use_regex_var = False
-            self.regex_filter_checkbutton.deselect()
+            self.filter_use_regex_var.set(False)
             self.image_index_entry.delete(0, "end")
             self.image_index_entry.insert(0, "1")
         self.update_image_file_count()
         self.current_index = 0
         self.show_pair()
         self.message_label.config(text="Filter Cleared!", bg="#6ca079", fg="white")
-        self.revert_filter_button.config(bg=self.tab4_button_frame.cget("bg"), fg="black")
+        self.revert_filter_button.config(style="")
         self.revert_filter_button_tooltip.config(text="Filter is inactive\n\nClear any filtering applied")
         self.filter_empty_files_var.set(False)
         if self.filter_empty_files_var.get():
@@ -3529,8 +3562,7 @@ class ImgTxtViewer:
             self.image_index_entry.insert(0, 1)
             self.filter_string_var.set("")
             self.filter_text_image_pairs()
-            self.filter_use_regex_var = False
-            self.regex_filter_checkbutton.deselect()
+            self.filter_use_regex_var.set(False)
             self.toggle_filter_widgets(state=True)
         else:
             self.revert_text_image_filter()
@@ -4354,8 +4386,8 @@ class ImgTxtViewer:
                 ttk.Radiobutton(setup_window, text=text, variable=last_word_match_var, value=value).pack(pady=5)
                 Label(setup_window, text=description).pack(pady=5)
             ttk.Separator(setup_window, orient="horizontal").pack(fill="x", padx=5, pady=5)
-            Button(setup_window, text="Back", overrelief="groove", width=10, command=lambda: save_and_continue(back=True)).pack(side="left", anchor="w", pady=5, padx=10)
-            Button(setup_window, text="Done", overrelief="groove", width=10, command=lambda: save_and_continue(close=True)).pack(side="right", anchor="e", pady=5, padx=10)
+            ttk.Button(setup_window, text="Back", width=10, command=lambda: save_and_continue(back=True)).pack(side="left", anchor="w", pady=5, padx=10)
+            ttk.Button(setup_window, text="Done", width=10, command=lambda: save_and_continue(close=True)).pack(side="right", anchor="e", pady=5, padx=10)
 
         def save_and_close():
             self.save_settings()
@@ -4383,7 +4415,7 @@ class ImgTxtViewer:
                 ttk.Radiobutton(frame, text=dictionary, variable=dict_var, value=dictionary).grid(row=i // 2, column=i % 2, padx=5, pady=5)
             ttk.Separator(setup_window, orient="horizontal").pack(fill="x", padx=5, pady=5)
             Label(setup_window, text="The autocomplete dictionary and settings can be changed at any time.").pack(pady=5)
-            Button(setup_window, text="Next", overrelief="groove", width=10, command=save_and_continue).pack(side="bottom", anchor="e", pady=5, padx=10)
+            ttk.Button(setup_window, text="Next", width=10, command=save_and_continue).pack(side="bottom", anchor="e", pady=5, padx=10)
 
         setup_window = create_setup_window()
         create_dictionary_selection_widgets()
@@ -4486,7 +4518,7 @@ class ImgTxtViewer:
         self.config.set("Other", "edit_panel_visible", str(self.edit_panel_visible_var.get()))
         self.config.set("Other", "image_quality", str(self.image_quality_var.get()))
         self.config.set("Other", "font", str(self.font_var.get()))
-        self.config.set("Other", "font_size", str(self.font_size_var))
+        self.config.set("Other", "font_size", str(self.font_size_var.get()))
         self.config.set("Other", "list_mode", str(self.list_mode_var.get()))
 
 
@@ -4580,7 +4612,7 @@ class ImgTxtViewer:
     def read_other_settings(self):
         self.auto_save_var.set(value=self.config.getboolean("Other", "auto_save", fallback=False))
         self.cleaning_text_var.set(value=self.config.getboolean("Other", "cleaning_text", fallback=True))
-        self.big_save_button_var.set(value=self.config.getboolean("Other", "big_save_button", fallback=False))
+        self.big_save_button_var.set(value=self.config.getboolean("Other", "big_save_button", fallback=True))
         self.highlight_selection_var.set(value=self.config.getboolean("Other", "highlighting_duplicates", fallback=True))
         self.truncate_stat_captions_var.set(value=self.config.getboolean("Other", "truncate_stat_captions", fallback=True))
         self.process_image_stats_var.set(value=self.config.getboolean("Other", "process_image_stats", fallback=False))
@@ -4593,7 +4625,7 @@ class ImgTxtViewer:
         self.image_quality_var.set(value=self.config.get("Other", "image_quality", fallback="Normal"))
         self.set_image_quality()
         self.font_var.set(value=self.config.get("Other", "font", fallback="Courier New"))
-        self.font_size_var = self.config.getint("Other", "font_size", fallback=10)
+        self.font_size_var.set(value=self.config.getint("Other", "font_size", fallback=10))
         self.list_mode_var.set(value=self.config.getboolean("Other", "list_mode", fallback=False))
 
 
@@ -4649,7 +4681,7 @@ class ImgTxtViewer:
         # Font and text_box
         if hasattr(self, 'text_box'):
             self.font_var.set(value="Courier New")
-            self.font_size_var = 10
+            self.font_size_var.set(value=10)
             self.size_scale.set(value=10)
             self.font_size_tab6.config(text=f"Size: 10")
             current_text = self.text_box.get("1.0", "end-1c")
@@ -5323,10 +5355,15 @@ root.mainloop()
 
 
 <details>
-  <summary>Click here to view release notes for v1.96</summary>
+  <summary>Release Notes for v1.96</summary>
 
 
-This release brings several new features and improvements, including a revamped Batch Tag Edit tool, a Thumbnail Panel for quick navigation, and an Edit Image Panel with various image adjustment options. Numerous bugs have been fixed, such as image quality issues, memory leaks, and improper scaling of landscape images. Additionally, _many_ small tweaks and improvements have been made all throughout the app.
+**v1.96 Changes**  |  https://github.com/Nenotriple/img-txt_viewer/compare/v1.95...v1.96
+
+
+This release incorporates several new features, including a reworked Batch Tag Edit tool, a Thumbnail Panel for quick navigation, and an Edit Image Panel for adjusting image properties. Additionally, numerous bugs have been fixed, such as issues with the Delete Pair tool, image quality degradation, and memory leaks.
+
+The app now targets Windows 11, and while it doesn't offer an complete `Aero` theme, many widgets have been updated to utilize a more modern theme where appropriate.
 
 
   - New:
@@ -5380,7 +5417,7 @@ This release brings several new features and improvements, including a revamped 
     - The `Options`, and `Tools` menus have been reorganized.
     - The color mode is now displayed in the image info panel.
     - You can now close the `Crop Image` window with the `Escape` key.
-    - I've switched to Windows 11, so it's now the target operating system for this project.
+    - I've switched to Windows 11, so it's now the target operating system for this project. You may notice some UI changes.
 
 
 <br>
@@ -5392,6 +5429,7 @@ This release brings several new features and improvements, including a revamped 
       - Batch Upscale: Added a label to display the number of images upscaled and the total number of images.
       - Batch Upscale: Added a timer and ETA label to show the total time taken and the estimated time remaining.
       - Batch Upscale: Entry path ToolTips are now updated when the path is changed.
+      - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
     - `Batch Resize`: v1.07:
       - NEW: A timer is now displayed in the bottom row.
       - FIXED: The following resize modes not working/causing an error: `Longer Side`, and `Height`
@@ -5403,6 +5441,10 @@ This release brings several new features and improvements, including a revamped 
       - NEW: `origin` parameter: Configure the origin point of the tooltip. (Default is "mouse")
       - FIXED: Issue where the underlying widget would be impossible to interact with after hiding the tooltip.
       - CHANGE: Now uses `TkDefaultFont` instead of Tahoma as the default font for the tooltip text.
+    - `PopUpZoom`v1.02:
+      - New: `Rounded Corners` The popup now supports rounded corners. (Default: 30px)
+    - `Batch Crop`(v1.03), `Resize Images`(v1.02), `Image Grid`(v1.04):
+      - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
 
 
 </details>
@@ -5420,20 +5462,29 @@ This release brings several new features and improvements, including a revamped 
 
 
 - Todo
+
+  - (High) Convert all appropriate tk widgets to ttk for a more modern look.
+
   - (Med) Go through all tools that touch text files and make sure they work with alt-text paths.
 
   - (Low) Find Dupe Files, could/should automatically move captions if they are found.
 
-  - (Very Low) Create a `Danbooru (safe)` autocomplete dictionary.
-
-  - New interface ideas:
+  - (Low) New interface ideas:
     - Compare image and create before/after images.
-  - Perhaps the Menubar should include another option for the "rich" tools like Batch Tag Edit, and any new tools that use the full window.
+    - Custom script/executable launcher.
 
-  - Convert all tk.Button widgets to ttk.Button for a more modern look.
+  - (Low) Perhaps the Menubar should include another option for the "rich" tools like Batch Tag Edit, and any new tools that use the full window.
+
+  - (Very Low) Create a `Danbooru (safe)` autocomplete dictionary. (I have no idea how to effectively filter the naughty words.)
+  - (Very Low) Refactor UI to utilize CustomTkinter.
 
 
 - Tofix
+
+  - (High) Batch Tag Edit: Switching to BTE before selecting a directory and then switching back breaks the app.
+    - Currently BTE only works with the selected directory, so it would be easy to simply prevent BTE from being used without a directory selected.
+    - But it would be handy if BTE could allow the user to select a different directory.
+
   - (Med) Image info, and thumbnail cache doesn't update when the image is changed.
     - This is because the cache is built using the filename as the key.
     - The cache dictionary should include the hash of the image file to ensure it's up-to-date.

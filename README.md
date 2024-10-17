@@ -1,45 +1,71 @@
+<h1 align="center"><img src="https://github.com/Nenotriple/img-txt_viewer/assets/70049990/8342e197-25c7-4e78-a27d-38daa79b4330" alt="icon" width="50">img-txt Viewer</h1>
+<p align="center">A Windows application for side-by-side image and text viewing, designed to streamline manual captioning or tagging.</p>
+<p align="center"><img src="https://github.com/Nenotriple/img-txt_viewer/assets/70049990/d7d9c754-aae4-4add-882d-fef105cd0531" alt="cover"></p>
 
-<h1 align="center">
-  <img src="https://github.com/Nenotriple/img-txt_viewer/assets/70049990/8342e197-25c7-4e78-a27d-38daa79b4330" alt="icon" width="50">
-  img-txt Viewer
-</h1>
 
-<p align="center">A Windows application to display an image and text file side-by-side for easy manual captioning or tagging.</p>
-<p align="center">+Tons of features to help you work faster!</p>
+<div align="center">
 
-<p align="center">
-  <img src="https://github.com/Nenotriple/img-txt_viewer/assets/70049990/d7d9c754-aae4-4add-882d-fef105cd0531" alt="cover">
-</p>
+![GitHub last commit](https://img.shields.io/github/last-commit/Nenotriple/img-txt_viewer)
+![GitHub contributors](https://img.shields.io/github/contributors/Nenotriple/img-txt_viewer)
+![GitHub repo size](https://img.shields.io/github/repo-size/Nenotriple/img-txt_viewer)
+[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FNenotriple%2Fimg-txt_viewer&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
+![GitHub all release downloads](https://img.shields.io/github/downloads/Nenotriple/img-txt_viewer/total)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/Nenotriple/img-txt_viewer)
+
+
+</div>
+
+
+<br>
+
 
 - [📝Usage](#-usage)
 - [💡Tips and Features](#-tips-and-features)
-- [🔒 Privacy](#-privacy) 
-- [🚩Requirements](#-requirements)
+- [🛠️Install](#-install)
+- [🔒Privacy Policy](#-privacy-policy)
 - [📜Version History](#-version-history)
 - [✨Wiki](https://github.com/Nenotriple/img-txt_viewer/wiki)
 - [💾Download](https://github.com/Nenotriple/img-txt_viewer/releases?q=executable&expanded=true)
 
----
+
+<br>
+
 
 # 📝 Usage
 
+
 > [!NOTE]
-> - Prepare Your Files:
->    - If you choose to include a text pair for an image, ensure they share the same basename.
->      - For example: `01.png, 01.txt`, `02.jpg, 02.txt`, etc.
->  - Supported image types: `.png` `.jpg` `.jpeg` `.jfif` `.jpg_large` `.webp` `.bmp` `.gif`
+>
+> Prepare Your Files:
+>
+> - If you choose to include a text pair for an image, ensure they share the same basename.
+>   - For example: `01.png, 01.txt`, `02.jpg, 02.txt`, etc.
+>
+> Supported image formats: `.png`, `.jpg`, `.jpeg`, `.jfif`, `.jpg_large`, `.webp`, `.bmp`, `.gif`.
 
 
 Images and text files can be loaded from different folder paths. Expand the section below to learn more.
 
+
 <details>
+
+
   <summary>Selecting an alternate text path...</summary>
 
-By default, text files are loaded from the chosen path. To load text files from a different path, first select a directory as usual, then right-click the `Browse...` button and select `Set Text File Path`. An indicator to the left of the Directory entry will turn blue when a different path is chosen, and hovering the mouse over the indicator will display the selected text path.
 
- - Example folder structures:
+---
 
 
+By default, text files are loaded from the selected directory. To load text files from a different path:
+1. Select a directory as usual.
+2. Right-click the `Browse...` button and choose `Set Text File Path`.
+3. When an alternate path is chosen, a blue indicator appears to the left of the directory entry. Hover over the indicator to view the selected text path.
+
+
+<br>
+
+
+Example folder structures:
 ```
 .
 └── dataset/
@@ -62,9 +88,15 @@ By default, text files are loaded from the chosen path. To load text files from 
 ```
 *(Images and text files in separate folder)*
 
+
 </details>
 
+
+<br>
+
+
 # 💡 Tips and Features
+
 
 - Shortcuts:
   - `ALT+LEFT/RIGHT`: Quickly move between img-txt pairs.
@@ -88,7 +120,7 @@ By default, text files are loaded from the chosen path. To load text files from 
     - For example: Typing `*lo*b` returns "<ins>**lo**</ins>oking <ins>**b**</ins>ack", and even "yel<ins>**lo**</ins>w <ins>**b**</ins>ackground"
 
 - Text Tools:
-  - `Batch tag Delete`: View all tag in a directory as a list, and quickly delete them._<sup>[1]</sup>_
+  - `Batch tag Edit`: View all tag in a directory as a list: Filter, edit, and delete tags all at once.
   - `Prefix Text Files`: Insert text at the START of all text files.
   - `Append Text Files`: Insert text at the END of all text files.
   - `Search and Replace`: Edit all text files at once.
@@ -114,38 +146,199 @@ By default, text files are loaded from the chosen path. To load text files from 
 
 _<sup>[1]</sup>These are stand alone tools and/or not available in the Lite version._
 
-Please see the [✨Tools](https://github.com/Nenotriple/img-txt_viewer/wiki/Tools) section of the wiki for a more comprehensive breakdown of the various features.
+For a more detailed feature guide, please visit the repo [✨Wiki](https://github.com/Nenotriple/img-txt_viewer/wiki).
 
 
-# 🔒 Privacy
-
-img-txt Viewer is completely private, in every sense of the word.
-- The app runs entirely on your device, so your data stays with you.
-- It does not collect any data, or require an internet connection.
+<br>
 
 
-# 🚩 Requirements
+# 🛠️Install
+### Portable Setup
+![Static Badge](https://img.shields.io/badge/Windows-gray)
 
-> [!TIP]
-> You don't need to worry about any requirements with the Windows [💾portable/executable](https://github.com/Nenotriple/img-txt_viewer/releases?q=executable&expanded=true) version.
+1. Download the Windows executable from the [releases page](https://github.com/Nenotriple/img-txt_viewer/releases?q=executable&expanded=true).
+2. Run the executable to launch the app.
+
+
+### Python Package Setup
+![Static Badge](https://img.shields.io/badge/Windows-Python_3.10%2B-green)
+
+1. Download the app package from the [releases page](https://github.com/Nenotriple/img-txt_viewer/releases?q=package&expanded=true).
+2. Run the `Start.bat` file to automatically create and activate a virtual environment, then launch the app.
+3. `Start.bat` can be used to launch the app in the future.
+
+
+<br>
+
 
 <details>
-  <summary>Python requirements...</summary>
 
-**Python 3.10+**
 
-You will need `Pillow` and `NumPy`:
-- `pip install pillow numpy`
+  <summary>Manual Python Setup...</summary>
 
-Or use the included `requirements.txt` when setting up your venv.
+
+![Static Badge](https://img.shields.io/badge/Windows-Python_3.10%2B-green)
+
+
+<br>
+
+
+1. **Clone the repository:**
+```
+git clone https://github.com/Nenotriple/img-txt_viewer.git
+```
+
+
+3. **Navigate into the project directory:**
+```
+cd img-txt_viewer`
+```
+
+
+5. **Create and activate a virtual environment:**
+```
+python -m venv venv
+venv\Scripts\activate
+```
+
+
+6. **Install the required dependencies:**
+```
+pip install -r requirements.txt
+```
+
+
+7. **Launch the app:**
+```
+python img-txt_viewer.pyw
+```
+
+
 </details>
+
+
+<br>
+
+
+# 🔒 Privacy Policy
+
+**img-txt Viewer** is completely private, in every sense of the word.
+- The app operates entirely on your device, ensuring your data remains solely under your control.
+- No data is collected, transmitted, or stored, aside from a basic configuration file for app settings.
+- The app functions 100% offline and never connects to external servers. No data is ever shared or sent elsewhere.
+
+
+<br>
+
 
 # 📜 Version History
 
-[💾v1.95](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.95)
+
+[💾v1.96](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.96)
+
 
 <details>
-  <summary>Click here to view release notes for v1.95</summary>
+  <summary>Release notes for: v1.96</summary>
+
+
+This release incorporates several new features, including a reworked Batch Tag Edit tool, a Thumbnail Panel for quick navigation, and an Edit Image Panel for adjusting image properties. Additionally, numerous bugs have been fixed, such as issues with the Delete Pair tool, image quality degradation, and memory leaks.
+
+The app now targets Windows 11, and while it doesn't offer an complete `Aero` theme, many widgets have been updated to utilize a more modern theme where appropriate.
+
+
+  - New:
+    - `Batch Tag Delete` has been renamed to `Batch Tag Edit`.
+      - This tool has been completely reworked to allow for more versatile tag editing.
+      - The interface is now more convenient and user-friendly, allowing you to see all pending changes before committing them.
+      - It is no longer supported as a stand-alone tool.
+    - New feature `Thumbnail Panel`: Displayed below the current image for quick navigation.
+    - New feature `Edit Image Panel`: Enabled from the options/image menu, this section allows you to edit the `Brightness`, `Contrast`, `Saturation`, `Sharpness`, `Highlights`, and `Shadows` of the current image.
+    - New feature `Edit Image...`: Open the current image in an external editor, the default is MS Paint.
+      - Running `Set Default Image Editor` will open a dialog to select the executable (or `.py`, `.pyw`) path to use as the default image editor.
+      - This should work with any app that accepts a file path as a launch argument. (Gimp, Krita, Photoshop, etc.)
+    - New tool `Create Wildcard From Captions`: Combine all image captions into a single text file, each set of image captions separated by a newline.
+    - Added `Copy` command to the right-click textbox context menu.
+    - Added `Last` to the index entry right-click context menu to quickly jump to the last img-txt pair.
+    - A quick guided setup will run on the app's first launch, or if the settings file is deleted/reset.
+      - This will set the preferred autocomplete dictionaries and matching settings.
+    - You can now press `CTRL+W` to close the current window.
+
+
+<br>
+
+
+  - Fixed:
+    - Fixed issue where the `Delete Pair` tool would overwrite the next index with the deleted text. #31
+    - Fixed an issue that was degrading the quality of the displayed image and not respecting the `Image Display Quality` setting.
+    - Fixed a memory leak that could occur whenever the primary image is displayed.
+    - Fixed Next/Previous button not properly displaying their relief when clicked.
+    - Fixed an issue where landscape images were improperly scaled, leading to an incorrect aspect ratio.
+      - Additionally, large landscape images now scale to fit the window frame better.
+    - Fixed `Open Text Directory...` not respecting the actual filepath if set by `Set Text File Path...`.
+    - Fixed issue where the file lists were not updated when using the internal function "jump_to_image()".
+    - Fixed an issue where the `alt text path` could be set to `.` when declining to reload the last directory.
+    - Fixed a bug where the window height would enlarge slightly when dragging the window from by the displayed image.
+    - Fixed the following tools not respecting the `Loading Order > Descending` setting, causing them to jump to the wrong index.
+      - `Image Grid`, `Upscale Image`, `Resize Image`
+    - Potential fix for the `Stats > PPI` calculation returning "0.00".
+    - if `clean-text` is enabled: The primary text box is now properly refreshed when saving.
+
+
+<br>
+
+
+  - Other changes:
+    - Using `Open Current Directory...` will now automatically select the current image in the file explorer. #30
+      - The `Open` button will also select the current image if the path being opened is the same as the image path.
+    - The Image info (the stats displayed above the image) is now cached for quicker access.
+    - `Zip Dataset...` Now only zips images and text files in the selected directory, omitting subfolders.
+    - The `Options`, and `Tools` menus have been reorganized.
+    - The color mode is now displayed in the image info panel.
+    - You can now close the `Crop Image` window with the `Escape` key.
+    - I've switched to Windows 11, so it's now the target operating system for this project. You may notice some UI changes.
+
+
+<br>
+
+
+  - Project Changes:
+    - `Upscale`, `Batch Upscale`: v1.05:
+      - FIXED: Prevent the app from hanging while upscaling a GIF.
+      - Batch Upscale: Added a label to display the number of images upscaled and the total number of images.
+      - Batch Upscale: Added a timer and ETA label to show the total time taken and the estimated time remaining.
+      - Batch Upscale: Entry path ToolTips are now updated when the path is changed.
+      - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
+    - `Batch Resize`: v1.07:
+      - NEW: A timer is now displayed in the bottom row.
+      - FIXED: The following resize modes not working/causing an error: `Longer Side`, and `Height`
+      - FIXED: The resize operation is now threaded, allowing the app to remain responsive during the resizing process.
+    - `TkToolTip`: v1.06:
+      - NEW: `justify` parameter: Configure text justification in the tooltip. (Default is "center")
+      - NEW: `wraplength` parameter: Configure the maximum line width for text wrapping. (Default is 0, which disables wrapping)
+      - NEW: `fade_in` and `fade_out` parameters: Configure fade-in and fade-out times. (Default is 75ms)
+      - NEW: `origin` parameter: Configure the origin point of the tooltip. (Default is "mouse")
+      - FIXED: Issue where the underlying widget would be impossible to interact with after hiding the tooltip.
+      - CHANGE: Now uses `TkDefaultFont` instead of Tahoma as the default font for the tooltip text.
+    - `PopUpZoom`v1.02:
+      - New: `Rounded Corners` The popup now supports rounded corners. (Default: 30px)
+    - `Batch Crop`(v1.03), `Resize Images`(v1.02), `Image Grid`(v1.04):
+      - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
+
+
+</details>
+
+
+<br>
+
+
+[💾v1.95](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.95)
+
+
+<details>
+
+
+  <summary>Release Notes for: v1.95</summary>
+
 
   - New:
     - New tab `Stats`: View file stats related to the current directory, including total files, characters, captions, average characters, words, captions per file, lists of captions, resolutions, common words, and more.
@@ -227,13 +420,21 @@ Or use the included `requirements.txt` when setting up your venv.
       - Other changes:
         - x_offset, and y_offset have been renamed to padx, and pady.
 
+
 </details>
+
+
 <br>
+
 
 [💾v1.94](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.94)
 
+
 <details>
-  <summary>Click here to view release notes for v1.94</summary>
+
+
+  <summary>Release Notes for: v1.94</summary>
+
 
   - New:
     - New option: `Toggle Zoom`, This allows you to hover the mouse over the current image and display a zoomed in preview.
@@ -255,13 +456,21 @@ Or use the included `requirements.txt` when setting up your venv.
     - Improved performance of Autocomplete by optimizing: data loading, similar names, string operations, and suggestion retrieval. Up to 50% faster than v1.92
     - `Image Grid`, Now reuses image cache across instances to speed up loading.
 
+
 </details>
+
+
 <br>
+
 
 [💾v1.93.1](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.93.1)
 
+
 <details>
-  <summary>Click here to view release notes for v1.93.1</summary>
+
+
+  <summary>Release Notes for: v1.93.1</summary>
+
 
   - New:
     - New autocomplete matching modes: `Match Whole String`, and `Match Last Word` [732120e](https://github.com/Nenotriple/img-txt_viewer/commit/732120e61dbe0758f8f00c4852edf3f435b32c29)
@@ -270,6 +479,7 @@ Or use the included `requirements.txt` when setting up your venv.
     - New option for image grid view: `Auto-Close`, Unchecking this option allows you to keep the image grid open after making a selection. [67593f4](https://github.com/Nenotriple/img-txt_viewer/commit/67593f4876daf0cdbc6170dbb7c8820b99d8636d)
     - New Tool: `Rename img-txt pairs`, Use this to clean-up the filenames of your dataset without converting the image types. [8f24a7e](https://github.com/Nenotriple/img-txt_viewer/commit/8f24a7e41a4fb4770fb5bd06d9dd2337b31c6270)
     - You can now choose the crop anchor point when using `Batch Crop Images`. [9d247ea](https://github.com/Nenotriple/img-txt_viewer/commit/9d247ea582218366be7969b4c30d20fb7e8fbe87)
+
 
 <br>
 
@@ -297,5 +507,8 @@ Or use the included `requirements.txt` when setting up your venv.
     - **Upscale:** v1.02 [616ddaa](https://github.com/Nenotriple/img-txt_viewer/commit/616ddaa6ebd897b3f63cf921406f0e5ed958f930)
       - The current and total GIF frames are now displayed in the UI.
 
+
 </details>
+
+
 <br>

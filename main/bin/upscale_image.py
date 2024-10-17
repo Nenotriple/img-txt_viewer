@@ -1,11 +1,8 @@
 """
 ########################################
-#                                      #
 #             Upscale Image            #
-#                                      #
 #   Version : v1.05                    #
 #   Author  : github.com/Nenotriple    #
-#                                      #
 ########################################
 
 Description:
@@ -116,15 +113,15 @@ class Upscale:
             self.label_batch_upscale_path = Label(frame_input_batch_directory, text="Upscale Path")
             self.label_batch_upscale_path.pack(anchor="w", side="top", padx=5, pady=5)
             self.batch_upscale_path = StringVar(value=self.batch_filepath)
-            self.entry_batch_upscale_path = Entry(frame_input_batch_directory, width=50, textvariable=self.batch_upscale_path)
+            self.entry_batch_upscale_path = ttk.Entry(frame_input_batch_directory, width=50, textvariable=self.batch_upscale_path)
             self.entry_batch_upscale_path.pack(side="left", fill="x", padx=5, pady=5)
             self.entry_batch_upscale_path.config()
             self.input_tooltip = self.ToolTip.create(self.entry_batch_upscale_path, self.batch_upscale_path.get(), 250, 6, 12)
 
-            self.button_browse_batch_input = Button(frame_input_batch_directory, overrelief="groove", text="Browse...", command=lambda: self.choose_directory(self.batch_upscale_path, self.input_tooltip))
+            self.button_browse_batch_input = ttk.Button(frame_input_batch_directory, text="Browse...", command=lambda: self.choose_directory(self.batch_upscale_path, self.input_tooltip))
             self.button_browse_batch_input.pack(side="left", fill="x", padx=2, pady=2)
 
-            self.button_open_batch_input = Button(frame_input_batch_directory, overrelief="groove", text="Open", command=lambda: self.open_directory(self.batch_upscale_path.get()))
+            self.button_open_batch_input = ttk.Button(frame_input_batch_directory, text="Open", command=lambda: self.open_directory(self.batch_upscale_path.get()))
             self.button_open_batch_input.pack(side="left", fill="x", padx=2, pady=2)
 
             frame_output_batch_directory = Frame(frame_comboboxes)
@@ -136,14 +133,14 @@ class Upscale:
 
             self.batch_output_path = StringVar(value=os.path.join(self.batch_upscale_path.get(), "Upscale_Output"))
 
-            self.entry_batch_output_path = Entry(frame_output_batch_directory, width=50, textvariable=self.batch_output_path)
+            self.entry_batch_output_path = ttk.Entry(frame_output_batch_directory, width=50, textvariable=self.batch_output_path)
             self.entry_batch_output_path.pack(side="left", fill="x", padx=5, pady=5)
             self.output_tooltip = self.ToolTip.create(self.entry_batch_output_path, self.batch_output_path.get(), 250, 6, 12)
 
-            self.browse_batch_output_button = Button(frame_output_batch_directory, overrelief="groove", text="Browse...", command=lambda: self.choose_directory(self.batch_output_path, self.output_tooltip))
+            self.browse_batch_output_button = ttk.Button(frame_output_batch_directory, text="Browse...", command=lambda: self.choose_directory(self.batch_output_path, self.output_tooltip))
             self.browse_batch_output_button.pack(side="left", fill="x", padx=2, pady=2)
 
-            self.open_batch_output_button = Button(frame_output_batch_directory, overrelief="groove", text="Open", command=lambda: self.open_directory(self.batch_output_path.get()))
+            self.open_batch_output_button = ttk.Button(frame_output_batch_directory, text="Open", command=lambda: self.open_directory(self.batch_output_path.get()))
             self.open_batch_output_button.pack(side="left", fill="x", padx=2, pady=2)
 
 
@@ -261,11 +258,11 @@ class Upscale:
 
 
         button_command = self.determine_image_type
-        self.button_upscale = Button(self.frame_primary_buttons, overrelief="groove", text="Upscale", command=button_command)
+        self.button_upscale = ttk.Button(self.frame_primary_buttons, text="Upscale", command=button_command)
         self.button_upscale.pack(side="left", expand=True, fill="x", padx=5, pady=5)
 
 
-        self.button_cancel = Button(self.frame_primary_buttons, overrelief="groove", text="Cancel", command=self.close_window)
+        self.button_cancel = ttk.Button(self.frame_primary_buttons, text="Cancel", command=self.close_window)
         self.button_cancel.pack(side="left", expand=True, fill="x", padx=5, pady=5)
 
 #endregion
@@ -682,6 +679,7 @@ v1.05 changes:
 
   - Other changes:
     - Batch Upscale: Entry path ToolTips are now updated when the path is changed.
+    - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
 
 
 '''

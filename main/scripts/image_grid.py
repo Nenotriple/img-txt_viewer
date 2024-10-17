@@ -1,11 +1,8 @@
 """
 ########################################
-#                                      #
 #              Image-Grid              #
-#                                      #
-#   Version : v1.03                    #
+#   Version : v1.04                    #
 #   Author  : github.com/Nenotriple    #
-#                                      #
 ########################################
 
 Description:
@@ -20,12 +17,23 @@ Images without a text pair have a red flag placed over them.
 #region -  Imports
 
 
+# Standard Library
 import os
-import re
 import configparser
-from tkinter import ttk, Toplevel, IntVar, StringVar, BooleanVar, Frame, Label, Button, Scale, Radiobutton, Checkbutton, Menu, Menubutton, Entry, Scale, Scrollbar, Canvas, messagebox, END
+
+
+# Standard Library - GUI
+from tkinter import (ttk, Toplevel, messagebox,
+                     IntVar, StringVar, BooleanVar,
+                     Frame, Label, Button, Menu, Scrollbar, Canvas,
+                     )
+
+
+# Third-Party Libraries
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 
+
+# Custom Libraries
 from main.scripts.TkToolTip import TkToolTip as ToolTip
 
 
@@ -62,8 +70,8 @@ class ImageGrid:
         self.supported_filetypes = (".png", ".webp", ".jpg", ".jpeg", ".jpg_large", ".jfif", ".tif", ".tiff", ".bmp", ".gif")
 
         # Image grid configuration
-        self.max_width = 85  # Thumbnail width
-        self.max_height = 85  # Thumbnail height
+        self.max_width = 80  # Thumbnail width
+        self.max_height = 80  # Thumbnail height
         self.rows = 500  # Max rows
         self.cols = 8  # Max columns
         self.images_per_load = 250  # Num of images to load per set
@@ -153,7 +161,7 @@ class ImageGrid:
         self.label_image_info.pack(side="left", padx=5)
         ToolTip.create(self.label_image_info, "Adjust grid size", 500, 6, 12)
 
-        self.slider_image_size = Scale(self.frame_bottom, variable=self.image_size, orient="horizontal", from_=1, to=3, showvalue=False)
+        self.slider_image_size = ttk.Scale(self.frame_bottom, variable=self.image_size, orient="horizontal", from_=1, to=3, command=self.round_scale_input)
         self.slider_image_size.bind("<ButtonRelease-1>", lambda event: self.reload_grid())
         self.slider_image_size.pack(side="left")
         ToolTip.create(self.slider_image_size, "Adjust grid size", 500, 6, 12)
@@ -162,11 +170,11 @@ class ImageGrid:
         self.grip_window_size.pack(side="right", padx=(5, 0))
         ToolTip.create(self.grip_window_size, "Adjust window size", 500, 6, 12)
 
-        self.button_refresh = Button(self.frame_bottom, text="Refresh", overrelief="groove", command=self.reload_grid)
+        self.button_refresh = ttk.Button(self.frame_bottom, text="Refresh", command=self.reload_grid)
         self.button_refresh.pack(side="right", padx=5)
         ToolTip.create(self.button_refresh, "Refresh the image grid. Useful when you've added or removed images, or altered the text pairs.", 500, 6, 12)
 
-        self.button_load_all = Button(self.frame_bottom, text="Load All", overrelief="groove", command=lambda: self.load_images(all_images=True))
+        self.button_load_all = ttk.Button(self.frame_bottom, text="Load All", command=lambda: self.load_images(all_images=True))
         self.button_load_all.pack(side="right", padx=5)
         ToolTip.create(self.button_load_all, "Load all images in the folder (Slow)", 500, 6, 12)
 
@@ -174,13 +182,13 @@ class ImageGrid:
         self.label_image_info.pack(side="right", padx=5)
         ToolTip.create(self.label_image_info, "Filtered Images : Loaded Images, Total Images", 500, 6, 12)
 
-        self.checkbutton_auto_close = Checkbutton(self.frame_bottom, text="Auto-Close", overrelief="groove", variable=self.auto_close)
+        self.checkbutton_auto_close = ttk.Checkbutton(self.frame_bottom, text="Auto-Close", variable=self.auto_close)
         self.checkbutton_auto_close.pack(side="right", padx=5)
         ToolTip.create(self.checkbutton_auto_close, "Uncheck this to keep the window open after selecting an image", 500, 6, 12)
 
 
     def create_filtering_row(self):
-        self.button_toggle_frame = Button(self.frame_bottom, text="Filtering", overrelief="groove", command=self.toggle_filterframe_visibility)
+        self.button_toggle_frame = ttk.Button(self.frame_bottom, text="Filtering", command=self.toggle_filterframe_visibility)
         self.button_toggle_frame.pack(side="left", padx=5)
         ToolTip.create(self.button_toggle_frame, "Show or hide the filtering options", 500, 6, 12)
 
@@ -194,15 +202,15 @@ class ImageGrid:
         vert_separator.pack(side="left", fill="y")
 
         self.pair_filter_var = StringVar(value="All")
-        self.radiobutton_all = Radiobutton(self.frame_filtering, text="All", variable=self.pair_filter_var, value="All", overrelief="groove", command=self.reload_grid)
+        self.radiobutton_all = ttk.Radiobutton(self.frame_filtering, text="All", variable=self.pair_filter_var, value="All", command=self.reload_grid)
         self.radiobutton_all.pack(side="left", padx=1)
         ToolTip.create(self.radiobutton_all, "Display all LOADED images", 500, 6, 12)
 
-        self.radiobutton_paired = Radiobutton(self.frame_filtering, text="Paired", variable=self.pair_filter_var, value="Paired", overrelief="groove", command=self.reload_grid)
+        self.radiobutton_paired = ttk.Radiobutton(self.frame_filtering, text="Paired", variable=self.pair_filter_var, value="Paired", command=self.reload_grid)
         self.radiobutton_paired.pack(side="left", padx=1)
         ToolTip.create(self.radiobutton_paired, "Display images with text pairs", 500, 6, 12)
 
-        self.radiobutton_unpaired = Radiobutton(self.frame_filtering, text="Unpaired", variable=self.pair_filter_var, value="Unpaired", overrelief="groove", command=self.reload_grid)
+        self.radiobutton_unpaired = ttk.Radiobutton(self.frame_filtering, text="Unpaired", variable=self.pair_filter_var, value="Unpaired", command=self.reload_grid)
         self.radiobutton_unpaired.pack(side="left", padx=1)
         ToolTip.create(self.radiobutton_unpaired, "Display images without text pairs", 500, 6, 12)
 
@@ -210,7 +218,7 @@ class ImageGrid:
         vert_separator.pack(side="left", fill="y")
 
         self.enable_extra_filter_var = BooleanVar(value=0)
-        self.checkbutton_enable_extra_filter = Checkbutton(self.frame_filtering, variable=self.enable_extra_filter_var, overrelief="groove", command=self.toggle_filter_widgets)
+        self.checkbutton_enable_extra_filter = ttk.Checkbutton(self.frame_filtering, variable=self.enable_extra_filter_var, command=self.toggle_filter_widgets)
         self.checkbutton_enable_extra_filter.pack(side="left")
 
         self.filter_options = ["Resolution", "Aspect Ratio", "Filesize", "Filename", "Filetype", "Tags"]
@@ -222,7 +230,7 @@ class ImageGrid:
 
         self.operator_var = StringVar(value="=")
         self.operator_options = ["=", "<", ">", "*"]
-        self.menu_button_operator = Menubutton(self.frame_filtering, textvariable=self.operator_var, indicatoron=False, relief="raised", state="disabled")
+        self.menu_button_operator = ttk.Menubutton(self.frame_filtering, textvariable=self.operator_var, state="disabled")
         self.menu_button_operator.menu = Menu(self.menu_button_operator, tearoff=0)
         self.menu_button_operator["menu"] = self.menu_button_operator.menu
         self.menu_button_operator.config(width=2)
@@ -231,7 +239,7 @@ class ImageGrid:
         self.menu_button_operator.pack(side="left", padx=5)
         ToolTip.create(self.menu_button_operator, "Select a filter operator", 500, 6, 12)
 
-        self.filter_entry = Entry(self.frame_filtering, state="disabled", width=15)
+        self.filter_entry = ttk.Entry(self.frame_filtering, state="disabled", width=15)
         self.filter_entry.pack(side="left", padx=5, fill="x", expand=True)
         self.filter_entry.bind("<KeyRelease>", lambda event: self.reload_grid())
         self.filter_entry_tooltiptext_resolution = "Enter an appropriate filter value for: Resolution\n\nEnter a full resolution like 100x100 (WxH), or enter a single value like 100w, 100h"
@@ -260,7 +268,7 @@ class ImageGrid:
 
     def update_filter_entry(self, event):
         selected_value = self.combobox_filterinput.get()
-        self.filter_entry.delete(0, END)
+        self.filter_entry.delete(0, "end")
         self.filter_entry.insert(0, selected_value)
         self.reload_grid()
 
@@ -318,10 +326,10 @@ class ImageGrid:
 
 
     def set_size_settings(self):
-        size_settings = {1: (50, 50, 13),
-                         2: (85, 85, 8),
-                         3: (175, 175, 4)}
-        self.max_width, self.max_height, self.cols = size_settings.get(self.image_size.get(), (85, 85, 8))
+        size_settings = {1: (45, 45, 13),
+                         2: (80, 80, 8),
+                         3: (170, 170, 4)}
+        self.max_width, self.max_height, self.cols = size_settings.get(self.image_size.get(), (80, 80, 8))
 
 
     def create_image_grid(self):
@@ -335,13 +343,14 @@ class ImageGrid:
     def populate_image_grid(self):
         for index, (image, filepath, image_index) in enumerate(self.images):
             row, col = divmod(index, self.cols)
-            thumbnail = Button(self.frame_image_grid, relief="flat", overrelief="groove", image=image, command=lambda path=filepath: self.on_mouse_click(path))
+            thumbnail = ttk.Button(self.frame_image_grid, image=image, command=lambda path=filepath: self.on_mouse_click(path))
             thumbnail.image = image
             thumbnail.grid(row=row, column=col)
             thumbnail.bind("<MouseWheel>", self.on_mousewheel)
             filesize = os.path.getsize(filepath)
             filesize = f"{filesize / 1024:.2f} KB" if filesize < 1024 * 1024 else f"{filesize / 1024 / 1024:.2f} MB"
-            width, height = Image.open(filepath).size
+            with Image.open(filepath) as img:
+                width, height = img.size
             resolution = f"({width} x {height})"
             ToolTip.create(thumbnail, f"#{image_index + 1}, {os.path.basename(filepath)}, {filesize}, {resolution}", 200, 6, 12)
 
@@ -375,10 +384,10 @@ class ImageGrid:
 
     def create_new_image(self, img_path, txt_path):
         new_img = Image.new("RGBA", (self.max_width, self.max_height))
-        img = Image.open(img_path)
-        img.thumbnail((self.max_width, self.max_height))
-        position = ((self.max_width - img.width) // 2, (self.max_height - img.height) // 2)
-        new_img.paste(img, position)
+        with Image.open(img_path) as img:
+            img.thumbnail((self.max_width, self.max_height))
+            position = ((self.max_width - img.width) // 2, (self.max_height - img.height) // 2)
+            new_img.paste(img, position)
         if not os.path.exists(txt_path) or os.path.getsize(txt_path) == 0:
             flag_position = (self.max_width - self.image_flag.width, self.max_height - self.image_flag.height)
             new_img.paste(self.image_flag, flag_position, mask=self.image_flag)
@@ -465,7 +474,6 @@ class ImageGrid:
             lower_limit = target_size * 0.75
             upper_limit = target_size * 1.25
             tolerance = 0.01
-
             if operator == "=":
                 return lower_limit * (1 - tolerance) <= actual_size <= upper_limit * (1 + tolerance)
             elif operator == "<":
@@ -547,10 +555,10 @@ class ImageGrid:
 
 
     def paste_image_flag(self, new_img, img_path, txt_path, current_text_file_size=None):
-        img = Image.open(img_path)
-        img.thumbnail((self.max_width, self.max_height))
-        position = ((self.max_width - img.width) // 2, (self.max_height - img.height) // 2)
-        new_img.paste(img, position)
+        with Image.open(img_path) as img:
+            img.thumbnail((self.max_width, self.max_height))
+            position = ((self.max_width - img.width) // 2, (self.max_height - img.height) // 2)
+            new_img.paste(img, position)
         if current_text_file_size is None:
             current_text_file_size = os.path.getsize(txt_path) if os.path.exists(txt_path) else 0
         if current_text_file_size == 0:
@@ -600,7 +608,7 @@ class ImageGrid:
 
     def add_load_more_button(self):
         if self.pair_filter_var.get() == "All" and self.loaded_images < self.num_total_images:
-            load_more_button = Button(self.frame_image_grid, text="Load More...", height=2, command=self.load_images)
+            load_more_button = ttk.Button(self.frame_image_grid, text="Load More...", height=2, command=self.load_images)
             load_more_button.grid(row=self.rows, column=0, columnspan=self.cols, sticky="ew", pady=5)
             ToolTip.create(load_more_button, "Load the next 150 images", 500, 6, 12)
 
@@ -673,11 +681,15 @@ class ImageGrid:
     def toggle_filterframe_visibility(self):
         if self.filterframe_visible:
             self.frame_filtering.pack_forget()
-            self.button_toggle_frame.config(relief="raised")
         else:
             self.frame_filtering.pack(side="bottom", fill="x", padx=5, pady=(0, 5))
-            self.button_toggle_frame.config(relief="sunken")
         self.filterframe_visible = not self.filterframe_visible
+
+
+    def round_scale_input(self, event=None):
+        value = float(self.slider_image_size.get())
+        if int(value) != value:
+            self.slider_image_size.set(round(value))
 
 
 #endregion
@@ -694,11 +706,6 @@ class ImageGrid:
 
     def get_image_files(self):
         return [name for name in self.all_file_list if os.path.isfile(os.path.join(self.working_folder, name)) and name.lower().endswith(self.supported_filetypes)]
-
-
-#    def natural_sort(self, string):
-#        return [int(text) if text.isdigit() else text.lower()
-#                for text in re.split(r'(\d+)', string)]
 
 
 #endregion
@@ -834,26 +841,18 @@ class ImageGrid:
 
 '''
 
-v1.03 changes:
+v1.04 changes:
 
   - New:
-    - Filtering options are now moved to a new menu.
-    - You can now filter images by `Resolution`, `Aspect Ratio`, `Filesize`, `Filename`, `Filetype`, and `Tags`.
-      - Along with these operators, `=`, `<`, `>`, `*`
-    - Resolution and Filesize are now displayed in the image tooltip.
-    - `Auto-Close`: This setting is now saved to the `settings.cfg` file. #24
-
+    -
 <br>
 
   - Fixed:
-    - Fixed the issue of not being able to focus on the image grid window when selecting the it from the taskbar. #24
-
+    -
 <br>
 
   - Other changes:
-    - Increased the default number of images loaded from 150 to 250.
-    - Improved image and text cache.
-    - Update index logic to support new loading order options.
+     - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
 
 '''
 
