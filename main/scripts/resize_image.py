@@ -16,9 +16,19 @@ Resize an image by resolution or percentage.
 #region -  Imports
 
 
+# Standard Library
 import os
 from io import BytesIO
-from tkinter import ttk, Toplevel, messagebox, IntVar, StringVar, BooleanVar, Frame, Label, Button
+
+
+# Standard Library - GUI
+from tkinter import (ttk, Toplevel, messagebox,
+                     IntVar, StringVar, BooleanVar,
+                     Frame, Label, Button
+                     )
+
+
+# Third-Party Libraries
 from PIL import Image, ImageSequence
 
 
@@ -551,7 +561,7 @@ class ResizeTool:
 
 #endregion
 ################################################################################################################################################
-#region - File Managment
+#region - File Management
 
 
 

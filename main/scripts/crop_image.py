@@ -18,11 +18,20 @@ More info here: https://github.com/Nenotriple/img-txt_viewer
 #region -  Imports
 
 
+# Standard Library
 import os
 import sys
-import tkinter as tk
-from tkinter import *
-from tkinter import messagebox
+
+
+# Standard Library - GUI
+from tkinter import (Toplevel, messagebox,
+                     BooleanVar,
+                     Menu, Canvas,
+                     TclError
+                     )
+
+
+# Third-Party Libraries
 from PIL import Image, ImageTk
 
 
@@ -81,7 +90,7 @@ class Crop:
 
 
     def create_canvas(self):
-        self.canvas = tk.Canvas(self.top, width=self.image_object.width(), height=self.image_object.height())
+        self.canvas = Canvas(self.top, width=self.image_object.width(), height=self.image_object.height())
         self.canvas.pack()
         self.canvas.create_image(0, 0, anchor='nw', image=self.image_object)
         self.canvas.bind("<ButtonPress-1>", self.on_button_press)
@@ -94,7 +103,7 @@ class Crop:
         def show_menu(event):
             self.context_menu.tk_popup(event.x_root, event.y_root)
         self.canvas.bind("<Button-3>", show_menu)
-        self.context_menu = tk.Menu(self.top, tearoff=0)
+        self.context_menu = Menu(self.top, tearoff=0)
         self.context_menu.add_command(label="Crop", accelerator="(Spacebar)", command=self.crop_image)
         self.context_menu.add_separator()
         self.context_menu.add_command(label="Clear", command=self.destroy_rectangle)

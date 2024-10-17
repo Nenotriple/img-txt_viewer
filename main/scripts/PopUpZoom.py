@@ -12,8 +12,20 @@ Create a small popup window beside the mouse that displays a zoomed view of the 
 """
 
 
+################################################################################################################################################
+#region - Imports
+
+
+# Standard Library - GUI
 from tkinter import Toplevel, BooleanVar, Canvas
+
+
+# Third-Party Libraries
 from PIL import Image, ImageTk, ImageDraw
+
+
+################################################################################################################################################
+#region - CLASS: PopUpZoom
 
 
 class PopUpZoom:

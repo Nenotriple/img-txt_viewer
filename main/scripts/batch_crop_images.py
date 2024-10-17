@@ -16,9 +16,19 @@ Crop a folder of images by resizing (ensuring they are larger than the target) t
 #region - Imports
 
 
+# Standard Library
 import os
 import shutil
-from tkinter import ttk, messagebox, Frame, Toplevel, Label, Button, StringVar
+
+
+# Standard Library - GUI
+from tkinter import (ttk, Toplevel, messagebox,
+                     StringVar,
+                     Frame, Label, Button,
+                    )
+
+
+# Third-Party Libraries
 from PIL import Image
 
 
@@ -199,7 +209,7 @@ class BatchCrop:
                     cropped_image.save(os.path.join(new_directory, f'{os.path.splitext(filename)[0]}_{resolution[0]}x{resolution[1]}.jpg'), quality=100)
             self.rename_text_files()
             self.close_window()
-            result = messagebox.askyesno("Crop Successful", f"All images cropped successfuly.\n\nOutput path:\n{new_directory}\n\nOpen output path?")
+            result = messagebox.askyesno("Crop Successful", f"All images cropped successfully.\n\nOutput path:\n{new_directory}\n\nOpen output path?")
             if result:
                os.startfile(new_directory)
         except ValueError:

@@ -13,9 +13,17 @@ Tags are expected to be in a pseudo-CSV format.
 
 """
 
+################################################################################################################################################
+#region - Imports
+
 
 import re
 import os
+
+
+#endregion
+################################################################################################################################################
+#region - Tag Editor
 
 
 def analyze_tags(text_files):
@@ -61,6 +69,7 @@ def edit_tags(text_files, tags, delete=False, edit=None):
                 content = content.replace(tag, edit)
         with open(file_path, 'w', encoding='utf-8') as file:
             file.write(content)
+
 
 def _extract_tags(text):
     """

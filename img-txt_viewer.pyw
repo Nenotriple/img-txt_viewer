@@ -59,7 +59,12 @@ from PIL import (Image, ImageTk, ImageSequence,
 
 
 # Custom Libraries
-from main.scripts import crop_image, batch_crop_images, resize_image, image_grid, TagEditor
+from main.scripts import (crop_image,
+                          batch_crop_images,
+                          resize_image,
+                          image_grid,
+                          TagEditor
+                          )
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
 from main.scripts.TkToolTip import TkToolTip as ToolTip
 from main.bin import upscale_image
