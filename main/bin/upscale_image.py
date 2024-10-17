@@ -15,13 +15,20 @@ Upscale a single/batch image using realesrgan-ncnn-vulkan.exe
 #region -  Imports
 
 
+# Standard Library
 import os
 import time
 import shutil
 import threading
 import subprocess
-from tkinter import ttk, Toplevel, messagebox, Frame, Entry, Label, Button, IntVar, DoubleVar, StringVar, TclError
+
+
+# Standard Library - GUI
+from tkinter import ttk, Toplevel, messagebox, Frame, Label, Button, IntVar, DoubleVar, StringVar, TclError
 from tkinter.filedialog import askdirectory
+
+
+# Third-Party Libraries
 from PIL import Image, ImageSequence
 
 
