@@ -5397,6 +5397,7 @@ The app now targets Windows 11, and while it doesn't offer an complete `Aero` th
   - NEW: `origin` parameter: Configure the origin point of the tooltip. (Default is "mouse")
   - FIXED: Issue where the underlying widget would be impossible to interact with after hiding the tooltip.
   - CHANGE: Now uses `TkDefaultFont` instead of Tahoma as the default font for the tooltip text.
+  - CHANGE: The default background color is now "#ffffee", less yellow and more "off-white".
 - `PopUpZoom`v1.02:
   - New: `Rounded Corners` The popup now supports rounded corners. (Default: 30px)
 - `Batch Crop`(v1.03), `Resize Images`(v1.02), `Image Grid`(v1.04), `Batch Resize Images`(v1.08):

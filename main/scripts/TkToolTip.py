@@ -21,8 +21,22 @@ B) Create and store a tooltip for later configuration:
 """
 
 
+################################################################################################################################################
+#region - Imports
+
+
+# Standard Library
 import time
+
+
+# Standard Library - GUI
 from tkinter import Toplevel, Label
+
+
+#endregion
+################################################################################################################################################
+#region - TkToolTips
+
 
 '''Default tooltip parameters'''
 TEXT = ""
@@ -32,7 +46,7 @@ PADY = 0
 IPADX = 2
 IPADY = 2
 STATE = "normal"
-BG = "#ffffe0"
+BG = "#ffffee"
 FG = "black"
 FONT = ("TkDefaultFont", "8", "normal")
 BORDERWIDTH = 1
@@ -75,7 +89,7 @@ class TkToolTip:
         Tooltip state, "normal" or "disabled" (default is None)
 
     bg : str, optional
-        Background color (default is "#ffffe0")
+        Background color (default is "#ffffee")
 
     fg : str, optional
         Foreground (text) color (default is "black")
@@ -352,6 +366,9 @@ v1.06 changes:
 
 
 #endregion
+################################################################################################################################################
+#region -  Todo
+
 
 '''
 
@@ -372,3 +389,5 @@ v1.06 changes:
   -
 
   '''
+
+#endregion
