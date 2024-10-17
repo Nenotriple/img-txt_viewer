@@ -1,28 +1,13 @@
-################################################################################################################################################
-#region -  Description
-
-
 """
 ########################################
-#                                      #
 #           Find Dupe files            #
-#                                      #
 #   Version : v1.01                    #
 #   Author  : github.com/Nenotriple    #
-#                                      #
 ########################################
 
 Description:
 -------------
-Scan a folder for duplicate images and/or all files by comparing thier MD5 or SHA-256 hash.
-
-Tested on Windows 10.
-
-Requirements:
--------------
-Pillow:
-    Install by: pip install pillow
-
+Scan a folder for duplicate images and/or all files by comparing their MD5 or SHA-256 hash.
 
 """
 
@@ -32,6 +17,7 @@ Pillow:
 #region -  Imports
 
 
+# Standard Library
 import os
 import sys
 import time
@@ -40,6 +26,9 @@ import ctypes
 import hashlib
 import argparse
 import threading
+
+
+# Standard Library - GUI
 from tkinter import Tk, ttk, Menu, Text, Label, StringVar, simpledialog, BooleanVar, filedialog, messagebox, Toplevel, TclError
 
 
@@ -801,7 +790,7 @@ v1.01 changes:
 <br>
 
   - Other changes:
-    - Removed `Pillow` Import, this makes the executable file ~75% smaller.
+    -
 
 <br>
 
