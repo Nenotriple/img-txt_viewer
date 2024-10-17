@@ -31,12 +31,14 @@ import time
 import shutil
 import ctypes
 import zipfile
+import threading
 import itertools
 import statistics
 import webbrowser
 import subprocess
 import configparser
 from collections import defaultdict, Counter
+from concurrent.futures import ThreadPoolExecutor
 
 
 # Standard Library - GUI
@@ -54,7 +56,7 @@ from tkinter import (ttk, Tk, Toplevel, messagebox, filedialog, simpledialog,
 import numpy
 from PIL import (Image, ImageTk, ImageSequence,
                  ImageOps, ImageEnhance, ImageFilter,
-                 UnidentifiedImageError
+                 UnidentifiedImageError, PngImagePlugin
                  )
 
 
@@ -812,6 +814,8 @@ class ImgTxtViewer:
         self.config = configparser.ConfigParser()
         self.caption_counter = Counter()
         self.autocomplete = Autocomplete
+        self.thread_executor = ThreadPoolExecutor(max_workers=1)
+        self.thread_file_locks = {}
 
         # Window drag variables
         self.drag_x = None
@@ -897,6 +901,7 @@ class ImgTxtViewer:
         # Auto Save Settings
         self.auto_save_var = BooleanVar(value=False)
         self.auto_delete_blank_files_var = BooleanVar(value=False)
+        self.save_caption_to_png_metadata_var = BooleanVar(value=False)
 
         # Highlight Settings
         self.highlight_selection_var = BooleanVar(value=True)
@@ -1003,6 +1008,7 @@ class ImgTxtViewer:
         self.optionsMenu.add_cascade(label="Options", underline=0, state="disable", menu=self.options_subMenu)
         self.options_subMenu.add_checkbutton(label="Clean-Text", underline=0, variable=self.cleaning_text_var, command=self.toggle_list_menu)
         self.options_subMenu.add_checkbutton(label="Auto-Delete Blank Files", underline=0, variable=self.auto_delete_blank_files_var)
+        self.options_subMenu.add_checkbutton(label="Save Caption to PNG Metadata", underline=0, variable=self.save_caption_to_png_metadata_var)
         self.options_subMenu.add_checkbutton(label="Colored Suggestions", underline=1, variable=self.colored_suggestion_var, command=self.update_autocomplete_dictionary)
         self.options_subMenu.add_checkbutton(label="Highlight Selection", underline=0, variable=self.highlight_selection_var)
         self.options_subMenu.add_checkbutton(label="Big Save Button", underline=0, variable=self.big_save_button_var, command=self.toggle_save_button_height)
@@ -1139,7 +1145,7 @@ class ImgTxtViewer:
         self.toolsMenu.add_command(label="Open Current Directory...", underline=13, command=self.open_image_directory)
         self.toolsMenu.add_command(label="Open Current Image...", underline=13, command=self.open_image)
         self.toolsMenu.add_command(label="Edit Image...", underline=6, accelerator="F4", command=self.open_image_in_editor)
-        self.toolsMenu.add_command(label="Open With...", underline=5, command=self.open_with_dialog) # Not working in Windows 11
+        self.toolsMenu.add_command(label="Open With...", underline=5, command=self.open_with_dialog)
         self.toolsMenu.add_separator()
         self.toolsMenu.add_command(label="Next Empty Text File", accelerator="Ctrl+E", command=self.index_goto_next_empty)
         self.toolsMenu.add_command(label="Open Image-Grid...", accelerator="F2", underline=11, command=self.open_image_grid)
@@ -1753,7 +1759,7 @@ class ImgTxtViewer:
         self.imageContext_menu.add_command(label="Open Current Image...", command=self.open_image)
         self.imageContext_menu.add_command(label="Open Image-Grid...", accelerator="F2", command=self.open_image_grid)
         self.imageContext_menu.add_command(label="Edit Image...", accelerator="F4", command=self.open_image_in_editor)
-        self.imageContext_menu.add_command(label="Open With...", command=self.open_with_dialog) # Not working in Windows 11
+        self.imageContext_menu.add_command(label="Open With...", command=self.open_with_dialog)
         self.imageContext_menu.add_separator()
         # File
         self.imageContext_menu.add_command(label="Duplicate img-txt pair", command=self.duplicate_pair)
@@ -3071,25 +3077,30 @@ class ImgTxtViewer:
         self.text_box.config(undo=True)
 
 
-    def load_image_file(self, image_file, text_file):
+    def load_image_file(self, image_path, text_file):
+        if image_path not in self.thread_file_locks:
+            self.thread_file_locks[image_path] = threading.Lock()
+        file_lock = self.thread_file_locks[image_path]
         try:
-            with Image.open(image_file) as img:
-                self.original_image_size = img.size
+            with Image.open(image_path) as image_file:
+                self.original_image_size = image_file.size
+                with file_lock:
+                    temp_image = image_file.copy()
                 max_size = (self.quality_max_size, self.quality_max_size)
-                img.thumbnail(max_size, self.quality_filter)
-                if img.format == 'GIF':
-                    self.gif_frames = [frame.copy() for frame in ImageSequence.Iterator(img)]
-                    self.frame_durations = [frame.info['duration'] for frame in ImageSequence.Iterator(img)]
+                temp_image.thumbnail(max_size, self.quality_filter)
+                if image_file.format == 'GIF':
+                    self.gif_frames = [frame.copy() for frame in ImageSequence.Iterator(image_file)]
+                    self.frame_durations = [frame.info['duration'] for frame in ImageSequence.Iterator(image_file)]
                 else:
-                    self.gif_frames = [img.copy()]
+                    self.gif_frames = [temp_image.copy()]
                     self.frame_durations = [None]
         except (FileNotFoundError, UnidentifiedImageError):
             self.update_image_file_count()
-            self.image_files.remove(image_file)
+            self.image_files.remove(self.image_file)
             if text_file in self.text_files:
                 self.text_files.remove(text_file)
             return
-        return img
+        return temp_image
 
 
     def display_image(self):
@@ -4507,6 +4518,7 @@ class ImgTxtViewer:
         self.config.set("Other", "process_image_stats", str(self.process_image_stats_var.get()))
         self.config.set("Other", "use_mytags", str(self.use_mytags_var.get()))
         self.config.set("Other", "auto_delete_blank_files", str(self.auto_delete_blank_files_var.get()))
+        self.config.set("Other", "save_caption_to_png_metadata_var", str(self.save_caption_to_png_metadata_var.get()))
         self.config.set("Other", "thumbnails_visible", str(self.thumbnails_visible.get()))
         self.config.set("Other", "edit_panel_visible", str(self.edit_panel_visible_var.get()))
         self.config.set("Other", "image_quality", str(self.image_quality_var.get()))
@@ -4611,6 +4623,7 @@ class ImgTxtViewer:
         self.process_image_stats_var.set(value=self.config.getboolean("Other", "process_image_stats", fallback=False))
         self.use_mytags_var.set(value=self.config.getboolean("Other", "use_mytags", fallback=True))
         self.auto_delete_blank_files_var.set(value=self.config.getboolean("Other", "auto_delete_blank_files", fallback=False))
+        self.save_caption_to_png_metadata_var.set(value=self.config.getboolean("Other", "save_caption_to_png_metadata_var", fallback=False))
         self.thumbnails_visible.set(value=self.config.getboolean("Other", "thumbnails_visible", fallback=True))
         self.edit_panel_visible_var.set(value=self.config.getboolean("Other", "edit_panel_visible", fallback=False))
         self.toggle_edit_panel()
@@ -4658,6 +4671,7 @@ class ImgTxtViewer:
         self.process_image_stats_var.set(value=False)
         self.use_mytags_var.set(value=True)
         self.auto_delete_blank_files_var.set(value=False)
+        self.save_caption_to_png_metadata_var.set(value=False)
         self.external_image_editor_path = "mspaint"
         self.image_quality_var.set(value="Normal")
         self.set_image_quality()
@@ -4703,18 +4717,22 @@ class ImgTxtViewer:
     def save_text_file(self):
         try:
             if self.image_dir.get() != "Choose Directory..." and self.check_if_directory() and self.text_files:
-                file_saved = self._save_file()
+                file_saved = self._save_text_file()
                 if self.cleaning_text_var.get() or self.list_mode_var.get():
                     self.refresh_text_box()
                 if file_saved:
                     self.message_label.config(text="Saved", bg="#6ca079", fg="white")
                 else:
                     self.message_label.config(text="No Change", bg="#f0f0f0", fg="black")
+                if self.save_caption_to_png_metadata_var.get():
+                    self.save_caption_metadata()
         except (PermissionError, IOError, TclError) as e:
             messagebox.showerror("Error: save_text_file()", f"An error occurred while saving the current text file.\n\n{e}")
+        except Exception as e:
+            messagebox.showerror("Error: save_text_file()", f"An unexpected error occurred while saving the current text file.\n\n{e}")
 
 
-    def _save_file(self):
+    def _save_text_file(self):
         text_file = self.text_files[self.current_index]
         text = self.text_box.get("1.0", "end-1c")
         if os.path.exists(text_file):
@@ -4736,6 +4754,31 @@ class ImgTxtViewer:
         with open(text_file, "w+", encoding="utf-8") as f:
             f.write(text)
         return True
+
+
+    def save_caption_metadata(self):
+        text = self.text_box.get("1.0", "end-1c")
+        if self.cleaning_text_var.get():
+            text = self.cleanup_text(text)
+        if self.list_mode_var.get():
+            text = ', '.join(text.split('\n'))
+        self.thread_executor.submit(self._save_image, self.image_file, text)
+
+
+    def _save_image(self, file_path, text):
+        if file_path not in self.thread_file_locks:
+            self.thread_file_locks[file_path] = threading.Lock()
+        file_lock = self.thread_file_locks[file_path]
+        with file_lock:
+            try:
+                with Image.open(file_path) as img:
+                    if img.format != 'PNG':
+                        raise ValueError("The image format must be PNG.")
+                    metadata = PngImagePlugin.PngInfo()
+                    metadata.add_text(";;img-txt_viewer_caption;;", f"{text};;")
+                    img.save(file_path, "PNG", pnginfo=metadata)
+            except Exception as e:
+                messagebox.showerror("Error: _save_image()", f"An error occurred while saving the caption metadata to the image file.\n\n{e}")
 
 
     def on_closing(self, event=None):
@@ -5333,6 +5376,8 @@ The app now targets Windows 11, and while it doesn't offer an complete `Aero` th
   - This tool has been completely reworked to allow for more versatile tag editing.
   - The interface is now more convenient and user-friendly, allowing you to see all pending changes before committing them.
   - It is no longer supported as a standalone tool.
+- New option `Save Caption to PNG Metadata`: Save the current caption to the PNG metadata of the displayed image. (PNG only), (text chunk)
+  - A double semi-colon `;;` is used as a delimiter to separate the caption from other metadata.  
 - New feature `Thumbnail Panel`: Displayed below the current image for quick navigation.
 - New feature `Edit Image Panel`: Enabled from the options/image menu, this section allows you to edit the `Brightness`, `Contrast`, `Saturation`, `Sharpness`, `Highlights`, and `Shadows` of the current image.
 - New feature `Edit Image...`: Open the current image in an external editor, the default is MS Paint.
