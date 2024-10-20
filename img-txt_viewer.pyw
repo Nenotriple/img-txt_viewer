@@ -52,6 +52,7 @@ from tkinter import (ttk, Tk, Toplevel, messagebox, filedialog, simpledialog,
 
 # Third-Party Libraries
 import numpy
+from TkToolTip.TkToolTip import TkToolTip as ToolTip
 from PIL import (Image, ImageTk, ImageSequence,
                  ImageOps, ImageEnhance, ImageFilter,
                  UnidentifiedImageError
@@ -66,7 +67,6 @@ from main.scripts import (crop_image,
                           TagEditor
                           )
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
-from main.scripts.TkToolTip import TkToolTip as ToolTip
 from main.bin import upscale_image
 
 

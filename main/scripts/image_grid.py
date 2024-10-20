@@ -30,11 +30,8 @@ from tkinter import (ttk, Toplevel, messagebox,
 
 
 # Third-Party Libraries
+from TkToolTip.TkToolTip import TkToolTip as ToolTip
 from PIL import Image, ImageTk, ImageDraw, ImageFont
-
-
-# Custom Libraries
-from main.scripts.TkToolTip import TkToolTip as ToolTip
 
 
 #endregion
