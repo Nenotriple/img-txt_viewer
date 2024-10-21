@@ -4807,14 +4807,24 @@ root.mainloop()
 
 This release incorporates several new features, including a reworked Batch Tag Edit tool, a Thumbnail Panel for quick navigation, and an Edit Image Panel for adjusting image properties. Additionally, numerous bugs have been fixed, such as issues with the Delete Pair tool, image quality degradation, and memory leaks.
 
+Aspects of the script have been refactored to be more modular and better handle additional tools and features.
+
 The app now targets Windows 11, and while it doesn't offer an complete `Aero` theme, many widgets have been updated to utilize a more modern theme where appropriate.
 
+Starting from this release, the `Lite` version will no longer be provided. All tools are now built-in.
+
+---
 
 ### New:
 - `Batch Tag Delete` has been renamed to `Batch Tag Edit`.
   - This tool has been completely reworked to allow for more versatile tag editing.
   - The interface is now more convenient and user-friendly, allowing you to see all pending changes before committing them.
   - It is no longer supported as a standalone tool.
+- `Batch Resize Images`:
+  - No longer a standalone tool, the tool has been integrated into the main app.
+  - NEW: A timer is now displayed in the bottom row.
+  - FIXED: The following resize modes not working/causing an error: `Longer Side`, and `Height`
+  - FIXED: The resize operation is now threaded, allowing the app to remain responsive during the resizing process.
 - New feature `Thumbnail Panel`: Displayed below the current image for quick navigation.
 - New feature `Edit Image Panel`: Enabled from the options/image menu, this section allows you to edit the `Brightness`, `Contrast`, `Saturation`, `Sharpness`, `Highlights`, and `Shadows` of the current image.
 - New feature `Edit Image...`: Open the current image in an external editor, the default is MS Paint.
@@ -4873,10 +4883,6 @@ The app now targets Windows 11, and while it doesn't offer an complete `Aero` th
   - Batch Upscale: Added a timer and ETA label to show the total time taken and the estimated time remaining.
   - Batch Upscale: Entry path ToolTips are now updated when the path is changed.
   - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
-- `Batch Resize`: v1.07:
-  - NEW: A timer is now displayed in the bottom row.
-  - FIXED: The following resize modes not working/causing an error: `Longer Side`, and `Height`
-  - FIXED: The resize operation is now threaded, allowing the app to remain responsive during the resizing process.
 - `TkToolTip`: v1.06:
   - NEW: `justify` parameter: Configure text justification in the tooltip. (Default is "center")
   - NEW: `wraplength` parameter: Configure the maximum line width for text wrapping. (Default is 0, which disables wrapping)
@@ -4887,7 +4893,7 @@ The app now targets Windows 11, and while it doesn't offer an complete `Aero` th
   - CHANGE: The default background color is now "#ffffee", less yellow and more "off-white".
 - `PopUpZoom`v1.02:
   - New: `Rounded Corners` The popup now supports rounded corners. (Default: 30px)
-- `Batch Crop`(v1.03), `Resize Images`(v1.02), `Image Grid`(v1.04), `Batch Resize Images`(v1.08):
+- `Batch Crop`(v1.03), `Resize Images`(v1.02), `Image Grid`(v1.04):
   - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
 
 
