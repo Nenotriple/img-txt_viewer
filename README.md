@@ -238,91 +238,102 @@ python img-txt_viewer.pyw
 
 
 <details>
-  <summary>Release notes for: v1.96</summary>
+  <summary>Release Notes for v1.96</summary>
+
+
+**v1.96 Changes**  |  https://github.com/Nenotriple/img-txt_viewer/compare/v1.95...v1.96
 
 
 This release incorporates several new features, including a reworked Batch Tag Edit tool, a Thumbnail Panel for quick navigation, and an Edit Image Panel for adjusting image properties. Additionally, numerous bugs have been fixed, such as issues with the Delete Pair tool, image quality degradation, and memory leaks.
 
+Aspects of the script have been refactored to be more modular and better handle additional tools and features.
+
 The app now targets Windows 11, and while it doesn't offer an complete `Aero` theme, many widgets have been updated to utilize a more modern theme where appropriate.
 
+Starting from this release, the `Lite` version will no longer be provided. All tools are now built-in.
 
-  - New:
-    - `Batch Tag Delete` has been renamed to `Batch Tag Edit`.
-      - This tool has been completely reworked to allow for more versatile tag editing.
-      - The interface is now more convenient and user-friendly, allowing you to see all pending changes before committing them.
-      - It is no longer supported as a stand-alone tool.
-    - New feature `Thumbnail Panel`: Displayed below the current image for quick navigation.
-    - New feature `Edit Image Panel`: Enabled from the options/image menu, this section allows you to edit the `Brightness`, `Contrast`, `Saturation`, `Sharpness`, `Highlights`, and `Shadows` of the current image.
-    - New feature `Edit Image...`: Open the current image in an external editor, the default is MS Paint.
-      - Running `Set Default Image Editor` will open a dialog to select the executable (or `.py`, `.pyw`) path to use as the default image editor.
-      - This should work with any app that accepts a file path as a launch argument. (Gimp, Krita, Photoshop, etc.)
-    - New tool `Create Wildcard From Captions`: Combine all image captions into a single text file, each set of image captions separated by a newline.
-    - Added `Copy` command to the right-click textbox context menu.
-    - Added `Last` to the index entry right-click context menu to quickly jump to the last img-txt pair.
-    - A quick guided setup will run on the app's first launch, or if the settings file is deleted/reset.
-      - This will set the preferred autocomplete dictionaries and matching settings.
-    - You can now press `CTRL+W` to close the current window.
+---
 
-
-<br>
-
-
-  - Fixed:
-    - Fixed issue where the `Delete Pair` tool would overwrite the next index with the deleted text. #31
-    - Fixed an issue that was degrading the quality of the displayed image and not respecting the `Image Display Quality` setting.
-    - Fixed a memory leak that could occur whenever the primary image is displayed.
-    - Fixed Next/Previous button not properly displaying their relief when clicked.
-    - Fixed an issue where landscape images were improperly scaled, leading to an incorrect aspect ratio.
-      - Additionally, large landscape images now scale to fit the window frame better.
-    - Fixed `Open Text Directory...` not respecting the actual filepath if set by `Set Text File Path...`.
-    - Fixed issue where the file lists were not updated when using the internal function "jump_to_image()".
-    - Fixed an issue where the `alt text path` could be set to `.` when declining to reload the last directory.
-    - Fixed a bug where the window height would enlarge slightly when dragging the window from by the displayed image.
-    - Fixed the following tools not respecting the `Loading Order > Descending` setting, causing them to jump to the wrong index.
-      - `Image Grid`, `Upscale Image`, `Resize Image`
-    - Potential fix for the `Stats > PPI` calculation returning "0.00".
-    - if `clean-text` is enabled: The primary text box is now properly refreshed when saving.
+### New:
+- `Batch Tag Delete` has been renamed to `Batch Tag Edit`.
+  - This tool has been completely reworked to allow for more versatile tag editing.
+  - The interface is now more convenient and user-friendly, allowing you to see all pending changes before committing them.
+  - It is no longer supported as a standalone tool.
+- `Batch Resize Images`:
+  - No longer a standalone tool, the tool has been integrated into the main app.
+  - NEW: A timer is now displayed in the bottom row.
+  - FIXED: The following resize modes not working/causing an error: `Longer Side`, and `Height`
+  - FIXED: The resize operation is now threaded, allowing the app to remain responsive during the resizing process.
+- New feature `Thumbnail Panel`: Displayed below the current image for quick navigation.
+- New feature `Edit Image Panel`: Enabled from the options/image menu, this section allows you to edit the `Brightness`, `Contrast`, `Saturation`, `Sharpness`, `Highlights`, and `Shadows` of the current image.
+- New feature `Edit Image...`: Open the current image in an external editor, the default is MS Paint.
+  - Running `Set Default Image Editor` will open a dialog to select the executable (or `.py`, `.pyw`) path to use as the default image editor.
+  - This should work with any app that accepts a file path as a launch argument. (GIMP, Krita, Photoshop, etc.)
+- New tool `Create Wildcard From Captions`: Combine all image captions into a single text file, each set of image captions separated by a newline.
+- Added `Copy` command to the right-click textbox context menu.
+- Added `Last` to the index entry right-click context menu to quickly jump to the last img-txt pair.
+- A quick guided setup will run on the app's first launch, or if the settings file is deleted/reset.
+  - This will set the preferred autocomplete dictionaries and matching settings.
+- You can now press `CTRL+W` to close the current window.
 
 
 <br>
 
 
-  - Other changes:
-    - Using `Open Current Directory...` will now automatically select the current image in the file explorer. #30
-      - The `Open` button will also select the current image if the path being opened is the same as the image path.
-    - The Image info (the stats displayed above the image) is now cached for quicker access.
-    - `Zip Dataset...` Now only zips images and text files in the selected directory, omitting subfolders.
-    - The `Options`, and `Tools` menus have been reorganized.
-    - The color mode is now displayed in the image info panel.
-    - You can now close the `Crop Image` window with the `Escape` key.
-    - I've switched to Windows 11, so it's now the target operating system for this project. You may notice some UI changes.
+### Fixed:
+- Fixed issue where the `Delete Pair` tool would overwrite the next index with the deleted text. #31
+- Fixed an issue that was degrading the quality of the displayed image and not respecting the `Image Display Quality` setting.
+- Fixed a memory leak that could occur whenever the primary image is displayed.
+- Fixed Next/Previous button not properly displaying their relief when clicked.
+- Fixed an issue where landscape images were improperly scaled, leading to an incorrect aspect ratio.
+  - Additionally, large landscape images now scale to fit the window frame better.
+- Fixed `Open Text Directory...` not respecting the actual filepath if set by `Set Text File Path...`.
+- Fixed issue where the file lists were not updated when using the internal function "jump_to_image()".
+- Fixed an issue where the `alt text path` could be set to `.` when declining to reload the last directory.
+- Fixed a bug where the window height would enlarge slightly when dragging the window from by the displayed image.
+- Fixed the following tools not respecting the `Loading Order > Descending` setting, causing them to jump to the wrong index.
+  - `Image Grid`, `Upscale Image`, `Resize Image`
+- Potential fix for the `Stats > PPI` calculation returning "0.00".
+- if `clean-text` is enabled: The primary text box is now properly refreshed when saving.
 
 
 <br>
 
 
-  - Project Changes:
-    - `Upscale`, `Batch Upscale`: v1.05:
-      - FIXED: Prevent the app from hanging while upscaling a GIF.
-      - Batch Upscale: Added a label to display the number of images upscaled and the total number of images.
-      - Batch Upscale: Added a timer and ETA label to show the total time taken and the estimated time remaining.
-      - Batch Upscale: Entry path ToolTips are now updated when the path is changed.
-      - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
-    - `Batch Resize`: v1.07:
-      - NEW: A timer is now displayed in the bottom row.
-      - FIXED: The following resize modes not working/causing an error: `Longer Side`, and `Height`
-      - FIXED: The resize operation is now threaded, allowing the app to remain responsive during the resizing process.
-    - `TkToolTip`: v1.06:
-      - NEW: `justify` parameter: Configure text justification in the tooltip. (Default is "center")
-      - NEW: `wraplength` parameter: Configure the maximum line width for text wrapping. (Default is 0, which disables wrapping)
-      - NEW: `fade_in` and `fade_out` parameters: Configure fade-in and fade-out times. (Default is 75ms)
-      - NEW: `origin` parameter: Configure the origin point of the tooltip. (Default is "mouse")
-      - FIXED: Issue where the underlying widget would be impossible to interact with after hiding the tooltip.
-      - CHANGE: Now uses `TkDefaultFont` instead of Tahoma as the default font for the tooltip text.
-    - `PopUpZoom`v1.02:
-      - New: `Rounded Corners` The popup now supports rounded corners. (Default: 30px)
-    - `Batch Crop`(v1.03), `Resize Images`(v1.02), `Image Grid`(v1.04):
-      - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
+### Other changes:
+- Using `Open Current Directory...` will now automatically select the current image in the file explorer. #30
+  - The `Open` button will also select the current image if the path being opened is the same as the image path.
+- The Image info (the stats displayed above the image) is now cached for quicker access.
+- `Zip Dataset...` Now only zips images and text files in the selected directory, omitting subfolders.
+- The `Options`, and `Tools` menus have been reorganized.
+- The color mode is now displayed in the image info panel.
+- You can now close the `Crop Image` window with the `Escape` key.
+- I have switched to Windows 11, so that's now the target operating system for this project. You may notice some UI changes.
+  - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
+
+
+<br>
+
+
+### Project Changes:
+- `Upscale`, `Batch Upscale`: v1.05:
+  - FIXED: Prevent the app from hanging while upscaling a GIF.
+  - Batch Upscale: Added a label to display the number of images upscaled and the total number of images.
+  - Batch Upscale: Added a timer and ETA label to show the total time taken and the estimated time remaining.
+  - Batch Upscale: Entry path ToolTips are now updated when the path is changed.
+  - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
+- `TkToolTip`: v1.06:
+  - NEW: `justify` parameter: Configure text justification in the tooltip. (Default is "center")
+  - NEW: `wraplength` parameter: Configure the maximum line width for text wrapping. (Default is 0, which disables wrapping)
+  - NEW: `fade_in` and `fade_out` parameters: Configure fade-in and fade-out times. (Default is 75ms)
+  - NEW: `origin` parameter: Configure the origin point of the tooltip. (Default is "mouse")
+  - FIXED: Issue where the underlying widget would be impossible to interact with after hiding the tooltip.
+  - CHANGE: Now uses `TkDefaultFont` instead of Tahoma as the default font for the tooltip text.
+  - CHANGE: The default background color is now "#ffffee", less yellow and more "off-white".
+- `PopUpZoom`v1.02:
+  - New: `Rounded Corners` The popup now supports rounded corners. (Default: 30px)
+- `Batch Crop`(v1.03), `Resize Images`(v1.02), `Image Grid`(v1.04):
+  - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
 
 
 </details>
