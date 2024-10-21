@@ -163,7 +163,7 @@ For a more detailed feature guide, please visit the repo [✨Wiki](https://githu
 ### Python Package Setup
 ![Static Badge](https://img.shields.io/badge/git-gray) ![Static Badge](https://img.shields.io/badge/Windows-Python_3.10%2B-green)
 
-1. Download the app package from the [releases page](https://github.com/Nenotriple/img-txt_viewer/releases?q=package&expanded=true).
+1. Download the source code package from the latest [releases page](https://github.com/Nenotriple/img-txt_viewer/releases?q=executable&expanded=true).
 2. Run the `Start.bat` file to automatically create and activate a virtual environment, then launch the app.
 3. `Start.bat` can be used to launch the app in the future.
 
