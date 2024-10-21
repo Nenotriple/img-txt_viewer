@@ -1,12 +1,8 @@
 """
-
 ########################################
-#                                      #
 #          Batch Resize Images         #
-#                                      #
-#   Version : v1.06                    #
+#   Version : v1.08                    #
 #   Author  : github.com/Nenotriple    #
-#                                      #
 ########################################
 
 Description:
@@ -22,21 +18,23 @@ Resize conditions: Upscale and Downscale, Upscale Only, Downscale Only
 #region -  Imports
 
 
+# Standard Library
 import os
-import sys
-import ctypes
+import time
 import argparse
-import tkinter as tk
-from tkinter import ttk, Toplevel, filedialog, messagebox, TclError
-from tkinter.scrolledtext import ScrolledText
-from PIL.PngImagePlugin import PngInfo
-from PIL import Image
-
+import threading
 import subprocess
 
 
-myappid = 'ImgTxtViewer.Nenotriple'
-ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+# Standard Library - GUI
+import tkinter as tk
+from tkinter import ttk, Toplevel, filedialog, messagebox
+from tkinter.scrolledtext import ScrolledText
+
+
+# Third-Party Libraries
+from PIL import Image, PngImagePlugin
+from TkToolTip.TkToolTip import TkToolTip as ToolTip
 
 
 #endregion
@@ -108,19 +106,20 @@ class AboutWindow(Toplevel):
 #region - CLASS: ResizeImages
 
 
-class ResizeImages(tk.Frame):
-    def __init__(self, master=None, folder_path=None):
-        super().__init__(master)
-        self.master = master
-        self.pack(fill="both", expand=True)
-        self.folder_path = folder_path
+class BatchResizeImages:
+    def __init__(self, parent, root, version, menu, path=None):
+        self.parent = parent
+        self.root = root
+        self.version = version
+        self.menu = menu
+        self.working_dir = path
 
         self.about_window = None
         self.files_processed = 0
 
         self.supported_filetypes = (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff")
 
-        self.setup_ui()
+        self.setup_window()
 
 
 #endregion
@@ -128,67 +127,98 @@ class ResizeImages(tk.Frame):
 #region -  Interface
 
 
-    def setup_ui(self):
-        self.frame_main = tk.Frame(self)
-        self.frame_main.pack(fill="both")
+    def setup_window(self):
+        self.root.minsize(750, 250) # Width x Height
+        self.root.title(f"{self.version} - img-txt Viewer - Batch Resize Images")
+        self.menu.entryconfig("Batch Resize Images...", command=self.close_batch_resize_images)
+        self.setup_ui()
 
-        self.create_top_row()
+
+    def setup_ui(self):
+        self.setup_primary_frame()
+        self.setup_top_row()
+        self.create_directory_row()
         self.create_control_row()
         self.create_bottom_row()
+        self.additional_setup()
 
-        self.resize_mode_var.trace_add('write', self.update_entries)
+    def setup_primary_frame(self):
+        self.parent.hide_primary_paned_window()
+        self.batch_resize_images_frame = tk.Frame(self.root)
+        self.batch_resize_images_frame.grid(row=0, column=0, sticky="nsew", padx=40)
+        self.batch_resize_images_frame.grid_rowconfigure(1, weight=1)
+        self.batch_resize_images_frame.grid_columnconfigure(1, weight=1)
 
 
-    def create_top_row(self):
-        self.frame_top_row = tk.Frame(self.frame_main)
-        self.frame_top_row.pack(fill="both")
+    def setup_top_row(self):
+        self.top_frame = tk.Frame(self.batch_resize_images_frame)
+        self.top_frame.pack(fill="x", padx=2, pady=2)
 
-        self.entry_directory = tk.Entry(self.frame_top_row)
-        self.entry_directory.insert(0, os.path.normpath(self.folder_path) if self.folder_path else "...")
+        self.close_button = ttk.Button(self.top_frame, text="<---Close", width=15, command=self.close_batch_resize_images)
+        self.close_button.pack(side="left", fill="x", padx=2, pady=2)
+
+        self.info_label = tk.Label(self.top_frame, anchor="w", text="Select a directory...")
+        self.info_label.pack(side="left", fill="x", padx=2, pady=2)
+
+        self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.toggle_about_window)
+        self.help_button.pack(side="right", fill="x", padx=2, pady=2)
+        ToolTip.create(self.help_button, "Show/Hide Help", 50, 6, 12)
+
+
+    def create_directory_row(self):
+        self.frame_top_row = tk.Frame(self.batch_resize_images_frame)
+        self.frame_top_row.pack(fill="both", padx=2, pady=(5, 0))
+
+        self.entry_directory = ttk.Entry(self.frame_top_row)
+        self.entry_directory.insert(0, os.path.normpath(self.working_dir) if self.working_dir else "...")
         self.entry_directory.pack(side="left", fill="x", expand=True, padx=2, pady=2)
         self.entry_directory.bind("<Return>", lambda event: self.select_folder(self.entry_directory.get()))
         self.entry_directory.bind("<Button-1>", lambda event: self.entry_directory.delete(0, "end") if self.entry_directory.get() == "..." else None)
 
-        self.select_button = tk.Button(self.frame_top_row, width=8, overrelief="groove", text="Browse...", command=self.select_folder)
+        self.select_button = ttk.Button(self.frame_top_row, width=8, text="Browse...", command=self.select_folder)
         self.select_button.pack(side="left", padx=2, pady=2)
 
-        self.open_button = tk.Button(self.frame_top_row, width=8, overrelief="groove", text="Open", command=self.open_folder)
+        self.open_button = ttk.Button(self.frame_top_row, width=8, text="Open", command=self.open_folder)
         self.open_button.pack(side="left", padx=2, pady=2)
 
 
     def create_control_row(self):
-        self.frame_control_row = tk.Frame(self.frame_main, borderwidth=2, relief="groove")
+        self.frame_control_row = tk.Frame(self.batch_resize_images_frame, borderwidth=2)
         self.frame_control_row.pack(side="top", fill="x", padx=2, pady=2)
 
 
-        ##### Checkbuttons
+# --------------------------------------
+# Checkbuttons
+# --------------------------------------
         self.frame_checkbuttons = tk.Frame(self.frame_control_row)
         self.frame_checkbuttons.pack(side="bottom", fill="x", padx=2, pady=2)
 
         separator = ttk.Separator(self.frame_checkbuttons, orient="horizontal")
         separator.pack(fill="x", padx=2, pady=2)
 
-            # Use output folder
+        # Use output folder
         self.use_output_folder_var = tk.IntVar(value=1)
-        self.use_output_folder_checkbutton = tk.Checkbutton(self.frame_checkbuttons, overrelief="groove", text="Use Output Folder", variable=self.use_output_folder_var)
+        self.use_output_folder_checkbutton = ttk.Checkbutton(self.frame_checkbuttons, text="Use Output Folder", variable=self.use_output_folder_var)
         self.use_output_folder_checkbutton.pack(side="left", fill="x", padx=2, pady=2)
 
-            # Overwrite files
+        # Overwrite files
         self.overwrite_files_var = tk.IntVar(value=0)
-        self.use_output_folder_checkbutton = tk.Checkbutton(self.frame_checkbuttons, overrelief="groove", text="Overwrite Output", variable=self.overwrite_files_var)
-        self.use_output_folder_checkbutton.pack(side="left", fill="x", padx=2, pady=2)
+        self.overwrite_files_checkbutton = ttk.Checkbutton(self.frame_checkbuttons, text="Overwrite Output", variable=self.overwrite_files_var)
+        self.overwrite_files_checkbutton.pack(side="left", fill="x", padx=2, pady=2)
 
-            # Save Chunk Info
+        # Save Chunk Info
         self.save_png_info_var = tk.BooleanVar(value=False)
-        self.save_png_info_checkbutton = tk.Checkbutton(self.frame_checkbuttons, overrelief="groove", text="Save PNG Info", variable=self.save_png_info_var)
+        self.save_png_info_checkbutton = ttk.Checkbutton(self.frame_checkbuttons, text="Save PNG Info", variable=self.save_png_info_var)
         self.save_png_info_checkbutton.pack(side="left", fill="x", padx=2, pady=2)
 
 
-        ##### Resize Settings
+# --------------------------------------
+# Resize Settings
+# --------------------------------------
         self.frame_resize_settings = tk.Frame(self.frame_control_row)
         self.frame_resize_settings.pack(side="left", anchor="center", expand=True, padx=2, pady=2)
 
-            # Resize Mode
+        # Resize Mode
         self.frame_resize_mode = tk.Frame(self.frame_resize_settings)
         self.frame_resize_mode.pack(side="top", anchor="w", padx=2, pady=2)
 
@@ -200,7 +230,7 @@ class ResizeImages(tk.Frame):
         self.resize_mode.set("Resolution")
         self.resize_mode.pack(side="left", padx=2, pady=2)
 
-            # Resize Condition
+        # Resize Condition
         self.frame_resize_condition = tk.Frame(self.frame_resize_settings)
         self.frame_resize_condition.pack(side="top", anchor="w", padx=2, pady=2)
 
@@ -212,7 +242,7 @@ class ResizeImages(tk.Frame):
         self.resize_condition.set("Upscale and Downscale")
         self.resize_condition.pack(side="left", padx=2, pady=2)
 
-            # Filetype
+        # Filetype
         self.frame_filetype = tk.Frame(self.frame_resize_settings)
         self.frame_filetype.pack(side="top", anchor="w", padx=2, pady=2)
 
@@ -226,81 +256,100 @@ class ResizeImages(tk.Frame):
         self.filetype_var.trace_add("write", self.update_quality_widgets)
 
 
-        ##### Sizes
+# --------------------------------------
+# Size/Quality Settings
+# --------------------------------------
         self.frame_sizes = tk.Frame(self.frame_control_row)
         self.frame_sizes.pack(side="left", anchor="center", expand=True, padx=2, pady=2)
 
-            # Width Frame
+        # Width Frame
         self.width_frame = tk.Frame(self.frame_sizes)
         self.width_frame.pack()
         self.width_label = tk.Label(self.width_frame, text="Width:", width=5)
         self.width_label.pack(side="left", padx=2, pady=2)
-        self.width_entry = tk.Entry(self.width_frame, width=20)
+        self.width_entry = ttk.Entry(self.width_frame, width=20)
         self.width_entry.pack(side="left", padx=2, pady=2)
 
-            # Height Frame
+        # Height Frame
         self.height_frame = tk.Frame(self.frame_sizes)
         self.height_frame.pack()
         self.height_label = tk.Label(self.height_frame, text="Height:", width=5)
         self.height_label.pack(side="left", padx=2, pady=2)
-        self.height_entry = tk.Entry(self.height_frame, width=20)
+        self.height_entry = ttk.Entry(self.height_frame, width=20)
         self.height_entry.pack(side="left", padx=2, pady=2)
 
-            # Quality Frame
+        # Quality Frame
         self.frame_quality = tk.Frame(self.frame_sizes)
         self.frame_quality.pack(fill="x")
         self.quality_label = tk.Label(self.frame_quality, text="Quality:", width=5)
         self.quality_label.pack(side="left", padx=2, pady=2)
         self.quality_var = tk.IntVar(value=100)
         self.original_quality = self.quality_var.get()
-        self.quality_scale = tk.Scale(self.frame_quality, length=1, showvalue=False, variable=self.quality_var, orient="horizontal", from_=20, to=100)
+        self.quality_scale = ttk.Scale(self.frame_quality, length=1, variable=self.quality_var, orient="horizontal", from_=20, to=100, command=lambda val: self.quality_var.set(int(float(val))))
         self.quality_scale.pack(side="left", fill="x", expand=True)
         self.quality_value_label = tk.Label(self.frame_quality, textvariable=self.quality_var, width=3)
         self.quality_value_label.pack(side="left", padx=2, pady=2)
 
 
     def create_bottom_row(self):
-        self.frame_bottom_row = tk.Frame(self.frame_main)
+        self.frame_bottom_row = tk.Frame(self.batch_resize_images_frame)
         self.frame_bottom_row.pack(side="bottom", fill="both", expand=True)
 
 
-        ##### Buttons
+# --------------------------------------
+# Resize/Cancel and Progress Bar
+# --------------------------------------
         self.frame_buttons = tk.Frame(self.frame_bottom_row)
         self.frame_buttons.pack(fill="x")
 
-            # Resize Button
-        self.button_resize = tk.Button(self.frame_buttons, overrelief="groove", text="Resize!", command=self.resize)
+        # Resize Button
+        self.button_resize = ttk.Button(self.frame_buttons, text="Resize!", command=self._resize)
         self.button_resize.pack(side="left", fill="x", expand=True, padx=2, pady=2)
 
-            # Cancel Button
-        self.button_cancel = tk.Button(self.frame_buttons, overrelief="groove", width=8, state="disabled", text="Cancel", command=lambda: setattr(self, 'stop', True))
+        # Cancel Button
+        self.button_cancel = ttk.Button(self.frame_buttons, width=8, state="disabled", text="Cancel", command=lambda: setattr(self, 'stop', True))
         self.button_cancel.pack(side="left", fill="x", padx=2, pady=2)
 
-
-        # Percent Bar
+        # Progress Bar
         self.percent_complete = tk.StringVar()
         self.percent_bar = ttk.Progressbar(self.frame_bottom_row, value=0)
         self.percent_bar.pack(fill="x", padx=2, pady=2)
 
 
-        #### Message row
-        self.frame_message_row = tk.Frame(self.frame_bottom_row)
-        self.frame_message_row.pack(side="top", fill="x")
-
-            # Message
-        self.label_message = tk.Label(self.frame_message_row, text="Select a directory...")
-        if self.folder_path:
-            self.update_message_text(filecount=True)
-        self.label_message.pack(side="left", padx=2)
-
-            # Help
-        self.button_help = tk.Button(self.frame_message_row, text="?", width=2, relief="groove", overrelief="raised", command=self.toggle_about_window)
-        self.button_help.pack(side="right", padx=2, pady=2)
-
-
 #endregion
 ################################################################################################################################################
-#region -  Misc
+#region -  UI Functions
+
+
+    def toggle_widgets(self, state):
+            if state == "disabled":
+                self.select_button.config(state=state)
+                #self.open_button.config(state=state)
+                self.entry_directory.config(state=state)
+                self.resize_mode.config(state=state)
+                self.resize_condition.config(state=state)
+                self.filetype.config(state=state)
+                self.width_entry.config(state=state)
+                self.height_entry.config(state=state)
+                self.quality_scale.config(state=state)
+                self.use_output_folder_checkbutton.config(state=state)
+                self.overwrite_files_checkbutton.config(state=state)
+                self.save_png_info_checkbutton.config(state=state)
+                self.button_resize.config(state=state)
+                self.button_help.config(state=state)
+            else:
+                self.select_button.config(state=state)
+                #self.open_button.config(state=state)
+                self.entry_directory.config(state=state)
+                self.resize_mode.config(state="readonly")
+                self.filetype.config(state="readonly")
+                self.update_entries()
+                self.update_quality_widgets()
+                self.use_output_folder_checkbutton.config(state=state)
+                self.overwrite_files_checkbutton.config(state=state)
+                self.save_png_info_checkbutton.config(state=state)
+                self.button_resize.config(state=state)
+                self.button_help.config(state=state)
 
 
     def update_quality_widgets(self, *args):
@@ -328,7 +377,6 @@ class ResizeImages(tk.Frame):
             self.resize_condition.config(state="readonly")
             self.width_label.config(text="Width:")
             self.height_label.config(text="Height:")
-
         elif mode == "Percentage":
             self.width_entry.config(state="normal")
             self.width_label.config(state="normal")
@@ -339,7 +387,6 @@ class ResizeImages(tk.Frame):
             self.resize_condition.config(state="disabled")
             self.width_label.config(text="%")
             self.height_label.config(text="-")
-
         elif mode in ["Width", "Shorter Side", "Longer Side"]:
             self.width_entry.config(state="normal")
             self.width_label.config(state="normal")
@@ -353,7 +400,6 @@ class ResizeImages(tk.Frame):
             else:
                 self.width_label.config(text="Size")
             self.height_label.config(text="-")
-
         elif mode in ["Height"]:
             self.width_entry.delete(0, 'end')
             self.width_entry.config(state="disabled")
@@ -368,10 +414,15 @@ class ResizeImages(tk.Frame):
 
     def update_message_text(self, filecount=None, text=None):
         if filecount:
-            count = sum(1 for file in os.listdir(self.folder_path) if file.endswith(self.supported_filetypes))
-            self.label_message.config(text=f"{count} {'Image' if count == 1 else 'Images'} Found")
+            count = sum(1 for file in os.listdir(self.working_dir) if file.endswith(self.supported_filetypes))
+            self.info_label.config(text=f"{count} {'Image' if count == 1 else 'Images'} Found")
         if text:
-            self.label_message.config(text=text)
+            self.info_label.config(text=text)
+
+
+#endregion
+################################################################################################################################################
+#region -  Misc
 
 
     def select_folder(self, path=None):
@@ -381,30 +432,46 @@ class ResizeImages(tk.Frame):
             else:
                 new_folder_path = filedialog.askdirectory()
             if new_folder_path:
-                self.folder_path = new_folder_path
+                self.working_dir = new_folder_path
                 self.entry_directory.delete(0, "end")
                 self.entry_directory.insert(0, new_folder_path)
                 self.update_message_text(filecount=True)
                 self.button_resize.config(state="normal")
+                self.percent_complete.set(0)
+                self.percent_bar['value'] = self.percent_complete.get()
         except FileNotFoundError:
             self.update_message_text(text="The system cannot find the path specified.")
 
 
     def open_folder(self):
         try:
-            os.startfile(self.folder_path)
+            os.startfile(self.working_dir)
         except FileNotFoundError:
             self.update_message_text(text="The system cannot find the path specified.")
 
 
     def get_output_folder_path(self):
         if self.use_output_folder_var.get() == 1:
-            output_folder_path = os.path.join(self.folder_path, "Resize Output")
+            output_folder_path = os.path.join(self.working_dir, "Resize Output")
             if not os.path.exists(output_folder_path):
                 os.makedirs(output_folder_path)
         else:
-            output_folder_path = self.folder_path
+            output_folder_path = self.working_dir
         return output_folder_path
+
+
+    def additional_setup(self):
+        self.resize_mode_var.trace_add('write', self.update_entries)
+        if self.working_dir:
+            self.update_message_text(filecount=True)
+
+
+    def close_batch_resize_images(self, event=None):
+        self.root.minsize(545, 200) # Width x Height
+        self.root.title(f"{self.version} - img-txt Viewer")
+        self.batch_resize_images_frame.grid_remove()
+        self.menu.entryconfig("Batch Resize Images...", command=self.parent.show_batch_resize_images)
+        self.parent.show_primary_paned_window()
 
 
 #endregion
@@ -412,26 +479,55 @@ class ResizeImages(tk.Frame):
 #region -  Resize
 
 
-    def resize_to_resolution(self, img, width, height):
+# --------------------------------------
+# Input Validation
+# --------------------------------------
+    def validate_dimensions(self, width, height):
         if width is None or height is None:
             messagebox.showinfo("Error", "Please enter a valid width and height.")
-            return
+            return False
         if not isinstance(width, int) or not isinstance(height, int):
             raise TypeError("Width and height must be integers.")
         if width <= 0 or height <= 0:
             raise ValueError("Width and height must be greater than 0.")
+        return True
+
+
+    def validate_dimension(self, dimension):
+        if dimension is None:
+            messagebox.showinfo("Error", "Please enter a valid size.")
+            return False
+        if not isinstance(dimension, int):
+            raise TypeError("Size must be an integer.")
+        if dimension <= 0:
+            raise ValueError("Size must be greater than 0.")
+        return True
+
+
+    def validate_percentage(self, percentage):
+        if percentage is None:
+            messagebox.showinfo("Error", "Please enter a valid percentage.")
+            return False
+        if not isinstance(percentage, (int, float)):
+            raise TypeError("Percentage must be a number.")
+        if percentage <= 0:
+            raise ValueError("Percentage must be greater than 0.")
+        return True
+
+
+# --------------------------------------
+# Resize Functions
+# --------------------------------------
+    def resize_to_resolution(self, img, width, height):
+        if not self.validate_dimensions(width, height):
+            return
         img = img.resize((width, height), Image.LANCZOS)
         return img
 
 
     def resize_to_percentage(self, img, percentage):
-        if percentage is None:
-            messagebox.showinfo("Error", "Please enter a valid percentage")
+        if not self.validate_percentage(percentage):
             return
-        if not isinstance(percentage, (int, float)):
-            raise TypeError("Percentage must be a number.")
-        if percentage <= 0:
-            raise ValueError("Percentage must be greater than 0.")
         width = int(img.size[0] * percentage)
         height = int(img.size[1] * percentage)
         img = img.resize((width, height), Image.LANCZOS)
@@ -439,71 +535,54 @@ class ResizeImages(tk.Frame):
 
 
     def resize_to_width(self, img, width):
-        if width is None:
-            messagebox.showinfo("Error", "Please enter a valid width")
+        if not self.validate_dimension(width):
             return
-        if not isinstance(width, int):
-            raise TypeError("Width must be an integer.")
-        if width <= 0:
-            raise ValueError("Width must be greater than 0.")
-        wpercent = (width/float(img.size[0]))
-        hsize = int((float(img.size[1])*float(wpercent)))
+        wpercent = (width / float(img.size[0]))
+        hsize = int((float(img.size[1]) * float(wpercent)))
         img = img.resize((width, hsize), Image.LANCZOS)
         return img
 
 
     def resize_to_height(self, img, height):
-        if height is None:
-            messagebox.showinfo("Error", "Please enter a valid height")
+        if not self.validate_dimension(height):
             return
-        if not isinstance(height, int):
-            raise TypeError("Height must be an integer.")
-        if height <= 0:
-            raise ValueError("Height must be greater than 0.")
-        hpercent = (height/float(img.size[1]))
-        wsize = int((float(img.size[0])*float(hpercent)))
+        hpercent = (height / float(img.size[1]))
+        wsize = int((float(img.size[0]) * float(hpercent)))
         img = img.resize((wsize, height), Image.LANCZOS)
         return img
 
 
-    def resize_to_shorter_side(self, img, width):
-        if width is None:
-            messagebox.showinfo("Error", "Please enter a valid size")
+    def resize_to_shorter_side(self, img, size):
+        if not self.validate_dimension(size):
             return
-        if not isinstance(width, int):
-            raise TypeError("Size must be an integer.")
-        if width <= 0:
-            raise ValueError("Size must be greater than 0.")
         if img.size[0] < img.size[1]:
-            wpercent = (width/float(img.size[0]))
-            hsize = int((float(img.size[1])*float(wpercent)))
-            img = img.resize((width, hsize), Image.LANCZOS)
+            wpercent = (size / float(img.size[0]))
+            hsize = int((float(img.size[1]) * float(wpercent)))
+            img = img.resize((size, hsize), Image.LANCZOS)
         else:
-            hpercent = (width/float(img.size[1]))
-            wsize = int((float(img.size[0])*float(hpercent)))
-            img = img.resize((wsize, width), Image.LANCZOS)
+            hpercent = (size / float(img.size[1]))
+            wsize = int((float(img.size[0]) * float(hpercent)))
+            img = img.resize((wsize, size), Image.LANCZOS)
         return img
 
 
-    def resize_to_longer_side(self, img, width):
-        if width is None:
-            messagebox.showinfo("Error", "Please enter a valid size")
+    def resize_to_longer_side(self, img, size):
+        if not self.validate_dimension(size):
             return
-        if not isinstance(width, int):
-            raise TypeError("Size must be an integer.")
-        if width <= 0:
-            raise ValueError("Size must be greater than 0.")
         if img.size[0] > img.size[1]:
-            wpercent = (width/float(img.size[0]))
-            hsize = int((float(img.size[1])*float(wpercent)))
-            img = img.resize((width, hsize), Image.LANCZOS)
+            wpercent = (size / float(img.size[0]))
+            hsize = int((float(img.size[1]) * float(wpercent)))
+            img = img.resize((size, hsize), Image.LANCZOS)
         else:
-            hpercent = (width/float(img.size[1]))
-            wsize = int((float(img.size[0])*float(hpercent)))
-            img = img.resize((wsize, width), Image.LANCZOS)
+            hpercent = (size / float(img.size[1]))
+            wsize = int((float(img.size[0]) * float(hpercent)))
+            img = img.resize((wsize, size), Image.LANCZOS)
         return img
 
 
+# --------------------------------------
+# Resize Conditions
+# --------------------------------------
     def should_resize(self, original_size, new_size):
         if original_size == new_size:
             return False
@@ -544,7 +623,7 @@ class ResizeImages(tk.Frame):
         elif resize_mode == "Longer Side":
             new_size = (height, height)
             if self.should_resize(original_size, new_size):
-                img = self.resize_to_longer_side(img, height)
+                img = self.resize_to_longer_side(img, width)
         return img
 
 
@@ -561,34 +640,51 @@ class ResizeImages(tk.Frame):
         height_entry = self.height_entry.get()
         width = int(width_entry) if width_entry else None
         height = int(height_entry) if height_entry else None
-        if (resize_mode == "Resolution" and (width is None or height is None)) or \
-           (resize_mode in ["Percentage", "Width", "Height", "Shorter Side", "Longer Side"] and width is None):
-            return
+        if resize_mode == "Resolution" and (width is None or height is None):
+            messagebox.showinfo("Error", "Please enter a valid width and height.")
+            return None
+        elif resize_mode == "Percentage" and width is None:
+            messagebox.showinfo("Error", "Please enter a valid percentage.")
+            return None
+        elif resize_mode in ["Width", "Shorter Side", "Longer Side"] and width is None:
+            messagebox.showinfo("Error", "Please enter a valid width.")
+            return None
+        elif resize_mode == "Height" and height is None:
+            messagebox.showinfo("Error", "Please enter a valid height.")
+            return None
         return resize_mode, width, height
 
 
-    def resize(self):
+# --------------------------------------
+# Primary Resize process
+# --------------------------------------
+    def _resize(self):
+        thread = threading.Thread(target=self.resize_thread)
+        thread.start()
+
+    def resize_thread(self):
         self.percent_complete.set(0)
         self.stop = False
         self.files_processed = 0
-        if self.folder_path is not None:
+        start_time = time.time()
+        if self.working_dir is not None:
             if not self.stop:
+                self.toggle_widgets(state="disabled")
                 self.button_cancel.config(state="normal")
-                self.button_resize.config(state="disabled")
             try:
                 resize_mode, width, height = self.get_entry_values()
-                image_files = [file for file in os.listdir(self.folder_path) if file.endswith(self.supported_filetypes)]
+                image_files = [file for file in os.listdir(self.working_dir) if file.endswith(self.supported_filetypes)]
                 total_images = len(image_files)
                 output_folder_path = self.get_output_folder_path()
                 confirm_message = self.get_resize_confirmation(output_folder_path)
                 if messagebox.askokcancel("Confirmation", confirm_message):
-                    self.master.focus_force()
+                    self.root.focus_force()
                     for image_index, filename in enumerate(image_files):
                         if self.stop:
                             self.button_cancel.config(state="disabled")
                             break
                         try:
-                            img = Image.open(os.path.join(self.folder_path, filename))
+                            img = Image.open(os.path.join(self.working_dir, filename))
                             if img is None:
                                 return
                             img = img.convert('RGB')
@@ -596,20 +692,29 @@ class ResizeImages(tk.Frame):
                             if img is None:
                                 return
                             dest_image_path = self.save_image(img, output_folder_path, filename, total_images)
-                            src_image_path = os.path.join(self.folder_path, filename)
+                            src_image_path = os.path.join(self.working_dir, filename)
                             self.handle_metadata(filename, src_image_path, dest_image_path)
                             self.percent_complete.set((image_index + 1) / total_images * 100)
                             self.percent_bar['value'] = self.percent_complete.get()
                             self.percent_bar.update()
+                            elapsed_time = time.time() - start_time
+                            eta = (elapsed_time / (image_index + 1)) * (total_images - (image_index + 1))
+                            elapsed_time_str = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
+                            eta_str = time.strftime('%H:%M:%S', time.gmtime(eta))
+                            self.update_message_text(text=f"Processed: {self.files_processed} of {total_images} images | Elapsed Time: {elapsed_time_str} | ETA: {eta_str}")
+                            if self.files_processed >= total_images:
+                                self.files_processed = 0
+                                self.update_message_text(text=f"Done processing: {total_images} images | Elapsed Time: {elapsed_time_str}")
                         except Exception as e:
                             print(f"Error processing file {filename}: {str(e)}")
                     if not self.stop:
                         messagebox.showinfo("Done!", "Resizing finished.")
-                        self.master.focus_force()
+                        self.root.focus_force()
             except Exception as e:
                 print(f"Error in resize function: {str(e)}")
             finally:
                 self.button_resize.config(state="normal")
+                self.toggle_widgets(state="normal")
 
 
     def save_image(self, img, output_folder_path, filename, total_images):
@@ -627,10 +732,6 @@ class ResizeImages(tk.Frame):
                 filename_with_new_extension = f"{base_filename}_{counter}.{filetype}"
                 counter += 1
         img.save(os.path.join(output_folder_path, filename_with_new_extension), quality=self.quality_var.get(), optimize=True)
-        self.update_message_text(text=f"Processed: {self.files_processed} of {total_images} images")
-        if self.files_processed >= total_images:
-            self.files_processed = 0
-            self.update_message_text(text="Done!")
         return os.path.join(output_folder_path, filename_with_new_extension)
 
 
@@ -650,12 +751,14 @@ class ResizeImages(tk.Frame):
                 self.copy_webp_metadata(src_image_path, output_image_path)
 
 
-    # PNG
+# --------------------------------------
+# PNG
+# --------------------------------------
     def read_png_metadata(self, src_image_path):
         src_image = Image.open(src_image_path)
         metadata = src_image.info
         metadata_text = ""
-        pnginfo = PngInfo()
+        pnginfo = PngImagePlugin.PngInfo()
         for key in metadata:
             if isinstance(metadata[key], bytes):
                 value = metadata[key].decode('utf-8')
@@ -698,7 +801,9 @@ class ResizeImages(tk.Frame):
                                     "\n\nThe resize operation will now stop.")
 
 
-    # WEBP
+# --------------------------------------
+# WEBP
+# --------------------------------------
     def read_webp_metadata(self, src_image_path):
         process = subprocess.run(["exiftool.exe", '-UserComment', '-b', src_image_path], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
         user_comment = process.stdout.strip()
@@ -741,11 +846,11 @@ class ResizeImages(tk.Frame):
 
 
     def open_about_window(self):
-        self.about_window = AboutWindow(self.master)
+        self.about_window = AboutWindow(self.root)
         self.about_window.protocol("WM_DELETE_WINDOW", self.close_about_window)
-        main_window_width = root.winfo_width()
-        main_window_x = root.winfo_x() - 200 + main_window_width // 2
-        main_window_y = root.winfo_y() + 30
+        main_window_width = self.root.winfo_width()
+        main_window_x = self.root.winfo_x() - 200 + main_window_width // 2
+        main_window_y = self.root.winfo_y() + 30
         self.about_window.geometry("+{}+{}".format(main_window_x, main_window_y))
 
 
@@ -756,69 +861,15 @@ class ResizeImages(tk.Frame):
 
 #endregion
 ################################################################################################################################################
-#region -  Framework
-
-
-def check_path():
-    parser = argparse.ArgumentParser(description='Resize Images Resize_Image')
-    parser.add_argument('--path', type=str, help='Path to the folder')
-    args = parser.parse_args()
-    if args.path and os.path.exists(args.path):
-        path = args.path
-    else:
-        path = None
-    return path
-
-
-def setup_root():
-    root = tk.Tk()
-    root.title("v1.06 - Batch Resize Images --- github.com/Nenotriple")
-    root.geometry("480x250")
-    root.resizable(False, False)
-    root.update_idletasks()
-    set_icon(root)
-    return root
-
-
-def set_icon(root):
-    if getattr(sys, 'frozen', False):
-        application_path = sys._MEIPASS
-    elif __file__:
-        application_path = os.path.dirname(__file__)
-    icon_path = os.path.join(application_path, "icon.ico")
-    try:
-        root.iconbitmap(icon_path)
-    except TclError:
-        pass
-
-
-def center_window(root):
-    x = (root.winfo_screenwidth() - root.winfo_width()) // 2
-    y = (root.winfo_screenheight() - root.winfo_height()) // 2
-    root.geometry(f"+{x}+{y}")
-
-
-if __name__ == "__main__":
-    root = setup_root()
-    path = check_path()
-    center_window(root)
-    ResizeImages(root, path)
-    root.mainloop()
-
-
-#endregion
-################################################################################################################################################
 #region - Changelog
 
 
 '''
 
-[v1.06 changes:](https://github.com/Nenotriple/batch_resize_images/releases/tag/v1.06)
+[v1.08 changes:](https://github.com/Nenotriple/batch_resize_images/releases/tag/v1.08)
 
   - New:
-      - Metadata can now be copied between PNG and WEBP images.
-        - Copying metadata from PNG-to-WEBP and WEBP-to-PNG requires `ExifTool.exe` to be in the same folder as `batch_resize_images.exe`.
-        - ExifTool (2003-2024) is created by Phil Harvey and can be downloaded from https://exiftool.org/
+      -
 
 <br>
 
@@ -828,8 +879,7 @@ if __name__ == "__main__":
 <br>
 
   - Other changes:
-    - Clicking on the directory entry when it's displaying the default `...` will now clear the entry.
-    - Minor UI tweaks.
+    - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
 
 
 '''
@@ -842,7 +892,7 @@ if __name__ == "__main__":
 '''
 
 - Todo
-  -
+  - Needs improved error handling when entering an incorrect input.
 
 - Tofix
   -
