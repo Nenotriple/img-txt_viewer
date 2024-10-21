@@ -20,9 +20,7 @@ Resize conditions: Upscale and Downscale, Upscale Only, Downscale Only
 
 # Standard Library
 import os
-import sys
 import time
-import ctypes
 import argparse
 import threading
 import subprocess
@@ -30,18 +28,13 @@ import subprocess
 
 # Standard Library - GUI
 import tkinter as tk
-from tkinter import ttk, Toplevel, filedialog, messagebox, TclError
+from tkinter import ttk, Toplevel, filedialog, messagebox
 from tkinter.scrolledtext import ScrolledText
 
 
 # Third-Party Libraries
-from PIL.PngImagePlugin import PngInfo
-from PIL import Image
-
-
-# Inherit the same App ID as the main script
-myappid = 'ImgTxtViewer.Nenotriple'
-ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+from PIL import Image, PngImagePlugin
+from TkToolTip.TkToolTip import TkToolTip as ToolTip
 
 
 #endregion
@@ -113,19 +106,20 @@ class AboutWindow(Toplevel):
 #region - CLASS: ResizeImages
 
 
-class ResizeImages(tk.Frame):
-    def __init__(self, master=None, folder_path=None):
-        super().__init__(master)
-        self.master = master
-        self.pack(fill="both", expand=True)
-        self.folder_path = folder_path
+class BatchResizeImages:
+    def __init__(self, parent, root, version, menu, path=None):
+        self.parent = parent
+        self.root = root
+        self.version = version
+        self.menu = menu
+        self.working_dir = path
 
         self.about_window = None
         self.files_processed = 0
 
         self.supported_filetypes = (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff")
 
-        self.setup_ui()
+        self.setup_window()
 
 
 #endregion
@@ -133,23 +127,50 @@ class ResizeImages(tk.Frame):
 #region -  Interface
 
 
-    def setup_ui(self):
-        self.frame_main = tk.Frame(self)
-        self.frame_main.pack(fill="both")
+    def setup_window(self):
+        self.root.minsize(750, 250) # Width x Height
+        self.root.title(f"{self.version} - img-txt Viewer - Batch Resize Images")
+        self.menu.entryconfig("Batch Resize Images...", command=self.close_batch_resize_images)
+        self.setup_ui()
 
-        self.create_top_row()
+
+    def setup_ui(self):
+        self.setup_primary_frame()
+        self.setup_top_row()
+        self.create_directory_row()
         self.create_control_row()
         self.create_bottom_row()
+        self.additional_setup()
 
-        self.resize_mode_var.trace_add('write', self.update_entries)
+    def setup_primary_frame(self):
+        self.parent.hide_primary_paned_window()
+        self.batch_resize_images_frame = tk.Frame(self.root)
+        self.batch_resize_images_frame.grid(row=0, column=0, sticky="nsew", padx=40)
+        self.batch_resize_images_frame.grid_rowconfigure(1, weight=1)
+        self.batch_resize_images_frame.grid_columnconfigure(1, weight=1)
 
 
-    def create_top_row(self):
-        self.frame_top_row = tk.Frame(self.frame_main)
+    def setup_top_row(self):
+        self.top_frame = tk.Frame(self.batch_resize_images_frame)
+        self.top_frame.pack(fill="x", padx=2, pady=2)
+
+        self.close_button = ttk.Button(self.top_frame, text="<---Close", width=15, command=self.close_batch_resize_images)
+        self.close_button.pack(side="left", fill="x", padx=2, pady=2)
+
+        self.info_label = tk.Label(self.top_frame, anchor="w", text="Select a directory...")
+        self.info_label.pack(side="left", fill="x", padx=2, pady=2)
+
+        self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.toggle_about_window)
+        self.help_button.pack(side="right", fill="x", padx=2, pady=2)
+        ToolTip.create(self.help_button, "Show/Hide Help", 50, 6, 12)
+
+
+    def create_directory_row(self):
+        self.frame_top_row = tk.Frame(self.batch_resize_images_frame)
         self.frame_top_row.pack(fill="both", padx=2, pady=(5, 0))
 
         self.entry_directory = ttk.Entry(self.frame_top_row)
-        self.entry_directory.insert(0, os.path.normpath(self.folder_path) if self.folder_path else "...")
+        self.entry_directory.insert(0, os.path.normpath(self.working_dir) if self.working_dir else "...")
         self.entry_directory.pack(side="left", fill="x", expand=True, padx=2, pady=2)
         self.entry_directory.bind("<Return>", lambda event: self.select_folder(self.entry_directory.get()))
         self.entry_directory.bind("<Button-1>", lambda event: self.entry_directory.delete(0, "end") if self.entry_directory.get() == "..." else None)
@@ -162,7 +183,7 @@ class ResizeImages(tk.Frame):
 
 
     def create_control_row(self):
-        self.frame_control_row = tk.Frame(self.frame_main, borderwidth=2)
+        self.frame_control_row = tk.Frame(self.batch_resize_images_frame, borderwidth=2)
         self.frame_control_row.pack(side="top", fill="x", padx=2, pady=2)
 
 
@@ -264,18 +285,19 @@ class ResizeImages(tk.Frame):
         self.quality_label.pack(side="left", padx=2, pady=2)
         self.quality_var = tk.IntVar(value=100)
         self.original_quality = self.quality_var.get()
-        self.quality_scale = tk.Scale(self.frame_quality, length=1, showvalue=False, variable=self.quality_var, orient="horizontal", from_=20, to=100)
+        self.quality_scale = ttk.Scale(self.frame_quality, length=1, variable=self.quality_var, orient="horizontal", from_=20, to=100, command=lambda val: self.quality_var.set(int(float(val))))
         self.quality_scale.pack(side="left", fill="x", expand=True)
         self.quality_value_label = tk.Label(self.frame_quality, textvariable=self.quality_var, width=3)
         self.quality_value_label.pack(side="left", padx=2, pady=2)
 
 
     def create_bottom_row(self):
-        self.frame_bottom_row = tk.Frame(self.frame_main)
+        self.frame_bottom_row = tk.Frame(self.batch_resize_images_frame)
         self.frame_bottom_row.pack(side="bottom", fill="both", expand=True)
 
+
 # --------------------------------------
-# Resize/Cancel Buttons
+# Resize/Cancel and Progress Bar
 # --------------------------------------
         self.frame_buttons = tk.Frame(self.frame_bottom_row)
         self.frame_buttons.pack(fill="x")
@@ -288,24 +310,10 @@ class ResizeImages(tk.Frame):
         self.button_cancel = ttk.Button(self.frame_buttons, width=8, state="disabled", text="Cancel", command=lambda: setattr(self, 'stop', True))
         self.button_cancel.pack(side="left", fill="x", padx=2, pady=2)
 
-# --------------------------------------
-# Progress and Message row
-# --------------------------------------
+        # Progress Bar
         self.percent_complete = tk.StringVar()
         self.percent_bar = ttk.Progressbar(self.frame_bottom_row, value=0)
         self.percent_bar.pack(fill="x", padx=2, pady=2)
-
-        # Message row
-        self.frame_message_row = tk.Frame(self.frame_bottom_row)
-        self.frame_message_row.pack(side="top", fill="x")
-        self.label_message = tk.Label(self.frame_message_row, text="Select a directory...")
-        if self.folder_path:
-            self.update_message_text(filecount=True)
-        self.label_message.pack(side="left", padx=2)
-
-        # Help
-        self.button_help = ttk.Button(self.frame_message_row, text="?", width=2, command=self.toggle_about_window)
-        self.button_help.pack(side="right", padx=2, pady=2)
 
 
 #endregion
@@ -406,10 +414,10 @@ class ResizeImages(tk.Frame):
 
     def update_message_text(self, filecount=None, text=None):
         if filecount:
-            count = sum(1 for file in os.listdir(self.folder_path) if file.endswith(self.supported_filetypes))
-            self.label_message.config(text=f"{count} {'Image' if count == 1 else 'Images'} Found")
+            count = sum(1 for file in os.listdir(self.working_dir) if file.endswith(self.supported_filetypes))
+            self.info_label.config(text=f"{count} {'Image' if count == 1 else 'Images'} Found")
         if text:
-            self.label_message.config(text=text)
+            self.info_label.config(text=text)
 
 
 #endregion
@@ -424,7 +432,7 @@ class ResizeImages(tk.Frame):
             else:
                 new_folder_path = filedialog.askdirectory()
             if new_folder_path:
-                self.folder_path = new_folder_path
+                self.working_dir = new_folder_path
                 self.entry_directory.delete(0, "end")
                 self.entry_directory.insert(0, new_folder_path)
                 self.update_message_text(filecount=True)
@@ -437,19 +445,33 @@ class ResizeImages(tk.Frame):
 
     def open_folder(self):
         try:
-            os.startfile(self.folder_path)
+            os.startfile(self.working_dir)
         except FileNotFoundError:
             self.update_message_text(text="The system cannot find the path specified.")
 
 
     def get_output_folder_path(self):
         if self.use_output_folder_var.get() == 1:
-            output_folder_path = os.path.join(self.folder_path, "Resize Output")
+            output_folder_path = os.path.join(self.working_dir, "Resize Output")
             if not os.path.exists(output_folder_path):
                 os.makedirs(output_folder_path)
         else:
-            output_folder_path = self.folder_path
+            output_folder_path = self.working_dir
         return output_folder_path
+
+
+    def additional_setup(self):
+        self.resize_mode_var.trace_add('write', self.update_entries)
+        if self.working_dir:
+            self.update_message_text(filecount=True)
+
+
+    def close_batch_resize_images(self, event=None):
+        self.root.minsize(545, 200) # Width x Height
+        self.root.title(f"{self.version} - img-txt Viewer")
+        self.batch_resize_images_frame.grid_remove()
+        self.menu.entryconfig("Batch Resize Images...", command=self.parent.show_batch_resize_images)
+        self.parent.show_primary_paned_window()
 
 
 #endregion
@@ -645,24 +667,24 @@ class ResizeImages(tk.Frame):
         self.stop = False
         self.files_processed = 0
         start_time = time.time()
-        if self.folder_path is not None:
+        if self.working_dir is not None:
             if not self.stop:
                 self.toggle_widgets(state="disabled")
                 self.button_cancel.config(state="normal")
             try:
                 resize_mode, width, height = self.get_entry_values()
-                image_files = [file for file in os.listdir(self.folder_path) if file.endswith(self.supported_filetypes)]
+                image_files = [file for file in os.listdir(self.working_dir) if file.endswith(self.supported_filetypes)]
                 total_images = len(image_files)
                 output_folder_path = self.get_output_folder_path()
                 confirm_message = self.get_resize_confirmation(output_folder_path)
                 if messagebox.askokcancel("Confirmation", confirm_message):
-                    self.master.focus_force()
+                    self.root.focus_force()
                     for image_index, filename in enumerate(image_files):
                         if self.stop:
                             self.button_cancel.config(state="disabled")
                             break
                         try:
-                            img = Image.open(os.path.join(self.folder_path, filename))
+                            img = Image.open(os.path.join(self.working_dir, filename))
                             if img is None:
                                 return
                             img = img.convert('RGB')
@@ -670,7 +692,7 @@ class ResizeImages(tk.Frame):
                             if img is None:
                                 return
                             dest_image_path = self.save_image(img, output_folder_path, filename, total_images)
-                            src_image_path = os.path.join(self.folder_path, filename)
+                            src_image_path = os.path.join(self.working_dir, filename)
                             self.handle_metadata(filename, src_image_path, dest_image_path)
                             self.percent_complete.set((image_index + 1) / total_images * 100)
                             self.percent_bar['value'] = self.percent_complete.get()
@@ -687,7 +709,7 @@ class ResizeImages(tk.Frame):
                             print(f"Error processing file {filename}: {str(e)}")
                     if not self.stop:
                         messagebox.showinfo("Done!", "Resizing finished.")
-                        self.master.focus_force()
+                        self.root.focus_force()
             except Exception as e:
                 print(f"Error in resize function: {str(e)}")
             finally:
@@ -736,7 +758,7 @@ class ResizeImages(tk.Frame):
         src_image = Image.open(src_image_path)
         metadata = src_image.info
         metadata_text = ""
-        pnginfo = PngInfo()
+        pnginfo = PngImagePlugin.PngInfo()
         for key in metadata:
             if isinstance(metadata[key], bytes):
                 value = metadata[key].decode('utf-8')
@@ -824,72 +846,17 @@ class ResizeImages(tk.Frame):
 
 
     def open_about_window(self):
-        self.about_window = AboutWindow(self.master)
+        self.about_window = AboutWindow(self.root)
         self.about_window.protocol("WM_DELETE_WINDOW", self.close_about_window)
-        main_window_width = root.winfo_width()
-        main_window_x = root.winfo_x() - 200 + main_window_width // 2
-        main_window_y = root.winfo_y() + 30
+        main_window_width = self.root.winfo_width()
+        main_window_x = self.root.winfo_x() - 200 + main_window_width // 2
+        main_window_y = self.root.winfo_y() + 30
         self.about_window.geometry("+{}+{}".format(main_window_x, main_window_y))
 
 
     def close_about_window(self):
         self.about_window.destroy()
         self.about_window = None
-
-
-#endregion
-################################################################################################################################################
-#region -  Framework
-
-
-def check_path():
-    parser = argparse.ArgumentParser(description='Resize Images Resize_Image')
-    parser.add_argument('--path', type=str, help='Path to the folder')
-    args = parser.parse_args()
-    if args.path and os.path.exists(args.path):
-        path = args.path
-    else:
-        path = None
-    return path
-
-
-def setup_root():
-    root = tk.Tk()
-    root.title("v1.08 - Batch Resize Images")
-    root.geometry("480x255")
-    root.resizable(False, False)
-    root.update_idletasks()
-    set_icon(root)
-    return root
-
-
-def set_icon(root):
-    if getattr(sys, 'frozen', False):
-        application_path = sys._MEIPASS
-    elif __file__:
-        application_path = os.path.dirname(__file__)
-    icon_path = os.path.join(application_path, "icon.ico")
-    try:
-        root.iconbitmap(icon_path)
-    except TclError:
-        pass
-
-
-def center_window(root):
-    x = (root.winfo_screenwidth() - root.winfo_width()) // 2
-    y = (root.winfo_screenheight() - root.winfo_height()) // 2
-    root.geometry(f"+{x}+{y}")
-
-
-# --------------------------------------
-# Mainloop
-# --------------------------------------
-if __name__ == "__main__":
-    root = setup_root()
-    path = check_path()
-    center_window(root)
-    ResizeImages(root, path)
-    root.mainloop()
 
 
 #endregion

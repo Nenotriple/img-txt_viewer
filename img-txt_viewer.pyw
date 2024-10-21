@@ -64,7 +64,8 @@ from main.scripts import (crop_image,
                           batch_crop_images,
                           resize_image,
                           image_grid,
-                          batch_tag_edit
+                          batch_tag_edit,
+                          batch_resize_images
                           )
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
 from main.bin import upscale_image
@@ -569,7 +570,7 @@ class ImgTxtViewer:
         self.batch_operations_menu = Menu(self.toolsMenu, tearoff=0)
         self.toolsMenu.add_cascade(label="Batch Operations", underline=0, state="disable", menu=self.batch_operations_menu)
         self.batch_operations_menu.add_command(label="Batch Rename And/Or Convert...", underline=3, command=self.rename_and_convert_pairs)
-        self.batch_operations_menu.add_command(label="Batch Resize Images...", underline=10, command=self.batch_resize_images)
+        self.batch_operations_menu.add_command(label="Batch Resize Images...", underline=10, command=self.show_batch_resize_images)
         self.batch_operations_menu.add_command(label="Batch Crop Images...", underline=8, command=self.batch_crop_images)
         self.batch_operations_menu.add_command(label="Batch Tag Edit...", underline=0, accelerator="F5", command=self.show_batch_tag_edit)
         self.batch_operations_menu.add_command(label="Batch Upscale...", underline=0, command=lambda: self.upscale_image(batch=True))
@@ -1623,7 +1624,21 @@ class ImgTxtViewer:
 
 
     def show_batch_tag_edit(self, event=None):
-        batch_tag_edit.BatchTagEdit(self, self.master, self.text_files, self.batch_operations_menu, VERSION)
+        parent = self
+        root = self.master
+        version = VERSION
+        menu = self.batch_operations_menu
+        text_files = self.text_files
+        batch_tag_edit.BatchTagEdit(parent, root, version, menu, text_files)
+
+
+    def show_batch_resize_images(self, event=None):
+        parent = self
+        root = self.master
+        version = VERSION
+        menu = self.batch_operations_menu
+        path = self.image_dir.get()
+        batch_resize_images.BatchResizeImages(parent, root, version, menu, path)
 
 
     def show_primary_paned_window(self, event=None):
