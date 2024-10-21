@@ -1538,7 +1538,7 @@ class ImgTxtViewer:
 
     def toggle_save_button_height(self, event=None, reset=None):
         if reset:
-            self.big_save_button_var.set(False)
+            self.big_save_button_var.set(True)
             self.save_button.config(padding=(1, 1))
             return
         else:
@@ -1795,13 +1795,13 @@ class ImgTxtViewer:
         ToolTip.create(self.cumulative_edit_checkbutton, "If enabled, all edits will be done cumulatively; otherwise, only the selected option will be used.", 25, 6, 12, wraplength=200)
 
         # Revert Button
-        self.edit_revert_image_button = ttk.Button(self.edit_image_panel, text="Revert", width=6, command=self.revert_image_edit)
+        self.edit_revert_image_button = ttk.Button(self.edit_image_panel, text="Revert", width=7, command=self.revert_image_edit)
         self.edit_revert_image_button.grid(row=0, column=4, pady=5, sticky="ew")
         self.edit_revert_image_button.bind("<Button-3>", self._reset_edit)
         ToolTip.create(self.edit_revert_image_button, "Cancel changes and refresh the displayed image.\nRight-Click to reset the edit panel.", 500, 6, 12)
 
         # Save Button
-        self.edit_save_image_button = ttk.Button(self.edit_image_panel, text="Save", width=6, command=self.save_image_edit)
+        self.edit_save_image_button = ttk.Button(self.edit_image_panel, text="Save", width=7, command=self.save_image_edit)
         self.edit_save_image_button.grid(row=0, column=5, padx=(0,5), pady=5, sticky="ew")
         ToolTip.create(self.edit_save_image_button, "Save the current changes.\nOptionally overwrite the current image.", 500, 6, 12)
 
