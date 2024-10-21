@@ -437,7 +437,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Menubar
+#region - Menubar
 
 
 # --------------------------------------
@@ -615,7 +615,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Buttons, Labels, and more
+#region - Buttons, Labels, and more
 
 
         # Configure the grid weights for the master window frame
@@ -797,7 +797,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Text Box setup
+#region - Text Box setup
 
 
     def create_text_pane(self):
@@ -1357,7 +1357,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Additional Interface Setup
+#region - Additional Interface Setup
 
 
 ####### Browse button context menu ##################################################
@@ -1620,7 +1620,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Alt-UI Setup
+#region - Alt-UI Setup
 
 
     def show_batch_tag_edit(self, event=None):
@@ -1651,7 +1651,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Thumbnail Panel
+#region - Thumbnail Panel
 
 
     def debounce_update_thumbnail_panel(self, event):
@@ -1749,7 +1749,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Edit Panel
+#region - Edit Panel
 
 
     def toggle_edit_panel(self):
@@ -2186,7 +2186,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Autocomplete
+#region - Autocomplete
 
 
 ### Display Suggestions ##################################################
@@ -2389,7 +2389,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   TextBox Highlights
+#region - TextBox Highlights
 
 
     def highlight_duplicates(self, event, mouse=True):
@@ -2488,7 +2488,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Primary Functions
+#region - Primary Functions
 
 
     def load_pairs(self):
@@ -2725,7 +2725,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Navigation
+#region - Navigation
 
 
     def update_pair(self, direction=None, save=True, step=1):
@@ -2822,7 +2822,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Text Options
+#region - Text Options
 
 
     def refresh_text_box(self):
@@ -2861,7 +2861,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Text Tools
+#region - Text Tools
 
 
     def search_and_replace(self):
@@ -3114,7 +3114,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Image Tools
+#region - Image Tools
 
 
     def expand_image(self):
@@ -3304,15 +3304,6 @@ class ImgTxtViewer:
         self.update_pair("next")
 
 
-    def batch_resize_images(self):
-        self.check_working_directory()
-        if os.path.isfile('./main/bin/batch_resize_images.py'):
-            command = f'python ./main/bin/batch_resize_images.py --path "{self.image_dir.get()}"'
-        else:
-            command = f'./batch_resize_images.exe --path "{self.image_dir.get()}"'
-        subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW)
-
-
     def find_duplicate_files(self):
         self.check_working_directory()
         if os.path.isfile('./main/bin/find_dupe_file.py'):
@@ -3374,7 +3365,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Misc Functions
+#region - Misc Functions
 
 
     def change_message_label(self, event=None):
@@ -3441,7 +3432,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Calculate File Stats
+#region - Calculate File Stats
 
 
     def calculate_file_stats(self, manual_refresh=None):
@@ -3704,7 +3695,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Window drag setup
+#region - Window drag setup
 
 
     def start_drag(self, event):
@@ -3731,7 +3722,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   About Window
+#region - About Window
 
 
     def toggle_about_window(self):
@@ -3759,7 +3750,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Text Cleanup
+#region - Text Cleanup
 
 
     def cleanup_all_text_files(self, show_confirmation=True):
@@ -3819,7 +3810,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   User Setup
+#region - User Setup
 
 
     def prompt_first_time_setup(self):
@@ -3899,7 +3890,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Save/Read/Reset Settings
+#region - Save/Read/Reset Settings
 
 
 # --------------------------------------
@@ -4179,7 +4170,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Save and close
+#region - Save and close
 
 
     def save_text_file(self):
@@ -4249,7 +4240,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Custom Dictionary
+#region - Custom Dictionary
 
 
     def refresh_custom_dictionary(self):
@@ -4302,7 +4293,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   File Management
+#region - File Management
 
 
     def natural_sort(self, string):
@@ -4740,7 +4731,7 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region -   Framework
+#region - Framework
 
 
     def set_appid(self):
@@ -4930,6 +4921,9 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
 
 - Tofix
+
+  - (High) Ensure only a single alternate-UI tool can be open at a time.
+    - Currently it's possible to have BTE, and BIR open at once.
 
   - (High) Batch Tag Edit: Switching to BTE before selecting a directory and then switching back breaks the app.
     - Currently BTE only works with the selected directory, so it would be easy to simply prevent BTE from being used without a directory selected.
