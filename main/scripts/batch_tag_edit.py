@@ -45,10 +45,10 @@ from main.scripts import TagEditor
 
 
 class BatchTagEdit:
-    def __init__(self, parent, root, text_files, menu, VERSION):
+    def __init__(self, parent, root, VERSION, menu, text_files):
         self.version = VERSION
         self.parent = parent
-        self.master = root
+        self.root = root
         self.text_files = text_files
         self.menu = menu
         self.batch_tag_edit_frame = None
@@ -68,11 +68,11 @@ class BatchTagEdit:
 #region - Setup - UI
 
     def setup_window(self):
-        self.master.minsize(750, 250) # Width x Height
-        self.master.title(f"{self.version} - img-txt Viewer - Batch Tag Edit")
+        self.root.minsize(750, 250) # Width x Height
+        self.root.title(f"{self.version} - img-txt Viewer - Batch Tag Edit")
         tag_dict = self.analyze_tags()
         self.tag_counts, self.total_unique_tags = self.count_file_tags(tag_dict)
-        self.master.bind('<F5>', self.close_batch_tag_edit)
+        self.root.bind('<F5>', self.close_batch_tag_edit)
         self.menu.entryconfig("Batch Tag Edit...", command=self.close_batch_tag_edit)
         self.original_tags = []
         self.create_ui()
@@ -89,7 +89,7 @@ class BatchTagEdit:
 
     def setup_primary_frame(self):
         self.parent.hide_primary_paned_window()
-        self.batch_tag_edit_frame = Frame(self.master)
+        self.batch_tag_edit_frame = Frame(self.root)
         self.batch_tag_edit_frame.grid(row=0, column=0, sticky="nsew")
         self.batch_tag_edit_frame.grid_rowconfigure(1, weight=1)
         self.batch_tag_edit_frame.grid_columnconfigure(1, weight=1)
@@ -457,12 +457,12 @@ class BatchTagEdit:
 
     def copy_listbox_selection(self, event=None):
         selected_tags = [self.listbox.get(i).split(", ", 1)[1].strip() for i in self.listbox.curselection()]
-        self.master.clipboard_clear()
-        self.master.clipboard_append(", ".join(selected_tags))
+        self.root.clipboard_clear()
+        self.root.clipboard_append(", ".join(selected_tags))
 
 
     def context_menu_edit_tag(self):
-        edit_string = simpledialog.askstring("Edit Tag", "Enter new tag:", parent=self.master)
+        edit_string = simpledialog.askstring("Edit Tag", "Enter new tag:", parent=self.root)
         if edit_string is not None:
             self.apply_commands_to_listbox(edit=edit_string)
 
@@ -517,7 +517,7 @@ class BatchTagEdit:
         listbox = event.widget
         if not listbox.curselection():
             return
-        context_menu = Menu(self.master, tearoff=0)
+        context_menu = Menu(self.root, tearoff=0)
         context_menu.add_command(label="Delete", command=lambda: self.apply_commands_to_listbox(delete=True))
         context_menu.add_command(label="Replace...", command=self.context_menu_edit_tag)
         context_menu.add_command(label="Copy", command=self.copy_listbox_selection)
@@ -534,7 +534,7 @@ class BatchTagEdit:
     def show_entry_context_menu(self, event):
         widget = event.widget
         if isinstance(widget, ttk.Entry):
-            context_menu = Menu(self.master, tearoff=0)
+            context_menu = Menu(self.root, tearoff=0)
             try:
                 widget.selection_get()
                 has_selection = True
@@ -565,10 +565,10 @@ class BatchTagEdit:
 
 
     def close_batch_tag_edit(self, event=None):
-        self.master.minsize(545, 200) # Width x Height
-        self.master.title(f"{self.version} - img-txt Viewer")
+        self.root.minsize(545, 200) # Width x Height
+        self.root.title(f"{self.version} - img-txt Viewer")
         self.batch_tag_edit_frame.grid_remove()
-        self.master.bind('<F5>', self.parent.show_batch_tag_edit)
+        self.root.bind('<F5>', self.parent.show_batch_tag_edit)
         self.menu.entryconfig("Batch Tag Edit...", command=self.parent.show_batch_tag_edit)
         self.parent.show_primary_paned_window()
         self.parent.refresh_text_box()
