@@ -607,7 +607,7 @@ class ImgTxtViewer:
         self.toolsMenu.add_command(label="Open Current Directory...", underline=13, command=self.open_image_directory)
         self.toolsMenu.add_command(label="Open Current Image...", underline=13, command=self.open_image)
         self.toolsMenu.add_command(label="Edit Image...", underline=6, accelerator="F4", command=self.open_image_in_editor)
-        self.toolsMenu.add_command(label="Open With...", underline=5, command=self.open_with_dialog) # Not working in Windows 11
+        #self.toolsMenu.add_command(label="Open With...", underline=5, command=self.open_with_dialog) # Not working with paths that contain spaces
         self.toolsMenu.add_separator()
         self.toolsMenu.add_command(label="Next Empty Text File", accelerator="Ctrl+E", command=self.index_goto_next_empty)
         self.toolsMenu.add_command(label="Open Image-Grid...", accelerator="F2", underline=11, command=self.open_image_grid)
@@ -1221,7 +1221,7 @@ class ImgTxtViewer:
         self.imageContext_menu.add_command(label="Open Current Image...", command=self.open_image)
         self.imageContext_menu.add_command(label="Open Image-Grid...", accelerator="F2", command=self.open_image_grid)
         self.imageContext_menu.add_command(label="Edit Image...", accelerator="F4", command=self.open_image_in_editor)
-        self.imageContext_menu.add_command(label="Open With...", command=self.open_with_dialog) # Not working in Windows 11
+        #self.imageContext_menu.add_command(label="Open With...", command=self.open_with_dialog) # Not working with paths that contain spaces
         self.imageContext_menu.add_separator()
         # File
         self.imageContext_menu.add_command(label="Duplicate img-txt pair", command=self.duplicate_pair)
@@ -3338,19 +3338,19 @@ class ImgTxtViewer:
             messagebox.showerror("Error", f"An error occurred while opening the image in the editor:\n\n{e}")
 
 
-    def open_with_dialog(self): # Not working with paths that include spaces. Adding quotes doesn't help.
-        try:
-            if self.image_files:
-                image_path = self.image_files[self.current_index]
-                subprocess.run(['rundll32', 'shell32.dll,OpenAs_RunDLL', image_path])
-        except PermissionError as e:
-            messagebox.showerror("Error", f"Permission denied: {e}")
-        except Exception as e:
-            messagebox.showerror("Error", f"An error occurred while opening the file:\n\n{e}")
+#    def open_with_dialog(self): # Not working with paths that contain spaces
+#        try:
+#            if self.image_files:
+#                image_path = self.image_files[self.current_index]
+#                subprocess.run(['rundll32', 'shell32.dll,OpenAs_RunDLL', image_path])
+#        except PermissionError as e:
+#            messagebox.showerror("Error", f"Permission denied: {e}")
+#        except Exception as e:
+#            messagebox.showerror("Error", f"An error occurred while opening the file:\n\n{e}")
 
 
     def set_external_image_editor_path(self):
-        response = messagebox.askyesnocancel("Set External Image Editor", f"Current external image editor is set to:\n\n{self.external_image_editor_path}\n\nDo you want to change it?\n\nPress 'Cancel' to reset to default (MS Paint).")
+        response = messagebox.askyesnocancel("Set External Image Editor", f"Current external image editor is set to:\n\n{self.external_image_editor_path}\n\nDo you want to change it? (Yes/No)\n\nPress (Cancel) to reset to default (MS Paint).")
         if response is None:  # Cancel, reset
             self.external_image_editor_path = "mspaint"
             messagebox.showinfo("Reset", "External image editor path has been reset to mspaint.")
