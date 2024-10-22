@@ -21,7 +21,6 @@ Resize conditions: Upscale and Downscale, Upscale Only, Downscale Only
 # Standard Library
 import os
 import time
-import argparse
 import threading
 import subprocess
 

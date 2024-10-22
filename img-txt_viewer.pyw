@@ -45,7 +45,7 @@ from tkinter.scrolledtext import ScrolledText
 from tkinter import (ttk, Tk, Toplevel, messagebox, filedialog, simpledialog,
                      StringVar, BooleanVar, IntVar,
                      Frame, PanedWindow, Menu,
-                     Label, Text, Listbox, Scrollbar,
+                     Label, Text,
                      Event, TclError
                      )
 
@@ -65,7 +65,8 @@ from main.scripts import (crop_image,
                           resize_image,
                           image_grid,
                           batch_tag_edit,
-                          batch_resize_images
+                          batch_resize_images,
+                          find_dupe_file
                           )
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
 from main.bin import upscale_image
@@ -576,7 +577,7 @@ class ImgTxtViewer:
         self.batch_operations_menu.add_command(label="Batch Upscale...", underline=0, command=lambda: self.upscale_image(batch=True))
         self.batch_operations_menu.add_separator()
         self.batch_operations_menu.add_command(label="Zip Dataset...", underline=0, command=self.archive_dataset)
-        self.batch_operations_menu.add_command(label="Find Duplicate Files...", underline=0, command=self.find_duplicate_files)
+        self.batch_operations_menu.add_command(label="Find Duplicate Files...", underline=0, command=self.show_find_dupe_file)
         self.batch_operations_menu.add_command(label="Cleanup All Text Files...", underline=1, command=self.cleanup_all_text_files)
         self.batch_operations_menu.add_command(label="Create Blank Text Pairs...", underline=0, command=self.create_blank_text_files)
         self.batch_operations_menu.add_command(label="Create Wildcard From Captions...", underline=0, command=self.collate_captions)
@@ -1639,6 +1640,15 @@ class ImgTxtViewer:
         menu = self.batch_operations_menu
         path = self.image_dir.get()
         batch_resize_images.BatchResizeImages(parent, root, version, menu, path)
+
+
+    def show_find_dupe_file(self, event=None):
+        parent = self
+        root = self.master
+        version = VERSION
+        menu = self.batch_operations_menu
+        path = self.image_dir.get()
+        find_dupe_file.FindDupeFile(parent, root, version, menu, path)
 
 
     def show_primary_paned_window(self, event=None):
@@ -3304,15 +3314,6 @@ class ImgTxtViewer:
         self.update_pair("next")
 
 
-    def find_duplicate_files(self):
-        self.check_working_directory()
-        if os.path.isfile('./main/bin/find_dupe_file.py'):
-            command = f'python ./main/bin/find_dupe_file.py --path "{self.image_dir.get()}"'
-        else:
-            command = f'./find_dupe_file.exe --path "{self.image_dir.get()}"'
-        subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW)
-
-
     def open_image_grid(self, event=None):
         if not self.image_files:
             return
@@ -4816,6 +4817,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - NEW: A timer is now displayed in the bottom row.
   - FIXED: The following resize modes not working/causing an error: `Longer Side`, and `Height`
   - FIXED: The resize operation is now threaded, allowing the app to remain responsive during the resizing process.
+- `Find Duplicate Files`: No longer a standalone tool, the tool has been integrated into the main app.
 - New feature `Thumbnail Panel`: Displayed below the current image for quick navigation.
 - New feature `Edit Image Panel`: Enabled from the options/image menu, this section allows you to edit the `Brightness`, `Contrast`, `Saturation`, `Sharpness`, `Highlights`, and `Shadows` of the current image.
 - New feature `Edit Image...`: Open the current image in an external editor, the default is MS Paint.
@@ -4915,6 +4917,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
     - Custom script/executable launcher.
 
   - (Low) Perhaps the Menubar should include another option for the "rich" tools like Batch Tag Edit, and any new tools that use the full window.
+    - It should be a notebook style menu with tabs for each tool.
 
   - (Very Low) Create a `Danbooru (safe)` autocomplete dictionary. (I have no idea how to effectively filter the naughty words.)
   - (Very Low) Refactor UI to utilize CustomTkinter.

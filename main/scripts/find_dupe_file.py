@@ -1,7 +1,7 @@
 """
 ########################################
 #           Find Dupe files            #
-#   Version : v1.01                    #
+#   Version : v1.02                    #
 #   Author  : github.com/Nenotriple    #
 ########################################
 
@@ -20,16 +20,13 @@ Scan a folder for duplicate images and/or all files by comparing their MD5 or SH
 
 # Standard Library
 import os
-import sys
 import shutil
-import ctypes
 import hashlib
-import argparse
 import threading
 
 
 # Standard Library - GUI
-from tkinter import (Tk, ttk, messagebox, simpledialog, filedialog,
+from tkinter import (ttk, messagebox, simpledialog, filedialog,
                      StringVar, BooleanVar,
                      Menu, Text,
                      TclError
@@ -37,8 +34,7 @@ from tkinter import (Tk, ttk, messagebox, simpledialog, filedialog,
 
 
 # Custom Libraries
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from scripts.TkToolTip import TkToolTip as ToolTip
+from TkToolTip.TkToolTip import TkToolTip as ToolTip
 
 
 #endregion
@@ -46,17 +42,13 @@ from scripts.TkToolTip import TkToolTip as ToolTip
 #region -  Duplicate Image Finder - Main class setup
 
 
-class DuplicateFinder:
-    def __init__(self, master, path=None):
-        self.master = master
-        self.set_appid()
-        root.title("Duplicate File Finder")
-        self.create_window()
-        self.set_icon()
-        self.folder_path = ""
-
-
-        self.master.protocol("WM_DELETE_WINDOW", self.on_close)
+class FindDupeFile:
+    def __init__(self, parent, root, version, menu, path=None):
+        self.parent = parent
+        self.root = root
+        self.version = version
+        self.menu = menu
+        self.working_dir = path
 
         self.is_closing = False
         self.duplicates_count = 0
@@ -66,23 +58,21 @@ class DuplicateFinder:
         self.scanned_files = None
         self.startup = True
 
-
         self.filetypes_to_scan = ['All']
 
         self.process_stopped = BooleanVar(value=True)
         self.process_stopped.trace_add('write', self.toggle_widgets)
-
 
         self.process_mode = StringVar(value="md5")
         self.dupe_handling_mode = StringVar(value="Single")
         self.scanning_mode = StringVar(value="Images")
         self.recursive_mode = BooleanVar(value=False)
 
-
-        self.create_menubar(master)
-        self.create_widgets(master)
+        self.setup_window()
 
         self.all_widgets = [
+                             self.file_menu_button,
+                             self.options_menu_button,
                              self.folder_entry,
                              self.browse_button,
                              #self.open_button,
@@ -106,17 +96,52 @@ class DuplicateFinder:
 
 #endregion
 ################################################################################################################################################
-#region -  Menubar
+#region -  Interface
 
 
-    def create_menubar(self, master):
-        # Create a Menu Bar
-        self.menubar = Menu(master)
-        self.master.config(menu=self.menubar)
+    def setup_window(self):
+        self.root.minsize(750, 250) # Width x Height
+        self.root.title(f"{self.version} - img-txt Viewer - Find Duplicate Files")
+        self.menu.entryconfig("Find Duplicate Files...", command=self.close_find_dupe_files)
+        self.setup_ui()
 
+
+    def setup_ui(self):
+        self.setup_primary_frame()
+        self.setup_top_row()
+        self.create_widgets()
+
+
+    def setup_primary_frame(self):
+        self.parent.hide_primary_paned_window()
+        self.find_dupe_files_frame = ttk.Frame(self.root)
+        self.find_dupe_files_frame.grid(row=0, column=0, sticky="nsew", padx=40, pady=(0,20))
+        self.find_dupe_files_frame.grid_rowconfigure(1, weight=1)
+        self.find_dupe_files_frame.grid_columnconfigure(1, weight=1)
+
+
+# --------------------------------------
+# Top Row / Menubar
+# --------------------------------------
+    def setup_top_row(self):
+        self.top_frame = ttk.Frame(self.find_dupe_files_frame)
+        self.top_frame.pack(fill="x", padx=2, pady=2)
+
+        self.close_button = ttk.Button(self.top_frame, text="<---Close", width=15, command=self.close_find_dupe_files)
+        self.close_button.pack(side="left", fill="x", padx=2, pady=2)
+
+        self.create_menubar()
+
+        self.help_button = ttk.Button(self.top_frame, text="?", width=2)
+        self.help_button.pack(side="right", fill="x", padx=2, pady=2)
+        ToolTip.create(self.help_button, "Show/Hide Help", 50, 6, 12)
+
+
+    def create_menubar(self):
         # File Menu
-        self.file_menu = Menu(self.menubar, tearoff=0)
-        self.menubar.add_cascade(label="File", menu=self.file_menu)
+        self.file_menu_button = ttk.Menubutton(self.top_frame, text="File")
+        self.file_menu = Menu(self.file_menu_button, tearoff=0)
+        self.file_menu_button.config(menu=self.file_menu)
         self.file_menu.add_command(label="Select Folder...", command=self.select_folder)
         self.file_menu.add_command(label="Open Folder...", command=self.open_folder)
         self.file_menu.add_separator()
@@ -124,10 +149,13 @@ class DuplicateFinder:
         self.file_menu.add_command(label="Move All Duplicates Upfront", command=self.move_all_duplicates_to_root)
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Delete All Duplicates", command=self.delete_all_duplicates)
+        self.file_menu_button.pack(side="left")
 
         # Options Menu
-        self.options_menu = Menu(self.menubar, tearoff=0)
-        self.menubar.add_cascade(label="Options", menu=self.options_menu)
+        self.options_menu_button = ttk.Menubutton(self.top_frame, text="Options")
+        self.options_menu = Menu(self.options_menu_button, tearoff=0)
+        self.options_menu_button.config(menu=self.options_menu)
+        self.options_menu_button.pack(side="left")
 
         # Process Mode Menu
         self.process_mode_menu = Menu(self.options_menu, tearoff=0)
@@ -157,14 +185,12 @@ class DuplicateFinder:
         self.duplication_handling_menu.add_radiobutton(label="Both", variable=self.dupe_handling_mode, value="Both")
 
 
-#endregion
-################################################################################################################################################
-#region -  Widgets
-
-
-    def create_widgets(self, master):
+# --------------------------------------
+# General Widgets
+# --------------------------------------
+    def create_widgets(self):
         # Frame - Widget Frame
-        self.widget_frame = ttk.Frame(master)
+        self.widget_frame = ttk.Frame(self.find_dupe_files_frame)
         self.widget_frame.pack(side="top", fill="both", padx=4, pady=4)
 
 
@@ -236,34 +262,33 @@ class DuplicateFinder:
 
 
         # Label - Tray - Status
-        self.tray_label_status = ttk.Label(self.master, width=15, relief="groove", text=" Idle...")
+        self.tray_label_status = ttk.Label(self.find_dupe_files_frame, width=15, relief="groove", text=" Idle...")
         ToolTip.create(self.tray_label_status, "App status.", delay=150, padx=6, pady=6)
         self.tray_label_status.pack(side="left", padx=2, ipadx=2, ipady=2)
 
         # Label - Tray - Total Duplicates
-        self.tray_label_duplicates = ttk.Label(self.master, width=15, relief="groove", text="Duplicates: 00000")
+        self.tray_label_duplicates = ttk.Label(self.find_dupe_files_frame, width=15, relief="groove", text="Duplicates: 00000")
         ToolTip.create(self.tray_label_duplicates, "Total number of duplicate files across all scanned folders.", delay=150, padx=6, pady=6)
         self.tray_label_duplicates.pack(side="left", padx=2, ipadx=2, ipady=2)
 
         # Label - Tray - Total Images Checked
-        self.tray_label_total_files = ttk.Label(self.master, width=19, relief="groove", text="Files Checked: 000000")
+        self.tray_label_total_files = ttk.Label(self.find_dupe_files_frame, width=19, relief="groove", text="Files Checked: 000000")
         ToolTip.create(self.tray_label_total_files, "Total number of files checked across all scanned folders.", delay=150, padx=6, pady=6)
         self.tray_label_total_files.pack(side="left", padx=2, ipadx=2, ipady=2)
 
         # Progressbar
-        self.progress = ttk.Progressbar(self.master, length=100, mode='determinate')
+        self.progress = ttk.Progressbar(self.find_dupe_files_frame, length=100, mode='determinate')
         ToolTip.create(self.progress, "Progressbar.", delay=150, padx=6, pady=6)
         self.progress.pack(side="left", fill="x", padx=2, expand=True)
 
 
-#endregion
-################################################################################################################################################
-#region -  Textlog
-
-
+# --------------------------------------
+# Textlog
+# --------------------------------------
     def create_textlog(self):
-        separator = ttk.Separator(self.master);separator.pack(fill="x")
-        text_frame = ttk.Frame(self.master)
+        separator = ttk.Separator(self.find_dupe_files_frame)
+        separator.pack(fill="x")
+        text_frame = ttk.Frame(self.find_dupe_files_frame)
         text_frame.pack(side="top", expand="yes", fill="both", padx="2", pady="2")
         vscrollbar = ttk.Scrollbar(text_frame, orient="vertical")
         hscrollbar = ttk.Scrollbar(text_frame, orient="horizontal")
@@ -275,6 +300,11 @@ class DuplicateFinder:
         hscrollbar.config(command=self.textlog.xview)
         text_frame.grid_columnconfigure(0, weight=1)
         text_frame.grid_rowconfigure(0, weight=1)
+
+
+#endregion
+################################################################################################################################################
+#region -  Textlog Helpers
 
 
     def insert_to_textlog(self, text):
@@ -368,7 +398,7 @@ class DuplicateFinder:
                 else:
                     hash_dict[file_hash] = file_path
                 self.progress['value'] = i
-                self.master.update()
+                self.root.update()
             except Exception as e:
                 self.insert_to_textlog(f"\nERROR - find_duplicates: Exception: {e}")
         self.update_total_duplicates()
@@ -421,16 +451,6 @@ class DuplicateFinder:
         except IOError:
             self.insert_to_textlog(f"\nERROR - get_file_hash: Cannot open file at {file_path}")
             return None
-
-
-    def update_total_images(self):
-        self.total_images_checked += len(self.scanned_files)
-        self.tray_label_total_files.config(text=f"Files Checked: {self.total_images_checked:06d}")
-
-
-    def update_total_duplicates(self):
-        self.total_duplicates += self.duplicates_count
-        self.tray_label_duplicates.config(text=f"Duplicates: {self.total_duplicates:05d}")
 
 
     def stop_process(self):
@@ -598,7 +618,7 @@ class DuplicateFinder:
     # Set filetypes to scan
     def open_filetypes_dialog(self):
         current_filetypes = ', '.join(self.filetypes_to_scan)
-        new_filetypes = simpledialog.askstring("Input", f"Current filetypes: {current_filetypes}\n\nEnter filetypes you want to scan. Unlisted filetypes will be skipped.\n\nEnter: 'All' to return to default.\n\nExample: .jpg, .png, .txt", parent=self.master)
+        new_filetypes = simpledialog.askstring("Input", f"Current filetypes: {current_filetypes}\n\nEnter filetypes you want to scan. Unlisted filetypes will be skipped.\n\nEnter: 'All' to return to default.\n\nExample: .jpg, .png, .txt", parent=self.root)
         if new_filetypes is not None and new_filetypes.strip() != '':
             self.filetypes_to_scan = [ftype.strip() for ftype in new_filetypes.split(',')]
 
@@ -612,16 +632,16 @@ class DuplicateFinder:
         widgets_to_disable = self.all_widgets
         for widgets in widgets_to_disable:
             widgets.config(state="disabled")
-        for menu_item in ["File", "Options"]:
-            self.menubar.entryconfig(menu_item, state="disabled")
+        #for menu_item in ["File", "Options"]:
+        #    self.menubar.entryconfig(menu_item, state="disabled")
 
 
     def enable_all(self):
         widgets_to_disable = self.all_widgets
         for widgets in widgets_to_disable:
             widgets.config(state="normal")
-        for menu_item in ["File", "Options"]:
-            self.menubar.entryconfig(menu_item, state="normal")
+        #for menu_item in ["File", "Options"]:
+        #    self.menubar.entryconfig(menu_item, state="normal")
 
 
     def toggle_widgets(self, *args):
@@ -642,9 +662,9 @@ class DuplicateFinder:
             self.tray_label_duplicates.config(text="Duplicates: 00000")
             self.tray_label_total_files.config(text="Files Checked: 000000")
             self.progress['value'] = 0
-            self.folder_path = new_folder_path
+            self.working_dir = new_folder_path
             self.folder_entry.delete(0, 'end')
-            self.folder_entry.insert(0, self.folder_path)
+            self.folder_entry.insert(0, self.working_dir)
 
 
     def open_folder(self):
@@ -662,70 +682,41 @@ class DuplicateFinder:
             self.tray_label_status.config(text=" Closing...")
 
 
+    def update_total_images(self):
+        self.total_images_checked += len(self.scanned_files)
+        self.tray_label_total_files.config(text=f"Files Checked: {self.total_images_checked:06d}")
+
+
+    def update_total_duplicates(self):
+        self.total_duplicates += self.duplicates_count
+        self.tray_label_duplicates.config(text=f"Duplicates: {self.total_duplicates:05d}")
+
+
 #endregion
 ################################################################################################################################################
 #region -  Framework
 
 
-    def on_close(self):
+    def close_find_dupe_files(self):
         self.is_closing = True
         self.stop_process()
         self.status_check()
-        self.master.after(1000, self.master.destroy)
+        self.root.after(1000, self._close_find_dupe_files)
 
 
-    def set_icon(self):
-        if getattr(sys, 'frozen', False):
-            application_path = sys._MEIPASS
-        elif __file__:
-            application_path = os.path.dirname(__file__)
-        icon_path = os.path.join(application_path, "icon.ico")
-        try:
-            self.master.iconbitmap(icon_path)
-        except TclError: pass
-
-
-    def set_appid(self):
-        myappid = 'ImgTxtViewer.Nenotriple'
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-
-
-    def create_window(self):
-        window_width = 900
-        window_height = 600
-        root.geometry(f"{window_width}x{window_height}")
-        root.minsize(500,175)
-
-        # Set the position of the window to the center of the screen
-        screen_width = root.winfo_screenwidth()
-        screen_height = root.winfo_screenheight()
-        position_top = int(screen_height / 2 - window_height / 2)
-        position_right = int(screen_width / 2 - window_width / 2)
-        root.geometry(f"+{position_right}+{position_top}")
-
-
-def check_path():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--path", help="The path to the directory")
-    args = parser.parse_args()
-    if args.path and os.path.exists(args.path):
-        path = args.path
-    else:
-        path = None
-    return path
-
-
-root = Tk()
-path = check_path()
-app = DuplicateFinder(root, path)
-root.mainloop()
+    def _close_find_dupe_files(self):
+        self.root.minsize(545, 200) # Width x Height
+        self.root.title(f"{self.version} - img-txt Viewer")
+        self.find_dupe_files_frame.grid_remove()
+        self.menu.entryconfig("Find Duplicate Files...", command=self.parent.show_find_dupe_file)
+        self.parent.show_primary_paned_window()
 
 
 #endregion
 
 '''
 
-v1.01 changes:
+v1.02 changes:
 
   - New:
     -
@@ -739,7 +730,7 @@ v1.01 changes:
 <br>
 
   - Other changes:
-    -
+    - Refactored to be a built-in tool.
 
 <br>
 
