@@ -29,7 +29,6 @@ import threading
 from tkinter import (ttk, messagebox, simpledialog, filedialog,
                      StringVar, BooleanVar,
                      Menu, Text,
-                     TclError
                      )
 
 
@@ -43,12 +42,12 @@ from TkToolTip.TkToolTip import TkToolTip as ToolTip
 
 
 class FindDupeFile:
-    def __init__(self, parent, root, version, menu, path=None):
-        self.parent = parent
-        self.root = root
-        self.version = version
-        self.menu = menu
-        self.working_dir = path
+    def __init__(self):
+        self.parent = None
+        self.root = None
+        self.version = None
+        self.menu = None
+        self.working_dir = None
 
         self.is_closing = False
         self.duplicates_count = 0
@@ -68,7 +67,26 @@ class FindDupeFile:
         self.scanning_mode = StringVar(value="Images")
         self.recursive_mode = BooleanVar(value=False)
 
-        self.setup_window()
+
+#endregion
+################################################################################################################################################
+#region -  Interface
+
+
+    def setup_window(self, parent, root, version, menu, path=None):
+        self.parent = parent
+        self.root = root
+        self.version = version
+        self.menu = menu
+        self.working_dir = path
+
+        self.root.minsize(750, 250) # Width x Height
+        self.root.title(f"{self.version} - img-txt Viewer - Find Duplicate Files")
+        self.menu.entryconfig("Find Duplicate Files...", command=self.close_find_dupe_files)
+        self.setup_ui()
+
+        if path:
+            self.folder_entry.insert(0, path)
 
         self.all_widgets = [
                              self.file_menu_button,
@@ -90,20 +108,6 @@ class FindDupeFile:
                              #self.tray_label_duplicates,
                              #self.progress,
                              ]
-        if path:
-            self.folder_entry.insert(0, path)
-
-
-#endregion
-################################################################################################################################################
-#region -  Interface
-
-
-    def setup_window(self):
-        self.root.minsize(750, 250) # Width x Height
-        self.root.title(f"{self.version} - img-txt Viewer - Find Duplicate Files")
-        self.menu.entryconfig("Find Duplicate Files...", command=self.close_find_dupe_files)
-        self.setup_ui()
 
 
     def setup_ui(self):

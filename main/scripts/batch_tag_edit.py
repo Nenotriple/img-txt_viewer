@@ -45,12 +45,12 @@ from main.scripts import TagEditor
 
 
 class BatchTagEdit:
-    def __init__(self, parent, root, VERSION, menu, text_files):
-        self.version = VERSION
-        self.parent = parent
-        self.root = root
-        self.text_files = text_files
-        self.menu = menu
+    def __init__(self):
+        self.version = None
+        self.parent = None
+        self.root = None
+        self.text_files = None
+        self.menu = None
         self.batch_tag_edit_frame = None
 
         self.tag_counts = 0
@@ -60,14 +60,19 @@ class BatchTagEdit:
         self.pending_delete = 0
         self.pending_edit = 0
 
-        self.setup_window()
-
 
 #endregion
 ################################################################################################################################################
 #region - Setup - UI
 
-    def setup_window(self):
+    def setup_window(self, parent, root, version, menu, text_files=None):
+        self.version = version
+        self.parent = parent
+        self.root = root
+        self.text_files = text_files
+        self.menu = menu
+        self.batch_tag_edit_frame = None
+
         self.root.minsize(750, 250) # Width x Height
         self.root.title(f"{self.version} - img-txt Viewer - Batch Tag Edit")
         tag_dict = self.analyze_tags()

@@ -106,19 +106,17 @@ class AboutWindow(Toplevel):
 
 
 class BatchResizeImages:
-    def __init__(self, parent, root, version, menu, path=None):
-        self.parent = parent
-        self.root = root
-        self.version = version
-        self.menu = menu
-        self.working_dir = path
+    def __init__(self):
+        self.parent = None
+        self.root = None
+        self.version = None
+        self.menu = None
+        self.working_dir = None
 
         self.about_window = None
         self.files_processed = 0
 
         self.supported_filetypes = (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff")
-
-        self.setup_window()
 
 
 #endregion
@@ -126,7 +124,13 @@ class BatchResizeImages:
 #region -  Interface
 
 
-    def setup_window(self):
+    def setup_window(self, parent, root, version, menu, path=None):
+        self.parent = parent
+        self.root = root
+        self.version = version
+        self.menu = menu
+        self.working_dir = path
+
         self.root.minsize(750, 250) # Width x Height
         self.root.title(f"{self.version} - img-txt Viewer - Batch Resize Images")
         self.menu.entryconfig("Batch Resize Images...", command=self.close_batch_resize_images)

@@ -281,6 +281,17 @@ class ImgTxtViewer:
         self.config = configparser.ConfigParser()
         self.caption_counter = Counter()
         self.autocomplete = Autocomplete
+        self.batch_tag_edit = batch_tag_edit.BatchTagEdit()
+        self.batch_resize_images = batch_resize_images.BatchResizeImages()
+        self.find_dupe_file = find_dupe_file.FindDupeFile()
+
+        # Setup UI state
+        self.ui_state = {
+            "ImgTxtViewer": True,
+            "BatchTagEdit": False,
+            "BatchResizeImages": False,
+            "FindDupeFile": False,
+            }
 
         # Window drag variables
         self.drag_x = None
@@ -1630,7 +1641,8 @@ class ImgTxtViewer:
         version = VERSION
         menu = self.batch_operations_menu
         text_files = self.text_files
-        batch_tag_edit.BatchTagEdit(parent, root, version, menu, text_files)
+        self.batch_tag_edit.setup_window(parent, root, version, menu, text_files)
+        self.update_ui_state("BatchTagEdit")
 
 
     def show_batch_resize_images(self, event=None):
@@ -1639,7 +1651,8 @@ class ImgTxtViewer:
         version = VERSION
         menu = self.batch_operations_menu
         path = self.image_dir.get()
-        batch_resize_images.BatchResizeImages(parent, root, version, menu, path)
+        self.batch_resize_images.setup_window(parent, root, version, menu, path)
+        self.update_ui_state("BatchResizeImages")
 
 
     def show_find_dupe_file(self, event=None):
@@ -1648,15 +1661,52 @@ class ImgTxtViewer:
         version = VERSION
         menu = self.batch_operations_menu
         path = self.image_dir.get()
-        find_dupe_file.FindDupeFile(parent, root, version, menu, path)
+        self.find_dupe_file.setup_window(parent, root, version, menu, path)
+        self.update_ui_state("FindDupeFile")
 
 
+# --------------------------------------
+# Handle Primary Paned Window
+# --------------------------------------
     def show_primary_paned_window(self, event=None):
         self.primary_paned_window.grid()
+        self.update_ui_state("ImgTxtViewer")
 
 
     def hide_primary_paned_window(self, event=None):
         self.primary_paned_window.grid_remove()
+
+
+# --------------------------------------
+# Handle UI State
+# --------------------------------------
+    def toggle_alt_ui_menus(self):
+        menu = self.batch_operations_menu
+        menu_items = {
+            "BatchResizeImages": "Batch Resize Images...",
+            "BatchTagEdit": "Batch Tag Edit...",
+            "FindDupeFile": "Find Duplicate Files..."
+            }
+        if self.ui_state.get("ImgTxtViewer", False):
+            for menu_label in menu_items.values():
+                menu.entryconfig(menu_label, state="normal")
+        else:
+            for key, state in self.ui_state.items():
+                menu_label = menu_items.get(key)
+                if menu_label:
+                    if state:
+                        menu.entryconfig(menu_label, state="normal")
+                    else:
+                        menu.entryconfig(menu_label, state="disabled")
+
+
+    def update_ui_state(self, key):
+        for k in self.ui_state:
+            self.ui_state[k] = False
+        if key in self.ui_state:
+            self.ui_state[key] = True
+        self.toggle_alt_ui_menus()
+        print(self.ui_state)
 
 
 #endregion
