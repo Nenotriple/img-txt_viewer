@@ -2397,7 +2397,7 @@ class ImgTxtViewer:
             'e621.csv': self.csv_e621,
             'dictionary.csv': self.csv_english_dictionary,
             'derpibooru.csv': self.csv_derpibooru
-        }
+            }
         self.selected_csv_files = [csv_file for csv_file, var in csv_vars.items() if var.get()]
         if not self.selected_csv_files:
             self.autocomplete = Autocomplete("None", include_my_tags=self.use_mytags_var.get())
@@ -3328,8 +3328,14 @@ class ImgTxtViewer:
     def upscale_image(self, batch):
         main_window_width = root.winfo_width()
         main_window_height = root.winfo_height()
-        window_x = root.winfo_x() + -135 + main_window_width // 2
-        window_y = root.winfo_y() - 200 + main_window_height // 2
+        if batch:
+            x_offset = -225
+            y_offset = 300
+        else:
+            x_offset = -135
+            y_offset = 200
+        window_x = root.winfo_x() + x_offset + main_window_width // 2
+        window_y = root.winfo_y() - y_offset + main_window_height // 2
         filepath = self.image_files[self.current_index]
         upscale_image.Upscale(self.master, self, ToolTip, filepath, window_x, window_y, batch, self.update_pair, self.jump_to_image)
 
@@ -3337,8 +3343,8 @@ class ImgTxtViewer:
     def batch_crop_images(self):
         main_window_width = root.winfo_width()
         main_window_height = root.winfo_height()
-        window_x = root.winfo_x() + -135 + main_window_width // 2
-        window_y = root.winfo_y() - 200 + main_window_height // 2
+        window_x = root.winfo_x() + -155 + main_window_width // 2
+        window_y = root.winfo_y() - 100 + main_window_height // 2
         filepath = str(self.image_dir.get())
         batch_crop_images.BatchCrop(self.master, filepath, window_x, window_y)
 
@@ -4959,6 +4965,8 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - (High) Convert all appropriate tk widgets to ttk for a more modern look.
 
   - (Med) Go through all tools that touch text files and make sure they work with alt-text paths.
+
+  - (Med) Upscale: Could support any NCNN model, and it could automatically scan a directory for new models.
 
   - (Low) Find Dupe Files, could/should automatically move captions if they are found.
 
