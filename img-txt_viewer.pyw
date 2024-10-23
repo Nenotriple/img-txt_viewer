@@ -732,7 +732,6 @@ class ImgTxtViewer:
 
 
     def create_text_pane(self):
-        self.word_wrap_var = BooleanVar(value=True)
         if not hasattr(self, 'text_pane'):
             self.text_pane = PanedWindow(self.master_control_frame, orient="vertical", sashwidth=6, bg="#d0d0d0", bd=0)
             self.text_pane.pack(side="bottom", fill="both", expand=1)
