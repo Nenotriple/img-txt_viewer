@@ -33,7 +33,6 @@ import ctypes
 import zipfile
 import itertools
 import statistics
-import webbrowser
 import subprocess
 from collections import defaultdict, Counter
 
@@ -59,7 +58,8 @@ from PIL import (Image, ImageTk, ImageSequence,
 
 
 # Custom Libraries
-from main.scripts import (settings_manager,
+from main.scripts import (about_img_txt_viewer,
+                          settings_manager,
                           crop_image,
                           batch_crop_images,
                           resize_image,
@@ -70,104 +70,6 @@ from main.scripts import (settings_manager,
                           )
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
 from main.bin import upscale_image
-
-
-#endregion
-################################################################################################################################################
-#region - CLASS: AboutWindow
-
-
-class AboutWindow(Toplevel):
-    info_headers = ["Shortcuts", "Tips", "Text Tools", "Other Tools", "Auto-Save"]
-    info_content = [
-        # Shortcuts
-        " ⦁ALT+LEFT/RIGHT: Quickly move between img-txt pairs.\n"
-        " ⦁SHIFT+DEL: Send the current pair to a local trash folder.\n"
-        " ⦁ALT: Cycle through auto-suggestions.\n"
-        " ⦁TAB: Insert the highlighted suggestion.\n"
-        " ⦁CTRL+S: Save the current text file.\n"
-        " ⦁CTRL+E: Jump to the next empty text file.\n"
-        " ⦁CTRL+R: Jump to a random img-txt pair.\n"
-        " ⦁CTRL+F: Highlight all duplicate words.\n"
-        " ⦁CTRL+Z / CTRL+Y: Undo/Redo.\n"
-        " ⦁F1: Toggle Zoom popup.\n"
-        " ⦁F2: Open the Image-Grid.\n"
-        " ⦁F5: Refresh the text box.\n"
-        " ⦁Middle-click a tag to delete it.\n",
-
-        # Tips
-        " ⦁Highlight matching words by selecting text. \n"
-        " ⦁Quickly create text pairs by loading the image and saving the text.\n"
-        " ⦁List Mode: Display tags in a list format while saving in standard format.\n"
-        " ⦁Use an asterisk * while typing to return autocomplete suggestions using a fuzzy search.\n"
-        " ⦁Use the Match Mode option: 'Last Word' to allow for more natural autocomplete.\n"
-        " ⦁Right-click the 'Browse...' button to set or clear the alternate text path, allowing you to load text files from a separate folder than images.\n",
-
-        # Text Tools
-        " ⦁Search and Replace: Search for a specific string of text and replace it with another.\n"
-        " ⦁Prefix: Insert text at the START of all text files.\n"
-        " ⦁Append: Insert text at the END of all text files.\n"
-        " ⦁Filter: Filter pairs based on matching text, blank or missing txt files, and more. Can also be used in relation with: S&R, Prefix, and Append. \n"
-        " ⦁Highlight: Always highlight certain text.\n"
-        " ⦁My Tags: Quickly add you own tags to be used as autocomplete suggestions.\n"
-        " ⦁Batch Tag Edit: View all tags in a directory as a list, and quickly delete or edit them.\n"
-        " ⦁Cleanup Text: Fix typos in all text files of the selected folder, such as duplicate tags, multiple spaces or commas, missing spaces, and more.\n",
-
-        # Other Tools
-        " ⦁Batch Resize Images: Resize all images in a folder using various methods and conditions\n"
-        " ⦁Batch Crop Image: Crop all images to a specific resolution.\n"
-        " ⦁Crop Image: Crop the current image to a square or freeform ratio.\n"
-        " ⦁Resize Image: Resize the current image either by exact resolution or percentage.\n"
-        " ⦁Upscale Image: Upscale the current image using RESRGAN.\n"
-        " ⦁Find Duplicate Files: Find and separate any duplicate files in a folder.\n"
-        " ⦁Expand: Expand an image to a square ratio instead of cropping.\n"
-        " ⦁Batch Rename and/or Convert: Rename and optionally convert all image and text files in the current directory, saving them in sequential order with padded zeros.\n",
-
-        # Auto Save
-        " ⦁Check the auto-save box to save text when navigating between img/txt pairs or closing the window, etc.\n"
-        " ⦁By default, text is cleaned up when saved, so you can ignore things like duplicate tags, trailing comma/spaces, double comma/spaces, etc.\n"
-        " ⦁Text cleanup was designed for CSV format captions and can be disabled from the options menu (Clean-Text).",
-        ]
-
-
-    def __init__(self, master=None):
-        super().__init__(master=master)
-        self.title("About")
-        self.geometry("850x650")
-        self.maxsize(900, 900)
-        self.minsize(630, 300)
-        self.github_url = "https://github.com/Nenotriple/img-txt_viewer"
-        self.create_info_text()
-        self.create_other_widgets()
-        self.focus_force()
-
-
-    def create_info_text(self):
-        self.info_text = ScrolledText(self)
-        self.info_text.pack(expand=True, fill='both')
-        for header, section in zip(AboutWindow.info_headers, AboutWindow.info_content):
-            self.info_text.insert("end", header + "\n", "header")
-            self.info_text.insert("end", section + "\n", "section")
-        self.info_text.tag_config("header", font=("Segoe UI", 9, "bold"))
-        self.info_text.tag_config("section", font=("Segoe UI", 9))
-        self.info_text.config(state='disabled', wrap="word", height=1)
-
-
-    def create_other_widgets(self):
-        frame = Frame(self)
-        frame.pack(fill="x")
-
-        self.url_button = ttk.Button(frame, text=f"{self.github_url}", command=self.open_url)
-        self.url_button.pack(side="left", fill="x", padx=10, ipadx=10)
-        ToolTip.create(self.url_button, "Click this button to open the repo in your default browser", 10, 6, 12)
-
-        self.made_by_label = Label(frame, text=f"{VERSION} - img-txt_viewer - Created by: Nenotriple (2023-2024)", font=("Segoe UI", 10))
-        self.made_by_label.pack(side="left", expand=True, pady=10)
-        ToolTip.create(self.made_by_label, "🤍Thank you for using my app!🤍 (^‿^)", 10, 6, 12)
-
-
-    def open_url(self):
-        webbrowser.open(f"{self.github_url}")
 
 
 #endregion
@@ -277,7 +179,9 @@ class ImgTxtViewer:
 # --------------------------------------
 # General Setup
 # --------------------------------------
+
         # Setup tools
+        self.about_window = about_img_txt_viewer.AboutWindow(self, self.master, VERSION, self.blank_image)
         self.settings_manager = settings_manager.SettingsManager(self, self.master, VERSION)
         self.caption_counter = Counter()
         self.autocomplete = Autocomplete
@@ -321,11 +225,6 @@ class ImgTxtViewer:
         self.new_text_files = []
         self.image_info_cache = {}
         self.thumbnail_cache = {}
-
-        # Blank image
-        self.icon_path = os.path.join(self.application_path, "icon.ico")
-        with Image.open(self.icon_path) as img:
-            self.blank_image = ImageTk.PhotoImage(img)
 
         # Misc variables
         self.about_window_open = False
@@ -798,7 +697,7 @@ class ImgTxtViewer:
         # Startup info text
         self.info_text = ScrolledText(self.master_control_frame)
         self.info_text.pack(expand=True, fill="both")
-        for header, section in zip(AboutWindow.info_headers, AboutWindow.info_content):
+        for header, section in zip(self.about_window.info_headers, self.about_window.info_content):
             self.info_text.insert("end", header + "\n", "header")
             self.info_text.insert("end", section + "\n", "section")
         self.info_text.tag_config("header", font=("Segoe UI", 9, "bold"))
@@ -807,7 +706,9 @@ class ImgTxtViewer:
         self.info_text.config(state='disabled', wrap="word")
 
 
-
+#endregion
+################################################################################################################################################
+#region - End ImgTxtViewer init
         self.settings_manager.read_settings()
 
 
@@ -3789,25 +3690,12 @@ class ImgTxtViewer:
 
     def toggle_about_window(self):
         if self.about_window_open:
-            self.close_about_window()
+            self.about_window.close_about_window()
+            self.about_window_open = False
         else:
-            self.open_about_window()
+            self.about_window.create_about_window()
+            self.about_window_open = True
 
-
-    def open_about_window(self):
-        self.about_window_open = AboutWindow(self.master)
-        self.about_window_open.iconphoto(False, self.blank_image)
-        self.about_window_open.protocol("WM_DELETE_WINDOW", self.close_about_window)
-        main_window_width = root.winfo_width()
-        main_window_height = root.winfo_height()
-        main_window_x = root.winfo_x() - 425 + main_window_width // 2
-        main_window_y = root.winfo_y() - 315 + main_window_height // 2
-        self.about_window_open.geometry("+{}+{}".format(main_window_x, main_window_y))
-
-
-    def close_about_window(self):
-        self.about_window_open.destroy()
-        self.about_window_open = False
 
 
 #endregion
@@ -4544,6 +4432,10 @@ class ImgTxtViewer:
         try:
             self.master.iconbitmap(self.icon_path)
         except TclError: pass
+        # Blank image (app icon)
+        self.icon_path = os.path.join(self.application_path, "icon.ico")
+        with Image.open(self.icon_path) as img:
+            self.blank_image = ImageTk.PhotoImage(img)
 
 
     def get_app_path(self):
@@ -4555,7 +4447,7 @@ class ImgTxtViewer:
 
 
 # --------------------------------------
-# Mainloop and settings
+# Mainloop
 # --------------------------------------
 root = Tk()
 app = ImgTxtViewer(root)
