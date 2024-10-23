@@ -181,7 +181,7 @@ class ImgTxtViewer:
         self.create_primary_ui()
         self.settings_manager.read_settings()
 
-
+#endregion
 ################################################################################################################################################
 #region - Setup
 
@@ -529,13 +529,12 @@ class ImgTxtViewer:
 # Misc
 # --------------------------------------
         self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Open Current Directory...", underline=13, command=self.open_image_directory)
-        self.toolsMenu.add_command(label="Open Current Image...", underline=13, command=self.open_image)
-        self.toolsMenu.add_command(label="Edit Image...", underline=6, accelerator="F4", command=self.open_image_in_editor)
-        #self.toolsMenu.add_command(label="Open With...", underline=5, command=self.open_with_dialog) # Not working with paths that contain spaces
+        self.toolsMenu.add_command(label="Open Current Directory...", state="disable", underline=13, command=self.open_image_directory)
+        self.toolsMenu.add_command(label="Open Current Image...", state="disable", underline=13, command=self.open_image)
+        self.toolsMenu.add_command(label="Edit Image...", state="disable", underline=6, accelerator="F4", command=self.open_image_in_editor)
         self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Next Empty Text File", accelerator="Ctrl+E", command=self.index_goto_next_empty)
-        self.toolsMenu.add_command(label="Open Image-Grid...", accelerator="F2", underline=11, command=self.open_image_grid)
+        self.toolsMenu.add_command(label="Next Empty Text File", state="disable", accelerator="Ctrl+E", command=self.index_goto_next_empty)
+        self.toolsMenu.add_command(label="Open Image-Grid...", state="disable", accelerator="F2", underline=11, command=self.open_image_grid)
 
 
 #endregion
@@ -1153,7 +1152,6 @@ class ImgTxtViewer:
         self.imageContext_menu.add_command(label="Open Current Image...", command=self.open_image)
         self.imageContext_menu.add_command(label="Open Image-Grid...", accelerator="F2", command=self.open_image_grid)
         self.imageContext_menu.add_command(label="Edit Image...", accelerator="F4", command=self.open_image_in_editor)
-        #self.imageContext_menu.add_command(label="Open With...", command=self.open_with_dialog) # Not working with paths that contain spaces
         self.imageContext_menu.add_separator()
         # File
         self.imageContext_menu.add_command(label="Duplicate img-txt pair", command=self.duplicate_pair)
@@ -1408,11 +1406,13 @@ class ImgTxtViewer:
 
 
     def index_goto_next_empty(self, event=None):
-            next_empty = self.get_next_empty_file_index()
-            if next_empty is not None:
-                self.image_index_entry.delete(0, "end")
-                self.image_index_entry.insert(0, next_empty + 1)
-                self.jump_to_image(next_empty)
+        if not self.check_if_directory():
+            return
+        next_empty = self.get_next_empty_file_index()
+        if next_empty is not None:
+            self.image_index_entry.delete(0, "end")
+            self.image_index_entry.insert(0, next_empty + 1)
+            self.jump_to_image(next_empty)
 
 
     def get_next_empty_file_index(self):
@@ -1438,6 +1438,7 @@ class ImgTxtViewer:
                              "Edit Current pair",
                              "Open Current Directory...",
                              "Open Current Image...",
+                             "Edit Image...",
                              "Next Empty Text File",
                              "Open Image-Grid...",
                              ]
@@ -3314,17 +3315,6 @@ class ImgTxtViewer:
             messagebox.showerror("Error", f"An error occurred while opening the image in the editor:\n\n{e}")
 
 
-#    def open_with_dialog(self): # Not working with paths that contain spaces
-#        try:
-#            if self.image_files:
-#                image_path = self.image_files[self.current_index]
-#                subprocess.run(['rundll32', 'shell32.dll,OpenAs_RunDLL', image_path])
-#        except PermissionError as e:
-#            messagebox.showerror("Error", f"Permission denied: {e}")
-#        except Exception as e:
-#            messagebox.showerror("Error", f"An error occurred while opening the file:\n\n{e}")
-
-
     def set_external_image_editor_path(self):
         response = messagebox.askyesnocancel("Set External Image Editor", f"Current external image editor is set to:\n\n{self.external_image_editor_path}\n\nDo you want to change it? (Yes/No)\n\nPress (Cancel) to reset to default (MS Paint).")
         if response is None:  # Cancel, reset
@@ -3877,23 +3867,23 @@ class ImgTxtViewer:
         text_file = self.text_files[self.current_index]
         text = self.text_box.get("1.0", "end-1c")
         if os.path.exists(text_file):
-            with open(text_file, "r", encoding="utf-8") as f:
-                if text == f.read():
+            with open(text_file, "r", encoding="utf-8") as file:
+                if text == file.read():
                     return False
         if text in {"None", ""}:
             if self.auto_delete_blank_files_var.get():
                 if os.path.exists(text_file):
                     os.remove(text_file)
             else:
-                with open(text_file, "w+", encoding="utf-8") as f:
-                    f.write("")
+                with open(text_file, "w+", encoding="utf-8") as file:
+                    file.write("")
             return True
         if self.cleaning_text_var.get():
             text = self.cleanup_text(text)
         if self.list_mode_var.get():
             text = ', '.join(text.split('\n'))
-        with open(text_file, "w+", encoding="utf-8") as f:
-            f.write(text)
+        with open(text_file, "w+", encoding="utf-8") as file:
+            file.write(text)
         return True
 
 

@@ -66,7 +66,7 @@ class SettingsManager:
         if self._verify_filepath(last_txt_directory) and last_txt_directory != ".":
             self.config.set("Path", "last_txt_directory", last_txt_directory)
         # External image editor
-        self.config.set("Path", "external_image_editor_path", str(self.external_image_editor_path))
+        self.config.set("Path", "external_image_editor_path", str(self.parent.external_image_editor_path))
         # Index and load order
         self.config.set("Path", "last_index", str(self.parent.current_index))
         self.config.set("Path", "load_order", str(self.parent.load_order_var.get()))
@@ -75,10 +75,6 @@ class SettingsManager:
 
     def _save_window_settings(self):
         self._add_section("Window")
-        window_size = f"{self.root.winfo_width()}x{self.root.winfo_height()}"
-        window_position = f"{self.root.winfo_x()}+{self.root.winfo_y()}"
-        self.config.set("Window", "window_size", window_size)
-        self.config.set("Window", "window_position", window_position)
         self.config.set("Window", "panes_swap_ew_var", str(self.parent.panes_swap_ew_var.get()))
         self.config.set("Window", "panes_swap_ns_var", str(self.parent.panes_swap_ns_var.get()))
         self.config.set("Window", "always_on_top_var", str(self.parent.always_on_top_var.get()))
