@@ -4474,7 +4474,7 @@ root.mainloop()
 
 This release incorporates several new features, including a reworked Batch Tag Edit tool, a Thumbnail Panel for quick navigation, and an Edit Image Panel for adjusting image properties. Additionally, numerous bugs have been fixed, such as issues with the Delete Pair tool, image quality degradation, and memory leaks.
 
-Aspects of the script have been refactored to be more modular and better handle additional tools and features.
+Many aspects of the script have been refactored to be more modular and better handle additional tools and features.
 
 The app now targets Windows 11, and while it doesn't offer an complete `Aero` theme, many widgets have been updated to utilize a more modern theme where appropriate.
 
@@ -4580,8 +4580,9 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
 
 - Todo
-
-  - (High) Convert all appropriate tk widgets to ttk for a more modern look.
+  - (Med) Remove 'main/bin':
+    - Move 'main/bin/resrgan' to 'main/resrgan'.
+    - Move 'upscale_image.py' to 'main/scripts/upscale_image.py'.
 
   - (Med) Go through all tools that touch text files and make sure they work with alt-text paths.
 
@@ -4590,20 +4591,12 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - (Low) Find Dupe Files, could/should automatically move captions if they are found.
 
   - (Low) New interface ideas:
-    - Compare image and create before/after images.
-    - Custom script/executable launcher.
-
-  - (Low) Perhaps the Menubar should include another option for the "rich" tools like Batch Tag Edit, and any new tools that use the full window.
-    - It should be a notebook style menu with tabs for each tool.
+    - ...
 
   - (Very Low) Create a `Danbooru (safe)` autocomplete dictionary. (I have no idea how to effectively filter the naughty words.)
-  - (Very Low) Refactor UI to utilize CustomTkinter.
 
 
 - Tofix
-
-  - (High) Ensure only a single alternate-UI tool can be open at a time.
-    - Currently it's possible to have BTE, and BIR open at once.
 
   - (High) Batch Tag Edit: Switching to BTE before selecting a directory and then switching back breaks the app.
     - Currently BTE only works with the selected directory, so it would be easy to simply prevent BTE from being used without a directory selected.
@@ -4614,18 +4607,18 @@ Starting from this release, the `Lite` version will no longer be provided. All t
     - The cache dictionary should include the hash of the image file to ensure it's up-to-date.
     - All cache for that image should be cleared when the hash changes.
 
-  - (Med) When restoring the previous directory: The first image index is initially loaded, and then the last view image is loaded.
-
-  - (Med) When reloading the last directory: The whole process is really messy and should be made more modular.
+  - (low) When reloading the last directory: The whole process is messy and should be made more modular.
     - set_working_directory(), set_text_file_path(), jump_to_image(); need to be optimized.
-    - When reloading the last directory, the displayed image is resized like 8 times because of repeated calls to show_pair(), display_image().
+    - When reloading the last directory, the displayed image is resized like 8 times because of repeated calls to show_pair() and display_image(), etc.
+
+  - (low) When restoring the previous directory: The first image index is initially loaded, and then the last view image is loaded.
 
   - (Low) Sometimes after navigating (perhaps only when using the ALT+Arrow-keys bind), the suggestion navigation fails to register on the first press of ALT.
     - Related to how (Alt-L, and Alt-R) are bound to disable_button()
 
   - (Low) Running "Crop" Doesn't update the file lists when closing the crop window.
 
-  - (Low) Sometimes when an image is loaded it isn't refreshed using LANCZOS.
+  - (Low) Sometimes when an image is loaded it isn't refreshed.
 
   - THUMBNAILS:
     - (Low) A 'TypeError' error can occur when using the Mouse Wheel while scrolling over the thumbnail panel.
