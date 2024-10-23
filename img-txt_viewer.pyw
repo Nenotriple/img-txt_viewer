@@ -174,12 +174,18 @@ class ImgTxtViewer:
         self.set_appid()
         self.set_window_size()
         self.set_icon()
+        self.initial_class_setup()
+        self.define_app_settings()
+        self.setup_general_binds()
+        self.create_menu_bar()
+        self.create_primary_ui()
+        self.settings_manager.read_settings()
 
 
-# --------------------------------------
-# General Setup
-# --------------------------------------
+################################################################################################################################################
+#region - Setup
 
+    def initial_class_setup(self):
         # Setup tools
         self.about_window = about_img_txt_viewer.AboutWindow(self, self.master, VERSION, self.blank_image)
         self.settings_manager = settings_manager.SettingsManager(self, self.master, VERSION)
@@ -236,7 +242,7 @@ class ImgTxtViewer:
         self.is_resizing_id = None
         self.toggle_zoom_var = None
         self.undo_state = StringVar(value="disabled")
-        self.previous_window_size = (master.winfo_width(), master.winfo_height())
+        self.previous_window_size = (self.master.winfo_width(), self.master.winfo_height())
 
         # Image Resize Variables
         self.current_image = None # ImageTk.PhotoImage object
@@ -256,6 +262,7 @@ class ImgTxtViewer:
 # --------------------------------------
 # Settings
 # --------------------------------------
+    def define_app_settings(self):
         # Misc Settings
         self.app_settings_cfg = 'settings.cfg'
         self.my_tags_csv = 'my_tags.csv'
@@ -330,30 +337,37 @@ class ImgTxtViewer:
 # --------------------------------------
 # Bindings
 # --------------------------------------
-        master.bind("<Control-f>", lambda event: self.toggle_highlight_all_duplicates())
-        master.bind("<Control-s>", lambda event: self.save_text_file())
-        master.bind("<Alt-Right>", lambda event: self.next_pair(event))
-        master.bind("<Alt-Left>", lambda event: self.prev_pair(event))
-        master.bind('<Shift-Delete>', lambda event: self.delete_pair())
-        master.bind('<Configure>', self.handle_window_configure)
-        master.bind('<F1>', lambda event: self.toggle_zoom_popup(event))
-        master.bind('<F2>', lambda event: self.open_image_grid(event))
-        master.bind('<F4>', lambda event: self.open_image_in_editor(event))
-        master.bind('<F5>', lambda event: self.show_batch_tag_edit(event))
-        master.bind('<Control-w>', lambda event: self.on_closing(event))
+    def setup_general_binds(self):
+        self.master.bind("<Control-f>", lambda event: self.toggle_highlight_all_duplicates())
+        self.master.bind("<Control-s>", lambda event: self.save_text_file())
+        self.master.bind("<Alt-Right>", lambda event: self.next_pair(event))
+        self.master.bind("<Alt-Left>", lambda event: self.prev_pair(event))
+        self.master.bind('<Shift-Delete>', lambda event: self.delete_pair())
+        self.master.bind('<Configure>', self.handle_window_configure)
+        self.master.bind('<F1>', lambda event: self.toggle_zoom_popup(event))
+        self.master.bind('<F2>', lambda event: self.open_image_grid(event))
+        self.master.bind('<F4>', lambda event: self.open_image_in_editor(event))
+        self.master.bind('<F5>', lambda event: self.show_batch_tag_edit(event))
+        self.master.bind('<Control-w>', lambda event: self.on_closing(event))
 
         # Print window size on resize:
-        #master.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == master else None, add="+")
+        #self.master.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == master else None, add="+")
 
 
 #endregion
 ################################################################################################################################################
 #region - Menubar
 
+    def create_menu_bar(self):
+        self.initialize_menu()
+        self.create_options_menu()
+        self.create_tools_menu()
+
 
 # --------------------------------------
 # Initialize Menu Bar
 # --------------------------------------
+    def initialize_menu(self):
         # Main
         menubar = Menu(self.master)
         self.master.config(menu=menubar)
@@ -373,10 +387,10 @@ class ImgTxtViewer:
         menubar.add_command(label="About", underline=0, command=self.toggle_about_window)
 
 
-####### Options Menu ##################################################
 # --------------------------------------
 # Options
 # --------------------------------------
+    def create_options_menu(self):
         # Options
         self.options_subMenu = Menu(self.optionsMenu, tearoff=0)
         self.optionsMenu.add_cascade(label="Options", underline=0, state="disable", menu=self.options_subMenu)
@@ -474,10 +488,10 @@ class ImgTxtViewer:
         self.optionsMenu.add_command(label="Open My Tags File...", underline=1, command=lambda: self.open_textfile(self.my_tags_csv))
 
 
-####### Tools Menu ##################################################
 # --------------------------------------
 # Batch Operations
 # --------------------------------------
+    def create_tools_menu(self):
         self.batch_operations_menu = Menu(self.toolsMenu, tearoff=0)
         self.toolsMenu.add_cascade(label="Batch Operations", underline=0, state="disable", menu=self.batch_operations_menu)
         self.batch_operations_menu.add_command(label="Batch Rename And/Or Convert...", underline=3, command=self.rename_and_convert_pairs)
@@ -526,21 +540,27 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Buttons, Labels, and more
+#region - Create Primary UI
 
 
+    def create_primary_ui(self):
+        self.setup_primary_frames()
+        self.create_primary_widgets()
+
+
+    def setup_primary_frames(self):
         # Configure the grid weights for the master window frame
-        master.grid_rowconfigure(0, weight=1)
-        master.grid_columnconfigure(0, weight=1)
+        self.master.grid_rowconfigure(0, weight=1)
+        self.master.grid_columnconfigure(0, weight=1)
 
         # primary_paned_window : is used to contain the ImgTxtViewer UI.
-        self.primary_paned_window = PanedWindow(master, orient="horizontal", sashwidth=6, bg="#d0d0d0", bd=0)
+        self.primary_paned_window = PanedWindow(self.master, orient="horizontal", sashwidth=6, bg="#d0d0d0", bd=0)
         self.primary_paned_window.grid(row=0, column=0, sticky="nsew")
         self.primary_paned_window.bind('<ButtonRelease-1>', self.snap_sash_to_half)
 
 
         # master_image_frame : is exclusively used for the displayed image, thumbnails, image info.
-        self.master_image_frame = Frame(master)
+        self.master_image_frame = Frame(self.master)
         self.master_image_frame.bind('<Configure>', lambda event: self.debounce_update_thumbnail_panel(event))
         self.master_image_frame.grid_rowconfigure(1, weight=1)
         self.master_image_frame.grid_columnconfigure(0, weight=1)
@@ -548,13 +568,14 @@ class ImgTxtViewer:
 
 
         # master_control_frame : serves as a container for all primary UI frames, with the exception of the master_image_frame.
-        self.master_control_frame = Frame(master)
+        self.master_control_frame = Frame(self.master)
         self.primary_paned_window.add(self.master_control_frame, stretch="always")
         self.primary_paned_window.paneconfigure(self.master_control_frame, minsize=300)
         self.primary_paned_window.update()
         self.primary_paned_window.sash_place(0, 0, 0)
 
 
+    def create_primary_widgets(self):
         # Image stats
         self.stats_frame = Frame(self.master_image_frame)
         self.stats_frame.grid(row=0, column=0, sticky="ew")
@@ -704,12 +725,6 @@ class ImgTxtViewer:
         self.info_text.tag_config("section", font=("Segoe UI", 9))
         self.info_text.bind("<Button-3>", self.show_textContext_menu)
         self.info_text.config(state='disabled', wrap="word")
-
-
-#endregion
-################################################################################################################################################
-#region - End ImgTxtViewer init
-        self.settings_manager.read_settings()
 
 
 #endregion
@@ -1277,9 +1292,9 @@ class ImgTxtViewer:
 #region - Additional Interface Setup
 
 
-####### Browse button context menu ##################################################
-
-
+# --------------------------------------
+# Browse button context menu
+# --------------------------------------
     def open_browse_context_menu(self, event):
         try:
             self.browse_context_menu.tk_popup(event.x_root, event.y_root)
@@ -1314,9 +1329,9 @@ class ImgTxtViewer:
             self.text_path_tooltip.config("Text Path: Same as image path", 10, 6, 12)
 
 
-####### Directory entry context menu helpers ##################################################
-
-
+# --------------------------------------
+# Directory entry context menu helpers
+# --------------------------------------
     def open_directory_context_menu(self, event):
         try:
             self.dir_context_menu.tk_popup(event.x_root, event.y_root)
@@ -1366,9 +1381,9 @@ class ImgTxtViewer:
             self.directory_entry.delete(0, "end")
 
 
-####### Index entry context menu helpers ##################################################
-
-
+# --------------------------------------
+# Index entry context menu helpers
+# --------------------------------------
     def open_index_context_menu(self, event):
         try:
             self.index_context_menu.tk_popup(event.x_root, event.y_root)
@@ -1414,9 +1429,9 @@ class ImgTxtViewer:
         return None
 
 
-####### Misc setup ##################################################
-
-
+# --------------------------------------
+# Misc setup
+# --------------------------------------
     def enable_menu_options(self):
         tool_commands =       [
                              "Batch Operations",
@@ -1480,9 +1495,9 @@ class ImgTxtViewer:
             self.popup_zoom.hide_zoom(event)
 
 
-####### PanedWindow ##################################################
-
-
+# --------------------------------------
+# PanedWindow
+# --------------------------------------
     def configure_pane_position(self):
         window_width = self.master.winfo_width()
         self.primary_paned_window.sash_place(0, window_width // 2, 0)
