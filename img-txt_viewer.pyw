@@ -35,7 +35,6 @@ import itertools
 import statistics
 import webbrowser
 import subprocess
-import configparser
 from collections import defaultdict, Counter
 
 
@@ -60,7 +59,8 @@ from PIL import (Image, ImageTk, ImageSequence,
 
 
 # Custom Libraries
-from main.scripts import (crop_image,
+from main.scripts import (settings_manager,
+                          crop_image,
                           batch_crop_images,
                           resize_image,
                           image_grid,
@@ -270,7 +270,7 @@ class ImgTxtViewer:
         self.master = master
         self.application_path = self.get_app_path()
         self.set_appid()
-        self.set_window_size(master)
+        self.set_window_size()
         self.set_icon()
 
 
@@ -278,7 +278,7 @@ class ImgTxtViewer:
 # General Setup
 # --------------------------------------
         # Setup tools
-        self.config = configparser.ConfigParser()
+        self.settings_manager = settings_manager.SettingsManager(self, self.master, VERSION)
         self.caption_counter = Counter()
         self.autocomplete = Autocomplete
         self.batch_tag_edit = batch_tag_edit.BatchTagEdit()
@@ -570,7 +570,7 @@ class ImgTxtViewer:
 # --------------------------------------
         # Settings Menu
         self.optionsMenu.add_separator()
-        self.optionsMenu.add_command(label="Reset Settings", underline=1, state="disable", command=self.reset_settings)
+        self.optionsMenu.add_command(label="Reset Settings", underline=1, state="disable", command=self.settings_manager.reset_settings)
         self.optionsMenu.add_command(label="Open Settings File...", underline=1, command=lambda: self.open_textfile(self.app_settings_cfg))
         self.optionsMenu.add_command(label="Open My Tags File...", underline=1, command=lambda: self.open_textfile(self.my_tags_csv))
 
@@ -805,6 +805,10 @@ class ImgTxtViewer:
         self.info_text.tag_config("section", font=("Segoe UI", 9))
         self.info_text.bind("<Button-3>", self.show_textContext_menu)
         self.info_text.config(state='disabled', wrap="word")
+
+
+
+        self.settings_manager.read_settings()
 
 
 #endregion
@@ -1706,7 +1710,6 @@ class ImgTxtViewer:
         if key in self.ui_state:
             self.ui_state[key] = True
         self.toggle_alt_ui_menus()
-        print(self.ui_state)
 
 
 #endregion
@@ -3458,7 +3461,9 @@ class ImgTxtViewer:
         return False
 
 
-    def set_always_on_top(self):
+    def set_always_on_top(self, initial=False):
+        if initial:
+            self.always_on_top_var = BooleanVar(value=False)
         root.attributes('-topmost', self.always_on_top_var.get())
 
 
@@ -3871,6 +3876,7 @@ class ImgTxtViewer:
 
 
     def prompt_first_time_setup(self):
+        print
         dict_var = StringVar(value="English Dictionary")
         last_word_match_var = StringVar(value="Match Last Word")
         match_modes = {"Match Whole String": False, "Match Last Word": True}
@@ -3890,7 +3896,7 @@ class ImgTxtViewer:
                 create_dictionary_selection_widgets()
                 setup_window.geometry("400x200")
             else:
-                self.save_settings()
+                self.settings_manager.save_settings()
                 clear_widgets()
                 setup_last_word_match_frame()
                 setup_window.geometry("400x250")
@@ -3914,7 +3920,7 @@ class ImgTxtViewer:
             ttk.Button(setup_window, text="Done", width=10, command=lambda: save_and_continue(close=True)).pack(side="right", anchor="e", pady=5, padx=10)
 
         def save_and_close():
-            self.save_settings()
+            self.settings_manager.save_settings()
             setup_window.destroy()
 
         def create_setup_window():
@@ -3943,286 +3949,6 @@ class ImgTxtViewer:
 
         setup_window = create_setup_window()
         create_dictionary_selection_widgets()
-
-
-#endregion
-################################################################################################################################################
-#region - Save/Read/Reset Settings
-
-
-# --------------------------------------
-# Save
-# --------------------------------------
-    def save_settings(self):
-        try:
-            self.read_existing_settings()
-            self.save_version_settings()
-            self.save_path_settings()
-            self.save_window_settings()
-            self.save_autocomplete_settings()
-            self.save_other_settings()
-            self.write_settings_to_file()
-        except (PermissionError, IOError) as e:
-            messagebox.showerror("Error: save_settings()", f"An error occurred while saving the user settings.\n\n{e}")
-
-
-    def read_existing_settings(self):
-        if os.path.exists(self.app_settings_cfg):
-            self.config.read(self.app_settings_cfg)
-
-
-    def _add_section(self, section_name):
-        if not self.config.has_section(section_name):
-            self.config.add_section(section_name)
-
-
-    def _verify_filepath(self, path):
-        return os.path.exists(path)
-
-
-    def save_version_settings(self):
-        self._add_section("Version")
-        self.check_working_directory()
-        self.config.set("Version", "app_version", VERSION)
-
-
-    def save_path_settings(self):
-        self._add_section("Path")
-        last_img_directory = str(self.image_dir.get())
-        last_txt_directory = str(os.path.normpath(self.text_dir))
-        # Image directory
-        if self._verify_filepath(last_img_directory):
-            self.config.set("Path", "last_img_directory", last_img_directory)
-        # Text directory
-        if self._verify_filepath(last_txt_directory) and last_txt_directory != ".":
-            self.config.set("Path", "last_txt_directory", last_txt_directory)
-        # External image editor
-        self.config.set("Path", "external_image_editor_path", str(self.external_image_editor_path))
-        # Index and load order
-        self.config.set("Path", "last_index", str(self.current_index))
-        self.config.set("Path", "load_order", str(self.load_order_var.get()))
-        self.config.set("Path", "reverse_load_order", str(self.reverse_load_order_var.get()))
-
-
-    def save_window_settings(self):
-        self._add_section("Window")
-        window_size = f"{self.master.winfo_width()}x{self.master.winfo_height()}"
-        window_position = f"{self.master.winfo_x()}+{self.master.winfo_y()}"
-        self.config.set("Window", "window_size", window_size)
-        self.config.set("Window", "window_position", window_position)
-        self.config.set("Window", "panes_swap_ew_var", str(self.panes_swap_ew_var.get()))
-        self.config.set("Window", "panes_swap_ns_var", str(self.panes_swap_ns_var.get()))
-        self.config.set("Window", "always_on_top_var", str(self.always_on_top_var.get()))
-
-
-    def save_autocomplete_settings(self):
-        self._add_section("Autocomplete")
-        self.config.set("Autocomplete", "csv_danbooru", str(self.csv_danbooru.get()))
-        self.config.set("Autocomplete", "csv_derpibooru", str(self.csv_derpibooru.get()))
-        self.config.set("Autocomplete", "csv_e621", str(self.csv_e621.get()))
-        self.config.set("Autocomplete", "csv_english_dictionary", str(self.csv_english_dictionary.get()))
-        self.config.set("Autocomplete", "suggestion_quantity", str(self.suggestion_quantity_var.get()))
-        self.config.set("Autocomplete", "use_colored_suggestions", str(self.colored_suggestion_var.get()))
-        self.config.set("Autocomplete", "suggestion_threshold", str(self.suggestion_threshold_var.get()))
-        self.config.set("Autocomplete", "last_word_match", str(self.last_word_match_var.get()))
-
-
-    def save_other_settings(self):
-        self._add_section("Other")
-        self.config.set("Other", "auto_save", str(self.auto_save_var.get()))
-        self.config.set("Other", "cleaning_text", str(self.cleaning_text_var.get()))
-        self.config.set("Other", "big_save_button", str(self.big_save_button_var.get()))
-        self.config.set("Other", "highlighting_duplicates", str(self.highlight_selection_var.get()))
-        self.config.set("Other", "truncate_stat_captions", str(self.truncate_stat_captions_var.get()))
-        self.config.set("Other", "process_image_stats", str(self.process_image_stats_var.get()))
-        self.config.set("Other", "use_mytags", str(self.use_mytags_var.get()))
-        self.config.set("Other", "auto_delete_blank_files", str(self.auto_delete_blank_files_var.get()))
-        self.config.set("Other", "thumbnails_visible", str(self.thumbnails_visible.get()))
-        self.config.set("Other", "edit_panel_visible", str(self.edit_panel_visible_var.get()))
-        self.config.set("Other", "image_quality", str(self.image_quality_var.get()))
-        self.config.set("Other", "font", str(self.font_var.get()))
-        self.config.set("Other", "font_size", str(self.font_size_var.get()))
-        self.config.set("Other", "list_mode", str(self.list_mode_var.get()))
-
-
-    def write_settings_to_file(self):
-        with open(self.app_settings_cfg, "w", encoding="utf-8") as f:
-            self.config.write(f)
-
-
-# --------------------------------------
-# Read
-# --------------------------------------
-    def read_settings(self):
-        try:
-            if os.path.exists(self.app_settings_cfg):
-                self.config.read(self.app_settings_cfg)
-                if not self.is_current_version():
-                    self.reset_settings()
-                    return
-                self.read_config_settings()
-                if hasattr(self, 'text_box'):
-                    self.show_pair()
-            else:
-                self.prompt_first_time_setup()
-        except Exception as e:
-            messagebox.showerror("Error: read_settings()", f"An unexpected error occurred.\n\n{e}")
-
-
-    def is_current_version(self):
-        return self.config.has_section("Version") and self.config.get("Version", "app_version", fallback=VERSION) == VERSION
-
-
-    def read_config_settings(self):
-        if not self.read_directory_settings():
-            return
-        #self.read_window_settings()
-        self.read_autocomplete_settings()
-        self.read_other_settings()
-
-
-    def read_directory_settings(self):
-        last_img_directory = self.config.get("Path", "last_img_directory", fallback=None)
-        if last_img_directory and os.path.exists(last_img_directory) and messagebox.askyesno("Confirmation", "Reload last directory?"):
-            self.external_image_editor_path = self.config.get("Path", "external_image_editor_path", fallback="mspaint")
-            self.load_order_var.set(value=self.config.get("Path", "load_order", fallback="Name (default)"))
-            self.reverse_load_order_var.set(value=self.config.getboolean("Path", "reverse_load_order", fallback=False))
-            self.image_dir.set(last_img_directory)
-            self.set_working_directory()
-            self.set_text_file_path(str(self.config.get("Path", "last_txt_directory", fallback=last_img_directory)))
-            last_index = int(self.config.get("Path", "last_index", fallback=1))
-            num_files = len([name for name in os.listdir(last_img_directory) if os.path.isfile(os.path.join(last_img_directory, name))])
-            self.jump_to_image(min(last_index, num_files))
-            return True
-        return False
-
-
-    def read_window_settings(self):
-        # Restore the panes swap state
-        self.panes_swap_ew_var.set(value=self.config.getboolean("Window", "panes_swap_ew_var", fallback=False))
-        self.panes_swap_ns_var.set(value=self.config.getboolean("Window", "panes_swap_ns_var", fallback=False))
-        self.swap_pane_sides(swap_state=self.panes_swap_ew_var.get())
-        self.swap_pane_orientation(swap_state=self.panes_swap_ns_var.get())
-        self.always_on_top_var.set(value=self.config.getboolean("Window", "always_on_top_var", fallback=False))
-        self.set_always_on_top()
-        # Restore the window size and position
-        #window_size = self.config.get("Window", "window_size", fallback=None)
-        #window_position = self.config.get("Window", "window_position", fallback=None)
-        #if window_size:
-        #    width, height = map(int, window_size.split('x'))
-        #    self.master.geometry(f"{width}x{height}")
-        #if window_position:
-        #    x, y = map(int, window_position.split('+'))
-        #    self.master.geometry(f"+{x}+{y}")
-        # Restore the minsize values
-        #current_min_width = self.master.minsize()[0]
-        #current_min_height = self.master.minsize()[1]
-        #self.master.minsize(current_min_width, current_min_height)
-
-
-    def read_autocomplete_settings(self):
-        self.csv_danbooru.set(value=self.config.getboolean("Autocomplete", "csv_danbooru", fallback=True))
-        self.csv_derpibooru.set(value=self.config.getboolean("Autocomplete", "csv_derpibooru", fallback=False))
-        self.csv_e621.set(value=self.config.getboolean("Autocomplete", "csv_e621", fallback=False))
-        self.csv_english_dictionary.set(value=self.config.getboolean("Autocomplete", "csv_english_dictionary", fallback=False))
-        self.suggestion_quantity_var.set(value=self.config.getint("Autocomplete", "suggestion_quantity", fallback=4))
-        self.colored_suggestion_var.set(value=self.config.getboolean("Autocomplete", "use_colored_suggestions", fallback=True))
-        self.suggestion_threshold_var.set(value=self.config.get("Autocomplete", "suggestion_threshold", fallback="Normal"))
-        self.last_word_match_var.set(value=self.config.getboolean("Autocomplete", "last_word_match", fallback=False))
-        self.update_autocomplete_dictionary()
-
-
-    def read_other_settings(self):
-        self.auto_save_var.set(value=self.config.getboolean("Other", "auto_save", fallback=False))
-        self.cleaning_text_var.set(value=self.config.getboolean("Other", "cleaning_text", fallback=True))
-        self.big_save_button_var.set(value=self.config.getboolean("Other", "big_save_button", fallback=True))
-        self.highlight_selection_var.set(value=self.config.getboolean("Other", "highlighting_duplicates", fallback=True))
-        self.truncate_stat_captions_var.set(value=self.config.getboolean("Other", "truncate_stat_captions", fallback=True))
-        self.process_image_stats_var.set(value=self.config.getboolean("Other", "process_image_stats", fallback=False))
-        self.use_mytags_var.set(value=self.config.getboolean("Other", "use_mytags", fallback=True))
-        self.auto_delete_blank_files_var.set(value=self.config.getboolean("Other", "auto_delete_blank_files", fallback=False))
-        self.thumbnails_visible.set(value=self.config.getboolean("Other", "thumbnails_visible", fallback=True))
-        self.edit_panel_visible_var.set(value=self.config.getboolean("Other", "edit_panel_visible", fallback=False))
-        self.toggle_edit_panel()
-        self.image_quality_var.set(value=self.config.get("Other", "image_quality", fallback="Normal"))
-        self.set_image_quality()
-        self.font_var.set(value=self.config.get("Other", "font", fallback="Courier New"))
-        self.font_size_var.set(value=self.config.getint("Other", "font_size", fallback=10))
-        self.list_mode_var.set(value=self.config.getboolean("Other", "list_mode", fallback=False))
-
-
-# --------------------------------------
-# Reset
-# --------------------------------------
-    def reset_settings(self):
-        if not messagebox.askokcancel("Confirm Reset", "Reset all settings to their default parameters?"):
-            return
-        # Path
-        self.set_text_file_path(str(self.image_dir.get()))
-        self.load_order_var.set(value="Name (default)")
-        self.reverse_load_order_var.set(value=False)
-        # Autocomplete
-        self.csv_danbooru.set(value=True)
-        self.csv_derpibooru.set(value=False)
-        self.csv_e621.set(value=False)
-        self.csv_english_dictionary.set(value=False)
-        self.colored_suggestion_var.set(value=True)
-        self.suggestion_quantity_var.set(value=4)
-        self.suggestion_threshold_var.set(value="Normal")
-        self.last_word_match_var.set(value=False)
-        # Other
-        self.clear_search_and_replace_tab()
-        self.clear_prefix_tab()
-        self.clear_append_tab()
-        self.revert_text_image_filter(clear=True)
-        self.clear_highlight_tab()
-        self.list_mode_var.set(value=False)
-        self.toggle_list_mode()
-        self.cleaning_text_var.set(value=True)
-        self.auto_save_var.set(value=False)
-        self.toggle_save_button_height(reset=True)
-        self.highlight_selection_var.set(value=True)
-        self.highlight_all_duplicates_var.set(value=False)
-        self.toggle_highlight_all_duplicates()
-        self.truncate_stat_captions_var.set(value=True)
-        self.process_image_stats_var.set(value=False)
-        self.use_mytags_var.set(value=True)
-        self.auto_delete_blank_files_var.set(value=False)
-        self.external_image_editor_path = "mspaint"
-        self.image_quality_var.set(value="Normal")
-        self.set_image_quality()
-        # Window
-        self.always_on_top_var.set(value=False)
-        self.set_always_on_top()
-        self.panes_swap_ew_var.set(value=False)
-        self.panes_swap_ns_var.set(value=False)
-        self.swap_pane_sides(swap_state=False)
-        self.swap_pane_orientation(swap_state=False)
-        self.set_window_size(self.master)
-        # Font and text_box
-        if hasattr(self, 'text_box'):
-            self.font_var.set(value="Courier New")
-            self.font_size_var.set(value=10)
-            self.size_scale.set(value=10)
-            self.font_size_tab6.config(text=f"Size: 10")
-            current_text = self.text_box.get("1.0", "end-1c")
-            self.text_box.config(font=(self.default_font, self.default_font_size))
-        self.load_pairs()
-        if hasattr(self, 'text_box'):
-            self.text_box.delete("1.0", "end")
-            self.text_box.insert("1.0", current_text)
-        if messagebox.askyesno("Confirm Reset", "Reset 'My Tags' to default?"):
-            with open(self.app_settings_cfg, 'w', encoding="utf-8") as cfg_file:
-                cfg_file.write("")
-            self.create_custom_dictionary(reset=True)
-        # Extra panels
-        self.thumbnails_visible.set(value=True)
-        self.update_thumbnail_panel()
-        self.edit_panel_visible_var.set(value=False)
-        self.toggle_edit_panel()
-        # Done
-        self.message_label.config(text="All settings reset!", bg="#6ca079", fg="white")
-        self.prompt_first_time_setup()
 
 
 #endregion
@@ -4270,7 +3996,7 @@ class ImgTxtViewer:
 
     def on_closing(self, event=None):
         try:
-            self.save_settings()
+            self.settings_manager.save_settings()
             self.delete_text_backup()
             self.check_working_directory()
             if os.path.isdir(os.path.join(self.image_dir.get(), 'Trash')):
@@ -4796,13 +4522,21 @@ class ImgTxtViewer:
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 
-    def set_window_size(self, master):
-        master.minsize(545, 200) # Width x Height
+    def set_window_size(self):
+        self.master.title(f"{VERSION} - img-txt Viewer")
+        self.master.minsize(545, 200) # Width x Height
         window_width = 1110
         window_height = 660
         position_right = root.winfo_screenwidth()//2 - window_width//2
         position_top = root.winfo_screenheight()//2 - window_height//2
         root.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
+        self.additional_window_setup()
+
+
+    def additional_window_setup(self):
+        self.set_always_on_top(initial=True)
+        self.master.attributes('-topmost', 0)
+        self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
 
     def set_icon(self):
@@ -4825,13 +4559,6 @@ class ImgTxtViewer:
 # --------------------------------------
 root = Tk()
 app = ImgTxtViewer(root)
-
-app.set_always_on_top()
-root.attributes('-topmost', 0)
-root.protocol("WM_DELETE_WINDOW", app.on_closing)
-root.title(f"{VERSION} - img-txt Viewer")
-
-app.read_settings()
 root.mainloop()
 
 
