@@ -710,7 +710,7 @@ class FindDupeFile:
 
     def _close_find_dupe_files(self):
         self.root.minsize(545, 200) # Width x Height
-        self.root.title(f"{self.version} - img-txt Viewer")
+        self.parent.sync_title_with_content()
         self.find_dupe_files_frame.grid_remove()
         self.menu.entryconfig("Find Duplicate Files...", command=self.parent.show_find_dupe_file)
         self.parent.show_primary_paned_window()

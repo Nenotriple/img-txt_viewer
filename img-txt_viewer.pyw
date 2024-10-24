@@ -34,6 +34,7 @@ import zipfile
 import itertools
 import statistics
 import subprocess
+from functools import partial
 from collections import defaultdict, Counter
 
 
@@ -172,7 +173,7 @@ class ImgTxtViewer:
         self.master = master
         self.application_path = self.get_app_path()
         self.set_appid()
-        self.set_window_size()
+        self.setup_window()
         self.set_icon()
         self.initial_class_setup()
         self.define_app_settings()
@@ -667,7 +668,7 @@ class ImgTxtViewer:
         self.save_button = ttk.Button(self.index_frame, text="Save", state="disabled", style="Blue.TButton", padding=(5, 5), command=self.save_text_file)
         self.save_button.pack(side="left", pady=2, fill="x", expand=True)
         ToolTip.create(self.save_button, "CTRL+S to save\n\nRight-Click to make the save button larger", 1000, 6, 12)
-        self.auto_save_checkbutton = ttk.Checkbutton(self.index_frame, width=10, text="Auto-save", state="disabled", variable=self.auto_save_var, command=self.change_message_label)
+        self.auto_save_checkbutton = ttk.Checkbutton(self.index_frame, width=10, text="Auto-save", state="disabled", variable=self.auto_save_var, command=self.sync_title_with_content)
         self.auto_save_checkbutton.pack(side="left")
 
 
@@ -682,16 +683,9 @@ class ImgTxtViewer:
         ToolTip.create(self.prev_button, "Hotkey: ALT+L\nHold shift to advance by 5", 1000, 6, 12)
 
 
-        # message Label
-        message_label_frame = Frame(self.master_control_frame)
-        message_label_frame.pack(pady=2)
-        self.message_label = Label(message_label_frame, text="No Change", state="disabled", width=35)
-        self.message_label.pack()
-
-
         # Suggestion text
         self.suggestion_textbox = Text(self.master_control_frame, height=1, borderwidth=0, highlightthickness=0, bg='#f0f0f0', state="disabled", cursor="arrow")
-        self.suggestion_textbox.pack(side="top", fill="x")
+        self.suggestion_textbox.pack(side="top", fill="x", pady=4)
         self.suggestion_textbox.bind("<Button-1>", self.disable_button)
         self.suggestion_textbox.bind("<B1-Motion>", self.disable_button)
         ToolTip.create(self.suggestion_textbox,
@@ -1073,10 +1067,10 @@ class ImgTxtViewer:
         self.text_box.bind("<Double-1>", lambda event: self.custom_select_word_for_text(event, self.text_box))
         self.text_box.bind("<Triple-1>", lambda event: self.custom_select_line_for_text(event, self.text_box))
         self.text_box.bind("<Button-1>", lambda event: (self.remove_tag(), self.clear_suggestions()))
-        self.text_box.bind("<Button-2>", lambda event: (self.delete_tag_under_mouse(event), self.change_message_label(event)))
+        self.text_box.bind("<Button-2>", lambda event: (self.delete_tag_under_mouse(event), self.sync_title_with_content(event)))
         self.text_box.bind("<Button-3>", lambda event: (self.show_textContext_menu(event)))
         # Update the autocomplete suggestion label after every KeyRelease event.
-        self.text_box.bind("<KeyRelease>", lambda event: (self.update_suggestions(event), self.change_message_label(event)))
+        self.text_box.bind("<KeyRelease>", lambda event: (self.update_suggestions(event), self.sync_title_with_content(event)))
         # Insert a newline after inserting an autocomplete suggestion when list_mode is active.
         self.text_box.bind('<comma>', self.insert_newline_listmode)
         # Highlight duplicates when selecting text with keyboard or mouse.
@@ -1088,9 +1082,9 @@ class ImgTxtViewer:
         self.text_box.bind("<Down>", lambda event: self.remove_highlight())
         self.text_box.bind("<Left>", lambda event: self.remove_highlight())
         self.text_box.bind("<Right>", lambda event: self.remove_highlight())
-        self.text_box.bind("<BackSpace>", lambda event: (self.remove_highlight(), self.change_message_label()))
-        # Sets the "message_label" whenever a key is pressed.
-        self.text_box.bind("<Key>", lambda event: self.change_message_label(event))
+        self.text_box.bind("<BackSpace>", lambda event: (self.remove_highlight(), self.sync_title_with_content()))
+        # Update the title status whenever a key is pressed.
+        self.text_box.bind("<Key>", lambda event: self.sync_title_with_content(event))
         # Disable normal button behavior
         self.text_box.bind("<Tab>", self.disable_button)
         self.text_box.bind("<Alt_L>", self.disable_button)
@@ -1119,14 +1113,14 @@ class ImgTxtViewer:
                         select_state = "normal"
                 except TclError:
                     pass
-                textContext_menu.add_command(label="Cut", accelerator="Ctrl+X", command=lambda: (widget_in_focus.event_generate('<<Cut>>'), self.change_message_label()))
+                textContext_menu.add_command(label="Cut", accelerator="Ctrl+X", command=lambda: (widget_in_focus.event_generate('<<Cut>>'), self.sync_title_with_content()))
                 textContext_menu.add_command(label="Copy", accelerator="Ctrl+C", command=lambda: (widget_in_focus.event_generate('<<Copy>>')))
-                textContext_menu.add_command(label="Paste", accelerator="Ctrl+V", command=lambda: (widget_in_focus.event_generate('<<Paste>>'), self.change_message_label()))
-                textContext_menu.add_command(label="Delete", accelerator="Del", command=lambda: (widget_in_focus.event_generate('<<Clear>>'), self.change_message_label()))
+                textContext_menu.add_command(label="Paste", accelerator="Ctrl+V", command=lambda: (widget_in_focus.event_generate('<<Paste>>'), self.sync_title_with_content()))
+                textContext_menu.add_command(label="Delete", accelerator="Del", command=lambda: (widget_in_focus.event_generate('<<Clear>>'), self.sync_title_with_content()))
                 textContext_menu.add_command(label="Refresh", accelerator="F5", command=self.refresh_text_box)
                 textContext_menu.add_separator()
-                textContext_menu.add_command(label="Undo", accelerator="Ctrl+Z", command=lambda: (widget_in_focus.event_generate('<<Undo>>'), self.change_message_label()))
-                textContext_menu.add_command(label="Redo", accelerator="Ctrl+Y", command=lambda: (widget_in_focus.event_generate('<<Redo>>'), self.change_message_label()))
+                textContext_menu.add_command(label="Undo", accelerator="Ctrl+Z", command=lambda: (widget_in_focus.event_generate('<<Undo>>'), self.sync_title_with_content()))
+                textContext_menu.add_command(label="Redo", accelerator="Ctrl+Y", command=lambda: (widget_in_focus.event_generate('<<Redo>>'), self.sync_title_with_content()))
                 textContext_menu.add_separator()
                 textContext_menu.add_command(label="Open Text Directory...", command=self.open_text_directory)
                 textContext_menu.add_command(label="Open Text File...", command=self.open_textfile)
@@ -1458,7 +1452,6 @@ class ImgTxtViewer:
         self.index_pair_label.configure(state="normal")
         self.image_index_entry.configure(state="normal")
         self.total_images_label.configure(state="normal")
-        self.message_label.configure(state="normal")
         self.save_button.configure(state="normal")
         self.next_button.configure(state="normal")
         self.prev_button.configure(state="normal")
@@ -2238,12 +2231,16 @@ class ImgTxtViewer:
             suggestion_color = self.suggestion_colors[color_index]
             bullet_symbol = "⚫" if index == self.selected_suggestion_index else "⚪"
             suggestions_to_insert.append((bullet_symbol, suggestion_text, suggestion_color))
-        for bullet_symbol, suggestion_text, suggestion_color in suggestions_to_insert:
+        for index, (bullet_symbol, suggestion_text, suggestion_color) in enumerate(suggestions_to_insert):
+            tag_name = f"suggestion_tag_{index}"
             self.suggestion_textbox.insert('end', bullet_symbol)
-            self.suggestion_textbox.insert('end', suggestion_text, suggestion_color)
+            self.suggestion_textbox.insert('end', suggestion_text, (tag_name, suggestion_color))
             self.suggestion_textbox.tag_config(suggestion_color, foreground=suggestion_color, font=('Segoe UI', '9'))
-            self.suggestion_textbox.insert('end', ', ')
-        self.suggestion_textbox.delete('end-2c', 'end')
+            self.suggestion_textbox.tag_bind(tag_name, '<Button-1>', partial(self.on_suggestion_click, index))
+            self.suggestion_textbox.tag_bind(tag_name, '<Enter>', lambda event: self.suggestion_textbox.config(cursor="hand2"))
+            self.suggestion_textbox.tag_bind(tag_name, '<Leave>', lambda event: self.suggestion_textbox.config(cursor=""))
+            if index < len(suggestions_to_insert) - 1:
+                self.suggestion_textbox.insert('end', ', ')
         self.suggestion_textbox.config(state='disabled')
 
 
@@ -2305,6 +2302,12 @@ class ImgTxtViewer:
             if called_from_insert and self.text_box.index("insert") != self.text_box.index("end-1c"):
                 self.text_box.mark_set("insert", "insert-1l")
             return 'break'
+
+
+    def on_suggestion_click(self, suggestion_index, event=None):
+        selected_suggestion, _ = self.suggestions[suggestion_index]
+        self.insert_selected_suggestion(selected_suggestion.strip())
+        self.clear_suggestions()
 
 
 ### Suggestion Settings ##################################################
@@ -2471,10 +2474,10 @@ class ImgTxtViewer:
 
 
     def load_pairs(self):
+        self.master.title(self.title)
         self.info_text.pack_forget()
         current_image_path = self.image_files[self.current_index] if self.image_files else None
         self.refresh_file_lists()
-        self.message_label.config(text="No Change", bg="#f0f0f0", fg="black")
         self.enable_menu_options()
         self.create_text_box()
         self.restore_previous_index(current_image_path)
@@ -2713,7 +2716,7 @@ class ImgTxtViewer:
         self.is_alt_arrow_pressed = True
         self.check_image_dir()
         if not self.text_modified_var:
-            self.message_label.config(text="No Change", bg="#f0f0f0", fg="black")
+            self.master.title(self.title)
         self.text_box.config(undo=False)
         self.text_box.edit_reset()
         if self.auto_save_var.get() and save:
@@ -2759,7 +2762,7 @@ class ImgTxtViewer:
             self.current_index = index
             self.show_pair()
             if not self.text_modified_var:
-                self.message_label.config(text="No Change", bg="#f0f0f0", fg="black")
+                pass
             self.image_index_entry.delete(0, "end")
             self.image_index_entry.insert(0, index + 1)
         except ValueError:
@@ -2817,7 +2820,7 @@ class ImgTxtViewer:
                 self.text_box.delete("1.0", "end")
                 self.text_box.insert("end", file_content)
                 self.text_modified_var = False
-                self.message_label.config(text="No Change", bg="#f0f0f0", fg="black")
+                self.master.title(self.title)
                 self.toggle_list_mode()
 
 
@@ -2866,11 +2869,11 @@ class ImgTxtViewer:
                     filedata = filedata.replace(search_string, replace_string)
                 with open(text_file, 'w', encoding="utf-8") as file:
                     file.write(filedata)
-            except Exception:
-                pass
+            except Exception as e:
+                messagebox.showerror("Error: search_and_replace()", f"An error occurred while trying to replace text in {text_file}.\n\n{e}")
         self.cleanup_all_text_files(show_confirmation=False)
         self.show_pair()
-        self.message_label.config(text="Search & Replace Complete!", bg="#6ca079", fg="white")
+        messagebox.showinfo("Search and Replace", "Search and Replace completed successfully.")
 
 
     def prefix_text_files(self):
@@ -2897,10 +2900,11 @@ class ImgTxtViewer:
                         content = file.read()
                         file.seek(0, 0)
                         file.write(prefix_text + content)
-            except Exception: pass
+            except Exception as e:
+                messagebox.showerror("Error: prefix_text_files()", f"An error occurred while trying to prefix text in {text_file}.\n\n{e}")
         self.cleanup_all_text_files(show_confirmation=False)
         self.show_pair()
-        self.message_label.config(text="Prefix Text Complete!", bg="#6ca079", fg="white")
+        messagebox.showinfo("Prefix", "Prefix completed successfully.")
 
 
     def append_text_files(self):
@@ -2925,10 +2929,11 @@ class ImgTxtViewer:
                 else:
                     with open(text_file, 'a', encoding="utf-8") as file:
                         file.write(append_text)
-            except Exception: pass
+            except Exception as e:
+                messagebox.showerror("Error: append_text_files()", f"An error occurred while trying to append text in {text_file}.\n\n{e}")
         self.cleanup_all_text_files(show_confirmation=False)
         self.show_pair()
-        self.message_label.config(text="Append Text Complete!", bg="#6ca079", fg="white")
+        messagebox.showinfo("Append", "Append completed successfully.")
 
 
     def filter_text_image_pairs(self):  # Filter
@@ -2980,7 +2985,7 @@ class ImgTxtViewer:
             self.total_images_label.config(text=f"of {len(self.image_files)}")
         self.current_index = 0
         self.show_pair()
-        self.message_label.config(text="Filter Applied!", bg="#6ca079", fg="white")
+        messagebox.showinfo("Filter", f"Filter applied successfully.\n\n{len(self.image_files)} images found.")
         self.revert_filter_button.config(style="Red.TButton")
         self.revert_filter_button_tooltip.config(text="Filter is active\n\nClear any filtering applied")
         if not self.image_files:
@@ -2988,7 +2993,6 @@ class ImgTxtViewer:
             self.image_index_entry.insert(0, "0")
             self.primary_display_image.config(image=self.blank_image)
             self.text_box.delete("1.0", "end")
-            self.message_label.config(text="No matches found", bg="#fd8a8a", fg="white")
             self.label_image_stats.config(text="No image! -- Check filters?", anchor="w")
 
 
@@ -3001,7 +3005,7 @@ class ImgTxtViewer:
         self.update_image_file_count()
         self.current_index = 0
         self.show_pair()
-        self.message_label.config(text="Filter Cleared!", bg="#6ca079", fg="white")
+        messagebox.showinfo("Filter", "Filter has been cleared.")
         self.revert_filter_button.config(style="")
         self.revert_filter_button_tooltip.config(text="Filter is inactive\n\nClear any filtering applied")
         self.filter_empty_files_var.set(False)
@@ -3307,11 +3311,11 @@ class ImgTxtViewer:
                 image_path = self.image_files[image_index]
                 subprocess.Popen([app_path, image_path])
         except FileNotFoundError:
-            messagebox.showerror("Error", f"The specified image editor was not found:\n\n{app_path}")
+            messagebox.showerror("Error: open_image_in_editor()", f"The specified image editor was not found:\n\n{app_path}")
         except PermissionError as e:
-            messagebox.showerror("Error", f"Permission denied: {e}")
+            messagebox.showerror("Error: open_image_in_editor()", f"Permission denied: {e}")
         except Exception as e:
-            messagebox.showerror("Error", f"An error occurred while opening the image in the editor:\n\n{e}")
+            messagebox.showerror("Error: open_image_in_editor()", f"An error occurred while opening the image in the editor:\n\n{e}")
 
 
     def set_external_image_editor_path(self):
@@ -3333,11 +3337,9 @@ class ImgTxtViewer:
 #region - Misc Functions
 
 
-    def change_message_label(self, event=None):
+    def sync_title_with_content(self, event=None):
         if event and self.ignore_key_event(event):
             return
-        if self.auto_save_var.get():
-            self.message_label.config(text="Changes are autosaved", bg="#5da9be", fg="white")
         else:
             if self.current_index < len(self.text_files):
                 text_file = self.text_files[self.current_index]
@@ -3347,11 +3349,9 @@ class ImgTxtViewer:
                 except FileNotFoundError:
                     file_content = ""
                 if self.text_box.get("1.0", "end-1c") == file_content:
-                    self.message_label.config(text="No Change", bg="#f0f0f0", fg="black")
+                    self.master.title(self.title)
                 else:
-                    self.message_label.config(text="Changes not saved", bg="#fd8a8a", fg="white")
-            else:
-                self.message_label.config(text="No file selected", bg="#fd8a8a", fg="white")
+                    self.master.title(self.title + " ⚪")
 
 
     def disable_button(self, event):
@@ -3379,7 +3379,7 @@ class ImgTxtViewer:
             self.options_subMenu.entryconfig("List View", state="disabled")
             if self.list_mode_var.get():
                 self.toggle_list_mode(skip=True)
-            if self.message_label.cget("text") in ["No Change", "Saved", "Changes Saved!", "Text Files Cleaned up!", "Filter Cleared!", "Filter Applied!"]:
+            if not self.master.title().endswith(" ⚪"):
                 if self.filepath_contains_images_var:
                     self.refresh_text_box()
             self.list_mode_var.set(False)
@@ -3657,7 +3657,7 @@ class ImgTxtViewer:
         self.tab8_stats_textbox.insert("1.0", stats_text)
         self.tab8_stats_textbox.config(state="disabled")
         if manual_refresh:
-            self.message_label.config(text="Stats Calculated!", bg="#6ca079", fg="white")
+            messagebox.showinfo("Stats Calculated", "Stats have been updated!")
 
 
 #endregion
@@ -3714,17 +3714,18 @@ class ImgTxtViewer:
             user_confirmation = messagebox.askokcancel("Clean-Text", "This operation will clean all text files from typos like:\nDuplicate tags, Extra commas, Extra spaces, trailing commas/spaces, commas without spaces, and more.\n\nExample Cleanup:\n  From: dog,solo,  ,happy  ,,\n       To: dog, solo, happy")
             if not user_confirmation:
                 return
-            self.message_label.config(text="Text Files Cleaned Up!", bg="#6ca079", fg="white")
-        for text_file in self.text_files:
-            if os.path.exists(text_file):
-                with open(text_file, "r+", encoding="utf-8") as f:
-                    text = f.read().strip()
-                    cleaned_text = self.cleanup_text(text)
-                    f.seek(0)
-                    f.write(cleaned_text)
-                    f.truncate()
-            else:
-                return
+        try:
+            for text_file in self.text_files:
+                if os.path.exists(text_file):
+                    with open(text_file, "r+", encoding="utf-8") as f:
+                        text = f.read().strip()
+                        cleaned_text = self.cleanup_text(text)
+                        f.seek(0)
+                        f.write(cleaned_text)
+                        f.truncate()
+            messagebox.showinfo("Success", "All text files have been cleaned!")
+        except Exception as e:
+            messagebox.showerror("Error: cleanup_all_text_files()", f"An unexpected error occurred: {str(e)}")
         self.show_pair()
 
 
@@ -3855,9 +3856,9 @@ class ImgTxtViewer:
                 if self.cleaning_text_var.get() or self.list_mode_var.get():
                     self.refresh_text_box()
                 if file_saved:
-                    self.message_label.config(text="Saved", bg="#6ca079", fg="white")
+                    self.master.title(self.title)
                 else:
-                    self.message_label.config(text="No Change", bg="#f0f0f0", fg="black")
+                    self.master.title(self.title)
         except (PermissionError, IOError, TclError) as e:
             messagebox.showerror("Error: save_text_file()", f"An error occurred while saving the current text file.\n\n{e}")
 
@@ -3900,7 +3901,7 @@ class ImgTxtViewer:
 
 
     def check_saved_and_quit(self):
-        if self.message_label.cget("text") in ["No Change", "Saved", "Changes Saved!", "Text Files Cleaned up!", "Filter Cleared!", "Filter Applied!"]:
+        if not self.master.title().endswith(" ⚪"):
             root.destroy()
         elif self.auto_save_var.get():
             self.cleanup_all_text_files(show_confirmation=False)
@@ -4258,7 +4259,7 @@ class ImgTxtViewer:
                     os.rename(original_file, original_file.replace('.bak', '.txt'))
                     os.utime(original_file, (time.time(), time.time()))
                     os.remove(os.path.join(backup_dir, backup_file))
-                    self.message_label.config(text="Files Restored", bg="#6ca079", fg="white")
+                    messagebox.showinfo("Success", "All text files have been restored from the latest backup!")
                 except Exception:
                     pass
         self.refresh_text_box()
@@ -4414,8 +4415,9 @@ class ImgTxtViewer:
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 
-    def set_window_size(self):
-        self.master.title(f"{VERSION} - img-txt Viewer")
+    def setup_window(self):
+        self.title = f"{VERSION} - img-txt Viewer"
+        self.master.title(self.title)
         self.master.minsize(545, 200) # Width x Height
         window_width = 1110
         window_height = 660
@@ -4505,6 +4507,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 - New tool `Create Wildcard From Captions`: Combine all image captions into a single text file, each set of image captions separated by a newline.
 - Added `Copy` command to the right-click textbox context menu.
 - Added `Last` to the index entry right-click context menu to quickly jump to the last img-txt pair.
+- Now you can insert a suggestion by simply clicking it.
 - A quick guided setup will run on the app's first launch, or if the settings file is deleted/reset.
   - This will set the preferred autocomplete dictionaries and matching settings.
 - You can now press `CTRL+W` to close the current window.
@@ -4541,6 +4544,9 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 - The `Options`, and `Tools` menus have been reorganized.
 - The color mode is now displayed in the image info panel.
 - You can now close the `Crop Image` window with the `Escape` key.
+- The message box is now removed.
+  - You can now check the title for a visual indicator of the text state.
+  - All tools that used the message box for notifications now use a message popup.
 - I have switched to Windows 11, so that's now the target operating system for this project. You may notice some UI changes.
   - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
 
@@ -4594,17 +4600,10 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
   - (Low) Find Dupe Files, could/should automatically move captions if they are found.
 
-  - (Low) New interface ideas:
-    - ...
-
   - (Very Low) Create a `Danbooru (safe)` autocomplete dictionary. (I have no idea how to effectively filter the naughty words.)
 
 
 - Tofix
-
-  - (High) Batch Tag Edit: Switching to BTE before selecting a directory and then switching back breaks the app.
-    - Currently BTE only works with the selected directory, so it would be easy to simply prevent BTE from being used without a directory selected.
-    - But it would be handy if BTE could allow the user to select a different directory.
 
   - (Med) Image info, and thumbnail cache doesn't update when the image is changed.
     - This is because the cache is built using the filename as the key.

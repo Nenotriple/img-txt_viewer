@@ -571,7 +571,7 @@ class BatchTagEdit:
 
     def close_batch_tag_edit(self, event=None):
         self.root.minsize(545, 200) # Width x Height
-        self.root.title(f"{self.version} - img-txt Viewer")
+        self.parent.sync_title_with_content()
         self.batch_tag_edit_frame.grid_remove()
         self.root.bind('<F5>', self.parent.show_batch_tag_edit)
         self.menu.entryconfig("Batch Tag Edit...", command=self.parent.show_batch_tag_edit)

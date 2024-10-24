@@ -252,7 +252,7 @@ class SettingsManager:
         self.parent.panes_swap_ns_var.set(value=False)
         self.parent.swap_pane_sides(swap_state=False)
         self.parent.swap_pane_orientation(swap_state=False)
-        self.parent.set_window_size(self.root)
+        self.parent.setup_window()
         # Font and text_box
         if hasattr(self, 'text_box'):
             self.parent.font_var.set(value="Courier New")
@@ -275,5 +275,5 @@ class SettingsManager:
         self.parent.edit_panel_visible_var.set(value=False)
         self.parent.toggle_edit_panel()
         # Done
-        self.parent.message_label.config(text="All settings reset!", bg="#6ca079", fg="white")
+        self.parent.sync_title_with_content()
         self.parent.prompt_first_time_setup()

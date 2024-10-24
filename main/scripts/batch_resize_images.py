@@ -471,7 +471,7 @@ class BatchResizeImages:
 
     def close_batch_resize_images(self, event=None):
         self.root.minsize(545, 200) # Width x Height
-        self.root.title(f"{self.version} - img-txt Viewer")
+        self.parent.sync_title_with_content()
         self.batch_resize_images_frame.grid_remove()
         self.menu.entryconfig("Batch Resize Images...", command=self.parent.show_batch_resize_images)
         self.parent.show_primary_paned_window()
