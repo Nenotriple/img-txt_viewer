@@ -30,7 +30,7 @@ from tkinter.filedialog import askdirectory
 
 # Third-Party Libraries
 from PIL import Image, ImageSequence
-
+from TkToolTip.TkToolTip import TkToolTip as ToolTip
 
 #endregion
 ################################################################################################################################################
@@ -38,46 +38,38 @@ from PIL import Image, ImageSequence
 
 
 class Upscale:
-    def __init__(self, master, ImgTxtViewer, ToolTip, filepath, window_x, window_y, batch, update_pair, jump_to_image):
-        self.top = Toplevel(master, borderwidth=2, relief="groove")
-        self.top.overrideredirect("true")
-        self.top.geometry("+{}+{}".format(window_x, window_y))
-        self.top.grab_set()
-        self.top.focus_force()
-        self.top.bind("<Escape>", self.close_window)
-        self.top.bind("<Return>", self.determine_image_type)
-
+    def __init__(self, parent, root, filepath, batch, window_x, window_y):
+        self.parent = parent
+        self.root = root
+        self.filepath = filepath
         self.batch_mode = batch
-        self.batch_filepath = os.path.dirname(filepath)
 
+        # Other Filepaths
+        self.executable_path = os.path.join(self.parent.application_path, "main/resrgan/realesrgan-ncnn-vulkan.exe")
+        self.extra_models_path = os.path.join(self.parent.application_path, "models".lower())
+        self.batch_filepath = os.path.dirname(self.filepath)
+        self.converted_filepath = None
+
+        # Supported Filetypes
         self.supported_filetypes = (".png", ".webp", ".jpg", ".jpeg", ".jpg_large", ".jfif", ".tif", ".tiff", ".bmp", ".gif")
 
-        self.executable_path = "main/resrgan/realesrgan-ncnn-vulkan.exe"
+        # Included Models
+        self.ncnn_models = ["realesr-animevideov3-x4", "RealESRGAN_General_x4_v3", "realesrgan-x4plus", "realesrgan-x4plus-anime", "AnimeSharp-4x", "UltraSharp-4x"]
 
-        self.ImgTxtViewer = ImgTxtViewer
-        self.sort_key = self.ImgTxtViewer.get_file_sort_key()
-        self.reverse_sort_direction_var = self.ImgTxtViewer.reverse_load_order_var.get()
-        self.ImgTxt_update_pair = update_pair
-        self.ImgTxt_jump_to_image = jump_to_image
-
-        self.total_images = len([file for file in os.listdir(self.batch_filepath) if file.lower().endswith(self.supported_filetypes)])
-
-        self.ToolTip = ToolTip
-
-        self.batch_thread = False
+        # Window Dragging
         self.start_x = None
         self.start_y = None
 
-        self.original_filepath = filepath
-        self.converted_filepath = None
-
+        # Other Variables
+        self.batch_thread = False
         self.total_gif_frames = None
         self.current_gif_frame = None
-
         self.is_window_closed = False
+        self.total_images = len([file for file in os.listdir(self.batch_filepath) if file.lower().endswith(self.supported_filetypes)])
 
-
+        # Continue startup...
         self.get_image_info()
+        self.create_window(window_x, window_y)
         self.create_interface()
         self.update_size_info_label()
 
@@ -87,8 +79,17 @@ class Upscale:
 #region -  Setup Interface
 
 
-    def create_interface(self):
+    def create_window(self, window_x, window_y):
+        self.top = Toplevel(self.root, borderwidth=2, relief="groove")
+        self.top.overrideredirect("true")
+        self.top.geometry("+{}+{}".format(window_x, window_y))
+        self.top.grab_set()
+        self.top.focus_force()
+        self.top.bind("<Escape>", self.close_window)
+        self.top.bind("<Return>", self.determine_image_type)
 
+
+    def create_interface(self):
         self.frame_container = Frame(self.top)
         self.frame_container.pack(expand=True, fill="both")
 
@@ -125,7 +126,7 @@ class Upscale:
             self.entry_batch_upscale_path = ttk.Entry(frame_input_batch_directory, width=50, textvariable=self.batch_upscale_path)
             self.entry_batch_upscale_path.pack(side="left", fill="x", padx=5, pady=5)
             self.entry_batch_upscale_path.config()
-            self.input_tooltip = self.ToolTip.create(self.entry_batch_upscale_path, self.batch_upscale_path.get(), 250, 6, 12)
+            self.input_tooltip = ToolTip.create(self.entry_batch_upscale_path, self.batch_upscale_path.get(), 250, 6, 12)
 
             self.button_browse_batch_input = ttk.Button(frame_input_batch_directory, text="Browse...", command=lambda: self.choose_directory(self.batch_upscale_path, self.input_tooltip))
             self.button_browse_batch_input.pack(side="left", fill="x", padx=2, pady=2)
@@ -144,7 +145,7 @@ class Upscale:
 
             self.entry_batch_output_path = ttk.Entry(frame_output_batch_directory, width=50, textvariable=self.batch_output_path)
             self.entry_batch_output_path.pack(side="left", fill="x", padx=5, pady=5)
-            self.output_tooltip = self.ToolTip.create(self.entry_batch_output_path, self.batch_output_path.get(), 250, 6, 12)
+            self.output_tooltip = ToolTip.create(self.entry_batch_output_path, self.batch_output_path.get(), 250, 6, 12)
 
             self.browse_batch_output_button = ttk.Button(frame_output_batch_directory, text="Browse...", command=lambda: self.choose_directory(self.batch_output_path, self.output_tooltip))
             self.browse_batch_output_button.pack(side="left", fill="x", padx=2, pady=2)
@@ -158,9 +159,9 @@ class Upscale:
 
         self.label_upscale_model = Label(frame_model, text="Upscale Model")
         self.label_upscale_model.pack(anchor="w", side="top", padx=5, pady=5)
-        self.combobox_upscale_model = ttk.Combobox(frame_model, width=25, state="readonly", values=["realesr-animevideov3-x4", "RealESRGAN_General_x4_v3", "realesrgan-x4plus", "realesrgan-x4plus-anime"])
+        self.combobox_upscale_model = ttk.Combobox(frame_model, width=25, state="readonly", values=self.find_additional_models())
         self.combobox_upscale_model.pack(side="top", fill="x", padx=5, pady=5)
-        self.ToolTip.create(self.combobox_upscale_model, "Select the RESRGAN upscale model", 250, 6, 12)
+        ToolTip.create(self.combobox_upscale_model, "Select the RESRGAN upscale model", 250, 6, 12)
         self.combobox_upscale_model.set("realesr-animevideov3-x4")
 
 
@@ -172,7 +173,7 @@ class Upscale:
         self.upscale_factor_value = DoubleVar(value=2.00)
         self.slider_upscale_factor = ttk.Scale(frame_size, from_=0.25, to=8.00, orient="horizontal", variable=self.upscale_factor_value, command=self.update_upscale_factor_label)
         self.slider_upscale_factor.pack(side="left", fill="x", expand=True, padx=5, pady=5)
-        self.ToolTip.create(self.slider_upscale_factor, "Determines the final size of the image.\n\nImages are first upscaled by 4x and then resized according to the selected upscale factor.\n\nThe final resolution is calculated as: (4 * original size) / upscale factor.", 250, 6, 12)
+        ToolTip.create(self.slider_upscale_factor, "Determines the final size of the image.\n\nImages are first upscaled by 4x and then resized according to the selected upscale factor.\n\nThe final resolution is calculated as: (4 * original size) / upscale factor.", 250, 6, 12)
         self.label_upscale_factor_value = Label(frame_size, textvariable=self.upscale_factor_value, width=5)
         self.label_upscale_factor_value.pack(side="left", anchor="w", padx=5, pady=5)
 
@@ -185,7 +186,7 @@ class Upscale:
         self.upscale_strength_value = IntVar(value=100)
         self.slider_upscale_strength = ttk.Scale(frame_slider, from_=0, to=100, orient="horizontal", command=self.update_strength_label)
         self.slider_upscale_strength.pack(side="left", fill="x", expand=True, padx=5, pady=5)
-        self.ToolTip.create(self.slider_upscale_strength, "Adjust the upscale strength to determine the final blending value of the output image.\n\n0% = Only original image, 100% = Only upscaled image.", 250, 6, 12)
+        ToolTip.create(self.slider_upscale_strength, "Adjust the upscale strength to determine the final blending value of the output image.\n\n0% = Only original image, 100% = Only upscaled image.", 250, 6, 12)
         self.label_upscale_strength_percent = Label(frame_slider, width=5)
         self.label_upscale_strength_percent.pack(anchor="w", side="left", padx=5, pady=5)
         self.slider_upscale_strength.set(100)
@@ -239,7 +240,7 @@ class Upscale:
             label_current.pack(anchor="w", side="top", padx=5, pady=5)
             label_new = Label(self.frame_labels, text="New Size:")
             label_new.pack(anchor="w", side="top", padx=5, pady=5)
-            if self.original_filepath.lower().endswith(".gif"):
+            if self.filepath.lower().endswith(".gif"):
                 label_frames = Label(self.frame_labels, text="Frames:")
                 label_frames.pack(anchor="w", side="top", padx=5, pady=5)
 
@@ -251,8 +252,8 @@ class Upscale:
             self.label_current_dimensions.pack(anchor="w", side="top", padx=5, pady=5)
             self.label_new_dimensions = Label(self.frame_dimensions, text="0 x 0", width=20)
             self.label_new_dimensions.pack(anchor="w", side="top", padx=5, pady=5)
-            self.ToolTip.create(self.label_new_dimensions, " The final size of the image after upscaling ", 250, 6, 12)
-            if self.original_filepath.lower().endswith(".gif"):
+            ToolTip.create(self.label_new_dimensions, " The final size of the image after upscaling ", 250, 6, 12)
+            if self.filepath.lower().endswith(".gif"):
                 self.label_framecount = Label(self.frame_dimensions, text=f"{self.current_gif_frame} of {self.total_gif_frames}", width=20)
                 self.label_framecount.pack(anchor="w", side="top", padx=5, pady=5)
 
@@ -283,9 +284,9 @@ class Upscale:
         if self.batch_mode:
             self.batch_upscale()
         else:
-            directory, filename = os.path.split(self.original_filepath)
+            directory, filename = os.path.split(self.filepath)
             filename, extension = os.path.splitext(filename)
-            gif_path = self.original_filepath
+            gif_path = self.filepath
             self.set_widget_state(state="disabled")
             if extension.lower() == '.gif':
                 self._upscale_gif(gif_path)
@@ -320,7 +321,7 @@ class Upscale:
                     break
                 file_path = os.path.join(input_path, filename)
                 if os.path.isfile(file_path) and filename.lower().endswith(self.supported_filetypes):
-                    self.original_filepath = file_path
+                    self.filepath = file_path
                     if filename.lower().endswith('.gif'):
                         if not self.batch_thread:
                             self.batch_upscale_cancel_message(count)
@@ -376,13 +377,19 @@ class Upscale:
                 frame.save(temp_frame_path)
                 upscaled_frame_path = os.path.join(temp_dir, f"frame_{i}_upscaled.png")
                 self.top.update()
-                subprocess.run([self.executable_path,
-                                "-i", temp_frame_path,
-                                "-o", upscaled_frame_path,
-                                "-n", model,
-                                "-s", "4",
-                                "-f", "jpg"],
-                                creationflags=subprocess.CREATE_NO_WINDOW)
+                upscale_command = [
+                    self.executable_path,
+                    "-i", temp_frame_path,
+                    "-o", upscaled_frame_path,
+                    "-n", model,
+                    "-s", "4",
+                    "-f", "jpg"]
+                if model not in self.ncnn_models:
+                    upscale_command.extend(["-m", self.extra_models_path])
+                upscale_process = subprocess.Popen(upscale_command, creationflags=subprocess.CREATE_NO_WINDOW)
+                upscale_process.wait()
+                self.top.update()
+                self.top.update_idletasks()
                 self.resize_image(upscaled_frame_path)
                 if os.path.exists(upscaled_frame_path):
                     if self.upscale_strength_value.get() != 100:
@@ -413,23 +420,27 @@ class Upscale:
             messagebox.showerror("Error: _upscale_gif()", f"An error occurred.\n\n{e}")
             self.close_window()
 
+
     def upscale_image(self, batch_mode=False, output_path=None):
         try:
             self.button_upscale.config(state="disabled")
             self.update_progress(25)
-            directory, filename = os.path.split(self.original_filepath)
+            directory, filename = os.path.split(self.filepath)
             filename, extension = os.path.splitext(filename)
             if extension.lower() == '.webp':
                 extension = self.convert_webp_to_jpg(directory, filename)
             output_image_path = os.path.join(output_path if batch_mode else directory, f"{filename}{extension}" if batch_mode else f"{filename}_up{extension}")
             model = str(self.combobox_upscale_model.get())
-            upscale_process = subprocess.Popen([self.executable_path,
-                              "-i", self.original_filepath,
-                              "-o", output_image_path,
-                              "-n", model,
-                              "-s", "4",
-                              "-f", "jpg"],
-                              creationflags=subprocess.CREATE_NO_WINDOW)
+            upscale_command = [
+                self.executable_path,
+                "-i", self.filepath,
+                "-o", output_image_path,
+                "-n", model,
+                "-s", "4",
+                "-f", "jpg"]
+            if model not in self.ncnn_models:
+                upscale_command.extend(["-m", self.extra_models_path])
+            upscale_process = subprocess.Popen(upscale_command, creationflags=subprocess.CREATE_NO_WINDOW)
             self.update_progress(40)
             upscale_process.wait()
             self.update_progress(60)
@@ -437,7 +448,7 @@ class Upscale:
             self.update_progress(80)
             self.delete_converted_image()
             if self.upscale_strength_value.get() != 100:
-                self.blend_images(self.original_filepath, output_image_path, extension)
+                self.blend_images(self.filepath, output_image_path, extension)
             self.update_progress(99)
             if not batch_mode:
                 time.sleep(0.1)
@@ -445,8 +456,8 @@ class Upscale:
                 self.close_window(index)
                 result = messagebox.askyesno("Upscale Successful", f"Output path:\n{output_image_path}\n\nOpen image?")
                 if result:
-                   os.startfile(output_image_path)
-        except (Exception) as e:
+                    os.startfile(output_image_path)
+        except Exception as e:
             messagebox.showerror("Error: upscale_image()", f"An error occurred.\n\n{e}")
             self.close_window()
 
@@ -464,7 +475,7 @@ class Upscale:
 
     def get_image_index(self, directory, filename):
         filename = os.path.basename(filename)
-        image_files = sorted((file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)), key=self.sort_key, reverse=self.reverse_sort_direction_var)
+        image_files = sorted((file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)), key=self.parent.get_file_sort_key(), reverse=self.parent.reverse_load_order_var.get())
         return image_files.index(filename) if filename in image_files else -1
 
 
@@ -542,9 +553,9 @@ class Upscale:
 
     def get_image_info(self):
         try:
-            with Image.open(self.original_filepath) as image:
+            with Image.open(self.filepath) as image:
                 self.original_image_width, self.original_image_height = image.size
-                if self.original_filepath.lower().endswith(".gif"):
+                if self.filepath.lower().endswith(".gif"):
                     frames = [frame for frame in ImageSequence.Iterator(image)]
                     self.total_gif_frames = len(frames)
                     self.current_gif_frame = format(1, f'0{len(str(self.total_gif_frames))}d')
@@ -611,8 +622,20 @@ class Upscale:
                 widget.config(state=state)
 
 
+    def find_additional_models(self):
+        if not os.path.exists(self.extra_models_path):
+            return
+        all_files = os.listdir(self.extra_models_path)
+        bin_files = {os.path.splitext(f)[0] for f in all_files if f.endswith('.bin')}
+        param_files = {os.path.splitext(f)[0] for f in all_files if f.endswith('.param')}
+        paired_models = bin_files & param_files
+        additional_models = [model for model in paired_models if model not in self.ncnn_models]
+        combined_models = self.ncnn_models + additional_models
+        return combined_models
+
+
     def convert_webp_to_jpg(self, directory, filename):
-        with Image.open(self.original_filepath) as img:
+        with Image.open(self.filepath) as img:
             if img.mode == "RGBA":
                 img = img.convert("RGB")
             jpg_filepath = os.path.join(directory, f"{filename}.jpg")
@@ -631,7 +654,7 @@ class Upscale:
 
     def delete_temp_dir(self):
         try:
-            temp_dir = os.path.join(os.path.dirname(self.original_filepath), "temp_upscale_img")
+            temp_dir = os.path.join(os.path.dirname(self.filepath), "temp_upscale_img")
             if os.path.exists(temp_dir):
                 shutil.rmtree(temp_dir)
         except (PermissionError, FileNotFoundError):
@@ -657,8 +680,8 @@ class Upscale:
         self.is_window_closed = True
         self.delete_temp_dir()
         if index:
-            self.ImgTxt_update_pair()
-            self.ImgTxt_jump_to_image(index)
+            self.parent.update_pair()
+            self.parent.jump_to_image(index)
         self.top.destroy()
 
 

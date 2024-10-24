@@ -3260,7 +3260,7 @@ class ImgTxtViewer:
         window_x = root.winfo_x() + x_offset + main_window_width // 2
         window_y = root.winfo_y() - y_offset + main_window_height // 2
         filepath = self.image_files[self.current_index]
-        upscale_image.Upscale(self.master, self, ToolTip, filepath, window_x, window_y, batch, self.update_pair, self.jump_to_image)
+        upscale_image.Upscale(self, self.master, filepath, batch, window_x, window_y)
 
 
     def batch_crop_images(self):
@@ -4507,11 +4507,12 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 - New tool `Create Wildcard From Captions`: Combine all image captions into a single text file, each set of image captions separated by a newline.
 - Added `Copy` command to the right-click textbox context menu.
 - Added `Last` to the index entry right-click context menu to quickly jump to the last img-txt pair.
+ - Added two additional upscale models: `AnimeSharp-4x` and `UltraSharp-4x`.
+- Additional NCNN upscale models can now be loaded by placing them in the `models` directory.
 - Now you can insert a suggestion by simply clicking it.
 - A quick guided setup will run on the app's first launch, or if the settings file is deleted/reset.
   - This will set the preferred autocomplete dictionaries and matching settings.
 - You can now press `CTRL+W` to close the current window.
-
 
 <br>
 
@@ -4591,8 +4592,6 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
 - Todo
   - (Med) Go through all tools that touch text files and make sure they work with alt-text paths.
-
-  - (Med) Upscale: Could support any NCNN model, and it could automatically scan a directory for new models.
 
   - (Low) Find Dupe Files, could/should automatically move captions if they are found.
 
