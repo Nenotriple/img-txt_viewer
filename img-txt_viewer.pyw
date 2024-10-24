@@ -1099,7 +1099,8 @@ class ImgTxtViewer:
 
     # Text context menu
     def show_textContext_menu(self, event):
-        self.text_box.focus_set()
+        if hasattr(self, 'text_box'):
+            self.text_box.focus_set()
         widget_in_focus = root.focus_get()
         textContext_menu = Menu(root, tearoff=0)
         if widget_in_focus in [self.info_text, getattr(self, 'text_box', None)]:
