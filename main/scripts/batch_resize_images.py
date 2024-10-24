@@ -326,6 +326,8 @@ class BatchResizeImages:
 
     def toggle_widgets(self, state):
             if state == "disabled":
+                self.close_button.config(state=state)
+                self.help_button.config(state=state)
                 self.select_button.config(state=state)
                 #self.open_button.config(state=state)
                 self.entry_directory.config(state=state)
@@ -339,8 +341,9 @@ class BatchResizeImages:
                 self.overwrite_files_checkbutton.config(state=state)
                 self.save_png_info_checkbutton.config(state=state)
                 self.button_resize.config(state=state)
-                self.button_help.config(state=state)
             else:
+                self.close_button.config(state=state)
+                self.help_button.config(state=state)
                 self.select_button.config(state=state)
                 #self.open_button.config(state=state)
                 self.entry_directory.config(state=state)
@@ -352,7 +355,6 @@ class BatchResizeImages:
                 self.overwrite_files_checkbutton.config(state=state)
                 self.save_png_info_checkbutton.config(state=state)
                 self.button_resize.config(state=state)
-                self.button_help.config(state=state)
 
 
     def update_quality_widgets(self, *args):
