@@ -1,3 +1,5 @@
+"""This module contains the SettingsManager class, which is responsible for saving and loading user settings."""
+
 # Standard Library
 import os
 import configparser
@@ -16,6 +18,7 @@ class SettingsManager:
         self.version = version
 
         self.config = configparser.ConfigParser()
+        self.edit_panel = self.parent.edit_panel
 
 
 # --------------------------------------
@@ -196,7 +199,7 @@ class SettingsManager:
         self.parent.auto_delete_blank_files_var.set(value=self.config.getboolean("Other", "auto_delete_blank_files", fallback=False))
         self.parent.thumbnails_visible.set(value=self.config.getboolean("Other", "thumbnails_visible", fallback=True))
         self.parent.edit_panel_visible_var.set(value=self.config.getboolean("Other", "edit_panel_visible", fallback=False))
-        self.parent.toggle_edit_panel()
+        self.edit_panel.toggle_edit_panel()
         self.parent.image_quality_var.set(value=self.config.get("Other", "image_quality", fallback="Normal"))
         self.parent.set_image_quality()
         self.parent.font_var.set(value=self.config.get("Other", "font", fallback="Courier New"))
@@ -273,7 +276,7 @@ class SettingsManager:
         self.parent.thumbnails_visible.set(value=True)
         self.parent.update_thumbnail_panel()
         self.parent.edit_panel_visible_var.set(value=False)
-        self.parent.toggle_edit_panel()
+        self.edit_panel.toggle_edit_panel()
         # Done
         self.parent.sync_title_with_content()
         self.parent.prompt_first_time_setup()

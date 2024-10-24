@@ -1,3 +1,4 @@
+"""About Window for img-txt Viewer."""
 
 # --------------------------------------
 # Imports
