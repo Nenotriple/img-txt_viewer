@@ -89,6 +89,7 @@ class FindDupeFile:
             self.folder_entry.insert(0, path)
 
         self.all_widgets = [
+                             self.close_button,
                              self.file_menu_button,
                              self.options_menu_button,
                              self.folder_entry,
@@ -430,16 +431,14 @@ class FindDupeFile:
 
 
     def is_image(self, file_path):
-        image_file_extensions = ['.blp', '.bmp', '.dds','.dib', '.eps',
-                                 '.gif', '.icns', '.ico', '.im', '.jpg',
-                                 '.jpeg', '.jfif', '.jp2', '.jpx', '.msp',
-                                 '.pcx', '.png', '.apng', '.ppm', '.sgi',
-                                 '.spider', '.tga', '.tif', '.tiff', '.webp',
-                                 '.xbm', '.cur', '.dcx', '.fits', '.fli',
-                                 '.flc', '.fpx', '.ftex', '.gbr', '.gd',
-                                 '.imt', '.naa', '.mcidas', '.mic', '.mpo',
-                                 '.pcd', '.pixar', '.psd', '.qoi', '.sun',
-                                 '.wal', '.wmf', '.emf', '.xpm', '.palm', '.pdf', '.xv']
+        image_file_extensions = [
+            ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif",
+            ".jpeg_large", ".tiff", ".tif", ".ico", ".svg", ".eps",
+            ".raw", ".pdf", ".psd", ".xcf", ".kra", ".cdr",
+            ".heic", ".heif", ".avif", ".apng", ".jp2", ".j2k",
+            ".jpf", ".jpx", ".jpm", ".mj2", ".dds", ".exr",
+            ".hdr", ".icns", ".ai", ".indd"
+        ]
         _, file_extension = os.path.splitext(file_path)
         return file_extension.lower() in image_file_extensions
 
