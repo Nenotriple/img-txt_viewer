@@ -35,76 +35,90 @@ class AboutWindow:
         self.info_headers = ["Shortcuts", "Tips", "Text Tools", "Other Tools", "Auto-Save"]
         self.info_content = [
             # Shortcuts
-            " ⦁ALT+LEFT/RIGHT: Quickly move between img-txt pairs.\n"
-            " ⦁SHIFT+DEL: Send the current pair to a local trash folder.\n"
-            " ⦁ALT: Cycle through auto-suggestions.\n"
-            " ⦁TAB: Insert the highlighted suggestion.\n"
-            " ⦁CTRL+S: Save the current text file.\n"
-            " ⦁CTRL+E: Jump to the next empty text file.\n"
-            " ⦁CTRL+R: Jump to a random img-txt pair.\n"
-            " ⦁CTRL+F: Highlight all duplicate words.\n"
-            " ⦁CTRL+Z / CTRL+Y: Undo/Redo.\n"
-            " ⦁F1: Toggle Zoom popup.\n"
-            " ⦁F2: Open the Image-Grid.\n"
-            " ⦁F5: Refresh the text box.\n"
-            " ⦁Middle-click a tag to delete it.\n",
+            " ⦁ ALT + LEFT/RIGHT: Quickly move between image-text pairs.\n"
+            " ⦁ SHIFT + DEL: Move the current pair to a local trash folder.\n"
+            " ⦁ ALT: Cycle through auto-suggestions.\n"
+            " ⦁ TAB: Insert the highlighted suggestion.\n"
+            " ⦁ CTRL + S: Save the current text file.\n"
+            " ⦁ CTRL + E: Jump to the next empty text file.\n"
+            " ⦁ CTRL + R: Jump to a random image-text pair.\n"
+            " ⦁ CTRL + F: Highlight all duplicate words.\n"
+            " ⦁ CTRL + Z / CTRL + Y: Undo / Redo.\n"
+            " ⦁ CTRL + W: Close the window.\n"
+            " ⦁ F1: Toggle Zoom popup.\n"
+            " ⦁ F2: Open the Image-Grid.\n"
+            " ⦁ F5: Refresh the text box.\n"
+            " ⦁ Middle-click on a tag to delete it.\n",
 
             # Tips
-            " ⦁Highlight matching words by selecting text. \n"
-            " ⦁Quickly create text pairs by loading the image and saving the text.\n"
-            " ⦁List Mode: Display tags in a list format while saving in standard format.\n"
-            " ⦁Use an asterisk * while typing to return autocomplete suggestions using a fuzzy search.\n"
-            " ⦁Use the Match Mode option: 'Last Word' to allow for more natural autocomplete.\n"
-            " ⦁Right-click the 'Browse...' button to set or clear the alternate text path, allowing you to load text files from a separate folder than images.\n",
+            " ⦁ Highlight matching words by selecting text.\n"
+            " ⦁ Insert a suggestion by clicking on it.\n"
+            " ⦁ A guided setup will run on first launch to configure your autocomplete dictionaries and matching settings.\n"
+            " ⦁ The 'Open Current Directory...' command selects the current image in the file explorer.\n"
+            " ⦁ Quickly create text pairs by loading the image and saving the text.\n"
+            " ⦁ List Mode: Display tags in a list format while saving them in standard format.\n"
+            " ⦁ Use an asterisk (*) while typing for fuzzy search autocomplete suggestions.\n"
+            " ⦁ Use 'Match Mode: Last Word' for more natural autocomplete.\n"
+            " ⦁ Right-click the 'Browse...' button to set or clear the alternate text path, allowing you to load text files from a separate folder than images.\n",
 
             # Text Tools
-            " ⦁Search and Replace: Search for a specific string of text and replace it with another.\n"
-            " ⦁Prefix: Insert text at the START of all text files.\n"
-            " ⦁Append: Insert text at the END of all text files.\n"
-            " ⦁Filter: Filter pairs based on matching text, blank or missing txt files, and more. Can also be used in relation with: S&R, Prefix, and Append. \n"
-            " ⦁Highlight: Always highlight certain text.\n"
-            " ⦁My Tags: Quickly add you own tags to be used as autocomplete suggestions.\n"
-            " ⦁Batch Tag Edit: View all tags in a directory as a list, and quickly delete or edit them.\n"
-            " ⦁Cleanup Text: Fix typos in all text files of the selected folder, such as duplicate tags, multiple spaces or commas, missing spaces, and more.\n",
+            " ⦁ Search and Replace: Find specific text and replace it with another.\n"
+            " ⦁ Prefix: Insert text at the START of all text files.\n"
+            " ⦁ Append: Insert text at the END of all text files.\n"
+            " ⦁ Filter: Filter pairs based on text, missing text files, and more. Works with Search and Replace, Prefix, and Append.\n"
+            " ⦁ Highlight: Always highlight specific text.\n"
+            " ⦁ My Tags: Add your custom tags for autocomplete suggestions.\n"
+            " ⦁ Batch Tag Edit: Edit and manage tags with a user-friendly interface that previews changes before applying them.\n"
+            " ⦁ Create Wildcard From Captions: Combine all image captions into one text file, with each caption set separated by a newline.\n"
+            " ⦁ Cleanup Text: Fix typos across all text files, such as duplicate tags, extra spaces, commas, and more.\n",
 
             # Other Tools
-            " ⦁Batch Resize Images: Resize all images in a folder using various methods and conditions\n"
-            " ⦁Batch Crop Image: Crop all images to a specific resolution.\n"
-            " ⦁Crop Image: Crop the current image to a square or freeform ratio.\n"
-            " ⦁Resize Image: Resize the current image either by exact resolution or percentage.\n"
-            " ⦁Upscale Image: Upscale the current image using RESRGAN.\n"
-            " ⦁Find Duplicate Files: Find and separate any duplicate files in a folder.\n"
-            " ⦁Expand: Expand an image to a square ratio instead of cropping.\n"
-            " ⦁Batch Rename and/or Convert: Rename and optionally convert all image and text files in the current directory, saving them in sequential order with padded zeros.\n",
+            " ⦁ Batch Resize Images: Resize all images in a folder using different methods and conditions.\n"
+            " ⦁ Batch Crop Images: Crop all images to a specified resolution.\n"
+            " ⦁ Crop Image: Crop the current image to a square or freeform ratio.\n"
+            " ⦁ Resize Image: Resize the current image by exact resolution or percentage.\n"
+            " ⦁ Upscale Image: Upscale images using models like RESRGAN, AnimeSharp-4x, and UltraSharp-4x. Additional models can be added to the 'models' folder.\n"
+            " ⦁ Find Duplicate Files: Identify and separate duplicate files in a folder.\n"
+            " ⦁ Expand: Expand an image to a square ratio instead of cropping.\n"
+            " ⦁ Thumbnail Panel: Display thumbnails under the current image for quick navigation.\n"
+            " ⦁ Edit Image Panel: Adjust brightness, contrast, saturation, sharpness, highlights, and shadows of the current image.\n"
+            " ⦁ Edit Image...: Open the current image in an external editor (e.g., MS Paint).\n"
+            " ⦁ Batch Rename/Convert: Rename and optionally convert image and text files, saving them sequentially with padded zeros.\n",
 
-            # Auto Save
-            " ⦁Check the auto-save box to save text when navigating between img/txt pairs or closing the window, etc.\n"
-            " ⦁By default, text is cleaned up when saved, so you can ignore things like duplicate tags, trailing comma/spaces, double comma/spaces, etc.\n"
-            " ⦁Text cleanup was designed for CSV format captions and can be disabled from the options menu (Clean-Text).",
+            # Auto-Save
+            " ⦁ Check the auto-save box to save text when switching between image-text pairs or closing the window.\n"
+            " ⦁ Text cleanup (e.g., removing duplicate tags, trailing commas, extra spaces) happens automatically on save, and can be disabled from the options menu.\n"
+            " ⦁ Text cleanup is optimized for CSV-format captions and can be disabled via the Clean-Text option in the menu.\n"
             ]
-
 
 
 # --------------------------------------
 # Class - AboutWindow
 # --------------------------------------
     def create_about_window(self):
+        """Create the About window."""
+        self._initialize_window()
+        self._set_icon()
+        self._create_textbox()
+        self._create_bottom_row()
+        self._center_window()
+        self.about_window.focus_force()
+
+
+    def _initialize_window(self):
         self.about_window = tk.Toplevel(self.root)
         self.about_window.title("About - img-txt Viewer")
         self.about_window.geometry("850x650")
-        self.about_window.maxsize(900, 900)
-        self.about_window.minsize(630, 300)
+        self.about_window.minsize(675, 300)
         self.github_url = "https://github.com/Nenotriple/img-txt_viewer"
-        self.set_icon()
-        self._create_header_text()
-        self._create_textbox()
-        self._create_bottom_row()
-        self.root.update_idletasks()
-        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (850 // 2)
-        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (650 // 2)
-        self.about_window.geometry(f"+{x}+{y}")
-        self.about_window.focus_force()
 
+
+    def _set_icon(self):
+        self.icon_path = os.path.join(self.parent.application_path, "icon.ico")
+        try:
+            self.about_window.iconbitmap(self.icon_path)
+        except TclError:
+            pass
 
 
     def _create_textbox(self):
@@ -119,27 +133,33 @@ class AboutWindow:
 
 
     def _create_bottom_row(self):
-        bottom_row_frame = Frame(self.about_window)
-        bottom_row_frame.pack(fill="x")
+        self.bottom_row_frame = Frame(self.about_window)
+        self.bottom_row_frame.pack(fill="x")
+        self._create_url_button()
+        self._create_made_by_label()
 
-        self.url_button = ttk.Button(bottom_row_frame, text=f"{self.github_url}", command=self._open_github_url)
+
+    def _create_url_button(self):
+        self.url_button = ttk.Button(self.bottom_row_frame, text=f"{self.github_url}", command=self._open_github_url)
         self.url_button.pack(side="left", fill="x", padx=10, ipadx=10)
         ToolTip.create(self.url_button, "Click this button to open the repo in your default browser", 10, 6, 12)
 
-        self.made_by_label = Label(bottom_row_frame, text=f"{self.version} - img-txt_viewer - Created by: Nenotriple (2023-2024)", font=("Segoe UI", 10))
-        self.made_by_label.pack(side="left", expand=True, pady=10)
+
+    def _create_made_by_label(self):
+        self.made_by_label = Label(self.bottom_row_frame, text=f"{self.version} - img-txt_viewer - Created by: Nenotriple (2023-2024)", font=("Segoe UI", 10))
+        self.made_by_label.pack(side="right", padx=10, pady=10)
         ToolTip.create(self.made_by_label, "🤍Thank you for using my app!🤍 (^‿^)", 10, 6, 12)
+
+
+    def _center_window(self):
+        self.root.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (850 // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (650 // 2)
+        self.about_window.geometry(f"+{x}+{y}")
 
 
     def _open_github_url(self):
         webbrowser.open(f"{self.github_url}")
-
-
-    def set_icon(self):
-        self.icon_path = os.path.join(self.parent.application_path, "icon.ico")
-        try:
-            self.about_window.iconbitmap(self.icon_path)
-        except TclError: pass
 
 
     def close_about_window(self):
