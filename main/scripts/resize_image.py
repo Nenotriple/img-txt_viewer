@@ -1,11 +1,8 @@
 """
 ########################################
-#                                      #
-#             Resize Image             #
-#                                      #
-#   Version : v1.02                    #
+#              ResizeTool              #
+#   Version : v1.03                    #
 #   Author  : github.com/Nenotriple    #
-#                                      #
 ########################################
 
 Description:
@@ -19,10 +16,19 @@ Resize an image by resolution or percentage.
 #region -  Imports
 
 
+# Standard Library
 import os
-import re
 from io import BytesIO
-from tkinter import ttk, Toplevel, messagebox, IntVar, StringVar, BooleanVar, Frame, Label, Button, Radiobutton, Entry, Checkbutton
+
+
+# Standard Library - GUI
+from tkinter import (ttk, Toplevel, messagebox,
+                     IntVar, StringVar, BooleanVar,
+                     Frame, Label, Button
+                     )
+
+
+# Third-Party Libraries
 from PIL import Image, ImageSequence
 
 
@@ -50,6 +56,7 @@ class ResizeTool:
 
         self.img_txt_viewer = img_txt_viewer
         self.sort_key = self.img_txt_viewer.get_file_sort_key()
+        self.reverse_sort_direction_var = self.img_txt_viewer.reverse_load_order_var.get()
         self.ImgTxt_update_pair = update_pair
         self.ImgTxt_jump_to_image = jump_to_image
 
@@ -122,11 +129,11 @@ class ResizeTool:
         self.frame_radio_buttons.pack(side="top", fill="x", padx=10, pady=10)
 
 
-        self.radiobutton_pixels = Radiobutton(self.frame_radio_buttons, variable=self.resize_condition, value="pixels", text="Pixels", width=10, overrelief="groove", command=self.toggle_resize_condition)
+        self.radiobutton_pixels = ttk.Radiobutton(self.frame_radio_buttons, variable=self.resize_condition, value="pixels", text="Pixels", width=10, command=self.toggle_resize_condition)
         self.radiobutton_pixels.pack(anchor="center", side="left", expand=True, padx=5, pady=5)
 
 
-        self.radiobutton_percentage = Radiobutton(self.frame_radio_buttons, variable=self.resize_condition, value="percentage", text="Percentage", width=10, overrelief="groove", command=self.toggle_resize_condition)
+        self.radiobutton_percentage = ttk.Radiobutton(self.frame_radio_buttons, variable=self.resize_condition, value="percentage", text="Percentage", width=10, command=self.toggle_resize_condition)
         self.radiobutton_percentage.pack(anchor="center", side="left", expand=True, padx=5, pady=5)
 
 
@@ -141,7 +148,7 @@ class ResizeTool:
 
         self.label_width = Label(self.frame_width, text="Width (px)")
         self.label_width.pack(anchor="w", side="top", padx=5, pady=5)
-        self.entry_width = Entry(self.frame_width, textvariable=self.entry_width_var)
+        self.entry_width = ttk.Entry(self.frame_width, textvariable=self.entry_width_var)
         self.entry_width.pack(side="top", padx=5, pady=5)
         self.entry_width.bind("<ButtonRelease-1>", lambda event: self.on_key_release)
         self.entry_width.bind("<KeyRelease>", self.on_key_release)
@@ -157,7 +164,7 @@ class ResizeTool:
         spacer = Label(self.frame_checkbutton, text="")
         spacer.pack(side="top")
 
-        self.checkbutton_link_ratio = Checkbutton(self.frame_checkbutton, indicatoron=False, overrelief="groove", text="Locked", width=8, variable=self.link_aspect_var, command=self.on_link_button_toggle)
+        self.checkbutton_link_ratio = ttk.Checkbutton(self.frame_checkbutton, text="Locked", width=10, variable=self.link_aspect_var, command=self.on_link_button_toggle)
         self.checkbutton_link_ratio.pack(side="bottom", padx=5, pady=5)
 
 
@@ -167,7 +174,7 @@ class ResizeTool:
 
         self.label_height = Label(self.frame_height, text="Height (px)")
         self.label_height.pack(anchor="w", side="top", padx=5, pady=5)
-        self.entry_height = Entry(self.frame_height, textvariable=self.entry_height_var)
+        self.entry_height = ttk.Entry(self.frame_height, textvariable=self.entry_height_var)
         self.entry_height.pack(side="top", padx=5, pady=5)
         self.entry_height.bind("<Button-1>", lambda event: self.on_key_release)
         self.entry_height.bind("<KeyRelease>", self.on_key_release)
@@ -274,11 +281,11 @@ class ResizeTool:
         self.frame_primary_buttons.pack(side="top", fill="x")
 
 
-        self.button_save = Button(self.frame_primary_buttons, overrelief="groove", text="Resize", command=self.save_image)
+        self.button_save = ttk.Button(self.frame_primary_buttons, text="Resize", command=self.save_image)
         self.button_save.pack(side="left", expand=True, fill="x", padx=5, pady=5)
 
 
-        self.button_cancel = Button(self.frame_primary_buttons, overrelief="groove", text="Cancel", command=self.close_window)
+        self.button_cancel = ttk.Button(self.frame_primary_buttons, text="Cancel", command=self.close_window)
         self.button_cancel.pack(side="left", expand=True, fill="x", padx=5, pady=5)
 
 
@@ -443,7 +450,7 @@ class ResizeTool:
 
     def get_image_index(self, directory, filename):
         filename = os.path.basename(filename)
-        image_files = sorted((file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)), key=self.sort_key)
+        image_files = sorted((file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)), key=self.sort_key, reverse=self.reverse_sort_direction_var)
         return image_files.index(filename) if filename in image_files else -1
 
 
@@ -554,7 +561,7 @@ class ResizeTool:
 
 #endregion
 ################################################################################################################################################
-#region - File Managment
+#region - File Management
 
 
 
@@ -640,10 +647,10 @@ class ResizeTool:
 '''
 
 
-v1.02 changes:
+v1.03 changes:
 
   - New:
-    - Added more supported filetypes.
+    -
 
 
 <br>
@@ -654,7 +661,7 @@ v1.02 changes:
 
 
   - Other:
-    - Update index logic to support new loading order options.
+    - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
 
 
 '''
