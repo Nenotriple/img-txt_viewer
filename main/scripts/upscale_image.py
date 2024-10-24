@@ -52,6 +52,8 @@ class Upscale:
 
         self.supported_filetypes = (".png", ".webp", ".jpg", ".jpeg", ".jpg_large", ".jfif", ".tif", ".tiff", ".bmp", ".gif")
 
+        self.executable_path = "main/resrgan/realesrgan-ncnn-vulkan.exe"
+
         self.ImgTxtViewer = ImgTxtViewer
         self.sort_key = self.ImgTxtViewer.get_file_sort_key()
         self.reverse_sort_direction_var = self.ImgTxtViewer.reverse_load_order_var.get()
@@ -374,7 +376,7 @@ class Upscale:
                 frame.save(temp_frame_path)
                 upscaled_frame_path = os.path.join(temp_dir, f"frame_{i}_upscaled.png")
                 self.top.update()
-                subprocess.run(["main/bin/resrgan/realesrgan-ncnn-vulkan.exe",
+                subprocess.run([self.executable_path,
                                 "-i", temp_frame_path,
                                 "-o", upscaled_frame_path,
                                 "-n", model,
@@ -421,7 +423,7 @@ class Upscale:
                 extension = self.convert_webp_to_jpg(directory, filename)
             output_image_path = os.path.join(output_path if batch_mode else directory, f"{filename}{extension}" if batch_mode else f"{filename}_up{extension}")
             model = str(self.combobox_upscale_model.get())
-            upscale_process = subprocess.Popen(["main/bin/resrgan/realesrgan-ncnn-vulkan.exe",
+            upscale_process = subprocess.Popen([self.executable_path,
                               "-i", self.original_filepath,
                               "-o", output_image_path,
                               "-n", model,

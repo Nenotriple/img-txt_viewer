@@ -61,6 +61,7 @@ from PIL import (Image, ImageTk, ImageSequence,
 # Custom Libraries
 from main.scripts import (about_img_txt_viewer,
                           settings_manager,
+                          upscale_image,
                           crop_image,
                           batch_crop_images,
                           resize_image,
@@ -70,7 +71,6 @@ from main.scripts import (about_img_txt_viewer,
                           find_dupe_file
                           )
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
-from main.bin import upscale_image
 
 
 #endregion
@@ -4590,10 +4590,6 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
 
 - Todo
-  - (Med) Remove 'main/bin':
-    - Move 'main/bin/resrgan' to 'main/resrgan'.
-    - Move 'upscale_image.py' to 'main/scripts/upscale_image.py'.
-
   - (Med) Go through all tools that touch text files and make sure they work with alt-text paths.
 
   - (Med) Upscale: Could support any NCNN model, and it could automatically scan a directory for new models.
