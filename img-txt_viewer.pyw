@@ -30,6 +30,7 @@ import glob
 import time
 import shutil
 import ctypes
+import pickle
 import zipfile
 import itertools
 import statistics
@@ -75,18 +76,18 @@ from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
 
 #endregion
 ################################################################################################################################################
-#region - CLASS: Autocomplete
+#region CLS: Autocomplete
 
 
 class Autocomplete:
-    def __init__(self, data_file, max_suggestions=4, suggestion_threshold=115000, include_my_tags=True):
+    def __init__(self, data_file, include_my_tags=True):
         # Data
         self.data_file = data_file
         self.my_tags_csv = 'my_tags.csv'
 
         # Settings
-        self.max_suggestions = max_suggestions
-        self.suggestion_threshold = suggestion_threshold
+        self.max_suggestions = 4
+        self.suggestion_threshold = 115000
         self.include_my_tags = include_my_tags
 
         # Cache
@@ -154,10 +155,37 @@ class Autocomplete:
     # --------------------------------------
     def _precache_single_letter_suggestions(self):
         """Pre-cache suggestions for all single-letter inputs (a-z, 0-9)."""
-        for char in "abcdefghijklmnopqrstuvwxyz0123456789":
-            pattern = self._compile_pattern(char)
-            suggestions = self._get_or_cache_threshold_results(pattern)
-            self.single_letter_cache[char] = self._sort_suggestions(suggestions, char)
+        dictionary_file_path = os.path.join(self._get_application_path(), "main/dict", self.data_file)
+        if not os.path.exists(dictionary_file_path):
+            return
+        dictionary_name = os.path.splitext(self.data_file)[0]
+        cache_dir = os.path.join(self._get_application_path(), 'main/dict/cache')
+        cache_file = os.path.join(cache_dir, f'{dictionary_name}_pre-cache')
+        cache_timestamp_file = os.path.join(cache_dir, f'{dictionary_name}_pre-cache-timestamp')
+        os.makedirs(cache_dir, exist_ok=True)
+
+        cache_is_stale = True
+        if os.path.exists(cache_file) and os.path.exists(cache_timestamp_file):
+            with open(cache_timestamp_file, 'r') as f:
+                cache_timestamp_str = f.read().strip()
+                if cache_timestamp_str:
+                    cache_timestamp = float(cache_timestamp_str)
+                    dictionary_timestamp = os.path.getmtime(dictionary_file_path)
+                    if cache_timestamp >= dictionary_timestamp:
+                        cache_is_stale = False
+        if not cache_is_stale:
+            if os.path.exists(cache_file):
+                with open(cache_file, 'rb') as f:
+                    self.single_letter_cache = pickle.load(f)
+        else:
+            for char in "abcdefghijklmnopqrstuvwxyz0123456789":
+                pattern = self._compile_pattern(char)
+                suggestions = self._get_or_cache_threshold_results(pattern)
+                self.single_letter_cache[char] = self._sort_suggestions(suggestions, char)
+            with open(cache_file, 'wb') as f:
+                pickle.dump(self.single_letter_cache, f)
+            with open(cache_timestamp_file, 'w') as f:
+                f.write(str(os.path.getmtime(dictionary_file_path)))
 
 
     # --------------------------------------
@@ -248,7 +276,7 @@ class Autocomplete:
 
 #endregion
 ################################################################################################################################################
-#region - CLASS: ImgTxtViewer
+#region CLS: ImgTxtViewer
 
 
 class ImgTxtViewer:
@@ -435,8 +463,8 @@ class ImgTxtViewer:
         self.master.bind('<F5>', lambda event: self.show_batch_tag_edit(event))
         self.master.bind('<Control-w>', lambda event: self.on_closing(event))
 
-        # Print window size on resize:
-        #self.master.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == master else None, add="+")
+        # Display window size on resize:
+        #self.master.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == self.master else None, add="+")
 
 
 #endregion
@@ -1088,8 +1116,7 @@ class ImgTxtViewer:
             with open(self.my_tags_csv, 'w') as file:
                 content  = self.remove_extra_newlines(self.custom_dictionary_textbox.get("1.0", "end-1c"))
                 file.write(content)
-                self.update_autocomplete_dictionary()
-                self.refresh_custom_dictionary()
+                self.master.after(100, self.refresh_custom_dictionary)
         self.create_custom_dictionary()
         self.tab7_frame = Frame(self.tab7)
         self.tab7_frame.pack(side='top', fill='both', expand=True)
@@ -1101,9 +1128,6 @@ class ImgTxtViewer:
         self.open_mytags_button = ttk.Button(self.tab7_button_frame, width=10, text="Open", takefocus=False, command=lambda: self.open_textfile("my_tags.csv"))
         self.open_mytags_button.pack(side='right', fill='x')
         ToolTip.create(self.open_mytags_button, "Open the 'my_tags.csv' file in your default system app.", 200, 6, 12)
-        self.refresh_mytags_button = ttk.Button(self.tab7_button_frame, width=10, text="Refresh", takefocus=False, command=self.refresh_custom_dictionary)
-        self.refresh_mytags_button.pack(side='right', fill='x')
-        ToolTip.create(self.refresh_mytags_button, "Refresh the textbox with the contents of 'my_tags.csv'", 200, 6, 12)
         self.save_mytags_button = ttk.Button(self.tab7_button_frame, width=10, text="Save", takefocus=False, command=save)
         self.save_mytags_button.pack(side='right', fill='x')
         ToolTip.create(self.save_mytags_button, "Save the contents of the textbox to 'my_tags.csv'", 200, 6, 12)
@@ -1114,9 +1138,8 @@ class ImgTxtViewer:
         self.tab7_frame2.pack(side='top', fill='both')
         tab7_info_label = Text(self.tab7_frame2, bg="#f0f0f0")
         tab7_info_label.pack(side='top', fill="both", expand=True)
-        tab7_info_label.insert("1.0",   "This is where you can create a custom dictionary of tags.\n"
-                                        "These tags will be loaded alongside the chosen autocomplete dictionary.\n"
-                                        "Tags near the top of the list have a higher priority than lower tags.")
+        tab7_info_label.insert("1.0", "Create a custom dictionary of tags.\n"
+                                      "Use newlines to separate tags.")
         tab7_info_label.config(state="disabled", wrap="word", height=3)
         self.custom_dictionary_textbox = ScrolledText(self.tab7_frame2, wrap="word")
         self.custom_dictionary_textbox.pack(side='top', fill='both', expand=True)
@@ -3089,7 +3112,7 @@ class ImgTxtViewer:
                 total_text_filesize += os.path.getsize(text_file)
             except FileNotFoundError: pass
             except Exception as e:
-                print(f"ERROR reading: {os.path.basename(text_file)}: {e}")
+                messagebox.showerror("Error: calculate_file_stats()", f"An error occurred while processing {os.path.basename(text_file)}:\n\n{e}")
 
         # Process image files
         if self.process_image_stats_var.get():
@@ -3109,7 +3132,7 @@ class ImgTxtViewer:
                         portrait_images += 1
                 except FileNotFoundError: pass
                 except Exception as e:
-                    print(f"ERROR reading: {os.path.basename(image_file)}: {e}")
+                    messagebox.showerror("Error: calculate_file_stats()", f"An error occurred while processing {os.path.basename(image_file)}:\n\n{e}")
 
         # Calculate averages
         avg_chars = total_chars / num_txt_files if num_txt_files > 0 else 0
@@ -3417,7 +3440,6 @@ class ImgTxtViewer:
 
 
     def prompt_first_time_setup(self):
-        print
         dict_var = StringVar(value="English Dictionary")
         last_word_match_var = StringVar(value="Match Last Word")
         match_modes = {"Match Whole String": False, "Match Last Word": True}
@@ -3463,6 +3485,7 @@ class ImgTxtViewer:
         def save_and_close():
             self.settings_manager.save_settings()
             setup_window.destroy()
+            self.update_autocomplete_dictionary()
 
         def create_setup_window():
             setup_window = Toplevel(self.master)
@@ -3580,13 +3603,10 @@ class ImgTxtViewer:
             csv_filename = self.my_tags_csv
             if reset or not os.path.isfile(csv_filename):
                 with open(csv_filename, 'w', newline='', encoding="utf-8") as file:
-                    writer = csv.writer(file)
-                    writer.writerow(["supercalifragilisticexpialidocious"])
-            self.update_autocomplete_dictionary()
-            if reset:
+                    file.write("")
                 self.refresh_custom_dictionary()
-        except (PermissionError, IOError, TclError):
-            return
+        except (PermissionError, IOError, TclError) as e:
+            messagebox.showerror("Error: create_custom_dictionary()", f"An error occurred while creating the custom dictionary file:\n\n{csv_filename}\n\n{e}")
 
 
     def add_to_custom_dictionary(self):
