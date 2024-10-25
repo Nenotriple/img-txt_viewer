@@ -85,80 +85,128 @@ class Autocomplete:
         self.previous_text = None
         self.previous_suggestions = None
         self.previous_pattern = None
-        self.data, self.similar_names_dict = self.load_data(data_file, include_my_tags)
+        self.data, self.similar_names_dict = self.load_autocomplete_data(data_file, include_my_tags)
 
 
-    def load_data(self, data_file, include_my_tags, additional_file='my_tags.csv'):
-        if getattr(sys, 'frozen', False):
-            application_path = sys._MEIPASS
-        else:
-            application_path = os.path.dirname(os.path.abspath(__file__))
+# --------------------------------------
+# Load/Read Data
+# --------------------------------------
+    def load_autocomplete_data(self, data_file, include_my_tags, additional_file='my_tags.csv'):
+        """Load the autocomplete data from the CSV file."""
+        application_path = self._get_application_path()
         data_file_path = os.path.join(application_path, "main/dict", data_file)
         additional_file_path = os.path.join(application_path, additional_file)
         data = {}
         similar_names_dict = defaultdict(list)
-        if os.path.isfile(data_file_path):
-            with open(data_file_path, newline='', encoding='utf-8') as csvfile:
-                reader = csv.reader(csvfile)
-                for row in reader:
-                    if row and not row[0].startswith('###'):
-                        true_name = row[0]
-                        classifier_id = row[1]
-                        similar_names = set(row[3].split(',')) if len(row) > 3 else set()
-                        data[true_name] = (classifier_id, list(similar_names))
-                        for sim_name in similar_names:
-                            similar_names_dict[sim_name].append(true_name)
+        self._read_csv(data_file_path, data, similar_names_dict)
         if include_my_tags and os.path.isfile(additional_file_path):
-            with open(additional_file_path, newline='', encoding='utf-8') as csvfile:
-                reader = csv.reader(csvfile)
-                for row in reader:
-                    if row and not row[0].startswith('###'):
-                        true_name = row[0]
-                        similar_names = row[3].split(',') if len(row) > 3 else []
-                        if true_name in data:
-                            data[true_name][1].extend(similar_names)
-                        else:
-                            data[true_name] = ('', similar_names)
-                        for sim_name in similar_names:
-                            similar_names_dict[sim_name].append(true_name)
+            self._read_csv(additional_file_path, data, similar_names_dict, include_classifier_id=False)
         return data, similar_names_dict
 
 
+    def _get_application_path(self):
+        """Get the application path for the autocomplete data files."""
+        if getattr(sys, 'frozen', False):
+            return sys._MEIPASS
+        else:
+            return os.path.dirname(os.path.abspath(__file__))
+
+
+    def _read_csv(self, file_path, data, similar_names_dict, include_classifier_id=True):
+        """Read the CSV file and populate the data dictionary."""
+        if os.path.isfile(file_path):
+            with open(file_path, newline='', encoding='utf-8') as csvfile:
+                reader = csv.reader(csvfile)
+                for row in reader:
+                    if row and not row[0].startswith('###'):
+                        true_name = row[0]
+                        classifier_id = row[1] if include_classifier_id and len(row) > 1 else ''
+                        similar_names = row[3].split(',') if len(row) > 3 else []
+                        if true_name in data and not include_classifier_id:
+                            data[true_name][1].extend(similar_names)
+                        else:
+                            data[true_name] = (classifier_id, similar_names)
+                        for sim_name in similar_names:
+                            similar_names_dict[sim_name].append(true_name)
+
+
+# --------------------------------------
+# Get Suggestions
+# --------------------------------------
     def get_suggestion(self, text):
+        """Main entry point to get suggestions based on input text."""
         if not self.data:
             return None
         text_with_underscores = text.replace(" ", "_")
-        text_with_asterisks = re.escape(text_with_underscores).replace("\\*", ".*")
-        pattern = re.compile(text_with_asterisks)
-        suggestions = {}
-        suggestion_threshold = 25000 if not self.previous_suggestions else self.suggestion_threshold
-        for true_name, (classifier_id, similar_names) in itertools.islice(self.data.items(), suggestion_threshold):
-            if pattern.match(true_name):
-                suggestions[true_name] = (classifier_id, similar_names)
-        for sim_name in self.similar_names_dict:
+        pattern = self._compile_pattern(text_with_underscores)
+        suggestion_threshold = self._get_suggestion_threshold()
+        suggestions = self._find_matching_names(pattern, suggestion_threshold)
+        self._include_similar_name_suggestions(pattern, suggestions)
+        sorted_suggestions = self._sort_suggestions(suggestions, text_with_underscores)
+        self._cache_suggestions(text, sorted_suggestions, pattern)
+        return sorted_suggestions[:self.max_suggestions]
+
+
+    def _compile_pattern(self, text):
+        """Compile the regex pattern with support for wildcard matching."""
+        text_with_asterisks = re.escape(text).replace("\\*", ".*")
+        return re.compile(text_with_asterisks)
+
+
+    def _get_suggestion_threshold(self):
+        """Determine the threshold for the number of suggestions to check."""
+        return self.suggestion_threshold if not self.previous_suggestions else 25000
+
+
+    def _find_matching_names(self, pattern, threshold):
+        """Find matching names in the main data based on the regex pattern."""
+        return {
+            true_name: (classifier_id, similar_names)
+            for true_name, (classifier_id, similar_names)
+            in itertools.islice(self.data.items(), threshold)
+            if pattern.match(true_name)
+            }
+
+
+    def _include_similar_name_suggestions(self, pattern, suggestions):
+        """Include suggestions based on similar names matching the pattern."""
+        for sim_name, true_names in self.similar_names_dict.items():
             if pattern.match(sim_name):
-                for true_name in self.similar_names_dict[sim_name]:
-                    classifier_id, similar_names = self.data[true_name]
-                    suggestions[true_name] = (classifier_id, similar_names)
-        suggestions = list(suggestions.items())
-        suggestions.sort(key=lambda x: self.get_score(x[0], text_with_underscores), reverse=True)
+                for true_name in true_names:
+                    suggestions[true_name] = self.data[true_name]
+
+
+    def _sort_suggestions(self, suggestions, text):
+        """Sort suggestions based on their matching score."""
+        return sorted(
+            suggestions.items(),
+            key=lambda x: self.get_score(x[0], text),
+            reverse=True
+            )
+
+
+    def _cache_suggestions(self, text, sorted_suggestions, pattern):
+        """Cache the current suggestions for potential reuse."""
         self.previous_text = text
-        self.previous_suggestions = suggestions
+        self.previous_suggestions = sorted_suggestions
         self.previous_pattern = pattern
-        return suggestions[:self.max_suggestions]
 
 
+# --------------------------------------
+# Score Calculation
+# --------------------------------------
     def get_score(self, suggestion, text):
+        """Calculate a score for the suggestion based on its similarity to the input text."""
         score = 0
         if suggestion == text:
-            score += len(text) * 2
-        else:
-            for i in range(len(text)):
-                if i < len(suggestion) and suggestion[i] == text[i]:
-                    score += 1
-                else:
-                    break
-        if self.data[suggestion][0] == '' and suggestion[:3] == text[:3]:
+            return len(text) * 2
+        for suggestion_char, input_char in zip(suggestion, text):
+            if suggestion_char == input_char:
+                score += 1
+            else:
+                break
+        classifier_id, _ = self.data.get(suggestion, ('', []))
+        if not classifier_id and suggestion.startswith(text[:3]):
             score += 1
         return score
 
