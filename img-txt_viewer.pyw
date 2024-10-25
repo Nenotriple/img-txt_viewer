@@ -80,11 +80,14 @@ from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
 
 class Autocomplete:
     def __init__(self, data_file, max_suggestions=4, suggestion_threshold=115000, include_my_tags=True):
+        # Data
+        self.data_file = data_file
+        self.my_tags_csv = 'my_tags.csv'
+
+        # Settings
         self.max_suggestions = max_suggestions
         self.suggestion_threshold = suggestion_threshold
-        self.data_file = data_file
         self.include_my_tags = include_my_tags
-        self.my_tags_csv = 'my_tags.csv'
 
         # Cache
         self.autocomplete_dict, self.similar_names_dict = None, None
@@ -94,6 +97,7 @@ class Autocomplete:
         self.previous_threshold_results = {}
         self.single_letter_cache = {}
 
+        # Load Data
         self._load_data()
         self._precache_single_letter_suggestions()
 
@@ -4183,6 +4187,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
 ### Other changes:
 - Autocomplete suggestions are now cached, so re-typing the same words returns suggestions quicker.
+    - Some pre-caching is done for Autocomplete suggestions, which does slow down the initial launch slightly.
 - Using `Open Current Directory...` will now automatically select the current image in the file explorer. #30
   - The `Open` button will also select the current image if the path being opened is the same as the image path.
 - The Image info (the stats displayed above the image) is now cached for quicker access.
@@ -4244,6 +4249,12 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
 
 - Tofix
+
+  - (High) The Autocomplete dictionary is not correctly set when running the initial guided setup.
+    - It always sets to Danbooru, the UI will show the correct dictionary, but the actual dictionary is not set.
+    - The entire class needs an overhaul on how the settings are adjusted, and how the dictionaries are selected for loading.
+      - The Autocomplete class should have a set of functions to handle updating the settings and loading the dictionaries.
+      - The entire class is sometimes being treated like a single function, which is probably causing these issues with the dictionary not being set correctly.
 
   - (Med) Image info, and thumbnail cache doesn't update when the image is changed.
     - This is because the cache is built using the filename as the key.
