@@ -1,0 +1,20 @@
+# Virtual Environment
+venv/
+
+
+# pycache
+__pycache__/
+
+
+# Dictionary Pre-Cache
+main/dict/cache/
+
+
+# PyInstaller
+dist/
+build/
+*.spec
+
+
+# App Settings file
+settings.cfg
