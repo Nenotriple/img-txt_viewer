@@ -131,7 +131,7 @@ class BatchResizeImages:
         self.menu = menu
         self.working_dir = path
 
-        self.root.minsize(750, 250) # Width x Height
+        self.root.minsize(750, 280) # Width x Height
         self.root.title(f"{self.version} - img-txt Viewer - Batch Resize Images")
         self.menu.entryconfig("Batch Resize Images...", command=self.close_batch_resize_images)
         self.setup_ui()

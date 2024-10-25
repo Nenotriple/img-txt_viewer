@@ -277,6 +277,7 @@ class SettingsManager:
         self.parent.update_thumbnail_panel()
         self.parent.edit_panel_visible_var.set(value=False)
         self.edit_panel.toggle_edit_panel()
-        # Done
+        # Title
         self.parent.sync_title_with_content()
+        # Guided setup
         self.parent.prompt_first_time_setup()
