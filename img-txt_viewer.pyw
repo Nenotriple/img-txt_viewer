@@ -82,34 +82,49 @@ class Autocomplete:
     def __init__(self, data_file, max_suggestions=4, suggestion_threshold=115000, include_my_tags=True):
         self.max_suggestions = max_suggestions
         self.suggestion_threshold = suggestion_threshold
+        self.data_file = data_file
+        self.include_my_tags = include_my_tags
+        self.my_tags_csv = 'my_tags.csv'
+
+        # Cache
+        self.autocomplete_dict, self.similar_names_dict = None, None
         self.previous_text = None
         self.previous_suggestions = None
         self.previous_pattern = None
-        self.data, self.similar_names_dict = self.load_autocomplete_data(data_file, include_my_tags)
+        self.previous_threshold_results = {}
+        self.single_letter_cache = {}
+
+        self._load_data()
+        self._precache_single_letter_suggestions()
 
 
-# --------------------------------------
-# Load/Read Data
-# --------------------------------------
-    def load_autocomplete_data(self, data_file, include_my_tags, additional_file='my_tags.csv'):
-        """Load the autocomplete data from the CSV file."""
+    # --------------------------------------
+    # Load/Read Data
+    # --------------------------------------
+    def _load_data(self):
+        """Load autocomplete data, only if not already cached."""
+        if not self.autocomplete_dict:
+            self.autocomplete_dict, self.similar_names_dict = self.load_autocomplete_data()
+
+
+    def load_autocomplete_data(self):
+        """Load the autocomplete data from CSV files."""
         application_path = self._get_application_path()
-        data_file_path = os.path.join(application_path, "main/dict", data_file)
-        additional_file_path = os.path.join(application_path, additional_file)
-        data = {}
+        data_file_path = os.path.join(application_path, "main/dict", self.data_file)
+        additional_file_path = os.path.join(application_path, self.my_tags_csv)
+        autocomplete_data = {}
         similar_names_dict = defaultdict(list)
-        self._read_csv(data_file_path, data, similar_names_dict)
-        if include_my_tags and os.path.isfile(additional_file_path):
-            self._read_csv(additional_file_path, data, similar_names_dict, include_classifier_id=False)
-        return data, similar_names_dict
+        self._read_csv(data_file_path, autocomplete_data, similar_names_dict)
+        if self.include_my_tags and os.path.isfile(additional_file_path):
+            self._read_csv(additional_file_path, autocomplete_data, similar_names_dict, include_classifier_id=False)
+        return autocomplete_data, similar_names_dict
 
 
     def _get_application_path(self):
         """Get the application path for the autocomplete data files."""
         if getattr(sys, 'frozen', False):
             return sys._MEIPASS
-        else:
-            return os.path.dirname(os.path.abspath(__file__))
+        return os.path.dirname(os.path.abspath(__file__))
 
 
     def _read_csv(self, file_path, data, similar_names_dict, include_classifier_id=True):
@@ -130,17 +145,32 @@ class Autocomplete:
                             similar_names_dict[sim_name].append(true_name)
 
 
-# --------------------------------------
-# Get Suggestions
-# --------------------------------------
+    # --------------------------------------
+    # Pre-Cache Single-Letter Suggestions
+    # --------------------------------------
+    def _precache_single_letter_suggestions(self):
+        """Pre-cache suggestions for all single-letter inputs (a-z, 0-9)."""
+        for char in "abcdefghijklmnopqrstuvwxyz0123456789":
+            pattern = self._compile_pattern(char)
+            suggestions = self._get_or_cache_threshold_results(pattern)
+            self.single_letter_cache[char] = self._sort_suggestions(suggestions, char)
+
+
+    # --------------------------------------
+    # Get Suggestions
+    # --------------------------------------
     def get_suggestion(self, text):
         """Main entry point to get suggestions based on input text."""
-        if not self.data:
+        self._load_data()
+        if not self.autocomplete_dict:
             return None
+        if len(text) == 1 and text in self.single_letter_cache:
+            return self.single_letter_cache[text][:self.max_suggestions]
+        if text == self.previous_text:
+            return self.previous_suggestions[:self.max_suggestions]
         text_with_underscores = text.replace(" ", "_")
         pattern = self._compile_pattern(text_with_underscores)
-        suggestion_threshold = self._get_suggestion_threshold()
-        suggestions = self._find_matching_names(pattern, suggestion_threshold)
+        suggestions = self._get_or_cache_threshold_results(pattern)
         self._include_similar_name_suggestions(pattern, suggestions)
         sorted_suggestions = self._sort_suggestions(suggestions, text_with_underscores)
         self._cache_suggestions(text, sorted_suggestions, pattern)
@@ -153,9 +183,14 @@ class Autocomplete:
         return re.compile(text_with_asterisks)
 
 
-    def _get_suggestion_threshold(self):
-        """Determine the threshold for the number of suggestions to check."""
-        return self.suggestion_threshold if not self.previous_suggestions else 25000
+    def _get_or_cache_threshold_results(self, pattern):
+        """Cache and retrieve results for threshold-based searches."""
+        cache_key = (pattern.pattern, self.suggestion_threshold)
+        if cache_key in self.previous_threshold_results:
+            return self.previous_threshold_results[cache_key]
+        results = self._find_matching_names(pattern, self.suggestion_threshold)
+        self.previous_threshold_results[cache_key] = results
+        return results
 
 
     def _find_matching_names(self, pattern, threshold):
@@ -163,7 +198,7 @@ class Autocomplete:
         return {
             true_name: (classifier_id, similar_names)
             for true_name, (classifier_id, similar_names)
-            in itertools.islice(self.data.items(), threshold)
+            in itertools.islice(self.autocomplete_dict.items(), threshold)
             if pattern.match(true_name)
             }
 
@@ -173,16 +208,12 @@ class Autocomplete:
         for sim_name, true_names in self.similar_names_dict.items():
             if pattern.match(sim_name):
                 for true_name in true_names:
-                    suggestions[true_name] = self.data[true_name]
+                    suggestions[true_name] = self.autocomplete_dict[true_name]
 
 
     def _sort_suggestions(self, suggestions, text):
         """Sort suggestions based on their matching score."""
-        return sorted(
-            suggestions.items(),
-            key=lambda x: self.get_score(x[0], text),
-            reverse=True
-            )
+        return sorted(suggestions.items(), key=lambda x: self.get_score(x[0], text), reverse=True)
 
 
     def _cache_suggestions(self, text, sorted_suggestions, pattern):
@@ -192,9 +223,9 @@ class Autocomplete:
         self.previous_pattern = pattern
 
 
-# --------------------------------------
-# Score Calculation
-# --------------------------------------
+    # --------------------------------------
+    # Score Calculation
+    # --------------------------------------
     def get_score(self, suggestion, text):
         """Calculate a score for the suggestion based on its similarity to the input text."""
         score = 0
@@ -205,7 +236,7 @@ class Autocomplete:
                 score += 1
             else:
                 break
-        classifier_id, _ = self.data.get(suggestion, ('', []))
+        classifier_id, _ = self.autocomplete_dict.get(suggestion, ('', []))
         if not classifier_id and suggestion.startswith(text[:3]):
             score += 1
         return score
@@ -1939,7 +1970,7 @@ class ImgTxtViewer:
         else:
             self.autocomplete = Autocomplete(self.selected_csv_files[0], include_my_tags=self.use_mytags_var.get())
             for csv_file in self.selected_csv_files[1:]:
-                self.autocomplete.data.update(Autocomplete(csv_file).data, include_my_tags=self.use_mytags_var.get())
+                self.autocomplete.autocomplete_dict.update(Autocomplete(csv_file).autocomplete_dict, include_my_tags=self.use_mytags_var.get())
         self.clear_suggestions()
         self.set_suggestion_color(self.selected_csv_files[0] if self.selected_csv_files else "None")
         self.set_suggestion_threshold()
@@ -4151,6 +4182,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
 
 ### Other changes:
+- Autocomplete suggestions are now cached, so re-typing the same words returns suggestions quicker.
 - Using `Open Current Directory...` will now automatically select the current image in the file explorer. #30
   - The `Open` button will also select the current image if the path being opened is the same as the image path.
 - The Image info (the stats displayed above the image) is now cached for quicker access.
