@@ -414,7 +414,7 @@ class ImgTxtViewer:
         self.search_and_replace_regex = BooleanVar(value=False)
 
         # Image Stats Settings
-        self.process_image_stats_var = BooleanVar(value=True)
+        self.process_image_stats_var = BooleanVar(value=False)
         self.use_mytags_var = BooleanVar(value=True)
 
         # Filter Settings
@@ -939,7 +939,8 @@ class ImgTxtViewer:
                                    "Example:\n"
                                    "Search for: the big brown dog\n"
                                    "Replace with: the big red dog\n\n"
-                                   "This will replace all instances of 'the big brown dog' with 'the big red dog'.")
+                                   "This will replace all instances of 'the big brown dog' with 'the big red dog'.\n\n"
+                                   "If a filter is applied, only text files that match the filter will be affected.")
         description_textbox.config(state="disabled", wrap="word")
 
 
@@ -975,7 +976,8 @@ class ImgTxtViewer:
         description_textbox = ScrolledText(self.tab2_text_frame, bg="#f0f0f0")
         description_textbox.pack(side='bottom', fill='both')
         description_textbox.insert("1.0", "Use this tool to prefix all text files in the selected directory with the entered text.\n\n"
-                                   "This means that the entered text will appear at the start of each text file.")
+                                   "This means that the entered text will appear at the start of each text file.\n\n"
+                                   "If a filter is applied, only text files that match the filter will be affected.")
         description_textbox.config(state="disabled", wrap="word")
 
 
@@ -1009,7 +1011,8 @@ class ImgTxtViewer:
         description_textbox = ScrolledText(self.tab3_text_frame, bg="#f0f0f0")
         description_textbox.pack(side='bottom', fill='both')
         description_textbox.insert("1.0", "Use this tool to append all text files in the selected directory with the entered text.\n\n"
-                                   "This means that the entered text will appear at the end of each text file.")
+                                   "This means that the entered text will appear at the end of each text file.\n\n"
+                                   "If a filter is applied, only text files that match the filter will be affected.")
         description_textbox.config(state="disabled", wrap="word")
 
 
@@ -1576,6 +1579,8 @@ class ImgTxtViewer:
         # Bindings
         self.suggestion_textbox.bind("<Button-3>", self.show_suggestionContext_menu)
         self.image_index_entry.bind("<Button-3>", self.open_index_context_menu)
+        self.total_images_label.bind("<Button-3>", self.open_index_context_menu)
+        self.index_pair_label.bind("<Button-3>", self.open_index_context_menu)
 
 
     def toggle_save_button_height(self, event=None, reset=None):
@@ -1902,29 +1907,32 @@ class ImgTxtViewer:
 
 
     def highlight_suggestions(self):
-        def on_mouse_hover(tag_name, highlight):
+        def on_mouse_hover(tag_name, highlight, event=None):
             if highlight:
                 self.suggestion_textbox.tag_config(tag_name, relief='raised', borderwidth=1)
+                self.suggestion_textbox.config(cursor="hand2")
             else:
                 self.suggestion_textbox.tag_config(tag_name, relief='flat', borderwidth=0)
+                self.suggestion_textbox.config(cursor="")
         self.suggestion_textbox.config(state='normal')
         self.suggestion_textbox.delete('1.0', 'end')
-        suggestions_to_insert = []
+        configured_colors = set()
+        num_suggestions = len(self.suggestions)
         for index, (suggestion_text, classifier_id) in enumerate(self.suggestions):
             classifier_id = classifier_id[0]
             color_index = int(classifier_id) % len(self.suggestion_colors) if classifier_id and classifier_id.isdigit() else 0
             suggestion_color = self.suggestion_colors[color_index]
             bullet_symbol = "⚫" if index == self.selected_suggestion_index else "⚪"
-            suggestions_to_insert.append((bullet_symbol, suggestion_text, suggestion_color))
-        for index, (bullet_symbol, suggestion_text, suggestion_color) in enumerate(suggestions_to_insert):
             tag_name = f"suggestion_tag_{index}"
             self.suggestion_textbox.insert('end', bullet_symbol)
-            self.suggestion_textbox.insert('end', suggestion_text, (tag_name, suggestion_color))
-            self.suggestion_textbox.tag_config(suggestion_color, foreground=suggestion_color, font=('Segoe UI', '9'))
+            self.suggestion_textbox.insert('end', f" {suggestion_text} ", (tag_name, suggestion_color))
+            if suggestion_color not in configured_colors:
+                self.suggestion_textbox.tag_config(suggestion_color, foreground=suggestion_color, font=('Segoe UI', '9'))
+                configured_colors.add(suggestion_color)
             self.suggestion_textbox.tag_bind(tag_name, '<Button-1>', partial(self.on_suggestion_click, index))
-            self.suggestion_textbox.tag_bind(tag_name, '<Enter>', lambda event, tag=tag_name: on_mouse_hover(tag, True))
-            self.suggestion_textbox.tag_bind(tag_name, '<Leave>', lambda event, tag=tag_name: on_mouse_hover(tag, False))
-            if index < len(suggestions_to_insert) - 1:
+            self.suggestion_textbox.tag_bind(tag_name, '<Enter>', partial(on_mouse_hover, tag_name, True))
+            self.suggestion_textbox.tag_bind(tag_name, '<Leave>', partial(on_mouse_hover, tag_name, False))
+            if index < num_suggestions - 1:
                 self.suggestion_textbox.insert('end', ', ')
         self.suggestion_textbox.config(state='disabled')
 
@@ -3632,7 +3640,7 @@ class ImgTxtViewer:
             with open(self.my_tags_csv, 'a', newline='', encoding="utf-8") as f:
                 writer = csv.writer(f)
                 writer.writerow([selected_text])
-            self.update_autocomplete_dictionary()
+            self.refresh_custom_dictionary()
         except (PermissionError, IOError, TclError) as e:
             messagebox.showerror("Error: add_to_custom_dictionary()", f"An error occurred while saving the selected to 'my_tags.csv'.\n\n{e}")
 
@@ -3980,12 +3988,14 @@ class ImgTxtViewer:
         trash_dir = os.path.join(self.image_dir.get(), 'Trash')
         try:
             if os.path.exists(trash_dir):
-                is_empty = not os.listdir(trash_dir)
+                files_in_trash = os.listdir(trash_dir)
+                is_empty = not files_in_trash
                 if is_empty:
                     self.check_working_directory()
                     shutil.rmtree(trash_dir)
                 else:
-                    if messagebox.askyesno("Trash Folder Found", f"A 'Trash' folder was found in the image directory. (Not Empty)\n\nWould you like to delete this folder?"):
+                    num_files = len(files_in_trash)
+                    if messagebox.askyesno("Trash Folder Found", f"A local Trash folder was found in the image directory.\n\n{num_files} - file(s) found\n\nWould you like to delete this folder?"):
                         self.check_working_directory()
                         shutil.rmtree(trash_dir)
             root.destroy()
