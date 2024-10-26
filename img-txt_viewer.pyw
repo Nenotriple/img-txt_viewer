@@ -1766,8 +1766,8 @@ class ImgTxtViewer:
         # Ensure the correct number of thumbnails are displayed
         total_thumbnails = min(len(self.image_files), num_thumbnails)
         thumbnail_buttons = []
-        for i in range(total_thumbnails):
-            index = start_index + i
+        for thumbnail_index in range(total_thumbnails):
+            index = start_index + thumbnail_index
             image_file = self.image_files[index]
             # Use cached image info or load it if not present
             if image_file not in self.image_info_cache:
@@ -1797,8 +1797,8 @@ class ImgTxtViewer:
             # Add to the list of thumbnail buttons
             thumbnail_buttons.append(thumbnail_button)
         # Display the thumbnails
-        for i, button in enumerate(thumbnail_buttons):
-            button.grid(row=0, column=i)
+        for thumbnail_index, button in enumerate(thumbnail_buttons):
+            button.grid(row=0, column=thumbnail_index)
         self.thumbnail_panel.update_idletasks()
 
 
@@ -1893,6 +1893,11 @@ class ImgTxtViewer:
 
 
     def highlight_suggestions(self):
+        def on_mouse_hover(tag_name, highlight):
+            if highlight:
+                self.suggestion_textbox.tag_config(tag_name, relief='raised', borderwidth=1)
+            else:
+                self.suggestion_textbox.tag_config(tag_name, relief='flat', borderwidth=0)
         self.suggestion_textbox.config(state='normal')
         self.suggestion_textbox.delete('1.0', 'end')
         suggestions_to_insert = []
@@ -1908,8 +1913,8 @@ class ImgTxtViewer:
             self.suggestion_textbox.insert('end', suggestion_text, (tag_name, suggestion_color))
             self.suggestion_textbox.tag_config(suggestion_color, foreground=suggestion_color, font=('Segoe UI', '9'))
             self.suggestion_textbox.tag_bind(tag_name, '<Button-1>', partial(self.on_suggestion_click, index))
-            self.suggestion_textbox.tag_bind(tag_name, '<Enter>', lambda event: self.suggestion_textbox.config(cursor="hand2"))
-            self.suggestion_textbox.tag_bind(tag_name, '<Leave>', lambda event: self.suggestion_textbox.config(cursor=""))
+            self.suggestion_textbox.tag_bind(tag_name, '<Enter>', lambda event, tag=tag_name: on_mouse_hover(tag, True))
+            self.suggestion_textbox.tag_bind(tag_name, '<Leave>', lambda event, tag=tag_name: on_mouse_hover(tag, False))
             if index < len(suggestions_to_insert) - 1:
                 self.suggestion_textbox.insert('end', ', ')
         self.suggestion_textbox.config(state='disabled')
