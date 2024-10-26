@@ -371,6 +371,15 @@ class ImgTxtViewer:
         self.current_gif_frame_image = None
         self.animation_job = None
 
+        # Color Palette
+        self.pastel_colors = [
+            "#a2d2ff", "#ffafcf", "#aec3ae", "#ebe3d5", "#beadfa",
+            "#cdf5fd", "#fdcedf", "#c3edc0", "#d6c7ae", "#dfccfb",
+            "#c0dbea", "#f2d8d8", "#cbffa9", "#f9f3cc", "#acb1d6",
+            "#a1ccd1", "#dba39a", "#c4d7b2", "#ffd9b7", "#d9acf5",
+            "#7895b2", "#ff8787", "#90a17d", "#f8c4b4", "#af7ab3"
+            ]# Blue     Pink       Green      Brown      Purple
+
 
 # --------------------------------------
 # Settings
@@ -2065,16 +2074,21 @@ class ImgTxtViewer:
         if len(selected_text) < 3:
             return
         selected_words = selected_text.split()
+        color_dict = {}
         for word in selected_words:
             if len(word) < 3:
                 continue
             pattern = re.escape(word)
             matches = [match for match in re.finditer(pattern, self.text_box.get("1.0", "end"))]
             if len(matches) > 1:
+                if word not in color_dict and self.pastel_colors:
+                    color = self.pastel_colors.pop(0)
+                    color_dict[word] = color
+                    self.text_box.tag_config(word, background=color_dict[word], foreground="black")
                 for match in matches:
                     start = match.start()
                     end = match.end()
-                    self.text_box.tag_add("highlight", f"1.0 + {start} chars", f"1.0 + {end} chars")
+                    self.text_box.tag_add(word, f"1.0 + {start} chars", f"1.0 + {end} chars")
 
 
     def toggle_highlight_all_duplicates(self):
@@ -2089,20 +2103,13 @@ class ImgTxtViewer:
         self.text_box.tag_remove("highlight", "1.0", "end")
         text = self.text_box.get("1.0", "end").strip().replace(',', '')
         words = text.split()
-                        # Blue      Pink      Green     Brown     Purple
-        pastel_colors = ["A2D2FF", "FFAFCF", "AEC3AE", "EBE3D5", "BEADFA",
-                         "CDF5FD", "FDCEDF", "C3EDC0", "D6C7AE", "DFCCFB",
-                         "C0DBEA", "F2D8D8", "CBFFA9", "F9F3CC", "ACB1D6",
-                         "A1CCD1", "DBA39A", "C4D7B2", "FFD9B7", "D9ACF5",
-                         "7895B2", "FF8787", "90A17D", "F8C4B4", "AF7AB3"]
-        numpy.random.shuffle(pastel_colors)
         color_dict = {}
         for word in set(words):
             if len(word) < 3 or words.count(word) == 1:
                 continue
-            if word not in color_dict and pastel_colors:
-                color = pastel_colors.pop(0)
-                color_dict[word] = '#' + color
+            if word not in color_dict and self.pastel_colors:
+                color = self.pastel_colors.pop(0)
+                color_dict[word] = color
                 self.text_box.tag_config(word, background=color_dict[word])
             start = "1.0"
             while True:
@@ -2115,22 +2122,27 @@ class ImgTxtViewer:
 
 
     def highlight_custom_string(self):
-        self.text_box.tag_remove("highlight", "1.0", "end")
-        if not self.custom_highlight_string_var.get():
-            return
-        words = self.custom_highlight_string_var.get().split('+')
-        for word in words:
-            pattern = word.strip()
-            if self.highlight_use_regex_var.get():
-                matches = [match for match in re.finditer(pattern, self.text_box.get("1.0", "end"))]
-            else:
-                pattern = re.escape(pattern)
-                matches = [match for match in re.finditer(pattern, self.text_box.get("1.0", "end"))]
-            if matches:
-                for match in matches:
-                    start = match.start()
-                    end = match.end()
-                    self.text_box.tag_add("highlight", f"1.0 + {start} chars", f"1.0 + {end} chars")
+            self.remove_tag()
+            if not self.custom_highlight_string_var.get():
+                return
+            words = self.custom_highlight_string_var.get().split('+')
+            for i, word in enumerate(words):
+                pattern = word.strip()
+                if len(pattern) < 2:
+                    continue
+                color = f"{self.pastel_colors[i % len(self.pastel_colors)]}"
+                tag_name = f"highlight_{i}"
+                self.text_box.tag_config(tag_name, background=color)
+                if self.highlight_use_regex_var.get():
+                    matches = [match for match in re.finditer(pattern, self.text_box.get("1.0", "end"))]
+                else:
+                    pattern = re.escape(pattern)
+                    matches = [match for match in re.finditer(pattern, self.text_box.get("1.0", "end"))]
+                if matches:
+                    for match in matches:
+                        start = match.start()
+                        end = match.end()
+                        self.text_box.tag_add(tag_name, f"1.0 + {start} chars", f"1.0 + {end} chars")
 
 
     def remove_highlight(self):
@@ -4223,6 +4235,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 - The message box is now removed.
   - You can now check the title for a visual indicator of the text state.
   - All tools that used the message box for notifications now use a message popup.
+- Custom and duplicate highlights now use a range of pastel colors.
 - I have switched to Windows 11, so that's now the target operating system for this project. You may notice some UI changes.
   - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
 
