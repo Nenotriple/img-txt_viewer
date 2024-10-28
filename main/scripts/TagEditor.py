@@ -29,7 +29,7 @@ import os
 def analyze_tags(text_files):
     """
     This method processes text files to extract tags and their
-    positions,storing them in a dictionary. Keys are tags, and
+    positions, storing them in a dictionary. Keys are tags, and
     values are lists of tuples with the file index and tag position.
     Returns:
         dict: Dictionary with tags (str) as keys and lists of tuples as values.
@@ -79,8 +79,8 @@ def _extract_tags(text):
     and its starting position.
     """
     text = text.replace('.', ',')
-    raw_tags = re.finditer(r'\b[\w\s]+\b', text)
-    tags = [(match.group().strip(), match.start()) for match in raw_tags]
+    raw_tags = re.finditer(r'[^,]+', text)
+    tags = [(tag, match.start()) for match in raw_tags if (tag := match.group().strip())]
     return tags
 
 
