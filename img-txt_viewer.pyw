@@ -2750,15 +2750,16 @@ class ImgTxtViewer:
         line_start = self.text_box.index(f"{cursor_pos} linestart")
         line_end = self.text_box.index(f"{cursor_pos} lineend")
         line_text = self.text_box.get(line_start, line_end)
-        tags = line_text.split(',')
-        for tag in tags:
-            start_of_tag = line_text.find(tag)
-            end_of_tag = start_of_tag + len(tag)
-            if start_of_tag <= int(cursor_pos.split('.')[1]) <= end_of_tag:
+        tags = [(match.group().strip(), match.start(), match.end()) for match in re.finditer(r'[^,]+', line_text)]
+        clicked_tag = None
+        for tag, start, end in tags:
+            if start <= int(cursor_pos.split('.')[1]) <= end:
                 clicked_tag = tag
+                start_of_clicked_tag, end_of_clicked_tag = start, end
                 break
-        start_of_clicked_tag = line_text.find(clicked_tag)
-        end_of_clicked_tag = start_of_clicked_tag + len(clicked_tag)
+        if clicked_tag is None:
+            print("No valid tag found under cursor: ", line_text)
+            return
         self.text_box.tag_add("highlight", f"{line_start}+{start_of_clicked_tag}c", f"{line_start}+{end_of_clicked_tag}c")
         self.text_box.tag_config("highlight", background="#fd8a8a")
         self.text_box.update_idletasks()
