@@ -29,7 +29,7 @@ import os
 def analyze_tags(text_files):
     """
     This method processes text files to extract tags and their
-    positions,storing them in a dictionary. Keys are tags, and
+    positions, storing them in a dictionary. Keys are tags, and
     values are lists of tuples with the file index and tag position.
     Returns:
         dict: Dictionary with tags (str) as keys and lists of tuples as values.
