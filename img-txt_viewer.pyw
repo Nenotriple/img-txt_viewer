@@ -32,11 +32,13 @@ import shutil
 import ctypes
 import pickle
 import zipfile
+import threading
 import itertools
 import statistics
 import subprocess
 from functools import partial
 from collections import defaultdict, Counter
+from concurrent.futures import ThreadPoolExecutor
 
 
 # Standard Library - GUI
@@ -54,7 +56,8 @@ from tkinter import (ttk, Tk, Toplevel, messagebox, filedialog, simpledialog,
 import numpy
 from TkToolTip.TkToolTip import TkToolTip as ToolTip
 from PIL import (Image, ImageTk, ImageSequence,
-                 ImageOps, UnidentifiedImageError
+                 ImageOps, ImageEnhance, ImageFilter,
+                 UnidentifiedImageError, PngImagePlugin
                  )
 
 
@@ -301,20 +304,8 @@ class ImgTxtViewer:
         # Setup tools
         self.caption_counter = Counter()
         self.autocomplete = Autocomplete
-        self.batch_tag_edit = batch_tag_edit.BatchTagEdit()
-        self.batch_resize_images = batch_resize_images.BatchResizeImages()
-        self.find_dupe_file = find_dupe_file.FindDupeFile()
-        self.edit_panel = edit_panel.EditPanel(self, self.master)
-        self.about_window = about_img_txt_viewer.AboutWindow(self, self.master, VERSION, self.blank_image)
-        self.settings_manager = settings_manager.SettingsManager(self, self.master, VERSION)
-
-        # Setup UI state
-        self.ui_state = {
-            "ImgTxtViewer": True,
-            "BatchTagEdit": False,
-            "BatchResizeImages": False,
-            "FindDupeFile": False,
-            }
+        self.thread_executor = ThreadPoolExecutor(max_workers=1)
+        self.thread_file_locks = {}
 
         # Window drag variables
         self.drag_x = None
@@ -405,6 +396,7 @@ class ImgTxtViewer:
         # Auto Save Settings
         self.auto_save_var = BooleanVar(value=False)
         self.auto_delete_blank_files_var = BooleanVar(value=False)
+        self.save_caption_to_png_metadata_var = BooleanVar(value=False)
 
         # Highlight Settings
         self.highlight_selection_var = BooleanVar(value=True)
@@ -518,6 +510,7 @@ class ImgTxtViewer:
         self.optionsMenu.add_cascade(label="Options", underline=0, state="disable", menu=self.options_subMenu)
         self.options_subMenu.add_checkbutton(label="Clean-Text", underline=0, variable=self.cleaning_text_var, command=self.toggle_list_menu)
         self.options_subMenu.add_checkbutton(label="Auto-Delete Blank Files", underline=0, variable=self.auto_delete_blank_files_var)
+        self.options_subMenu.add_checkbutton(label="Save Caption to PNG Metadata", underline=0, variable=self.save_caption_to_png_metadata_var)
         self.options_subMenu.add_checkbutton(label="Colored Suggestions", underline=1, variable=self.colored_suggestion_var, command=self.update_autocomplete_dictionary)
         self.options_subMenu.add_checkbutton(label="Highlight Selection", underline=0, variable=self.highlight_selection_var)
         self.options_subMenu.add_checkbutton(label="Big Save Button", underline=0, variable=self.big_save_button_var, command=self.toggle_save_button_height)
@@ -651,9 +644,10 @@ class ImgTxtViewer:
 # Misc
 # --------------------------------------
         self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Open Current Directory...", state="disable", underline=13, command=self.open_image_directory)
-        self.toolsMenu.add_command(label="Open Current Image...", state="disable", underline=13, command=self.open_image)
-        self.toolsMenu.add_command(label="Edit Image...", state="disable", underline=6, accelerator="F4", command=self.open_image_in_editor)
+        self.toolsMenu.add_command(label="Open Current Directory...", underline=13, command=self.open_image_directory)
+        self.toolsMenu.add_command(label="Open Current Image...", underline=13, command=self.open_image)
+        self.toolsMenu.add_command(label="Edit Image...", underline=6, accelerator="F4", command=self.open_image_in_editor)
+        self.toolsMenu.add_command(label="Open With...", underline=5, command=self.open_with_dialog)
         self.toolsMenu.add_separator()
         self.toolsMenu.add_command(label="Next Empty Text File", state="disable", accelerator="Ctrl+E", command=self.index_goto_next_empty)
         self.toolsMenu.add_command(label="Open Image-Grid...", state="disable", accelerator="F2", underline=11, command=self.open_image_grid)
@@ -1265,6 +1259,7 @@ class ImgTxtViewer:
         self.imageContext_menu.add_command(label="Open Current Image...", command=self.open_image)
         self.imageContext_menu.add_command(label="Open Image-Grid...", accelerator="F2", command=self.open_image_grid)
         self.imageContext_menu.add_command(label="Edit Image...", accelerator="F4", command=self.open_image_in_editor)
+        self.imageContext_menu.add_command(label="Open With...", command=self.open_with_dialog)
         self.imageContext_menu.add_separator()
         # File
         self.imageContext_menu.add_command(label="Duplicate img-txt pair", command=self.duplicate_pair)
@@ -2231,25 +2226,30 @@ class ImgTxtViewer:
         self.text_box.config(undo=True)
 
 
-    def load_image_file(self, image_file, text_file):
+    def load_image_file(self, image_path, text_file):
+        if image_path not in self.thread_file_locks:
+            self.thread_file_locks[image_path] = threading.Lock()
+        file_lock = self.thread_file_locks[image_path]
         try:
-            with Image.open(image_file) as img:
-                self.original_image_size = img.size
+            with Image.open(image_path) as image_file:
+                self.original_image_size = image_file.size
+                with file_lock:
+                    temp_image = image_file.copy()
                 max_size = (self.quality_max_size, self.quality_max_size)
-                img.thumbnail(max_size, self.quality_filter)
-                if img.format == 'GIF':
-                    self.gif_frames = [frame.copy() for frame in ImageSequence.Iterator(img)]
-                    self.frame_durations = [frame.info['duration'] for frame in ImageSequence.Iterator(img)]
+                temp_image.thumbnail(max_size, self.quality_filter)
+                if image_file.format == 'GIF':
+                    self.gif_frames = [frame.copy() for frame in ImageSequence.Iterator(image_file)]
+                    self.frame_durations = [frame.info['duration'] for frame in ImageSequence.Iterator(image_file)]
                 else:
-                    self.gif_frames = [img.copy()]
+                    self.gif_frames = [temp_image.copy()]
                     self.frame_durations = [None]
         except (FileNotFoundError, UnidentifiedImageError):
             self.update_image_file_count()
-            self.image_files.remove(image_file)
+            self.image_files.remove(self.image_file)
             if text_file in self.text_files:
                 self.text_files.remove(text_file)
             return
-        return img
+        return temp_image
 
 
     def display_image(self):
@@ -3553,24 +3553,311 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - Save and close
+#region -   Save/Read/Reset Settings
+
+
+# --------------------------------------
+# Save
+# --------------------------------------
+    def save_settings(self):
+        try:
+            self.read_existing_settings()
+            self.save_version_settings()
+            self.save_path_settings()
+            self.save_window_settings()
+            self.save_autocomplete_settings()
+            self.save_other_settings()
+            self.write_settings_to_file()
+        except (PermissionError, IOError) as e:
+            messagebox.showerror("Error: save_settings()", f"An error occurred while saving the user settings.\n\n{e}")
+
+
+    def read_existing_settings(self):
+        if os.path.exists(self.app_settings_cfg):
+            self.config.read(self.app_settings_cfg)
+
+
+    def _add_section(self, section_name):
+        if not self.config.has_section(section_name):
+            self.config.add_section(section_name)
+
+
+    def _verify_filepath(self, path):
+        return os.path.exists(path)
+
+
+    def save_version_settings(self):
+        self._add_section("Version")
+        self.check_working_directory()
+        self.config.set("Version", "app_version", VERSION)
+
+
+    def save_path_settings(self):
+        self._add_section("Path")
+        last_img_directory = str(self.image_dir.get())
+        last_txt_directory = str(os.path.normpath(self.text_dir))
+        # Image directory
+        if self._verify_filepath(last_img_directory):
+            self.config.set("Path", "last_img_directory", last_img_directory)
+        # Text directory
+        if self._verify_filepath(last_txt_directory) and last_txt_directory != ".":
+            self.config.set("Path", "last_txt_directory", last_txt_directory)
+        # External image editor
+        self.config.set("Path", "external_image_editor_path", str(self.external_image_editor_path))
+        # Index and load order
+        self.config.set("Path", "last_index", str(self.current_index))
+        self.config.set("Path", "load_order", str(self.load_order_var.get()))
+        self.config.set("Path", "reverse_load_order", str(self.reverse_load_order_var.get()))
+
+
+    def save_window_settings(self):
+        self._add_section("Window")
+        window_size = f"{self.master.winfo_width()}x{self.master.winfo_height()}"
+        window_position = f"{self.master.winfo_x()}+{self.master.winfo_y()}"
+        self.config.set("Window", "window_size", window_size)
+        self.config.set("Window", "window_position", window_position)
+        self.config.set("Window", "panes_swap_ew_var", str(self.panes_swap_ew_var.get()))
+        self.config.set("Window", "panes_swap_ns_var", str(self.panes_swap_ns_var.get()))
+        self.config.set("Window", "always_on_top_var", str(self.always_on_top_var.get()))
+
+
+    def save_autocomplete_settings(self):
+        self._add_section("Autocomplete")
+        self.config.set("Autocomplete", "csv_danbooru", str(self.csv_danbooru.get()))
+        self.config.set("Autocomplete", "csv_derpibooru", str(self.csv_derpibooru.get()))
+        self.config.set("Autocomplete", "csv_e621", str(self.csv_e621.get()))
+        self.config.set("Autocomplete", "csv_english_dictionary", str(self.csv_english_dictionary.get()))
+        self.config.set("Autocomplete", "suggestion_quantity", str(self.suggestion_quantity_var.get()))
+        self.config.set("Autocomplete", "use_colored_suggestions", str(self.colored_suggestion_var.get()))
+        self.config.set("Autocomplete", "suggestion_threshold", str(self.suggestion_threshold_var.get()))
+        self.config.set("Autocomplete", "last_word_match", str(self.last_word_match_var.get()))
+
+
+    def save_other_settings(self):
+        self._add_section("Other")
+        self.config.set("Other", "auto_save", str(self.auto_save_var.get()))
+        self.config.set("Other", "cleaning_text", str(self.cleaning_text_var.get()))
+        self.config.set("Other", "big_save_button", str(self.big_save_button_var.get()))
+        self.config.set("Other", "highlighting_duplicates", str(self.highlight_selection_var.get()))
+        self.config.set("Other", "truncate_stat_captions", str(self.truncate_stat_captions_var.get()))
+        self.config.set("Other", "process_image_stats", str(self.process_image_stats_var.get()))
+        self.config.set("Other", "use_mytags", str(self.use_mytags_var.get()))
+        self.config.set("Other", "auto_delete_blank_files", str(self.auto_delete_blank_files_var.get()))
+        self.config.set("Other", "save_caption_to_png_metadata_var", str(self.save_caption_to_png_metadata_var.get()))
+        self.config.set("Other", "thumbnails_visible", str(self.thumbnails_visible.get()))
+        self.config.set("Other", "edit_panel_visible", str(self.edit_panel_visible_var.get()))
+        self.config.set("Other", "image_quality", str(self.image_quality_var.get()))
+        self.config.set("Other", "font", str(self.font_var.get()))
+        self.config.set("Other", "font_size", str(self.font_size_var.get()))
+        self.config.set("Other", "list_mode", str(self.list_mode_var.get()))
+
+
+    def write_settings_to_file(self):
+        with open(self.app_settings_cfg, "w", encoding="utf-8") as f:
+            self.config.write(f)
+
+
+# --------------------------------------
+# Read
+# --------------------------------------
+    def read_settings(self):
+        try:
+            if os.path.exists(self.app_settings_cfg):
+                self.config.read(self.app_settings_cfg)
+                if not self.is_current_version():
+                    self.reset_settings()
+                    return
+                self.read_config_settings()
+                if hasattr(self, 'text_box'):
+                    self.show_pair()
+            else:
+                self.prompt_first_time_setup()
+        except Exception as e:
+            messagebox.showerror("Error: read_settings()", f"An unexpected error occurred.\n\n{e}")
+
+
+    def is_current_version(self):
+        return self.config.has_section("Version") and self.config.get("Version", "app_version", fallback=VERSION) == VERSION
+
+
+    def read_config_settings(self):
+        if not self.read_directory_settings():
+            return
+        #self.read_window_settings()
+        self.read_autocomplete_settings()
+        self.read_other_settings()
+
+
+    def read_directory_settings(self):
+        last_img_directory = self.config.get("Path", "last_img_directory", fallback=None)
+        if last_img_directory and os.path.exists(last_img_directory) and messagebox.askyesno("Confirmation", "Reload last directory?"):
+            self.external_image_editor_path = self.config.get("Path", "external_image_editor_path", fallback="mspaint")
+            self.load_order_var.set(value=self.config.get("Path", "load_order", fallback="Name (default)"))
+            self.reverse_load_order_var.set(value=self.config.getboolean("Path", "reverse_load_order", fallback=False))
+            self.image_dir.set(last_img_directory)
+            self.set_working_directory()
+            self.set_text_file_path(str(self.config.get("Path", "last_txt_directory", fallback=last_img_directory)))
+            last_index = int(self.config.get("Path", "last_index", fallback=1))
+            num_files = len([name for name in os.listdir(last_img_directory) if os.path.isfile(os.path.join(last_img_directory, name))])
+            self.jump_to_image(min(last_index, num_files))
+            return True
+        return False
+
+
+    def read_window_settings(self):
+        # Restore the panes swap state
+        self.panes_swap_ew_var.set(value=self.config.getboolean("Window", "panes_swap_ew_var", fallback=False))
+        self.panes_swap_ns_var.set(value=self.config.getboolean("Window", "panes_swap_ns_var", fallback=False))
+        self.swap_pane_sides(swap_state=self.panes_swap_ew_var.get())
+        self.swap_pane_orientation(swap_state=self.panes_swap_ns_var.get())
+        self.always_on_top_var.set(value=self.config.getboolean("Window", "always_on_top_var", fallback=False))
+        self.set_always_on_top()
+        # Restore the window size and position
+        #window_size = self.config.get("Window", "window_size", fallback=None)
+        #window_position = self.config.get("Window", "window_position", fallback=None)
+        #if window_size:
+        #    width, height = map(int, window_size.split('x'))
+        #    self.master.geometry(f"{width}x{height}")
+        #if window_position:
+        #    x, y = map(int, window_position.split('+'))
+        #    self.master.geometry(f"+{x}+{y}")
+        # Restore the minsize values
+        #current_min_width = self.master.minsize()[0]
+        #current_min_height = self.master.minsize()[1]
+        #self.master.minsize(current_min_width, current_min_height)
+
+
+    def read_autocomplete_settings(self):
+        self.csv_danbooru.set(value=self.config.getboolean("Autocomplete", "csv_danbooru", fallback=True))
+        self.csv_derpibooru.set(value=self.config.getboolean("Autocomplete", "csv_derpibooru", fallback=False))
+        self.csv_e621.set(value=self.config.getboolean("Autocomplete", "csv_e621", fallback=False))
+        self.csv_english_dictionary.set(value=self.config.getboolean("Autocomplete", "csv_english_dictionary", fallback=False))
+        self.suggestion_quantity_var.set(value=self.config.getint("Autocomplete", "suggestion_quantity", fallback=4))
+        self.colored_suggestion_var.set(value=self.config.getboolean("Autocomplete", "use_colored_suggestions", fallback=True))
+        self.suggestion_threshold_var.set(value=self.config.get("Autocomplete", "suggestion_threshold", fallback="Normal"))
+        self.last_word_match_var.set(value=self.config.getboolean("Autocomplete", "last_word_match", fallback=False))
+        self.update_autocomplete_dictionary()
+
+
+    def read_other_settings(self):
+        self.auto_save_var.set(value=self.config.getboolean("Other", "auto_save", fallback=False))
+        self.cleaning_text_var.set(value=self.config.getboolean("Other", "cleaning_text", fallback=True))
+        self.big_save_button_var.set(value=self.config.getboolean("Other", "big_save_button", fallback=True))
+        self.highlight_selection_var.set(value=self.config.getboolean("Other", "highlighting_duplicates", fallback=True))
+        self.truncate_stat_captions_var.set(value=self.config.getboolean("Other", "truncate_stat_captions", fallback=True))
+        self.process_image_stats_var.set(value=self.config.getboolean("Other", "process_image_stats", fallback=False))
+        self.use_mytags_var.set(value=self.config.getboolean("Other", "use_mytags", fallback=True))
+        self.auto_delete_blank_files_var.set(value=self.config.getboolean("Other", "auto_delete_blank_files", fallback=False))
+        self.save_caption_to_png_metadata_var.set(value=self.config.getboolean("Other", "save_caption_to_png_metadata_var", fallback=False))
+        self.thumbnails_visible.set(value=self.config.getboolean("Other", "thumbnails_visible", fallback=True))
+        self.edit_panel_visible_var.set(value=self.config.getboolean("Other", "edit_panel_visible", fallback=False))
+        self.toggle_edit_panel()
+        self.image_quality_var.set(value=self.config.get("Other", "image_quality", fallback="Normal"))
+        self.set_image_quality()
+        self.font_var.set(value=self.config.get("Other", "font", fallback="Courier New"))
+        self.font_size_var.set(value=self.config.getint("Other", "font_size", fallback=10))
+        self.list_mode_var.set(value=self.config.getboolean("Other", "list_mode", fallback=False))
+
+
+# --------------------------------------
+# Reset
+# --------------------------------------
+    def reset_settings(self):
+        if not messagebox.askokcancel("Confirm Reset", "Reset all settings to their default parameters?"):
+            return
+        # Path
+        self.set_text_file_path(str(self.image_dir.get()))
+        self.load_order_var.set(value="Name (default)")
+        self.reverse_load_order_var.set(value=False)
+        # Autocomplete
+        self.csv_danbooru.set(value=True)
+        self.csv_derpibooru.set(value=False)
+        self.csv_e621.set(value=False)
+        self.csv_english_dictionary.set(value=False)
+        self.colored_suggestion_var.set(value=True)
+        self.suggestion_quantity_var.set(value=4)
+        self.suggestion_threshold_var.set(value="Normal")
+        self.last_word_match_var.set(value=False)
+        # Other
+        self.clear_search_and_replace_tab()
+        self.clear_prefix_tab()
+        self.clear_append_tab()
+        self.revert_text_image_filter(clear=True)
+        self.clear_highlight_tab()
+        self.list_mode_var.set(value=False)
+        self.toggle_list_mode()
+        self.cleaning_text_var.set(value=True)
+        self.auto_save_var.set(value=False)
+        self.toggle_save_button_height(reset=True)
+        self.highlight_selection_var.set(value=True)
+        self.highlight_all_duplicates_var.set(value=False)
+        self.toggle_highlight_all_duplicates()
+        self.truncate_stat_captions_var.set(value=True)
+        self.process_image_stats_var.set(value=False)
+        self.use_mytags_var.set(value=True)
+        self.auto_delete_blank_files_var.set(value=False)
+        self.save_caption_to_png_metadata_var.set(value=False)
+        self.external_image_editor_path = "mspaint"
+        self.image_quality_var.set(value="Normal")
+        self.set_image_quality()
+        # Window
+        self.always_on_top_var.set(value=False)
+        self.set_always_on_top()
+        self.panes_swap_ew_var.set(value=False)
+        self.panes_swap_ns_var.set(value=False)
+        self.swap_pane_sides(swap_state=False)
+        self.swap_pane_orientation(swap_state=False)
+        self.set_window_size(self.master)
+        # Font and text_box
+        if hasattr(self, 'text_box'):
+            self.font_var.set(value="Courier New")
+            self.font_size_var.set(value=10)
+            self.size_scale.set(value=10)
+            self.font_size_tab6.config(text=f"Size: 10")
+            current_text = self.text_box.get("1.0", "end-1c")
+            self.text_box.config(font=(self.default_font, self.default_font_size))
+        self.load_pairs()
+        if hasattr(self, 'text_box'):
+            self.text_box.delete("1.0", "end")
+            self.text_box.insert("1.0", current_text)
+        if messagebox.askyesno("Confirm Reset", "Reset 'My Tags' to default?"):
+            with open(self.app_settings_cfg, 'w', encoding="utf-8") as cfg_file:
+                cfg_file.write("")
+            self.create_custom_dictionary(reset=True)
+        # Extra panels
+        self.thumbnails_visible.set(value=True)
+        self.update_thumbnail_panel()
+        self.edit_panel_visible_var.set(value=False)
+        self.toggle_edit_panel()
+        # Done
+        self.message_label.config(text="All settings reset!", bg="#6ca079", fg="white")
+        self.prompt_first_time_setup()
+
+
+#endregion
+################################################################################################################################################
+#region -   Save and close
 
 
     def save_text_file(self):
         try:
             if self.image_dir.get() != "Choose Directory..." and self.check_if_directory() and self.text_files:
-                file_saved = self._save_file()
+                file_saved = self._save_text_file()
                 if self.cleaning_text_var.get() or self.list_mode_var.get():
                     self.refresh_text_box()
                 if file_saved:
                     self.master.title(self.title)
                 else:
-                    self.master.title(self.title)
+                    self.message_label.config(text="No Change", bg="#f0f0f0", fg="black")
+                if self.save_caption_to_png_metadata_var.get():
+                    self.save_caption_metadata()
         except (PermissionError, IOError, TclError) as e:
             messagebox.showerror("Error: save_text_file()", f"An error occurred while saving the current text file.\n\n{e}")
+        except Exception as e:
+            messagebox.showerror("Error: save_text_file()", f"An unexpected error occurred while saving the current text file.\n\n{e}")
 
 
-    def _save_file(self):
+    def _save_text_file(self):
         text_file = self.text_files[self.current_index]
         text = self.text_box.get("1.0", "end-1c")
         if os.path.exists(text_file):
@@ -3592,6 +3879,31 @@ class ImgTxtViewer:
         with open(text_file, "w+", encoding="utf-8") as file:
             file.write(text)
         return True
+
+
+    def save_caption_metadata(self):
+        text = self.text_box.get("1.0", "end-1c")
+        if self.cleaning_text_var.get():
+            text = self.cleanup_text(text)
+        if self.list_mode_var.get():
+            text = ', '.join(text.split('\n'))
+        self.thread_executor.submit(self._save_image, self.image_file, text)
+
+
+    def _save_image(self, file_path, text):
+        if file_path not in self.thread_file_locks:
+            self.thread_file_locks[file_path] = threading.Lock()
+        file_lock = self.thread_file_locks[file_path]
+        with file_lock:
+            try:
+                with Image.open(file_path) as img:
+                    if img.format != 'PNG':
+                        raise ValueError("The image format must be PNG.")
+                    metadata = PngImagePlugin.PngInfo()
+                    metadata.add_text(";;img-txt_viewer_caption;;", f"{text};;")
+                    img.save(file_path, "PNG", pnginfo=metadata)
+            except Exception as e:
+                messagebox.showerror("Error: _save_image()", f"An error occurred while saving the caption metadata to the image file.\n\n{e}")
 
 
     def on_closing(self, event=None):
@@ -4199,12 +4511,8 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - This tool has been completely reworked to allow for more versatile tag editing.
   - The interface is now more convenient and user-friendly, allowing you to see all pending changes before committing them.
   - It is no longer supported as a standalone tool.
-- `Batch Resize Images`:
-  - No longer a standalone tool, the tool has been integrated into the main app.
-  - NEW: A timer is now displayed in the bottom row.
-  - FIXED: The following resize modes not working/causing an error: `Longer Side`, and `Height`
-  - FIXED: The resize operation is now threaded, allowing the app to remain responsive during the resizing process.
-- `Find Duplicate Files`: No longer a standalone tool, the tool has been integrated into the main app.
+- New option `Save Caption to PNG Metadata`: Save the current caption to the PNG metadata of the displayed image. (PNG only), (text chunk)
+  - A double semi-colon `;;` is used as a delimiter to separate the caption from other metadata.  
 - New feature `Thumbnail Panel`: Displayed below the current image for quick navigation.
 - New feature `Edit Image Panel`: Enabled from the options/image menu, this section allows you to edit the `Brightness`, `Contrast`, `Saturation`, `Sharpness`, `Highlights`, and `Shadows` of the current image.
 - New feature `Edit Image...`: Open the current image in an external editor, the default is MS Paint.
