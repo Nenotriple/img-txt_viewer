@@ -2744,32 +2744,42 @@ class ImgTxtViewer:
 
 
     def delete_tag_under_mouse(self, event):
-        if self.cleaning_text_var.get() == False:
+        def set_text_highlight(tag, color, start=None, end=None):
+            self.text_box.tag_config(tag, background=color)
+            if start and end:
+                self.text_box.tag_add(tag, start, end)
+
+        def delete_tag():
+            self.text_box.delete(f"{line_start}+{start_of_clicked_tag}c", f"{line_start}+{end_of_clicked_tag}c")
+            cleaned_text = self.cleanup_text(self.text_box.get("1.0", "end"))
+            cleaned_text = '\n'.join([line for line in cleaned_text.split('\n') if line.strip() != ''])
+            self.text_box.delete("1.0", "end")
+            self.text_box.insert("1.0", cleaned_text)
+            set_text_highlight("highlight", "#5da9be")
+
+        def get_cursor_and_line_text():
+            cursor_pos = self.text_box.index(f"@{event.x},{event.y}")
+            line_start = self.text_box.index(f"{cursor_pos} linestart")
+            line_end = self.text_box.index(f"{cursor_pos} lineend")
+            line_text = self.text_box.get(line_start, line_end)
+            return cursor_pos, line_start, line_end, line_text
+
+        def find_clicked_tag(line_text, cursor_pos):
+            tags = [(match.group().strip(), match.start(), match.end()) for match in re.finditer(r'[^,]+', line_text)]
+            for tag, start, end in tags:
+                if start <= int(cursor_pos.split('.')[1]) <= end:
+                    return tag, start, end
+            return None, None, None
+
+        if not self.cleaning_text_var.get():
             return
-        cursor_pos = self.text_box.index(f"@{event.x},{event.y}")
-        line_start = self.text_box.index(f"{cursor_pos} linestart")
-        line_end = self.text_box.index(f"{cursor_pos} lineend")
-        line_text = self.text_box.get(line_start, line_end)
-        tags = [(match.group().strip(), match.start(), match.end()) for match in re.finditer(r'[^,]+', line_text)]
-        clicked_tag = None
-        for tag, start, end in tags:
-            if start <= int(cursor_pos.split('.')[1]) <= end:
-                clicked_tag = tag
-                start_of_clicked_tag, end_of_clicked_tag = start, end
-                break
+        cursor_pos, line_start, line_end, line_text = get_cursor_and_line_text()
+        clicked_tag, start_of_clicked_tag, end_of_clicked_tag = find_clicked_tag(line_text, cursor_pos)
         if clicked_tag is None:
-            print("No valid tag found under cursor: ", line_text)
             return
-        self.text_box.tag_add("highlight", f"{line_start}+{start_of_clicked_tag}c", f"{line_start}+{end_of_clicked_tag}c")
-        self.text_box.tag_config("highlight", background="#fd8a8a")
+        set_text_highlight("highlight", "#fd8a8a", f"{line_start}+{start_of_clicked_tag}c", f"{line_start}+{end_of_clicked_tag}c")
         self.text_box.update_idletasks()
-        time.sleep(0.2)
-        self.text_box.delete(f"{line_start}+{start_of_clicked_tag}c", f"{line_start}+{end_of_clicked_tag}c")
-        cleaned_text = self.cleanup_text(self.text_box.get("1.0", "end"))
-        cleaned_text = '\n'.join([line for line in cleaned_text.split('\n') if line.strip() != ''])
-        self.text_box.delete("1.0", "end")
-        self.text_box.insert("1.0", cleaned_text)
-        self.text_box.tag_configure("highlight", background="#5da9be")
+        self.text_box.after(200, delete_tag)
 
 
     def collate_captions(self):
