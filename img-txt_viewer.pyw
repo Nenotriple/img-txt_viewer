@@ -4238,7 +4238,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - `Image Grid`, `Upscale Image`, `Resize Image`
 - Potential fix for the `Stats > PPI` calculation returning "0.00".
 - if `clean-text` is enabled: The primary text box is now properly refreshed when saving.
-
+- Fixed an issue where deleting tags that are substring of another tag using middle-mouse-click caused an error and did not remove the tag. #38
 
 <br>
 
