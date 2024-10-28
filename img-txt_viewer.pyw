@@ -2744,6 +2744,13 @@ class ImgTxtViewer:
 
 
     def delete_tag_under_mouse(self, event):
+        if not self.cleaning_text_var.get():
+            return
+        if not hasattr(self, "delete_tag_under_mouse_in_progress"):
+            self.delete_tag_under_mouse_in_progress = False
+        elif self.delete_tag_under_mouse_in_progress:
+            return
+        
         def set_text_highlight(tag, color, start=None, end=None):
             self.text_box.tag_config(tag, background=color)
             if start and end:
@@ -2771,15 +2778,15 @@ class ImgTxtViewer:
                     return tag, start, end
             return None, None, None
 
-        if not self.cleaning_text_var.get():
-            return
         cursor_pos, line_start, line_end, line_text = get_cursor_and_line_text()
         clicked_tag, start_of_clicked_tag, end_of_clicked_tag = find_clicked_tag(line_text, cursor_pos)
         if clicked_tag is None:
             return
+        self.delete_tag_under_mouse_in_progress = True
         set_text_highlight("highlight", "#fd8a8a", f"{line_start}+{start_of_clicked_tag}c", f"{line_start}+{end_of_clicked_tag}c")
         self.text_box.update_idletasks()
         self.text_box.after(200, delete_tag)
+        self.delete_tag_under_mouse_in_progress = False
 
 
     def collate_captions(self):
