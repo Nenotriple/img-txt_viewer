@@ -79,8 +79,8 @@ def _extract_tags(text):
     and its starting position.
     """
     text = text.replace('.', ',')
-    raw_tags = re.finditer(r'\b[\w\s]+\b', text)
-    tags = [(match.group().strip(), match.start()) for match in raw_tags]
+    raw_tags = re.finditer(r'[^,]+', text)
+    tags = [(tag, match.start()) for match in raw_tags if (tag := match.group().strip())]
     return tags
 
 
