@@ -199,7 +199,7 @@ class SettingsManager:
 
 
     def _read_ONNX_settings(self):
-        self.parent.onnx_model_var.set(value=self.config.get("ONNX", "ONNX_model", fallback="WDMoat_v2"))
+        self.parent.onnx_model_var.set(value=self.config.get("ONNX", "ONNX_model", fallback=""))
         self.parent.general_threshold_var.set(value=self.config.getfloat("ONNX", "general_threshold", fallback=0.35))
         self.parent.character_threshold_var.set(value=self.config.getfloat("ONNX", "character_threshold", fallback=0.8))
         self.parent.custom_exclude_tags_var.set(value=self.config.get("ONNX", "custom_exclude_tags", fallback=""))
@@ -246,7 +246,7 @@ class SettingsManager:
         self.parent.suggestion_threshold_var.set(value="Normal")
         self.parent.last_word_match_var.set(value=False)
         # ONNX
-        self.parent.onnx_model_var.set(value="WDMoat_v2")
+        self.parent.onnx_model_var.set(value="")
         self.parent.general_threshold_var.set(value=0.35)
         self.parent.character_threshold_var.set(value=0.8)
         self.parent.custom_exclude_tags_var.set(value="")

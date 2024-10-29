@@ -20,5 +20,5 @@ build/
 settings.cfg
 
 
-# ONNX Models
-onnx_models/
+#ONNX Models
+onnx_models/*

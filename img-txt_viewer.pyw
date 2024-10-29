@@ -294,6 +294,7 @@ class ImgTxtViewer:
         self.create_primary_ui()
         self.settings_manager.read_settings()
 
+
 #endregion
 ################################################################################################################################################
 #region - Setup
@@ -457,7 +458,7 @@ class ImgTxtViewer:
         self.suggestions = []
 
         # ONNX
-        self.onnx_model_var = StringVar(value="WDMoat_v2")
+        self.onnx_model_var = StringVar()
         self.general_threshold_var = DoubleVar(value=0.35)
         self.character_threshold_var = DoubleVar(value=0.8)
         self.custom_exclude_tags_var = StringVar(value="")
@@ -4144,56 +4145,66 @@ class ImgTxtViewer:
         except (PermissionError, ValueError, IOError, TclError) as e:
             messagebox.showerror("Error: undo_delete_pair()", f"An error occurred while restoring the img-txt pair.\n\n{e}")
 
-    def infer_tags(self, model="WDMoat_v2", threshold="0.35", character_threshold="0.9", excluded_tags="", exclude_current_tags=False):
-        model = self.onnx_model_var.get()
-        threshold = str(self.general_threshold_var.get())
+
+#endregion
+################################################################################################################################################
+#region - ONNX Tagger
+
+
+    def infer_tags(self, model_path=None, general_threshold=None, character_threshold=None, excluded_tags=None, exclude_current_tags=None):
+        model_path = self.onnx_model_var.get()
+        if not os.path.exists(model_path):
+            self.set_ONNX_model_value()
+            model_path = self.onnx_model_var.get()
+
+        general_threshold = str(self.general_threshold_var.get())
         character_threshold = str(self.character_threshold_var.get())
-        
         excluded_tags = self.custom_exclude_tags_var.get()
+        exclude_current_tags = self.exclude_current_tags_var.get()
 
         if exclude_current_tags:
             current_tags = self.text_box.get("1.0", "end-1c")
             excluded_tags = f"{excluded_tags}, {current_tags}".strip(", ")
 
         script_path = os.path.join(".", "main", "scripts", "ONNXTagger.py")
-        print(f"""model: {model}
-threshold: {threshold}
-character_threshold: {character_threshold}
-excluded_tags: {excluded_tags}""")
         
+
         command = [
             "python", script_path,
             "--image", self.image_file,
-            "--model", model,
-            "--threshold", threshold,
+            "--model_path", model_path,
+            "--general_threshold", general_threshold,
             "--character_threshold", character_threshold,
             "--exclude_tags", excluded_tags
         ]
-        
+
         result = subprocess.run(command, capture_output=True, text=True)
         
         if result.returncode == 0:
             self.open_ONNX_window(result.stdout)
-            #messagebox.showinfo(f"{model} tag results", result.stdout)
         else:
             print("Error:\n", result.stderr)
+
 
     def set_threshold_value(self, tk_float: DoubleVar):
         value = simpledialog.askfloat("Input Float", "Enter a float between 0 and 1:", minvalue=0, maxvalue=1)
         if value is not None:
             tk_float.set(value)
 
+
     def set_ONNX_model_value(self):
-        value = filedialog.askopenfilename(initialdir="./ONNX_models", title="Choose ONNX model for tagging", filetypes=[("ONNX Model", "*.onnx")])
+        os.makedirs("onnx_models", exist_ok=True)
+        value = filedialog.askopenfilename(initialdir="./onnx_models", title="Choose ONNX model for tagging", filetypes=[("ONNX Model", "*.onnx")])
         if value is not None:
-            model_name = os.path.splitext(os.path.basename(value))[0]
-            self.onnx_model_var.set(model_name)
+            self.onnx_model_var.set(value)
+
 
     def set_exclude_tags_value(self):
         value = simpledialog.askstring("Input String", "Enter a comma separated list of tags to exclude:")
         if value is not None:
             cleaned_text = self.cleanup_text(value, bypass=True)
             self.custom_exclude_tags_var.set(cleaned_text)
+
 
 #endregion
 ################################################################################################################################################

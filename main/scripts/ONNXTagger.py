@@ -1,17 +1,20 @@
 import os
 import numpy as np
 import csv
+import json
 import argparse
 
+from tkinter import filedialog
 from PIL import Image
+
 from onnxruntime import InferenceSession
+# GPU inference requires onnxruntime-gpu as well as proper PyTorch, CUDA and cuDNN versions: https://onnxruntime.ai/docs/execution-providers/CUDA-ExecutionProvider.html
+# model = InferenceSession(model_path, providers=['CUDAExecutionProvider', 'CPUExecutionProvider']) 
 
-ROOT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-def tag(image, model_name, threshold="0.35", character_threshold="0.85", exclude_tags="", replace_underscore=True, sort=True, reverse=True):
-    model_path = os.path.join(ROOT_DIRECTORY, "ONNX_models", model_name + ".ONNX")
-    threshold = float(threshold)
+def tag(image, model_path, general_threshold="0.35", character_threshold="0.85", exclude_tags="", replace_underscore=True, sort=True, reverse=True):
+    general_threshold = float(general_threshold)
     character_threshold = float(character_threshold)
+    
     model = InferenceSession(model_path, providers=['CPUExecutionProvider'])
     input = model.get_inputs()[0]
     height = input.shape[1]
@@ -31,7 +34,7 @@ def tag(image, model_name, threshold="0.35", character_threshold="0.85", exclude
     tags = []
     general_index = None
     character_index = None
-    with open(os.path.join(ROOT_DIRECTORY, "ONNX_models", model_name + ".csv")) as f:
+    with open(os.path.join(os.path.splitext(model_path)[0] + ".csv")) as f:
         reader = csv.reader(f)
         next(reader)
         for row in reader:
@@ -45,40 +48,57 @@ def tag(image, model_name, threshold="0.35", character_threshold="0.85", exclude
                 tags.append(row[1])
 
     label_name = model.get_outputs()[0].name
-
     probs = model.run([label_name], {input.name: image})[0]
 
     result = list(zip(tags, probs[0]))
 
-    general = [item for item in result[general_index:character_index] if item[1] > threshold]
-    character = [item for item in result[character_index:] if item[1] > character_threshold]
-
+    general = [tag_tuple for tag_tuple in result[general_index:character_index] if tag_tuple[1] > general_threshold]
+    character = [tag_tuple for tag_tuple in result[character_index:] if tag_tuple[1] > character_threshold]
     all = character + general
+
     remove = [s.strip() for s in exclude_tags.lower().split(",")]
     if sort:
-        all = sorted([(tag, round(float(conf), 2)) for (tag, conf) in all if tag not in remove], key=lambda x: x[1], reverse=reverse)
+        all = sorted([(tag, round(float(conf), 2)) for (tag, conf) in all if tag.lower() not in remove], key=lambda x: x[1], reverse=reverse)
     else:
-        all = [tag for tag in all if tag[0] not in remove]
+        all = [tag_tuple for tag_tuple in all if tag_tuple[0] not in remove]
 
     return all
 
+
 def main(**kwargs):
+    arg_string_repr = json.dumps(kwargs, indent=2)
     image = kwargs.pop("image")
     try:
         image = Image.open(image)
     except FileNotFoundError as e:
         print("Error: " + e)
         return
-    model= kwargs.pop("model")
+    
+    model_path = kwargs.pop("model_path")
+    if not os.path.exists(model_path):
+        model_path = filedialog.askopenfilename(initialdir="../../ONNX_models", title="Choose ONNX model for tagging", filetypes=[("ONNX Model", "*.onnx")])
+        if not os.path.exists(model_path):
+            print(f'''ONNX model ({model_path}) not found.
+Please visit https://huggingface.co/SmilingWolf and pick a model. I recommend wd-v1-4-moat-tagger-v2.
+Download "model.onnx" and "selected_tags.csv" for your chosen model.
+Rename both files to whatever you\'d like, ensuring both names match e.g., "WDMoat_v2.onnx" and "WDMoat_v2.csv"
+Place these files in the "onnx_models" folder and that's it!''')
+            return
+        
+    inferred_tags = tag(image, model_path, **kwargs)
 
-    all = tag(image, model, **kwargs)
-    all = [[item[0].replace("(", "\\(").replace(")", "\\)") , item[1]] for item in all]
-    res = (", ").join((item[0].replace("(", "\\(").replace(")", "\\)") for item in all))
-    conf = "\n".join(
-        [f"{(item[0])}: {item[1]}" for item in all]
+    all_formatted = [
+        [item[0].replace("(", "\\(").replace(")", "\\)") , item[1]] for item in inferred_tags
+        ]
+
+    csv_result = (", ").join(
+        (item[0] for item in all_formatted)
         )
-    print(res)
-    #print(json.dumps(all,indent=2))
+
+    confidence_result = "\n".join(
+        [f"{(item[0])}: {item[1]}" for item in inferred_tags]
+        )
+    print(f"{csv_result}\n\n{confidence_result}\n\nArguments: {arg_string_repr}")
     #print(json.dumps(all,indent=2))
 
 
@@ -89,25 +109,24 @@ if __name__ == "__main__":
     parser.add_argument(
         "--image", 
         type=str, 
-        required=False,
+        required=True,
         help="Path to the image"
+    )
+
+    parser.add_argument(
+        "--model_path", 
+        type=str, 
+        required=False, 
+        help="Path of the ONNX model for inference"
     )
 
     # Optional
     parser.add_argument(
-        "--model", 
-        type=str, 
-        required=False, 
-        default="WDMoat_v2",
-        help="Name of the model in ONNX_models for inference"
-    )
-
-    parser.add_argument(
-        "--threshold", 
+        "--general_threshold", 
         type=str, 
         required=False, 
         default="0.35",
-        help="Tag confidence threshold"
+        help="General tag confidence threshold"
     )
 
     parser.add_argument(
@@ -125,6 +144,7 @@ if __name__ == "__main__":
         default="",
         help="Comma separated list of tags to exclude"
     )
+
     # parser.add_argument(
     #     "--verbose", 
     #     action="store_true",  # This is a flag, no value is required
@@ -133,7 +153,7 @@ if __name__ == "__main__":
 
     kwargs = vars(parser.parse_args())
     if not kwargs["image"]:
-        kwargs["image"] = r"x:\Kohya\Datasets\1_Tacticool2-InProgress\__termichan_original_drawn_by_polilla__79f92e56d0ff60d338db21d3c68ec890.jpg"
-        #raise ValueError("First argument must be an image file")
+        raise ValueError("First argument must be an image file")
 
+    
     main(**kwargs)
