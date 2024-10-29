@@ -2760,7 +2760,9 @@ class ImgTxtViewer:
                 self.text_box.delete("1.0", "end")
                 self.text_box.insert("1.0", cleaned_text)
                 set_text_highlight("highlight", "#5da9be")
-                self.text_box.clipboard_get()
+                try:
+                    self.text_box.clipboard_get()
+                except TclError: pass
                 self.delete_tag_job_id = None
                 self.sync_title_with_content()
 
