@@ -356,6 +356,7 @@ class ImgTxtViewer:
         self.toggle_zoom_var = None
         self.undo_state = StringVar(value="disabled")
         self.previous_window_size = (self.master.winfo_width(), self.master.winfo_height())
+        self.delete_tag_job = None
 
         # Image Resize Variables
         self.current_image = None # ImageTk.PhotoImage object
@@ -2749,40 +2750,42 @@ class ImgTxtViewer:
             if start and end:
                 self.text_box.tag_add(tag, start, end)
 
-        def delete_tag(tag_regex):
-            match = re.search(tag_regex, self.text_box.get("1.0", "end"))
-            if match:
-                start, end = match.span()
-                self.text_box.delete(f"1.0+{start}c", f"1.0+{end}c")
+        def delete_tag():
+            if self.delete_tag_job is not None:
+                self.text_box.delete(f"{line_start}+{start_of_clicked_tag}c", f"{line_start}+{end_of_clicked_tag}c")
                 cleaned_text = self.cleanup_text(self.text_box.get("1.0", "end"))
                 cleaned_text = '\n'.join([line for line in cleaned_text.split('\n') if line.strip() != ''])
                 self.text_box.delete("1.0", "end")
                 self.text_box.insert("1.0", cleaned_text)
                 set_text_highlight("highlight", "#5da9be")
                 self.text_box.clipboard_get()
+                self.delete_tag_job = None
 
         def get_cursor_and_line_text():
             cursor_pos = self.text_box.index(f"@{event.x},{event.y}")
             line_start = self.text_box.index(f"{cursor_pos} linestart")
-            line_text = self.text_box.get(line_start, f"{line_start} lineend")
-            return cursor_pos, line_start, line_text
+            line_end = self.text_box.index(f"{cursor_pos} lineend")
+            line_text = self.text_box.get(line_start, line_end)
+            return cursor_pos, line_start, line_end, line_text
 
         def find_clicked_tag(line_text, cursor_pos):
             tags = [(match.group().strip(), match.start(), match.end()) for match in re.finditer(r'[^,]+', line_text)]
             for tag, start, end in tags:
                 if start <= int(cursor_pos.split('.')[1]) <= end:
-                    return tag, re.escape(tag)
-            return None, None
+                    return tag, start, end
+            return None, None, None
 
         if not self.cleaning_text_var.get():
             return
-        cursor_pos, line_start, line_text = get_cursor_and_line_text()
-        clicked_tag, tag_regex = find_clicked_tag(line_text, cursor_pos)
+        cursor_pos, line_start, line_end, line_text = get_cursor_and_line_text()
+        clicked_tag, start_of_clicked_tag, end_of_clicked_tag = find_clicked_tag(line_text, cursor_pos)
         if clicked_tag is None:
             return
-        set_text_highlight("highlight", "#fd8a8a", f"{line_start}+{line_text.find(clicked_tag)}c", f"{line_start}+{line_text.find(clicked_tag) + len(clicked_tag)}c")
+        set_text_highlight("highlight", "#fd8a8a", f"{line_start}+{start_of_clicked_tag}c", f"{line_start}+{end_of_clicked_tag}c")
         self.text_box.update_idletasks()
-        self.text_box.after(200, lambda: delete_tag(tag_regex))
+        if self.delete_tag_job is not None:
+            self.text_box.after_cancel(self.delete_tag_job)
+        self.delete_tag_job = self.text_box.after(100, delete_tag)
 
 
     def collate_captions(self):
