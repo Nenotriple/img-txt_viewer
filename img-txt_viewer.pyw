@@ -2762,6 +2762,7 @@ class ImgTxtViewer:
                 set_text_highlight("highlight", "#5da9be")
                 self.text_box.clipboard_get()
                 self.delete_tag_job_id = None
+                self.sync_title_with_content()
 
         def get_cursor_and_line_text():
             cursor_pos = self.text_box.index(f"@{event.x},{event.y}")
