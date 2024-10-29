@@ -356,6 +356,7 @@ class ImgTxtViewer:
         self.toggle_zoom_var = None
         self.undo_state = StringVar(value="disabled")
         self.previous_window_size = (self.master.winfo_width(), self.master.winfo_height())
+        self.delete_tag_job = None
 
         # Image Resize Variables
         self.current_image = None # ImageTk.PhotoImage object
@@ -2750,12 +2751,15 @@ class ImgTxtViewer:
                 self.text_box.tag_add(tag, start, end)
 
         def delete_tag():
-            self.text_box.delete(f"{line_start}+{start_of_clicked_tag}c", f"{line_start}+{end_of_clicked_tag}c")
-            cleaned_text = self.cleanup_text(self.text_box.get("1.0", "end"))
-            cleaned_text = '\n'.join([line for line in cleaned_text.split('\n') if line.strip() != ''])
-            self.text_box.delete("1.0", "end")
-            self.text_box.insert("1.0", cleaned_text)
-            set_text_highlight("highlight", "#5da9be")
+            if self.delete_tag_job is not None:
+                self.text_box.delete(f"{line_start}+{start_of_clicked_tag}c", f"{line_start}+{end_of_clicked_tag}c")
+                cleaned_text = self.cleanup_text(self.text_box.get("1.0", "end"))
+                cleaned_text = '\n'.join([line for line in cleaned_text.split('\n') if line.strip() != ''])
+                self.text_box.delete("1.0", "end")
+                self.text_box.insert("1.0", cleaned_text)
+                set_text_highlight("highlight", "#5da9be")
+                self.text_box.clipboard_get()
+                self.delete_tag_job = None
 
         def get_cursor_and_line_text():
             cursor_pos = self.text_box.index(f"@{event.x},{event.y}")
@@ -2779,7 +2783,9 @@ class ImgTxtViewer:
             return
         set_text_highlight("highlight", "#fd8a8a", f"{line_start}+{start_of_clicked_tag}c", f"{line_start}+{end_of_clicked_tag}c")
         self.text_box.update_idletasks()
-        self.text_box.after(200, delete_tag)
+        if self.delete_tag_job is not None:
+            self.text_box.after_cancel(self.delete_tag_job)
+        self.delete_tag_job = self.text_box.after(100, delete_tag)
 
 
     def collate_captions(self):
