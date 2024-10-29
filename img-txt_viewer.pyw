@@ -1214,7 +1214,7 @@ class ImgTxtViewer:
         # Show random img-txt pair
         self.text_box.bind("<Control-r>", self.index_goto_random)
         # Refresh text box
-        self.text_box.bind("<F5>", lambda event: self.refresh_text_box())
+        #self.text_box.bind("<F5>", lambda event: self.refresh_text_box())
 
 
     # Text context menu
@@ -1238,7 +1238,7 @@ class ImgTxtViewer:
                 textContext_menu.add_command(label="Copy", accelerator="Ctrl+C", command=lambda: (widget_in_focus.event_generate('<<Copy>>')))
                 textContext_menu.add_command(label="Paste", accelerator="Ctrl+V", command=lambda: (widget_in_focus.event_generate('<<Paste>>'), self.sync_title_with_content()))
                 textContext_menu.add_command(label="Delete", accelerator="Del", command=lambda: (widget_in_focus.event_generate('<<Clear>>'), self.sync_title_with_content()))
-                textContext_menu.add_command(label="Refresh", accelerator="F5", command=self.refresh_text_box)
+                textContext_menu.add_command(label="Refresh", command=self.refresh_text_box)
                 textContext_menu.add_separator()
                 textContext_menu.add_command(label="Undo", accelerator="Ctrl+Z", command=lambda: (widget_in_focus.event_generate('<<Undo>>'), self.sync_title_with_content()))
                 textContext_menu.add_command(label="Redo", accelerator="Ctrl+Y", command=lambda: (widget_in_focus.event_generate('<<Redo>>'), self.sync_title_with_content()))
@@ -4245,6 +4245,8 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 - Potential fix for the `Stats > PPI` calculation returning "0.00".
 - if `clean-text` is enabled: The primary text box is now properly refreshed when saving.
 - Fixed an issue where deleting tags that are substring of another tag using middle-mouse-click caused an error and did not remove the tag. #38
+- Fixed an issue where the system clipboard would become unresponsive after deleting a tag with the middle mouse button. #38
+
 
 <br>
 
