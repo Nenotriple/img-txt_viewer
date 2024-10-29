@@ -43,7 +43,7 @@ from collections import defaultdict, Counter
 import tkinter.font
 from tkinter.scrolledtext import ScrolledText
 from tkinter import (ttk, Tk, Toplevel, messagebox, filedialog, simpledialog,
-                     StringVar, BooleanVar, IntVar,
+                     StringVar, BooleanVar, IntVar, DoubleVar,
                      Frame, PanedWindow, Menu,
                      Label, Text,
                      Event, TclError
@@ -60,6 +60,7 @@ from PIL import (Image, ImageTk, ImageSequence,
 
 # Custom Libraries
 from main.scripts import (about_img_txt_viewer,
+                          ONNX_window,
                           settings_manager,
                           upscale_image,
                           crop_image,
@@ -455,6 +456,13 @@ class ImgTxtViewer:
         self.selected_suggestion_index = 0
         self.suggestions = []
 
+        # ONNX
+        self.onnx_model_var = StringVar(value="WDMoat_v2")
+        self.general_threshold_var = DoubleVar(value=0.35)
+        self.character_threshold_var = DoubleVar(value=0.8)
+        self.custom_exclude_tags_var = StringVar(value="")
+        self.exclude_current_tags_var = BooleanVar(value=False)
+
 
 # --------------------------------------
 # Bindings
@@ -598,6 +606,23 @@ class ImgTxtViewer:
         match_modes = {"Match Whole String": False, "Match Last Word": True}
         for mode, value in match_modes.items():
             match_mode_menu.add_radiobutton(label=mode, variable=self.last_word_match_var, value=value)
+
+
+# --------------------------------------
+# ONNX
+# --------------------------------------
+
+        # ONNX Settings Menu
+        ONNXSettingsMenu = Menu(self.optionsMenu, tearoff=0)
+        self.optionsMenu.add_cascade(label="ONNX", underline=11, state="disable", menu=ONNXSettingsMenu)
+        ONNXSettingsMenu.add_command(label=f"Model Name", underline=0, command=self.set_ONNX_model_value)
+        ONNXSettingsMenu.add_command(label=f"General Threshold", underline=0, command=lambda: self.set_threshold_value(self.general_threshold_var))
+        ONNXSettingsMenu.add_command(label=f"Character Threshold", underline=0, command=lambda: self.set_threshold_value(self.character_threshold_var))
+        ONNXSettingsMenu.add_command(label=f"Custom Exclude Tags", underline=0, command=self.set_exclude_tags_value)
+        ONNXSettingsMenu.add_checkbutton(label="Exclude Current Tags", underline=0, variable=self.exclude_current_tags_var)
+
+
+
 
 
 # --------------------------------------
@@ -1265,6 +1290,7 @@ class ImgTxtViewer:
         self.imageContext_menu.add_command(label="Open Current Image...", command=self.open_image)
         self.imageContext_menu.add_command(label="Open Image-Grid...", accelerator="F2", command=self.open_image_grid)
         self.imageContext_menu.add_command(label="Edit Image...", accelerator="F4", command=self.open_image_in_editor)
+        self.imageContext_menu.add_command(label="Infer Tags...", command=self.infer_tags)
         self.imageContext_menu.add_separator()
         # File
         self.imageContext_menu.add_command(label="Duplicate img-txt pair", command=self.duplicate_pair)
@@ -1559,6 +1585,7 @@ class ImgTxtViewer:
                               "Options",
                               "Loading Order",
                               "Autocomplete",
+                              "ONNX",
                               "Reset Settings"
                               ]
         for t_command in tool_commands:
@@ -3407,6 +3434,13 @@ class ImgTxtViewer:
             self.about_window.create_about_window()
             self.about_window_open = True
 
+#endregion
+################################################################################################################################################
+#region - ONNX Window
+
+
+    def open_ONNX_window(self, tags):
+        ONNX_window.ONNXWindow(self, self.master, VERSION, self.blank_image, tags).create_ONNX_window()
 
 
 #endregion
@@ -3436,8 +3470,8 @@ class ImgTxtViewer:
         self.show_pair()
 
 
-    def cleanup_text(self, text):
-        if self.cleaning_text_var.get():
+    def cleanup_text(self, text, bypass=False):
+        if self.cleaning_text_var.get() or bypass:
             text = self.remove_duplicate_CSV_captions(text)
             if self.list_mode_var.get():
                 text = re.sub(r'\.\s', '\n', text)  # Replace period and space with newline
@@ -4110,6 +4144,56 @@ class ImgTxtViewer:
         except (PermissionError, ValueError, IOError, TclError) as e:
             messagebox.showerror("Error: undo_delete_pair()", f"An error occurred while restoring the img-txt pair.\n\n{e}")
 
+    def infer_tags(self, model="WDMoat_v2", threshold="0.35", character_threshold="0.9", excluded_tags="", exclude_current_tags=False):
+        model = self.onnx_model_var.get()
+        threshold = str(self.general_threshold_var.get())
+        character_threshold = str(self.character_threshold_var.get())
+        
+        excluded_tags = self.custom_exclude_tags_var.get()
+
+        if exclude_current_tags:
+            current_tags = self.text_box.get("1.0", "end-1c")
+            excluded_tags = f"{excluded_tags}, {current_tags}".strip(", ")
+
+        script_path = os.path.join(".", "main", "scripts", "ONNXTagger.py")
+        print(f"""model: {model}
+threshold: {threshold}
+character_threshold: {character_threshold}
+excluded_tags: {excluded_tags}""")
+        
+        command = [
+            "python", script_path,
+            "--image", self.image_file,
+            "--model", model,
+            "--threshold", threshold,
+            "--character_threshold", character_threshold,
+            "--exclude_tags", excluded_tags
+        ]
+        
+        result = subprocess.run(command, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            self.open_ONNX_window(result.stdout)
+            #messagebox.showinfo(f"{model} tag results", result.stdout)
+        else:
+            print("Error:\n", result.stderr)
+
+    def set_threshold_value(self, tk_float: DoubleVar):
+        value = simpledialog.askfloat("Input Float", "Enter a float between 0 and 1:", minvalue=0, maxvalue=1)
+        if value is not None:
+            tk_float.set(value)
+
+    def set_ONNX_model_value(self):
+        value = filedialog.askopenfilename(initialdir="./ONNX_models", title="Choose ONNX model for tagging", filetypes=[("ONNX Model", "*.onnx")])
+        if value is not None:
+            model_name = os.path.splitext(os.path.basename(value))[0]
+            self.onnx_model_var.set(model_name)
+
+    def set_exclude_tags_value(self):
+        value = simpledialog.askstring("Input String", "Enter a comma separated list of tags to exclude:")
+        if value is not None:
+            cleaned_text = self.cleanup_text(value, bypass=True)
+            self.custom_exclude_tags_var.set(cleaned_text)
 
 #endregion
 ################################################################################################################################################

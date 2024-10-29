@@ -18,3 +18,7 @@ build/
 
 # App Settings file
 settings.cfg
+
+
+# ONNX Models
+onnx_models/
