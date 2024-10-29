@@ -131,7 +131,7 @@ class SettingsManager:
                     self.reset_settings()
                     return
                 self._read_config_settings()
-                if hasattr(self, 'text_box'):
+                if hasattr(self.parent, 'text_box'):
                     self.parent.show_pair()
             else:
                 self.parent.prompt_first_time_setup()
@@ -204,6 +204,7 @@ class SettingsManager:
         self.parent.set_image_quality()
         self.parent.font_var.set(value=self.config.get("Other", "font", fallback="Courier New"))
         self.parent.font_size_var.set(value=self.config.getint("Other", "font_size", fallback=10))
+        self.parent.text_box.config(font=(self.parent.font_var.get(), self.parent.font_size_var.get()))
         self.parent.list_mode_var.set(value=self.config.getboolean("Other", "list_mode", fallback=False))
 
 
@@ -257,7 +258,7 @@ class SettingsManager:
         self.parent.swap_pane_orientation(swap_state=False)
         self.parent.setup_window()
         # Font and text_box
-        if hasattr(self, 'text_box'):
+        if hasattr(self.parent, 'text_box'):
             self.parent.font_var.set(value="Courier New")
             self.parent.font_size_var.set(value=10)
             self.parent.size_scale.set(value=10)
@@ -265,7 +266,7 @@ class SettingsManager:
             current_text = self.parent.text_box.get("1.0", "end-1c")
             self.parent.text_box.config(font=(self.parent.default_font, self.parent.default_font_size))
         self.parent.load_pairs()
-        if hasattr(self, 'text_box'):
+        if hasattr(self.parent, 'text_box'):
             self.parent.text_box.delete("1.0", "end")
             self.parent.text_box.insert("1.0", current_text)
         if messagebox.askyesno("Confirm Reset", "Reset 'My Tags' to default?"):
