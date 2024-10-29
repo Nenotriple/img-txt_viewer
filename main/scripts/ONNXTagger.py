@@ -1,159 +1,136 @@
 import os
-import numpy as np
 import csv
-import json
-import argparse
 
-from tkinter import filedialog
 from PIL import Image
-
+import numpy as np
 from onnxruntime import InferenceSession
-# GPU inference requires onnxruntime-gpu as well as proper PyTorch, CUDA and cuDNN versions: https://onnxruntime.ai/docs/execution-providers/CUDA-ExecutionProvider.html
-# model = InferenceSession(model_path, providers=['CUDAExecutionProvider', 'CPUExecutionProvider']) 
-
-def tag(image, model_path, general_threshold="0.35", character_threshold="0.85", exclude_tags="", replace_underscore=True, sort=True, reverse=True):
-    general_threshold = float(general_threshold)
-    character_threshold = float(character_threshold)
-    
-    model = InferenceSession(model_path, providers=['CPUExecutionProvider'])
-    input = model.get_inputs()[0]
-    height = input.shape[1]
-
-    # Reduce to max size and pad with white
-    ratio = float(height) / max(image.size)
-    new_size = tuple([int(x * ratio) for x in image.size])
-    image = image.resize(new_size, Image.LANCZOS)
-    square = Image.new("RGB", (height, height), (255, 255, 255))
-    square.paste(image, ((height - new_size[0]) // 2, (height - new_size[1]) // 2))
-
-    image = np.array(square).astype(np.float32)
-    image = image[:, :, ::-1]  # RGB -> BGR
-    image = np.expand_dims(image, 0)
-
-    # Read all tags from csv and locate start of each category
-    tags = []
-    general_index = None
-    character_index = None
-    with open(os.path.join(os.path.splitext(model_path)[0] + ".csv")) as f:
-        reader = csv.reader(f)
-        next(reader)
-        for row in reader:
-            if general_index is None and row[2] == "0":
-                general_index = reader.line_num - 2
-            elif character_index is None and row[2] == "4":
-                character_index = reader.line_num - 2
-            if replace_underscore:
-                tags.append(row[1].replace("_", " "))
-            else:
-                tags.append(row[1])
-
-    label_name = model.get_outputs()[0].name
-    probs = model.run([label_name], {input.name: image})[0]
-
-    result = list(zip(tags, probs[0]))
-
-    general = [tag_tuple for tag_tuple in result[general_index:character_index] if tag_tuple[1] > general_threshold]
-    character = [tag_tuple for tag_tuple in result[character_index:] if tag_tuple[1] > character_threshold]
-    all = character + general
-
-    remove = [s.strip() for s in exclude_tags.lower().split(",")]
-    if sort:
-        all = sorted([(tag, round(float(conf), 2)) for (tag, conf) in all if tag.lower() not in remove], key=lambda x: x[1], reverse=reverse)
-    else:
-        all = [tag_tuple for tag_tuple in all if tag_tuple[0] not in remove]
-
-    return all
+from tkinter import filedialog, messagebox
 
 
-def main(**kwargs):
-    arg_string_repr = json.dumps(kwargs, indent=2)
-    image = kwargs.pop("image")
-    try:
-        image = Image.open(image)
-    except FileNotFoundError as e:
-        print("Error: " + e)
-        return
-    
-    model_path = kwargs.pop("model_path")
-    if not os.path.exists(model_path):
-        model_path = filedialog.askopenfilename(initialdir="../../ONNX_models", title="Choose ONNX model for tagging", filetypes=[("ONNX Model", "*.onnx")])
-        if not os.path.exists(model_path):
-            print(f'''ONNX model ({model_path}) not found.
-Please visit https://huggingface.co/SmilingWolf and pick a model. I recommend wd-v1-4-moat-tagger-v2.
-Download "model.onnx" and "selected_tags.csv" for your chosen model.
-Rename both files to whatever you\'d like, ensuring both names match e.g., "WDMoat_v2.onnx" and "WDMoat_v2.csv"
-Place these files in the "onnx_models" folder and that's it!''')
+class OnnxTagger:
+    def __init__(self, parent):
+        self.parent = parent
+
+        # Model related attributes
+        self.model = None
+        self.model_path = None
+        self.model_input = None
+        self.model_input_height = None
+        self.tag_label = None
+
+        # Tagging thresholds
+        self.general_threshold = 0.35
+        self.character_threshold = 0.85
+
+        # Tagging options
+        self.exclude_tags = []
+        self.replace_underscore = True
+        self.sort = True
+        self.reverse = True
+
+        # Tag indices and labels
+        self.model_tags = []
+        self.general_index = None
+        self.character_index = None
+
+
+# --------------------------------------
+# Handle Model
+# --------------------------------------
+    def _load_model(self):
+        if not self.model_path or not os.path.exists(self.model_path):
+            self.model_path = filedialog.askopenfilename(initialdir="./onnx_models", title="Choose ONNX model for tagging", filetypes=[("ONNX Model", "*.onnx")])
+            if not self.model_path or not os.path.exists(self.model_path):
+                messagebox.showerror(
+                    "Model Not Found",
+                    f'ONNX model ({self.model_path}) not found. Please visit https://huggingface.co/SmilingWolf and pick a model. I recommend wd-v1-4-moat-tagger-v2.'
+                    ' Download "model.onnx" and "selected_tags.csv" for your chosen model.'
+                    ' Rename both files to have matching names, e.g., "WDMoat_v2.onnx" and "WDMoat_v2.csv".'
+                    ' Place these files in the "onnx_models" folder.'
+                    )
+                return False
+        self.model = InferenceSession(self.model_path, providers=['CPUExecutionProvider'])
+        self.model_input = self.model.get_inputs()[0]
+        self.model_input_height = self.model_input.shape[1]
+        self.tag_label = self.model.get_outputs()[0].name
+        self._read_csv_tags()
+        return True
+
+
+# --------------------------------------
+# Handle Tags
+# --------------------------------------
+
+    def _read_csv_tags(self):
+        csv_path = os.path.splitext(self.model_path)[0] + ".csv"
+        with open(csv_path) as file:
+            csv_reader = csv.reader(file)
+            next(csv_reader)
+            for row in csv_reader:
+                if self.general_index is None and row[2] == "0":
+                    self.general_index = csv_reader.line_num - 2
+                elif self.character_index is None and row[2] == "4":
+                    self.character_index = csv_reader.line_num - 2
+                if self.replace_underscore:
+                    self.model_tags.append(row[1].replace("_", " "))
+                else:
+                    self.model_tags.append(row[1])
+
+
+    def _process_tags(self, image):
+        preprocessed_image = self._preprocess_image(image)
+        confidence_scores = self.model.run([self.tag_label], {self.model_input.name: preprocessed_image})[0]
+        tag_confidence_pairs = list(zip(self.model_tags, confidence_scores[0]))
+        general_tags = [tag_tuple for tag_tuple in tag_confidence_pairs[self.general_index:self.character_index] if tag_tuple[1] > self.general_threshold]
+        character_tags = [tag_tuple for tag_tuple in tag_confidence_pairs[self.character_index:] if tag_tuple[1] > self.character_threshold]
+        all_tags = character_tags + general_tags
+        if self.sort:
+            all_tags = sorted([(tag, round(float(confidence), 2)) for (tag, confidence) in all_tags if tag.lower() not in self.exclude_tags], key=lambda x: x[1], reverse=self.reverse)
+        else:
+            all_tags = [tag_tuple for tag_tuple in all_tags if tag_tuple[0].lower() not in self.exclude_tags]
+        return all_tags
+
+
+    def _format_results(self, inferred_tags):
+        formatted_tags = [[item[0].replace("(", "\\(").replace(")", "\\)"), item[1]]for item in inferred_tags]
+        csv_result = ", ".join(item[0] for item in formatted_tags)
+        confidence_result = "\n".join(f"{item[0]}: {item[1]}" for item in inferred_tags)
+        return csv_result, confidence_result
+
+
+# --------------------------------------
+# Handle Image
+# --------------------------------------
+
+
+    def _preprocess_image(self, image):
+        image.thumbnail((self.model_input_height, self.model_input_height), Image.BILINEAR)
+        square_image = Image.new("RGB", (self.model_input_height, self.model_input_height), (255, 255, 255))
+        square_image.paste(image, ((self.model_input_height - image.size[0]) // 2, (self.model_input_height - image.size[1]) // 2))
+        preprocessed_image = np.array(square_image).astype(np.float32)
+        preprocessed_image = preprocessed_image[:, :, ::-1]  # RGB -> BGR
+        preprocessed_image = np.expand_dims(preprocessed_image, 0)
+        return preprocessed_image
+
+
+# --------------------------------------
+# Tag Image
+# --------------------------------------
+    def tag_image(self, image_path):
+        if not self.model:
+            model_loaded = self._load_model()
+            if not model_loaded:
+                return
+        try:
+            with Image.open(image_path) as image:
+                inferred_tags = self._process_tags(image)
+        except FileNotFoundError as e:
+            print("Error:", e)
             return
-        
-    inferred_tags = tag(image, model_path, **kwargs)
-
-    all_formatted = [
-        [item[0].replace("(", "\\(").replace(")", "\\)") , item[1]] for item in inferred_tags
-        ]
-
-    csv_result = (", ").join(
-        (item[0] for item in all_formatted)
-        )
-
-    confidence_result = "\n".join(
-        [f"{(item[0])}: {item[1]}" for item in inferred_tags]
-        )
-    print(f"{csv_result}\n\n{confidence_result}\n\nArguments: {arg_string_repr}")
-    #print(json.dumps(all,indent=2))
+        csv_result, confidence_result = self._format_results(inferred_tags)
+        return csv_result, confidence_result
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Process image with ONNX model")
-
-    # Required
-    parser.add_argument(
-        "--image", 
-        type=str, 
-        required=True,
-        help="Path to the image"
-    )
-
-    parser.add_argument(
-        "--model_path", 
-        type=str, 
-        required=False, 
-        help="Path of the ONNX model for inference"
-    )
-
-    # Optional
-    parser.add_argument(
-        "--general_threshold", 
-        type=str, 
-        required=False, 
-        default="0.35",
-        help="General tag confidence threshold"
-    )
-
-    parser.add_argument(
-        "--character_threshold", 
-        type=str, 
-        required=False, 
-        default="0.85",
-        help="Character tag confidence threshold"
-    )
-
-    parser.add_argument(
-        "--exclude_tags", 
-        type=str, 
-        required=False, 
-        default="",
-        help="Comma separated list of tags to exclude"
-    )
-
-    # parser.add_argument(
-    #     "--verbose", 
-    #     action="store_true",  # This is a flag, no value is required
-    #     help="Enable verbose mode for more detailed output"
-    # )
-
-    kwargs = vars(parser.parse_args())
-    if not kwargs["image"]:
-        raise ValueError("First argument must be an image file")
-
-    
-    main(**kwargs)
+# Example usage:
+# tagger = OnnxTagger()
+# tagger.tag_image("path_to_image.jpg")

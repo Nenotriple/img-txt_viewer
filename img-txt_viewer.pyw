@@ -60,7 +60,6 @@ from PIL import (Image, ImageTk, ImageSequence,
 
 # Custom Libraries
 from main.scripts import (about_img_txt_viewer,
-                          ONNX_window,
                           settings_manager,
                           upscale_image,
                           crop_image,
@@ -73,6 +72,7 @@ from main.scripts import (about_img_txt_viewer,
                           edit_panel
                           )
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
+from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
 
 
 #endregion
@@ -309,6 +309,7 @@ class ImgTxtViewer:
         self.edit_panel = edit_panel.EditPanel(self, self.master)
         self.about_window = about_img_txt_viewer.AboutWindow(self, self.master, VERSION, self.blank_image)
         self.settings_manager = settings_manager.SettingsManager(self, self.master, VERSION)
+        self.onnx_tagger = OnnxTagger(self)
 
         # Setup UI state
         self.ui_state = {
@@ -457,13 +458,6 @@ class ImgTxtViewer:
         self.selected_suggestion_index = 0
         self.suggestions = []
 
-        # ONNX
-        self.onnx_model_var = StringVar()
-        self.general_threshold_var = DoubleVar(value=0.35)
-        self.character_threshold_var = DoubleVar(value=0.8)
-        self.custom_exclude_tags_var = StringVar(value="")
-        self.exclude_current_tags_var = BooleanVar(value=False)
-
 
 # --------------------------------------
 # Bindings
@@ -607,23 +601,6 @@ class ImgTxtViewer:
         match_modes = {"Match Whole String": False, "Match Last Word": True}
         for mode, value in match_modes.items():
             match_mode_menu.add_radiobutton(label=mode, variable=self.last_word_match_var, value=value)
-
-
-# --------------------------------------
-# ONNX
-# --------------------------------------
-
-        # ONNX Settings Menu
-        ONNXSettingsMenu = Menu(self.optionsMenu, tearoff=0)
-        self.optionsMenu.add_cascade(label="ONNX", underline=11, state="disable", menu=ONNXSettingsMenu)
-        ONNXSettingsMenu.add_command(label=f"Model Name", underline=0, command=self.set_ONNX_model_value)
-        ONNXSettingsMenu.add_command(label=f"General Threshold", underline=0, command=lambda: self.set_threshold_value(self.general_threshold_var))
-        ONNXSettingsMenu.add_command(label=f"Character Threshold", underline=0, command=lambda: self.set_threshold_value(self.character_threshold_var))
-        ONNXSettingsMenu.add_command(label=f"Custom Exclude Tags", underline=0, command=self.set_exclude_tags_value)
-        ONNXSettingsMenu.add_checkbutton(label="Exclude Current Tags", underline=0, variable=self.exclude_current_tags_var)
-
-
-
 
 
 # --------------------------------------
@@ -1586,7 +1563,6 @@ class ImgTxtViewer:
                               "Options",
                               "Loading Order",
                               "Autocomplete",
-                              "ONNX",
                               "Reset Settings"
                               ]
         for t_command in tool_commands:
@@ -3435,14 +3411,6 @@ class ImgTxtViewer:
             self.about_window.create_about_window()
             self.about_window_open = True
 
-#endregion
-################################################################################################################################################
-#region - ONNX Window
-
-
-    def open_ONNX_window(self, tags):
-        ONNX_window.ONNXWindow(self, self.master, VERSION, self.blank_image, tags).create_ONNX_window()
-
 
 #endregion
 ################################################################################################################################################
@@ -4151,59 +4119,9 @@ class ImgTxtViewer:
 #region - ONNX Tagger
 
 
-    def infer_tags(self, model_path=None, general_threshold=None, character_threshold=None, excluded_tags=None, exclude_current_tags=None):
-        model_path = self.onnx_model_var.get()
-        if not os.path.exists(model_path):
-            self.set_ONNX_model_value()
-            model_path = self.onnx_model_var.get()
-
-        general_threshold = str(self.general_threshold_var.get())
-        character_threshold = str(self.character_threshold_var.get())
-        excluded_tags = self.custom_exclude_tags_var.get()
-        exclude_current_tags = self.exclude_current_tags_var.get()
-
-        if exclude_current_tags:
-            current_tags = self.text_box.get("1.0", "end-1c")
-            excluded_tags = f"{excluded_tags}, {current_tags}".strip(", ")
-
-        script_path = os.path.join(".", "main", "scripts", "ONNXTagger.py")
-        
-
-        command = [
-            "python", script_path,
-            "--image", self.image_file,
-            "--model_path", model_path,
-            "--general_threshold", general_threshold,
-            "--character_threshold", character_threshold,
-            "--exclude_tags", excluded_tags
-        ]
-
-        result = subprocess.run(command, capture_output=True, text=True)
-        
-        if result.returncode == 0:
-            self.open_ONNX_window(result.stdout)
-        else:
-            print("Error:\n", result.stderr)
-
-
-    def set_threshold_value(self, tk_float: DoubleVar):
-        value = simpledialog.askfloat("Input Float", "Enter a float between 0 and 1:", minvalue=0, maxvalue=1)
-        if value is not None:
-            tk_float.set(value)
-
-
-    def set_ONNX_model_value(self):
-        os.makedirs("onnx_models", exist_ok=True)
-        value = filedialog.askopenfilename(initialdir="./onnx_models", title="Choose ONNX model for tagging", filetypes=[("ONNX Model", "*.onnx")])
-        if value is not None:
-            self.onnx_model_var.set(value)
-
-
-    def set_exclude_tags_value(self):
-        value = simpledialog.askstring("Input String", "Enter a comma separated list of tags to exclude:")
-        if value is not None:
-            cleaned_text = self.cleanup_text(value, bypass=True)
-            self.custom_exclude_tags_var.set(cleaned_text)
+    def infer_tags(self):
+        csv_result, confidence_result = self.onnx_tagger.tag_image(self.image_files[self.current_index])
+        print(csv_result, confidence_result)
 
 
 #endregion
