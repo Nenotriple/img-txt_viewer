@@ -99,52 +99,61 @@ Example folder structures:
 
 
 - Shortcuts:
-  - `ALT+LEFT/RIGHT`: Quickly move between img-txt pairs.
-  - `SHIFT+DEL`: Send the current pair to a local trash folder.
+  - `ALT + LEFT/RIGHT`: Quickly move between img-txt pairs.
+  - `SHIFT + DEL`: Move the current pair to a local trash folder.
   - `ALT`: Cycle through auto-suggestions.
   - `TAB`: Insert the highlighted suggestion.
-  - `CTRL+S`: Save the current text file.
-  - `CTRL+E`: jump to the next empty text file.
-  - `CTRL+R`: Jump to a random img-txt pair.
-  - `CTRL+F`: Highlight all duplicate words.
-  - `CTRL+Z` / `CTRL+Y`: Undo/Redo.
-  - `F5`: Refresh the text box.
+  - `CTRL + S`: Save the current text file.
+  - `CTRL + E`: jump to the next empty text file.
+  - `CTRL + R`: Jump to a random img-txt pair.
+  - `CTRL + F`: Highlight all duplicate words.
+  - `CTRL + Z` / `CTRL + Y`: Undo / Redo.
+  - `F1`: Toggle zoom popup.
+  - `F2`: Open the Image-Grid view.
+  - `F5`: Open Batch Tag Edit.
   - `Middle-click`: A tag to quickly delete it.
 
 - Tips:
+  - A guided setup will run on first launch to configure your autocomplete dictionaries and matching settings.
   - Highlight matching words by selecting text.
-  - Enable `List View` to display text in a vertical list format.
+  - Insert a suggestion by clicking on it.
   - Quickly create text pairs by loading the image and saving the text.
+  - List Mode: Display tags in a list format while saving them in standard format.
   - Get `Autocomplete Suggestions` while you type using Danbooru/Anime tags, the English Dictionary, etc.
-  - `Fuzzy Search` Use an asterisk * while typing to return a broader range of suggestions.
+  - Use an asterisk (*) while typing for fuzzy search autocomplete suggestions.
     - For example: Typing `*lo*b` returns "<ins>**lo**</ins>oking <ins>**b**</ins>ack", and even "yel<ins>**lo**</ins>w <ins>**b**</ins>ackground"
+  - Use 'Match Mode: Last Word' for more natural autocomplete.
+  - Right-click the 'Browse...' button to set or clear the alternate text path, allowing you to load text files from a separate folder than images.
 
 - Text Tools:
-  - `Batch tag Edit`: View all tag in a directory as a list: Filter, edit, and delete tags all at once.
-  - `Prefix Text Files`: Insert text at the START of all text files.
-  - `Append Text Files`: Insert text at the END of all text files.
-  - `Search and Replace`: Edit all text files at once.
-  - `Filter Pairs`: Filter pairs based on matching text, blank or missing txt files, and more.
-  - `Active Highlights`: Always highlight specific text.
-  - `My Tags`: Quickly add you own tags to be used as autocomplete suggestions.
+  - `Search and Replace`: Find specific text and replace it with another.
+  - `Prefix`: Insert text at the START of all text files.
+  - `Append`: Insert text at the END of all text files.
+  - `Filter`: Filter pairs based on text, missing text files, and more. Works with Search and Replace, Prefix, and Append.
+  - `Highlight`: Always highlight specific text.
+  - `My Tags`: Add your custom tags for autocomplete suggestions.
+  - `Batch Tag Edit`: Edit and manage tags with a user-friendly interface that previews changes before applying them.
+  - `Create Wildcard From Captions`: Combine all image captions into one text file, with each caption set separated by a newline.
   - `Cleanup Text`: Fix simple typos in all text files of the selected folder.
 
  - Other Tools
-   - `Batch Resize Images`: Resize a folder of images using several methods and conditions._<sup>[1]</sup>_
-   - `Resize Image`: Resize a single image.
-   - `Batch Crop Images`: Crop a folder of images to an exact size, resizing if needed.
+   - `Batch Resize Images`: Resize all images in a folder using different methods and conditions.
+   - `Resize Image`: Resize the current image by exact resolution or percentage.
+   - `Batch Crop Images`: Crop all images to a specified resolution.
    - `Crop Image`: Quickly crop an image to a square or freeform ratio.
-   - `Upscale Image`: Upscale an image using `realesrgan-ncnn-vulkan` _<sup>[1]</sup>_
-   - `Expand Current Image`: Expand an image to a square ratio instead of cropping.
-   - `Find Duplicate Files`: Find and separate any duplicate files in a folder. _<sup>[1]</sup>_
-   - `Rename and Convert Pairs`: Automatically rename and convert files using a neat and tidy formatting.
+   - `Upscale Image`: Upscale images using models like RESRGAN, AnimeSharp-4x, and UltraSharp-4x. Additional models can be added to the 'models' folder.
+   - `Find Duplicate Files`: Identify and separate duplicate files in a folder.
+   - `Expand`: Expand an image to a square ratio instead of cropping.
+   - `Thumbnail Panel`: Display thumbnails under the current image for quick navigation.
+   - `Edit Image Panel`: Adjust brightness, contrast, saturation, sharpness, highlights, and shadows of the current image.
+   - `Edit Image...`: Open the current image in an external editor (e.g., MS Paint).
+   - `Batch Rename/Convert`: Rename and optionally convert image and text files, saving them sequentially with padded zeros.
 
  - Auto-Save
-   - Check the auto-save box to save text when navigating between img/txt pairs or closing the window, etc.
-   - Text is cleaned when saved, so you can ignore typos such as duplicate tokens, multiple spaces or commas, missing spaces, and more.
-   - `Clean text on save` Can be disabled from the options menu.
+   - Check the auto-save box to save text when switching between image-text pairs or closing the window.
+   - Text cleanup (e.g., removing duplicate tags, trailing commas, extra spaces) happens automatically on save, and can be disabled from the options menu.
+   - Text cleanup is optimized for CSV-format captions and can be disabled via the Clean-Text option in the menu.
 
-_<sup>[1]</sup>These are stand alone tools and/or not available in the Lite version._
 
 For a more detailed feature guide, please visit the repo [✨Wiki](https://github.com/Nenotriple/img-txt_viewer/wiki).
 
