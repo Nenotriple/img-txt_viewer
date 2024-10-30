@@ -3974,9 +3974,9 @@ class ImgTxtViewer:
                     os.rename(original_file, original_file.replace('.bak', '.txt'))
                     os.utime(original_file, (time.time(), time.time()))
                     os.remove(os.path.join(backup_dir, backup_file))
-                    messagebox.showinfo("Success", "All text files have been restored from the latest backup!")
-                except Exception:
-                    pass
+                except Exception as e:
+                    messagebox.showerror("Error: restore_backup()", f"Something went wrong: {original_file}\n\n{str(e)}")
+        messagebox.showinfo("Success", "All text files have been restored from the latest backup!")
         self.refresh_text_box()
 
 
