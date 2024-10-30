@@ -3,7 +3,7 @@ import os
 import csv
 
 # Standard Library - GUI
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, BooleanVar
 
 # Third-Party Libraries
 import numpy
@@ -32,7 +32,7 @@ class OnnxTagger:
         # Tagging options
         self.exclude_tags = []
         self.exclude_tags_set = set()
-        self.replace_underscore = True
+        self.replace_underscore = BooleanVar(value=False)
         self.sort = True
         self.reverse = True
 
@@ -61,7 +61,6 @@ class OnnxTagger:
         self.model_input = self.model.get_inputs()[0]
         self.model_input_height = self.model_input.shape[1]
         self.tag_label = self.model.get_outputs()[0].name
-        self._read_csv_tags()
         return True
 
 
@@ -69,6 +68,7 @@ class OnnxTagger:
     # Handle Tags
     # --------------------------------------
     def _read_csv_tags(self):
+        self.model_tags.clear()
         csv_path = os.path.splitext(self.model_path)[0] + ".csv"
         with open(csv_path, newline='') as file:
             csv_reader = csv.reader(file)
@@ -78,12 +78,13 @@ class OnnxTagger:
                     self.general_index = idx
                 elif self.character_index is None and row[2] == "4":
                     self.character_index = idx
-                tag = row[1].replace("_", " ") if self.replace_underscore else row[1]
+                tag = row[1].replace("_", " ") if self.replace_underscore.get() else row[1]
                 self.model_tags.append(tag)
         self.exclude_tags_set = set(tag.lower() for tag in self.exclude_tags)
 
 
     def _process_tags(self, image):
+        self._read_csv_tags()
         preprocessed_image = self._preprocess_image(image)
         confidence_scores = self.model.run([self.tag_label], {self.model_input.name: preprocessed_image})[0][0]
         tag_confidence_pairs = list(zip(self.model_tags, confidence_scores))
