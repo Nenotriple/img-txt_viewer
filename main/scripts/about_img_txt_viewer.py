@@ -46,16 +46,15 @@ class AboutWindow:
             " ⦁ CTRL + F: Highlight all duplicate words.\n"
             " ⦁ CTRL + Z / CTRL + Y: Undo / Redo.\n"
             " ⦁ CTRL + W: Close the window.\n"
-            " ⦁ F1: Toggle Zoom popup.\n"
-            " ⦁ F2: Open the Image-Grid.\n"
-            " ⦁ F5: Refresh the text box.\n"
+            " ⦁ F1: Toggle zoom popup.\n"
+            " ⦁ F2: Open the Image-Grid view.\n"
+            " ⦁ F5: Open Batch Tag Edit.\n"
             " ⦁ Middle-click on a tag to delete it.\n",
 
             # Tips
+            " ⦁ A guided setup will run on first launch to configure your autocomplete dictionaries and matching settings.\n"
             " ⦁ Highlight matching words by selecting text.\n"
             " ⦁ Insert a suggestion by clicking on it.\n"
-            " ⦁ A guided setup will run on first launch to configure your autocomplete dictionaries and matching settings.\n"
-            " ⦁ The 'Open Current Directory...' command selects the current image in the file explorer.\n"
             " ⦁ Quickly create text pairs by loading the image and saving the text.\n"
             " ⦁ List Mode: Display tags in a list format while saving them in standard format.\n"
             " ⦁ Use an asterisk (*) while typing for fuzzy search autocomplete suggestions.\n"
@@ -75,9 +74,9 @@ class AboutWindow:
 
             # Other Tools
             " ⦁ Batch Resize Images: Resize all images in a folder using different methods and conditions.\n"
+            " ⦁ Resize Image: Resize the current image by exact resolution or percentage.\n"
             " ⦁ Batch Crop Images: Crop all images to a specified resolution.\n"
             " ⦁ Crop Image: Crop the current image to a square or freeform ratio.\n"
-            " ⦁ Resize Image: Resize the current image by exact resolution or percentage.\n"
             " ⦁ Upscale Image: Upscale images using models like RESRGAN, AnimeSharp-4x, and UltraSharp-4x. Additional models can be added to the 'models' folder.\n"
             " ⦁ Find Duplicate Files: Identify and separate duplicate files in a folder.\n"
             " ⦁ Expand: Expand an image to a square ratio instead of cropping.\n"

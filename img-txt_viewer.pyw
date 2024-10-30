@@ -355,11 +355,16 @@ class ImgTxtViewer:
         self.text_modified_var = False
         self.is_alt_arrow_pressed = False
         self.filepath_contains_images_var = False
-        self.is_resizing_id = None
         self.toggle_zoom_var = None
         self.undo_state = StringVar(value="disabled")
         self.previous_window_size = (self.master.winfo_width(), self.master.winfo_height())
         self.initialize_text_pane = True
+
+        # 'after()' Job IDs
+        self.is_resizing_job_id = None
+        self.delete_tag_job_id = None
+        self.animation_job_id = None
+        self.update_thumbnail_job_id = None
 
         # Image Resize Variables
         self.current_image = None # ImageTk.PhotoImage object
@@ -373,7 +378,6 @@ class ImgTxtViewer:
         self.frame_durations = []
         self.current_frame = 0
         self.current_gif_frame_image = None
-        self.animation_job = None
 
         # Color Palette
         self.pastel_colors = [
@@ -430,7 +434,6 @@ class ImgTxtViewer:
         self.reverse_load_order_var = BooleanVar(value=False)
 
         # Thumbnail Panel
-        self.update_thumbnail_id = None
         self.thumbnails_visible = BooleanVar(value=True)
         self.thumbnail_width = IntVar(value=50)
 
@@ -1304,7 +1307,7 @@ class ImgTxtViewer:
         # Show random img-txt pair
         self.text_box.bind("<Control-r>", self.index_goto_random)
         # Refresh text box
-        self.text_box.bind("<F5>", lambda event: self.refresh_text_box())
+        #self.text_box.bind("<F5>", lambda event: self.refresh_text_box())
 
 
     # --------------------------------------
@@ -1330,7 +1333,7 @@ class ImgTxtViewer:
                 textContext_menu.add_command(label="Copy", accelerator="Ctrl+C", command=lambda: (widget_in_focus.event_generate('<<Copy>>')))
                 textContext_menu.add_command(label="Paste", accelerator="Ctrl+V", command=lambda: (widget_in_focus.event_generate('<<Paste>>'), self.sync_title_with_content()))
                 textContext_menu.add_command(label="Delete", accelerator="Del", command=lambda: (widget_in_focus.event_generate('<<Clear>>'), self.sync_title_with_content()))
-                textContext_menu.add_command(label="Refresh", accelerator="F5", command=self.refresh_text_box)
+                textContext_menu.add_command(label="Refresh", command=self.refresh_text_box)
                 textContext_menu.add_separator()
                 textContext_menu.add_command(label="Undo", accelerator="Ctrl+Z", command=lambda: (widget_in_focus.event_generate('<<Undo>>'), self.sync_title_with_content()))
                 textContext_menu.add_command(label="Redo", accelerator="Ctrl+Y", command=lambda: (widget_in_focus.event_generate('<<Redo>>'), self.sync_title_with_content()))
@@ -1850,9 +1853,9 @@ class ImgTxtViewer:
 
 
     def debounce_update_thumbnail_panel(self, event):
-        if self.update_thumbnail_id is not None:
-            self.master.after_cancel(self.update_thumbnail_id)
-        self.update_thumbnail_id = self.master.after(250, self.update_thumbnail_panel)
+        if self.update_thumbnail_job_id is not None:
+            self.master.after_cancel(self.update_thumbnail_job_id)
+        self.update_thumbnail_job_id = self.master.after(250, self.update_thumbnail_panel)
 
 
     def update_thumbnail_panel(self):
@@ -2382,9 +2385,9 @@ class ImgTxtViewer:
 
 
     def display_animated_gif(self):
-        if self.animation_job is not None:
-            root.after_cancel(self.animation_job)
-            self.animation_job = None
+        if self.animation_job_id is not None:
+            root.after_cancel(self.animation_job_id)
+            self.animation_job_id = None
         if self.frame_iterator is not None:
             try:
                 self.current_frame = next(self.frame_iterator)
@@ -2403,7 +2406,7 @@ class ImgTxtViewer:
                 self.primary_display_image.config(image=self.current_gif_frame_image)
                 self.primary_display_image.image = self.current_gif_frame_image
                 delay = self.frame_durations[self.current_frame_index] if self.frame_durations[self.current_frame_index] else 100
-                self.animation_job = root.after(delay, self.display_animated_gif)
+                self.animation_job_id = root.after(delay, self.display_animated_gif)
                 self.current_frame_index = (self.current_frame_index + 1) % len(self.gif_frames)
             except StopIteration:
                 self.frame_iterator = iter(self.gif_frames)
@@ -2468,9 +2471,9 @@ class ImgTxtViewer:
 
     def debounce_refresh_image(self, event):
         if hasattr(self, 'text_box'):
-            if self.is_resizing_id:
-                root.after_cancel(self.is_resizing_id)
-            self.is_resizing_id = root.after(250, self.refresh_image)
+            if self.is_resizing_job_id:
+                root.after_cancel(self.is_resizing_job_id)
+            self.is_resizing_job_id = root.after(250, self.refresh_image)
 
 
     def handle_window_configure(self, event):  # Window resize
@@ -2851,12 +2854,16 @@ class ImgTxtViewer:
                 self.text_box.tag_add(tag, start, end)
 
         def delete_tag():
-            self.text_box.delete(f"{line_start}+{start_of_clicked_tag}c", f"{line_start}+{end_of_clicked_tag}c")
-            cleaned_text = self.cleanup_text(self.text_box.get("1.0", "end"))
-            cleaned_text = '\n'.join([line for line in cleaned_text.split('\n') if line.strip() != ''])
-            self.text_box.delete("1.0", "end")
-            self.text_box.insert("1.0", cleaned_text)
-            set_text_highlight("highlight", "#5da9be")
+            if self.delete_tag_job_id is not None:
+                self.text_box.delete(f"{line_start}+{start_of_clicked_tag}c", f"{line_start}+{end_of_clicked_tag}c")
+                cleaned_text = self.cleanup_text(self.text_box.get("1.0", "end"))
+                cleaned_text = '\n'.join([line for line in cleaned_text.split('\n') if line.strip() != ''])
+                self.text_box.delete("1.0", "end")
+                self.text_box.insert("1.0", cleaned_text)
+                set_text_highlight("highlight", "#5da9be")
+                self.text_box.clipboard_get()
+                self.delete_tag_job_id = None
+                self.sync_title_with_content()
 
         def get_cursor_and_line_text():
             cursor_pos = self.text_box.index(f"@{event.x},{event.y}")
@@ -2880,7 +2887,9 @@ class ImgTxtViewer:
             return
         set_text_highlight("highlight", "#fd8a8a", f"{line_start}+{start_of_clicked_tag}c", f"{line_start}+{end_of_clicked_tag}c")
         self.text_box.update_idletasks()
-        self.text_box.after(200, delete_tag)
+        if self.delete_tag_job_id is not None:
+            self.text_box.after_cancel(self.delete_tag_job_id)
+        self.delete_tag_job_id = self.text_box.after(100, delete_tag)
 
 
     def collate_captions(self):
@@ -4342,6 +4351,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 - Potential fix for the `Stats > PPI` calculation returning "0.00".
 - if `clean-text` is enabled: The primary text box is now properly refreshed when saving.
 - Fixed an issue when deleting tags that are a substring of another tag using middle-mouse-click. #38
+- Fixed an issue where the system clipboard would become unresponsive after deleting a tag with the middle mouse button. #38
 
 
 <br>
