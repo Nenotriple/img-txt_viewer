@@ -43,7 +43,7 @@ from collections import defaultdict, Counter
 import tkinter.font
 from tkinter.scrolledtext import ScrolledText
 from tkinter import (ttk, Tk, Toplevel, messagebox, filedialog, simpledialog,
-                     StringVar, BooleanVar, IntVar, DoubleVar,
+                     StringVar, BooleanVar, IntVar,
                      Frame, PanedWindow, Menu,
                      Label, Text,
                      Event, TclError
@@ -359,6 +359,7 @@ class ImgTxtViewer:
         self.toggle_zoom_var = None
         self.undo_state = StringVar(value="disabled")
         self.previous_window_size = (self.master.winfo_width(), self.master.winfo_height())
+        self.initialize_text_pane = True
 
         # Image Resize Variables
         self.current_image = None # ImageTk.PhotoImage object
@@ -849,12 +850,18 @@ class ImgTxtViewer:
 #region - Text Box setup
 
 
+    # --------------------------------------
+    # Text Pane
+    # --------------------------------------
     def create_text_pane(self):
         if not hasattr(self, 'text_pane'):
             self.text_pane = PanedWindow(self.master_control_frame, orient="vertical", sashwidth=6, bg="#d0d0d0", bd=0)
             self.text_pane.pack(side="bottom", fill="both", expand=1)
 
 
+    # --------------------------------------
+    # Text Box
+    # --------------------------------------
     def create_text_box(self):
         self.create_text_pane()
         if not hasattr(self, 'text_frame'):
@@ -870,11 +877,15 @@ class ImgTxtViewer:
             self.create_text_control_frame()
 
 
+    # --------------------------------------
+    # Text Widget Frame
+    # --------------------------------------
     def create_text_control_frame(self):
         self.text_widget_frame = Frame(self.master_control_frame)
         self.text_pane.add(self.text_widget_frame, stretch="never")
         self.text_pane.paneconfigure(self.text_widget_frame)
         self.text_notebook = ttk.Notebook(self.text_widget_frame)
+        self.text_notebook.bind("<<NotebookTabChanged>>", self.adjust_text_pane_height)
         self.tab1 = Frame(self.text_notebook)
         self.tab2 = Frame(self.text_notebook)
         self.tab3 = Frame(self.text_notebook)
@@ -883,25 +894,53 @@ class ImgTxtViewer:
         self.tab6 = Frame(self.text_notebook)
         self.tab7 = Frame(self.text_notebook)
         self.tab8 = Frame(self.text_notebook)
+        self.tab9 = Frame(self.text_notebook)
         self.text_notebook.add(self.tab1, text='S&R')
         self.text_notebook.add(self.tab2, text='Prefix')
         self.text_notebook.add(self.tab3, text='Append')
-        self.text_notebook.add(self.tab4, text='Filter')
-        self.text_notebook.add(self.tab5, text='Highlight')
-        self.text_notebook.add(self.tab6, text='Font')
-        self.text_notebook.add(self.tab7, text='My Tags')
-        self.text_notebook.add(self.tab8, text='Stats', )
+        self.text_notebook.add(self.tab4, text='Auto-Tag')
+        self.text_notebook.add(self.tab5, text='Filter')
+        self.text_notebook.add(self.tab6, text='Highlight')
+        self.text_notebook.add(self.tab7, text='Font')
+        self.text_notebook.add(self.tab8, text='My Tags')
+        self.text_notebook.add(self.tab9, text='Stats')
         self.text_notebook.pack(fill='both', expand=True)
         self.create_search_and_replace_widgets_tab1()
         self.create_prefix_text_widgets_tab2()
         self.create_append_text_widgets_tab3()
-        self.create_filter_text_image_pairs_widgets_tab4()
-        self.create_custom_active_highlight_widgets_tab5()
-        self.create_font_widgets_tab6()
-        self.create_custom_dictionary_widgets_tab7()
-        self.create_stats_widgets_tab8()
+        self.create_auto_tag_widgets_tab4()
+        self.create_filter_text_image_pairs_widgets_tab5()
+        self.create_custom_active_highlight_widgets_tab6()
+        self.create_font_widgets_tab7()
+        self.create_custom_dictionary_widgets_tab8()
+        self.create_stats_widgets_tab9()
+        self.text_widget_frame.bind("<Configure>", self.print_text_widget_frame_height)
+
+    def print_text_widget_frame_height(self, event):
+        print(f"text_widget_frame height: {event.height}")
 
 
+    def adjust_text_pane_height(self, event):
+        tab_heights = {
+            'S&R': 60,
+            'Prefix': 60,
+            'Append': 60,
+            'Auto-Tag': 240,
+            'Filter': 60,
+            'Highlight': 60,
+            'Font': 60,
+            'My Tags': 240,
+            'Stats': 240
+            }
+        selected_tab = event.widget.tab("current", "text")
+        tab_height = 60 if self.initialize_text_pane else tab_heights.get(selected_tab, 60)
+        self.initialize_text_pane = False
+        self.text_pane.paneconfigure(self.text_widget_frame, height=tab_height)
+
+
+    # --------------------------------------
+    # Tab 1: Search and Replace
+    # --------------------------------------
     def create_search_and_replace_widgets_tab1(self):
         self.tab1_frame = Frame(self.tab1)
         self.tab1_frame.pack(side='top', fill='both')
@@ -953,6 +992,9 @@ class ImgTxtViewer:
         self.search_and_replace_regex.set(False)
 
 
+    # --------------------------------------
+    # Tab 2: Prefix
+    # --------------------------------------
     def create_prefix_text_widgets_tab2(self):
         self.tab2_frame = Frame(self.tab2)
         self.tab2_frame.pack(side='top', fill='both')
@@ -988,6 +1030,9 @@ class ImgTxtViewer:
         self.prefix_entry.delete(0, 'end')
 
 
+    # --------------------------------------
+    # Tab 3: Append
+    # --------------------------------------
     def create_append_text_widgets_tab3(self):
         self.tab3_frame = Frame(self.tab3)
         self.tab3_frame.pack(side='top', fill='both')
@@ -1023,8 +1068,36 @@ class ImgTxtViewer:
         self.append_entry.delete(0, 'end')
 
 
-    def create_filter_text_image_pairs_widgets_tab4(self):
-        self.tab4_frame = Frame(self.tab4)
+    # --------------------------------------
+    # Tab 4: Auto-Tag
+    # --------------------------------------
+    def create_auto_tag_widgets_tab4(self):
+        self.tab9_frame = Frame(self.tab4)
+        self.tab9_frame.pack(side='top', fill='both')
+        self.tab9_button_frame = Frame(self.tab9_frame)
+        self.tab9_button_frame.pack(side='top', fill='x')
+        self.auto_tag_button = ttk.Button(self.tab9_button_frame, text="Interrogate", width=10, command=self.interrogate_image_tags)
+        self.auto_tag_button.pack(side='left', anchor="n", pady=4)
+        ToolTip.create(self.auto_tag_button, "Interrogate the current image using the a ONNX vision model.", 200, 6, 12)
+        self.tab9_text_frame = Frame(self.tab9_frame, borderwidth=0)
+        self.tab9_text_frame.pack(side='top', fill="both")
+        description_textbox = ScrolledText(self.tab9_text_frame, bg="#f0f0f0")
+        description_textbox.pack(side='bottom', fill='both')
+        description_textbox.insert("1.0", "Use this tool to automatically infer tags for the current image.\n\n"
+                                   "Click the 'Interrogate' button to generate tags using the selected ONNX vision model.\n\n"
+                                   "The tags will be displayed in the text box below.")
+        description_textbox.config(state="disabled", wrap="word")
+
+    def interrogate_image_tags(self):
+        csv_result, confidence_result = self.onnx_tagger.tag_image(self.image_files[self.current_index])
+        print(csv_result, confidence_result)
+
+
+    # --------------------------------------
+    # Tab 5: Filter
+    # --------------------------------------
+    def create_filter_text_image_pairs_widgets_tab5(self):
+        self.tab4_frame = Frame(self.tab5)
         self.tab4_frame.pack(side='top', fill='both')
         self.tab4_button_frame = Frame(self.tab4_frame)
         self.tab4_button_frame.pack(side='top', fill='x')
@@ -1063,8 +1136,11 @@ class ImgTxtViewer:
         description_textbox.config(state="disabled", wrap="word")
 
 
-    def create_custom_active_highlight_widgets_tab5(self):
-        self.tab5_frame = Frame(self.tab5)
+    # --------------------------------------
+    # Tab 6: Highlight
+    # --------------------------------------
+    def create_custom_active_highlight_widgets_tab6(self):
+        self.tab5_frame = Frame(self.tab6)
         self.tab5_frame.pack(side='top', fill='both')
         self.tab5_button_frame = Frame(self.tab5_frame)
         self.tab5_button_frame.pack(side='top', fill='x')
@@ -1098,7 +1174,10 @@ class ImgTxtViewer:
         self.highlight_use_regex_var.set(False)
 
 
-    def create_font_widgets_tab6(self, event=None):
+    # --------------------------------------
+    # Tab 7: Font
+    # --------------------------------------
+    def create_font_widgets_tab7(self, event=None):
         def set_font_and_size(font, size):
             if font and size:
                 size = int(size)
@@ -1108,32 +1187,35 @@ class ImgTxtViewer:
             self.font_var.set(self.default_font)
             self.size_scale.set(self.default_font_size)
             set_font_and_size(self.default_font, self.default_font_size)
-        font_label = Label(self.tab6, width=8, text="Font:")
+        font_label = Label(self.tab7, width=8, text="Font:")
         font_label.pack(side="left", anchor="n", pady=4)
         ToolTip.create(font_label, "Recommended Fonts: Courier New, Ariel, Consolas, Segoe UI", 200, 6, 12)
-        font_box = ttk.Combobox(self.tab6, textvariable=self.font_var, width=4, takefocus=False, state="readonly", values=list(tkinter.font.families()))
+        font_box = ttk.Combobox(self.tab7, textvariable=self.font_var, width=4, takefocus=False, state="readonly", values=list(tkinter.font.families()))
         font_box.set(self.current_font_name)
         font_box.bind("<<ComboboxSelected>>", lambda event: set_font_and_size(self.font_var.get(), self.size_scale.get()))
         font_box.pack(side="left", anchor="n", pady=4, fill="x", expand=True)
-        self.font_size_tab6 = Label(self.tab6, text=f"Size: {self.font_size_var.get()}", width=14)
+        self.font_size_tab6 = Label(self.tab7, text=f"Size: {self.font_size_var.get()}", width=14)
         self.font_size_tab6.pack(side="left", anchor="n", pady=4)
         ToolTip.create(self.font_size_tab6, "Default size: 10", 200, 6, 12)
-        self.size_scale = ttk.Scale(self.tab6, from_=6, to=24, variable=self.font_size_var, takefocus=False)
+        self.size_scale = ttk.Scale(self.tab7, from_=6, to=24, variable=self.font_size_var, takefocus=False)
         self.size_scale.set(self.current_font_size)
         self.size_scale.bind("<B1-Motion>", lambda event: set_font_and_size(self.font_var.get(), self.size_scale.get()))
         self.size_scale.pack(side="left", anchor="n", pady=4, fill="x", expand=True)
-        reset_button = ttk.Button(self.tab6, text="Reset", width=5, takefocus=False, command=reset_to_defaults)
+        reset_button = ttk.Button(self.tab7, text="Reset", width=5, takefocus=False, command=reset_to_defaults)
         reset_button.pack(side="left", anchor="n", pady=4)
 
 
-    def create_custom_dictionary_widgets_tab7(self):
+    # --------------------------------------
+    # Tab 8: My Tags
+    # --------------------------------------
+    def create_custom_dictionary_widgets_tab8(self):
         def save():
             with open(self.my_tags_csv, 'w') as file:
                 content  = self.remove_extra_newlines(self.custom_dictionary_textbox.get("1.0", "end-1c"))
                 file.write(content)
                 self.master.after(100, self.refresh_custom_dictionary)
         self.create_custom_dictionary()
-        self.tab7_frame = Frame(self.tab7)
+        self.tab7_frame = Frame(self.tab8)
         self.tab7_frame.pack(side='top', fill='both', expand=True)
         self.tab7_button_frame = Frame(self.tab7_frame)
         self.tab7_button_frame.pack(side='top', fill='x', pady=4)
@@ -1164,8 +1246,11 @@ class ImgTxtViewer:
         self.custom_dictionary_textbox.configure(undo=True)
 
 
-    def create_stats_widgets_tab8(self):
-        self.tab8_frame = Frame(self.tab8)
+    # --------------------------------------
+    # Tab 9: File Stats
+    # --------------------------------------
+    def create_stats_widgets_tab9(self):
+        self.tab8_frame = Frame(self.tab9)
         self.tab8_frame.pack(fill='both', expand=True)
         self.tab8_button_frame = Frame(self.tab8_frame)
         self.tab8_button_frame.pack(side='top', fill='x', pady=4)
@@ -1184,6 +1269,9 @@ class ImgTxtViewer:
         self.tab8_stats_textbox.pack(fill='both', expand=True)
 
 
+    # --------------------------------------
+    # Text Box Binds
+    # --------------------------------------
     def set_text_box_binds(self):
         # Mouse binds
         self.text_box.bind("<Double-1>", lambda event: self.custom_select_word_for_text(event, self.text_box))
@@ -1219,7 +1307,9 @@ class ImgTxtViewer:
         self.text_box.bind("<F5>", lambda event: self.refresh_text_box())
 
 
-    # Text context menu
+    # --------------------------------------
+    # Text Box Context Menu
+    # --------------------------------------
     def show_textContext_menu(self, event):
         if hasattr(self, 'text_box'):
             self.text_box.focus_set()
@@ -1260,7 +1350,9 @@ class ImgTxtViewer:
             textContext_menu.tk_popup(event.x_root, event.y_root)
 
 
-    # Image context menu
+    # --------------------------------------
+    # Image Context Menu
+    # --------------------------------------
     def show_imageContext_menu(self, event):
         self.imageContext_menu = Menu(self.master, tearoff=0)
         # Open
@@ -1268,7 +1360,7 @@ class ImgTxtViewer:
         self.imageContext_menu.add_command(label="Open Current Image...", command=self.open_image)
         self.imageContext_menu.add_command(label="Open Image-Grid...", accelerator="F2", command=self.open_image_grid)
         self.imageContext_menu.add_command(label="Edit Image...", accelerator="F4", command=self.open_image_in_editor)
-        self.imageContext_menu.add_command(label="Infer Tags...", command=self.infer_tags)
+        self.imageContext_menu.add_command(label="Auto-Tag", command=self.interrogate_image_tags)
         self.imageContext_menu.add_separator()
         # File
         self.imageContext_menu.add_command(label="Duplicate img-txt pair", command=self.duplicate_pair)
@@ -1302,7 +1394,9 @@ class ImgTxtViewer:
         self.imageContext_menu.tk_popup(event.x_root, event.y_root)
 
 
-    # Suggestion context menu
+    # --------------------------------------
+    # Suggestion Context Menu
+    # --------------------------------------
     def show_suggestionContext_menu(self, event):
         suggestionContext_menu = Menu(self.master, tearoff=0)
         # Selected Dictionary
@@ -1334,6 +1428,9 @@ class ImgTxtViewer:
         suggestionContext_menu.tk_popup(event.x_root, event.y_root)
 
 
+    # --------------------------------------
+    # Misc UI logic
+    # --------------------------------------
     def custom_select_word_for_text(self, event, text_widget):
         widget = text_widget
         separators = " ,.-|()[]<>\\/\"'{}:;!@#$%^&*+=~`?"
@@ -4116,16 +4213,6 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - ONNX Tagger
-
-
-    def infer_tags(self):
-        csv_result, confidence_result = self.onnx_tagger.tag_image(self.image_files[self.current_index])
-        print(csv_result, confidence_result)
-
-
-#endregion
-################################################################################################################################################
 #region - Framework
 
 
@@ -4205,7 +4292,9 @@ The app now targets Windows 11, and while it doesn't offer an complete `Aero` th
 
 Starting from this release, the `Lite` version will no longer be provided. All tools are now built-in.
 
+
 ---
+
 
 ### New:
 - `Batch Tag Delete` has been renamed to `Batch Tag Edit`.
@@ -4233,6 +4322,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - This will set the preferred autocomplete dictionaries and matching settings.
 - You can now press `CTRL+W` to close the current window.
 
+
 <br>
 
 
@@ -4251,7 +4341,8 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - `Image Grid`, `Upscale Image`, `Resize Image`
 - Potential fix for the `Stats > PPI` calculation returning "0.00".
 - if `clean-text` is enabled: The primary text box is now properly refreshed when saving.
-- Fixed an issue where deleting tags that are substring of another tag using middle-mouse-click caused an error and did not remove the tag. #38
+- Fixed an issue when deleting tags that are a substring of another tag using middle-mouse-click. #38
+
 
 <br>
 
@@ -4312,43 +4403,33 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 '''
 
 
-- Todo
-  - (Med) Go through all tools that touch text files and make sure they work with alt-text paths.
+### Todo
+- (Med) Go through all tools that touch text files and make sure they work with alt-text paths.
 
-  - (Low) Find Dupe Files, could/should automatically move captions if they are found.
+- (Low) Find Dupe Files, could/should automatically move captions if they are found.
 
-  - (Very Low) Create a `Danbooru (safe)` autocomplete dictionary. (I have no idea how to effectively filter the naughty words.)
+- (Very Low) Create a `Danbooru (safe)` autocomplete dictionary. (I have no idea how to effectively filter the naughty words.)
 
 
-- Tofix
+### Tofix
+- (Med) Image info, and thumbnail cache doesn't update when the image is changed.
+  - This is because the cache is built using the filename as the key.
+  - The cache dictionary should include the hash of the image file to ensure it's up-to-date.
+  - All cache for that image should be cleared when the hash changes.
 
-  - (High) The Autocomplete dictionary is not correctly set when running the initial guided setup.
-    - It always sets to Danbooru, the UI will show the correct dictionary, but the actual dictionary is not set.
-    - The entire class needs an overhaul on how the settings are adjusted, and how the dictionaries are selected for loading.
-      - The Autocomplete class should have a set of functions to handle updating the settings and loading the dictionaries.
-      - The entire class is sometimes being treated like a single function, which is probably causing these issues with the dictionary not being set correctly.
-
-  - (Med) Image info, and thumbnail cache doesn't update when the image is changed.
-    - This is because the cache is built using the filename as the key.
-    - The cache dictionary should include the hash of the image file to ensure it's up-to-date.
-    - All cache for that image should be cleared when the hash changes.
-
-  - (low) When reloading the last directory: The whole process is messy and should be made more modular.
-    - set_working_directory(), set_text_file_path(), jump_to_image(); need to be optimized.
-    - When reloading the last directory, the displayed image is resized like 8 times because of repeated calls to show_pair() and display_image(), etc.
-
+- (low) When reloading the last directory: The whole process is messy and should be made more modular.
+  - set_working_directory(), set_text_file_path(), jump_to_image(); need to be optimized.
+  - When reloading the last directory, the displayed image is resized like 8 times because of repeated calls to show_pair() and display_image(), etc.
   - (low) When restoring the previous directory: The first image index is initially loaded, and then the last view image is loaded.
 
-  - (Low) Sometimes after navigating (perhaps only when using the ALT+Arrow-keys bind), the suggestion navigation fails to register on the first press of ALT.
-    - Related to how (Alt-L, and Alt-R) are bound to disable_button()
+- (Low) Sometimes after navigating (perhaps only when using the ALT+Arrow-keys bind), the suggestion navigation fails to register on the first press of ALT.
+  - Related to how (Alt-L, and Alt-R) are bound to disable_button()
 
-  - (Low) Running "Crop" Doesn't update the file lists when closing the crop window.
+- (Low) Sometimes when an image is loaded it isn't refreshed.
 
-  - (Low) Sometimes when an image is loaded it isn't refreshed.
-
-  - THUMBNAILS:
-    - (Low) A 'TypeError' error can occur when using the Mouse Wheel while scrolling over the thumbnail panel.
-            - It appears to be related to the ToolTip binding.
+- THUMBNAILS:
+  - (Low) A 'TypeError' error can occur when using the Mouse Wheel while scrolling over the thumbnail panel.
+          - It appears to be related to the ToolTip binding.
 
 
   '''
