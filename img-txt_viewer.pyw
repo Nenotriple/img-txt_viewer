@@ -1099,7 +1099,7 @@ class ImgTxtViewer:
                 self.auto_tag_listbox.clipboard_clear()
                 self.auto_tag_listbox.clipboard_append(', '.join(cleaned_items))
 
-        self.get_model_list()
+        self.get_onnx_model_list()
         self.tab9_frame = Frame(self.tab4)
         self.tab9_frame.pack(fill='both', expand=True)
 
@@ -1123,7 +1123,7 @@ class ImgTxtViewer:
         self.listbox_frame.pack(side='left', fill='both', expand=True)
         self.listbox_vertical_scrollbar = Scrollbar(self.listbox_frame, orient="vertical")
         self.listbox_horizontal_scrollbar = Scrollbar(self.listbox_frame, orient="horizontal")
-        self.auto_tag_listbox = Listbox(self.listbox_frame, width=25, selectmode="extended", yscrollcommand=self.listbox_vertical_scrollbar.set, xscrollcommand=self.listbox_horizontal_scrollbar.set)
+        self.auto_tag_listbox = Listbox(self.listbox_frame, width=25, selectmode="extended", exportselection=False, yscrollcommand=self.listbox_vertical_scrollbar.set, xscrollcommand=self.listbox_horizontal_scrollbar.set)
         self.listbox_vertical_scrollbar.config(command=self.auto_tag_listbox.yview)
         self.listbox_horizontal_scrollbar.config(command=self.auto_tag_listbox.xview)
         self.listbox_horizontal_scrollbar.pack(side='bottom', fill='x')
@@ -1223,7 +1223,7 @@ class ImgTxtViewer:
                 self.auto_tag_listbox.itemconfig("end", {'fg': '#148632'})
 
 
-    def get_model_list(self):
+    def get_onnx_model_list(self):
         model_dict = {}
         for onnx_model_path, dirs, files in os.walk(self.onnx_models_dir):
             if "model.onnx" in files and "selected_tags.csv" in files:
