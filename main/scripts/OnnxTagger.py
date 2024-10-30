@@ -32,7 +32,7 @@ class OnnxTagger:
         # Tagging options
         self.exclude_tags = []
         self.exclude_tags_set = set()
-        self.replace_underscore = BooleanVar(value=False)
+        self.replace_underscore = BooleanVar(value=True)
         self.sort = True
         self.reverse = True
 
@@ -46,22 +46,10 @@ class OnnxTagger:
     # Handle Model
     # --------------------------------------
     def _load_model(self):
-        if not self.model_path or not os.path.exists(self.model_path):
-            self.model_path = filedialog.askopenfilename(initialdir="./onnx_models", title="Choose ONNX model for tagging", filetypes=[("ONNX Model", "*.onnx")])
-            if not self.model_path or not os.path.exists(self.model_path):
-                messagebox.showerror(
-                    "Model Not Found",
-                    f'ONNX model ({self.model_path}) not found. Please visit https://huggingface.co/SmilingWolf and pick a model. I recommend wd-v1-4-moat-tagger-v2.'
-                    ' Download "model.onnx" and "selected_tags.csv" for your chosen model.'
-                    ' Rename both files to have matching names, e.g., "WDMoat_v2.onnx" and "WDMoat_v2.csv".'
-                    ' Place these files in the "onnx_models" folder.'
-                )
-                return False
         self.model = InferenceSession(self.model_path, providers=['CPUExecutionProvider'])
         self.model_input = self.model.get_inputs()[0]
         self.model_input_height = self.model_input.shape[1]
         self.tag_label = self.model.get_outputs()[0].name
-        return True
 
 
     # --------------------------------------
@@ -69,7 +57,7 @@ class OnnxTagger:
     # --------------------------------------
     def _read_csv_tags(self):
         self.model_tags.clear()
-        csv_path = os.path.splitext(self.model_path)[0] + ".csv"
+        csv_path = os.path.join(os.path.dirname(self.model_path), "selected_tags.csv")
         with open(csv_path, newline='') as file:
             csv_reader = csv.reader(file)
             next(csv_reader)
@@ -88,6 +76,8 @@ class OnnxTagger:
         preprocessed_image = self._preprocess_image(image)
         confidence_scores = self.model.run([self.tag_label], {self.model_input.name: preprocessed_image})[0][0]
         tag_confidence_pairs = list(zip(self.model_tags, confidence_scores))
+        if self.general_index is None or self.character_index is None:
+            raise ValueError("General index or character index not set correctly.")
         general_tags = [tc for tc in tag_confidence_pairs[self.general_index:self.character_index] if tc[1] > self.general_threshold]
         character_tags = [tc for tc in tag_confidence_pairs[self.character_index:] if tc[1] > self.character_threshold]
         all_tags = character_tags + general_tags
@@ -121,7 +111,7 @@ class OnnxTagger:
     # --------------------------------------
     # Tag Image
     # --------------------------------------
-    def tag_image(self, image_path):
+    def tag_image(self, image_path, model_path):
         """
         Tags an image using the loaded ONNX model.
 
@@ -137,8 +127,8 @@ class OnnxTagger:
             FileNotFoundError: If the image file specified by `image_path` does not exist.
 
         """
-        if not self.model and not self._load_model():
-            return
+        self.model_path = model_path
+        self._load_model()
         try:
             with Image.open(image_path) as image:
                 inferred_tags = self._process_tags(image)
