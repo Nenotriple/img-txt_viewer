@@ -1589,7 +1589,7 @@ class ImgTxtViewer:
     def toggle_save_button_height(self, event=None, reset=None):
         if reset:
             self.big_save_button_var.set(True)
-            self.save_button.config(padding=(1, 1))
+            self.save_button.config(padding=(5, 5))
             return
         else:
             if self.big_save_button_var.get():
