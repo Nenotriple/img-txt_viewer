@@ -100,7 +100,7 @@ class OnnxTagger:
     def _format_results(self, inferred_tags):
         formatted_tags = [[tag.replace("(", "\\(").replace(")", "\\)"), confidence] for tag, confidence in inferred_tags]
         csv_result = ", ".join(tag for tag, _ in formatted_tags)
-        confidence_result = "\n".join(f"{tag}: {confidence}" for tag, confidence in formatted_tags)
+        confidence_result = {tag: confidence for tag, confidence in formatted_tags}
         return csv_result, confidence_result
 
 
