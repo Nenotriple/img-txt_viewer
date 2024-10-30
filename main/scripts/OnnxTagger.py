@@ -121,6 +121,21 @@ class OnnxTagger:
     # Tag Image
     # --------------------------------------
     def tag_image(self, image_path):
+        """
+        Tags an image using the loaded ONNX model.
+
+        Args:
+            image_path (str): The file path to the image that needs to be tagged.
+
+        Returns:
+            tuple: A tuple containing:
+                - csv_result (str): A CSV formatted string of the inferred tags.
+                - confidence_result (dict): A dictionary where the keys are the inferred tags and the values are the confidence scores.
+
+        Raises:
+            FileNotFoundError: If the image file specified by `image_path` does not exist.
+
+        """
         if not self.model and not self._load_model():
             return
         try:
