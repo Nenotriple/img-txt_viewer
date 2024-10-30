@@ -29,6 +29,8 @@ class EditPanel:
     def __init__(self, parent, root):
         self.parent = parent
         self.root = root
+        self.edit_is_reverted_var = False
+
 
 
 #endregion
@@ -159,6 +161,8 @@ class EditPanel:
 
     def update_slider_value(self, event):
         current_option = self.edit_combobox.get()
+        if not hasattr(self, "current_image"):
+            self.current_image = self.parent.original_image.copy()
         is_rgb = self.current_image.mode == "RGB"
         rgb_required_options = ["AutoContrast", "Hue", "Color Temperature"]
         if current_option in rgb_required_options and not is_rgb:
@@ -233,19 +237,19 @@ class EditPanel:
 
 
     def _reset_edit(self, event=None):
-            self.edit_is_reverted_var = False
-            self.edit_revert_image_button.config(text="Revert")
-            for option in self.parent.edit_slider_dict:
-                self.parent.edit_slider_dict[option] = 0
-            self.edit_last_slider_dict = self.parent.edit_slider_dict.copy()
-            self.edit_slider.set(0)
-            self.edit_value_label.config(text="0")
-            self.highlights_threshold_spinbox.set(128)
-            self.highlights_blur_radius_spinbox.set(0)
-            self.shadows_threshold_spinbox.set(128)
-            self.shadows_blur_radius_spinbox.set(0)
-            self.sharpness_boost_spinbox.set(1)
-            self.parent.refresh_image()
+        self.edit_is_reverted_var = False
+        self.edit_revert_image_button.config(text="Revert")
+        for option in self.parent.edit_slider_dict:
+            self.parent.edit_slider_dict[option] = 0
+        self.edit_last_slider_dict = self.parent.edit_slider_dict.copy()
+        self.edit_slider.set(0)
+        self.edit_value_label.config(text="0")
+        self.highlights_threshold_spinbox.set(128)
+        self.highlights_blur_radius_spinbox.set(0)
+        self.shadows_threshold_spinbox.set(128)
+        self.shadows_blur_radius_spinbox.set(0)
+        self.sharpness_boost_spinbox.set(1)
+        self.parent.refresh_image()
 
 
     def update_edited_image(self):
