@@ -359,6 +359,8 @@ class ImgTxtViewer:
         self.undo_state = StringVar(value="disabled")
         self.previous_window_size = (self.master.winfo_width(), self.master.winfo_height())
         self.initialize_text_pane = True
+        self.onnx_model_dict = {}
+        self.onnx_models_dir = "onnx_models"
 
         # 'after()' Job IDs
         self.is_resizing_job_id = None
@@ -1075,47 +1077,117 @@ class ImgTxtViewer:
     # Tab 4: Auto-Tag
     # --------------------------------------
     def create_auto_tag_widgets_tab4(self):
+        def update_general_threshold(event=None):
+            self.onnx_tagger.general_threshold = float(self.auto_tag_general_threshold_spinbox.get())
+            print(f"General Threshold: {self.onnx_tagger.general_threshold}")
+
+        def update_character_threshold(event=None):
+            self.onnx_tagger.character_threshold = float(self.auto_tag_character_threshold_spinbox.get())
+            print(f"Character Threshold: {self.onnx_tagger.character_threshold}")
+
+        self.get_model_list()
         self.tab9_frame = Frame(self.tab4)
         self.tab9_frame.pack(fill='both', expand=True)
-        self.tab9_button_frame = Frame(self.tab9_frame)
-        self.tab9_button_frame.pack(fill='x')
-        self.auto_tag_button = ttk.Button(self.tab9_button_frame, text="Interrogate", width=10, command=self.interrogate_image_tags)
-        self.auto_tag_button.pack(side='left', anchor="n", pady=4)
+        self.tab9_top_frame = Frame(self.tab9_frame)
+        self.tab9_top_frame.pack(fill='x')
+        self.auto_tag_button = ttk.Button(self.tab9_top_frame, text="Interrogate", takefocus=False, command=self.interrogate_image_tags)
+        self.auto_tag_button.pack(side='left')
         ToolTip.create(self.auto_tag_button, "Interrogate the current image using the a ONNX vision model.", 200, 6, 12)
+        self.auto_tag_stats_label = Label(self.tab9_top_frame, text="Total Tags: 0  |  Selected Tags: 0")
+        self.auto_tag_stats_label.pack(side='left')
+        self.auto_tag_replace_underscore_checkbutton = ttk.Checkbutton(self.tab9_top_frame, text="Replace Underscores", takefocus=False, variable=self.onnx_tagger.replace_underscore)
+        self.auto_tag_replace_underscore_checkbutton.pack(side='right')
 
-        # Listbox setup with Scrollbar
+        # Listbox
         self.tab9_main_frame = Frame(self.tab9_frame)
         self.tab9_main_frame.pack(fill='both', expand=True)
         self.listbox_frame = Frame(self.tab9_main_frame)
         self.listbox_frame.pack(side='left', fill='both', expand=True)
         self.listbox_vertical_scrollbar = Scrollbar(self.listbox_frame, orient="vertical")
         self.listbox_horizontal_scrollbar = Scrollbar(self.listbox_frame, orient="horizontal")
-        self.listbox = Listbox(self.listbox_frame, selectmode="extended", yscrollcommand=self.listbox_vertical_scrollbar.set, xscrollcommand=self.listbox_horizontal_scrollbar.set)
-        self.listbox_vertical_scrollbar.config(command=self.listbox.yview)
-        self.listbox_horizontal_scrollbar.config(command=self.listbox.xview)
+        self.auto_tag_listbox = Listbox(self.listbox_frame, width=25, selectmode="extended", yscrollcommand=self.listbox_vertical_scrollbar.set, xscrollcommand=self.listbox_horizontal_scrollbar.set)
+        self.listbox_vertical_scrollbar.config(command=self.auto_tag_listbox.yview)
+        self.listbox_horizontal_scrollbar.config(command=self.auto_tag_listbox.xview)
         self.listbox_horizontal_scrollbar.pack(side='bottom', fill='x')
-        self.listbox.pack(side='left', fill='both', expand=True)
+        self.auto_tag_listbox.pack(side='left', fill='both', expand=True)
         self.listbox_vertical_scrollbar.pack(side='left', fill='y')
 
-        # Widgets that interact with the listbox go here
+        # Main Widget Frame
         self.tab9_main_widget_frame = Frame(self.tab9_main_frame)
-        self.tab9_main_widget_frame.pack(side='left', fill='both', expand=True)
-        self.test_label = Label(self.tab9_main_widget_frame, text="Test")
-        self.test_label.pack(side='top', fill='both', expand=True)
+        self.tab9_main_widget_frame.pack(side='left', fill='both')
+
+        # Model Selection
+        model_selection_frame = Frame(self.tab9_main_widget_frame)
+        model_selection_frame.pack(side='top', fill='x', padx=2, pady=2)
+        model_selection_label = Label(model_selection_frame, text="Model:", width=16, anchor="w")
+        model_selection_label.pack(side='left')
+        ToolTip.create(model_selection_label, "Select the ONNX vision model to use for interrogation", 200, 6, 12)
+        self.auto_tag_model_combobox = ttk.Combobox(model_selection_frame, width=25, takefocus=False, state="readonly", values=list(self.onnx_model_dict.keys()))
+        self.auto_tag_model_combobox.pack(side='right')
+        self.set_auto_tag_combo_box()
+
+        # Gen Threshold
+        general_threshold_frame = Frame(self.tab9_main_widget_frame)
+        general_threshold_frame.pack(side='top', fill='x', padx=2, pady=2)
+        general_threshold_label = Label(general_threshold_frame, text="General Threshold:", width=16, anchor="w")
+        general_threshold_label.pack(side='left')
+        ToolTip.create(general_threshold_label, "The minimum confidence threshold for general tags", 200, 6, 12)
+        self.auto_tag_general_threshold_spinbox = ttk.Spinbox(general_threshold_frame, takefocus=False, from_=0, to=1, increment=0.01, width=8, command=update_general_threshold)
+        self.auto_tag_general_threshold_spinbox.pack(side='right')
+        self.auto_tag_general_threshold_spinbox.set(self.onnx_tagger.general_threshold)
+        self.auto_tag_general_threshold_spinbox.bind("<KeyRelease>", lambda event: update_general_threshold())
+        self.auto_tag_general_threshold_spinbox.bind("<FocusOut>", lambda event: update_general_threshold())
+
+        # Char Threshold
+        character_threshold_frame = Frame(self.tab9_main_widget_frame)
+        character_threshold_frame.pack(side='top', fill='x', padx=2, pady=2)
+        character_threshold_label = Label(character_threshold_frame, text="Character Threshold:", width=16, anchor="w")
+        character_threshold_label.pack(side='left')
+        ToolTip.create(character_threshold_label, "The minimum confidence threshold for character tags", 200, 6, 12)
+        self.auto_tag_character_threshold_spinbox = ttk.Spinbox(character_threshold_frame, takefocus=False, from_=0, to=1, increment=0.01, width=8, command=update_character_threshold)
+        self.auto_tag_character_threshold_spinbox.pack(side='right')
+        self.auto_tag_character_threshold_spinbox.set(self.onnx_tagger.character_threshold)
+        self.auto_tag_character_threshold_spinbox.bind("<KeyRelease>", lambda event: update_character_threshold())
+        self.auto_tag_character_threshold_spinbox.bind("<FocusOut>", lambda event: update_character_threshold())
 
 
     def interrogate_image_tags(self):
         image_path = self.image_files[self.current_index]
-        csv_result, confidence_result = self.onnx_tagger.tag_image(image_path)
-        print(confidence_result)
+        selected_model_path = self.onnx_model_dict.get(self.auto_tag_model_combobox.get())
+        if not selected_model_path or not os.path.exists(selected_model_path):
+            messagebox.showerror("Error", f"Model file not found: {selected_model_path}")
+            return
+        csv_result, confidence_result = self.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
         self.parse_interrogation_result(confidence_result)
 
 
     def parse_interrogation_result(self, confidence_result):
+        self.auto_tag_listbox.delete(0, "end")
+        if not confidence_result:
+            return
         max_length = max(len(f"{value:.2f}") for value in confidence_result.values())
         for tag, value in confidence_result.items():
             padded_score = f"{value:.2f}".ljust(max_length, '0')
-            self.listbox.insert("end", f" {padded_score}: {tag}")
+            self.auto_tag_listbox.insert("end", f" {padded_score}: {tag}")
+
+
+    def get_model_list(self):
+        model_dict = {}
+        for root, dirs, files in os.walk(self.onnx_models_dir):
+            if "model.onnx" in files and "selected_tags.csv" in files:
+                folder_name = os.path.basename(root)
+                model_file_path = os.path.join(root, "model.onnx")
+                model_dict[folder_name] = model_file_path
+        self.onnx_model_dict = model_dict
+
+
+    def set_auto_tag_combo_box(self):
+        try:
+            first_model_key = next(iter(self.onnx_model_dict.keys()), None)
+        except Exception as e:
+            first_model_key = None
+        if first_model_key:
+            self.auto_tag_model_combobox.set(first_model_key)
 
 
     # --------------------------------------
