@@ -2639,7 +2639,7 @@ class ImgTxtViewer:
         if not self.check_if_directory():
             return
         if not self.filter_empty_files_var.get():
-            self.revert_text_image_filter()
+            self.revert_text_image_filter(quiet=True)
         filter_string = self.filter_string_var.get()
         if not filter_string and not self.filter_empty_files_var.get():
             self.image_index_entry.delete(0, "end")
@@ -2678,6 +2678,9 @@ class ImgTxtViewer:
                     if match:
                         self.filtered_image_files.append(image_file)
                         self.filtered_text_files.append(text_file)
+        if not self.filtered_image_files:
+            messagebox.showinfo("Filter", f"0 images found. Canceling filter.")
+            return
         self.image_files = self.filtered_image_files
         self.text_files = self.filtered_text_files
         if hasattr(self, 'total_images_label'):
@@ -2687,15 +2690,11 @@ class ImgTxtViewer:
         messagebox.showinfo("Filter", f"Filter applied successfully.\n\n{len(self.image_files)} images found.")
         self.revert_filter_button.config(style="Red.TButton")
         self.revert_filter_button_tooltip.config(text="Filter is active\n\nClear any filtering applied")
-        if not self.image_files:
-            self.image_index_entry.delete(0, "end")
-            self.image_index_entry.insert(0, "0")
-            self.primary_display_image.config(image=self.blank_image)
-            self.text_box.delete("1.0", "end")
-            self.label_image_stats.config(text="No image! -- Check filters?", anchor="w")
+        self.image_index_entry.delete(0, "end")
+        self.image_index_entry.insert(0, "1")
 
 
-    def revert_text_image_filter(self, clear=None): # Filter
+    def revert_text_image_filter(self, clear=None, quiet=False): # Filter
         if clear:
             self.filter_string_var.set("")
             self.filter_use_regex_var.set(False)
@@ -2704,7 +2703,8 @@ class ImgTxtViewer:
         self.update_image_file_count()
         self.current_index = 0
         self.show_pair()
-        messagebox.showinfo("Filter", "Filter has been cleared.")
+        if not quiet:
+            messagebox.showinfo("Filter", "Filter has been cleared.")
         self.revert_filter_button.config(style="")
         self.revert_filter_button_tooltip.config(text="Filter is inactive\n\nClear any filtering applied")
         self.filter_empty_files_var.set(False)
