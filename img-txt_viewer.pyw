@@ -1207,31 +1207,28 @@ class ImgTxtViewer:
         if not selected_model_path or not os.path.exists(selected_model_path):
             messagebox.showerror("Error", f"Model file not found: {selected_model_path}")
             return
-        tag_list, tag_dictionary = self.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
-        self.parse_interrogation_result(tag_dictionary)
+        tag_list, tag_dict = self.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
+        self.parse_interrogation_result(tag_dict)
 
 
-    def parse_interrogation_result(self, tag_dictionary):
+    def parse_interrogation_result(self, tag_dict):
         self.auto_tag_listbox.delete(0, "end")
-        if not tag_dictionary:
+        if not tag_dict:
             return
-        max_length = max(len(f"{list(value)[0]:.2f}") for value in tag_dictionary.values())
-        for tag, value in tag_dictionary.items():
-            confidence, category = list(value)
+        max_length = max(len(f"{confidence:.2f}") for confidence, _ in tag_dict.values())
+        for tag, (confidence, category) in tag_dict.items():
             padded_score = f"{confidence:.2f}".ljust(max_length, '0')
+            self.auto_tag_listbox.insert("end", f" {padded_score}: {tag}")
             if category == "character":
-                self.auto_tag_listbox.insert("end", f" {padded_score}: {tag}")
                 self.auto_tag_listbox.itemconfig("end", {'fg': '#148632'})
-            else:
-                self.auto_tag_listbox.insert("end", f" {padded_score}: {tag}")
 
 
     def get_model_list(self):
         model_dict = {}
-        for base_directory, dirs, files in os.walk(self.onnx_models_dir):
+        for onnx_model_path, dirs, files in os.walk(self.onnx_models_dir):
             if "model.onnx" in files and "selected_tags.csv" in files:
-                folder_name = os.path.basename(base_directory)
-                model_file_path = os.path.join(base_directory, "model.onnx")
+                folder_name = os.path.basename(onnx_model_path)
+                model_file_path = os.path.join(onnx_model_path, "model.onnx")
                 model_dict[folder_name] = model_file_path
         self.onnx_model_dict = model_dict
 
