@@ -605,7 +605,7 @@ class ImageGrid:
 
     def add_load_more_button(self):
         if self.pair_filter_var.get() == "All" and self.loaded_images < self.num_total_images:
-            load_more_button = ttk.Button(self.frame_image_grid, text="Load More...", height=2, command=self.load_images)
+            load_more_button = ttk.Button(self.frame_image_grid, text="Load More...", command=self.load_images)
             load_more_button.grid(row=self.rows, column=0, columnspan=self.cols, sticky="ew", pady=5)
             ToolTip.create(load_more_button, "Load the next 150 images", 500, 6, 12)
 
