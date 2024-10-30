@@ -1079,26 +1079,46 @@ class ImgTxtViewer:
     def create_auto_tag_widgets_tab4(self):
         def update_general_threshold(event=None):
             self.onnx_tagger.general_threshold = float(self.auto_tag_general_threshold_spinbox.get())
-            print(f"General Threshold: {self.onnx_tagger.general_threshold}")
 
         def update_character_threshold(event=None):
             self.onnx_tagger.character_threshold = float(self.auto_tag_character_threshold_spinbox.get())
-            print(f"Character Threshold: {self.onnx_tagger.character_threshold}")
+
+        def invert_selection():
+            for i in range(self.auto_tag_listbox.size()):
+                if self.auto_tag_listbox.selection_includes(i):
+                    self.auto_tag_listbox.selection_clear(i)
+                else:
+                    self.auto_tag_listbox.select_set(i)
+
+        def insert_selection(prefix=False, append=False):
+            pass
+
+        def copy_selection():
+            selected_items = [self.auto_tag_listbox.get(i) for i in self.auto_tag_listbox.curselection()]
+            cleaned_items = [item.split(': ', 1)[-1] for item in selected_items]
+            if cleaned_items:
+                self.auto_tag_listbox.clipboard_clear()
+                self.auto_tag_listbox.clipboard_append(', '.join(cleaned_items))
 
         self.get_model_list()
         self.tab9_frame = Frame(self.tab4)
         self.tab9_frame.pack(fill='both', expand=True)
+
+        # Top Frame for Buttons
         self.tab9_top_frame = Frame(self.tab9_frame)
         self.tab9_top_frame.pack(fill='x')
         self.auto_tag_button = ttk.Button(self.tab9_top_frame, text="Interrogate", takefocus=False, command=self.interrogate_image_tags)
         self.auto_tag_button.pack(side='left')
-        ToolTip.create(self.auto_tag_button, "Interrogate the current image using the a ONNX vision model.", 200, 6, 12)
+        ToolTip.create(self.auto_tag_button, "Interrogate the current image using the selected ONNX vision model.", 500, 6, 12)
         self.auto_tag_stats_label = Label(self.tab9_top_frame, text="Total Tags: 0  |  Selected Tags: 0")
         self.auto_tag_stats_label.pack(side='left')
-        self.auto_tag_replace_underscore_checkbutton = ttk.Checkbutton(self.tab9_top_frame, text="Replace Underscores", takefocus=False, variable=self.onnx_tagger.replace_underscore)
-        self.auto_tag_replace_underscore_checkbutton.pack(side='right')
 
-        # Listbox
+        auto_insert_checkbutton = ttk.Checkbutton(self.tab9_top_frame, text="Auto-Insert", takefocus=False)
+        auto_insert_checkbutton.pack(side='right')
+        ToolTip.create(auto_insert_checkbutton, "Automatically insert tags into the text box, replacing any existing tags", 200, 6, 12)
+
+
+        # Listbox Frame
         self.tab9_main_frame = Frame(self.tab9_frame)
         self.tab9_main_frame.pack(fill='both', expand=True)
         self.listbox_frame = Frame(self.tab9_main_frame)
@@ -1126,7 +1146,7 @@ class ImgTxtViewer:
         self.auto_tag_model_combobox.pack(side='right')
         self.set_auto_tag_combo_box()
 
-        # Gen Threshold
+        # General Threshold
         general_threshold_frame = Frame(self.tab9_main_widget_frame)
         general_threshold_frame.pack(side='top', fill='x', padx=2, pady=2)
         general_threshold_label = Label(general_threshold_frame, text="General Threshold:", width=16, anchor="w")
@@ -1138,7 +1158,7 @@ class ImgTxtViewer:
         self.auto_tag_general_threshold_spinbox.bind("<KeyRelease>", lambda event: update_general_threshold())
         self.auto_tag_general_threshold_spinbox.bind("<FocusOut>", lambda event: update_general_threshold())
 
-        # Char Threshold
+        # Character Threshold
         character_threshold_frame = Frame(self.tab9_main_widget_frame)
         character_threshold_frame.pack(side='top', fill='x', padx=2, pady=2)
         character_threshold_label = Label(character_threshold_frame, text="Character Threshold:", width=16, anchor="w")
@@ -1149,6 +1169,40 @@ class ImgTxtViewer:
         self.auto_tag_character_threshold_spinbox.set(self.onnx_tagger.character_threshold)
         self.auto_tag_character_threshold_spinbox.bind("<KeyRelease>", lambda event: update_character_threshold())
         self.auto_tag_character_threshold_spinbox.bind("<FocusOut>", lambda event: update_character_threshold())
+
+        # Replace Underscores
+        self.auto_tag_replace_underscore_checkbutton = ttk.Checkbutton(self.tab9_main_widget_frame, text="Replace Underscores", takefocus=False, variable=self.onnx_tagger.replace_underscore)
+        self.auto_tag_replace_underscore_checkbutton.pack(side='top', anchor='w', padx=2, pady=2)
+        ToolTip.create(self.auto_tag_replace_underscore_checkbutton, "If enabled, underscores in tags will be replaced with spaces", 200, 6, 12)
+
+        # Listbox Interaction Buttons
+        button_frame = ttk.LabelFrame(self.tab9_main_widget_frame, text="Selection")
+        button_frame.pack(side="bottom", fill='both', padx=2)
+
+        # Configure the grid layout
+        button_frame.grid_columnconfigure(0, weight=1)
+        button_frame.grid_columnconfigure(1, weight=1)
+        button_frame.grid_columnconfigure(2, weight=1)
+
+        # Selection Buttons
+        insert_selection_prefix_button = ttk.Button(button_frame, text="Prefix", command=lambda: insert_selection(prefix=True))
+        insert_selection_prefix_button.grid(row=0, column=0, sticky='ew', pady=2)
+        ToolTip.create(insert_selection_prefix_button, "Insert the selected tags at the START of the text box", 500, 6, 12)
+        insert_selection_append_button = ttk.Button(button_frame, text="Append", command=lambda: insert_selection(append=True))
+        insert_selection_append_button.grid(row=0, column=1, sticky='ew', pady=2)
+        ToolTip.create(insert_selection_append_button, "Insert the selected tags at the END of the text box", 500, 6, 12)
+        copy_button = ttk.Button(button_frame, text="Copy", command=copy_selection)
+        copy_button.grid(row=0, column=2, sticky='ew', pady=2)
+        ToolTip.create(copy_button, "Copy the selected tags to the clipboard", 500, 6, 12)
+        all_button = ttk.Button(button_frame, text="All", command=lambda: self.auto_tag_listbox.select_set(0, 'end'))
+        all_button.grid(row=1, column=0, sticky='ew', pady=2)
+        ToolTip.create(all_button, "Select all tags", 500, 6, 12)
+        invert_button = ttk.Button(button_frame, text="Invert", command=invert_selection)
+        invert_button.grid(row=1, column=1, sticky='ew', pady=2)
+        ToolTip.create(invert_button, "Invert the current selection", 500, 6, 12)
+        clear_button = ttk.Button(button_frame, text="Clear", command=lambda: self.auto_tag_listbox.selection_clear(0, 'end'))
+        clear_button.grid(row=1, column=2, sticky='ew', pady=2)
+        ToolTip.create(clear_button, "Clear the current selection", 500, 6, 12)
 
 
     def interrogate_image_tags(self):
@@ -1173,10 +1227,10 @@ class ImgTxtViewer:
 
     def get_model_list(self):
         model_dict = {}
-        for root, dirs, files in os.walk(self.onnx_models_dir):
+        for base_directory, dirs, files in os.walk(self.onnx_models_dir):
             if "model.onnx" in files and "selected_tags.csv" in files:
-                folder_name = os.path.basename(root)
-                model_file_path = os.path.join(root, "model.onnx")
+                folder_name = os.path.basename(base_directory)
+                model_file_path = os.path.join(base_directory, "model.onnx")
                 model_dict[folder_name] = model_file_path
         self.onnx_model_dict = model_dict
 
@@ -1184,7 +1238,7 @@ class ImgTxtViewer:
     def set_auto_tag_combo_box(self):
         try:
             first_model_key = next(iter(self.onnx_model_dict.keys()), None)
-        except Exception as e:
+        except Exception:
             first_model_key = None
         if first_model_key:
             self.auto_tag_model_combobox.set(first_model_key)
