@@ -128,8 +128,8 @@ class OnnxTagger:
 
         """
         self.model_path = model_path
-        self._load_model()
         try:
+            self._load_model()
             with Image.open(image_path) as image:
                 inferred_tags = self._process_tags(image)
         except FileNotFoundError as e:
