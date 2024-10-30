@@ -45,7 +45,7 @@ from tkinter.scrolledtext import ScrolledText
 from tkinter import (ttk, Tk, Toplevel, messagebox, filedialog, simpledialog,
                      StringVar, BooleanVar, IntVar,
                      Frame, PanedWindow, Menu,
-                     Label, Text,
+                     Label, Text, Listbox, Scrollbar,
                      Event, TclError
                      )
 
@@ -1076,24 +1076,46 @@ class ImgTxtViewer:
     # --------------------------------------
     def create_auto_tag_widgets_tab4(self):
         self.tab9_frame = Frame(self.tab4)
-        self.tab9_frame.pack(side='top', fill='both')
+        self.tab9_frame.pack(fill='both', expand=True)
         self.tab9_button_frame = Frame(self.tab9_frame)
-        self.tab9_button_frame.pack(side='top', fill='x')
+        self.tab9_button_frame.pack(fill='x')
         self.auto_tag_button = ttk.Button(self.tab9_button_frame, text="Interrogate", width=10, command=self.interrogate_image_tags)
         self.auto_tag_button.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.auto_tag_button, "Interrogate the current image using the a ONNX vision model.", 200, 6, 12)
-        self.tab9_text_frame = Frame(self.tab9_frame, borderwidth=0)
-        self.tab9_text_frame.pack(side='top', fill="both")
-        description_textbox = ScrolledText(self.tab9_text_frame, bg="#f0f0f0")
-        description_textbox.pack(side='bottom', fill='both')
-        description_textbox.insert("1.0", "Use this tool to automatically infer tags for the current image.\n\n"
-                                   "Click the 'Interrogate' button to generate tags using the selected ONNX vision model.\n\n"
-                                   "The tags will be displayed in the text box below.")
-        description_textbox.config(state="disabled", wrap="word")
+
+        # Listbox setup with Scrollbar
+        self.tab9_main_frame = Frame(self.tab9_frame)
+        self.tab9_main_frame.pack(fill='both', expand=True)
+        self.listbox_frame = Frame(self.tab9_main_frame)
+        self.listbox_frame.pack(side='left', fill='both', expand=True)
+        self.listbox_vertical_scrollbar = Scrollbar(self.listbox_frame, orient="vertical")
+        self.listbox_horizontal_scrollbar = Scrollbar(self.listbox_frame, orient="horizontal")
+        self.listbox = Listbox(self.listbox_frame, selectmode="extended", yscrollcommand=self.listbox_vertical_scrollbar.set, xscrollcommand=self.listbox_horizontal_scrollbar.set)
+        self.listbox_vertical_scrollbar.config(command=self.listbox.yview)
+        self.listbox_horizontal_scrollbar.config(command=self.listbox.xview)
+        self.listbox_horizontal_scrollbar.pack(side='bottom', fill='x')
+        self.listbox.pack(side='left', fill='both', expand=True)
+        self.listbox_vertical_scrollbar.pack(side='left', fill='y')
+
+        # Widgets that interact with the listbox go here
+        self.tab9_main_widget_frame = Frame(self.tab9_main_frame)
+        self.tab9_main_widget_frame.pack(side='left', fill='both', expand=True)
+        self.test_label = Label(self.tab9_main_widget_frame, text="Test")
+        self.test_label.pack(side='top', fill='both', expand=True)
+
 
     def interrogate_image_tags(self):
-        csv_result, confidence_result = self.onnx_tagger.tag_image(self.image_files[self.current_index])
-        print(csv_result, confidence_result)
+        image_path = self.image_files[self.current_index]
+        csv_result, confidence_result = self.onnx_tagger.tag_image(image_path)
+        print(confidence_result)
+        self.parse_interrogation_result(confidence_result)
+
+
+    def parse_interrogation_result(self, confidence_result):
+        max_length = max(len(f"{value:.2f}") for value in confidence_result.values())
+        for tag, value in confidence_result.items():
+            padded_score = f"{value:.2f}".ljust(max_length, '0')
+            self.listbox.insert("end", f" {padded_score}: {tag}")
 
 
     # --------------------------------------
