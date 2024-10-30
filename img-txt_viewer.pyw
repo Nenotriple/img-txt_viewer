@@ -1269,6 +1269,9 @@ class ImgTxtViewer:
         self.imageContext_menu.add_command(label="Open Image-Grid...", accelerator="F2", command=self.open_image_grid)
         self.imageContext_menu.add_command(label="Edit Image...", accelerator="F4", command=self.open_image_in_editor)
         self.imageContext_menu.add_command(label="Infer Tags...", command=self.infer_tags)
+        self.imageContext_menu.add_command(label="Infer All Tags Sequentially...", command=self.infer_tags_on_all_sequential)
+        self.imageContext_menu.add_command(label="Infer All Tags Concurrently...", command=self.infer_tags_on_all_concurrent)
+        self.imageContext_menu.add_command(label="Check Model Batch Type...", command=self.check_model_batch_dimension)
         self.imageContext_menu.add_separator()
         # File
         self.imageContext_menu.add_command(label="Duplicate img-txt pair", command=self.duplicate_pair)
@@ -4118,10 +4121,29 @@ class ImgTxtViewer:
 ################################################################################################################################################
 #region - ONNX Tagger
 
+    def check_model_batch_dimension(self):
+        self.onnx_tagger.test_model_batch_dim()
+
 
     def infer_tags(self):
         csv_result, confidence_result = self.onnx_tagger.tag_image(self.image_files[self.current_index])
         print(csv_result, confidence_result)
+    
+
+    def infer_tags_on_all_sequential(self):
+        start_time = time.time()
+        result_dict = self.onnx_tagger.tag_images_sequential_test(self.image_files)
+        delta_time = time.time() - start_time 
+        print(result_dict)
+        print(f"Elapsed time: {delta_time:.4f} seconds")
+
+
+    def infer_tags_on_all_concurrent(self):
+        start_time = time.time()
+        result_dict = self.onnx_tagger.tag_images_concurrent_test(self.image_files)
+        delta_time = time.time() - start_time 
+        print(result_dict)
+        print(f"Elapsed time: {delta_time:.4f} seconds")
 
 
 #endregion
