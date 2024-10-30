@@ -1057,7 +1057,7 @@ class ImgTxtViewer:
         self.append_button = ttk.Button(self.tab3_button_frame, text="Go!", width=5, command=self.append_text_files)
         self.append_button.pack(side='left', anchor="n", pady=4)
         ToolTip.create(self.append_button, "Text files will be backup up", 200, 6, 12)
-        self.clear_button = ttk.Button(self.tab3_button_frame, text="Clear", width=5, command=self.clear_append_tab)
+        self.clear_button = ttk.Button(self.tab3_button_frame, text="Clear", width=5, command=lambda: self.append_entry.delete(0, 'end'))
         self.clear_button.pack(side='left', anchor="n", pady=4)
         self.undo_button = ttk.Button(self.tab3_button_frame, text="Undo", width=5, command=self.restore_backup)
         self.undo_button.pack(side='left', anchor="n", pady=4)
@@ -1070,10 +1070,6 @@ class ImgTxtViewer:
                                    "This means that the entered text will appear at the end of each text file.\n\n"
                                    "If a filter is applied, only text files that match the filter will be affected.")
         description_textbox.config(state="disabled", wrap="word")
-
-
-    def clear_append_tab(self):
-        self.append_entry.delete(0, 'end')
 
 
     # --------------------------------------
@@ -1119,7 +1115,6 @@ class ImgTxtViewer:
         auto_insert_checkbutton = ttk.Checkbutton(self.tab9_top_frame, text="Auto-Insert", takefocus=False)
         auto_insert_checkbutton.pack(side='right')
         ToolTip.create(auto_insert_checkbutton, "Automatically insert tags into the text box, replacing any existing tags", 200, 6, 12)
-
 
         # Listbox Frame
         self.tab9_main_frame = Frame(self.tab9_frame)
@@ -1178,11 +1173,9 @@ class ImgTxtViewer:
         self.auto_tag_replace_underscore_checkbutton.pack(side='top', anchor='w', padx=2, pady=2)
         ToolTip.create(self.auto_tag_replace_underscore_checkbutton, "If enabled, underscores in tags will be replaced with spaces", 200, 6, 12)
 
-        # Listbox Interaction Buttons
+        # Selection Button Frame
         button_frame = ttk.LabelFrame(self.tab9_main_widget_frame, text="Selection")
         button_frame.pack(side="bottom", fill='both', padx=2)
-
-        # Configure the grid layout
         button_frame.grid_columnconfigure(0, weight=1)
         button_frame.grid_columnconfigure(1, weight=1)
         button_frame.grid_columnconfigure(2, weight=1)
@@ -1214,18 +1207,23 @@ class ImgTxtViewer:
         if not selected_model_path or not os.path.exists(selected_model_path):
             messagebox.showerror("Error", f"Model file not found: {selected_model_path}")
             return
-        csv_result, confidence_result = self.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
-        self.parse_interrogation_result(confidence_result)
+        tag_list, tag_dictionary = self.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
+        self.parse_interrogation_result(tag_dictionary)
 
 
-    def parse_interrogation_result(self, confidence_result):
+    def parse_interrogation_result(self, tag_dictionary):
         self.auto_tag_listbox.delete(0, "end")
-        if not confidence_result:
+        if not tag_dictionary:
             return
-        max_length = max(len(f"{value:.2f}") for value in confidence_result.values())
-        for tag, value in confidence_result.items():
-            padded_score = f"{value:.2f}".ljust(max_length, '0')
-            self.auto_tag_listbox.insert("end", f" {padded_score}: {tag}")
+        max_length = max(len(f"{list(value)[0]:.2f}") for value in tag_dictionary.values())
+        for tag, value in tag_dictionary.items():
+            confidence, category = list(value)
+            padded_score = f"{confidence:.2f}".ljust(max_length, '0')
+            if category == "character":
+                self.auto_tag_listbox.insert("end", f" {padded_score}: {tag}")
+                self.auto_tag_listbox.itemconfig("end", {'fg': '#148632'})
+            else:
+                self.auto_tag_listbox.insert("end", f" {padded_score}: {tag}")
 
 
     def get_model_list(self):
@@ -4452,6 +4450,10 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
 
 ### New:
+- `Auto-Tag`: Automatically tag images using ONNX vision models like `wd-v1-4-vit-tagger-v2`.
+  - SPARSE FEATURE LIST...
+  - DETAILS ABOUT DOWNLOAD AND ADDING MODELS TO THE UI...
+  - LIMITATIONS...
 - `Batch Tag Delete` has been renamed to `Batch Tag Edit`.
   - This tool has been completely reworked to allow for more versatile tag editing.
   - The interface is now more convenient and user-friendly, allowing you to see all pending changes before committing them.
