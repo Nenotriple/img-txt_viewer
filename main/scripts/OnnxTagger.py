@@ -102,8 +102,8 @@ class OnnxTagger:
     def _format_results(self, inferred_tags):
         formatted_tags = [[tag.replace("(", "\\(").replace(")", "\\)"), confidence, category] for tag, confidence, category in inferred_tags]
         tag_list = ", ".join(tag for tag, _, _ in formatted_tags)
-        tag_dictionary = {tag: {confidence, category} for tag, confidence, category in formatted_tags}
-        return tag_list, tag_dictionary
+        tag_dict = {tag: {confidence, category} for tag, confidence, category in formatted_tags}
+        return tag_list, tag_dict
 
 
     # --------------------------------------
@@ -124,15 +124,17 @@ class OnnxTagger:
     # --------------------------------------
     def tag_image(self, image_path, model_path):
         """
-        Tags an image using the loaded ONNX model.
+        Tags an image using the provided ONNX model.
 
         Args:
             image_path (str): The file path to the image that needs to be tagged.
+            model_path (str): The file path to the `.onnx` model that will be used to tag the image.
+            - Ensure that the model has a corresponding `selected_tags.csv` file in the same directory as the model_path.
 
         Returns:
             tuple: A tuple containing:
-                - csv_result (str): A CSV formatted string of the inferred tags.
-                - confidence_result (dict): A dictionary where the keys are the inferred tags and the values are the confidence scores and categories.
+                - tag_list (str): A CSV formatted string of the inferred tags.
+                - tag_dict (dict): A dictionary where the keys are the inferred tags and the values are the confidence scores and categories.
 
         Raises:
             FileNotFoundError: If the image file specified by `image_path` does not exist.
@@ -146,5 +148,5 @@ class OnnxTagger:
         except FileNotFoundError as e:
             print("Error:", e)
             return
-        csv_result, confidence_result = self._format_results(inferred_tags)
-        return csv_result, confidence_result
+        tag_list, tag_dict = self._format_results(inferred_tags)
+        return tag_list, tag_dict
