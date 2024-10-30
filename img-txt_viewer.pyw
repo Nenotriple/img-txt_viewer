@@ -103,6 +103,9 @@ class Autocomplete:
         self._load_data()
         self._precache_single_letter_suggestions()
 
+        # Misc
+        self.tags_with_underscore = ["0_0", "(o)_(o)", "o_o", ">_o", "u_u", "x_x", "|_|", "||_||", "._.", "^_^", ">_<", "@_@", ">_@", "+_+", "+_-", "=_=", "<o>_<o>", "<|>_<|>", "ಠ_ಠ", "3_3", "6_9"]
+
 
     # --------------------------------------
     # Load/Read Data
@@ -1171,7 +1174,7 @@ class ImgTxtViewer:
         self.auto_tag_character_threshold_spinbox.bind("<FocusOut>", lambda event: update_character_threshold())
 
         # Replace Underscores
-        self.auto_tag_replace_underscore_checkbutton = ttk.Checkbutton(self.tab9_main_widget_frame, text="Replace Underscores", takefocus=False, variable=self.onnx_tagger.replace_underscore)
+        self.auto_tag_replace_underscore_checkbutton = ttk.Checkbutton(self.tab9_main_widget_frame, text="Use Space Instead Of _", takefocus=False, variable=self.onnx_tagger.replace_underscore)
         self.auto_tag_replace_underscore_checkbutton.pack(side='top', anchor='w', padx=2, pady=2)
         ToolTip.create(self.auto_tag_replace_underscore_checkbutton, "If enabled, underscores in tags will be replaced with spaces", 200, 6, 12)
 
@@ -2123,7 +2126,6 @@ class ImgTxtViewer:
 
 
     def update_suggestions(self, event=None):
-        tags_with_underscore = self.get_tags_with_underscore()
         if event is None:
             event = type('', (), {})()
             event.keysym = ''
@@ -2149,7 +2151,7 @@ class ImgTxtViewer:
         if current_word and len(self.selected_csv_files) >= 1:
             suggestions = self.autocomplete.get_suggestion(current_word)
             suggestions.sort(key=lambda x: self.autocomplete.get_score(x[0], current_word), reverse=True)
-            self.suggestions = [(suggestion[0].replace("_", " ") if suggestion[0] not in tags_with_underscore else suggestion[0], suggestion[1]) for suggestion in suggestions]
+            self.suggestions = [(suggestion[0].replace("_", " ") if suggestion[0] not in self.autocomplete.tags_with_underscore else suggestion[0], suggestion[1]) for suggestion in suggestions]
             if self.suggestions:
                 self.highlight_suggestions()
             else:
@@ -2308,10 +2310,6 @@ class ImgTxtViewer:
         for attr in ['csv_danbooru', 'csv_derpibooru', 'csv_e621', 'csv_english_dictionary']:
             getattr(self, attr).set(False)
         self.update_autocomplete_dictionary()
-
-
-    def get_tags_with_underscore(self):
-        return {"0_0", "(o)_(o)", "o_o", ">_o", "u_u", "x_x", "|_|", "||_||", "._.", "^_^", ">_<", "@_@", ">_@", "+_+", "+_-", "=_=", "<o>_<o>", "<|>_<|>", "ಠ_ಠ", "3_3", "6_9"}
 
 
 #endregion
