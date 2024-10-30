@@ -41,6 +41,9 @@ class OnnxTagger:
         self.general_index = None
         self.character_index = None
 
+        # Tags with underscores
+        self.tags_with_underscore = ["0_0", "(o)_(o)", "o_o", ">_o", "u_u", "x_x", "|_|", "||_||", "._.", "^_^", ">_<", "@_@", ">_@", "+_+", "+_-", "=_=", "<o>_<o>", "<|>_<|>", "ಠ_ಠ", "3_3", "6_9"]
+
 
     # --------------------------------------
     # Handle Model
@@ -66,7 +69,9 @@ class OnnxTagger:
                     self.general_index = idx
                 elif self.character_index is None and row[2] == "4":
                     self.character_index = idx
-                tag = row[1].replace("_", " ") if self.replace_underscore.get() else row[1]
+                tag = row[1]
+                if tag not in self.tags_with_underscore and self.replace_underscore.get():
+                    tag = tag.replace("_", " ")
                 self.model_tags.append(tag)
         self.exclude_tags_set = set(tag.lower() for tag in self.exclude_tags)
 
