@@ -3,7 +3,7 @@ import os
 import csv
 
 # Standard Library - GUI
-from tkinter import filedialog, messagebox, BooleanVar
+from tkinter import BooleanVar
 
 # Third-Party Libraries
 import numpy
@@ -83,21 +83,27 @@ class OnnxTagger:
         tag_confidence_pairs = list(zip(self.model_tags, confidence_scores))
         if self.general_index is None or self.character_index is None:
             raise ValueError("General index or character index not set correctly.")
-        general_tags = [tc for tc in tag_confidence_pairs[self.general_index:self.character_index] if tc[1] > self.general_threshold]
-        character_tags = [tc for tc in tag_confidence_pairs[self.character_index:] if tc[1] > self.character_threshold]
+
+        def filter_tags(tag_confidence_pairs, start, end, threshold, category):
+            filtered_tags = []
+            for tag, confidence in tag_confidence_pairs[start:end]:
+                if confidence > threshold and tag.lower() not in self.exclude_tags_set:
+                    filtered_tags.append((tag, round(float(confidence), 2), category))
+            return filtered_tags
+
+        general_tags = filter_tags(tag_confidence_pairs, self.general_index, self.character_index, self.general_threshold, "general")
+        character_tags = filter_tags(tag_confidence_pairs, self.character_index, len(tag_confidence_pairs), self.character_threshold, "character")
         all_tags = character_tags + general_tags
         if self.sort:
-            all_tags = sorted([(tag, round(float(confidence), 2)) for tag, confidence in all_tags if tag.lower() not in self.exclude_tags_set], key=lambda x: x[1], reverse=self.reverse)
-        else:
-            all_tags = [(tag, round(float(confidence), 2)) for tag, confidence in all_tags if tag.lower() not in self.exclude_tags_set]
+            all_tags.sort(key=lambda x: x[1], reverse=self.reverse)
         return all_tags
 
 
     def _format_results(self, inferred_tags):
-        formatted_tags = [[tag.replace("(", "\\(").replace(")", "\\)"), confidence] for tag, confidence in inferred_tags]
-        csv_result = ", ".join(tag for tag, _ in formatted_tags)
-        confidence_result = {tag: confidence for tag, confidence in formatted_tags}
-        return csv_result, confidence_result
+        formatted_tags = [[tag.replace("(", "\\(").replace(")", "\\)"), confidence, category] for tag, confidence, category in inferred_tags]
+        tag_list = ", ".join(tag for tag, _, _ in formatted_tags)
+        tag_dictionary = {tag: {confidence, category} for tag, confidence, category in formatted_tags}
+        return tag_list, tag_dictionary
 
 
     # --------------------------------------
@@ -126,7 +132,7 @@ class OnnxTagger:
         Returns:
             tuple: A tuple containing:
                 - csv_result (str): A CSV formatted string of the inferred tags.
-                - confidence_result (dict): A dictionary where the keys are the inferred tags and the values are the confidence scores.
+                - confidence_result (dict): A dictionary where the keys are the inferred tags and the values are the confidence scores and categories.
 
         Raises:
             FileNotFoundError: If the image file specified by `image_path` does not exist.
