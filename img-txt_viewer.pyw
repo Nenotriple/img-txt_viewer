@@ -1179,48 +1179,35 @@ class ImgTxtViewer:
         self.auto_tag_replace_underscore_checkbutton.pack(side='top', anchor='w', padx=2, pady=2)
         ToolTip.create(self.auto_tag_replace_underscore_checkbutton, "If enabled, underscores in tags will be replaced with spaces", 200, 6, 12)
 
-
         # Entry Frame
         entry_frame = Frame(self.tab9_main_widget_frame)
         entry_frame.pack(side='top', fill='x', padx=2, pady=2)
-
         excluded_entry_frame = Frame(entry_frame)
         excluded_entry_frame.pack(side='top', fill='x', padx=2, pady=2)
-
         excluded_tags_label = Label(excluded_entry_frame, text="Exclude:", width=9, anchor="w")
         excluded_tags_label.pack(side='left')
         ToolTip.create(excluded_tags_label, "Enter tags that will be excluded from interrogation\nSeparate tags with commas", 200, 6, 12)
-
         self.excluded_tags_entry = ttk.Entry(excluded_entry_frame, width=25)
         self.excluded_tags_entry.pack(side='left', fill='both', expand=True)
-
         keep_entry_frame = Frame(entry_frame)
         keep_entry_frame.pack(side='top', fill='x', padx=2, pady=2)
-
         keep_tags_label = Label(keep_entry_frame, text="Keep:", width=9, anchor="w")
         keep_tags_label.pack(side='left')
         ToolTip.create(keep_tags_label, "Enter tags that will always be included in interrogation\nSeparate tags with commas", 200, 6, 12)
-
         self.keep_tags_entry = ttk.Entry(keep_entry_frame, width=25)
         self.keep_tags_entry.pack(side='left', fill='both', expand=True)
-
         replace_entry_frame = Frame(entry_frame)
         replace_entry_frame.pack(side='top', fill='x', padx=2, pady=2)
-
         replace_tags_label = Label(replace_entry_frame, text="Replace:", width=9, anchor="w")
         replace_tags_label.pack(side='left')
         ToolTip.create(replace_tags_label, "Enter tags that will be replaced during interrogation\nSeparate tags with commas", 200, 6, 12)
-
         self.replace_tags_entry = ttk.Entry(replace_entry_frame, width=1)
         self.replace_tags_entry.pack(side='left', fill='both', expand=True)
-
         replace_with_tags_label = Label(replace_entry_frame, text="With:", anchor="w")
         replace_with_tags_label.pack(side='left')
         ToolTip.create(replace_with_tags_label, "Enter tags that will replace the tags entered in the 'Replace' entry\nSeparate tags with commas", 200, 6, 12)
-
         self.replace_with_tags_entry = ttk.Entry(replace_entry_frame, width=1)
         self.replace_with_tags_entry.pack(side='left', fill='both', expand=True)
-
 
         # Selection Button Frame
         button_frame = ttk.LabelFrame(self.tab9_main_widget_frame, text="Selection")
@@ -1255,7 +1242,8 @@ class ImgTxtViewer:
     def update_auto_tag_stats_label(self):
         total_tags = self.auto_tag_listbox.size()
         selected_tags = len(self.auto_tag_listbox.curselection())
-        self.auto_tag_stats_label.config(text=f"Total: {total_tags}  |  Selected: {selected_tags}")
+        selected_tags_padded = str(selected_tags).zfill(len(str(total_tags)))
+        self.auto_tag_stats_label.config(text=f"Total: {total_tags}  |  Selected: {selected_tags_padded}")
 
 
     def insert_listbox_selection(self, prefix=False, append=False, replace=False):
