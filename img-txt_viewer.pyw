@@ -1220,12 +1220,12 @@ class ImgTxtViewer:
         replace_entry_frame.pack(side='top', fill='x', padx=2, pady=2)
         replace_tags_label = Label(replace_entry_frame, text="Replace:", width=9, anchor="w")
         replace_tags_label.pack(side='left')
-        ToolTip.create(replace_tags_label, "Enter tags that will be replaced during interrogation\nSeparate tags with commas", 200, 6, 12)
+        ToolTip.create(replace_tags_label, "Enter tags that will be replaced during interrogation\nSeparate tags with commas, the index of the tag in the 'Replace' entry will be used to replace the tag in the 'With' entry", 200, 6, 12)
         self.replace_tags_entry = ttk.Entry(replace_entry_frame, width=1)
         self.replace_tags_entry.pack(side='left', fill='both', expand=True)
         replace_with_tags_label = Label(replace_entry_frame, text="With:", anchor="w")
         replace_with_tags_label.pack(side='left')
-        ToolTip.create(replace_with_tags_label, "Enter tags that will replace the tags entered in the 'Replace' entry\nSeparate tags with commas", 200, 6, 12)
+        ToolTip.create(replace_with_tags_label, "Enter tags that will replace the tags entered in the 'Replace' entry\nSeparate tags with commas, ensure tags match the index of the tags in the 'Replace' entry", 200, 6, 12)
         self.replace_with_tags_entry = ttk.Entry(replace_entry_frame, width=1)
         self.replace_with_tags_entry.pack(side='left', fill='both', expand=True)
 
@@ -1290,12 +1290,26 @@ class ImgTxtViewer:
         return selected_items, extracted_tags
 
 
+    def set_other_tag_options(self):
+            self.onnx_tagger.exclude_tags.clear()
+            self.onnx_tagger.keep_tags.clear()
+            self.onnx_tagger.replace_tag_dict.clear()
+            excluded_tags = self.excluded_tags_entry.get().strip().split(',')
+            self.onnx_tagger.exclude_tags = [tag.strip() for tag in excluded_tags if tag.strip()]
+            keep_tags = self.keep_tags_entry.get().strip().split(',')
+            self.onnx_tagger.keep_tags = [tag.strip() for tag in keep_tags if tag.strip()]
+            replace_tags = self.replace_tags_entry.get().strip().split(',')
+            replace_with_tags = self.replace_with_tags_entry.get().strip().split(',')
+            self.onnx_tagger.replace_tag_dict = {tag.strip(): replace_with_tags[i].strip() for i, tag in enumerate(replace_tags) if tag.strip() and i < len(replace_with_tags) and replace_with_tags[i].strip()}
+
+
     def interrogate_image_tags(self):
         image_path = self.image_files[self.current_index]
         selected_model_path = self.onnx_model_dict.get(self.auto_tag_model_combobox.get())
         if not selected_model_path or not os.path.exists(selected_model_path):
             messagebox.showerror("Error", f"Model file not found: {selected_model_path}")
             return
+        self.set_other_tag_options()
         tag_list, tag_dict = self.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
         self.parse_interrogation_result(tag_dict)
         if self.auto_insert_interrogator_var.get():
