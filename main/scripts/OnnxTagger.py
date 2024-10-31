@@ -30,10 +30,12 @@ class OnnxTagger:
         self.character_threshold = 0.85
 
         # Tagging options
+        self.replace_tag_dict = {}
+        self.keep_tags = []
         self.exclude_tags = []
         self.exclude_tags_set = set()
         self.keep_underscore = BooleanVar(value=False)
-        self.keep_escape_character = BooleanVar(value=False)
+        self.keep_escape_character = BooleanVar(value=True)
         self.sort = True
         self.reverse = True
 
@@ -89,19 +91,29 @@ class OnnxTagger:
             filtered_tags = []
             for tag, confidence in tag_confidence_pairs[start:end]:
                 if confidence > threshold and tag.lower() not in self.exclude_tags_set:
+                    if tag in self.replace_tag_dict:
+                        tag = self.replace_tag_dict[tag]
                     filtered_tags.append((tag, round(float(confidence), 2), category))
             return filtered_tags
+
+        def insert_keep_tags(tag_confidence_pairs, start, end, category):
+            for tag in self.keep_tags:
+                if tag not in [t[0] for t in tag_confidence_pairs[start:end]]:
+                    tag_confidence_pairs.append((tag, 1.0, category))
 
         general_tags = filter_tags(tag_confidence_pairs, self.general_index, self.character_index, self.general_threshold, "general")
         character_tags = filter_tags(tag_confidence_pairs, self.character_index, len(tag_confidence_pairs), self.character_threshold, "character")
         all_tags = character_tags + general_tags
+        insert_keep_tags(all_tags, self.general_index, self.character_index, "keep")
         if self.sort:
             all_tags.sort(key=lambda x: x[1], reverse=self.reverse)
         return all_tags
 
-
     def _format_results(self, inferred_tags):
-        formatted_tags = [[tag.replace("(", "\\(").replace(")", "\\)"), confidence, category] for tag, confidence, category in inferred_tags]
+        if self.keep_escape_character.get():
+            formatted_tags = [[tag.replace("(", "\\(").replace(")", "\\)"), confidence, category] for tag, confidence, category in inferred_tags]
+        else:
+            formatted_tags = [[tag, confidence, category] for tag, confidence, category in inferred_tags]
         tag_list = ", ".join(tag for tag, _, _ in formatted_tags)
         tag_dict = {tag: {confidence, category} for tag, confidence, category in formatted_tags}
         return tag_list, tag_dict
