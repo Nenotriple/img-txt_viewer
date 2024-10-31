@@ -32,7 +32,8 @@ class OnnxTagger:
         # Tagging options
         self.exclude_tags = []
         self.exclude_tags_set = set()
-        self.replace_underscore = BooleanVar(value=True)
+        self.keep_underscore = BooleanVar(value=False)
+        self.keep_escape_character = BooleanVar(value=False)
         self.sort = True
         self.reverse = True
 
@@ -70,7 +71,7 @@ class OnnxTagger:
                 elif self.character_index is None and row[2] == "4":
                     self.character_index = idx
                 tag = row[1]
-                if tag not in self.tags_with_underscore and self.replace_underscore.get():
+                if tag not in self.tags_with_underscore and not self.keep_underscore.get():
                     tag = tag.replace("_", " ")
                 self.model_tags.append(tag)
         self.exclude_tags_set = set(tag.lower() for tag in self.exclude_tags)
