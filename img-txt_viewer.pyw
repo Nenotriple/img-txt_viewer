@@ -406,6 +406,7 @@ class ImgTxtViewer:
         self.external_image_editor_path = "mspaint"
         self.always_on_top_var = BooleanVar(value=False)
         self.big_save_button_var = BooleanVar(value=True)
+        self.auto_insert_interrogator_var = BooleanVar(value=False)
 
         # Font Settings
         self.font_var = StringVar()
@@ -1088,16 +1089,21 @@ class ImgTxtViewer:
                     self.auto_tag_listbox.selection_clear(i)
                 else:
                     self.auto_tag_listbox.select_set(i)
+            self.update_auto_tag_stats_label()
 
-        def insert_selection(prefix=False, append=False):
-            pass
+        def clear_selection():
+            self.auto_tag_listbox.selection_clear(0, 'end')
+            self.update_auto_tag_stats_label()
+
+        def all_selection():
+            self.auto_tag_listbox.select_set(0, 'end')
+            self.update_auto_tag_stats_label()
 
         def copy_selection():
-            selected_items = [self.auto_tag_listbox.get(i) for i in self.auto_tag_listbox.curselection()]
-            cleaned_items = [item.split(': ', 1)[-1] for item in selected_items]
-            if cleaned_items:
+            extracted_tags = self.get_auto_tag_selection()
+            if extracted_tags:
                 self.auto_tag_listbox.clipboard_clear()
-                self.auto_tag_listbox.clipboard_append(', '.join(cleaned_items))
+                self.auto_tag_listbox.clipboard_append(', '.join(extracted_tags))
 
         self.get_onnx_model_list()
         self.tab9_frame = Frame(self.tab4)
@@ -1106,13 +1112,12 @@ class ImgTxtViewer:
         # Top Frame for Buttons
         self.tab9_top_frame = Frame(self.tab9_frame)
         self.tab9_top_frame.pack(fill='x')
-        self.auto_tag_button = ttk.Button(self.tab9_top_frame, text="Interrogate", takefocus=False, command=self.interrogate_image_tags)
-        self.auto_tag_button.pack(side='left')
-        ToolTip.create(self.auto_tag_button, "Interrogate the current image using the selected ONNX vision model.", 500, 6, 12)
-        self.auto_tag_stats_label = Label(self.tab9_top_frame, text="Total Tags: 0  |  Selected Tags: 0")
+        self.auto_tag_stats_label = Label(self.tab9_top_frame, text="Total: 0  |  Selected: 0")
         self.auto_tag_stats_label.pack(side='left')
-
-        auto_insert_checkbutton = ttk.Checkbutton(self.tab9_top_frame, text="Auto-Insert", takefocus=False)
+        self.auto_tag_button = ttk.Button(self.tab9_top_frame, text="Interrogate", takefocus=False, command=self.interrogate_image_tags)
+        self.auto_tag_button.pack(side='right')
+        ToolTip.create(self.auto_tag_button, "Interrogate the current image using the selected ONNX vision model.", 500, 6, 12)
+        auto_insert_checkbutton = ttk.Checkbutton(self.tab9_top_frame, text="Auto-Insert", takefocus=False, variable=self.auto_insert_interrogator_var)
         auto_insert_checkbutton.pack(side='right')
         ToolTip.create(auto_insert_checkbutton, "Automatically insert tags into the text box, replacing any existing tags", 200, 6, 12)
 
@@ -1124,6 +1129,7 @@ class ImgTxtViewer:
         self.listbox_vertical_scrollbar = Scrollbar(self.listbox_frame, orient="vertical")
         self.listbox_horizontal_scrollbar = Scrollbar(self.listbox_frame, orient="horizontal")
         self.auto_tag_listbox = Listbox(self.listbox_frame, width=25, selectmode="extended", exportselection=False, yscrollcommand=self.listbox_vertical_scrollbar.set, xscrollcommand=self.listbox_horizontal_scrollbar.set)
+        self.auto_tag_listbox.bind('<<ListboxSelect>>', lambda event: self.update_auto_tag_stats_label())
         self.listbox_vertical_scrollbar.config(command=self.auto_tag_listbox.yview)
         self.listbox_horizontal_scrollbar.config(command=self.auto_tag_listbox.xview)
         self.listbox_horizontal_scrollbar.pack(side='bottom', fill='x')
@@ -1181,24 +1187,57 @@ class ImgTxtViewer:
         button_frame.grid_columnconfigure(2, weight=1)
 
         # Selection Buttons
-        insert_selection_prefix_button = ttk.Button(button_frame, text="Prefix", command=lambda: insert_selection(prefix=True))
+        insert_selection_prefix_button = ttk.Button(button_frame, text="Prefix", command=lambda: self.insert_listbox_selection(prefix=True))
         insert_selection_prefix_button.grid(row=0, column=0, sticky='ew', pady=2)
-        ToolTip.create(insert_selection_prefix_button, "Insert the selected tags at the START of the text box", 500, 6, 12)
-        insert_selection_append_button = ttk.Button(button_frame, text="Append", command=lambda: insert_selection(append=True))
+        insert_selection_prefix_button.bind("<Button-3>", lambda event: self.insert_listbox_selection(replace=True))
+        ToolTip.create(insert_selection_prefix_button, "Insert the selected tags at the START of the text box\nRight-click to replace the current tags", 500, 6, 12)
+        insert_selection_append_button = ttk.Button(button_frame, text="Append", command=lambda: self.insert_listbox_selection(append=True))
         insert_selection_append_button.grid(row=0, column=1, sticky='ew', pady=2)
-        ToolTip.create(insert_selection_append_button, "Insert the selected tags at the END of the text box", 500, 6, 12)
+        insert_selection_append_button.bind("<Button-3>", lambda event: self.insert_listbox_selection(replace=True))
+        ToolTip.create(insert_selection_append_button, "Insert the selected tags at the END of the text box\nRight-click to replace the current tags", 500, 6, 12)
         copy_button = ttk.Button(button_frame, text="Copy", command=copy_selection)
         copy_button.grid(row=0, column=2, sticky='ew', pady=2)
         ToolTip.create(copy_button, "Copy the selected tags to the clipboard", 500, 6, 12)
-        all_button = ttk.Button(button_frame, text="All", command=lambda: self.auto_tag_listbox.select_set(0, 'end'))
+        all_button = ttk.Button(button_frame, text="All", command=all_selection)
         all_button.grid(row=1, column=0, sticky='ew', pady=2)
         ToolTip.create(all_button, "Select all tags", 500, 6, 12)
         invert_button = ttk.Button(button_frame, text="Invert", command=invert_selection)
         invert_button.grid(row=1, column=1, sticky='ew', pady=2)
         ToolTip.create(invert_button, "Invert the current selection", 500, 6, 12)
-        clear_button = ttk.Button(button_frame, text="Clear", command=lambda: self.auto_tag_listbox.selection_clear(0, 'end'))
+        clear_button = ttk.Button(button_frame, text="Clear", command=clear_selection)
         clear_button.grid(row=1, column=2, sticky='ew', pady=2)
         ToolTip.create(clear_button, "Clear the current selection", 500, 6, 12)
+
+
+    def update_auto_tag_stats_label(self):
+        total_tags = self.auto_tag_listbox.size()
+        selected_tags = len(self.auto_tag_listbox.curselection())
+        self.auto_tag_stats_label.config(text=f"Total: {total_tags}  |  Selected: {selected_tags}")
+
+
+    def insert_listbox_selection(self, prefix=False, append=False, replace=False):
+        selected_items, extracted_tags = self.get_auto_tag_selection()
+        print(selected_items, extracted_tags)
+        if not selected_items:
+            return
+        current_text = self.text_box.get("1.0", "end-1c").strip(', ')
+        if replace:
+            new_text = ', '.join(extracted_tags)
+        elif prefix:
+            new_text = ', '.join(extracted_tags) + ', ' + current_text
+        elif append:
+            new_text = current_text + ', ' + ', '.join(extracted_tags)
+        else:
+            new_text = ', '.join(extracted_tags)
+        new_text = new_text.strip(', ')
+        self.text_box.delete("1.0", "end")
+        self.text_box.insert("1.0", new_text)
+
+
+    def get_auto_tag_selection(self):
+        selected_items = [self.auto_tag_listbox.get(i) for i in self.auto_tag_listbox.curselection()]
+        extracted_tags = [item.split(': ', 1)[-1] for item in selected_items]
+        return selected_items, extracted_tags
 
 
     def interrogate_image_tags(self):
@@ -1209,11 +1248,15 @@ class ImgTxtViewer:
             return
         tag_list, tag_dict = self.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
         self.parse_interrogation_result(tag_dict)
+        if self.auto_insert_interrogator_var.get():
+            self.text_box.delete("1.0", "end")
+            self.text_box.insert("1.0", tag_list)
 
 
     def parse_interrogation_result(self, tag_dict):
         self.auto_tag_listbox.delete(0, "end")
         if not tag_dict:
+            self.update_auto_tag_stats_label()
             return
         max_length = max(len(f"{confidence:.2f}") for confidence, _ in tag_dict.values())
         for tag, (confidence, category) in tag_dict.items():
@@ -1221,6 +1264,7 @@ class ImgTxtViewer:
             self.auto_tag_listbox.insert("end", f" {padded_score}: {tag}")
             if category == "character":
                 self.auto_tag_listbox.itemconfig("end", {'fg': '#148632'})
+        self.update_auto_tag_stats_label()
 
 
     def get_onnx_model_list(self):
