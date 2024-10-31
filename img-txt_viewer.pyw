@@ -3727,7 +3727,12 @@ class ImgTxtViewer:
             else:
                 original_auto_save_var = self.auto_save_var.get()
                 self.auto_save_var.set(value=False)
-            directory = filedialog.askdirectory()
+            initialdir = self.image_dir.get()
+            if not initialdir or initialdir == "Choose Directory...":
+                initialdir = self.settings_manager.config.get("Path", "last_img_directory", fallback=None) 
+            if not os.path.exists(initialdir):
+                initialdir = os.path.dirname(__file__)
+            directory = filedialog.askdirectory(initialdir=initialdir)
             if directory and directory != self.image_dir.get():
                 if hasattr(self, 'text_box'):
                     self.revert_text_image_filter(clear=True)
