@@ -1314,6 +1314,8 @@ class ImgTxtViewer:
             self.auto_tag_listbox.insert("end", f" {padded_score}: {tag}")
             if category == "character":
                 self.auto_tag_listbox.itemconfig("end", {'fg': '#148632'})
+            if category == "keep":
+                self.auto_tag_listbox.itemconfig("end", {'fg': '#c00004'})
         self.update_auto_tag_stats_label()
 
 
