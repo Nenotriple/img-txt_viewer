@@ -620,7 +620,7 @@ class ImgTxtViewer:
         self.optionsMenu.add_separator()
         self.optionsMenu.add_command(label="Reset Settings", underline=1, state="disable", command=self.settings_manager.reset_settings)
         self.optionsMenu.add_command(label="Open Settings File...", underline=1, command=lambda: self.open_textfile(self.app_settings_cfg))
-        self.optionsMenu.add_command(label="Open My Tags File...", underline=1, command=lambda: self.open_textfile(self.my_tags_csv))
+        self.optionsMenu.add_command(label="Open MyTags File...", underline=1, command=lambda: self.open_textfile(self.my_tags_csv))
 
 
 # --------------------------------------
@@ -907,11 +907,11 @@ class ImgTxtViewer:
         self.text_notebook.add(self.tab1, text='S&R')
         self.text_notebook.add(self.tab2, text='Prefix')
         self.text_notebook.add(self.tab3, text='Append')
-        self.text_notebook.add(self.tab4, text='Auto-Tag')
+        self.text_notebook.add(self.tab4, text='AutoTag')
         self.text_notebook.add(self.tab5, text='Filter')
         self.text_notebook.add(self.tab6, text='Highlight')
         self.text_notebook.add(self.tab7, text='Font')
-        self.text_notebook.add(self.tab8, text='My Tags')
+        self.text_notebook.add(self.tab8, text='MyTags')
         self.text_notebook.add(self.tab9, text='Stats')
         self.text_notebook.pack(fill='both', expand=True)
         self.create_search_and_replace_widgets_tab1()
@@ -923,10 +923,10 @@ class ImgTxtViewer:
         self.create_font_widgets_tab7()
         self.create_custom_dictionary_widgets_tab8()
         self.create_stats_widgets_tab9()
-        self.text_widget_frame.bind("<Configure>", self.print_text_widget_frame_height)
-
-    def print_text_widget_frame_height(self, event):
-        print(f"text_widget_frame height: {event.height}")
+#        self.text_widget_frame.bind("<Configure>", self.print_text_widget_frame_height)
+#
+#    def print_text_widget_frame_height(self, event):
+#        print(f"text_widget_frame height: {event.height}")
 
 
     def adjust_text_pane_height(self, event):
@@ -934,11 +934,11 @@ class ImgTxtViewer:
             'S&R': 60,
             'Prefix': 60,
             'Append': 60,
-            'Auto-Tag': 310,
+            'AutoTag': 310,
             'Filter': 60,
             'Highlight': 60,
             'Font': 60,
-            'My Tags': 240,
+            'MyTags': 240,
             'Stats': 240
             }
         selected_tab = event.widget.tab("current", "text")
@@ -1074,7 +1074,7 @@ class ImgTxtViewer:
 
 
     # --------------------------------------
-    # Tab 4: Auto-Tag
+    # Tab 4: AutoTag
     # --------------------------------------
     def create_auto_tag_widgets_tab4(self):
         def update_general_threshold(event=None):
@@ -1444,7 +1444,7 @@ class ImgTxtViewer:
 
 
     # --------------------------------------
-    # Tab 8: My Tags
+    # Tab 8: MyTags
     # --------------------------------------
     def create_custom_dictionary_widgets_tab8(self):
         def save():
@@ -1466,7 +1466,7 @@ class ImgTxtViewer:
         self.save_mytags_button = ttk.Button(self.tab7_button_frame, width=10, text="Save", takefocus=False, command=save)
         self.save_mytags_button.pack(side='right', fill='x')
         ToolTip.create(self.save_mytags_button, "Save the contents of the textbox to 'my_tags.csv'", 200, 6, 12)
-        self.use_mytags_checkbutton = ttk.Checkbutton(self.tab7_button_frame, text="Use My Tags", variable=self.use_mytags_var, takefocus=False, command=self.refresh_custom_dictionary)
+        self.use_mytags_checkbutton = ttk.Checkbutton(self.tab7_button_frame, text="Use MyTags", variable=self.use_mytags_var, takefocus=False, command=self.refresh_custom_dictionary)
         self.use_mytags_checkbutton.pack(side='right', fill='x')
         ToolTip.create(self.use_mytags_checkbutton, "Enable or disable these tags for use with autocomplete.", 200, 6, 12)
         self.tab7_frame2 = Frame(self.tab7_frame)
@@ -1575,7 +1575,7 @@ class ImgTxtViewer:
                 textContext_menu.add_separator()
                 textContext_menu.add_command(label="Open Text Directory...", command=self.open_text_directory)
                 textContext_menu.add_command(label="Open Text File...", command=self.open_textfile)
-                textContext_menu.add_command(label="Add Selected Text to My Tags", state=select_state, command=self.add_to_custom_dictionary)
+                textContext_menu.add_command(label="Add Selected Text to MyTags", state=select_state, command=self.add_to_custom_dictionary)
                 textContext_menu.add_separator()
                 textContext_menu.add_command(label="Highlight all Duplicates", accelerator="Ctrl+F", command=self.highlight_all_duplicates)
                 textContext_menu.add_command(label="Next Empty Text File", accelerator="Ctrl+E", command=self.index_goto_next_empty)
@@ -1598,7 +1598,7 @@ class ImgTxtViewer:
         self.imageContext_menu.add_command(label="Open Current Image...", command=self.open_image)
         self.imageContext_menu.add_command(label="Open Image-Grid...", accelerator="F2", command=self.open_image_grid)
         self.imageContext_menu.add_command(label="Edit Image...", accelerator="F4", command=self.open_image_in_editor)
-        self.imageContext_menu.add_command(label="Auto-Tag", command=self.interrogate_image_tags)
+        self.imageContext_menu.add_command(label="AutoTag", command=self.interrogate_image_tags)
         self.imageContext_menu.add_separator()
         # File
         self.imageContext_menu.add_command(label="Duplicate img-txt pair", command=self.duplicate_pair)
@@ -4536,7 +4536,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
 
 ### New:
-- `Auto-Tag`: Automatically tag images using ONNX vision models like `wd-v1-4-vit-tagger-v2`.
+- `AutoTag`: Automatically tag images using ONNX vision models like `wd-v1-4-vit-tagger-v2`.
   - SPARSE FEATURE LIST...
   - DETAILS ABOUT DOWNLOAD AND ADDING MODELS TO THE UI...
   - LIMITATIONS...
