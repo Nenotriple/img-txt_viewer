@@ -1109,11 +1109,9 @@ class ImgTxtViewer:
             self.listbox_context_menu.tk_popup(event.x_root, event.y_root)
 
         self.get_onnx_model_list()
-        self.tab9_frame = Frame(self.tab4)
-        self.tab9_frame.pack(fill='both', expand=True)
 
         # Top Frame for Buttons
-        self.tab9_top_frame = Frame(self.tab9_frame)
+        self.tab9_top_frame = Frame(self.tab4)
         self.tab9_top_frame.pack(fill='x')
         self.auto_tag_stats_label = Label(self.tab9_top_frame, text="Total: 0  |  Selected: 0")
         self.auto_tag_stats_label.pack(side='left')
@@ -1125,7 +1123,7 @@ class ImgTxtViewer:
         ToolTip.create(auto_insert_checkbutton, "Automatically insert tags into the text box, replacing any existing tags", 200, 6, 12)
 
         # Listbox Frame
-        self.tab9_main_frame = Frame(self.tab9_frame)
+        self.tab9_main_frame = Frame(self.tab4)
         self.tab9_main_frame.pack(fill='both', expand=True)
         self.listbox_frame = Frame(self.tab9_main_frame)
         self.listbox_frame.pack(side='left', fill='both', expand=True)
@@ -1189,10 +1187,17 @@ class ImgTxtViewer:
         self.auto_tag_character_threshold_spinbox.bind("<KeyRelease>", lambda event: update_character_threshold())
         self.auto_tag_character_threshold_spinbox.bind("<FocusOut>", lambda event: update_character_threshold())
 
-        # Replace Underscores
-        self.auto_tag_replace_underscore_checkbutton = ttk.Checkbutton(self.tab9_main_widget_frame, text="Use Space Instead Of _", takefocus=False, variable=self.onnx_tagger.replace_underscore)
-        self.auto_tag_replace_underscore_checkbutton.pack(side='top', anchor='w', padx=2, pady=2)
-        ToolTip.create(self.auto_tag_replace_underscore_checkbutton, "If enabled, underscores in tags will be replaced with spaces", 200, 6, 12)
+        # Checkbutton Frame
+        checkbutton_frame = Frame(self.tab9_main_widget_frame)
+        checkbutton_frame.pack(side='top', fill='x', padx=2, pady=2)
+        # Keep (_)
+        self.auto_tag_keep_underscore_checkbutton = ttk.Checkbutton(checkbutton_frame, text="Keep: _", takefocus=False, variable=self.onnx_tagger.keep_underscore)
+        self.auto_tag_keep_underscore_checkbutton.pack(side='left', anchor='w', padx=2, pady=2)
+        ToolTip.create(self.auto_tag_keep_underscore_checkbutton, "If enabled, Underscores will be kept in tags, otherwise they will be replaced with a space\n\nExample: Keep = simple_background, Replace = simple background", 200, 6, 12)
+        # Keep (\)
+        self.auto_tag_keep_escape_checkbutton = ttk.Checkbutton(checkbutton_frame, text="Keep: \\", takefocus=False, variable=self.onnx_tagger.keep_escape_character)
+        self.auto_tag_keep_escape_checkbutton.pack(side='left', anchor='w', padx=2, pady=2)
+        ToolTip.create(self.auto_tag_keep_escape_checkbutton, "If enabled, the escape character will be kept in tags\n\nExample: Keep = \(cat\), Replace = (cat)", 200, 6, 12)
 
         # Entry Frame
         entry_frame = Frame(self.tab9_main_widget_frame)
