@@ -30,7 +30,7 @@ class OnnxTagger:
         self.character_threshold = 0.85
 
         # Tagging options
-        self.replace_tag_dict = {}
+        self.replace_tag_dict = {} # {"original_tag": "replaced_tag"}
         self.keep_tags = []
         self.exclude_tags = []
         self.exclude_tags_set = set()
