@@ -3,7 +3,7 @@ import os
 import csv
 
 # Standard Library - GUI
-from tkinter import BooleanVar
+from tkinter import BooleanVar, messagebox
 
 # Third-Party Libraries
 import numpy
@@ -146,7 +146,7 @@ class OnnxTagger:
             with Image.open(image_path) as image:
                 inferred_tags = self._process_tags(image)
         except FileNotFoundError as e:
-            print("Error:", e)
+            messagebox.showerror("File Not Found", f"The file specified by {image_path} does not exist.\n\n{e}")
             return
         tag_list, tag_dict = self._format_results(inferred_tags)
         return tag_list, tag_dict
