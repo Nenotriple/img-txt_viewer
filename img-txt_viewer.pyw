@@ -1100,10 +1100,13 @@ class ImgTxtViewer:
             self.update_auto_tag_stats_label()
 
         def copy_selection():
-            extracted_tags = self.get_auto_tag_selection()
+            _, extracted_tags = self.get_auto_tag_selection()
             if extracted_tags:
                 self.auto_tag_listbox.clipboard_clear()
                 self.auto_tag_listbox.clipboard_append(', '.join(extracted_tags))
+
+        def show_listbox_context_menu(event):
+            self.listbox_context_menu.tk_popup(event.x_root, event.y_root)
 
         self.get_onnx_model_list()
         self.tab9_frame = Frame(self.tab4)
@@ -1130,11 +1133,23 @@ class ImgTxtViewer:
         self.listbox_horizontal_scrollbar = Scrollbar(self.listbox_frame, orient="horizontal")
         self.auto_tag_listbox = Listbox(self.listbox_frame, width=25, selectmode="extended", exportselection=False, yscrollcommand=self.listbox_vertical_scrollbar.set, xscrollcommand=self.listbox_horizontal_scrollbar.set)
         self.auto_tag_listbox.bind('<<ListboxSelect>>', lambda event: self.update_auto_tag_stats_label())
+        self.auto_tag_listbox.bind("<Button-3>", show_listbox_context_menu)
         self.listbox_vertical_scrollbar.config(command=self.auto_tag_listbox.yview)
         self.listbox_horizontal_scrollbar.config(command=self.auto_tag_listbox.xview)
         self.listbox_horizontal_scrollbar.pack(side='bottom', fill='x')
         self.auto_tag_listbox.pack(side='left', fill='both', expand=True)
         self.listbox_vertical_scrollbar.pack(side='left', fill='y')
+
+        # Listbox - Context Menu
+        self.listbox_context_menu = Menu(self.auto_tag_listbox, tearoff=0)
+        self.listbox_context_menu.add_command(label="Insert: Prefix", command=lambda: self.insert_listbox_selection(prefix=True))
+        self.listbox_context_menu.add_command(label="Insert: Append", command=lambda: self.insert_listbox_selection(append=True))
+        self.listbox_context_menu.add_command(label="Insert: Replace", command=lambda: self.insert_listbox_selection(replace=True))
+        self.listbox_context_menu.add_separator()
+        self.listbox_context_menu.add_command(label="Selection: Copy", command=copy_selection)
+        self.listbox_context_menu.add_command(label="Selection: All", command=all_selection)
+        self.listbox_context_menu.add_command(label="Selection: Invert", command=invert_selection)
+        self.listbox_context_menu.add_command(label="Selection: Clear", command=clear_selection)
 
         # Main Widget Frame
         self.tab9_main_widget_frame = Frame(self.tab9_main_frame)
@@ -1248,7 +1263,6 @@ class ImgTxtViewer:
 
     def insert_listbox_selection(self, prefix=False, append=False, replace=False):
         selected_items, extracted_tags = self.get_auto_tag_selection()
-        print(selected_items, extracted_tags)
         if not selected_items:
             return
         current_text = self.text_box.get("1.0", "end-1c").strip(', ')
