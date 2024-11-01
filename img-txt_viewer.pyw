@@ -1284,9 +1284,9 @@ class ImgTxtViewer:
             spinbox.set(default_value)
             return default_value
 
+        validate_spinbox_value(self.auto_tag_max_tags_spinbox, 40)
         self.onnx_tagger.general_threshold = validate_spinbox_value(self.auto_tag_general_threshold_spinbox, 0.35)
         self.onnx_tagger.character_threshold = validate_spinbox_value(self.auto_tag_character_threshold_spinbox, 0.85)
-        validate_spinbox_value(self.auto_tag_max_tags_spinbox, 40)
         self.onnx_tagger.exclude_tags.clear()
         self.onnx_tagger.keep_tags.clear()
         self.onnx_tagger.replace_tag_dict.clear()
