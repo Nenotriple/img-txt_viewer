@@ -24,6 +24,9 @@ class OnnxTagger:
         self.model_input = None
         self.model_input_height = None
         self.tag_label = None
+        self.last_model_path = None
+        self.last_exclude_tags = None
+        self.last_keep_underscore = None
 
         # Tagging thresholds
         self.general_threshold = 0.35
@@ -52,31 +55,34 @@ class OnnxTagger:
     # Handle Model
     # --------------------------------------
     def _load_model(self):
-        self.model = InferenceSession(self.model_path, providers=['CPUExecutionProvider'])
-        self.model_input = self.model.get_inputs()[0]
-        self.model_input_height = self.model_input.shape[1]
-        self.tag_label = self.model.get_outputs()[0].name
+        if self.model_path != self.last_model_path:
+            self.model = InferenceSession(self.model_path, providers=['CPUExecutionProvider'])
+            self.model_input = self.model.get_inputs()[0]
+            self.model_input_height = self.model_input.shape[1]
+            self.tag_label = self.model.get_outputs()[0].name
+            self.last_model_path = self.model_path
 
 
     # --------------------------------------
     # Handle Tags
     # --------------------------------------
     def _read_csv_tags(self):
-        self.model_tags.clear()
-        csv_path = os.path.join(os.path.dirname(self.model_path), "selected_tags.csv")
-        with open(csv_path, newline='') as file:
-            csv_reader = csv.reader(file)
-            next(csv_reader)
-            for idx, row in enumerate(csv_reader):
-                if self.general_index is None and row[2] == "0":
-                    self.general_index = idx
-                elif self.character_index is None and row[2] == "4":
-                    self.character_index = idx
-                tag = row[1]
-                if tag not in self.tags_with_underscore and not self.keep_underscore.get():
-                    tag = tag.replace("_", " ")
-                self.model_tags.append(tag)
-        self.exclude_tags_set = set(tag.lower() for tag in self.exclude_tags)
+        if (self.model_path != self.last_model_path or self.exclude_tags != self.last_exclude_tags):
+            self.model_tags.clear()
+            csv_path = os.path.join(os.path.dirname(self.model_path), "selected_tags.csv")
+            with open(csv_path, newline='') as file:
+                csv_reader = csv.reader(file)
+                next(csv_reader)
+                for idx, row in enumerate(csv_reader):
+                    if self.general_index is None and row[2] == "0":
+                        self.general_index = idx
+                    elif self.character_index is None and row[2] == "4":
+                        self.character_index = idx
+                    tag = row[1]
+                    self.model_tags.append(tag)
+            self.exclude_tags_set = set(tag.lower() for tag in self.exclude_tags)
+            self.last_exclude_tags = self.exclude_tags.copy()
+            self.last_keep_underscore = self.keep_underscore.get()
 
 
     def _process_tags(self, image):
@@ -110,6 +116,8 @@ class OnnxTagger:
     def _format_results(self, inferred_tags):
         escape_character = self.keep_escape_character.get()
         formatted_tags = [[tag.replace("(", "\\(").replace(")", "\\)") if escape_character else tag, confidence, category] for tag, confidence, category in inferred_tags]
+        if not self.keep_underscore.get():
+            formatted_tags = [[tag.replace("_", " "), confidence, category] for tag, confidence, category in formatted_tags]
         tag_list = [tag for tag, _, _ in formatted_tags]
         tag_dict = {tag: {confidence, category} for tag, confidence, category in formatted_tags}
         return tag_list, tag_dict
