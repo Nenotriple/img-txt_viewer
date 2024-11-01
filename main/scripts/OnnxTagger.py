@@ -81,40 +81,36 @@ class OnnxTagger:
 
     def _process_tags(self, image):
         self._read_csv_tags()
-        preprocessed_image = self._preprocess_image(image)
-        confidence_scores = self.model.run([self.tag_label], {self.model_input.name: preprocessed_image})[0][0]
-        tag_confidence_pairs = list(zip(self.model_tags, confidence_scores))
-        if self.general_index is None or self.character_index is None:
-            raise ValueError("General index or character index not set correctly.")
-
-        def filter_tags(tag_confidence_pairs, start, end, threshold, category):
-            filtered_tags = []
-            for tag, confidence in tag_confidence_pairs[start:end]:
-                if confidence > threshold and tag.lower() not in self.exclude_tags_set:
-                    if tag in self.replace_tag_dict:
-                        tag = self.replace_tag_dict[tag]
-                    filtered_tags.append((tag, round(float(confidence), 2), category))
-            return filtered_tags
-
-        def insert_keep_tags(tag_confidence_pairs, start, end, category):
-            for tag in self.keep_tags:
-                if tag not in [t[0] for t in tag_confidence_pairs[start:end]]:
-                    tag_confidence_pairs.append((tag, 1.0, category))
-
-        general_tags = filter_tags(tag_confidence_pairs, self.general_index, self.character_index, self.general_threshold, "general")
-        character_tags = filter_tags(tag_confidence_pairs, self.character_index, len(tag_confidence_pairs), self.character_threshold, "character")
+        tag_confidence_pairs = self._interrogate_image(image)
+        general_tags = self._filter_tags(tag_confidence_pairs, self.general_index, self.character_index, self.general_threshold, "general")
+        character_tags = self._filter_tags(tag_confidence_pairs, self.character_index, len(tag_confidence_pairs), self.character_threshold, "character")
         all_tags = character_tags + general_tags
-        insert_keep_tags(all_tags, self.general_index, self.character_index, "keep")
+        self._insert_keep_tags(all_tags, self.general_index, self.character_index, "keep")
         if self.sort:
             all_tags.sort(key=lambda x: x[1], reverse=self.reverse)
         return all_tags
 
+
+    def _filter_tags(self, tag_confidence_pairs, start, end, threshold, category):
+        filtered_tags = []
+        for tag, confidence in tag_confidence_pairs[start:end]:
+            if confidence > threshold and tag.lower() not in self.exclude_tags_set:
+                if tag in self.replace_tag_dict:
+                    tag = self.replace_tag_dict[tag]
+                filtered_tags.append((tag, round(float(confidence), 2), category))
+        return filtered_tags
+
+
+    def _insert_keep_tags(self, tag_confidence_pairs, start, end, category):
+        for tag in self.keep_tags:
+            if tag not in [t[0] for t in tag_confidence_pairs[start:end]]:
+                tag_confidence_pairs.append((tag, 1.0, category))
+
+
     def _format_results(self, inferred_tags):
-        if self.keep_escape_character.get():
-            formatted_tags = [[tag.replace("(", "\\(").replace(")", "\\)"), confidence, category] for tag, confidence, category in inferred_tags]
-        else:
-            formatted_tags = [[tag, confidence, category] for tag, confidence, category in inferred_tags]
-        tag_list = ", ".join(tag for tag, _, _ in formatted_tags)
+        escape_character = self.keep_escape_character.get()
+        formatted_tags = [[tag.replace("(", "\\(").replace(")", "\\)") if escape_character else tag, confidence, category] for tag, confidence, category in inferred_tags]
+        tag_list = [tag for tag, _, _ in formatted_tags]
         tag_dict = {tag: {confidence, category} for tag, confidence, category in formatted_tags}
         return tag_list, tag_dict
 
@@ -123,13 +119,19 @@ class OnnxTagger:
     # Handle Image
     # --------------------------------------
     def _preprocess_image(self, image):
-        image.thumbnail((self.model_input_height, self.model_input_height), Image.BILINEAR)
-        square_image = Image.new("RGB", (self.model_input_height, self.model_input_height), (255, 255, 255))
-        square_image.paste(image, ((self.model_input_height - image.size[0]) // 2, (self.model_input_height - image.size[1]) // 2))
-        preprocessed_image = numpy.array(square_image, dtype=numpy.float32)
-        preprocessed_image = preprocessed_image[:, :, ::-1]  # RGB -> BGR
-        preprocessed_image = numpy.expand_dims(preprocessed_image, 0)
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+        image = image.resize((self.model_input_height, self.model_input_height), Image.NEAREST)
+        preprocessed_image = numpy.array(image, dtype=numpy.float32)[:, :, ::-1]  # RGB to BGR
+        preprocessed_image = numpy.expand_dims(preprocessed_image, axis=0)
         return preprocessed_image
+
+
+    def _interrogate_image(self, image):
+        preprocessed_image = self._preprocess_image(image)
+        confidence_scores = self.model.run([self.tag_label], {self.model_input.name: preprocessed_image})[0][0]
+        tag_confidence_pairs = list(zip(self.model_tags, confidence_scores))
+        return tag_confidence_pairs
 
 
     # --------------------------------------
@@ -146,7 +148,7 @@ class OnnxTagger:
 
         Returns:
             tuple: A tuple containing:
-                - tag_list (str): A CSV formatted string of the inferred tags.
+                - tag_list (list): A list of the inferred tags.
                 - tag_dict (dict): A dictionary where the keys are the inferred tags and the values are the confidence scores and categories.
 
         Raises:
