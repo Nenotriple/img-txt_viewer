@@ -1070,12 +1070,6 @@ class ImgTxtViewer:
     # Tab 4: AutoTag
     # --------------------------------------
     def create_auto_tag_widgets_tab4(self):
-        def update_general_threshold(event=None):
-            self.onnx_tagger.general_threshold = float(self.auto_tag_general_threshold_spinbox.get())
-
-        def update_character_threshold(event=None):
-            self.onnx_tagger.character_threshold = float(self.auto_tag_character_threshold_spinbox.get())
-
         def invert_selection():
             for i in range(self.auto_tag_listbox.size()):
                 if self.auto_tag_listbox.selection_includes(i):
@@ -1154,22 +1148,18 @@ class ImgTxtViewer:
         general_threshold_label = Label(general_threshold_frame, text="General Threshold:", width=16, anchor="w")
         general_threshold_label.pack(side='left')
         ToolTip.create(general_threshold_label, "The minimum confidence threshold for general tags", 200, 6, 12)
-        self.auto_tag_general_threshold_spinbox = ttk.Spinbox(general_threshold_frame, takefocus=False, from_=0, to=1, increment=0.01, width=8, command=update_general_threshold)
+        self.auto_tag_general_threshold_spinbox = ttk.Spinbox(general_threshold_frame, takefocus=False, from_=0, to=1, increment=0.01, width=8)
         self.auto_tag_general_threshold_spinbox.pack(side='right')
         self.auto_tag_general_threshold_spinbox.set(self.onnx_tagger.general_threshold)
-        self.auto_tag_general_threshold_spinbox.bind("<KeyRelease>", lambda event: update_general_threshold())
-        self.auto_tag_general_threshold_spinbox.bind("<FocusOut>", lambda event: update_general_threshold())
         # Character Threshold
         character_threshold_frame = Frame(control_frame)
         character_threshold_frame.pack(side='top', fill='x', padx=2, pady=2)
         character_threshold_label = Label(character_threshold_frame, text="Character Threshold:", width=16, anchor="w")
         character_threshold_label.pack(side='left')
         ToolTip.create(character_threshold_label, "The minimum confidence threshold for character tags", 200, 6, 12)
-        self.auto_tag_character_threshold_spinbox = ttk.Spinbox(character_threshold_frame, takefocus=False, from_=0, to=1, increment=0.01, width=8, command=update_character_threshold)
+        self.auto_tag_character_threshold_spinbox = ttk.Spinbox(character_threshold_frame, takefocus=False, from_=0, to=1, increment=0.01, width=8)
         self.auto_tag_character_threshold_spinbox.pack(side='right')
         self.auto_tag_character_threshold_spinbox.set(self.onnx_tagger.character_threshold)
-        self.auto_tag_character_threshold_spinbox.bind("<KeyRelease>", lambda event: update_character_threshold())
-        self.auto_tag_character_threshold_spinbox.bind("<FocusOut>", lambda event: update_character_threshold())
         # Max Tags
         max_tags_frame = Frame(control_frame)
         max_tags_frame.pack(side='top', fill='x', padx=2, pady=2)
@@ -1284,6 +1274,19 @@ class ImgTxtViewer:
 
 
     def set_other_tag_options(self):
+        def validate_spinbox_value(spinbox, default_value):
+            try:
+                value = float(spinbox.get())
+                if 0 <= value <= 1:
+                    return value
+            except ValueError:
+                pass
+            spinbox.set(default_value)
+            return default_value
+
+        self.onnx_tagger.general_threshold = validate_spinbox_value(self.auto_tag_general_threshold_spinbox, 0.35)
+        self.onnx_tagger.character_threshold = validate_spinbox_value(self.auto_tag_character_threshold_spinbox, 0.85)
+        validate_spinbox_value(self.auto_tag_max_tags_spinbox, 40)
         self.onnx_tagger.exclude_tags.clear()
         self.onnx_tagger.keep_tags.clear()
         self.onnx_tagger.replace_tag_dict.clear()
