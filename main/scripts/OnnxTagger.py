@@ -129,11 +129,15 @@ class OnnxTagger:
     def _preprocess_image(self, image):
         if image.mode != 'RGB':
             image = image.convert('RGB')
-        image = image.resize((self.model_input_height, self.model_input_height), Image.NEAREST)
-        preprocessed_image = numpy.array(image, dtype=numpy.float32)[:, :, ::-1]  # RGB to BGR
-        preprocessed_image = numpy.expand_dims(preprocessed_image, axis=0)
+        ratio = float(self.model_input_height) / max(image.size)
+        new_size = tuple([int(x * ratio) for x in image.size])
+        image = image.resize(new_size, Image.LANCZOS)
+        square = Image.new("RGB", (self.model_input_height, self.model_input_height), (255, 255, 255))
+        square.paste(image, ((self.model_input_height - new_size[0]) // 2, (self.model_input_height - new_size[1]) // 2))
+        image = numpy.array(square).astype(numpy.float32)
+        image = image[:, :, ::-1]  # RGB -> BGR
+        preprocessed_image = numpy.expand_dims(image, 0)
         return preprocessed_image
-
 
     def _interrogate_image(self, image):
         preprocessed_image = self._preprocess_image(image)
