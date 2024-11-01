@@ -1304,6 +1304,9 @@ class ImgTxtViewer:
             return
         self.set_other_tag_options()
         tag_list, tag_dict = self.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
+        max_tags = int(self.auto_tag_max_tags_spinbox.get())
+        tag_list = tag_list[:max_tags]
+        tag_dict = {k: v for k, v in list(tag_dict.items())[:max_tags]}
         self.parse_interrogation_result(tag_dict)
         if self.auto_insert_interrogator_var.get():
             tags = ', '.join(tag_list)
@@ -1317,18 +1320,13 @@ class ImgTxtViewer:
             self.update_auto_tag_stats_label()
             return
         max_length = max(len(f"{confidence:.2f}") for confidence, _ in tag_dict.values())
-        max_tags = int(self.auto_tag_max_tags_spinbox.get())
-        tag_count = 0
         for tag, (confidence, category) in tag_dict.items():
-            if tag_count >= max_tags:
-                break
             padded_score = f"{confidence:.2f}".ljust(max_length, '0')
             self.auto_tag_listbox.insert("end", f" {padded_score}: {tag}")
             if category == "character":
                 self.auto_tag_listbox.itemconfig("end", {'fg': '#148632'})
             if category == "keep":
                 self.auto_tag_listbox.itemconfig("end", {'fg': '#c00004'})
-            tag_count += 1
         self.update_auto_tag_stats_label()
 
 
