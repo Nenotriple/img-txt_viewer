@@ -754,8 +754,8 @@ class ImgTxtViewer:
         self.directory_entry = ttk.Entry(directory_frame, textvariable=self.image_dir)
         self.directory_entry.pack(side="left", fill="both", expand=True, pady=2)
         self.directory_entry.bind('<Return>', self.set_working_directory)
-        self.directory_entry.bind("<Double-1>", lambda event: self.custom_select_word_for_entry(event, self.directory_entry))
-        self.directory_entry.bind("<Triple-1>", lambda event: self.select_all_in_entry(event, self.directory_entry))
+        self.directory_entry.bind("<Double-1>", lambda event: self.custom_select_word_for_entry(event))
+        self.directory_entry.bind("<Triple-1>", lambda event: self.select_all_in_entry(event))
         self.directory_entry.bind("<Button-3>", self.open_directory_context_menu)
         self.directory_entry.bind("<Button-1>", self.clear_directory_entry_on_click)
         self.dir_context_menu = Menu(self.directory_entry, tearoff=0)
@@ -957,15 +957,13 @@ class ImgTxtViewer:
         ToolTip.create(search_label, "Enter the EXACT text you want to search for", 200, 6, 12)
         self.search_entry = ttk.Entry(button_frame, textvariable=self.search_string_var, width=4)
         self.search_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
-        self.search_entry.bind("<Double-1>", lambda event: self.custom_select_word_for_entry(event, self.search_entry))
-        self.search_entry.bind("<Triple-1>", lambda event: self.select_all_in_entry(event, self.search_entry))
+        self.bind_entry_functions(self.search_entry)
         replace_label = Label(button_frame, width=8, text="Replace:")
         replace_label.pack(side='left', anchor="n", pady=4)
         ToolTip.create(replace_label, "Enter the text you want to replace the searched text with\n\nLeave empty to replace with nothing (delete)", 200, 6, 12)
         self.replace_entry = ttk.Entry(button_frame, textvariable=self.replace_string_var, width=4)
         self.replace_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
-        self.replace_entry.bind("<Double-1>", lambda event: self.custom_select_word_for_entry(event, self.replace_entry))
-        self.replace_entry.bind("<Triple-1>", lambda event: self.select_all_in_entry(event, self.replace_entry))
+        self.bind_entry_functions(self.replace_entry)
         self.replace_entry.bind('<Return>', lambda event: self.search_and_replace())
         replace_button = ttk.Button(button_frame, text="Go!", width=5, command=self.search_and_replace)
         replace_button.pack(side='left', anchor="n", pady=4)
@@ -1011,8 +1009,7 @@ class ImgTxtViewer:
         ToolTip.create(prefix_label, "Enter the text you want to insert at the START of all text files\n\nCommas will be inserted as needed", 200, 6, 12)
         self.prefix_entry = ttk.Entry(button_frame, textvariable=self.prefix_string_var)
         self.prefix_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
-        self.prefix_entry.bind("<Double-1>", lambda event: self.custom_select_word_for_entry(event, self.prefix_entry))
-        self.prefix_entry.bind("<Triple-1>", lambda event: self.select_all_in_entry(event, self.prefix_entry))
+        self.bind_entry_functions(self.prefix_entry)
         self.prefix_entry.bind('<Return>', lambda event: self.prefix_text_files())
         prefix_button = ttk.Button(button_frame, text="Go!", width=5, command=self.prefix_text_files)
         prefix_button.pack(side='left', anchor="n", pady=4)
@@ -1049,8 +1046,7 @@ class ImgTxtViewer:
         ToolTip.create(append_label, "Enter the text you want to insert at the END of all text files\n\nCommas will be inserted as needed", 200, 6, 12)
         self.append_entry = ttk.Entry(button_frame, textvariable=self.append_string_var)
         self.append_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
-        self.append_entry.bind("<Double-1>", lambda event: self.custom_select_word_for_entry(event, self.append_entry))
-        self.append_entry.bind("<Triple-1>", lambda event: self.select_all_in_entry(event, self.append_entry))
+        self.bind_entry_functions(self.append_entry)
         self.append_entry.bind('<Return>', lambda event: self.append_text_files())
         append_button = ttk.Button(button_frame, text="Go!", width=5, command=self.append_text_files)
         append_button.pack(side='left', anchor="n", pady=4)
@@ -1127,7 +1123,7 @@ class ImgTxtViewer:
         listbox_frame.pack(side='left', fill='both', expand=True)
         listbox_y_scrollbar = Scrollbar(listbox_frame, orient="vertical")
         listbox_x_scrollbar = Scrollbar(listbox_frame, orient="horizontal")
-        self.auto_tag_listbox = Listbox(listbox_frame, width=25, selectmode="extended", exportselection=False, yscrollcommand=listbox_y_scrollbar.set, xscrollcommand=listbox_x_scrollbar.set)
+        self.auto_tag_listbox = Listbox(listbox_frame, width=20, selectmode="extended", exportselection=False, yscrollcommand=listbox_y_scrollbar.set, xscrollcommand=listbox_x_scrollbar.set)
         self.auto_tag_listbox.bind('<<ListboxSelect>>', lambda event: self.update_auto_tag_stats_label())
         self.auto_tag_listbox.bind("<Button-3>", show_listbox_context_menu)
         listbox_y_scrollbar.config(command=self.auto_tag_listbox.yview)
@@ -1149,7 +1145,7 @@ class ImgTxtViewer:
 
         # Control Frame
         control_frame = Frame(widget_frame)
-        control_frame.pack(side='left', fill='both')
+        control_frame.pack(side='left', fill='both', expand=True)
 
         # Model Selection
         model_selection_frame = Frame(control_frame)
@@ -1217,6 +1213,7 @@ class ImgTxtViewer:
         ToolTip.create(excluded_tags_label, "Enter tags that will be excluded from interrogation\nSeparate tags with commas", 200, 6, 12)
         self.excluded_tags_entry = ttk.Entry(excluded_entry_frame, width=25)
         self.excluded_tags_entry.pack(side='left', fill='both', expand=True)
+        self.bind_entry_functions(self.excluded_tags_entry)
         keep_entry_frame = Frame(entry_frame)
         keep_entry_frame.pack(side='top', fill='x', padx=2, pady=2)
         keep_tags_label = Label(keep_entry_frame, text="Keep:", width=9, anchor="w")
@@ -1224,6 +1221,7 @@ class ImgTxtViewer:
         ToolTip.create(keep_tags_label, "Enter tags that will always be included in interrogation\nSeparate tags with commas", 200, 6, 12)
         self.keep_tags_entry = ttk.Entry(keep_entry_frame, width=25)
         self.keep_tags_entry.pack(side='left', fill='both', expand=True)
+        self.bind_entry_functions(self.keep_tags_entry)
         replace_entry_frame = Frame(entry_frame)
         replace_entry_frame.pack(side='top', fill='x', padx=2, pady=2)
         replace_tags_label = Label(replace_entry_frame, text="Replace:", width=9, anchor="w")
@@ -1231,11 +1229,13 @@ class ImgTxtViewer:
         ToolTip.create(replace_tags_label, "Enter tags that will be replaced during interrogation\nSeparate tags with commas, the index of the tag in the 'Replace' entry will be used to replace the tag in the 'With' entry", 200, 6, 12)
         self.replace_tags_entry = ttk.Entry(replace_entry_frame, width=1)
         self.replace_tags_entry.pack(side='left', fill='both', expand=True)
+        self.bind_entry_functions(self.replace_tags_entry)
         replace_with_tags_label = Label(replace_entry_frame, text="With:", anchor="w")
         replace_with_tags_label.pack(side='left')
         ToolTip.create(replace_with_tags_label, "Enter tags that will replace the tags entered in the 'Replace' entry\nSeparate tags with commas, ensure tags match the index of the tags in the 'Replace' entry", 200, 6, 12)
         self.replace_with_tags_entry = ttk.Entry(replace_entry_frame, width=1)
         self.replace_with_tags_entry.pack(side='left', fill='both', expand=True)
+        self.bind_entry_functions(self.replace_with_tags_entry)
 
         # Selection Button Frame
         button_frame = ttk.LabelFrame(control_frame, text="Selection")
@@ -1379,8 +1379,7 @@ class ImgTxtViewer:
         ToolTip.create(self.filter_label, "Enter the EXACT text you want to filter by\nThis will filter all img-txt pairs based on the provided text, see below for more info", 200, 6, 12)
         self.filter_entry = ttk.Entry(button_frame, width=11, textvariable=self.filter_string_var)
         self.filter_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
-        self.filter_entry.bind("<Double-1>", lambda event: self.custom_select_word_for_entry(event, self.filter_entry))
-        self.filter_entry.bind("<Triple-1>", lambda event: self.select_all_in_entry(event, self.filter_entry))
+        self.bind_entry_functions(self.filter_entry)
         self.filter_entry.bind('<Return>', lambda event: self.filter_text_image_pairs())
         self.filter_button = ttk.Button(button_frame, text="Go!", width=5, command=self.filter_text_image_pairs)
         self.filter_button.pack(side='left', anchor="n", pady=4)
@@ -1422,8 +1421,7 @@ class ImgTxtViewer:
         ToolTip.create(highlight_label, "Enter the text you want to highlight\nUse ' + ' to highlight multiple strings of text\n\nExample: dog + cat", 200, 6, 12)
         self.highlight_entry = ttk.Entry(button_frame, textvariable=self.custom_highlight_string_var)
         self.highlight_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
-        self.highlight_entry.bind("<Double-1>", lambda event: self.custom_select_word_for_entry(event, self.highlight_entry))
-        self.highlight_entry.bind("<Triple-1>", lambda event: self.select_all_in_entry(event, self.highlight_entry))
+        self.bind_entry_functions(self.highlight_entry)
         self.highlight_entry.bind('<KeyRelease>', lambda event: self.highlight_custom_string())
         highlight_button = ttk.Button(button_frame, text="Go!", width=5, command=self.highlight_custom_string)
         highlight_button.pack(side='left', anchor="n", pady=4)
@@ -1738,8 +1736,25 @@ class ImgTxtViewer:
         return "break"
 
 
-    def custom_select_word_for_entry(self, event, entry_widget):
-        widget = entry_widget
+    def get_default_font(self):
+        self.current_font = self.text_box.cget("font")
+        self.current_font_name = self.text_box.tk.call("font", "actual", self.current_font, "-family")
+        self.current_font_size = self.text_box.tk.call("font", "actual", self.current_font, "-size")
+        self.default_font = self.current_font_name
+        self.default_font_size = self.current_font_size
+
+
+    # --------------------------------------
+    # Entry Binds
+    # --------------------------------------
+    def bind_entry_functions(self, widget):
+        widget.bind("<Double-1>", self.custom_select_word_for_entry)
+        widget.bind("<Triple-1>", self.select_all_in_entry)
+        widget.bind("<Button-3>", self.show_entry_context_menu)
+
+
+    def custom_select_word_for_entry(self, event):
+        widget = event.widget
         separators = " ,.-|()[]<>\\/\"'{}:;!@#$%^&*+=~`?"
         click_index = widget.index(f"@{event.x}")
         entry_text = widget.get()
@@ -1759,17 +1774,29 @@ class ImgTxtViewer:
         return "break"
 
 
-    def select_all_in_entry(self, event, entry_widget):
-        entry_widget.selection_range(0, 'end')
+    def select_all_in_entry(self, event):
+        widget = event.widget
+        widget.selection_range(0, 'end')
         return "break"
 
 
-    def get_default_font(self):
-        self.current_font = self.text_box.cget("font")
-        self.current_font_name = self.text_box.tk.call("font", "actual", self.current_font, "-family")
-        self.current_font_size = self.text_box.tk.call("font", "actual", self.current_font, "-size")
-        self.default_font = self.current_font_name
-        self.default_font_size = self.current_font_size
+    def show_entry_context_menu(self, event):
+        widget = event.widget
+        if isinstance(widget, ttk.Entry):
+            context_menu = Menu(self.master, tearoff=0)
+            try:
+                widget.selection_get()
+                has_selection = True
+            except TclError:
+                has_selection = False
+            has_text = bool(widget.get())
+            context_menu.add_command(label="Cut", command=lambda: widget.event_generate("<Control-x>"), state="normal" if has_selection else "disabled")
+            context_menu.add_command(label="Copy", command=lambda: widget.event_generate("<Control-c>"), state="normal" if has_selection else "disabled")
+            context_menu.add_command(label="Paste", command=lambda: widget.event_generate("<Control-v>"))
+            context_menu.add_separator()
+            context_menu.add_command(label="Delete", command=lambda: widget.delete("sel.first", "sel.last"), state="normal" if has_selection else "disabled")
+            context_menu.add_command(label="Clear", command=lambda: widget.delete(0, "end"), state="normal" if has_text else "disabled")
+            context_menu.post(event.x_root, event.y_root)
 
 
 #endregion
