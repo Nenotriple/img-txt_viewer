@@ -1098,10 +1098,6 @@ class ImgTxtViewer:
                 self.auto_tag_listbox.clipboard_clear()
                 self.auto_tag_listbox.clipboard_append(', '.join(extracted_tags))
 
-        def show_listbox_context_menu(event):
-            listbox_context_menu.tk_popup(event.x_root, event.y_root)
-
-        self.get_onnx_model_list()
         # Top Frame for Buttons
         top_frame = Frame(self.tab4)
         top_frame.pack(fill='x')
@@ -1113,11 +1109,9 @@ class ImgTxtViewer:
         auto_insert_checkbutton = ttk.Checkbutton(top_frame, text="Auto-Insert", takefocus=False, variable=self.auto_insert_interrogator_var)
         auto_insert_checkbutton.pack(side='right')
         ToolTip.create(auto_insert_checkbutton, "Automatically insert tags into the text box, replacing any existing tags", 200, 6, 12)
-
         # Main Frame
         widget_frame = Frame(self.tab4)
         widget_frame.pack(fill='both', expand=True)
-
         # Listbox Frame
         listbox_frame = Frame(widget_frame)
         listbox_frame.pack(side='left', fill='both', expand=True)
@@ -1125,13 +1119,12 @@ class ImgTxtViewer:
         listbox_x_scrollbar = Scrollbar(listbox_frame, orient="horizontal")
         self.auto_tag_listbox = Listbox(listbox_frame, width=20, selectmode="extended", exportselection=False, yscrollcommand=listbox_y_scrollbar.set, xscrollcommand=listbox_x_scrollbar.set)
         self.auto_tag_listbox.bind('<<ListboxSelect>>', lambda event: self.update_auto_tag_stats_label())
-        self.auto_tag_listbox.bind("<Button-3>", show_listbox_context_menu)
+        self.auto_tag_listbox.bind("<Button-3>", lambda event: listbox_context_menu.tk_popup(event.x_root, event.y_root))
         listbox_y_scrollbar.config(command=self.auto_tag_listbox.yview)
         listbox_x_scrollbar.config(command=self.auto_tag_listbox.xview)
         listbox_x_scrollbar.pack(side='bottom', fill='x')
         self.auto_tag_listbox.pack(side='left', fill='both', expand=True)
         listbox_y_scrollbar.pack(side='left', fill='y')
-
         # Listbox - Context Menu
         listbox_context_menu = Menu(self.auto_tag_listbox, tearoff=0)
         listbox_context_menu.add_command(label="Insert: Prefix", command=lambda: self.insert_listbox_selection(prefix=True))
@@ -1142,21 +1135,19 @@ class ImgTxtViewer:
         listbox_context_menu.add_command(label="Selection: All", command=all_selection)
         listbox_context_menu.add_command(label="Selection: Invert", command=invert_selection)
         listbox_context_menu.add_command(label="Selection: Clear", command=clear_selection)
-
         # Control Frame
         control_frame = Frame(widget_frame)
         control_frame.pack(side='left', fill='both', expand=True)
-
         # Model Selection
         model_selection_frame = Frame(control_frame)
         model_selection_frame.pack(side='top', fill='x', padx=2, pady=2)
         model_selection_label = Label(model_selection_frame, text="Model:", width=16, anchor="w")
         model_selection_label.pack(side='left')
         ToolTip.create(model_selection_label, "Select the ONNX vision model to use for interrogation", 200, 6, 12)
+        self.get_onnx_model_list()
         self.auto_tag_model_combobox = ttk.Combobox(model_selection_frame, width=25, takefocus=False, state="readonly", values=list(self.onnx_model_dict.keys()))
         self.auto_tag_model_combobox.pack(side='right')
         self.set_auto_tag_combo_box()
-
         # General Threshold
         general_threshold_frame = Frame(control_frame)
         general_threshold_frame.pack(side='top', fill='x', padx=2, pady=2)
@@ -1168,7 +1159,6 @@ class ImgTxtViewer:
         self.auto_tag_general_threshold_spinbox.set(self.onnx_tagger.general_threshold)
         self.auto_tag_general_threshold_spinbox.bind("<KeyRelease>", lambda event: update_general_threshold())
         self.auto_tag_general_threshold_spinbox.bind("<FocusOut>", lambda event: update_general_threshold())
-
         # Character Threshold
         character_threshold_frame = Frame(control_frame)
         character_threshold_frame.pack(side='top', fill='x', padx=2, pady=2)
@@ -1180,7 +1170,6 @@ class ImgTxtViewer:
         self.auto_tag_character_threshold_spinbox.set(self.onnx_tagger.character_threshold)
         self.auto_tag_character_threshold_spinbox.bind("<KeyRelease>", lambda event: update_character_threshold())
         self.auto_tag_character_threshold_spinbox.bind("<FocusOut>", lambda event: update_character_threshold())
-
         # Max Tags
         max_tags_frame = Frame(control_frame)
         max_tags_frame.pack(side='top', fill='x', padx=2, pady=2)
@@ -1190,7 +1179,6 @@ class ImgTxtViewer:
         self.auto_tag_max_tags_spinbox = ttk.Spinbox(max_tags_frame, takefocus=False, from_=1, to=999, increment=1, width=8)
         self.auto_tag_max_tags_spinbox.pack(side='right')
         self.auto_tag_max_tags_spinbox.set(40)
-
         # Checkbutton Frame
         checkbutton_frame = Frame(control_frame)
         checkbutton_frame.pack(side='top', fill='x', padx=2, pady=2)
@@ -1202,7 +1190,6 @@ class ImgTxtViewer:
         self.auto_tag_keep_escape_checkbutton = ttk.Checkbutton(checkbutton_frame, text="Keep: \\", takefocus=False, variable=self.onnx_tagger.keep_escape_character)
         self.auto_tag_keep_escape_checkbutton.pack(side='left', anchor='w', padx=2, pady=2)
         ToolTip.create(self.auto_tag_keep_escape_checkbutton, "If enabled, the escape character will be kept in tags\n\nExample: Keep = \(cat\), Replace = (cat)", 200, 6, 12)
-
         # Entry Frame
         entry_frame = Frame(control_frame)
         entry_frame.pack(side='top', fill='x', padx=2, pady=2)
@@ -1236,14 +1223,12 @@ class ImgTxtViewer:
         self.replace_with_tags_entry = ttk.Entry(replace_entry_frame, width=1)
         self.replace_with_tags_entry.pack(side='left', fill='both', expand=True)
         self.bind_entry_functions(self.replace_with_tags_entry)
-
         # Selection Button Frame
         button_frame = ttk.LabelFrame(control_frame, text="Selection")
         button_frame.pack(side="bottom", fill='both', padx=2)
         button_frame.grid_columnconfigure(0, weight=1)
         button_frame.grid_columnconfigure(1, weight=1)
         button_frame.grid_columnconfigure(2, weight=1)
-
         # Selection Buttons
         insert_selection_prefix_button = ttk.Button(button_frame, text="Prefix", command=lambda: self.insert_listbox_selection(prefix=True))
         insert_selection_prefix_button.grid(row=0, column=0, sticky='ew', pady=2)
