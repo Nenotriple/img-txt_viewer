@@ -934,7 +934,7 @@ class ImgTxtViewer:
             'S&R': 60,
             'Prefix': 60,
             'Append': 60,
-            'AutoTag': 310,
+            'AutoTag': 340,
             'Filter': 60,
             'Highlight': 60,
             'Font': 60,
@@ -1187,6 +1187,16 @@ class ImgTxtViewer:
         self.auto_tag_character_threshold_spinbox.bind("<KeyRelease>", lambda event: update_character_threshold())
         self.auto_tag_character_threshold_spinbox.bind("<FocusOut>", lambda event: update_character_threshold())
 
+        # Max Tags
+        max_tags_frame = Frame(self.tab9_main_widget_frame)
+        max_tags_frame.pack(side='top', fill='x', padx=2, pady=2)
+        max_tags_label = Label(max_tags_frame, text="Max Tags:", width=16, anchor="w")
+        max_tags_label.pack(side='left')
+        ToolTip.create(max_tags_label, "The maximum number of tags that will be generated\nAdditional tags will be ignored", 200, 6, 12)
+        self.auto_tag_max_tags_spinbox = ttk.Spinbox(max_tags_frame, takefocus=False, from_=1, to=999, increment=1, width=8)
+        self.auto_tag_max_tags_spinbox.pack(side='right')
+        self.auto_tag_max_tags_spinbox.set(40)
+
         # Checkbutton Frame
         checkbutton_frame = Frame(self.tab9_main_widget_frame)
         checkbutton_frame.pack(side='top', fill='x', padx=2, pady=2)
@@ -1291,16 +1301,16 @@ class ImgTxtViewer:
 
 
     def set_other_tag_options(self):
-            self.onnx_tagger.exclude_tags.clear()
-            self.onnx_tagger.keep_tags.clear()
-            self.onnx_tagger.replace_tag_dict.clear()
-            excluded_tags = self.excluded_tags_entry.get().strip().split(',')
-            self.onnx_tagger.exclude_tags = [tag.strip() for tag in excluded_tags if tag.strip()]
-            keep_tags = self.keep_tags_entry.get().strip().split(',')
-            self.onnx_tagger.keep_tags = [tag.strip() for tag in keep_tags if tag.strip()]
-            replace_tags = self.replace_tags_entry.get().strip().split(',')
-            replace_with_tags = self.replace_with_tags_entry.get().strip().split(',')
-            self.onnx_tagger.replace_tag_dict = {tag.strip(): replace_with_tags[i].strip() for i, tag in enumerate(replace_tags) if tag.strip() and i < len(replace_with_tags) and replace_with_tags[i].strip()}
+        self.onnx_tagger.exclude_tags.clear()
+        self.onnx_tagger.keep_tags.clear()
+        self.onnx_tagger.replace_tag_dict.clear()
+        excluded_tags = self.excluded_tags_entry.get().strip().split(',')
+        self.onnx_tagger.exclude_tags = [tag.strip() for tag in excluded_tags if tag.strip()]
+        keep_tags = self.keep_tags_entry.get().strip().split(',')
+        self.onnx_tagger.keep_tags = [tag.strip() for tag in keep_tags if tag.strip()]
+        replace_tags = self.replace_tags_entry.get().strip().split(',')
+        replace_with_tags = self.replace_with_tags_entry.get().strip().split(',')
+        self.onnx_tagger.replace_tag_dict = {tag.strip(): replace_with_tags[i].strip() for i, tag in enumerate(replace_tags) if tag.strip() and i < len(replace_with_tags) and replace_with_tags[i].strip()}
 
 
     def interrogate_image_tags(self):
@@ -1324,13 +1334,18 @@ class ImgTxtViewer:
             self.update_auto_tag_stats_label()
             return
         max_length = max(len(f"{confidence:.2f}") for confidence, _ in tag_dict.values())
+        max_tags = int(self.auto_tag_max_tags_spinbox.get())
+        tag_count = 0
         for tag, (confidence, category) in tag_dict.items():
+            if tag_count >= max_tags:
+                break
             padded_score = f"{confidence:.2f}".ljust(max_length, '0')
             self.auto_tag_listbox.insert("end", f" {padded_score}: {tag}")
             if category == "character":
                 self.auto_tag_listbox.itemconfig("end", {'fg': '#148632'})
             if category == "keep":
                 self.auto_tag_listbox.itemconfig("end", {'fg': '#c00004'})
+            tag_count += 1
         self.update_auto_tag_stats_label()
 
 
