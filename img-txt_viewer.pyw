@@ -1313,8 +1313,9 @@ class ImgTxtViewer:
         tag_list, tag_dict = self.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
         self.parse_interrogation_result(tag_dict)
         if self.auto_insert_interrogator_var.get():
+            tags = ', '.join(tag_list)
             self.text_box.delete("1.0", "end")
-            self.text_box.insert("1.0", tag_list)
+            self.text_box.insert("1.0", tags)
 
 
     def parse_interrogation_result(self, tag_dict):
