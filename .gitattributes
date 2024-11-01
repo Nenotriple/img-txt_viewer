@@ -1,1 +1,0 @@
-img-txt_viewer/onnx_models/wd-v1-4-moat-tagger-v2/model.onnx filter=lfs diff=lfs merge=lfs -text
