@@ -923,10 +923,7 @@ class ImgTxtViewer:
         self.create_font_widgets_tab7()
         self.create_custom_dictionary_widgets_tab8()
         self.create_stats_widgets_tab9()
-#        self.text_widget_frame.bind("<Configure>", self.print_text_widget_frame_height)
-#
-#    def print_text_widget_frame_height(self, event):
-#        print(f"text_widget_frame height: {event.height}")
+        #self.text_widget_frame.bind("<Configure>", lambda event: print(f"text_widget_frame height: {event.height}"))
 
 
     def adjust_text_pane_height(self, event):
