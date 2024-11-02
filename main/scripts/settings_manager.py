@@ -7,7 +7,6 @@ import configparser
 # Standard Library - GUI
 from tkinter import messagebox
 
-
 # --------------------------------------
 # Class: SettingsManager
 # --------------------------------------
@@ -32,6 +31,7 @@ class SettingsManager:
             self._save_path_settings()
             self._save_window_settings()
             self._save_autocomplete_settings()
+            #self._save_ONNX_settings()
             self._save_other_settings()
             self.write_settings_to_file()
         except (PermissionError, IOError) as e:
@@ -95,6 +95,15 @@ class SettingsManager:
         self.config.set("Autocomplete", "last_word_match", str(self.parent.last_word_match_var.get()))
 
 
+    #def _save_ONNX_settings(self):
+    #    self._add_section("ONNX")
+    #    self.config.set("ONNX", "ONNX_model", str(self.parent.onnx_model_var.get()))
+    #    self.config.set("ONNX", "general_threshold", str(self.parent.general_threshold_var.get()))
+    #    self.config.set("ONNX", "character_threshold", str(self.parent.character_threshold_var.get()))
+    #    self.config.set("ONNX", "custom_exclude_tags", str(self.parent.custom_exclude_tags_var.get()))
+    #    self.config.set("ONNX", "exclude_current_tags", str(self.parent.exclude_current_tags_var.get()))
+
+
     def _save_other_settings(self):
         self._add_section("Other")
         self.config.set("Other", "auto_save", str(self.parent.auto_save_var.get()))
@@ -148,6 +157,7 @@ class SettingsManager:
             return
         #self.read_window_settings()
         self._read_autocomplete_settings()
+        #self._read_ONNX_settings()
         self._read_other_settings()
 
 
@@ -186,6 +196,14 @@ class SettingsManager:
         self.parent.suggestion_threshold_var.set(value=self.config.get("Autocomplete", "suggestion_threshold", fallback="Normal"))
         self.parent.last_word_match_var.set(value=self.config.getboolean("Autocomplete", "last_word_match", fallback=False))
         self.parent.update_autocomplete_dictionary()
+
+
+    #def _read_ONNX_settings(self):
+    #    self.parent.onnx_model_var.set(value=self.config.get("ONNX", "ONNX_model", fallback=""))
+    #    self.parent.general_threshold_var.set(value=self.config.getfloat("ONNX", "general_threshold", fallback=0.35))
+    #    self.parent.character_threshold_var.set(value=self.config.getfloat("ONNX", "character_threshold", fallback=0.8))
+    #    self.parent.custom_exclude_tags_var.set(value=self.config.get("ONNX", "custom_exclude_tags", fallback=""))
+    #    self.parent.exclude_current_tags_var.set(value=self.config.getboolean("ONNX", "exclude_current_tags", fallback=False))
 
 
     def _read_other_settings(self):
@@ -228,6 +246,12 @@ class SettingsManager:
         self.parent.suggestion_quantity_var.set(value=4)
         self.parent.suggestion_threshold_var.set(value="Normal")
         self.parent.last_word_match_var.set(value=False)
+        # ONNX
+        #self.parent.onnx_model_var.set(value="")
+        #self.parent.general_threshold_var.set(value=0.35)
+        #self.parent.character_threshold_var.set(value=0.8)
+        #self.parent.custom_exclude_tags_var.set(value="")
+        #self.parent.exclude_current_tags_var.set(value=False)
         # Other
         self.parent.clear_search_and_replace_tab()
         self.parent.clear_prefix_tab()

@@ -1,3 +1,4 @@
 numpy==1.25.2
 Pillow==10.2.0
+onnxruntime
 git+https://github.com/Nenotriple/TkToolTip.git

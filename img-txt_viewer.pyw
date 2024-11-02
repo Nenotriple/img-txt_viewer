@@ -43,7 +43,7 @@ from collections import defaultdict, Counter
 import tkinter.font
 from tkinter.scrolledtext import ScrolledText
 from tkinter import (ttk, Tk, Toplevel, messagebox, filedialog, simpledialog,
-                     StringVar, BooleanVar, IntVar,
+                     StringVar, BooleanVar, IntVar, DoubleVar,
                      Frame, PanedWindow, Menu,
                      Label, Text,
                      Event, TclError
@@ -72,6 +72,7 @@ from main.scripts import (about_img_txt_viewer,
                           edit_panel
                           )
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
+from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
 
 
 #endregion
@@ -293,6 +294,7 @@ class ImgTxtViewer:
         self.create_primary_ui()
         self.settings_manager.read_settings()
 
+
 #endregion
 ################################################################################################################################################
 #region - Setup
@@ -307,6 +309,7 @@ class ImgTxtViewer:
         self.edit_panel = edit_panel.EditPanel(self, self.master)
         self.about_window = about_img_txt_viewer.AboutWindow(self, self.master, VERSION, self.blank_image)
         self.settings_manager = settings_manager.SettingsManager(self, self.master, VERSION)
+        self.onnx_tagger = OnnxTagger(self)
 
         # Setup UI state
         self.ui_state = {
@@ -1268,6 +1271,7 @@ class ImgTxtViewer:
         self.imageContext_menu.add_command(label="Open Current Image...", command=self.open_image)
         self.imageContext_menu.add_command(label="Open Image-Grid...", accelerator="F2", command=self.open_image_grid)
         self.imageContext_menu.add_command(label="Edit Image...", accelerator="F4", command=self.open_image_in_editor)
+        self.imageContext_menu.add_command(label="Infer Tags...", command=self.infer_tags)
         self.imageContext_menu.add_separator()
         # File
         self.imageContext_menu.add_command(label="Duplicate img-txt pair", command=self.duplicate_pair)
@@ -3417,7 +3421,6 @@ class ImgTxtViewer:
             self.about_window_open = True
 
 
-
 #endregion
 ################################################################################################################################################
 #region - Text Cleanup
@@ -3445,8 +3448,8 @@ class ImgTxtViewer:
         self.show_pair()
 
 
-    def cleanup_text(self, text):
-        if self.cleaning_text_var.get():
+    def cleanup_text(self, text, bypass=False):
+        if self.cleaning_text_var.get() or bypass:
             text = self.remove_duplicate_CSV_captions(text)
             if self.list_mode_var.get():
                 text = re.sub(r'\.\s', '\n', text)  # Replace period and space with newline
@@ -4118,6 +4121,16 @@ class ImgTxtViewer:
                 self.individual_operations_menu.entryconfig("Undo Delete", state="disabled")
         except (PermissionError, ValueError, IOError, TclError) as e:
             messagebox.showerror("Error: undo_delete_pair()", f"An error occurred while restoring the img-txt pair.\n\n{e}")
+
+
+#endregion
+################################################################################################################################################
+#region - ONNX Tagger
+
+
+    def infer_tags(self):
+        csv_result, confidence_result = self.onnx_tagger.tag_image(self.image_files[self.current_index])
+        print(csv_result, confidence_result)
 
 
 #endregion
