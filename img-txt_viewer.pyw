@@ -1191,6 +1191,10 @@ class ImgTxtViewer:
         self.excluded_tags_entry = ttk.Entry(excluded_entry_frame, width=25)
         self.excluded_tags_entry.pack(side='left', fill='both', expand=True)
         self.bind_entry_functions(self.excluded_tags_entry)
+        self.auto_exclude_tags_var = BooleanVar(value=False)
+        auto_exclude_tags = ttk.Checkbutton(excluded_entry_frame, text="Auto", takefocus=False, variable=self.auto_exclude_tags_var)
+        auto_exclude_tags.pack(side='left', anchor='w', padx=2, pady=2)
+        self.auto_exclude_tags_tooltip = ToolTip.create(auto_exclude_tags, "Automatically exclude tags that are already in the text box", 200, 6, 12)
         keep_entry_frame = Frame(entry_frame)
         keep_entry_frame.pack(side='top', fill='x', padx=2, pady=2)
         keep_tags_label = Label(keep_entry_frame, text="Keep:", width=9, anchor="w")
@@ -1290,7 +1294,9 @@ class ImgTxtViewer:
         self.onnx_tagger.exclude_tags.clear()
         self.onnx_tagger.keep_tags.clear()
         self.onnx_tagger.replace_tag_dict.clear()
-        excluded_tags = self.excluded_tags_entry.get().strip().split(',')
+        excluded_tags = [tag.strip().replace(' ', '_') for tag in self.excluded_tags_entry.get().strip().split(',')]
+        if self.auto_exclude_tags_var.get():
+            excluded_tags.extend(tag.strip().replace(' ', '_') for tag in self.text_box.get("1.0", "end-1c").strip().split(','))
         self.onnx_tagger.exclude_tags = [tag.strip() for tag in excluded_tags if tag.strip()]
         keep_tags = self.keep_tags_entry.get().strip().split(',')
         self.onnx_tagger.keep_tags = [tag.strip() for tag in keep_tags if tag.strip()]
