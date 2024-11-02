@@ -348,8 +348,8 @@ class ImgTxtViewer:
         self.image_files = []
         self.deleted_pairs = []
         self.new_text_files = []
-        self.image_info_cache = {}
         self.thumbnail_cache = {}
+        self.image_info_cache = {}
 
         # Misc variables
         self.about_window_open = False
@@ -362,8 +362,6 @@ class ImgTxtViewer:
         self.undo_state = StringVar(value="disabled")
         self.previous_window_size = (self.master.winfo_width(), self.master.winfo_height())
         self.initialize_text_pane = True
-        self.onnx_model_dict = {}
-        self.onnx_models_dir = "onnx_models"
 
         # 'after()' Job IDs
         self.is_resizing_job_id = None
@@ -406,6 +404,10 @@ class ImgTxtViewer:
         self.external_image_editor_path = "mspaint"
         self.always_on_top_var = BooleanVar(value=False)
         self.big_save_button_var = BooleanVar(value=True)
+
+        # Auto-Tag variables
+        self.onnx_model_dict = {}
+        self.onnx_models_dir = "onnx_models"
         self.auto_insert_mode = StringVar(value="disable")
 
         # Font Settings
