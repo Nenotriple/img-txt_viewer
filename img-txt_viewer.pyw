@@ -2678,7 +2678,7 @@ class ImgTxtViewer:
                         self.filtered_image_files.append(image_file)
                         self.filtered_text_files.append(text_file)
         if not self.filtered_image_files:
-            messagebox.showinfo("Filter", f"0 images found. Canceling filter.")
+            messagebox.showinfo("Filter", f"0 images found matching the filter:\n\n{filter_string}")
             return
         self.image_files = self.filtered_image_files
         self.text_files = self.filtered_text_files
@@ -2689,18 +2689,17 @@ class ImgTxtViewer:
         messagebox.showinfo("Filter", f"Filter applied successfully.\n\n{len(self.image_files)} images found.")
         self.revert_filter_button.config(style="Red.TButton")
         self.revert_filter_button_tooltip.config(text="Filter is active\n\nClear any filtering applied")
-        self.image_index_entry.delete(0, "end")
-        self.image_index_entry.insert(0, "1")
 
 
     def revert_text_image_filter(self, clear=None, quiet=False): # Filter
+        last_index = self.current_index
         if clear:
             self.filter_string_var.set("")
             self.filter_use_regex_var.set(False)
             self.image_index_entry.delete(0, "end")
-            self.image_index_entry.insert(0, "1")
+            self.image_index_entry.insert(0, last_index + 1)
         self.update_image_file_count()
-        self.current_index = 0
+        self.current_index = last_index if last_index < len(self.image_files) else 0
         self.show_pair()
         if not quiet:
             messagebox.showinfo("Filter", "Filter has been cleared.")
@@ -3729,7 +3728,7 @@ class ImgTxtViewer:
                 self.auto_save_var.set(value=False)
             initialdir = self.image_dir.get()
             if not initialdir or initialdir == "Choose Directory...":
-                initialdir = self.settings_manager.config.get("Path", "last_img_directory", fallback=None) 
+                initialdir = self.settings_manager.config.get("Path", "last_img_directory", fallback=None)
             if not os.path.exists(initialdir):
                 initialdir = os.path.dirname(__file__)
             directory = filedialog.askdirectory(initialdir=initialdir)
