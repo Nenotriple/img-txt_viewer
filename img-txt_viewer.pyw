@@ -1257,13 +1257,11 @@ class ImgTxtViewer:
 
     def show_auto_tag_help(self):
         messagebox.showinfo("Auto-Tag Help",
-            "Auto-Tagging is a feature that uses an ONNX vision model to interrogate an image and generate tags.\n\n"
-            "The model will generate tags based on the contents of the image, the tags will be displayed in the listbox.\n\n"
-            "You can download additional models from https://huggingface.co/SmilingWolf \n\n"
-            "Models should be placed in the 'onnx_models' directory in the same folder as the program.\n\n"
-            "Models should be placed in a subfolder, the name of the subfolder will be used as the model name.\n\n"
-            "The model subfolder should contain the 'model.onnx' file and the 'selected_tags.csv' file.\n\n"
-            "Auto-Tag was primarily tested with the 'wd-v1-4-moat-tagger-v2' model.")
+            "Auto-Tagging uses an ONNX vision model to analyze images and generate tags displayed in the listbox.\n\n"
+            "Download additional models from https://huggingface.co/SmilingWolf\n\n"
+            "Place models in subfolders within the 'onnx_models' directory, located in the same folder as this program. The subfolder name will be used as the model name.\n\n"
+            "Each model subfolder should contain a 'model.onnx' file and a 'selected_tags.csv' file.\n\n"
+            "Auto-Tagging was primarily tested with the 'wd-v1-4-moat-tagger-v2' model.")
 
 
     def update_auto_tag_stats_label(self):
@@ -4632,9 +4630,10 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
 ### New:
 - `AutoTag`: Automatically tag images using ONNX vision models like `wd-v1-4-vit-tagger-v2`.
-  - SPARSE FEATURE LIST...
-  - DETAILS ABOUT DOWNLOAD AND ADDING MODELS TO THE UI...
-  - LIMITATIONS...
+  - Download additional models from https://huggingface.co/SmilingWolf
+  - Place models in subfolders within the `onnx_models` directory, located in the same folder as this program. The subfolder name will be used as the model name.
+  - Each model subfolder should contain a `model.onnx` file and a 'selected_tags.csv' file.
+  - Auto-Tagging was primarily tested with the `wd-v1-4-moat-tagger-v2` model.
 - `Batch Tag Delete` has been renamed to `Batch Tag Edit`.
   - This tool has been completely reworked to allow for more versatile tag editing.
   - The interface is now more convenient and user-friendly, allowing you to see all pending changes before committing them.
