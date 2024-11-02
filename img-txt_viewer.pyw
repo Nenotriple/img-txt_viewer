@@ -1097,6 +1097,8 @@ class ImgTxtViewer:
         # Top Frame for Buttons
         top_frame = Frame(self.tab4)
         top_frame.pack(fill='x')
+        help_button = ttk.Button(top_frame, text="?", takefocus=False, width=2, command=self.show_auto_tag_help)
+        help_button.pack(side='left')
         self.interrogation_stats_label = Label(top_frame, text="Total: 0  |  Selected: 0")
         self.interrogation_stats_label.pack(side='left')
         interrogate_button = ttk.Button(top_frame, text="Interrogate", takefocus=False, command=self.interrogate_image_tags)
@@ -1252,6 +1254,16 @@ class ImgTxtViewer:
         clear_button = ttk.Button(button_frame, text="Clear", command=clear_selection)
         clear_button.grid(row=1, column=2, sticky='ew', pady=2)
         ToolTip.create(clear_button, "Clear the current selection", 500, 6, 12)
+
+    def show_auto_tag_help(self):
+        messagebox.showinfo("Auto-Tag Help",
+            "Auto-Tagging is a feature that uses an ONNX vision model to interrogate an image and generate tags.\n\n"
+            "The model will generate tags based on the contents of the image, the tags will be displayed in the listbox.\n\n"
+            "You can download additional models from https://huggingface.co/SmilingWolf \n\n"
+            "Models should be placed in the 'onnx_models' directory in the same folder as the program.\n\n"
+            "Models should be placed in a subfolder, the name of the subfolder will be used as the model name.\n\n"
+            "The model subfolder should contain the 'model.onnx' file and the 'selected_tags.csv' file.\n\n"
+            "Auto-Tag was primarily tested with the 'wd-v1-4-moat-tagger-v2' model.")
 
 
     def update_auto_tag_stats_label(self):
