@@ -1100,9 +1100,16 @@ class ImgTxtViewer:
         interrogate_button = ttk.Button(top_frame, text="Interrogate", takefocus=False, command=self.interrogate_image_tags)
         interrogate_button.pack(side='right')
         ToolTip.create(interrogate_button, "Interrogate the current image using the selected ONNX vision model.", 500, 6, 12)
-        auto_insert_checkbutton = ttk.Checkbutton(top_frame, text="Auto-Insert", takefocus=False, variable=self.auto_insert_interrogator_var)
-        auto_insert_checkbutton.pack(side='right')
-        ToolTip.create(auto_insert_checkbutton, "Automatically insert tags into the text box, replacing any existing tags", 200, 6, 12)
+        self.auto_insert_mode = StringVar(value="disable")
+        auto_insert_menubutton = ttk.Menubutton(top_frame, text="Auto-Insert", takefocus=False)
+        auto_insert_menubutton.pack(side='right')
+        auto_insert_menu = Menu(auto_insert_menubutton, tearoff=0)
+        auto_insert_menu.add_radiobutton(label="Disable", variable=self.auto_insert_mode, value="disable")
+        auto_insert_menu.add_separator()
+        auto_insert_menu.add_radiobutton(label="Prefix", variable=self.auto_insert_mode, value="prefix")
+        auto_insert_menu.add_radiobutton(label="Append", variable=self.auto_insert_mode, value="append")
+        auto_insert_menu.add_radiobutton(label="Replace", variable=self.auto_insert_mode, value="replace")
+        auto_insert_menubutton.config(menu=auto_insert_menu)
         # Main Frame
         widget_frame = Frame(self.tab4)
         widget_frame.pack(fill='both', expand=True)
@@ -1192,9 +1199,9 @@ class ImgTxtViewer:
         self.excluded_tags_entry.pack(side='left', fill='both', expand=True)
         self.bind_entry_functions(self.excluded_tags_entry)
         self.auto_exclude_tags_var = BooleanVar(value=False)
-        auto_exclude_tags = ttk.Checkbutton(excluded_entry_frame, text="Auto", takefocus=False, variable=self.auto_exclude_tags_var)
-        auto_exclude_tags.pack(side='left', anchor='w', padx=2, pady=2)
-        self.auto_exclude_tags_tooltip = ToolTip.create(auto_exclude_tags, "Automatically exclude tags that are already in the text box", 200, 6, 12)
+        auto_exclude_tags_checkbutton = ttk.Checkbutton(excluded_entry_frame, text="Auto", takefocus=False, variable=self.auto_exclude_tags_var)
+        auto_exclude_tags_checkbutton.pack(side='left', anchor='w', padx=2, pady=2)
+        self.auto_exclude_tags_tooltip = ToolTip.create(auto_exclude_tags_checkbutton, "Automatically exclude tags that are already in the text box", 200, 6, 12)
         keep_entry_frame = Frame(entry_frame)
         keep_entry_frame.pack(side='top', fill='x', padx=2, pady=2)
         keep_tags_label = Label(keep_entry_frame, text="Keep:", width=9, anchor="w")
@@ -1317,10 +1324,7 @@ class ImgTxtViewer:
         tag_list = tag_list[:max_tags]
         tag_dict = {k: v for k, v in list(tag_dict.items())[:max_tags]}
         self.parse_interrogation_result(tag_dict)
-        if self.auto_insert_interrogator_var.get():
-            tags = ', '.join(tag_list)
-            self.text_box.delete("1.0", "end")
-            self.text_box.insert("1.0", tags)
+        self.auto_insert_tags(tag_list)
 
 
     def parse_interrogation_result(self, tag_dict):
@@ -1337,6 +1341,24 @@ class ImgTxtViewer:
             if category == "keep":
                 self.auto_tag_listbox.itemconfig("end", {'fg': '#c00004'})
         self.update_auto_tag_stats_label()
+
+
+    def auto_insert_tags(self, tags):
+        mode = self.auto_insert_mode.get()
+        if mode == "disable":
+            return
+        tags_str = ', '.join(tags)
+        current_text = self.text_box.get("1.0", "end-1c")
+        if mode == "prefix":
+            new_text = tags_str + ', ' + current_text if current_text else tags_str
+        elif mode == "append":
+            new_text = current_text + ', ' + tags_str if current_text else tags_str
+        elif mode == "replace":
+            new_text = tags_str
+        else:
+            return
+        self.text_box.delete("1.0", "end")
+        self.text_box.insert("1.0", new_text)
 
 
     def get_onnx_model_list(self):
