@@ -159,10 +159,10 @@ class EditPanel:
 
     def update_slider_value(self, event):
         current_option = self.edit_combobox.get()
-        is_rgb = self.current_image.mode == "RGB"
+        is_rgb = self.parent.current_image.mode == "RGB"
         rgb_required_options = ["AutoContrast", "Hue", "Color Temperature"]
         if current_option in rgb_required_options and not is_rgb:
-            messagebox.showwarning("Unsupported Color Mode", f"{current_option} adjustment only supports images in RGB color mode!\n\nImage Color Mode: {self.current_image.mode}\n\nAdjustments will be ignored.")
+            messagebox.showwarning("Unsupported Color Mode", f"{current_option} adjustment only supports images in RGB color mode!\n\nImage Color Mode: {self.parent.current_image.mode}\n\nAdjustments will be ignored.")
             return
         self.edit_slider.set(self.parent.edit_slider_dict[current_option])
         self.edit_value_label.config(text=str(self.parent.edit_slider_dict[current_option]))
@@ -233,28 +233,28 @@ class EditPanel:
 
 
     def _reset_edit(self, event=None):
-            self.edit_is_reverted_var = False
-            self.edit_revert_image_button.config(text="Revert")
-            for option in self.parent.edit_slider_dict:
-                self.parent.edit_slider_dict[option] = 0
-            self.edit_last_slider_dict = self.parent.edit_slider_dict.copy()
-            self.edit_slider.set(0)
-            self.edit_value_label.config(text="0")
-            self.highlights_threshold_spinbox.set(128)
-            self.highlights_blur_radius_spinbox.set(0)
-            self.shadows_threshold_spinbox.set(128)
-            self.shadows_blur_radius_spinbox.set(0)
-            self.sharpness_boost_spinbox.set(1)
-            self.parent.refresh_image()
+        self.parent.edit_is_reverted_var = False
+        self.edit_revert_image_button.config(text="Revert")
+        for option in self.parent.edit_slider_dict:
+            self.parent.edit_slider_dict[option] = 0
+        self.edit_last_slider_dict = self.parent.edit_slider_dict.copy()
+        self.edit_slider.set(0)
+        self.edit_value_label.config(text="0")
+        self.highlights_threshold_spinbox.set(128)
+        self.highlights_blur_radius_spinbox.set(0)
+        self.shadows_threshold_spinbox.set(128)
+        self.shadows_blur_radius_spinbox.set(0)
+        self.sharpness_boost_spinbox.set(1)
+        self.parent.refresh_image()
 
 
     def update_edited_image(self):
         display_width = self.parent.primary_display_image.winfo_width()
         display_height = self.parent.primary_display_image.winfo_height()
-        self.current_image, new_width, new_height = self.parent.resize_and_scale_image(self.current_image, display_width, display_height, None)
-        self.current_image_tk = ImageTk.PhotoImage(self.current_image)
-        self.parent.primary_display_image.config(image=self.current_image_tk)
-        self.parent.primary_display_image.image = self.current_image_tk
+        self.parent.current_image, new_width, new_height = self.parent.resize_and_scale_image(self.parent.current_image, display_width, display_height, None)
+        self.parent.current_image_tk = ImageTk.PhotoImage(self.parent.current_image)
+        self.parent.primary_display_image.config(image=self.parent.current_image_tk)
+        self.parent.primary_display_image.image = self.parent.current_image_tk
 
 
 #endregion
@@ -271,8 +271,8 @@ class EditPanel:
 
 
     def _apply_image_edit(self):
-        self.current_image = self.parent.original_image.copy()
-        is_rgb = self.current_image.mode == "RGB"
+        self.parent.current_image = self.parent.original_image.copy()
+        is_rgb = self.parent.current_image.mode == "RGB"
         adjustment_methods = {
             "Brightness": self.adjust_brightness,
             "Contrast": self.adjust_contrast,
@@ -299,8 +299,8 @@ class EditPanel:
     def edit_image(self, value, enhancer_class, image_type="display", image=None):
         factor = (value + 100) / 100.0
         if image_type == "display":
-            enhancer_display = enhancer_class(self.current_image)
-            self.current_image = enhancer_display.enhance(factor)
+            enhancer_display = enhancer_class(self.parent.current_image)
+            self.parent.current_image = enhancer_display.enhance(factor)
         elif image_type == "original" and image:
             enhancer_original = enhancer_class(image)
             return enhancer_original.enhance(factor)
@@ -352,7 +352,7 @@ class EditPanel:
 # Undo/Redo
 # --------------------------------------
     def revert_image_edit(self):
-        if self.edit_is_reverted_var:
+        if self.parent.edit_is_reverted_var:
             self.edit_revert_image_button.config(text="Revert")
             self.parent.edit_slider_dict.update(self.edit_last_slider_dict)
             for option, value in self.parent.edit_slider_dict.items():
@@ -361,7 +361,7 @@ class EditPanel:
                     self.edit_slider.set(value)
                     self.edit_value_label.config(text=str(value))
                     self.apply_image_edit()
-            self.edit_is_reverted_var = False
+            self.parent.edit_is_reverted_var = False
         else:
             self.edit_revert_image_button.config(text="Restore")
             self.edit_last_slider_dict = {option: value for option, value in self.parent.edit_slider_dict.items() if value != 0}
@@ -370,7 +370,7 @@ class EditPanel:
                 self.parent.edit_slider_dict[option] = 0
             self.edit_slider.set(0)
             self.edit_value_label.config(text="0")
-            self.edit_is_reverted_var = True
+            self.parent.edit_is_reverted_var = True
 
 
 #endregion
@@ -419,10 +419,10 @@ class EditPanel:
         iterations = max(1, (value - 1) // 20)
         if image_type == "display":
             for i in range(iterations):
-                self.current_image = ImageOps.autocontrast(self.current_image)
+                self.parent.current_image = ImageOps.autocontrast(self.parent.current_image)
                 if value > 20:
-                    enhancer = ImageEnhance.Contrast(self.current_image)
-                    self.current_image = enhancer.enhance(1.025)
+                    enhancer = ImageEnhance.Contrast(self.parent.current_image)
+                    self.parent.current_image = enhancer.enhance(1.025)
         elif image_type == "original" and image:
             for i in range(iterations):
                 image = ImageOps.autocontrast(image)
@@ -444,8 +444,8 @@ class EditPanel:
         threshold = self.validate_spinbox_value(self.highlights_threshold_spinbox, min_value=1, max_value=256, integer=True)
         blur_radius = self.validate_spinbox_value(self.highlights_blur_radius_spinbox, min_value=0, max_value=100, integer=True)
         if image_type == "display":
-            mask = self.create_gradient_mask(self.current_image, threshold, blur_radius, invert=True)
-            self.current_image = Image.composite(self.current_image, ImageEnhance.Brightness(self.current_image).enhance(factor), mask)
+            mask = self.create_gradient_mask(self.parent.current_image, threshold, blur_radius, invert=True)
+            self.parent.current_image = Image.composite(self.parent.current_image, ImageEnhance.Brightness(self.parent.current_image).enhance(factor), mask)
         elif image_type == "original" and image:
             mask = self.create_gradient_mask(image, threshold, blur_radius, invert=True)
             return Image.composite(image, ImageEnhance.Brightness(image).enhance(factor), mask)
@@ -457,8 +457,8 @@ class EditPanel:
         threshold = self.validate_spinbox_value(self.shadows_threshold_spinbox, min_value=1, max_value=256, integer=True)
         blur_radius = self.validate_spinbox_value(self.shadows_blur_radius_spinbox, min_value=0, max_value=100, integer=True)
         if image_type == "display":
-            mask = self.create_gradient_mask(self.current_image, threshold, blur_radius)
-            self.current_image = Image.composite(self.current_image, ImageEnhance.Brightness(self.current_image).enhance(factor), mask)
+            mask = self.create_gradient_mask(self.parent.current_image, threshold, blur_radius)
+            self.parent.current_image = Image.composite(self.parent.current_image, ImageEnhance.Brightness(self.parent.current_image).enhance(factor), mask)
         elif image_type == "original" and image:
             mask = self.create_gradient_mask(image, threshold, blur_radius)
             return Image.composite(image, ImageEnhance.Brightness(image).enhance(factor), mask)
@@ -486,10 +486,10 @@ class EditPanel:
     def adjust_hue(self, value, image_type="display", image=None):
         factor = (value + 100) / 100.0
         if image_type == "display":
-            hsv_image = self.current_image.convert('HSV')
+            hsv_image = self.parent.current_image.convert('HSV')
             channels = list(hsv_image.split())
             channels[0] = channels[0].point(lambda p: (p + factor * 256) % 256)
-            self.current_image = Image.merge('HSV', channels).convert('RGB')
+            self.parent.current_image = Image.merge('HSV', channels).convert('RGB')
         elif image_type == "original" and image:
             hsv_image = image.convert('HSV')
             channels = list(hsv_image.split())
@@ -509,7 +509,7 @@ class EditPanel:
             blue_channel = blue_channel.point(lambda intensity: intensity * (1 - 0.2 * adjustment_factor))
             return Image.merge('RGB', (red_channel, green_channel, blue_channel))
         if image_type == "display":
-            self.current_image = _adjust_color_temperature(self.current_image, factor)
+            self.parent.current_image = _adjust_color_temperature(self.parent.current_image, factor)
         elif image_type == "original" and image:
             return _adjust_color_temperature(image, factor)
         return image

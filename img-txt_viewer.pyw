@@ -440,7 +440,6 @@ class ImgTxtViewer:
         self.edit_panel_visible_var = BooleanVar(value=False)
         self.edit_slider_dict = {"Brightness": 0, "Contrast": 0, "AutoContrast": 0, "Highlights": 0, "Shadows": 0, "Saturation": 0, "Sharpness": 0, "Hue": 0, "Color Temperature": 0}
         self.edit_last_slider_dict = {}
-        self.edit_is_reverted_var = False
         self.edit_cumulative_var = BooleanVar(value=False)
 
         # Image Quality
@@ -1593,7 +1592,7 @@ class ImgTxtViewer:
     def toggle_save_button_height(self, event=None, reset=None):
         if reset:
             self.big_save_button_var.set(True)
-            self.save_button.config(padding=(1, 1))
+            self.save_button.config(padding=(5, 5))
             return
         else:
             if self.big_save_button_var.get():
@@ -2643,7 +2642,7 @@ class ImgTxtViewer:
         if not self.check_if_directory():
             return
         if not self.filter_empty_files_var.get():
-            self.revert_text_image_filter()
+            self.revert_text_image_filter(quiet=True)
         filter_string = self.filter_string_var.get()
         if not filter_string and not self.filter_empty_files_var.get():
             self.image_index_entry.delete(0, "end")
@@ -2682,6 +2681,9 @@ class ImgTxtViewer:
                     if match:
                         self.filtered_image_files.append(image_file)
                         self.filtered_text_files.append(text_file)
+        if not self.filtered_image_files:
+            messagebox.showinfo("Filter", f"0 images found matching the filter:\n\n{filter_string}")
+            return
         self.image_files = self.filtered_image_files
         self.text_files = self.filtered_text_files
         if hasattr(self, 'total_images_label'):
@@ -2691,24 +2693,20 @@ class ImgTxtViewer:
         messagebox.showinfo("Filter", f"Filter applied successfully.\n\n{len(self.image_files)} images found.")
         self.revert_filter_button.config(style="Red.TButton")
         self.revert_filter_button_tooltip.config(text="Filter is active\n\nClear any filtering applied")
-        if not self.image_files:
-            self.image_index_entry.delete(0, "end")
-            self.image_index_entry.insert(0, "0")
-            self.primary_display_image.config(image=self.blank_image)
-            self.text_box.delete("1.0", "end")
-            self.label_image_stats.config(text="No image! -- Check filters?", anchor="w")
 
 
-    def revert_text_image_filter(self, clear=None): # Filter
+    def revert_text_image_filter(self, clear=None, quiet=False): # Filter
+        last_index = self.current_index
         if clear:
             self.filter_string_var.set("")
             self.filter_use_regex_var.set(False)
             self.image_index_entry.delete(0, "end")
-            self.image_index_entry.insert(0, "1")
+            self.image_index_entry.insert(0, last_index + 1)
         self.update_image_file_count()
-        self.current_index = 0
+        self.current_index = last_index if last_index < len(self.image_files) else 0
         self.show_pair()
-        messagebox.showinfo("Filter", "Filter has been cleared.")
+        if not quiet:
+            messagebox.showinfo("Filter", "Filter has been cleared.")
         self.revert_filter_button.config(style="")
         self.revert_filter_button_tooltip.config(text="Filter is inactive\n\nClear any filtering applied")
         self.filter_empty_files_var.set(False)
@@ -2764,7 +2762,9 @@ class ImgTxtViewer:
                 self.text_box.delete("1.0", "end")
                 self.text_box.insert("1.0", cleaned_text)
                 set_text_highlight("highlight", "#5da9be")
-                self.text_box.clipboard_get()
+                try:
+                    self.text_box.clipboard_get()
+                except TclError: pass
                 self.delete_tag_job_id = None
                 self.sync_title_with_content()
 
@@ -3729,7 +3729,12 @@ class ImgTxtViewer:
             else:
                 original_auto_save_var = self.auto_save_var.get()
                 self.auto_save_var.set(value=False)
-            directory = filedialog.askdirectory()
+            initialdir = self.image_dir.get()
+            if not initialdir or initialdir == "Choose Directory...":
+                initialdir = self.settings_manager.config.get("Path", "last_img_directory", fallback=None)
+            if not os.path.exists(initialdir):
+                initialdir = os.path.dirname(__file__)
+            directory = filedialog.askdirectory(initialdir=initialdir)
             if directory and directory != self.image_dir.get():
                 if hasattr(self, 'text_box'):
                     self.revert_text_image_filter(clear=True)
@@ -3975,9 +3980,9 @@ class ImgTxtViewer:
                     os.rename(original_file, original_file.replace('.bak', '.txt'))
                     os.utime(original_file, (time.time(), time.time()))
                     os.remove(os.path.join(backup_dir, backup_file))
-                    messagebox.showinfo("Success", "All text files have been restored from the latest backup!")
-                except Exception:
-                    pass
+                except Exception as e:
+                    messagebox.showerror("Error: restore_backup()", f"Something went wrong: {original_file}\n\n{str(e)}")
+        messagebox.showinfo("Success", "All text files have been restored from the latest backup!")
         self.refresh_text_box()
 
 

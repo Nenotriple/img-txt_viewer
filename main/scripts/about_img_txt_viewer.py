@@ -110,6 +110,7 @@ class AboutWindow:
         self.about_window.title("About - img-txt Viewer")
         self.about_window.geometry("850x650")
         self.about_window.minsize(675, 300)
+        self.about_window.protocol("WM_DELETE_WINDOW", self.close_about_window)
         self.github_url = "https://github.com/Nenotriple/img-txt_viewer"
 
 
@@ -164,4 +165,5 @@ class AboutWindow:
 
     def close_about_window(self):
         if hasattr(self, 'about_window') and self.about_window:
+            self.parent.about_window_open = False
             self.about_window.destroy()
