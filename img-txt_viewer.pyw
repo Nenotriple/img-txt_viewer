@@ -1255,6 +1255,7 @@ class ImgTxtViewer:
         clear_button.grid(row=1, column=2, sticky='ew', pady=2)
         ToolTip.create(clear_button, "Clear the current selection", 500, 6, 12)
 
+
     def show_auto_tag_help(self):
         messagebox.showinfo("Auto-Tag Help",
             "Auto-Tagging is a feature that uses an ONNX vision model to interrogate an image and generate tags.\n\n"
