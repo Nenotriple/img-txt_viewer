@@ -152,7 +152,7 @@ class OnnxTagger:
         avg_color = tuple(map(lambda x: int(sum(x) / len(x)), zip(*border_pixels)))
         return avg_color
 
-    
+
     def _interrogate_image(self, image):
         preprocessed_image = self._preprocess_image(image)
         confidence_scores = self.model.run([self.tag_label], {self.model_input.name: preprocessed_image})[0][0]
