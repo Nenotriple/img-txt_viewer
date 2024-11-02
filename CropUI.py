@@ -170,24 +170,42 @@ class CropSelection:
 
 
     def update_selection_coords(self, x1, y1, x2, y2):
+        """
+        Updates the selection coordinates based on user input and adjusts them according to the image canvas offsets and scale ratio.
+
+        Parameters:
+            x1 (int): The x-coordinate of the first selection point.
+            y1 (int): The y-coordinate of the first selection point.
+            x2 (int): The x-coordinate of the second selection point.
+            y2 (int): The y-coordinate of the second selection point.
+
+        Sets:
+            self.coords (tuple or None): The adjusted original coordinates as a tuple (x1_orig, y1_orig, x2_orig, y2_orig). Set to None if the selection has zero area.
+        """
+        # Convert canvas coordinates to original image coordinates
         x_offset, y_offset = self.img_canvas.x_offset, self.img_canvas.y_offset
         x_max = x_offset + self.img_canvas.new_size[0]
         y_max = y_offset + self.img_canvas.new_size[1]
+        # Ensure coordinates are within canvas bounds
         x1, x2 = sorted([max(x_offset, min(x1, x_max)), max(x_offset, min(x2, x_max))])
         y1, y2 = sorted([max(y_offset, min(y1, y_max)), max(y_offset, min(y2, y_max))])
+        # Adjust coordinates based on image scale ratio and offsets
         x1_adj = x1 - x_offset
         y1_adj = y1 - y_offset
         x2_adj = x2 - x_offset
         y2_adj = y2 - y_offset
+        # Convert adjusted coordinates to original image coordinates
         img_scale_ratio = self.img_canvas.img_scale_ratio
         x1_orig = int(x1_adj / img_scale_ratio)
         y1_orig = int(y1_adj / img_scale_ratio)
         x2_orig = int(x2_adj / img_scale_ratio)
         y2_orig = int(y2_adj / img_scale_ratio)
+        # Ensure coordinates are within original image bounds
         original_img_width = self.img_canvas.original_img_width
         original_img_height = self.img_canvas.original_img_height
         x1_orig, x2_orig = sorted([max(0, min(original_img_width, x1_orig)), max(0, min(original_img_width, x2_orig))])
         y1_orig, y2_orig = sorted([max(0, min(original_img_height, y1_orig)), max(0, min(original_img_height, y2_orig))])
+        # Set coordinates
         self.coords = (x1_orig, y1_orig, x2_orig, y2_orig) if x1_orig != x2_orig and y1_orig != y2_orig else None
 
 
@@ -617,14 +635,14 @@ class ImageCropper:
         self.expand_from_center_checkbutton.grid(row=0, column=0, columnspan=3, padx=self.padx, pady=self.pady, sticky="w")
 
         # Fixed Aspect Ratio
-        self.fixed_aspect_ratio_var = tk.BooleanVar(value=False)
-        self.fixed_checkbutton = ttk.Checkbutton(self.aspect_ratio_frame, variable=self.fixed_aspect_ratio_var, text="Fixed", width=5)
-        self.fixed_checkbutton.grid(row=1, column=0, padx=self.padx, pady=self.pady)
+        self.fixed_selection_var = tk.BooleanVar(value=False)
+        self.fixed_selection_checkbutton = ttk.Checkbutton(self.aspect_ratio_frame, variable=self.fixed_selection_var, text="Fixed", width=5)
+        self.fixed_selection_checkbutton.grid(row=1, column=0, padx=self.padx, pady=self.pady)
 
         # Aspect Ratio Combobox
-        self.aspect_ratio_var = tk.StringVar(value="Aspect Ratio")
-        self.aspect_ratio_combobox = ttk.Combobox(self.aspect_ratio_frame, values=["Aspect Ratio", "Width", "Height", "Size"], state="readonly", textvariable=self.aspect_ratio_var, width=12)
-        self.aspect_ratio_combobox.grid(row=1, column=1, columnspan=2, sticky="ew", padx=self.padx, pady=self.pady)
+        self.fixed_selection_option_var = tk.StringVar(value="Aspect Ratio")
+        self.fixed_selection_option_combobox = ttk.Combobox(self.aspect_ratio_frame, values=["Aspect Ratio", "Width", "Height", "Size"], state="readonly", textvariable=self.fixed_selection_option_var, width=12)
+        self.fixed_selection_option_combobox.grid(row=1, column=1, columnspan=2, sticky="ew", padx=self.padx, pady=self.pady)
 
         # Aspect Entry Frame
         self.aspect_entry_frame = tk.Frame(self.aspect_ratio_frame)
@@ -635,9 +653,9 @@ class ImageCropper:
         self.clear_button.pack(side="right")
 
         # Aspect Ratio Entry
-        self.aspect_ratio_entry_var = tk.StringVar(value="1:1")
-        self.aspect_ratio_entry = ttk.Entry(self.aspect_entry_frame, textvariable=self.aspect_ratio_entry_var, width=12)
-        self.aspect_ratio_entry.pack(side="right")
+        self.fixed_selection_entry_var = tk.StringVar(value="1:1")
+        self.fixed_selection_entry = ttk.Entry(self.aspect_entry_frame, textvariable=self.fixed_selection_entry_var, width=12)
+        self.fixed_selection_entry.pack(side="right")
 
 
     def open_directory_dialog(self):
