@@ -1252,12 +1252,22 @@ class ImgTxtViewer:
 
 
     def show_auto_tag_help(self):
-        messagebox.showinfo("Auto-Tag Help",
+        confirm = messagebox.askokcancel("Auto-Tag Help",
             "Auto-Tagging uses an ONNX vision model to analyze images and generate tags displayed in the listbox.\n\n"
-            "Download additional models from https://huggingface.co/SmilingWolf\n\n"
+            "Download additional models from:\n\nhttps://huggingface.co/SmilingWolf\n\n"
             "Place models in subfolders within the 'onnx_models' directory, located in the same folder as this program. The subfolder name will be used as the model name.\n\n"
             "Each model subfolder should contain a 'model.onnx' file and a 'selected_tags.csv' file.\n\n"
-            "Auto-Tagging was primarily tested with the 'wd-v1-4-moat-tagger-v2' model.")
+            "Restart the program to load new models.\n\n"
+            "Example:\n"
+            "img-txt_viewer/\n"
+            "  └── onnx_models/\n"
+            "      └── wd-v1-4-moat-tagger-v2/\n"
+            "          ├── model.onnx\n"
+            "          └── selected_tags.csv\n\n"
+            "Auto-Tagging was primarily tested with the 'wd-v1-4-moat-tagger-v2' model.\n\nCopy URL to clipboard?")
+        if confirm:
+            self.text_box.clipboard_clear()
+            self.text_box.clipboard_append("https://huggingface.co/SmilingWolf")
 
 
     def update_auto_tag_stats_label(self):
@@ -1323,7 +1333,9 @@ class ImgTxtViewer:
         image_path = self.image_files[self.current_index]
         selected_model_path = self.onnx_model_dict.get(self.auto_tag_model_combobox.get())
         if not selected_model_path or not os.path.exists(selected_model_path):
-            messagebox.showerror("Error", f"Model file not found: {selected_model_path}")
+            confirm = messagebox.askyesno("Error", f"Model file not found: {selected_model_path}\n\nWould you like to view the Auto-Tag Help?")
+            if confirm:
+                self.show_auto_tag_help()
             return
         self.set_other_tag_options()
         tag_list, tag_dict = self.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
@@ -4612,7 +4624,7 @@ root.mainloop()
 **v1.96 Changes**  |  https://github.com/Nenotriple/img-txt_viewer/compare/v1.95...v1.96
 
 
-This release incorporates several new features, including a reworked Batch Tag Edit tool, a Thumbnail Panel for quick navigation, and an Edit Image Panel for adjusting image properties. Additionally, numerous bugs have been fixed, such as issues with the Delete Pair tool, image quality degradation, and memory leaks.
+This release incorporates many new features, including AutoTag for automatically tagging images using ONNX vision models, a reworked Batch Tag Edit tool, a Thumbnail Panel for quick navigation, and an Edit Image Panel for adjusting image properties. Additionally, numerous bugs have been fixed, such as issues with the Delete Pair tool, image quality degradation, and memory leaks.
 
 Many aspects of the script have been refactored to be more modular and better handle additional tools and features.
 
