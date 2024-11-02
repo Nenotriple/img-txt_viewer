@@ -4155,8 +4155,8 @@ class ImgTxtViewer:
             initialdir = self.image_dir.get()
             if not initialdir or initialdir == "Choose Directory...":
                 initialdir = self.settings_manager.config.get("Path", "last_img_directory", fallback=None)
-            if not os.path.exists(initialdir):
-                initialdir = os.path.dirname(__file__)
+                if not initialdir or not os.path.exists(initialdir):
+                    initialdir = os.path.dirname(__file__)
             directory = filedialog.askdirectory(initialdir=initialdir)
             if directory and directory != self.image_dir.get():
                 if hasattr(self, 'text_box'):
