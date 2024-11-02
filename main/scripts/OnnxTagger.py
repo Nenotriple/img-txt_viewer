@@ -129,12 +129,30 @@ class OnnxTagger:
     def _preprocess_image(self, image):
         if image.mode != 'RGB':
             image = image.convert('RGB')
-        image = image.resize((self.model_input_height, self.model_input_height), Image.NEAREST)
-        preprocessed_image = numpy.array(image, dtype=numpy.float32)[:, :, ::-1]  # RGB to BGR
-        preprocessed_image = numpy.expand_dims(preprocessed_image, axis=0)
+        avg_color = self._get_avg_color(image)
+        ratio = float(self.model_input_height) / max(image.size)
+        new_size = tuple([int(x * ratio) for x in image.size])
+        image = image.resize(new_size, Image.LANCZOS)
+        square = Image.new("RGB", (self.model_input_height, self.model_input_height), avg_color)
+        square.paste(image, ((self.model_input_height - new_size[0]) // 2, (self.model_input_height - new_size[1]) // 2))
+        np_image = numpy.array(square).astype(numpy.float32)
+        np_image = np_image[:, :, ::-1]  # RGB -> BGR
+        preprocessed_image = numpy.expand_dims(np_image, 0)
         return preprocessed_image
 
 
+    def _get_avg_color(self, image):
+        border_pixels = []
+        for x in range(image.width):
+            border_pixels.append(image.getpixel((x, 0)))
+            border_pixels.append(image.getpixel((x, image.height - 1)))
+        for y in range(image.height):
+            border_pixels.append(image.getpixel((0, y)))
+            border_pixels.append(image.getpixel((image.width - 1, y)))
+        avg_color = tuple(map(lambda x: int(sum(x) / len(x)), zip(*border_pixels)))
+        return avg_color
+
+    
     def _interrogate_image(self, image):
         preprocessed_image = self._preprocess_image(image)
         confidence_scores = self.model.run([self.tag_label], {self.model_input.name: preprocessed_image})[0][0]
