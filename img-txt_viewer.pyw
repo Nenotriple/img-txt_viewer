@@ -406,7 +406,7 @@ class ImgTxtViewer:
         self.external_image_editor_path = "mspaint"
         self.always_on_top_var = BooleanVar(value=False)
         self.big_save_button_var = BooleanVar(value=True)
-        self.auto_insert_interrogator_var = BooleanVar(value=False)
+        self.auto_insert_mode = StringVar(value="disable")
 
         # Font Settings
         self.font_var = StringVar()
@@ -1100,7 +1100,6 @@ class ImgTxtViewer:
         interrogate_button = ttk.Button(top_frame, text="Interrogate", takefocus=False, command=self.interrogate_image_tags)
         interrogate_button.pack(side='right')
         ToolTip.create(interrogate_button, "Interrogate the current image using the selected ONNX vision model.", 500, 6, 12)
-        self.auto_insert_mode = StringVar(value="disable")
         auto_insert_menubutton = ttk.Menubutton(top_frame, text="Auto-Insert", takefocus=False)
         auto_insert_menubutton.pack(side='right')
         auto_insert_menu = Menu(auto_insert_menubutton, tearoff=0)
