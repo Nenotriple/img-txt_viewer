@@ -1015,7 +1015,7 @@ class ImgTxtViewer:
         prefix_button = ttk.Button(button_frame, text="Go!", width=5, command=self.prefix_text_files)
         prefix_button.pack(side='left', anchor="n", pady=4)
         ToolTip.create(prefix_button, "Text files will be backup up", 200, 6, 12)
-        clear_button = ttk.Button(button_frame, text="Clear", width=5, command=self.clear_prefix_tab)
+        clear_button = ttk.Button(button_frame, text="Clear", width=5, command=lambda: self.prefix_entry.delete(0, 'end'))
         clear_button.pack(side='left', anchor="n", pady=4)
         undo_button = ttk.Button(button_frame, text="Undo", width=5, command=self.restore_backup)
         undo_button.pack(side='left', anchor="n", pady=4)
@@ -1028,10 +1028,6 @@ class ImgTxtViewer:
                                    "This means that the entered text will appear at the start of each text file.\n\n"
                                    "If a filter is applied, only text files that match the filter will be affected.")
         description_textbox.config(state="disabled", wrap="word")
-
-
-    def clear_prefix_tab(self):
-        self.prefix_entry.delete(0, 'end')
 
 
     # --------------------------------------
@@ -1478,7 +1474,7 @@ class ImgTxtViewer:
             if font and size:
                 size = int(size)
                 self.text_box.config(font=(font, size))
-                font_size_label.config(text=f"Size: {size}")
+                self.font_size_label.config(text=f"Size: {size}")
         def reset_to_defaults():
             self.font_var.set(self.default_font)
             self.size_scale.set(self.default_font_size)
@@ -1490,9 +1486,9 @@ class ImgTxtViewer:
         font_box.set(self.current_font_name)
         font_box.bind("<<ComboboxSelected>>", lambda event: set_font_and_size(self.font_var.get(), self.size_scale.get()))
         font_box.pack(side="left", anchor="n", pady=4, fill="x", expand=True)
-        font_size_label = Label(self.tab7, text=f"Size: {self.font_size_var.get()}", width=14)
-        font_size_label.pack(side="left", anchor="n", pady=4)
-        ToolTip.create(font_size_label, "Default size: 10", 200, 6, 12)
+        self.font_size_label = Label(self.tab7, text=f"Size: {self.font_size_var.get()}", width=14)
+        self.font_size_label.pack(side="left", anchor="n", pady=4)
+        ToolTip.create(self.font_size_label, "Default size: 10", 200, 6, 12)
         self.size_scale = ttk.Scale(self.tab7, from_=6, to=24, variable=self.font_size_var, takefocus=False)
         self.size_scale.set(self.current_font_size)
         self.size_scale.bind("<B1-Motion>", lambda event: set_font_and_size(self.font_var.get(), self.size_scale.get()))
