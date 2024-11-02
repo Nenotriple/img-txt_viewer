@@ -12,7 +12,7 @@ Create a UI that allows the user to open an image file and crop a selection from
 """
 
 #endregion
-################################################################################################################################################
+#########################################################################################################
 #region - Imports
 
 
@@ -30,7 +30,7 @@ from PIL import Image, ImageTk
 
 
 #endregion
-################################################################################################################################################
+#########################################################################################################
 #region CLS: CropSelection
 
 
@@ -113,19 +113,8 @@ class CropSelection:
             self.handles_manager.update_handles()
             self.update_overlay()
 
-        if self.handles_manager.resizing_handle:
-            x1, y1, x2, y2 = self.img_canvas.coords(self.rect)
-            handle_actions = {
-                'n': lambda: (x1, max(y_offset, min(event.y, y2 - 10)), x2, y2),
-                'e': lambda: (x1, y1, min(x_max, max(event.x, x1 + 10)), y2),
-                's': lambda: (x1, y1, x2, min(y_max, max(event.y, y1 + 10))),
-                'w': lambda: (max(x_offset, min(event.x, x2 - 10)), y1, x2, y2),
-                'ne': lambda: (x1, max(y_offset, min(event.y, y2 - 10)), min(x_max, max(event.x, x1 + 10)), y2),
-                'nw': lambda: (max(x_offset, min(event.x, x2 - 10)), max(y_offset, min(event.y, y2 - 10)), x2, y2),
-                'se': lambda: (x1, y1, min(x_max, max(event.x, x1 + 10)), min(y_max, max(event.y, y1 + 10))),
-                'sw': lambda: (max(x_offset, min(event.x, x2 - 10)), y1, x2, min(y_max, max(event.y, y1 + 10)))
-                }
-            x1, y1, x2, y2 = handle_actions[self.handles_manager.resizing_handle]()
+        if self.handles_manager.is_resizing():
+            x1, y1, x2, y2 = self.handles_manager.resize(event)
             update_rectangle(x1, y1, x2, y2)
         elif self.moving_rectangle:
             x1 = max(x_offset, min(event.x - self.move_offset_x, x_max - self.rect_width))
@@ -155,15 +144,15 @@ class CropSelection:
         if len(coords) != 4:
             return
         x1, y1, x2, y2 = coords
-        if self.handles_manager.resizing_handle:
-            self.handles_manager.resizing_handle = None
+        if self.handles_manager.is_resizing():
+            self.handles_manager.stop_resizing()
         elif self.moving_rectangle:
             self.moving_rectangle = False
         else:
             if x1 == x2 or y1 == y2:
                 self.clear_selection()
                 return
-            self.handles_manager.update_handles(create=True)
+            self.handles_manager.create_handles()
             self.update_overlay()
         self.update_selection_coords(x1, y1, x2, y2)
         self.handles_manager.show_handles()
@@ -314,7 +303,7 @@ class CropSelection:
 
 
 #endregion
-################################################################################################################################################
+#########################################################################################################
 #region CLS: CropSelHandles
 
 
@@ -426,8 +415,40 @@ class CropSelectionHandles:
         self.resizing_handle = None
 
 
+    def is_resizing(self):
+        return self.resizing_handle is not None
+
+
+    def stop_resizing(self):
+        self.resizing_handle = None
+        self.show_handles()
+
+
+    def resize(self, event):
+        x1, y1, x2, y2 = self.img_canvas.coords(self.crop_selection.rect)
+        x_offset, y_offset = self.img_canvas.x_offset, self.img_canvas.y_offset
+        x_max = x_offset + self.img_canvas.new_size[0]
+        y_max = y_offset + self.img_canvas.new_size[1]
+        handle_actions = {
+            'n': lambda: (x1, max(y_offset, min(event.y, y2 - 10)), x2, y2),
+            'e': lambda: (x1, y1, min(x_max, max(event.x, x1 + 10)), y2),
+            's': lambda: (x1, y1, x2, min(y_max, max(event.y, y1 + 10))),
+            'w': lambda: (max(x_offset, min(event.x, x2 - 10)), y1, x2, y2),
+            'ne': lambda: (x1, max(y_offset, min(event.y, y2 - 10)), min(x_max, max(event.x, x1 + 10)), y2),
+            'nw': lambda: (max(x_offset, min(event.x, x2 - 10)), max(y_offset, min(event.y, y2 - 10)), x2, y2),
+            'se': lambda: (x1, y1, min(x_max, max(event.x, x1 + 10)), min(y_max, max(event.y, y1 + 10))),
+            'sw': lambda: (max(x_offset, min(event.x, x2 - 10)), y1, x2, min(y_max, max(event.y, y1 + 10)))
+            }
+        x1_new, y1_new, x2_new, y2_new = handle_actions[self.resizing_handle]()
+        return x1_new, y1_new, x2_new, y2_new
+
+
+    def create_handles(self):
+        self.update_handles(create=True)
+
+
 #endregion
-################################################################################################################################################
+#########################################################################################################
 #region CLS: ImageCanvas
 
 
@@ -501,7 +522,7 @@ class ImageCanvas(tk.Canvas):
 
 
 #endregion
-################################################################################################################################################
+#########################################################################################################
 #region CLS: ImageCropper
 
 
@@ -731,8 +752,8 @@ class ImageCropper:
             width = x2 - x1
         except TypeError:
             x = y = height = width = 0
-        self.pos_x_spinbox.set(y)
-        self.pos_y_spinbox.set(x)
+        self.pos_x_spinbox.set(x)
+        self.pos_y_spinbox.set(y)
         self.width_spinbox.set(width)
         self.height_spinbox.set(height)
 
