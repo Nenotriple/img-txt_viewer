@@ -22,7 +22,7 @@ import os
 
 # Standard Library GUI
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, messagebox
 
 
 # Third Party Library
@@ -643,12 +643,14 @@ class ImageCropper:
     def open_directory_dialog(self):
         dir_path = filedialog.askdirectory()
         if dir_path and os.path.exists(dir_path):
-            self.image_files = [os.path.join(dir_path, f) for f in os.listdir(dir_path) if f.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp', '.gif'))]
+            self.image_files = [os.path.join(dir_path, f) for f in os.listdir(dir_path) if f.lower().endswith((".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif"))]
             self.current_index = 0
             if self.image_files:
                 self.display_image(self.image_files[self.current_index])
                 self.path_entry.delete(0, "end")
                 self.path_entry.insert(0, dir_path)
+            else:
+                messagebox.showerror("Error", "No image files found in the selected directory.")
 
 
     def display_image(self, img_path):
