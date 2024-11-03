@@ -169,7 +169,6 @@ def adjust_resolution_to_latent_analogue(input_resolution: str|tuple, multiple_o
     if isinstance(input_resolution, str):
         input_resolution = parse_string(input_resolution)
     width, height = input_resolution
-        # Adjust dimensions again to be multiples of 64 for latent compatibility
     adjusted_width = max((round(width / multiple_of)), 1) * 64
     adjusted_height = max((round(height / multiple_of)), 1) * 64
     return adjusted_width, adjusted_height
