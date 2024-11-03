@@ -56,145 +56,136 @@ class CropSelection:
         # Initialize handles manager
         self.handles_manager = CropSelectionHandles(self, img_canvas)
 
-        self.setup_img_canvas_binds()
+        self._set_img_canvas_binds()
 
 
-    def setup_img_canvas_binds(self):
-        self.img_canvas.bind("<ButtonPress-1>", self.on_button_press)
-        self.img_canvas.bind("<B1-Motion>", lambda event: self.on_move_press(event), add="+")
+    def _set_img_canvas_binds(self):
+        self.img_canvas.bind("<ButtonPress-1>", self._on_button_press)
+        self.img_canvas.bind("<B1-Motion>", self._on_move_press, add="+")
         self.img_canvas.bind("<B1-Motion>", lambda event: self.parent.update_widget_values(), add="+")
-        self.img_canvas.bind("<ButtonRelease-1>", self.on_button_release, add="+")
+        self.img_canvas.bind("<ButtonRelease-1>", self._on_button_release, add="+")
         self.img_canvas.bind("<ButtonRelease-1>", lambda event: self.parent.update_widget_values(), add="+")
-        self.img_canvas.bind("<Motion>", self.handles_manager.update_cursor_icon)
+        self.img_canvas.bind("<Motion>", self.handles_manager._update_cursor_icon)
 
 
-    def on_button_press(self, event):
+    def _on_button_press(self, event):
         if not self.img_canvas.img_path:
             return
-        x_offset, y_offset = self.img_canvas.x_offset, self.img_canvas.y_offset
-        x_max = x_offset + self.img_canvas.new_size[0]
-        y_max = y_offset + self.img_canvas.new_size[1]
+        x_off, y_off = self.img_canvas.x_off, self.img_canvas.y_off
+        x_max = x_off + self.img_canvas.new_size[0]
+        y_max = y_off + self.img_canvas.new_size[1]
         if self.rect:
-            if self.handles_manager.is_handle_clicked(event):
+            if self.handles_manager._is_handle_clicked(event):
                 return
             x1, y1, x2, y2 = self.img_canvas.coords(self.rect)
             if x1 <= event.x <= x2 and y1 <= event.y <= y2:
-                self.moving_rectangle = True
-                self.move_offset_x = event.x - x1
-                self.move_offset_y = event.y - y1
-                self.rect_width = x2 - x1
-                self.rect_height = y2 - y1
-                self.handles_manager.hide_handles()
+                self._start_moving_rect(event, x1, y1, x2, y2)
                 return
             else:
                 self.clear_selection()
-        if not (x_offset <= event.x <= x_max and y_offset <= event.y <= y_max):
+        if not (x_off <= event.x <= x_max and y_off <= event.y <= y_max):
             return
-        self.start_x = max(min(event.x, x_max), x_offset)
-        self.start_y = max(min(event.y, y_max), y_offset)
+        self._start_selection(event, x_off, y_off, x_max, y_max)
+
+
+    def _start_moving_rect(self, event, x1, y1, x2, y2):
+        self.moving_rectangle = True
+        self.move_offset_x = event.x - x1
+        self.move_offset_y = event.y - y1
+        self.rect_width = x2 - x1
+        self.rect_height = y2 - y1
+        self.handles_manager.hide_handles()
+
+
+    def _start_selection(self, event, x_off, y_off, x_max, y_max):
+        self.start_x = max(min(event.x, x_max), x_off)
+        self.start_y = max(min(event.y, y_max), y_off)
         if self.parent.expand_from_center_var.get():
             self.center_x = self.start_x
             self.center_y = self.start_y
         self.rect = self.img_canvas.create_rectangle(self.start_x, self.start_y, self.start_x, self.start_y, outline='white', tags='rect')
 
 
-    def on_move_press(self, event):
+    def _on_move_press(self, event):
         if not self.img_canvas.img_path or not self.rect:
             return
-        x_offset, y_offset = self.img_canvas.x_offset, self.img_canvas.y_offset
-        x_max = x_offset + self.img_canvas.new_size[0]
-        y_max = y_offset + self.img_canvas.new_size[1]
-
-        def update_rectangle(x1, y1, x2, y2):
-            self.img_canvas.coords(self.rect, x1, y1, x2, y2)
-            self.rect_width = x2 - x1
-            self.rect_height = y2 - y1
-            self.update_selection_coords(x1, y1, x2, y2)
-            self.handles_manager.update_handles()
-            self.update_overlay()
-
-        if self.handles_manager.is_resizing():
-            x1, y1, x2, y2 = self.handles_manager.resize(event)
-            update_rectangle(x1, y1, x2, y2)
+        x_off, y_off = self.img_canvas.x_off, self.img_canvas.y_off
+        x_max = x_off + self.img_canvas.new_size[0]
+        y_max = y_off + self.img_canvas.new_size[1]
+        if self.handles_manager._is_resizing():
+            x1, y1, x2, y2 = self.handles_manager._resize(event)
         elif self.moving_rectangle:
-            x1 = max(x_offset, min(event.x - self.move_offset_x, x_max - self.rect_width))
-            y1 = max(y_offset, min(event.y - self.move_offset_y, y_max - self.rect_height))
-            x2 = x1 + self.rect_width
-            y2 = y1 + self.rect_height
-            update_rectangle(x1, y1, x2, y2)
+            x1, y1, x2, y2 = self._calculate_moving_rect(event, x_off, y_off, x_max, y_max)
         else:
-            if self.parent.expand_from_center_var.get():
-                curX = max(min(event.x, x_max), x_offset)
-                curY = max(min(event.y, y_max), y_offset)
-                x1 = max(x_offset, min(2 * self.center_x - curX, x_max))
-                y1 = max(y_offset, min(2 * self.center_y - curY, y_max))
-                x2 = curX
-                y2 = curY
-                update_rectangle(x1, y1, x2, y2)
-            else:
-                curX = max(min(event.x, x_max), x_offset)
-                curY = max(min(event.y, y_max), y_offset)
-                update_rectangle(self.start_x, self.start_y, curX, curY)
+            x1, y1, x2, y2 = self._calculate_selection_rect(event, x_off, y_off, x_max, y_max)
+        self.update_rectangle(x1, y1, x2, y2)
 
 
-    def on_button_release(self, event):
+    def _calculate_moving_rect(self, event, x_off, y_off, x_max, y_max):
+        x1 = max(x_off, min(event.x - self.move_offset_x, x_max - self.rect_width))
+        y1 = max(y_off, min(event.y - self.move_offset_y, y_max - self.rect_height))
+        x2 = x1 + self.rect_width
+        y2 = y1 + self.rect_height
+        return x1, y1, x2, y2
+
+
+    def _calculate_selection_rect(self, event, x_off, y_off, x_max, y_max):
+        curX = max(min(event.x, x_max), x_off)
+        curY = max(min(event.y, y_max), y_off)
+        if self.parent.expand_from_center_var.get():
+            x1 = max(x_off, min(2 * self.center_x - curX, x_max))
+            y1 = max(y_off, min(2 * self.center_y - curY, y_max))
+            x2 = curX
+            y2 = curY
+        else:
+            x1, y1 = self.start_x, self.start_y
+            x2, y2 = curX, curY
+        return x1, y1, x2, y2
+
+
+    def update_rectangle(self, x1, y1, x2, y2):
+        self.img_canvas.coords(self.rect, x1, y1, x2, y2)
+        self.rect_width = x2 - x1
+        self.rect_height = y2 - y1
+        self._update_selection_coords(x1, y1, x2, y2)
+        self.handles_manager.update_handles()
+        self._update_overlay()
+
+
+    def _on_button_release(self, event):
         if not self.img_canvas.img_path or not self.rect:
             return
         coords = self.img_canvas.coords(self.rect)
         if len(coords) != 4:
             return
         x1, y1, x2, y2 = coords
-        if self.handles_manager.is_resizing():
-            self.handles_manager.stop_resizing()
+        if self.handles_manager._is_resizing():
+            self.handles_manager._stop_resizing()
         elif self.moving_rectangle:
             self.moving_rectangle = False
         else:
             if x1 == x2 or y1 == y2:
                 self.clear_selection()
                 return
-            self.handles_manager.create_handles()
-            self.update_overlay()
-        self.update_selection_coords(x1, y1, x2, y2)
+            self.handles_manager.update_handles(create=True)
+            self._update_overlay()
+        self._update_selection_coords(x1, y1, x2, y2)
         self.handles_manager.show_handles()
 
 
-    def update_selection_coords(self, x1, y1, x2, y2):
-        """
-        Updates the selection coordinates based on user input and adjusts them according to the image canvas offsets and scale ratio.
-
-        Parameters:
-            x1 (int): The x-coordinate of the first selection point.
-            y1 (int): The y-coordinate of the first selection point.
-            x2 (int): The x-coordinate of the second selection point.
-            y2 (int): The y-coordinate of the second selection point.
-
-        Sets:
-            self.coords (tuple or None): The adjusted original coordinates as a tuple (x1_orig, y1_orig, x2_orig, y2_orig). Set to None if the selection has zero area.
-        """
-        # Convert canvas coordinates to original image coordinates
-        x_offset, y_offset = self.img_canvas.x_offset, self.img_canvas.y_offset
-        x_max = x_offset + self.img_canvas.new_size[0]
-        y_max = y_offset + self.img_canvas.new_size[1]
-        # Ensure coordinates are within canvas bounds
-        x1, x2 = sorted([max(x_offset, min(x1, x_max)), max(x_offset, min(x2, x_max))])
-        y1, y2 = sorted([max(y_offset, min(y1, y_max)), max(y_offset, min(y2, y_max))])
-        # Adjust coordinates based on image scale ratio and offsets
-        x1_adj = x1 - x_offset
-        y1_adj = y1 - y_offset
-        x2_adj = x2 - x_offset
-        y2_adj = y2 - y_offset
-        # Convert adjusted coordinates to original image coordinates
-        img_scale_ratio = self.img_canvas.img_scale_ratio
-        x1_orig = int(x1_adj / img_scale_ratio)
-        y1_orig = int(y1_adj / img_scale_ratio)
-        x2_orig = int(x2_adj / img_scale_ratio)
-        y2_orig = int(y2_adj / img_scale_ratio)
-        # Ensure coordinates are within original image bounds
-        original_img_width = self.img_canvas.original_img_width
-        original_img_height = self.img_canvas.original_img_height
-        x1_orig, x2_orig = sorted([max(0, min(original_img_width, x1_orig)), max(0, min(original_img_width, x2_orig))])
-        y1_orig, y2_orig = sorted([max(0, min(original_img_height, y1_orig)), max(0, min(original_img_height, y2_orig))])
-        # Set coordinates
+    def _update_selection_coords(self, x1, y1, x2, y2):
+        cx_off, cy_off = self.img_canvas.x_off, self.img_canvas.y_off
+        c_ns = self.img_canvas.new_size
+        x1, x2 = sorted([max(cx_off, min(x1, cx_off + c_ns[0])), max(cx_off, min(x2, cx_off + c_ns[0]))])
+        y1, y2 = sorted([max(cy_off, min(y1, cy_off + c_ns[1])), max(cy_off, min(y2, cy_off + c_ns[1]))])
+        x1_adj, y1_adj = x1 - cx_off, y1 - cy_off
+        x2_adj, y2_adj = x2 - cx_off, y2 - cy_off
+        scale = self.img_canvas.img_scale_ratio
+        x1_orig, y1_orig = int(x1_adj / scale), int(y1_adj / scale)
+        x2_orig, y2_orig = int(x2_adj / scale), int(y2_adj / scale)
+        orig_img_width, orig_img_height = self.img_canvas.original_img_width, self.img_canvas.original_img_height
+        x1_orig, x2_orig = sorted([max(0, min(orig_img_width, x1_orig)), max(0, min(orig_img_width, x2_orig))])
+        y1_orig, y2_orig = sorted([max(0, min(orig_img_height, y1_orig)), max(0, min(orig_img_height, y2_orig))])
         self.coords = (x1_orig, y1_orig, x2_orig, y2_orig) if x1_orig != x2_orig and y1_orig != y2_orig else None
 
 
@@ -216,7 +207,7 @@ class CropSelection:
         self.parent.update_widget_values()
 
 
-    def update_overlay(self):
+    def _update_overlay(self):
         if self.overlay:
             self.img_canvas.delete("overlay")
         self.overlay = []
@@ -236,70 +227,44 @@ class CropSelection:
 
     def redraw(self):
         if self.rect and self.coords:
-            x1 = self.coords[0] * self.img_canvas.img_scale_ratio + self.img_canvas.x_offset
-            y1 = self.coords[1] * self.img_canvas.img_scale_ratio + self.img_canvas.y_offset
-            x2 = self.coords[2] * self.img_canvas.img_scale_ratio + self.img_canvas.x_offset
-            y2 = self.coords[3] * self.img_canvas.img_scale_ratio + self.img_canvas.y_offset
+            scale = self.img_canvas.img_scale_ratio
+            x1 = self.coords[0] * scale + self.img_canvas.x_off
+            y1 = self.coords[1] * scale + self.img_canvas.y_off
+            x2 = self.coords[2] * scale + self.img_canvas.x_off
+            y2 = self.coords[3] * scale + self.img_canvas.y_off
             self.rect = self.img_canvas.create_rectangle(x1, y1, x2, y2, outline='white', tags='rect')
             self.handles_manager.update_handles(create=True)
-            self.update_overlay()
+            self._update_overlay()
 
 
-    def update_selection_size(self, width=None, height=None, x=None, y=None):
+    def set_selection_dimensions(self, width=None, height=None, new_x=None, new_y=None):
         if not self.rect:
             return
-        # Get current rectangle coordinates
-        x1_canvas, y1_canvas, x2_canvas, y2_canvas = self.img_canvas.coords(self.rect)
-        # Convert canvas coordinates to original image coordinates
-        x_offset, y_offset = self.img_canvas.x_offset, self.img_canvas.y_offset
-        img_scale_ratio = self.img_canvas.img_scale_ratio
-        x1_orig = (x1_canvas - x_offset) / img_scale_ratio
-        y1_orig = (y1_canvas - y_offset) / img_scale_ratio
-        x2_orig = (x2_canvas - x_offset) / img_scale_ratio
-        y2_orig = (y2_canvas - y_offset) / img_scale_ratio
-        current_width = x2_orig - x1_orig
-        current_height = y2_orig - y1_orig
-        updated = False
-        if x is not None and x != x1_orig:
-            x1_orig = x
-            updated = True
-        if y is not None and y != y1_orig:
-            y1_orig = y
-            updated = True
-        if width is not None and width != current_width:
-            x2_orig = x1_orig + width
-            updated = True
-        else:
-            x2_orig = x1_orig + current_width
-        if height is not None and height != current_height:
-            y2_orig = y1_orig + height
-            updated = True
-        else:
-            y2_orig = y1_orig + current_height
-        if updated:
-            # Convert back to canvas coordinates
-            x1_canvas = x1_orig * img_scale_ratio + x_offset
-            y1_canvas = y1_orig * img_scale_ratio + y_offset
-            x2_canvas = x2_orig * img_scale_ratio + x_offset
-            y2_canvas = y2_orig * img_scale_ratio + y_offset
-            # Ensure coordinates are within canvas bounds
-            x_max = x_offset + self.img_canvas.new_size[0]
-            y_max = y_offset + self.img_canvas.new_size[1]
-            x1_canvas = max(x_offset, min(x1_canvas, x_max))
-            y1_canvas = max(y_offset, min(y1_canvas, y_max))
-            x2_canvas = max(x_offset, min(x2_canvas, x_max))
-            y2_canvas = max(y_offset, min(y2_canvas, y_max))
-            if x2_canvas < x1_canvas:
-                x1_canvas, x2_canvas = x2_canvas, x1_canvas
-            if y2_canvas < y1_canvas:
-                y1_canvas, y2_canvas = y2_canvas, y1_canvas
-            # Update rectangle on canvas
-            self.img_canvas.coords(self.rect, x1_canvas, y1_canvas, x2_canvas, y2_canvas)
-            self.rect_width = x2_canvas - x1_canvas
-            self.rect_height = y2_canvas - y1_canvas
-            self.update_selection_coords(x1_canvas, y1_canvas, x2_canvas, y2_canvas)
-            self.handles_manager.update_handles()
-            self.update_overlay()
+        x1, y1, x2, y2 = self.img_canvas.coords(self.rect)
+        cx_off, cy_off = self.img_canvas.x_off, self.img_canvas.y_off
+        scale = self.img_canvas.img_scale_ratio
+        c_size = self.img_canvas.new_size
+        if new_x is not None:
+            new_x = max(cx_off, min(new_x, cx_off + c_size[0] - (x2 - x1)))
+            x2 = new_x + (x2 - x1)
+            x1 = new_x
+        if new_y is not None:
+            new_y = max(cy_off, min(new_y, cy_off + c_size[1] - (y2 - y1)))
+            y2 = new_y + (y2 - y1)
+            y1 = new_y
+        if width is not None:
+            width = min(width * scale, c_size[0])
+            x2 = x1 + width
+            if x2 > cx_off + c_size[0]:
+                x2 = cx_off + c_size[0]
+                x1 = x2 - width
+        if height is not None:
+            height = min(height * scale, c_size[1])
+            y2 = y1 + height
+            if y2 > cy_off + c_size[1]:
+                y2 = cy_off + c_size[1]
+                y1 = y2 - height
+        self.update_rectangle(x1, y1, x2, y2)
 
 
 #endregion
@@ -336,7 +301,7 @@ class CropSelectionHandles:
             return
         x1, y1, x2, y2 = self.img_canvas.coords(self.crop_selection.rect)
         mid_x, mid_y = (x1 + x2) / 2, (y1 + y2) / 2
-        size = self.calculate_handle_size(x1, y1, x2, y2)
+        size = self._calculate_handle_size(x1, y1, x2, y2)
         positions = {
             'n': (mid_x, y1),
             'e': (x2, mid_y),
@@ -349,15 +314,12 @@ class CropSelectionHandles:
             }
         for key, (cx, cy) in positions.items():
             if create:
-                self.handles[key] = self.img_canvas.create_rectangle(
-                    cx - size, cy - size, cx + size, cy + size,
-                    fill=self.handle_color, tags='handle'
-                    )
+                self.handles[key] = self.img_canvas.create_rectangle(cx - size, cy - size, cx + size, cy + size, fill=self.handle_color, tags='handle')
             elif key in self.handles:
                 self.img_canvas.coords(self.handles[key], cx - size, cy - size, cx + size, cy + size)
 
 
-    def calculate_handle_size(self, x1, y1, x2, y2):
+    def _calculate_handle_size(self, x1, y1, x2, y2):
         width = abs(x2 - x1)
         height = abs(y2 - y1)
         if width < 50 or height < 50:
@@ -370,7 +332,7 @@ class CropSelectionHandles:
             return self.handle_size
 
 
-    def hide_handles_except(self, active_handle):
+    def _hide_handles_except(self, active_handle):
         for key, handle in self.handles.items():
             if key != active_handle:
                 self.img_canvas.itemconfigure(handle, state='hidden')
@@ -386,17 +348,17 @@ class CropSelectionHandles:
             self.img_canvas.itemconfigure(handle, state='normal')
 
 
-    def is_handle_clicked(self, event):
+    def _is_handle_clicked(self, event):
         items = self.img_canvas.find_overlapping(event.x, event.y, event.x, event.y)
         for key, handle in self.handles.items():
             if handle in items:
                 self.resizing_handle = key
-                self.hide_handles_except(key)
+                self._hide_handles_except(key)
                 return True
         return False
 
 
-    def update_cursor_icon(self, event):
+    def _update_cursor_icon(self, event):
         if not self.img_canvas.img_path:
             return
         items = self.img_canvas.find_overlapping(event.x, event.y, event.x, event.y)
@@ -415,36 +377,32 @@ class CropSelectionHandles:
         self.resizing_handle = None
 
 
-    def is_resizing(self):
+    def _is_resizing(self):
         return self.resizing_handle is not None
 
 
-    def stop_resizing(self):
+    def _stop_resizing(self):
         self.resizing_handle = None
         self.show_handles()
 
 
-    def resize(self, event):
+    def _resize(self, event):
         x1, y1, x2, y2 = self.img_canvas.coords(self.crop_selection.rect)
-        x_offset, y_offset = self.img_canvas.x_offset, self.img_canvas.y_offset
-        x_max = x_offset + self.img_canvas.new_size[0]
-        y_max = y_offset + self.img_canvas.new_size[1]
+        x_off, y_off = self.img_canvas.x_off, self.img_canvas.y_off
+        x_max = x_off + self.img_canvas.new_size[0]
+        y_max = y_off + self.img_canvas.new_size[1]
         handle_actions = {
-            'n': lambda: (x1, max(y_offset, min(event.y, y2 - 10)), x2, y2),
+            'n': lambda: (x1, max(y_off, min(event.y, y2 - 10)), x2, y2),
             'e': lambda: (x1, y1, min(x_max, max(event.x, x1 + 10)), y2),
             's': lambda: (x1, y1, x2, min(y_max, max(event.y, y1 + 10))),
-            'w': lambda: (max(x_offset, min(event.x, x2 - 10)), y1, x2, y2),
-            'ne': lambda: (x1, max(y_offset, min(event.y, y2 - 10)), min(x_max, max(event.x, x1 + 10)), y2),
-            'nw': lambda: (max(x_offset, min(event.x, x2 - 10)), max(y_offset, min(event.y, y2 - 10)), x2, y2),
+            'w': lambda: (max(x_off, min(event.x, x2 - 10)), y1, x2, y2),
+            'ne': lambda: (x1, max(y_off, min(event.y, y2 - 10)), min(x_max, max(event.x, x1 + 10)), y2),
+            'nw': lambda: (max(x_off, min(event.x, x2 - 10)), max(y_off, min(event.y, y2 - 10)), x2, y2),
             'se': lambda: (x1, y1, min(x_max, max(event.x, x1 + 10)), min(y_max, max(event.y, y1 + 10))),
-            'sw': lambda: (max(x_offset, min(event.x, x2 - 10)), y1, x2, min(y_max, max(event.y, y1 + 10)))
+            'sw': lambda: (max(x_off, min(event.x, x2 - 10)), y1, x2, min(y_max, max(event.y, y1 + 10)))
             }
         x1_new, y1_new, x2_new, y2_new = handle_actions[self.resizing_handle]()
         return x1_new, y1_new, x2_new, y2_new
-
-
-    def create_handles(self):
-        self.update_handles(create=True)
 
 
 #endregion
@@ -462,48 +420,41 @@ class ImageCanvas(tk.Canvas):
         self.original_img_height = 0
         self.img_scale_ratio = 1.0
         self.new_size = (0, 0)
-        self.x_offset = 0
-        self.y_offset = 0
+        self.x_off = 0
+        self.y_off = 0
         self.img_thumbnail = None
         self.resize_after_id = None
 
-        self.bind("<Configure>", self.resize_image)
+        self.bind("<Configure>", self._resize_image)
         self.bind("<Button-3>", lambda event: self.parent.crop_selection.clear_selection())
 
 
-    def display_image(self, img_path):
+    def _display_image(self, img_path):
         self.img_path = img_path
         with Image.open(img_path) as img:
             self.original_img = img.copy()
         self.original_img_width, self.original_img_height = self.original_img.size
-        self.resize_image(None)
+        self._resize_image(None)
 
 
-    def resize_image(self, event):
+    def _resize_image(self, event):
         if not self.img_path:
             return
-        # Calculate new dimensions while maintaining aspect ratio
         new_width, new_height = self.winfo_width(), self.winfo_height()
         ratio = min(new_width / self.original_img_width, new_height / self.original_img_height)
         new_size = (int(self.original_img_width * ratio), int(self.original_img_height * ratio))
-        # Resize if new size is different
         if new_size != self.new_size:
             self.img_scale_ratio = ratio
             self.new_size = new_size
-            # Resize the image
             self.img_resized = self.original_img.resize(self.new_size, Image.NEAREST)
-            # Convert resized image for Tkinter
             self.img_thumbnail = ImageTk.PhotoImage(self.img_resized)
-            # Update image info
             percent_scale = self.img_scale_ratio * 100
             self.parent.update_imageinfo(int(percent_scale))
         self.delete("all")
-        # Center and Create image image on canvas
-        self.x_offset = (new_width - self.new_size[0]) // 2
-        self.y_offset = (new_height - self.new_size[1]) // 2
-        self.create_image(self.x_offset, self.y_offset, anchor="nw", image=self.img_thumbnail)
+        self.x_off = (new_width - self.new_size[0]) // 2
+        self.y_off = (new_height - self.new_size[1]) // 2
+        self.create_image(self.x_off, self.y_off, anchor="nw", image=self.img_thumbnail)
         self.configure(scrollregion=self.bbox("all"))
-        # Schedule HQ resize after 250ms
         if self.resize_after_id:
             self.after_cancel(self.resize_after_id)
         self.resize_after_id = self.after(250, self.refresh_image)
@@ -515,7 +466,7 @@ class ImageCanvas(tk.Canvas):
         self.img_resized = self.original_img.resize(self.new_size, Image.LANCZOS)
         self.img_thumbnail = ImageTk.PhotoImage(self.img_resized)
         self.delete("all")
-        self.create_image(self.x_offset, self.y_offset, anchor="nw", image=self.img_thumbnail)
+        self.create_image(self.x_off, self.y_off, anchor="nw", image=self.img_thumbnail)
         self.configure(scrollregion=self.bbox("all"))
         if hasattr(self, 'crop_selection'):
             self.crop_selection.redraw()
@@ -535,9 +486,7 @@ class ImageCropper:
         self.padx = 10
         self.setup_window()
 
-        # Create crop selection object
         self.crop_selection = CropSelection(self, self.img_canvas)
-        # Bind crop selection to image canvas
         self.img_canvas.crop_selection = self.crop_selection
 
 
@@ -551,7 +500,6 @@ class ImageCropper:
         self.root.grid_columnconfigure(0, weight=1)
         self.create_image_ui()
         self.create_control_panel()
-        # Display window size on resize:
         #self.root.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == self.root else None, add="+")
 
 
@@ -615,16 +563,18 @@ class ImageCropper:
         # Width
         self.width_label = ttk.Label(self.size_frame, text="W (px):")
         self.width_label.grid(row=0, column=0, padx=self.padx, pady=self.pady)
-        self.width_spinbox = ttk.Spinbox(self.size_frame, from_=1, to=99999, width=10)
+        self.width_spinbox = ttk.Spinbox(self.size_frame, from_=1, to=9999, width=10, command=self.adjust_selection)
         self.width_spinbox.grid(row=0, column=1, columnspan=2, padx=self.padx, pady=self.pady)
-        self.width_spinbox.bind("<Return>", lambda event: self.crop_selection.update_selection_size(width=int(self.width_spinbox.get())))
+        self.width_spinbox.set(0)
+        self.width_spinbox.bind("<Return>", self.adjust_selection)
 
         # Height
         self.height_label = ttk.Label(self.size_frame, text="H (px):")
         self.height_label.grid(row=1, column=0, padx=self.padx, pady=self.pady)
-        self.height_spinbox = ttk.Spinbox(self.size_frame, from_=1, to=99999, width=10)
+        self.height_spinbox = ttk.Spinbox(self.size_frame, from_=1, to=9999, width=10, command=self.adjust_selection)
         self.height_spinbox.grid(row=1, column=1, columnspan=2, padx=self.padx, pady=self.pady)
-        self.height_spinbox.bind("<Return>", lambda event: self.crop_selection.update_selection_size(height=int(self.width_spinbox.get())))
+        self.height_spinbox.set(0)
+        self.height_spinbox.bind("<Return>", self.adjust_selection)
 
 
     def create_position_widgets(self):
@@ -634,16 +584,18 @@ class ImageCropper:
         # X Position
         self.pos_x_label = ttk.Label(self.position_frame, text="X (px):")
         self.pos_x_label.grid(row=0, column=0, padx=self.padx, pady=self.pady)
-        self.pos_x_spinbox = ttk.Spinbox(self.position_frame, from_=0, to=99999, width=10)
+        self.pos_x_spinbox = ttk.Spinbox(self.position_frame, from_=0, to=9999, width=10, command=self.adjust_selection)
         self.pos_x_spinbox.grid(row=0, column=1, columnspan=2, padx=self.padx, pady=self.pady)
-        self.pos_x_spinbox.bind("<Return>", lambda event: self.crop_selection.update_selection_size(x=int(self.pos_x_spinbox.get())))
+        self.pos_x_spinbox.set(0)
+        self.pos_x_spinbox.bind("<Return>", self.adjust_selection)
 
         # Y Position
         self.pos_y_label = ttk.Label(self.position_frame, text="Y (px):")
         self.pos_y_label.grid(row=1, column=0, padx=self.padx, pady=self.pady)
-        self.pos_y_spinbox = ttk.Spinbox(self.position_frame, from_=0, to=99999, width=10)
+        self.pos_y_spinbox = ttk.Spinbox(self.position_frame, from_=0, to=9999, width=10, command=self.adjust_selection)
         self.pos_y_spinbox.grid(row=1, column=1, columnspan=2, padx=self.padx, pady=self.pady)
-        self.pos_y_spinbox.bind("<Return>", lambda event: self.crop_selection.update_selection_size(y=int(self.pos_y_spinbox.get())))
+        self.pos_y_spinbox.set(0)
+        self.pos_y_spinbox.bind("<Return>", self.adjust_selection)
 
 
     def create_aspect_ratio_widgets(self):
@@ -693,12 +645,14 @@ class ImageCropper:
 
 
     def display_image(self, img_path):
-        self.img_canvas.display_image(img_path)
+        self.img_canvas._display_image(img_path)
         self.crop_selection.clear_selection()
         original_width, original_height = self.img_canvas.original_img.size
         displayed_width = self.img_canvas.winfo_width()
         percent_scale = int((displayed_width / original_width) * 100)
         self.update_imageinfo(percent_scale)
+        self.width_spinbox.config(to=self.img_canvas.original_img_width)
+        self.height_spinbox.config(to=self.img_canvas.original_img_height)
 
 
     def show_previous_image(self):
@@ -719,7 +673,26 @@ class ImageCropper:
         if self.crop_selection.coords:
             cropped = self.img_canvas.original_img.crop(self.crop_selection.coords)
             cropped.show()
-            self.root.after(750, self.crop_selection.clear_selection)
+            self.root.after(100, self.crop_selection.clear_selection)
+
+
+    def adjust_selection(self, event=None):
+        if event is None:
+            widget = self.root.focus_get()
+        else:
+            widget = event.widget
+        try:
+            value = int(widget.get())
+        except (AttributeError, ValueError):
+            return
+        spinbox_map = {
+            self.width_spinbox: 'width',
+            self.height_spinbox: 'height',
+            self.pos_x_spinbox: 'new_x',
+            self.pos_y_spinbox: 'new_y'
+            }
+        kwargs = {spinbox_map[widget]: value}
+        self.crop_selection.set_selection_dimensions(**kwargs)
 
 
     def update_imageinfo(self, percent_scale=0):
@@ -746,10 +719,8 @@ class ImageCropper:
     def update_widget_values(self):
         try:
             x1, y1, x2, y2 = self.crop_selection.coords
-            x = x1
-            y = y1
-            height = y2 - y1
-            width = x2 - x1
+            x, y, = x1, y1
+            height, width = (y2 - y1), (x2 - x1)
         except TypeError:
             x = y = height = width = 0
         self.pos_x_spinbox.set(x)
