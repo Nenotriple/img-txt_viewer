@@ -59,9 +59,7 @@ class CropSelection:
 
         self.img_canvas.bind("<ButtonPress-1>", self._on_button_press)
         self.img_canvas.bind("<B1-Motion>", self._on_move_press, add="+")
-        #self.img_canvas.bind("<B1-Motion>", lambda event: self.parent.update_widget_values(resize=True), add="+")
         self.img_canvas.bind("<ButtonRelease-1>", self._on_button_release, add="+")
-        #self.img_canvas.bind("<ButtonRelease-1>", lambda event: self.parent.update_widget_values(), add="+")
         self.img_canvas.bind("<Motion>", self.handles_manager._update_cursor_icon)
 
 
@@ -419,17 +417,30 @@ class CropSelectionHandles:
         x_off, y_off = self.img_canvas.x_off, self.img_canvas.y_off
         x_max = x_off + self.img_canvas.new_size[0]
         y_max = y_off + self.img_canvas.new_size[1]
-        handle_actions = {
-            'n': lambda: (x1, max(y_off, min(event.y, y2 - 10)), x2, y2),
-            'e': lambda: (x1, y1, min(x_max, max(event.x, x1 + 10)), y2),
-            's': lambda: (x1, y1, x2, min(y_max, max(event.y, y1 + 10))),
-            'w': lambda: (max(x_off, min(event.x, x2 - 10)), y1, x2, y2),
-            'ne': lambda: (x1, max(y_off, min(event.y, y2 - 10)), min(x_max, max(event.x, x1 + 10)), y2),
-            'nw': lambda: (max(x_off, min(event.x, x2 - 10)), max(y_off, min(event.y, y2 - 10)), x2, y2),
-            'se': lambda: (x1, y1, min(x_max, max(event.x, x1 + 10)), min(y_max, max(event.y, y1 + 10))),
-            'sw': lambda: (max(x_off, min(event.x, x2 - 10)), y1, x2, min(y_max, max(event.y, y1 + 10)))
-            }
-        x1_new, y1_new, x2_new, y2_new = handle_actions[self.resizing_handle]()
+        expand_from_center = self.crop_selection.parent.expand_from_center_var.get()
+        m_size = 10
+
+        if expand_from_center:
+            # Calculate center and distance from center
+            cx = (x1 + x2) / 2
+            cy = (y1 + y2) / 2
+            dx = max(m_size / 2, abs(event.x - cx))
+            dy = max(m_size / 2, abs(event.y - cy))
+            # Resize from center
+            x1_new = max(x_off, cx - dx) if 'w' in self.resizing_handle or 'e' in self.resizing_handle else x1
+            y1_new = max(y_off, cy - dy) if 'n' in self.resizing_handle or 's' in self.resizing_handle else y1
+            x2_new = min(x_max, cx + dx) if 'e' in self.resizing_handle or 'w' in self.resizing_handle else x2
+            y2_new = min(y_max, cy + dy) if 's' in self.resizing_handle or 'n' in self.resizing_handle else y2
+        else:
+            x1_new, y1_new, x2_new, y2_new = x1, y1, x2, y2
+            if 'n' in self.resizing_handle:
+                y1_new = max(y_off, min(event.y, y2 - m_size))
+            if 's' in self.resizing_handle:
+                y2_new = min(y_max, max(event.y, y1 + m_size))
+            if 'w' in self.resizing_handle:
+                x1_new = max(x_off, min(event.x, x2 - m_size))
+            if 'e' in self.resizing_handle:
+                x2_new = min(x_max, max(event.x, x1 + m_size))
         return x1_new, y1_new, x2_new, y2_new
 
 
