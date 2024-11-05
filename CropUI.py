@@ -59,9 +59,9 @@ class CropSelection:
 
         self.img_canvas.bind("<ButtonPress-1>", self._on_button_press)
         self.img_canvas.bind("<B1-Motion>", self._on_move_press, add="+")
-        self.img_canvas.bind("<B1-Motion>", lambda event: self.parent.update_widget_values(), add="+")
+        #self.img_canvas.bind("<B1-Motion>", lambda event: self.parent.update_widget_values(resize=True), add="+")
         self.img_canvas.bind("<ButtonRelease-1>", self._on_button_release, add="+")
-        self.img_canvas.bind("<ButtonRelease-1>", lambda event: self.parent.update_widget_values(), add="+")
+        #self.img_canvas.bind("<ButtonRelease-1>", lambda event: self.parent.update_widget_values(), add="+")
         self.img_canvas.bind("<Motion>", self.handles_manager._update_cursor_icon)
 
 
@@ -111,10 +111,12 @@ class CropSelection:
         y_max = y_off + self.img_canvas.new_size[1]
         if self.handles_manager._is_resizing():
             x1, y1, x2, y2 = self.handles_manager._resize(event)
+            self.parent.update_widget_values(resize=True)
         elif self.moving_rectangle:
             x1, y1, x2, y2 = self._calculate_moving_rect(event, x_off, y_off, x_max, y_max)
         else:
             x1, y1, x2, y2 = self._calculate_selection_rect(event, x_off, y_off, x_max, y_max)
+            self.parent.update_widget_values(resize=True)
         self.update_rectangle(x1, y1, x2, y2)
 
 
@@ -168,6 +170,7 @@ class CropSelection:
             self._update_overlay()
         self._update_selection_coords(x1, y1, x2, y2)
         self.handles_manager.show_handles()
+        self.parent.update_widget_values()
 
 
     def _update_selection_coords(self, x1, y1, x2, y2):
@@ -677,13 +680,13 @@ class ImageCropper:
 # --------------------------------------
 # UI Helpers
 # --------------------------------------
-    def update_widget_values(self, label=False):
+    def update_widget_values(self, label=False, resize=False):
         def update_label():
+            width, height = int(self.width_spinbox.get()), int(self.height_spinbox.get())
             self.crop_info_label.config(text=f"Crop to: {width}x{height} ({aspect_ratio:.2f})")
             self.selection_aspect = round(aspect_ratio, 2)
             self.pos_x_spinbox.config(to=self.img_canvas.original_img_width - int(self.width_spinbox.get()))
             self.pos_y_spinbox.config(to=self.img_canvas.original_img_height - int(self.height_spinbox.get()))
-
         try:
             x1, y1, x2, y2 = self.crop_selection.coords
             x, y = x1, y1
@@ -701,8 +704,9 @@ class ImageCropper:
             else:
                 self.pos_x_spinbox.set(x)
                 self.pos_y_spinbox.set(y)
-                self.width_spinbox.set(width)
-                self.height_spinbox.set(height)
+                if resize:
+                    self.width_spinbox.set(width)
+                    self.height_spinbox.set(height)
                 update_label()
         except UnboundLocalError:
             pass
@@ -759,15 +763,13 @@ class ImageCropper:
 
 
     def crop_image(self):
-        if not self.img_canvas.img_path:
+        if not (self.img_canvas.img_path and self.crop_selection.coords):
             return
-        if self.crop_selection.coords:
-            scale = self.img_canvas.img_scale_ratio
-            x1, y1, x2, y2 = self.crop_selection.coords
-            coords = (x1 / scale, y1 / scale, x2 / scale, y2 / scale)
-            cropped = self.img_canvas.original_img.crop(coords)
-            cropped.show()
-            self.root.after(100, self.crop_selection.clear_selection)
+        width, height = int(self.width_spinbox.get()), int(self.height_spinbox.get())
+        pos_x, pos_y = int(self.pos_x_spinbox.get()), int(self.pos_y_spinbox.get())
+        coords = (pos_x, pos_y, pos_x + width, pos_y + height)
+        cropped_img = self.img_canvas.original_img.crop(coords)
+        cropped_img.show()
 
 
 # --------------------------------------
