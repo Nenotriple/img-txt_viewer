@@ -137,6 +137,81 @@ class CropSelection:
         else:
             x1, y1 = self.start_x, self.start_y
             x2, y2 = curX, curY
+        if self.parent.fixed_selection_var.get():
+            x1, y1, x2, y2 = self._apply_fixed_selection(x1, y1, x2, y2, x_off, y_off, x_max, y_max)
+        return x1, y1, x2, y2
+
+
+    def _apply_fixed_selection(self, x1, y1, x2, y2, x_off, y_off, x_max, y_max):
+        scale = self.img_canvas.img_scale_ratio
+        mode = self.parent.fixed_selection_option_var.get()
+        value = self.parent.fixed_selection_entry_var.get()
+
+        if mode == "Size":  # Tuple: (100x100), (200 x 200), etc.
+            value = value.split("x")
+        elif mode == "Aspect Ratio":  # Handle later
+            pass
+        else:
+            try:
+                value = float(value)
+            except ValueError:
+                return x1, y1, x2, y2
+
+        width = abs(x2 - x1)
+        height = abs(y2 - y1)
+
+        if mode == "Aspect Ratio":  # Input: "1:1", "16:9", etc.
+            try:
+                if ":" in value:
+                    width_str, height_str = value.split(":")
+                    width_ratio = float(width_str.strip())
+                    height_ratio = float(height_str.strip())
+                    if width_ratio == 0 or height_ratio == 0:
+                        return x1, y1, x2, y2
+                    ratio = width_ratio / height_ratio
+                else:
+                    ratio = float(value)
+                if ratio == 0 or height == 0:
+                    return x1, y1, x2, y2
+            except (ValueError, ZeroDivisionError):
+                return x1, y1, x2, y2
+            if width / height > ratio:
+                width = height * ratio
+            else:
+                height = width / ratio
+
+        elif mode == "Width":  # Integer: 100, 200, etc.
+            try:
+                width = int(value * scale)
+            except ValueError:
+                return x1, y1, x2, y2
+            if width == 0:
+                return x1, y1, x2, y2
+            height = width * (height / width)
+
+        elif mode == "Height":  # Integer: 100, 200, etc.
+            try:
+                height = int(value * scale)
+            except ValueError:
+                return x1, y1, x2, y2
+            if height == 0:
+                return x1, y1, x2, y2
+            width = height * (width / height)
+
+        elif mode == "Size":  # Tuple: (100x100), (200 x 200), etc.
+            try:
+                width_str, height_str = value
+                width = int(width_str.strip()) * scale
+                height = int(height_str.strip()) * scale
+            except (ValueError, IndexError):
+                return x1, y1, x2, y2
+            if width == 0 or height == 0:
+                return x1, y1, x2, y2
+
+        x2 = x1 + width if x2 >= x1 else x1 - width
+        y2 = y1 + height if y2 >= y1 else y1 - height
+        x2 = min(max(x2, x_off), x_max)
+        y2 = min(max(y2, y_off), y_max)
         return x1, y1, x2, y2
 
 
@@ -419,7 +494,6 @@ class CropSelectionHandles:
         y_max = y_off + self.img_canvas.new_size[1]
         expand_from_center = self.crop_selection.parent.expand_from_center_var.get()
         m_size = 10
-
         if expand_from_center:
             # Calculate center and distance from center
             cx = (x1 + x2) / 2
@@ -473,6 +547,12 @@ class ImageCanvas(tk.Canvas):
         with Image.open(img_path) as img:
             self.original_img = img.copy()
         self.original_img_width, self.original_img_height = self.original_img.size
+        self.img_scale_ratio = 1.0
+        self.new_size = (0, 0)
+        self.x_off = 0
+        self.y_off = 0
+        self.img_thumbnail = None
+        self.resize_after_id = None
         self._resize_image(None)
 
 
@@ -506,7 +586,7 @@ class ImageCanvas(tk.Canvas):
         self.delete("all")
         self.create_image(self.x_off, self.y_off, anchor="nw", image=self.img_thumbnail)
         if hasattr(self, 'crop_selection'):
-            self.crop_selection.redraw()
+            self.crop_selection.clear_selection()
 
 
 #endregion
@@ -570,7 +650,6 @@ class ImageCropper:
         self.create_position_widgets()
         self.create_option_widgets()
         self.create_crop_info_label()
-        self.toggle_fixed_selection_widgets()
 
 
     def create_directory_and_navigation_widgets(self):
@@ -658,7 +737,7 @@ class ImageCropper:
 
         # Fixed selection
         self.fixed_selection_var = tk.BooleanVar(value=False)
-        self.fixed_selection_checkbutton = ttk.Checkbutton(options_frame, variable=self.fixed_selection_var, text="Fixed", width=5, command=self.toggle_fixed_selection_widgets)
+        self.fixed_selection_checkbutton = ttk.Checkbutton(options_frame, variable=self.fixed_selection_var, text="Fixed", width=5)
         self.fixed_selection_checkbutton.grid(row=1, column=0, padx=self.padx, pady=self.pady)
         ToolTip(self.fixed_selection_checkbutton, "Enable lock of aspect ratio, width, height, or size", 200, 6, 12)
 
@@ -684,7 +763,7 @@ class ImageCropper:
 
 
     def create_crop_info_label(self):
-        self.crop_info_label = ttk.Label(self.control_panel, text="Crop to: 0 x 0 (0:0)", anchor="w")
+        self.crop_info_label = ttk.Label(self.control_panel, text="Crop to: 0x0 (0:0)", anchor="w")
         self.crop_info_label.pack(side="bottom", fill="x", padx=self.padx, pady=self.pady)
 
 
@@ -733,13 +812,6 @@ class ImageCropper:
             self.fixed_selection_entry_var.set(self.height_spinbox.get())
         elif mode == "Size":
             self.fixed_selection_entry_var.set(f"{self.width_spinbox.get()} x {self.height_spinbox.get()}")
-
-
-    def toggle_fixed_selection_widgets(self):
-        state = "normal" if self.fixed_selection_var.get() else "disabled"
-        self.fixed_selection_option_combobox.config(state="readonly" if state == "normal" else "disabled")
-        self.fixed_selection_entry.config(state=state)
-        self.insert_button.config(state=state)
 
 
     def focus_widget_and_adjust_selection(self, event):
