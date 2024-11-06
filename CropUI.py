@@ -595,7 +595,8 @@ class ImageCanvas(tk.Canvas):
 
 
 class ImageCropper:
-    def __init__(self):
+    def __init__(self, root):
+        self.root = root
         self.image_files = []
         self.image_info_cache = {}
         self.current_index = 0
@@ -612,7 +613,6 @@ class ImageCropper:
 # UI
 # --------------------------------------
     def setup_window(self):
-        self.root = tk.Tk()
         self.root.minsize(590, 450)
         self.root.title("Image Cropper")
         self.main_frame = tk.Frame(self.root)
@@ -737,7 +737,7 @@ class ImageCropper:
 
         # Fixed selection
         self.fixed_selection_var = tk.BooleanVar(value=False)
-        self.fixed_selection_checkbutton = ttk.Checkbutton(options_frame, variable=self.fixed_selection_var, text="Fixed", width=5)
+        self.fixed_selection_checkbutton = ttk.Checkbutton(options_frame, variable=self.fixed_selection_var, text="Fixed", width=5, command=self.toggle_widgets_by_mode)
         self.fixed_selection_checkbutton.grid(row=1, column=0, padx=self.padx, pady=self.pady)
         ToolTip(self.fixed_selection_checkbutton, "Enable lock of aspect ratio, width, height, or size", 200, 6, 12)
 
@@ -746,6 +746,8 @@ class ImageCropper:
         self.fixed_selection_option_combobox = ttk.Combobox(options_frame, values=["Aspect Ratio", "Width", "Height", "Size"], state="readonly", textvariable=self.fixed_selection_option_var, width=12)
         self.fixed_selection_option_combobox.grid(row=1, column=1, columnspan=2, sticky="ew", padx=self.padx, pady=self.pady)
         ToolTip(self.fixed_selection_option_combobox, "Choose what to be fixed", 200, 6, 12)
+        self.fixed_selection_option_combobox.bind("<<ComboboxSelected>>", self.toggle_widgets_by_mode)
+        self.fixed_selection_option_combobox.bind("<MouseWheel>", self.toggle_widgets_by_mode)
 
         # Entry Frame
         entry_frame = tk.Frame(options_frame)
@@ -804,19 +806,38 @@ class ImageCropper:
 
     def insert_selection_dimension(self):
         mode = self.fixed_selection_option_var.get()
+        entry = self.fixed_selection_entry_var
         if mode == "Aspect Ratio":
-            self.fixed_selection_entry_var.set(self.selection_aspect)
+            entry.set(self.selection_aspect)
         elif mode == "Width":
-            self.fixed_selection_entry_var.set(self.width_spinbox.get())
+            entry.set(self.width_spinbox.get())
         elif mode == "Height":
-            self.fixed_selection_entry_var.set(self.height_spinbox.get())
+            entry.set(self.height_spinbox.get())
         elif mode == "Size":
-            self.fixed_selection_entry_var.set(f"{self.width_spinbox.get()} x {self.height_spinbox.get()}")
+            entry.set(f"{self.width_spinbox.get()} x {self.height_spinbox.get()}")
 
 
     def focus_widget_and_adjust_selection(self, event):
         event.widget.focus_set()
         self.adjust_selection(event)
+
+
+    def toggle_widgets_by_mode(self, event=None):
+        width = self.width_spinbox
+        height = self.height_spinbox
+        if self.fixed_selection_var.get():
+            state_map = {# Mode: {Widget: State}
+                "Aspect Ratio": {width: "disabled", height: "disabled"},
+                "Width": {width: "disabled", height: "normal"},
+                "Height": {width: "normal", height: "disabled"},
+                "Size": {width: "disabled", height: "disabled"}
+                }
+            mode = self.fixed_selection_option_var.get()
+            for widget, widget_state in state_map.get(mode, {}).items():
+                widget.config(state=widget_state)
+        else:
+            width.config(state="normal")
+            height.config(state="normal")
 
 
 # --------------------------------------
@@ -921,13 +942,10 @@ class ImageCropper:
 # --------------------------------------
 # Framework
 # --------------------------------------
-    def run(self):
-        self.root.mainloop()
 
-
-if __name__ == "__main__":
-    cropper = ImageCropper()
-    cropper.run()
+root = tk.Tk()
+cropper = ImageCropper(root)
+cropper.root.mainloop()
 
 
 #endregion
