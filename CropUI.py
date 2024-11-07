@@ -80,13 +80,37 @@ class CropSelection:
                 self.clear_selection()
         if not (x_off <= event.x <= x_max and y_off <= event.y <= y_max):
             return
+        # Fixed size mode
+        if self.parent.fixed_selection_var.get() and self.parent.fixed_selection_option_var.get() == "Size":
+            try:
+                value = self.parent.fixed_selection_entry_var.get()
+                if "x" in value:
+                    value = value.split("x")
+                else:
+                    value = value.split(",")
+                width = int(float(value[0].strip()) * self.img_canvas.img_scale_ratio)
+                height = int(float(value[1].strip()) * self.img_canvas.img_scale_ratio)
+                x1 = max(x_off, min(event.x - width / 2, x_max - width))
+                y1 = max(y_off, min(event.y - height / 2, y_max - height))
+                x2 = min(x_max, x1 + width)
+                y2 = min(y_max, y1 + height)
+                self.rect = self.img_canvas.create_rectangle(x1, y1, x2, y2, outline='white', tags='rect')
+                self._update_overlay()
+                self._start_moving_rect(event, x1, y1, x2, y2)
+                return
+            except (ValueError, IndexError):
+                pass
         self._start_selection(event, x_off, y_off, x_max, y_max)
 
 
     def _start_moving_rect(self, event, x1, y1, x2, y2):
         self.moving_rectangle = True
-        self.move_offset_x = event.x - x1
-        self.move_offset_y = event.y - y1
+        if self.parent.fixed_selection_var.get() and self.parent.fixed_selection_option_var.get() == "Size":
+            self.move_offset_x = (x2 - x1) / 2
+            self.move_offset_y = (y2 - y1) / 2
+        else:
+            self.move_offset_x = event.x - x1
+            self.move_offset_y = event.y - y1
         self.rect_width = x2 - x1
         self.rect_height = y2 - y1
         self.handles_manager.hide_handles()
@@ -98,6 +122,11 @@ class CropSelection:
         if self.parent.expand_from_center_var.get():
             self.center_x = self.start_x
             self.center_y = self.start_y
+        if self.parent.fixed_selection_var.get() and self.parent.fixed_selection_option_var.get() in ["Aspect Ratio", "Width", "Height"]:
+            self.center_x = (x_off + x_max) / 2
+            self.center_y = (y_off + y_max) / 2
+            self.start_x = self.center_x
+            self.start_y = self.center_y
         self.rect = self.img_canvas.create_rectangle(self.start_x, self.start_y, self.start_x, self.start_y, outline='white', tags='rect')
 
 
@@ -146,21 +175,18 @@ class CropSelection:
         scale = self.img_canvas.img_scale_ratio
         mode = self.parent.fixed_selection_option_var.get()
         value = self.parent.fixed_selection_entry_var.get()
-
-        if mode == "Size":  # Tuple: (100x100), (200 x 200), etc.
+        if mode == "Size":
             value = value.split("x")
-        elif mode == "Aspect Ratio":  # Handle later
+        elif mode == "Aspect Ratio":
             pass
         else:
             try:
                 value = float(value)
             except ValueError:
                 return x1, y1, x2, y2
-
         width = abs(x2 - x1)
         height = abs(y2 - y1)
-
-        if mode == "Aspect Ratio":  # Input: "1:1", "16:9", etc.
+        if mode == "Aspect Ratio":
             try:
                 if ":" in value:
                     width_str, height_str = value.split(":")
@@ -179,8 +205,7 @@ class CropSelection:
                 width = height * ratio
             else:
                 height = width / ratio
-
-        elif mode == "Width":  # Integer: 100, 200, etc.
+        elif mode == "Width":
             try:
                 width = int(value * scale)
             except ValueError:
@@ -188,8 +213,7 @@ class CropSelection:
             if width == 0:
                 return x1, y1, x2, y2
             height = width * (height / width)
-
-        elif mode == "Height":  # Integer: 100, 200, etc.
+        elif mode == "Height":
             try:
                 height = int(value * scale)
             except ValueError:
@@ -197,8 +221,7 @@ class CropSelection:
             if height == 0:
                 return x1, y1, x2, y2
             width = height * (width / height)
-
-        elif mode == "Size":  # Tuple: (100x100), (200 x 200), etc.
+        elif mode == "Size":
             try:
                 width_str, height_str = value
                 width = int(width_str.strip()) * scale
@@ -207,9 +230,14 @@ class CropSelection:
                 return x1, y1, x2, y2
             if width == 0 or height == 0:
                 return x1, y1, x2, y2
-
-        x2 = x1 + width if x2 >= x1 else x1 - width
-        y2 = y1 + height if y2 >= y1 else y1 - height
+        if self.parent.expand_from_center_var.get() and self.parent.fixed_selection_var.get() and mode in ["Aspect Ratio", "Width", "Height"]:
+            x1 = self.center_x - width / 2
+            y1 = self.center_y - height / 2
+            x2 = self.center_x + width / 2
+            y2 = self.center_y + height / 2
+        else:
+            x2 = x1 + width if x2 >= x1 else x1 - width
+            y2 = y1 + height if y2 >= y1 else y1 - height
         x2 = min(max(x2, x_off), x_max)
         y2 = min(max(y2, y_off), y_max)
         return x1, y1, x2, y2
@@ -247,17 +275,40 @@ class CropSelection:
 
 
     def _update_selection_coords(self, x1, y1, x2, y2):
+        # Retrieve canvas offsets and scale ratio
         cx_off, cy_off = self.img_canvas.x_off, self.img_canvas.y_off
+        scale_ratio = self.img_canvas.img_scale_ratio
         c_ns = self.img_canvas.new_size
-        x1, x2 = sorted([max(cx_off, min(x1, cx_off + c_ns[0])), max(cx_off, min(x2, cx_off + c_ns[0]))])
-        y1, y2 = sorted([max(cy_off, min(y1, cy_off + c_ns[1])), max(cy_off, min(y2, cy_off + c_ns[1]))])
+        # Clamp coordinates within image boundaries
+        x1, x2 = sorted([
+            max(cx_off, min(x1, cx_off + c_ns[0])),
+            max(cx_off, min(x2, cx_off + c_ns[0]))
+            ])
+        y1, y2 = sorted([
+            max(cy_off, min(y1, cy_off + c_ns[1])),
+            max(cy_off, min(y2, cy_off + c_ns[1]))
+            ])
+        # Adjust coordinates relative to image
         x1_adj, y1_adj = x1 - cx_off, y1 - cy_off
         x2_adj, y2_adj = x2 - cx_off, y2 - cy_off
-        x1_orig, y1_orig = int(x1_adj), int(y1_adj)
-        x2_orig, y2_orig = int(x2_adj), int(y2_adj)
-        orig_img_width, orig_img_height = self.img_canvas.original_img_width, self.img_canvas.original_img_height
-        x1_orig, x2_orig = sorted([max(0, min(orig_img_width, x1_orig)), max(0, min(orig_img_width, x2_orig))])
-        y1_orig, y2_orig = sorted([max(0, min(orig_img_height, y1_orig)), max(0, min(orig_img_height, y2_orig))])
+        # Scale back to original image coordinates
+        x1_orig = int(x1_adj / scale_ratio)
+        y1_orig = int(y1_adj / scale_ratio)
+        x2_orig = int(x2_adj / scale_ratio)
+        y2_orig = int(y2_adj / scale_ratio)
+        # Get original image dimensions
+        orig_img_width = self.img_canvas.original_img_width
+        orig_img_height = self.img_canvas.original_img_height
+        # Clamp to original image boundaries
+        x1_orig, x2_orig = sorted([
+            max(0, min(orig_img_width, x1_orig)),
+            max(0, min(orig_img_width, x2_orig))
+            ])
+        y1_orig, y2_orig = sorted([
+            max(0, min(orig_img_height, y1_orig)),
+            max(0, min(orig_img_height, y2_orig))
+            ])
+        # Update coords if valid rectangle
         self.coords = (x1_orig, y1_orig, x2_orig, y2_orig) if x1_orig != x2_orig and y1_orig != y2_orig else None
 
 
@@ -762,6 +813,19 @@ class ImageCropper:
         self.fixed_selection_entry_var = tk.StringVar(value="1:1")
         self.fixed_selection_entry = ttk.Entry(entry_frame, textvariable=self.fixed_selection_entry_var, width=12)
         self.fixed_selection_entry.pack(side="right")
+        self.fixed_selection_entry.bind("<KeyRelease>", lambda event: self.update_widget_values(resize=True))
+        self.selection_error_pip = tk.Label(entry_frame)
+        self.selection_error_pip.pack(side="right")
+        self.selection_error_pip_tooltip = ToolTip(self.selection_error_pip, 100, 6, 12, state="disabled")
+
+
+    def set_error_pip_color(self, state=None, message=None, event=None):
+        if state == "error":
+            self.selection_error_pip.config(bg="#fd8a8a")
+            self.selection_error_pip_tooltip.config(state="normal", text=message)
+        if state == "normal":
+            self.selection_error_pip.config(bg=self.selection_error_pip.master.cget("bg"))
+            self.selection_error_pip_tooltip.config(state="disabled")
 
 
     def create_crop_info_label(self):
@@ -773,35 +837,78 @@ class ImageCropper:
 # UI Helpers
 # --------------------------------------
     def update_widget_values(self, label=False, resize=False):
-        def update_label():
-            width, height = int(self.width_spinbox.get()), int(self.height_spinbox.get())
-            self.crop_info_label.config(text=f"Crop to: {width}x{height} ({aspect_ratio:.2f})")
-            self.selection_aspect = round(aspect_ratio, 2)
-            self.pos_x_spinbox.config(to=self.img_canvas.original_img_width - int(self.width_spinbox.get()))
-            self.pos_y_spinbox.config(to=self.img_canvas.original_img_height - int(self.height_spinbox.get()))
-        try:
-            x1, y1, x2, y2 = self.crop_selection.coords
-            x, y = x1, y1
-            height, width = (y2 - y1), (x2 - x1)
-            aspect_ratio = width / height if height != 0 else 0
-        except TypeError:
-            x = y = height = width = aspect_ratio = 0
-        scale = self.img_canvas.img_scale_ratio
-        x, y = int(x / scale), int(y / scale)
-        width, height = int(width / scale), int(height / scale)
-        try:
-            if label:
-                update_label()
-                return
-            else:
+            def update_label(aspect_ratio):
+                width = int(self.width_spinbox.get())
+                height = int(self.height_spinbox.get())
+                max_width = self.img_canvas.original_img_width
+                max_height = self.img_canvas.original_img_height
+                display_width = min(width, max_width)
+                display_height = min(height, max_height)
+                self.crop_info_label.config(text=f"Crop to: {display_width}x{display_height} ({aspect_ratio:.2f})")
+                self.selection_aspect = round(aspect_ratio, 2)
+                self.pos_x_spinbox.config(to=max_width - display_width)
+                self.pos_y_spinbox.config(to=max_height - display_height)
+
+            def set_spinbox_values(width, height, aspect_ratio):
+                self.width_spinbox.set(width)
+                self.height_spinbox.set(height)
+                self.set_error_pip_color("normal")
+                update_label(aspect_ratio)
+
+            def handle_fixed_selection(value, width, height):
+                option = self.fixed_selection_option_var.get()
+                try:
+                    if option == "Width":
+                        width = int(value)
+                    elif option == "Height":
+                        height = int(value)
+                    elif option == "Size":
+                        if 'x' in value:
+                            width, height = map(int, value.split("x"))
+                        elif ',' in value:
+                            width, height = map(int, value.split(","))
+                        else:
+                            raise ValueError
+                    elif option == "Aspect Ratio":
+                        if ':' in value:
+                            ratio_width, ratio_height = map(int, value.split(':'))
+                            aspect_ratio = ratio_width / ratio_height
+                        else:
+                            aspect_ratio = float(value)
+                        width = int(height * aspect_ratio)
+                    set_spinbox_values(width, height, width / height if height != 0 else 0)
+                except ValueError:
+                    self.width_spinbox.set(0)
+                    self.height_spinbox.set(0)
+                    error_message = {
+                        "Width": "Expected whole number (Integer)",
+                        "Height": "Expected whole number (Integer)",
+                        "Size": "Expected 'Width x Height' OR 'Width,Height' (Integer x Integer OR Integer, Integer)",
+                        "Aspect Ratio": "Expected ratio: 'Width:Height' (Integer:Integer); or a float '1.0'"
+                    }[option]
+                    self.set_error_pip_color("error", error_message)
+            try:
+                x1, y1, x2, y2 = self.crop_selection.coords
+                x, y = x1, y1
+                height, width = (y2 - y1), (x2 - x1)
+                aspect_ratio = width / height if height != 0 else 0
+            except TypeError:
+                x = y = height = width = aspect_ratio = 0
+            try:
+                if label:
+                    update_label(aspect_ratio)
+                    return
                 self.pos_x_spinbox.set(x)
                 self.pos_y_spinbox.set(y)
                 if resize:
-                    self.width_spinbox.set(width)
-                    self.height_spinbox.set(height)
-                update_label()
-        except UnboundLocalError:
-            pass
+                    if self.fixed_selection_var.get():
+                        handle_fixed_selection(self.fixed_selection_entry_var.get(), width, height)
+                    else:
+                        set_spinbox_values(width, height, aspect_ratio)
+                else:
+                    update_label(aspect_ratio)
+            except UnboundLocalError:
+                pass
 
 
     def insert_selection_dimension(self):
@@ -869,9 +976,15 @@ class ImageCropper:
     def crop_image(self):
         if not (self.img_canvas.img_path and self.crop_selection.coords):
             return
-        width, height = int(self.width_spinbox.get()), int(self.height_spinbox.get())
-        pos_x, pos_y = int(self.pos_x_spinbox.get()), int(self.pos_y_spinbox.get())
-        coords = (pos_x, pos_y, pos_x + width, pos_y + height)
+        width = int(self.width_spinbox.get())
+        height = int(self.height_spinbox.get())
+        pos_x = int(self.pos_x_spinbox.get())
+        pos_y = int(self.pos_y_spinbox.get())
+        max_width = self.img_canvas.original_img_width
+        max_height = self.img_canvas.original_img_height
+        display_width = min(width, max_width)
+        display_height = min(height, max_height)
+        coords = (pos_x, pos_y, pos_x + display_width, pos_y + display_height)
         cropped_img = self.img_canvas.original_img.crop(coords)
         cropped_img.show()
 
