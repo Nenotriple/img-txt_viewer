@@ -123,10 +123,14 @@ class CropSelection:
             self.center_x = self.start_x
             self.center_y = self.start_y
         if self.parent.fixed_selection_var.get() and self.parent.fixed_selection_option_var.get() in ["Aspect Ratio", "Width", "Height"]:
-            self.center_x = (x_off + x_max) / 2
-            self.center_y = (y_off + y_max) / 2
-            self.start_x = self.center_x
-            self.start_y = self.center_y
+            if self.parent.expand_from_center_var.get():
+                self.center_x = (x_off + x_max) / 2
+                self.center_y = (y_off + y_max) / 2
+                self.start_x = self.center_x
+                self.start_y = self.center_y
+            else:
+                self.start_x = max(min(event.x, x_max), x_off)
+                self.start_y = max(min(event.y, y_max), y_off)
         self.rect = self.img_canvas.create_rectangle(self.start_x, self.start_y, self.start_x, self.start_y, outline='white', tags='rect')
 
 
@@ -176,7 +180,10 @@ class CropSelection:
         mode = self.parent.fixed_selection_option_var.get()
         value = self.parent.fixed_selection_entry_var.get()
         if mode == "Size":
-            value = value.split("x")
+            if "x" in value:
+                value = value.split("x")
+            else:
+                value = value.split(",")
         elif mode == "Aspect Ratio":
             pass
         else:
@@ -837,78 +844,78 @@ class ImageCropper:
 # UI Helpers
 # --------------------------------------
     def update_widget_values(self, label=False, resize=False):
-            def update_label(aspect_ratio):
-                width = int(self.width_spinbox.get())
-                height = int(self.height_spinbox.get())
-                max_width = self.img_canvas.original_img_width
-                max_height = self.img_canvas.original_img_height
-                display_width = min(width, max_width)
-                display_height = min(height, max_height)
-                self.crop_info_label.config(text=f"Crop to: {display_width}x{display_height} ({aspect_ratio:.2f})")
-                self.selection_aspect = round(aspect_ratio, 2)
-                self.pos_x_spinbox.config(to=max_width - display_width)
-                self.pos_y_spinbox.config(to=max_height - display_height)
+        def update_label(aspect_ratio):
+            width = int(self.width_spinbox.get())
+            height = int(self.height_spinbox.get())
+            max_width = self.img_canvas.original_img_width
+            max_height = self.img_canvas.original_img_height
+            display_width = min(width, max_width)
+            display_height = min(height, max_height)
+            self.crop_info_label.config(text=f"Crop to: {display_width}x{display_height} ({aspect_ratio:.2f})")
+            self.selection_aspect = round(aspect_ratio, 2)
+            self.pos_x_spinbox.config(to=max_width - display_width)
+            self.pos_y_spinbox.config(to=max_height - display_height)
 
-            def set_spinbox_values(width, height, aspect_ratio):
-                self.width_spinbox.set(width)
-                self.height_spinbox.set(height)
-                self.set_error_pip_color("normal")
-                update_label(aspect_ratio)
+        def set_spinbox_values(width, height, aspect_ratio):
+            self.width_spinbox.set(width)
+            self.height_spinbox.set(height)
+            self.set_error_pip_color("normal")
+            update_label(aspect_ratio)
 
-            def handle_fixed_selection(value, width, height):
-                option = self.fixed_selection_option_var.get()
-                try:
-                    if option == "Width":
-                        width = int(value)
-                    elif option == "Height":
-                        height = int(value)
-                    elif option == "Size":
-                        if 'x' in value:
-                            width, height = map(int, value.split("x"))
-                        elif ',' in value:
-                            width, height = map(int, value.split(","))
-                        else:
-                            raise ValueError
-                    elif option == "Aspect Ratio":
-                        if ':' in value:
-                            ratio_width, ratio_height = map(int, value.split(':'))
-                            aspect_ratio = ratio_width / ratio_height
-                        else:
-                            aspect_ratio = float(value)
-                        width = int(height * aspect_ratio)
-                    set_spinbox_values(width, height, width / height if height != 0 else 0)
-                except ValueError:
-                    self.width_spinbox.set(0)
-                    self.height_spinbox.set(0)
-                    error_message = {
-                        "Width": "Expected whole number (Integer)",
-                        "Height": "Expected whole number (Integer)",
-                        "Size": "Expected 'Width x Height' OR 'Width,Height' (Integer x Integer OR Integer, Integer)",
-                        "Aspect Ratio": "Expected ratio: 'Width:Height' (Integer:Integer); or a float '1.0'"
-                    }[option]
-                    self.set_error_pip_color("error", error_message)
+        def handle_fixed_selection(value, width, height):
+            option = self.fixed_selection_option_var.get()
             try:
-                x1, y1, x2, y2 = self.crop_selection.coords
-                x, y = x1, y1
-                height, width = (y2 - y1), (x2 - x1)
-                aspect_ratio = width / height if height != 0 else 0
-            except TypeError:
-                x = y = height = width = aspect_ratio = 0
-            try:
-                if label:
-                    update_label(aspect_ratio)
-                    return
-                self.pos_x_spinbox.set(x)
-                self.pos_y_spinbox.set(y)
-                if resize:
-                    if self.fixed_selection_var.get():
-                        handle_fixed_selection(self.fixed_selection_entry_var.get(), width, height)
+                if option == "Width":
+                    width = int(value)
+                elif option == "Height":
+                    height = int(value)
+                elif option == "Size":
+                    if 'x' in value:
+                        width, height = map(int, value.split("x"))
+                    elif ',' in value:
+                        width, height = map(int, value.split(","))
                     else:
-                        set_spinbox_values(width, height, aspect_ratio)
+                        raise ValueError
+                elif option == "Aspect Ratio":
+                    if ':' in value:
+                        ratio_width, ratio_height = map(int, value.split(':'))
+                        aspect_ratio = ratio_width / ratio_height
+                    else:
+                        aspect_ratio = float(value)
+                    width = int(height * aspect_ratio)
+                set_spinbox_values(width, height, width / height if height != 0 else 0)
+            except ValueError:
+                self.width_spinbox.set(0)
+                self.height_spinbox.set(0)
+                error_message = {
+                    "Width": "Expected whole number (Integer)",
+                    "Height": "Expected whole number (Integer)",
+                    "Size": "Expected 'Width x Height' OR 'Width,Height' (Integer x Integer OR Integer, Integer)",
+                    "Aspect Ratio": "Expected ratio: 'Width:Height' (Integer:Integer); or a float '1.0'"
+                }[option]
+                self.set_error_pip_color("error", error_message)
+        try:
+            x1, y1, x2, y2 = self.crop_selection.coords
+            x, y = x1, y1
+            height, width = (y2 - y1), (x2 - x1)
+            aspect_ratio = width / height if height != 0 else 0
+        except TypeError:
+            x = y = height = width = aspect_ratio = 0
+        try:
+            if label:
+                update_label(aspect_ratio)
+                return
+            self.pos_x_spinbox.set(x)
+            self.pos_y_spinbox.set(y)
+            if resize:
+                if self.fixed_selection_var.get():
+                    handle_fixed_selection(self.fixed_selection_entry_var.get(), width, height)
                 else:
-                    update_label(aspect_ratio)
-            except UnboundLocalError:
-                pass
+                    set_spinbox_values(width, height, aspect_ratio)
+            else:
+                update_label(aspect_ratio)
+        except UnboundLocalError:
+            pass
 
 
     def insert_selection_dimension(self):
