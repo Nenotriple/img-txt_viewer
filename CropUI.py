@@ -187,6 +187,9 @@ class CropSelection:
         curX = max(min(event.x, x_max), x_off)
         curY = max(min(event.y, y_max), y_off)
         if self.parent.expand_from_center_var.get():
+            if not hasattr(self, 'center_x') or not hasattr(self, 'center_y'):
+                self.center_x = (x_off + x_max) / 2
+                self.center_y = (y_off + y_max) / 2
             x1 = max(x_off, min(2 * self.center_x - curX, x_max))
             y1 = max(y_off, min(2 * self.center_y - curY, y_max))
             x2 = curX
