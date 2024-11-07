@@ -279,6 +279,7 @@ class CropSelection:
         self._update_selection_coords(x1, y1, x2, y2)
         self.handles_manager.show_handles()
         self.parent.update_widget_values()
+        self.handles_manager._hide_handles_based_on_mode()
 
 
     def _update_selection_coords(self, x1, y1, x2, y2):
@@ -476,6 +477,22 @@ class CropSelectionHandles:
                 self.handles[key] = self.img_canvas.create_rectangle(cx - size, cy - size, cx + size, cy + size, fill=self.handle_color, tags='handle')
             elif key in self.handles:
                 self.img_canvas.coords(self.handles[key], cx - size, cy - size, cx + size, cy + size)
+
+    def _hide_handles_based_on_mode(self):
+        if self.crop_selection.parent.fixed_selection_var.get():
+            mode = self.crop_selection.parent.fixed_selection_option_var.get()
+            hide_handles = []
+            if mode == "Aspect Ratio":
+                hide_handles = ["n", "e", "s", "w"]
+            elif mode == "Width":
+                hide_handles = ["e", "w", "ne", "nw", "se", "sw"]
+            elif mode == "Height":
+                hide_handles = ["n", "s", "ne", "nw", "se", "sw"]
+            for key, handle in self.handles.items():
+                if key in hide_handles:
+                    self.img_canvas.itemconfigure(handle, state='hidden')
+                else:
+                    self.img_canvas.itemconfigure(handle, state='normal')
 
 
     def _calculate_handle_size(self, x1, y1, x2, y2):
