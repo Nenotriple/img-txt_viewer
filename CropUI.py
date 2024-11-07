@@ -568,29 +568,94 @@ class CropSelectionHandles:
         x_max = x_off + self.img_canvas.new_size[0]
         y_max = y_off + self.img_canvas.new_size[1]
         expand_from_center = self.crop_selection.parent.expand_from_center_var.get()
+        handle = self.resizing_handle
         m_size = 10
+        if self.crop_selection.parent.fixed_selection_var.get() and self.crop_selection.parent.fixed_selection_option_var.get() == "Aspect Ratio":
+            return self._resize_with_aspect_ratio(event, x1, y1, x2, y2, x_off, y_off, x_max, y_max, expand_from_center, m_size)
         if expand_from_center:
-            # Calculate center and distance from center
-            cx = (x1 + x2) / 2
-            cy = (y1 + y2) / 2
+            cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
             dx = max(m_size / 2, abs(event.x - cx))
             dy = max(m_size / 2, abs(event.y - cy))
-            # Resize from center
-            x1_new = max(x_off, cx - dx) if 'w' in self.resizing_handle or 'e' in self.resizing_handle else x1
-            y1_new = max(y_off, cy - dy) if 'n' in self.resizing_handle or 's' in self.resizing_handle else y1
-            x2_new = min(x_max, cx + dx) if 'e' in self.resizing_handle or 'w' in self.resizing_handle else x2
-            y2_new = min(y_max, cy + dy) if 's' in self.resizing_handle or 'n' in self.resizing_handle else y2
+            x1_new, y1_new, x2_new, y2_new = self._calculate_new_coords(x1, y1, x2, y2, cx, cy, dx, dy, x_off, y_off, x_max, y_max)
         else:
             x1_new, y1_new, x2_new, y2_new = x1, y1, x2, y2
-            if 'n' in self.resizing_handle:
-                y1_new = max(y_off, min(event.y, y2 - m_size))
-            if 's' in self.resizing_handle:
-                y2_new = min(y_max, max(event.y, y1 + m_size))
-            if 'w' in self.resizing_handle:
-                x1_new = max(x_off, min(event.x, x2 - m_size))
-            if 'e' in self.resizing_handle:
-                x2_new = min(x_max, max(event.x, x1 + m_size))
+            adjustments = {
+                'n': lambda y: max(y_off, min(y, y2 - m_size)),
+                's': lambda y: min(y_max, max(y, y1 + m_size)),
+                'w': lambda x: max(x_off, min(x, x2 - m_size)),
+                'e': lambda x: min(x_max, max(x, x1 + m_size))
+                }
+            for direction in handle:
+                if direction in adjustments:
+                    if direction in ['n', 's']:
+                        y = adjustments[direction](event.y)
+                        y1_new if direction == 'n' else y2_new
+                        y1_new, y2_new = (y, y2_new) if direction == 'n' else (y1_new, y)
+                    else:
+                        x = adjustments[direction](event.x)
+                        x1_new, x2_new = (x, x2_new) if direction == 'w' else (x1_new, x)
+        return self._ensure_coords_in_bounds(x1_new, y1_new, x2_new, y2_new, x_off, y_off, x_max, y_max)
+
+
+    def _resize_with_aspect_ratio(self, event, x1, y1, x2, y2, x_off, y_off, x_max, y_max, expand_from_center, m_size):
+        handle = self.resizing_handle
+        try:
+            value = self.crop_selection.parent.fixed_selection_entry_var.get()
+            if ':' in value:
+                width_ratio, height_ratio = map(float, value.split(':'))
+                target_ratio = width_ratio / height_ratio
+            else:
+                target_ratio = float(value)
+        except (ValueError, ZeroDivisionError):
+            target_ratio = (x2 - x1) / (y2 - y1) if y2 != y1 else 1
+        orig_coords = (x1, y1, x2, y2)
+        if expand_from_center:
+            cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
+            dx, dy = abs(event.x - cx), abs(event.y - cy)
+            if 'n' in handle or 's' in handle:
+                dx = dy * target_ratio
+            else:
+                dy = dx / target_ratio
+            x1_new, y1_new, x2_new, y2_new = self._calculate_new_coords(x1, y1, x2, y2, cx, cy, dx, dy, x_off, y_off, x_max, y_max)
+        else:
+            if 'n' in handle or 's' in handle:
+                new_height = abs(y2 - event.y) if 'n' in handle else abs(event.y - y1)
+                new_width = new_height * target_ratio
+                y1_new = max(y_off, min(event.y, y2 - m_size)) if 'n' in handle else y1
+                y2_new = y2 if 'n' in handle else min(y_max, max(event.y, y1 + m_size))
+                x1_new = (x1 + x2 - new_width) / 2
+                x2_new = x1_new + new_width
+            else:
+                new_width = abs(x2 - event.x) if 'w' in handle else abs(event.x - x1)
+                new_height = new_width / target_ratio
+                x1_new = max(x_off, min(event.x, x2 - m_size)) if 'w' in handle else x1
+                x2_new = x2 if 'w' in handle else min(x_max, max(event.x, x1 + m_size))
+                y1_new = (y1 + y2 - new_height) / 2
+                y2_new = y1_new + new_height
+        x1_new, y1_new, x2_new, y2_new = self._ensure_coords_in_bounds(x1_new, y1_new, x2_new, y2_new, x_off, y_off, x_max, y_max)
+        new_width, new_height = x2_new - x1_new, y2_new - y1_new
+        if new_height != 0:
+            ratio_error = abs((new_width / new_height) - target_ratio) / target_ratio
+            if ratio_error > 0.01:
+                return orig_coords
         return x1_new, y1_new, x2_new, y2_new
+
+
+    def _calculate_new_coords(self, x1, y1, x2, y2, cx, cy, dx, dy, x_off, y_off, x_max, y_max):
+        handle = self.resizing_handle
+        x1_new = max(x_off, cx - dx) if 'w' in handle or 'e' in handle else x1
+        y1_new = max(y_off, cy - dy) if 'n' in handle or 's' in handle else y1
+        x2_new = min(x_max, cx + dx) if 'e' in handle or 'w' in handle else x2
+        y2_new = min(y_max, cy + dy) if 's' in handle or 'n' in handle else y2
+        return x1_new, y1_new, x2_new, y2_new
+
+
+    def _ensure_coords_in_bounds(self, x1, y1, x2, y2, x_off, y_off, x_max, y_max):
+        x1 = max(x_off, min(x1, x_max))
+        x2 = max(x_off, min(x2, x_max))
+        y1 = max(y_off, min(y1, y_max))
+        y2 = max(y_off, min(y2, y_max))
+        return x1, y1, x2, y2
 
 
 #endregion
