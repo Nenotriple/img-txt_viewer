@@ -80,9 +80,12 @@ class CropSelection:
                 self.clear_selection()
         if not (x_off <= event.x <= x_max and y_off <= event.y <= y_max):
             return
-        # Fixed size mode
-        if self.parent.fixed_selection_var.get() and self.parent.fixed_selection_option_var.get() == "Size":
-            try:
+        if not self.parent.fixed_selection_var.get():
+            self._start_selection(event, x_off, y_off, x_max, y_max)
+            return
+        mode = self.parent.fixed_selection_option_var.get()
+        try:
+            if mode == "Size":
                 value = self.parent.fixed_selection_entry_var.get()
                 if "x" in value:
                     value = value.split("x")
@@ -94,13 +97,34 @@ class CropSelection:
                 y1 = max(y_off, min(event.y - height / 2, y_max - height))
                 x2 = min(x_max, x1 + width)
                 y2 = min(y_max, y1 + height)
-                self.rect = self.img_canvas.create_rectangle(x1, y1, x2, y2, outline='white', tags='rect')
-                self._update_overlay()
-                self._start_moving_rect(event, x1, y1, x2, y2)
+            elif mode == "Width":
+                width = int(float(self.parent.fixed_selection_entry_var.get()) * self.img_canvas.img_scale_ratio)
+                space_right = x_max - event.x
+                if space_right >= width:
+                    x1, x2 = event.x, event.x + width
+                else:
+                    x2, x1 = event.x, event.x - width
+                y1 = y2 = event.y
+                self.start_x, self.start_y = x1, y1
+            elif mode == "Height":
+                height = int(float(self.parent.fixed_selection_entry_var.get()) * self.img_canvas.img_scale_ratio)
+                space_down = y_max - event.y
+                if space_down >= height:
+                    y1, y2 = event.y, event.y + height
+                else:
+                    y2, y1 = event.y, event.y - height
+                x1 = x2 = event.x
+                self.start_x, self.start_y = x1, y1
+            else:  # Aspect Ratio mode
+                self._start_selection(event, x_off, y_off, x_max, y_max)
                 return
-            except (ValueError, IndexError):
-                pass
-        self._start_selection(event, x_off, y_off, x_max, y_max)
+            self.rect = self.img_canvas.create_rectangle(x1, y1, x2, y2, outline='white', tags='rect')
+            self._update_overlay()
+            if mode == "Size":
+                self._start_moving_rect(event, x1, y1, x2, y2)
+            return
+        except (ValueError, IndexError):
+            pass
 
 
     def _start_moving_rect(self, event, x1, y1, x2, y2):
@@ -478,16 +502,16 @@ class CropSelectionHandles:
             elif key in self.handles:
                 self.img_canvas.coords(self.handles[key], cx - size, cy - size, cx + size, cy + size)
 
+
     def _hide_handles_based_on_mode(self):
         if self.crop_selection.parent.fixed_selection_var.get():
             mode = self.crop_selection.parent.fixed_selection_option_var.get()
-            hide_handles = []
-            if mode == "Aspect Ratio":
-                hide_handles = ["n", "e", "s", "w"]
-            elif mode == "Width":
-                hide_handles = ["e", "w", "ne", "nw", "se", "sw"]
-            elif mode == "Height":
-                hide_handles = ["n", "s", "ne", "nw", "se", "sw"]
+            hide_handles_dict = {
+                "Aspect Ratio": ["n", "e", "s", "w"],
+                "Width": ["e", "w", "ne", "nw", "se", "sw"],
+                "Height": ["n", "s", "ne", "nw", "se", "sw"]
+                }
+            hide_handles = hide_handles_dict.get(mode, [])
             for key, handle in self.handles.items():
                 if key in hide_handles:
                     self.img_canvas.itemconfigure(handle, state='hidden')
@@ -734,7 +758,7 @@ class ImageCanvas(tk.Canvas):
 #region CLS: ImageCropper
 
 
-class ImageCropper:
+class CropInterface:
     def __init__(self, root):
         self.root = root
         self.image_files = []
@@ -794,20 +818,20 @@ class ImageCropper:
 
     def create_directory_and_navigation_widgets(self):
         # Directory
-        self.directory_frame = tk.Frame(self.control_panel)
-        self.directory_frame.pack(pady=self.pady, padx=self.padx, fill="x")
-        self.path_entry = ttk.Entry(self.directory_frame)
+        directory_frame = tk.Frame(self.control_panel)
+        directory_frame.pack(pady=self.pady, padx=self.padx, fill="x")
+        self.path_entry = ttk.Entry(directory_frame)
         self.path_entry.pack(side="left", fill="x")
         self.path_tooltip = ToolTip(self.path_entry, "...", 400, 6, 12)
-        self.open_button = ttk.Button(self.directory_frame, text="Browse...", width=9, command=self.open_directory_dialog)
+        self.open_button = ttk.Button(directory_frame, text="Browse...", width=9, command=self.open_directory_dialog)
         self.open_button.pack(side="left", fill="x")
 
         # Navigation
-        self.nav_frame = tk.Frame(self.control_panel)
-        self.nav_frame.pack(pady=self.pady, padx=self.padx, fill="x")
-        self.prev_button = ttk.Button(self.nav_frame, text="<---Previous", width=12, command=self.show_previous_image)
+        nav_frame = tk.Frame(self.control_panel)
+        nav_frame.pack(pady=self.pady, padx=self.padx, fill="x")
+        self.prev_button = ttk.Button(nav_frame, text="<---Previous", width=12, command=self.show_previous_image)
         self.prev_button.pack(side="left", fill="x", expand=True)
-        self.next_button = ttk.Button(self.nav_frame, text="Next--->", width=12, command=self.show_next_image)
+        self.next_button = ttk.Button(nav_frame, text="Next--->", width=12, command=self.show_next_image)
         self.next_button.pack(side="left", fill="x", expand=True)
 
         # Crop Button
@@ -816,50 +840,52 @@ class ImageCropper:
 
 
     def create_size_widgets(self):
-        self.size_frame = ttk.LabelFrame(self.control_panel, text="Size")
-        self.size_frame.pack(pady=self.pady, padx=self.padx, fill="x")
+        size_frame = ttk.LabelFrame(self.control_panel, text="Size")
+        size_frame.pack(pady=self.pady, padx=self.padx, fill="x")
+        size_frame.columnconfigure(1, weight=1)
 
         # Width
-        self.width_label = ttk.Label(self.size_frame, text="W (px):")
-        self.width_label.grid(row=0, column=0, padx=self.padx, pady=self.pady)
+        self.width_label = ttk.Label(size_frame, text="W (px):")
+        self.width_label.grid(row=0, column=0, padx=self.padx, pady=self.pady, sticky='w')
         ToolTip(self.width_label, "Width of selection in pixels", 200, 6, 12)
-        self.width_spinbox = ttk.Spinbox(self.size_frame, from_=1, to=9999, width=10, command=self.adjust_selection)
-        self.width_spinbox.grid(row=0, column=1, columnspan=2, padx=self.padx, pady=self.pady)
+        self.width_spinbox = ttk.Spinbox(size_frame, from_=1, to=9999, width=13, command=self.adjust_selection)
+        self.width_spinbox.grid(row=0, column=1, padx=self.padx, pady=self.pady, sticky='e')
         self.width_spinbox.set(0)
         self.width_spinbox.bind("<Return>", self.adjust_selection)
         self.width_spinbox.bind("<MouseWheel>", self.focus_widget_and_adjust_selection)
 
         # Height
-        self.height_label = ttk.Label(self.size_frame, text="H (px):")
-        self.height_label.grid(row=1, column=0, padx=self.padx, pady=self.pady)
+        self.height_label = ttk.Label(size_frame, text="H (px):")
+        self.height_label.grid(row=1, column=0, padx=self.padx, pady=self.pady, sticky='w')
         ToolTip(self.height_label, "Height of selection in pixels", 200, 6, 12)
-        self.height_spinbox = ttk.Spinbox(self.size_frame, from_=1, to=9999, width=10, command=self.adjust_selection)
-        self.height_spinbox.grid(row=1, column=1, columnspan=2, padx=self.padx, pady=self.pady)
+        self.height_spinbox = ttk.Spinbox(size_frame, from_=1, to=9999, width=13, command=self.adjust_selection)
+        self.height_spinbox.grid(row=1, column=1, padx=self.padx, pady=self.pady, sticky='e')
         self.height_spinbox.set(0)
         self.height_spinbox.bind("<Return>", self.adjust_selection)
         self.height_spinbox.bind("<MouseWheel>", self.focus_widget_and_adjust_selection)
 
 
     def create_position_widgets(self):
-        self.position_frame = ttk.LabelFrame(self.control_panel, text="Position")
-        self.position_frame.pack(pady=self.pady, padx=self.padx, fill="x")
+        position_frame = ttk.LabelFrame(self.control_panel, text="Position")
+        position_frame.pack(pady=self.pady, padx=self.padx, fill="x")
+        position_frame.columnconfigure(1, weight=1)
 
         # X Position
-        self.pos_x_label = ttk.Label(self.position_frame, text="X (px):")
-        self.pos_x_label.grid(row=0, column=0, padx=self.padx, pady=self.pady)
+        self.pos_x_label = ttk.Label(position_frame, text="X (px):")
+        self.pos_x_label.grid(row=0, column=0, padx=self.padx, pady=self.pady, sticky='w')
         ToolTip(self.pos_x_label, "X coordinate of selection in pixels (From top left corner)", 200, 6, 12)
-        self.pos_x_spinbox = ttk.Spinbox(self.position_frame, from_=0, to=9999, width=10, command=self.adjust_selection)
-        self.pos_x_spinbox.grid(row=0, column=1, columnspan=2, padx=self.padx, pady=self.pady)
+        self.pos_x_spinbox = ttk.Spinbox(position_frame, from_=0, to=9999, width=13, command=self.adjust_selection)
+        self.pos_x_spinbox.grid(row=0, column=1, padx=self.padx, pady=self.pady, sticky='e')
         self.pos_x_spinbox.set(0)
         self.pos_x_spinbox.bind("<Return>", self.adjust_selection)
         self.pos_x_spinbox.bind("<MouseWheel>", self.focus_widget_and_adjust_selection)
 
         # Y Position
-        self.pos_y_label = ttk.Label(self.position_frame, text="Y (px):")
-        self.pos_y_label.grid(row=1, column=0, padx=self.padx, pady=self.pady)
+        self.pos_y_label = ttk.Label(position_frame, text="Y (px):")
+        self.pos_y_label.grid(row=1, column=0, padx=self.padx, pady=self.pady, sticky='w')
         ToolTip(self.pos_y_label, "Y coordinate of selection in pixels (From top left corner)", 200, 6, 12)
-        self.pos_y_spinbox = ttk.Spinbox(self.position_frame, from_=0, to=9999, width=10, command=self.adjust_selection)
-        self.pos_y_spinbox.grid(row=1, column=1, columnspan=2, padx=self.padx, pady=self.pady)
+        self.pos_y_spinbox = ttk.Spinbox(position_frame, from_=0, to=9999, width=13, command=self.adjust_selection)
+        self.pos_y_spinbox.grid(row=1, column=1, padx=self.padx, pady=self.pady, sticky='e')
         self.pos_y_spinbox.set(0)
         self.pos_y_spinbox.bind("<Return>", self.adjust_selection)
         self.pos_y_spinbox.bind("<MouseWheel>", self.focus_widget_and_adjust_selection)
@@ -972,9 +998,9 @@ class ImageCropper:
                 error_message = {
                     "Width": "Expected whole number (Integer)",
                     "Height": "Expected whole number (Integer)",
-                    "Size": "Expected 'Width x Height' OR 'Width,Height' (Integer x Integer OR Integer, Integer)",
-                    "Aspect Ratio": "Expected ratio: 'Width:Height' (Integer:Integer); or a float '1.0'"
-                }[option]
+                    "Size": "Expected 'W x H' OR 'W , H' (Integer x Integer OR Integer , Integer)",
+                    "Aspect Ratio": "Expected ratio: 'W:H' (Integer:Integer); or a float '1.0'"
+                    }[option]
                 self.set_error_pip_color("error", error_message)
         try:
             x1, y1, x2, y2 = self.crop_selection.coords
@@ -1144,9 +1170,8 @@ class ImageCropper:
 # --------------------------------------
 # Framework
 # --------------------------------------
-
 root = tk.Tk()
-cropper = ImageCropper(root)
+cropper = CropInterface(root)
 cropper.root.mainloop()
 
 
