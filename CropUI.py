@@ -116,6 +116,8 @@ class CropSelection:
                 x1 = x2 = event.x
                 self.start_x, self.start_y = x1, y1
             else:  # Aspect Ratio mode
+                if self.parent.auto_aspect_var.get():
+                    self.parent.determine_best_aspect_ratio()
                 self._start_selection(event, x_off, y_off, x_max, y_max)
                 return
             self.rect = self.img_canvas.create_rectangle(x1, y1, x2, y2, outline='white', tags='rect')
@@ -943,9 +945,10 @@ class CropInterface:
         ToolTip(self.auto_aspect_checkbutton, "Automatically select the best aspect ratio for the selection based on the predefined ratios and the aspect ratio of the displayed image.\n\n'Fixed' and 'Aspect Ratio' must be enabled!", 200, 6, 12, wraplength=240)
 
         # Auto Entry
-        self.auto_entry_var = tk.StringVar(value="1:1")
+        self.auto_entry_var = tk.StringVar(value="1:1, 5:4, 4:5, 4:3, 3:4, 3:2, 2:3, 16:9, 9:16, 2:1, 1:2")
         self.auto_entry = ttk.Entry(options_frame, textvariable=self.auto_entry_var, width=12, state="disabled")
         self.auto_entry.grid(row=3, column=0, columnspan=3, sticky="ew", padx=self.padx, pady=self.pady)
+        self.auto_entry.bind("<Return>", self.determine_best_aspect_ratio)
 
 
     def create_crop_info_label(self):
@@ -1094,6 +1097,25 @@ class CropInterface:
         else:
             self.auto_entry.config(state="disabled")
             self.fixed_selection_entry.config(state="normal")
+
+
+    def determine_best_aspect_ratio(self, event=None):
+        def convert_to_float(ratio):
+            if ':' in ratio:
+                width, height = map(float, ratio.split(':'))
+                return round(width / height, 2)
+            return round(float(ratio), 2)
+        ratio_list_str = self.auto_entry_var.get()
+        ratio_list = [r.strip() for r in ratio_list_str.split(",")]
+        ratio_list = list(set(convert_to_float(r) for r in ratio_list))
+        width = self.img_canvas.original_img_width
+        height = self.img_canvas.original_img_height
+        image_ratio = round(width / height, 2)
+        closest_ratio = min(ratio_list, key=lambda x: abs(x - image_ratio))
+        self.fixed_selection_entry.config(state="normal")
+        self.fixed_selection_entry.delete(0, 'end')
+        self.fixed_selection_entry.insert(0, str(closest_ratio))
+        self.fixed_selection_entry.config(state="disabled")
 
 
 # --------------------------------------
