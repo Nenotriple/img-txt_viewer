@@ -93,26 +93,24 @@ class CropSelection:
                     value = value.split(",")
                 width = int(float(value[0].strip()) * self.img_canvas.img_scale_ratio)
                 height = int(float(value[1].strip()) * self.img_canvas.img_scale_ratio)
+                width = min(width, x_max - x_off)
+                height = min(height, y_max - y_off)
                 x1 = max(x_off, min(event.x - width / 2, x_max - width))
                 y1 = max(y_off, min(event.y - height / 2, y_max - height))
-                x2 = min(x_max, x1 + width)
-                y2 = min(y_max, y1 + height)
+                x2 = x1 + width
+                y2 = y1 + height
             elif mode == "Width":
                 width = int(float(self.parent.fixed_selection_entry_var.get()) * self.img_canvas.img_scale_ratio)
-                space_right = x_max - event.x
-                if space_right >= width:
-                    x1, x2 = event.x, event.x + width
-                else:
-                    x2, x1 = event.x, event.x - width
+                width = min(width, x_max - x_off)
+                x1 = max(x_off, min(event.x - width / 2, x_max - width))
+                x2 = x1 + width
                 y1 = y2 = event.y
                 self.start_x, self.start_y = x1, y1
             elif mode == "Height":
                 height = int(float(self.parent.fixed_selection_entry_var.get()) * self.img_canvas.img_scale_ratio)
-                space_down = y_max - event.y
-                if space_down >= height:
-                    y1, y2 = event.y, event.y + height
-                else:
-                    y2, y1 = event.y, event.y - height
+                height = min(height, y_max - y_off)
+                y1 = max(y_off, min(event.y - height / 2, y_max - height))
+                y2 = y1 + height
                 x1 = x2 = event.x
                 self.start_x, self.start_y = x1, y1
             else:  # Aspect Ratio mode
@@ -222,6 +220,8 @@ class CropSelection:
                 return x1, y1, x2, y2
         width = abs(x2 - x1)
         height = abs(y2 - y1)
+        if width == 0 or height == 0:
+            width, height = 1, 1
         if mode == "Aspect Ratio":
             try:
                 if ":" in value:
@@ -233,7 +233,7 @@ class CropSelection:
                     ratio = width_ratio / height_ratio
                 else:
                     ratio = float(value)
-                if ratio == 0 or height == 0:
+                if ratio == 0:
                     return x1, y1, x2, y2
             except (ValueError, ZeroDivisionError):
                 return x1, y1, x2, y2
@@ -241,6 +241,15 @@ class CropSelection:
                 width = height * ratio
             else:
                 height = width / ratio
+            if x2 != x1 and y2 != y1:  # Diagonal
+                width = abs(x2 - x1)
+                height = width / ratio if width / height > ratio else height
+            elif x2 != x1:  # Horizontal
+                width = abs(x2 - x1)
+                height = width / ratio
+            elif y2 != y1:  # Vertical
+                height = abs(y2 - y1)
+                width = height * ratio
         elif mode == "Width":
             try:
                 width = int(value * scale)
@@ -248,7 +257,7 @@ class CropSelection:
                 return x1, y1, x2, y2
             if width == 0:
                 return x1, y1, x2, y2
-            height = width * (height / width)
+            height = width / (width / height)
         elif mode == "Height":
             try:
                 height = int(value * scale)
@@ -837,7 +846,7 @@ class CropInterface:
         self.after_crop_menu.menu.add_separator()
         self.after_crop_menu.menu.add_radiobutton(label="Overwrite", variable=self.after_crop_option, value="Overwrite")
         # Crop Info
-        self.crop_info_label = ttk.Label(top_frame, text="Crop to: 0x0 (0:0)", anchor="w")
+        self.crop_info_label = ttk.Label(top_frame, text="Crop to: 0x0 (0:0)", anchor="w", width=30)
         self.crop_info_label.grid(row=0, column=2, padx=self.padx, sticky="ew")
         # Directory
         directory_frame = tk.Frame(top_frame)
