@@ -313,6 +313,7 @@ class ImgTxtViewer:
         self.about_window = about_img_txt_viewer.AboutWindow(self, self.master, VERSION, self.blank_image)
         self.settings_manager = settings_manager.SettingsManager(self, self.master, VERSION)
         self.onnx_tagger = OnnxTagger(self)
+        self.crop_ui = CropUI.CropInterface()
 
         # Setup UI state
         self.ui_state = {
@@ -650,7 +651,7 @@ class ImgTxtViewer:
         self.toolsMenu.add_cascade(label="Edit Current pair", underline=0, state="disable", menu=self.individual_operations_menu)
         self.individual_operations_menu.add_command(label="Rename Pair", underline=0, command=self.manually_rename_single_pair)
         self.individual_operations_menu.add_command(label="Upscale...", underline=0, command=lambda: self.upscale_image(batch=False))
-        self.individual_operations_menu.add_command(label="Crop...", underline=0, command=self.open_crop_tool)
+        self.individual_operations_menu.add_command(label="Crop...", underline=0, command=self.show_crop_ui)
         self.individual_operations_menu.add_command(label="Resize...", underline=0, command=self.resize_image)
         self.individual_operations_menu.add_command(label="Expand", underline=1, command=self.expand_image)
         self.individual_operations_menu.add_command(label="Rotate", underline=1, command=self.rotate_current_image)
@@ -1676,10 +1677,10 @@ class ImgTxtViewer:
         self.imageContext_menu.add_command(label="Upscale...", command=lambda: self.upscale_image(batch=False))
         self.imageContext_menu.add_command(label="Resize...", command=self.resize_image)
         if not self.image_file.lower().endswith('.gif'):
-            self.imageContext_menu.add_command(label="Crop...", command=self.open_crop_tool)
+            self.imageContext_menu.add_command(label="Crop...", command=self.show_crop_ui)
             self.imageContext_menu.add_command(label="Expand", command=self.expand_image)
         else:
-            self.imageContext_menu.add_command(label="Crop...", state="disabled", command=self.open_crop_tool)
+            self.imageContext_menu.add_command(label="Crop...", state="disabled", command=self.show_crop_ui)
             self.imageContext_menu.add_command(label="Expand", state="disabled", command=self.expand_image)
         self.imageContext_menu.add_command(label="Rotate", command=self.rotate_current_image)
         self.imageContext_menu.add_command(label="Flip", command=self.flip_current_image)
@@ -2132,6 +2133,15 @@ class ImgTxtViewer:
         path = self.image_dir.get()
         self.find_dupe_file.setup_window(parent, root, version, menu, path)
         self.update_ui_state("FindDupeFile")
+
+
+    def show_crop_ui(self):
+        parent = self
+        root = self.master
+        version = VERSION
+        menu = self.individual_operations_menu
+        path = self.image_dir.get()
+        self.crop_ui.setup_window(parent, root, version, menu, path)
 
 
 # --------------------------------------
@@ -3413,14 +3423,6 @@ class ImgTxtViewer:
         window_y = root.winfo_y() - 100 + main_window_height // 2
         filepath = str(self.image_dir.get())
         batch_crop_images.BatchCrop(self.master, filepath, window_x, window_y)
-
-
-    def open_crop_tool(self):
-        filepath = self.image_files[self.current_index]
-        if filepath.lower().endswith('.gif'):
-            messagebox.showerror("Error: open_crop_tool()", "Unsupported filetype: .GIF")
-            return
-        CropUI.CropInterface(self.master)
 
 
     def duplicate_pair(self):

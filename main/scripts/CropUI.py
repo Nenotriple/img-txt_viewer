@@ -764,55 +764,69 @@ class ImageCanvas(tk.Canvas):
 
 
 class CropInterface:
-    def __init__(self, root):
-        self.root = root
+    def __init__(self):
+        self.version = None
+        self.parent = None
+        self.root = None
+        self.image_path = None
+        self.menu = None
+
         self.image_files = []
         self.image_info_cache = {}
         self.current_index = 0
         self.pady = 5
         self.padx = 10
         self.selection_aspect = 0
-        self.setup_window()
-
-        self.crop_selection = CropSelection(self, self.img_canvas)
-        self.img_canvas.crop_selection = self.crop_selection
 
 
 # --------------------------------------
 # UI
 # --------------------------------------
-    def setup_window(self):
-        self.root.minsize(590, 450)
-        self.root.title("Image Cropper")
-        self.main_frame = tk.Frame(self.root)
-        self.main_frame.grid(row=0, column=0, sticky="nsew")
-        self.main_frame.grid_rowconfigure(0, weight=0)
-        self.main_frame.grid_rowconfigure(1, weight=1)
-        self.main_frame.grid_columnconfigure(0, weight=1)
-        self.main_frame.grid_columnconfigure(1, weight=0)
-        self.root.grid_rowconfigure(0, weight=1)
-        self.root.grid_columnconfigure(0, weight=1)
+    def setup_window(self, parent, root, version, menu, path=None):
+        self.version = version
+        self.parent = parent
+        self.root = root
+        self.image_path = path
+        self.menu = menu
+        self.root.minsize(590, 485)
+        self.root.title(f"{self.version} - img-txt Viewer - Crop Image")
+        self.menu.entryconfig("Crop...", command=self.close_crop_ui)
+        self.create_main_frame()
         self.create_image_ui()
         self.create_control_panel()
-        #self.root.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == self.root else None, add="+")
+        self.crop_selection = CropSelection(self, self.img_canvas)
+        self.img_canvas.crop_selection = self.crop_selection
+
+
+    def create_main_frame(self):
+        self.parent.hide_primary_paned_window()
+        self.crop_ui_frame = tk.Frame(self.root)
+        self.crop_ui_frame.grid(row=0, column=0, sticky="nsew")
+        self.crop_ui_frame.grid_rowconfigure(0, weight=0)
+        self.crop_ui_frame.grid_rowconfigure(1, weight=1)
+        self.crop_ui_frame.grid_columnconfigure(0, weight=1)
+        self.crop_ui_frame.grid_columnconfigure(1, weight=0)
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+        self.root.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == self.root else None, add="+")
 
 
     def create_image_ui(self):
         # Image Stats
-        stats_frame = tk.Frame(self.main_frame, relief="sunken", borderwidth=1)
+        stats_frame = tk.Frame(self.crop_ui_frame, relief="sunken", borderwidth=1)
         stats_frame.grid(row=0, column=0, sticky="ew", pady=self.pady)
         self.stats_label = ttk.Label(stats_frame)
         self.stats_label.pack(fill="x")
 
         # Image Canvas
-        canvas_frame = tk.Frame(self.main_frame)
+        canvas_frame = tk.Frame(self.crop_ui_frame)
         canvas_frame.grid(row=1, column=0, sticky="nsew")
         self.img_canvas = ImageCanvas(self, canvas_frame)
         self.img_canvas.pack(fill="both", expand=True)
 
 
     def create_control_panel(self):
-        self.control_panel = tk.Frame(self.main_frame, relief="sunken", borderwidth=1)
+        self.control_panel = tk.Frame(self.crop_ui_frame, relief="sunken", borderwidth=1)
         self.control_panel.grid(row=0, column=1, sticky="nsew", rowspan=2, padx=self.padx, pady=self.pady)
         self.create_directory_and_navigation_widgets()
         self.create_size_widgets()
@@ -1220,6 +1234,15 @@ class CropInterface:
         filename = os.path.basename(image_file)
         filename = (filename[:61] + '(...)') if len(filename) > 64 else filename
         return {"filename": filename, "resolution": f"{width}x{height}", "size": size_str, "color_mode": color_mode}
+
+
+    def close_crop_ui(self, event=None):
+        self.root.minsize(545, 200) # Width x Height
+        self.parent.sync_title_with_content()
+        self.crop_ui_frame.grid_remove()
+        self.menu.entryconfig("Crop...", command=self.parent.open_crop_tool)
+        self.parent.show_primary_paned_window()
+        self.parent.refresh_text_box()
 
 
 #endregion
