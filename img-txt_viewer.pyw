@@ -316,12 +316,7 @@ class ImgTxtViewer:
         self.crop_ui = CropUI.CropInterface()
 
         # Setup UI state
-        self.ui_state = {
-            "ImgTxtViewer": True,
-            "BatchTagEdit": False,
-            "BatchResizeImages": False,
-            "FindDupeFile": False,
-            }
+        self.ui_state = "ImgTxtViewer"
 
         # Window drag variables
         self.drag_x = None
@@ -2112,7 +2107,7 @@ class ImgTxtViewer:
         menu = self.batch_operations_menu
         text_files = self.text_files
         self.batch_tag_edit.setup_window(parent, root, version, menu, text_files)
-        self.update_ui_state("BatchTagEdit")
+        self.toggle_alt_ui_menus("BatchTagEdit")
 
 
     def show_batch_resize_images(self, event=None):
@@ -2122,7 +2117,7 @@ class ImgTxtViewer:
         menu = self.batch_operations_menu
         path = self.image_dir.get()
         self.batch_resize_images.setup_window(parent, root, version, menu, path)
-        self.update_ui_state("BatchResizeImages")
+        self.toggle_alt_ui_menus("BatchResizeImages")
 
 
     def show_find_dupe_file(self, event=None):
@@ -2132,7 +2127,7 @@ class ImgTxtViewer:
         menu = self.batch_operations_menu
         path = self.image_dir.get()
         self.find_dupe_file.setup_window(parent, root, version, menu, path)
-        self.update_ui_state("FindDupeFile")
+        self.toggle_alt_ui_menus("FindDupeFile")
 
 
     def show_crop_ui(self):
@@ -2142,7 +2137,7 @@ class ImgTxtViewer:
         menu = self.individual_operations_menu
         path = self.image_dir.get()
         self.crop_ui.setup_window(parent, root, version, menu, path)
-        self.update_ui_state("CropUI")
+        self.toggle_alt_ui_menus("CropUI")
 
 
 # --------------------------------------
@@ -2150,7 +2145,7 @@ class ImgTxtViewer:
 # --------------------------------------
     def show_primary_paned_window(self, event=None):
         self.primary_paned_window.grid()
-        self.update_ui_state("ImgTxtViewer")
+        self.toggle_alt_ui_menus("ImgTxtViewer")
 
 
     def hide_primary_paned_window(self, event=None):
@@ -2160,44 +2155,44 @@ class ImgTxtViewer:
 # --------------------------------------
 # Handle UI State
 # --------------------------------------
-    def toggle_alt_ui_menus(self):
-        batch_menu = self.batch_operations_menu
-        batch_menu_items = {
-            "BatchResizeImages": "Batch Resize Images...",
-            "BatchTagEdit": "Batch Tag Edit...",
-            "FindDupeFile": "Find Duplicate Files..."
-            }
-        indiv_menu = self.individual_operations_menu
-        crop_menu_item = "Crop..."
-        ui_state = self.ui_state
-        if ui_state.get("ImgTxtViewer", False):
-        # Enable all batch menu items and Crop...
-            for menu_label in batch_menu_items.values():
-                batch_menu.entryconfig(menu_label, state="normal")
-            indiv_menu.entryconfig(crop_menu_item, state="normal")
-        elif ui_state.get("CropUI", False):
-        # Disable batch menu items, enable Crop...
-            for menu_label in batch_menu_items.values():
-                batch_menu.entryconfig(menu_label, state="disabled")
-            indiv_menu.entryconfig(crop_menu_item, state="normal")
+    def toggle_alt_ui_menus(self, state):
+        self.ui_state = state
+        if state == "ImgTxtViewer":
+            self.toggle_batch_ops_menu_items(all=True, state="normal")
+            self.toggle_indiv_ops_menu_items(all=True, state="normal")
         else:
-        # Enable/disable batch menu items based on ui_state
-            for key, menu_label in batch_menu_items.items():
-                state = "normal" if ui_state.get(key, False) else "disabled"
-                batch_menu.entryconfig(menu_label, state=state)
-            # Disable Crop... if any batch ui_state is active
-            if any(ui_state.get(k, False) for k in batch_menu_items.keys()):
-                indiv_menu.entryconfig(crop_menu_item, state="disabled")
-            else:
-                indiv_menu.entryconfig(crop_menu_item, state="normal")
+            self.toggle_batch_ops_menu_items(all=True, state="disabled")
+            self.toggle_indiv_ops_menu_items(all=True, state="disabled")
+            if state == "BatchTagEdit":
+                self.toggle_batch_ops_menu_items(item="Batch Tag Edit...", state="normal")
+            elif state == "BatchResizeImages":
+                self.toggle_batch_ops_menu_items(item="Batch Resize Images...", state="normal")
+            elif state == "FindDupeFile":
+                self.toggle_batch_ops_menu_items(item="Find Duplicate Files...", state="normal")
+            elif state == "CropUI":
+                self.toggle_indiv_ops_menu_items(item="Crop...", state="normal")
 
 
-    def update_ui_state(self, key):
-        for k in self.ui_state:
-            self.ui_state[k] = False
-        if key in self.ui_state:
-            self.ui_state[key] = True
-        self.toggle_alt_ui_menus()
+    def toggle_batch_ops_menu_items(self, all=False, item=None, state="disabled", event=None):
+        menu = self.batch_operations_menu
+        menu_items = ["Batch Resize Images...", "Batch Tag Edit...", "Find Duplicate Files..."]
+        if all:
+            for item in menu_items:
+                menu.entryconfig(item, state=state)
+        else:
+            if item in menu_items:
+                menu.entryconfig(item, state=state)
+
+
+    def toggle_indiv_ops_menu_items(self, all=False, item=None, state="disabled", event=None):
+        menu = self.individual_operations_menu
+        menu_items = ["Rename Pair", "Upscale...", "Crop...", "Resize...", "Expand", "Rotate", "Flip", "Duplicate img-txt Pair", "Delete img-txt Pair", "Undo Delete"]
+        if all:
+            for item in menu_items:
+                menu.entryconfig(item, state=state)
+        else:
+            if item in menu_items:
+                menu.entryconfig(item, state=state)
 
 
 #endregion
