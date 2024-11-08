@@ -758,7 +758,7 @@ class ImageCanvas(tk.Canvas):
 
 #endregion
 #########################################################################################################
-#region CLS: ImageCropper
+#region CLS: CropInterface
 
 
 class CropInterface:
@@ -906,7 +906,7 @@ class CropInterface:
 
         # Fixed selection
         self.fixed_selection_var = tk.BooleanVar(value=False)
-        self.fixed_selection_checkbutton = ttk.Checkbutton(options_frame, variable=self.fixed_selection_var, text="Fixed", width=5, command=self.toggle_widgets_by_mode)
+        self.fixed_selection_checkbutton = ttk.Checkbutton(options_frame, variable=self.fixed_selection_var, text="Fixed", command=self.toggle_widgets_by_mode)
         self.fixed_selection_checkbutton.grid(row=1, column=0, padx=self.padx, pady=self.pady)
         ToolTip(self.fixed_selection_checkbutton, "Enable lock of aspect ratio, width, height, or size", 200, 6, 12)
 
@@ -936,14 +936,16 @@ class CropInterface:
         self.selection_error_pip.pack(side="right")
         self.selection_error_pip_tooltip = ToolTip(self.selection_error_pip, 100, 6, 12, state="disabled")
 
+        # Auto Mode
+        self.auto_aspect_var = tk.BooleanVar(value=False)
+        self.auto_aspect_checkbutton = ttk.Checkbutton(entry_frame, text="Auto", variable=self.auto_aspect_var, command=self.update_auto_entry_state, state="disabled")
+        self.auto_aspect_checkbutton.pack(side="left")
+        ToolTip(self.auto_aspect_checkbutton, "Automatically select the best aspect ratio for the selection based on the predefined ratios and the aspect ratio of the displayed image.\n\n'Fixed' and 'Aspect Ratio' must be enabled!", 200, 6, 12, wraplength=240)
 
-    def set_error_pip_color(self, state=None, message=None, event=None):
-        if state == "error":
-            self.selection_error_pip.config(bg="#fd8a8a")
-            self.selection_error_pip_tooltip.config(state="normal", text=message)
-        if state == "normal":
-            self.selection_error_pip.config(bg=self.selection_error_pip.master.cget("bg"))
-            self.selection_error_pip_tooltip.config(state="disabled")
+        # Auto Entry
+        self.auto_entry_var = tk.StringVar(value="1:1")
+        self.auto_entry = ttk.Entry(options_frame, textvariable=self.auto_entry_var, width=12, state="disabled")
+        self.auto_entry.grid(row=3, column=0, columnspan=3, sticky="ew", padx=self.padx, pady=self.pady)
 
 
     def create_crop_info_label(self):
@@ -1063,6 +1065,35 @@ class CropInterface:
         else:
             width.config(state="normal")
             height.config(state="normal")
+        if self.fixed_selection_var.get() and self.fixed_selection_option_var.get() == "Aspect Ratio":
+            self.auto_aspect_checkbutton.config(state="normal")
+            self.update_auto_entry_state()
+        else:
+            self.auto_aspect_checkbutton.config(state="disabled")
+            self.auto_aspect_var.set(False)
+            self.update_auto_entry_state()
+
+
+    def set_error_pip_color(self, state=None, message=None, event=None):
+        if state == "error":
+            self.selection_error_pip.config(bg="#fd8a8a")
+            self.selection_error_pip_tooltip.config(state="normal", text=message)
+        if state == "normal":
+            self.selection_error_pip.config(bg=self.selection_error_pip.master.cget("bg"))
+            self.selection_error_pip_tooltip.config(state="disabled")
+
+
+    def update_auto_entry_state(self):
+        if self.fixed_selection_var.get() and self.fixed_selection_option_var.get() == "Aspect Ratio":
+            if self.auto_aspect_var.get():
+                self.auto_entry.config(state="normal")
+                self.fixed_selection_entry.config(state="disabled")
+            else:
+                self.auto_entry.config(state="disabled")
+                self.fixed_selection_entry.config(state="normal")
+        else:
+            self.auto_entry.config(state="disabled")
+            self.fixed_selection_entry.config(state="normal")
 
 
 # --------------------------------------
