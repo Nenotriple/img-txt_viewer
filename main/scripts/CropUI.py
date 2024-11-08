@@ -1222,12 +1222,4 @@ class CropInterface:
         return {"filename": filename, "resolution": f"{width}x{height}", "size": size_str, "color_mode": color_mode}
 
 
-# --------------------------------------
-# Framework
-# --------------------------------------
-root = tk.Tk()
-cropper = CropInterface(root)
-cropper.root.mainloop()
-
-
 #endregion

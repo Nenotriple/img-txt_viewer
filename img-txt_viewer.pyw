@@ -62,7 +62,7 @@ from PIL import (Image, ImageTk, ImageSequence,
 from main.scripts import (about_img_txt_viewer,
                           settings_manager,
                           upscale_image,
-                          crop_image,
+                          CropUI,
                           batch_crop_images,
                           resize_image,
                           image_grid,
@@ -3420,7 +3420,7 @@ class ImgTxtViewer:
         if filepath.lower().endswith('.gif'):
             messagebox.showerror("Error: open_crop_tool()", "Unsupported filetype: .GIF")
             return
-        crop_image.Crop(self.master, filepath)
+        CropUI.CropInterface(self.master)
 
 
     def duplicate_pair(self):
