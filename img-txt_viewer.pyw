@@ -4634,11 +4634,9 @@ root.mainloop()
 **v1.96 Changes**  |  https://github.com/Nenotriple/img-txt_viewer/compare/v1.95...v1.96
 
 
-This release incorporates many new features, including AutoTag for automatically tagging images using ONNX vision models, a reworked Batch Tag Edit tool, a Thumbnail Panel for quick navigation, and an Edit Image Panel for adjusting image properties. Additionally, numerous bugs have been fixed, such as issues with the Delete Pair tool, image quality degradation, and memory leaks.
+This release incorporates many new features, including AutoTag for automatically tagging images using ONNX vision models *(wd14)*, reworked Batch Tag Edit and Crop tools, a Thumbnail Panel for quick navigation, and an Edit Image Panel for adjusting image properties. Additionally, numerous bugs have been fixed, such as issues with the Delete Pair tool, image quality degradation, and memory leaks.
 
-Many aspects of the script have been refactored to be more modular and better handle additional tools and features.
-
-The app now targets Windows 11, and while it doesn't offer an complete `Aero` theme, many widgets have been updated to utilize a more modern theme where appropriate.
+The app now targets Windows 11, most widgets should have a more modern look and feel.
 
 Starting from this release, the `Lite` version will no longer be provided. All tools are now built-in.
 
