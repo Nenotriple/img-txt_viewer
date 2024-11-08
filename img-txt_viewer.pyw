@@ -2142,6 +2142,7 @@ class ImgTxtViewer:
         menu = self.individual_operations_menu
         path = self.image_dir.get()
         self.crop_ui.setup_window(parent, root, version, menu, path)
+        self.update_ui_state("CropUI")
 
 
 # --------------------------------------
@@ -2160,23 +2161,35 @@ class ImgTxtViewer:
 # Handle UI State
 # --------------------------------------
     def toggle_alt_ui_menus(self):
-        menu = self.batch_operations_menu
-        menu_items = {
+        batch_menu = self.batch_operations_menu
+        batch_menu_items = {
             "BatchResizeImages": "Batch Resize Images...",
             "BatchTagEdit": "Batch Tag Edit...",
             "FindDupeFile": "Find Duplicate Files..."
             }
-        if self.ui_state.get("ImgTxtViewer", False):
-            for menu_label in menu_items.values():
-                menu.entryconfig(menu_label, state="normal")
+        indiv_menu = self.individual_operations_menu
+        crop_menu_item = "Crop..."
+        ui_state = self.ui_state
+        if ui_state.get("ImgTxtViewer", False):
+        # Enable all batch menu items and Crop...
+            for menu_label in batch_menu_items.values():
+                batch_menu.entryconfig(menu_label, state="normal")
+            indiv_menu.entryconfig(crop_menu_item, state="normal")
+        elif ui_state.get("CropUI", False):
+        # Disable batch menu items, enable Crop...
+            for menu_label in batch_menu_items.values():
+                batch_menu.entryconfig(menu_label, state="disabled")
+            indiv_menu.entryconfig(crop_menu_item, state="normal")
         else:
-            for key, state in self.ui_state.items():
-                menu_label = menu_items.get(key)
-                if menu_label:
-                    if state:
-                        menu.entryconfig(menu_label, state="normal")
-                    else:
-                        menu.entryconfig(menu_label, state="disabled")
+        # Enable/disable batch menu items based on ui_state
+            for key, menu_label in batch_menu_items.items():
+                state = "normal" if ui_state.get(key, False) else "disabled"
+                batch_menu.entryconfig(menu_label, state=state)
+            # Disable Crop... if any batch ui_state is active
+            if any(ui_state.get(k, False) for k in batch_menu_items.keys()):
+                indiv_menu.entryconfig(crop_menu_item, state="disabled")
+            else:
+                indiv_menu.entryconfig(crop_menu_item, state="normal")
 
 
     def update_ui_state(self, key):
