@@ -1104,8 +1104,8 @@ class CropInterface:
                 width, height = map(float, ratio.split(':'))
                 return round(width / height, 2)
             return round(float(ratio), 2)
-        ratio_list_str = self.auto_entry_var.get()
-        ratio_list = [r.strip() for r in ratio_list_str.split(",")]
+
+        ratio_list = [input.strip() for input in self.auto_entry_var.get().split(",")]
         ratio_list = list(set(convert_to_float(r) for r in ratio_list))
         width = self.img_canvas.original_img_width
         height = self.img_canvas.original_img_height
