@@ -948,7 +948,6 @@ class CropInterface:
         self.auto_entry_var = tk.StringVar(value="1:1, 5:4, 4:5, 4:3, 3:4, 3:2, 2:3, 16:9, 9:16, 2:1, 1:2")
         self.auto_entry = ttk.Entry(options_frame, textvariable=self.auto_entry_var, width=12, state="disabled")
         self.auto_entry.grid(row=3, column=0, columnspan=3, sticky="ew", padx=self.padx, pady=self.pady)
-        self.auto_entry.bind("<Return>", self.determine_best_aspect_ratio)
 
 
     def create_crop_info_label(self):
