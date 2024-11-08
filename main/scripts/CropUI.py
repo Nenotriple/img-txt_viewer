@@ -844,6 +844,7 @@ class CropInterface:
         directory_frame.grid(row=0, column=3, padx=(self.padx, 0), sticky="ew")
         self.path_entry = ttk.Entry(directory_frame)
         self.path_entry.pack(side="left", fill="x", expand=True)
+        self.parent.bind_entry_functions(self.path_entry)
         browse_button = ttk.Button(directory_frame, text="Browse...", width=9, command=self.open_directory_dialog)
         browse_button.pack(side="left")
         open_button = ttk.Button(directory_frame, text="Open", width=9)
@@ -902,6 +903,7 @@ class CropInterface:
         self.width_spinbox.set(0)
         self.width_spinbox.bind("<Return>", self.adjust_selection)
         self.width_spinbox.bind("<MouseWheel>", self.focus_widget_and_adjust_selection)
+        self.parent.bind_entry_functions(self.width_spinbox)
         # Height
         self.height_label = ttk.Label(size_frame, text="H (px):")
         self.height_label.grid(row=1, column=0, padx=self.padx, pady=self.pady, sticky='w')
@@ -911,6 +913,7 @@ class CropInterface:
         self.height_spinbox.set(0)
         self.height_spinbox.bind("<Return>", self.adjust_selection)
         self.height_spinbox.bind("<MouseWheel>", self.focus_widget_and_adjust_selection)
+        self.parent.bind_entry_functions(self.height_spinbox)
 
 
     def create_position_widgets(self):
@@ -926,6 +929,7 @@ class CropInterface:
         self.pos_x_spinbox.set(0)
         self.pos_x_spinbox.bind("<Return>", self.adjust_selection)
         self.pos_x_spinbox.bind("<MouseWheel>", self.focus_widget_and_adjust_selection)
+        self.parent.bind_entry_functions(self.pos_x_spinbox)
         # Y Position
         self.pos_y_label = ttk.Label(position_frame, text="Y (px):")
         self.pos_y_label.grid(row=1, column=0, padx=self.padx, pady=self.pady, sticky='w')
@@ -935,6 +939,7 @@ class CropInterface:
         self.pos_y_spinbox.set(0)
         self.pos_y_spinbox.bind("<Return>", self.adjust_selection)
         self.pos_y_spinbox.bind("<MouseWheel>", self.focus_widget_and_adjust_selection)
+        self.parent.bind_entry_functions(self.pos_y_spinbox)
 
 
     def create_option_widgets(self):
@@ -968,6 +973,7 @@ class CropInterface:
         self.fixed_selection_entry_var = tk.StringVar(value="1:1")
         self.fixed_selection_entry = ttk.Entry(entry_frame, textvariable=self.fixed_selection_entry_var, width=12)
         self.fixed_selection_entry.pack(side="right")
+        self.parent.bind_entry_functions(self.fixed_selection_entry)
         self.fixed_selection_entry.bind("<KeyRelease>", lambda event: self.update_widget_values(resize=True))
         self.selection_error_pip = tk.Label(entry_frame)
         self.selection_error_pip.pack(side="right")
@@ -981,6 +987,7 @@ class CropInterface:
         self.auto_entry_var = tk.StringVar(value="1:1, 5:4, 4:5, 4:3, 3:4, 3:2, 2:3, 16:9, 9:16, 2:1, 1:2")
         self.auto_entry = ttk.Entry(options_frame, textvariable=self.auto_entry_var, width=12, state="disabled")
         self.auto_entry.grid(row=3, column=0, columnspan=3, sticky="ew", padx=self.padx, pady=self.pady)
+        self.parent.bind_entry_functions(self.auto_entry)
 
 
 # --------------------------------------
