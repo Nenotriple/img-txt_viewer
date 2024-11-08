@@ -2141,7 +2141,7 @@ class ImgTxtViewer:
 
 
 # --------------------------------------
-# Handle Primary Paned Window
+# Handle Primary Paned Window (ImgTxtViewer)
 # --------------------------------------
     def show_primary_paned_window(self, event=None):
         self.primary_paned_window.grid()
@@ -4662,6 +4662,9 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - FIXED: The following resize modes not working/causing an error: `Longer Side`, and `Height`
   - FIXED: The resize operation is now threaded, allowing the app to remain responsive during the resizing process.
 - `Find Duplicate Files`: No longer a standalone tool, the tool has been integrated into the main app.
+- `Crop...`: The crop tool has been totally reworked, it has new features and it's more convenient to use.
+  - All the normal cropping features you would expect are present.
+  - A special `Auto` fixed aspect ratio mode allows you to quickly create a crop based on the image's aspect ratio and a list of predefined aspect ratios.
 - New feature `Thumbnail Panel`: Displayed below the current image for quick navigation.
 - New feature `Edit Image Panel`: Enabled from the options/image menu, this section allows you to edit the `Brightness`, `Contrast`, `Saturation`, `Sharpness`, `Highlights`, and `Shadows` of the current image.
 - New feature `Edit Image...`: Open the current image in an external editor, the default is MS Paint.
@@ -4743,6 +4746,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - New: `Rounded Corners` The popup now supports rounded corners. (Default: 30px)
 - `Batch Crop`(v1.03), `Resize Images`(v1.02), `Image Grid`(v1.04):
   - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
+- `crop_image` has been replaced with `CropUI`.
 
 
 </details>
