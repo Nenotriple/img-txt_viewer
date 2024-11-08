@@ -1240,7 +1240,7 @@ class CropInterface:
         self.root.minsize(545, 200) # Width x Height
         self.parent.sync_title_with_content()
         self.crop_ui_frame.grid_remove()
-        self.menu.entryconfig("Crop...", command=self.parent.open_crop_tool)
+        self.menu.entryconfig("Crop...", command=self.parent.show_crop_ui)
         self.parent.show_primary_paned_window()
         self.parent.refresh_text_box()
 
