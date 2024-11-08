@@ -725,13 +725,13 @@ class ImageCanvas(tk.Canvas):
         self._resize_image(None)
 
 
-    def _resize_image(self, event):
+    def _resize_image(self, event=None):
         if not self.img_path:
             return
         new_width, new_height = self.winfo_width(), self.winfo_height()
         ratio = min(new_width / self.original_img_width, new_height / self.original_img_height)
         new_size = (int(self.original_img_width * ratio), int(self.original_img_height * ratio))
-        if new_size != self.new_size:
+        if new_size != self.new_size and new_size[0] > 0 and new_size[1] > 0:
             self.img_scale_ratio = ratio
             self.new_size = new_size
             self.img_resized = self.original_img.resize(self.new_size, Image.NEAREST)
@@ -765,37 +765,45 @@ class ImageCanvas(tk.Canvas):
 
 class CropInterface:
     def __init__(self):
-        self.version = None
         self.parent = None
         self.root = None
-        self.image_path = None
+        self.version = None
         self.menu = None
-
+        self.image_path = None
         self.image_files = []
+
         self.image_info_cache = {}
+        self.selection_aspect = 0
         self.current_index = 0
         self.pady = 5
         self.padx = 10
-        self.selection_aspect = 0
 
 
 # --------------------------------------
 # UI
 # --------------------------------------
-    def setup_window(self, parent, root, version, menu, path=None):
-        self.version = version
+    def setup_window(self, parent, root, version, menu, path=None, image_paths=None):
         self.parent = parent
         self.root = root
-        self.image_path = path
+        self.version = version
         self.menu = menu
-        self.root.minsize(590, 485)
+        if os.path.exists(path):
+            self.image_path = path
+        self.image_files = image_paths
+        self.root.minsize(450, 450)
         self.root.title(f"{self.version} - img-txt Viewer - Crop Image")
         self.menu.entryconfig("Crop...", command=self.close_crop_ui)
         self.create_main_frame()
+        self.setup_top_frame()
         self.create_image_ui()
         self.create_control_panel()
         self.crop_selection = CropSelection(self, self.img_canvas)
         self.img_canvas.crop_selection = self.crop_selection
+        if path:
+            self.path_entry.insert(0, path)
+            self.current_index = self.parent.current_index
+            self.display_image(self.image_files[self.current_index])
+        self.root.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == self.root else None, add="+")
 
 
     def create_main_frame(self):
@@ -803,48 +811,64 @@ class CropInterface:
         self.crop_ui_frame = tk.Frame(self.root)
         self.crop_ui_frame.grid(row=0, column=0, sticky="nsew")
         self.crop_ui_frame.grid_rowconfigure(0, weight=0)
-        self.crop_ui_frame.grid_rowconfigure(1, weight=1)
+        self.crop_ui_frame.grid_rowconfigure(1, weight=0)
+        self.crop_ui_frame.grid_rowconfigure(2, weight=1)
         self.crop_ui_frame.grid_columnconfigure(0, weight=1)
         self.crop_ui_frame.grid_columnconfigure(1, weight=0)
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
-        self.root.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == self.root else None, add="+")
+
+
+    def setup_top_frame(self):
+        top_frame = tk.Frame(self.crop_ui_frame)
+        top_frame.grid(row=0, column=0, columnspan=99, padx=self.padx, pady=(5,0), sticky="nsew")
+        top_frame.grid_columnconfigure(3, weight=1)
+
+        ttk.Button(top_frame, text="<---Close", width=15, command=self.close_crop_ui).grid(row=0, column=0, sticky="w")
+
+        self.crop_info_label = ttk.Label(top_frame, text="Crop to: 0x0 (0:0)", anchor="w")
+        self.crop_info_label.grid(row=0, column=2, padx=self.padx, sticky="ew")
+
+        # Directory
+        directory_frame = tk.Frame(top_frame)
+        directory_frame.grid(row=0, column=3, padx=(self.padx, 0), sticky="ew")
+        self.path_entry = ttk.Entry(directory_frame)
+        self.path_entry.pack(side="left", fill="x", expand=True)
+        browse_button = ttk.Button(directory_frame, text="Browse...", width=9, command=self.open_directory_dialog)
+        browse_button.pack(side="left")
+        open_button = ttk.Button(directory_frame, text="Open", width=9)
+        open_button.pack(side="left")
+
+        # Help
+        help_button = ttk.Button(top_frame, text="?", width=2, command=self.show_help)
+        help_button.grid(row=0, column=4, padx=2, sticky="e")
+        ToolTip.create(help_button, "Show/Hide Help", 50, 6, 12)
 
 
     def create_image_ui(self):
         # Image Stats
         stats_frame = tk.Frame(self.crop_ui_frame, relief="sunken", borderwidth=1)
-        stats_frame.grid(row=0, column=0, sticky="ew", pady=self.pady)
-        self.stats_label = ttk.Label(stats_frame)
-        self.stats_label.pack(fill="x")
+        stats_frame.grid(row=1, column=0, sticky="ew", pady=self.pady)
+        self.img_stats_label = ttk.Label(stats_frame)
+        self.img_stats_label.pack(fill="x")
 
         # Image Canvas
         canvas_frame = tk.Frame(self.crop_ui_frame)
-        canvas_frame.grid(row=1, column=0, sticky="nsew")
+        canvas_frame.grid(row=2, column=0, sticky="nsew")
         self.img_canvas = ImageCanvas(self, canvas_frame)
         self.img_canvas.pack(fill="both", expand=True)
 
 
     def create_control_panel(self):
         self.control_panel = tk.Frame(self.crop_ui_frame, relief="sunken", borderwidth=1)
-        self.control_panel.grid(row=0, column=1, sticky="nsew", rowspan=2, padx=self.padx, pady=self.pady)
-        self.create_directory_and_navigation_widgets()
+        self.control_panel.grid(row=1, column=1, sticky="nsew", rowspan=2, padx=self.padx, pady=self.pady)
+        self.create_nav_and_crop_widgets()
         self.create_size_widgets()
         self.create_position_widgets()
         self.create_option_widgets()
-        self.create_crop_info_label()
 
 
-    def create_directory_and_navigation_widgets(self):
-        # Directory
-        directory_frame = tk.Frame(self.control_panel)
-        directory_frame.pack(pady=self.pady, padx=self.padx, fill="x")
-        self.path_entry = ttk.Entry(directory_frame)
-        self.path_entry.pack(side="left", fill="x")
-        self.path_tooltip = ToolTip(self.path_entry, "...", 400, 6, 12)
-        self.open_button = ttk.Button(directory_frame, text="Browse...", width=9, command=self.open_directory_dialog)
-        self.open_button.pack(side="left", fill="x")
-
+    def create_nav_and_crop_widgets(self):
         # Navigation
         nav_frame = tk.Frame(self.control_panel)
         nav_frame.pack(pady=self.pady, padx=self.padx, fill="x")
@@ -962,11 +986,6 @@ class CropInterface:
         self.auto_entry_var = tk.StringVar(value="1:1, 5:4, 4:5, 4:3, 3:4, 3:2, 2:3, 16:9, 9:16, 2:1, 1:2")
         self.auto_entry = ttk.Entry(options_frame, textvariable=self.auto_entry_var, width=12, state="disabled")
         self.auto_entry.grid(row=3, column=0, columnspan=3, sticky="ew", padx=self.padx, pady=self.pady)
-
-
-    def create_crop_info_label(self):
-        self.crop_info_label = ttk.Label(self.control_panel, text="Crop to: 0x0 (0:0)", anchor="w")
-        self.crop_info_label.pack(side="bottom", fill="x", padx=self.padx, pady=self.pady)
 
 
 # --------------------------------------
@@ -1221,7 +1240,7 @@ class CropInterface:
             if self.image_file not in self.image_info_cache:
                 self.image_info_cache[self.image_file] = self.get_image_info(self.image_file)
             image_info = self.image_info_cache[self.image_file]
-            self.stats_label.config(text=f"{image_info['filename']}  |  {image_info['resolution']}  |  {percent_scale}%  |  {image_info['size']}  |  {image_info['color_mode']}", anchor="w")
+            self.img_stats_label.config(text=f"{image_info['filename']}  |  {image_info['resolution']}  |  {percent_scale}%  |  {image_info['size']}  |  {image_info['color_mode']}", anchor="w")
 
 
     def get_image_info(self, image_file):
@@ -1234,6 +1253,11 @@ class CropInterface:
         filename = os.path.basename(image_file)
         filename = (filename[:61] + '(...)') if len(filename) > 64 else filename
         return {"filename": filename, "resolution": f"{width}x{height}", "size": size_str, "color_mode": color_mode}
+
+
+    def show_help(self):
+        help_message = ("Not Implemented!")
+        messagebox.showinfo("CropUI Help", help_message)
 
 
     def close_crop_ui(self, event=None):
