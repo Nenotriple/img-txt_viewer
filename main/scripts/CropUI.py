@@ -823,12 +823,22 @@ class CropInterface:
         top_frame = tk.Frame(self.crop_ui_frame)
         top_frame.grid(row=0, column=0, columnspan=99, padx=self.padx, pady=(5,0), sticky="nsew")
         top_frame.grid_columnconfigure(3, weight=1)
-
+        # Close
         ttk.Button(top_frame, text="<---Close", width=15, command=self.close_crop_ui).grid(row=0, column=0, sticky="w")
-
+        # After Crop
+        self.after_crop_menu = ttk.Menubutton(top_frame, text="After Crop...")
+        self.after_crop_menu.grid(row=0, column=1, padx=self.padx, sticky="w")
+        self.after_crop_menu.menu = tk.Menu(self.after_crop_menu, tearoff=0)
+        self.after_crop_menu["menu"] = self.after_crop_menu.menu
+        self.after_crop_option = tk.StringVar(value="Save & Close")
+        self.after_crop_menu.menu.add_radiobutton(label="Save & Close", variable=self.after_crop_option, value="Save & Close")
+        self.after_crop_menu.menu.add_radiobutton(label="Save & Next", variable=self.after_crop_option, value="Save & Next")
+        self.after_crop_menu.menu.add_radiobutton(label="Save As...", variable=self.after_crop_option, value="Save As...")
+        self.after_crop_menu.menu.add_separator()
+        self.after_crop_menu.menu.add_radiobutton(label="Overwrite", variable=self.after_crop_option, value="Overwrite")
+        # Crop Info
         self.crop_info_label = ttk.Label(top_frame, text="Crop to: 0x0 (0:0)", anchor="w")
         self.crop_info_label.grid(row=0, column=2, padx=self.padx, sticky="ew")
-
         # Directory
         directory_frame = tk.Frame(top_frame)
         directory_frame.grid(row=0, column=3, padx=(self.padx, 0), sticky="ew")
@@ -838,7 +848,6 @@ class CropInterface:
         browse_button.pack(side="left")
         open_button = ttk.Button(directory_frame, text="Open", width=9)
         open_button.pack(side="left")
-
         # Help
         help_button = ttk.Button(top_frame, text="?", width=2, command=self.show_help)
         help_button.grid(row=0, column=4, padx=2, sticky="e")
@@ -851,7 +860,6 @@ class CropInterface:
         stats_frame.grid(row=1, column=0, sticky="ew", pady=self.pady)
         self.img_stats_label = ttk.Label(stats_frame)
         self.img_stats_label.pack(fill="x")
-
         # Image Canvas
         canvas_frame = tk.Frame(self.crop_ui_frame)
         canvas_frame.grid(row=2, column=0, sticky="nsew")
@@ -876,7 +884,6 @@ class CropInterface:
         self.prev_button.pack(side="left", fill="x", expand=True)
         self.next_button = ttk.Button(nav_frame, text="Next--->", width=12, command=self.show_next_image)
         self.next_button.pack(side="left", fill="x", expand=True)
-
         # Crop Button
         self.crop_button = ttk.Button(self.control_panel, text="Crop Selection", command=self.crop_image)
         self.crop_button.pack(fill="x", pady=self.pady, padx=self.padx)
@@ -886,7 +893,6 @@ class CropInterface:
         size_frame = ttk.LabelFrame(self.control_panel, text="Size")
         size_frame.pack(pady=self.pady, padx=self.padx, fill="x")
         size_frame.columnconfigure(1, weight=1)
-
         # Width
         self.width_label = ttk.Label(size_frame, text="W (px):")
         self.width_label.grid(row=0, column=0, padx=self.padx, pady=self.pady, sticky='w')
@@ -896,7 +902,6 @@ class CropInterface:
         self.width_spinbox.set(0)
         self.width_spinbox.bind("<Return>", self.adjust_selection)
         self.width_spinbox.bind("<MouseWheel>", self.focus_widget_and_adjust_selection)
-
         # Height
         self.height_label = ttk.Label(size_frame, text="H (px):")
         self.height_label.grid(row=1, column=0, padx=self.padx, pady=self.pady, sticky='w')
@@ -912,7 +917,6 @@ class CropInterface:
         position_frame = ttk.LabelFrame(self.control_panel, text="Position")
         position_frame.pack(pady=self.pady, padx=self.padx, fill="x")
         position_frame.columnconfigure(1, weight=1)
-
         # X Position
         self.pos_x_label = ttk.Label(position_frame, text="X (px):")
         self.pos_x_label.grid(row=0, column=0, padx=self.padx, pady=self.pady, sticky='w')
@@ -922,7 +926,6 @@ class CropInterface:
         self.pos_x_spinbox.set(0)
         self.pos_x_spinbox.bind("<Return>", self.adjust_selection)
         self.pos_x_spinbox.bind("<MouseWheel>", self.focus_widget_and_adjust_selection)
-
         # Y Position
         self.pos_y_label = ttk.Label(position_frame, text="Y (px):")
         self.pos_y_label.grid(row=1, column=0, padx=self.padx, pady=self.pady, sticky='w')
@@ -937,19 +940,16 @@ class CropInterface:
     def create_option_widgets(self):
         options_frame = ttk.LabelFrame(self.control_panel, text="Options")
         options_frame.pack(pady=self.pady, padx=self.padx, fill="x")
-
         # Expand From Center
         self.expand_from_center_var = tk.BooleanVar(value=False)
         self.expand_from_center_checkbutton = ttk.Checkbutton(options_frame, variable=self.expand_from_center_var, text="Expand From Center")
         self.expand_from_center_checkbutton.grid(row=0, column=0, columnspan=3, padx=self.padx, pady=self.pady, sticky="w")
         ToolTip(self.expand_from_center_checkbutton, "Expand selection from center outwards", 200, 6, 12)
-
         # Fixed selection
         self.fixed_selection_var = tk.BooleanVar(value=False)
         self.fixed_selection_checkbutton = ttk.Checkbutton(options_frame, variable=self.fixed_selection_var, text="Fixed", command=self.toggle_widgets_by_mode)
         self.fixed_selection_checkbutton.grid(row=1, column=0, padx=self.padx, pady=self.pady)
         ToolTip(self.fixed_selection_checkbutton, "Enable lock of aspect ratio, width, height, or size", 200, 6, 12)
-
         # Fixed selection Combobox
         self.fixed_selection_option_var = tk.StringVar(value="Aspect Ratio")
         self.fixed_selection_option_combobox = ttk.Combobox(options_frame, values=["Aspect Ratio", "Width", "Height", "Size"], state="readonly", textvariable=self.fixed_selection_option_var, width=12)
@@ -957,16 +957,13 @@ class CropInterface:
         ToolTip(self.fixed_selection_option_combobox, "Choose what to be fixed", 200, 6, 12)
         self.fixed_selection_option_combobox.bind("<<ComboboxSelected>>", self.toggle_widgets_by_mode)
         self.fixed_selection_option_combobox.bind("<MouseWheel>", self.toggle_widgets_by_mode)
-
         # Entry Frame
         entry_frame = tk.Frame(options_frame)
         entry_frame.grid(row=2, column=0, columnspan=3, sticky="ew", padx=self.padx, pady=self.pady)
-
         # Insert Button
         self.insert_button = ttk.Button(entry_frame, text="<", width=1, command=self.insert_selection_dimension)
         self.insert_button.pack(side="right")
         ToolTip(self.insert_button, "Insert current selection dimensions relative to the selected mode", 200, 6, 12)
-
         # Selection Entry
         self.fixed_selection_entry_var = tk.StringVar(value="1:1")
         self.fixed_selection_entry = ttk.Entry(entry_frame, textvariable=self.fixed_selection_entry_var, width=12)
@@ -975,13 +972,11 @@ class CropInterface:
         self.selection_error_pip = tk.Label(entry_frame)
         self.selection_error_pip.pack(side="right")
         self.selection_error_pip_tooltip = ToolTip(self.selection_error_pip, 100, 6, 12, state="disabled")
-
         # Auto Mode
         self.auto_aspect_var = tk.BooleanVar(value=False)
         self.auto_aspect_checkbutton = ttk.Checkbutton(entry_frame, text="Auto", variable=self.auto_aspect_var, command=self.update_auto_entry_state, state="disabled")
         self.auto_aspect_checkbutton.pack(side="left")
         ToolTip(self.auto_aspect_checkbutton, "Automatically select the best aspect ratio for the selection based on the predefined ratios and the aspect ratio of the displayed image.\n\n'Fixed' and 'Aspect Ratio' must be enabled!", 200, 6, 12, wraplength=240)
-
         # Auto Entry
         self.auto_entry_var = tk.StringVar(value="1:1, 5:4, 4:5, 4:3, 3:4, 3:2, 2:3, 16:9, 9:16, 2:1, 1:2")
         self.auto_entry = ttk.Entry(options_frame, textvariable=self.auto_entry_var, width=12, state="disabled")
