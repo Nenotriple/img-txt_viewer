@@ -1326,6 +1326,7 @@ class ImgTxtViewer:
 
 
     def interrogate_image_tags(self):
+        self.text_notebook.select(self.tab4)
         image_path = self.image_files[self.current_index]
         selected_model_path = self.onnx_model_dict.get(self.auto_tag_model_combobox.get())
         if not selected_model_path or not os.path.exists(selected_model_path):
