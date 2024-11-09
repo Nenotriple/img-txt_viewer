@@ -67,6 +67,8 @@ class CropSelection:
         self.img_canvas.bind("<ButtonRelease-1>", self._on_button_release, add="+")
         self.img_canvas.bind("<Motion>", self.handles_manager._update_cursor_icon)
         self.img_canvas.bind("<Double-1>", self._on_double_click)
+        # Bind mouse wheel events
+        self.img_canvas.bind("<MouseWheel>", self._on_mousewheel, add="+")
 
 
 # --------------------------------------
@@ -204,6 +206,40 @@ class CropSelection:
         self.update_overlay()
 
 
+    def _on_mousewheel(self, event):
+        if not self.rect:
+            return
+        if event.delta:
+            delta = event.delta
+        else:
+            return
+        shift_pressed = event.state & 0x0001
+        ctrl_pressed = event.state & 0x0004
+        mode = self.parent.fixed_selection_option_var.get()
+        step = 10 if delta > 0 else -10
+
+        if self.parent.fixed_selection_var.get():
+            if mode == "Aspect Ratio":
+                # Resize both width and height
+                self._resize_selection_with_mousewheel(True, True, step)
+            elif mode == "Width":
+                # Only resize height
+                self._resize_selection_with_mousewheel(False, True, step)
+            elif mode == "Height":
+                # Only resize width
+                self._resize_selection_with_mousewheel(True, False, step)
+            elif mode == "Size":
+                # Do not allow resizing
+                return
+        else:
+            if shift_pressed and ctrl_pressed: # Resize width and height
+                self._resize_selection_with_mousewheel(True, True, step)
+            elif shift_pressed: # Resize width
+                self._resize_selection_with_mousewheel(True, False, step)
+            else: # Resize height
+                self._resize_selection_with_mousewheel(False, True, step)
+
+
 # --------------------------------------
 # Event Helpers
 # --------------------------------------
@@ -236,6 +272,28 @@ class CropSelection:
                 self.start_x = max(min(event.x, x_max), x_off)
                 self.start_y = max(min(event.y, y_max), y_off)
         self.rect = self.img_canvas.create_rectangle(self.start_x, self.start_y, self.start_x, self.start_y, outline='white', tags='rect')
+
+
+    def _resize_selection_with_mousewheel(self, delta_width, delta_height, step):
+        x1, y1, x2, y2 = self.img_canvas.coords(self.rect)
+        cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
+        new_width = (x2 - x1) + (step if delta_width else 0)
+        new_height = (y2 - y1) + (step if delta_height else 0)
+        new_width = max(new_width, 10)
+        new_height = max(new_height, 10)
+        x1_new = cx - new_width / 2
+        x2_new = cx + new_width / 2
+        y1_new = cy - new_height / 2
+        y2_new = cy + new_height / 2
+        x_off, y_off = self.img_canvas.x_off, self.img_canvas.y_off
+        x_max = x_off + self.img_canvas.new_size[0]
+        y_max = y_off + self.img_canvas.new_size[1]
+        x1_new = max(x_off, x1_new)
+        y1_new = max(y_off, y1_new)
+        x2_new = min(x_max, x2_new)
+        y2_new = min(y_max, y2_new)
+        self.update_rect(x1_new, y1_new, x2_new, y2_new)
+        self.handles_manager.update_handles()
 
 
 # --------------------------------------
