@@ -294,6 +294,7 @@ class CropSelection:
         y2_new = min(y_max, y2_new)
         self.update_rect(x1_new, y1_new, x2_new, y2_new)
         self.handles_manager.update_handles()
+        self.parent.update_widget_values(resize=True)
 
 
 # --------------------------------------
