@@ -42,10 +42,14 @@ class CropSelection:
 
         # Selection variables
         self.rect = None
-        self.overlay = None
         self.coords = None
         self.start_x = None
         self.start_y = None
+
+        # Overlay variables
+        self.overlay = None
+        self.overlay_enabled = tk.BooleanVar(value=True)
+        self.highlight_rect = None
 
         # Variables for moving and resizing
         self.moving_rectangle = False
@@ -286,6 +290,13 @@ class CropSelection:
 
 
     def update_overlay(self):
+        if not self.overlay_enabled.get():
+            if self.highlight_rect:
+                self.img_canvas.delete(self.highlight_rect)
+            if self.rect:
+                x1, y1, x2, y2 = self.img_canvas.coords(self.rect)
+                self.highlight_rect = self.img_canvas.create_rectangle(x1-1, y1-1, x2+1, y2+1, outline='black', tags='highlight')
+            return
         if self.overlay:
             self.img_canvas.delete("overlay")
         self.overlay = []
@@ -308,6 +319,8 @@ class CropSelection:
             self.img_canvas.delete(self.rect)
         if self.overlay:
             self.img_canvas.delete("overlay")
+        if self.highlight_rect:
+            self.img_canvas.delete(self.highlight_rect)
         self.handles_manager.delete_handles()
         self.rect = None
         self.coords = None
@@ -1072,6 +1085,11 @@ class CropInterface:
         self.auto_entry.grid(row=3, column=0, columnspan=3, sticky="ew", padx=self.padx, pady=self.pady)
         ToolTip(self.auto_entry, "Enter aspect ratios separated by commas. As a ratio: 'W:H', or a decimal: '1.0'", 200, 6, 12)
         self.parent.bind_entry_functions(self.auto_entry)
+        # Highlight
+        self.overlay_var = tk.BooleanVar(value=True)
+        self.overlay_checkbutton = ttk.Checkbutton(options_frame, variable=self.overlay_var, text="Overlay/Highlight", command=self.toggle_overlay)
+        self.overlay_checkbutton.grid(row=4, column=0, padx=self.padx, pady=self.pady, sticky="w")
+        ToolTip(self.overlay_checkbutton, "Toggle the overlay/highlight that darkens the background during selection", 200, 6, 12)
 
 
 # --------------------------------------
@@ -1372,6 +1390,11 @@ class CropInterface:
                 self.display_image(self.image_files[self.current_index])
         except ValueError:
             pass
+
+
+    def toggle_overlay(self):
+        self.crop_selection.overlay_enabled.set(self.overlay_var.get())
+        self.crop_selection.update_overlay()
 
 
 #endregion
