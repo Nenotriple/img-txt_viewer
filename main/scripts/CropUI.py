@@ -66,6 +66,7 @@ class CropSelection:
         self.img_canvas.bind("<B1-Motion>", self._on_move_press, add="+")
         self.img_canvas.bind("<ButtonRelease-1>", self._on_button_release, add="+")
         self.img_canvas.bind("<Motion>", self.handles_manager._update_cursor_icon)
+        self.img_canvas.bind("<Double-1>", self._on_double_click)
 
 
 # --------------------------------------
@@ -175,6 +176,34 @@ class CropSelection:
         self.handles_manager._hide_handles_based_on_mode()
 
 
+    def _on_double_click(self, event):
+        if self.rect:
+            self.clear_selection()
+            self.parent.update_widget_values()
+            return
+        if not self.img_canvas.img_path:
+            return
+        img_width, img_height = self.img_canvas.original_img_width, self.img_canvas.original_img_height
+        half_width, half_height = img_width // 2, img_height // 2
+        center_x, center_y = img_width // 2, img_height // 2
+        x1, y1 = center_x - half_width // 2, center_y - half_height // 2
+        x2, y2 = center_x + half_width // 2, center_y + half_height // 2
+        scale = self.img_canvas.img_scale_ratio
+        x1_scaled = self.img_canvas.x_off + int(x1 * scale)
+        y1_scaled = self.img_canvas.y_off + int(y1 * scale)
+        x2_scaled = self.img_canvas.x_off + int(x2 * scale)
+        y2_scaled = self.img_canvas.y_off + int(y2 * scale)
+        if self.rect:
+            self.img_canvas.coords(self.rect, x1_scaled, y1_scaled, x2_scaled, y2_scaled)
+        else:
+            self.rect = self.img_canvas.create_rectangle(x1_scaled, y1_scaled, x2_scaled, y2_scaled, outline='white', tags='rect')
+        self.coords = (x1, y1, x2, y2)
+        self.rect_width = x2_scaled - x1_scaled
+        self.rect_height = y2_scaled - y1_scaled
+        self.handles_manager.update_handles()
+        self.update_overlay()
+
+
 # --------------------------------------
 # Event Helpers
 # --------------------------------------
@@ -281,6 +310,8 @@ class CropSelection:
 # Updates
 # --------------------------------------
     def update_rect(self, x1, y1, x2, y2):
+        if None in (x1, y1, x2, y2):
+            return
         self.img_canvas.coords(self.rect, x1, y1, x2, y2)
         self.rect_width = x2 - x1
         self.rect_height = y2 - y1
