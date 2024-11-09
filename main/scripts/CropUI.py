@@ -26,7 +26,7 @@ from tkinter import ttk, filedialog, messagebox
 
 
 # Third Party Library
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageSequence
 from TkToolTip.TkToolTip import TkToolTip as ToolTip
 
 
@@ -906,6 +906,8 @@ class CropInterface:
         self.current_index = 0
         self.pady = 5
         self.padx = 10
+        self.padxl = (5,2)
+        self.padxr = (2,5)
 
 
 # --------------------------------------
@@ -919,7 +921,7 @@ class CropInterface:
         if os.path.exists(path):
             self.image_path = path
         self.image_files = image_paths
-        self.root.minsize(450, 450)
+        self.root.minsize(530, 370)
         self.root.title(f"{self.version} - img-txt Viewer - Crop Image")
         self.menu.entryconfig("Crop...", command=self.close_crop_ui)
         self.create_main_frame()
@@ -975,7 +977,7 @@ class CropInterface:
 
     def create_image_ui(self):
         # Image Stats
-        stats_frame = tk.Frame(self.crop_ui_frame, relief="sunken", borderwidth=1)
+        stats_frame = tk.Frame(self.crop_ui_frame)
         stats_frame.grid(row=1, column=0, sticky="ew", pady=self.pady)
         self.img_stats_label = ttk.Label(stats_frame)
         self.img_stats_label.pack(fill="x")
@@ -990,13 +992,17 @@ class CropInterface:
         self.control_panel = tk.Frame(self.crop_ui_frame, relief="sunken", borderwidth=1)
         self.control_panel.grid(row=1, column=1, sticky="nsew", rowspan=2, padx=self.padx, pady=self.pady)
         self.create_nav_and_crop_widgets()
+        self.spinbox_frame = tk.Frame(self.control_panel)
+        self.spinbox_frame.pack(pady=self.pady, padx=self.padx, fill="x")
         self.create_size_widgets()
         self.create_position_widgets()
+        self.create_selection_widgets()
         self.create_option_widgets()
+        self.create_transform_widgets()
 
 
     def create_nav_and_crop_widgets(self):
-        top_frame = tk.Frame(self.control_panel, width=12)
+        top_frame = tk.Frame(self.control_panel)
         top_frame.pack(pady=self.pady, padx=self.padx, fill="x")
         # After Crop
         self.after_crop_var = tk.StringVar(value="Save & Close")
@@ -1010,19 +1016,19 @@ class CropInterface:
         after_crop_menu.menu.add_separator()
         after_crop_menu.menu.add_radiobutton(label="Overwrite", variable=self.after_crop_var, value="Overwrite")
         # Index
-        index_frame = tk.Frame(top_frame, width=12)
+        index_frame = tk.Frame(top_frame)
         index_frame.pack(side="left", padx=5, pady=self.pady, fill="x", expand=True)
         self.image_index_spinbox = ttk.Spinbox(index_frame, from_=1, to=len(self.image_files), width=5, command=self.image_index_changed)
         self.image_index_spinbox.pack(side="left", fill="x", expand=True)
         self.image_index_spinbox.bind("<Return>", self.image_index_changed)
         self.parent.bind_entry_functions(self.image_index_spinbox)
-        ttk.Label(index_frame, text=f"of {len(self.image_files)}").pack(side="left", fill="x", expand=True)
+        ttk.Label(index_frame, text=f"of {len(self.image_files)}").pack(side="left")
         # Nav Buttons
         nav_button_frame = tk.Frame(self.control_panel)
         nav_button_frame.pack(pady=self.pady, padx=self.padx, fill="x")
-        self.prev_button = ttk.Button(nav_button_frame, text="<---Previous", width=12, command=self.show_previous_image)
+        self.prev_button = ttk.Button(nav_button_frame, text="<---Previous", command=self.show_previous_image)
         self.prev_button.pack(side="left", fill="x", expand=True)
-        self.next_button = ttk.Button(nav_button_frame, text="Next--->", width=12, command=self.show_next_image)
+        self.next_button = ttk.Button(nav_button_frame, text="Next--->", command=self.show_next_image)
         self.next_button.pack(side="left", fill="x", expand=True)
         # Crop Button
         self.crop_button = ttk.Button(self.control_panel, text="Crop Selection", command=self.crop_image)
@@ -1030,25 +1036,25 @@ class CropInterface:
 
 
     def create_size_widgets(self):
-        size_frame = ttk.LabelFrame(self.control_panel, text="Size")
-        size_frame.pack(pady=self.pady, padx=self.padx, fill="x")
+        size_frame = ttk.LabelFrame(self.spinbox_frame, text="Size")
+        size_frame.pack(side="left", fill="x", padx=(0,2), expand=True)
         size_frame.columnconfigure(1, weight=1)
         # Width
         self.width_label = ttk.Label(size_frame, text="W (px):")
-        self.width_label.grid(row=0, column=0, padx=self.padx, pady=self.pady, sticky='w')
+        self.width_label.grid(row=0, column=0, padx=self.padxl, pady=self.pady, sticky='w')
         ToolTip(self.width_label, "Width of selection in pixels", 200, 6, 12)
-        self.width_spinbox = ttk.Spinbox(size_frame, from_=1, to=9999, width=13, command=self.adjust_selection)
-        self.width_spinbox.grid(row=0, column=1, padx=self.padx, pady=self.pady, sticky='e')
+        self.width_spinbox = ttk.Spinbox(size_frame, from_=1, to=9999, width=7, command=self.adjust_selection)
+        self.width_spinbox.grid(row=0, column=1, padx=self.padxr, pady=self.pady, sticky='e')
         self.width_spinbox.set(0)
         self.width_spinbox.bind("<Return>", self.adjust_selection)
         self.width_spinbox.bind("<MouseWheel>", self.focus_widget_and_adjust_selection)
         self.parent.bind_entry_functions(self.width_spinbox)
         # Height
         self.height_label = ttk.Label(size_frame, text="H (px):")
-        self.height_label.grid(row=1, column=0, padx=self.padx, pady=self.pady, sticky='w')
+        self.height_label.grid(row=1, column=0, padx=self.padxl, pady=self.pady, sticky='w')
         ToolTip(self.height_label, "Height of selection in pixels", 200, 6, 12)
-        self.height_spinbox = ttk.Spinbox(size_frame, from_=1, to=9999, width=13, command=self.adjust_selection)
-        self.height_spinbox.grid(row=1, column=1, padx=self.padx, pady=self.pady, sticky='e')
+        self.height_spinbox = ttk.Spinbox(size_frame, from_=1, to=9999, width=7, command=self.adjust_selection)
+        self.height_spinbox.grid(row=1, column=1, padx=self.padxr, pady=self.pady, sticky='e')
         self.height_spinbox.set(0)
         self.height_spinbox.bind("<Return>", self.adjust_selection)
         self.height_spinbox.bind("<MouseWheel>", self.focus_widget_and_adjust_selection)
@@ -1056,29 +1062,73 @@ class CropInterface:
 
 
     def create_position_widgets(self):
-        position_frame = ttk.LabelFrame(self.control_panel, text="Position")
-        position_frame.pack(pady=self.pady, padx=self.padx, fill="x")
+        position_frame = ttk.LabelFrame(self.spinbox_frame, text="Position")
+        position_frame.pack(side="left", fill="x", padx=(2,0), expand=True)
         position_frame.columnconfigure(1, weight=1)
         # X Position
         self.pos_x_label = ttk.Label(position_frame, text="X (px):")
-        self.pos_x_label.grid(row=0, column=0, padx=self.padx, pady=self.pady, sticky='w')
+        self.pos_x_label.grid(row=0, column=0, padx=self.padxl, pady=self.pady, sticky='w')
         ToolTip(self.pos_x_label, "X coordinate of selection in pixels (From top left corner)", 200, 6, 12)
-        self.pos_x_spinbox = ttk.Spinbox(position_frame, from_=0, to=9999, width=13, command=self.adjust_selection)
-        self.pos_x_spinbox.grid(row=0, column=1, padx=self.padx, pady=self.pady, sticky='e')
+        self.pos_x_spinbox = ttk.Spinbox(position_frame, from_=0, to=9999, width=7, command=self.adjust_selection)
+        self.pos_x_spinbox.grid(row=0, column=1, padx=self.padxr, pady=self.pady, sticky='e')
         self.pos_x_spinbox.set(0)
         self.pos_x_spinbox.bind("<Return>", self.adjust_selection)
         self.pos_x_spinbox.bind("<MouseWheel>", self.focus_widget_and_adjust_selection)
         self.parent.bind_entry_functions(self.pos_x_spinbox)
         # Y Position
         self.pos_y_label = ttk.Label(position_frame, text="Y (px):")
-        self.pos_y_label.grid(row=1, column=0, padx=self.padx, pady=self.pady, sticky='w')
+        self.pos_y_label.grid(row=1, column=0, padx=self.padxl, pady=self.pady, sticky='w')
         ToolTip(self.pos_y_label, "Y coordinate of selection in pixels (From top left corner)", 200, 6, 12)
-        self.pos_y_spinbox = ttk.Spinbox(position_frame, from_=0, to=9999, width=13, command=self.adjust_selection)
-        self.pos_y_spinbox.grid(row=1, column=1, padx=self.padx, pady=self.pady, sticky='e')
+        self.pos_y_spinbox = ttk.Spinbox(position_frame, from_=0, to=9999, width=7, command=self.adjust_selection)
+        self.pos_y_spinbox.grid(row=1, column=1, padx=self.padxr, pady=self.pady, sticky='e')
         self.pos_y_spinbox.set(0)
         self.pos_y_spinbox.bind("<Return>", self.adjust_selection)
         self.pos_y_spinbox.bind("<MouseWheel>", self.focus_widget_and_adjust_selection)
         self.parent.bind_entry_functions(self.pos_y_spinbox)
+
+
+    def create_selection_widgets(self):
+        fixed_selection_frame = ttk.LabelFrame(self.control_panel, text="Fixed Selection")
+        fixed_selection_frame.pack(pady=self.pady, padx=self.padx, fill="x")
+        fixed_selection_frame.columnconfigure(1, weight=1)
+        # Fixed selection
+        self.fixed_selection_var = tk.BooleanVar(value=False)
+        self.fixed_selection_checkbutton = ttk.Checkbutton(fixed_selection_frame, variable=self.fixed_selection_var, text="Fixed", command=self.toggle_widgets_by_mode)
+        self.fixed_selection_checkbutton.grid(row=0, column=0, padx=self.padxl, pady=self.pady, sticky="w")
+        ToolTip(self.fixed_selection_checkbutton, "Enable fixed aspect ratio, width, height, or size", 200, 6, 12)
+        # Fixed selection Combobox
+        self.fixed_selection_option_var = tk.StringVar(value="Aspect Ratio")
+        self.fixed_selection_option_combobox = ttk.Combobox(fixed_selection_frame, values=["Aspect Ratio", "Width", "Height", "Size"], state="readonly", textvariable=self.fixed_selection_option_var, width=16)
+        self.fixed_selection_option_combobox.grid(row=0, column=1, columnspan=99, sticky="e", padx=self.pady, pady=self.pady)
+        self.fixed_selection_option_combobox.bind("<<ComboboxSelected>>", self.toggle_widgets_by_mode)
+        self.fixed_selection_option_combobox.bind("<MouseWheel>", self.toggle_widgets_by_mode)
+        ToolTip(self.fixed_selection_option_combobox, "Choose what to be fixed", 200, 6, 12)
+        # Auto Mode
+        self.auto_aspect_var = tk.BooleanVar(value=False)
+        self.auto_aspect_checkbutton = ttk.Checkbutton(fixed_selection_frame, text="Auto", variable=self.auto_aspect_var, command=self.update_auto_entry_state, state="disabled")
+        self.auto_aspect_checkbutton.grid(row=1, column=0, padx=self.padxl, pady=self.pady, sticky="w")
+        ToolTip(self.auto_aspect_checkbutton, "Automatically select the best aspect ratio for the selection based on the predefined ratios and the aspect ratio of the displayed image.\n\n'Fixed' and 'Aspect Ratio' must be enabled!", 200, 6, 12, wraplength=240)
+        # Error Pip
+        self.selection_error_pip = tk.Label(fixed_selection_frame)
+        self.selection_error_pip.grid(row=1, column=1, pady=self.pady, sticky="w")
+        self.selection_error_pip_tooltip = ToolTip(self.selection_error_pip, 100, 6, 12, state="disabled")
+        # Selection Entry
+        self.fixed_selection_entry_var = tk.StringVar(value="1:1")
+        self.fixed_selection_entry = ttk.Entry(fixed_selection_frame, textvariable=self.fixed_selection_entry_var, width=12)
+        self.fixed_selection_entry.grid(row=1, column=2, padx=self.pady, pady=self.pady, sticky="ew")
+        self.fixed_selection_entry_tooltip = ToolTip(self.fixed_selection_entry, "Enter a ratio 'W:H' or a decimal '1.0'", 200, 6, 12)
+        self.fixed_selection_entry.bind("<KeyRelease>", lambda event: self.update_widget_values(resize=True))
+        self.parent.bind_entry_functions(self.fixed_selection_entry)
+        # Insert Button
+        self.insert_button = ttk.Button(fixed_selection_frame, text="<", width=1, command=self.insert_selection_dimension)
+        self.insert_button.grid(row=1, column=3, padx=self.pady, pady=self.pady, sticky="e")
+        ToolTip(self.insert_button, "Insert current selection dimensions relative to the selected mode", 200, 6, 12)
+        # Auto Entry
+        self.auto_entry_var = tk.StringVar(value="1:1, 5:4, 4:5, 4:3, 3:4, 3:2, 2:3, 16:9, 9:16, 2:1, 1:2")
+        self.auto_entry = ttk.Entry(fixed_selection_frame, textvariable=self.auto_entry_var, width=12, state="disabled")
+        self.auto_entry.grid(row=3, column=0, columnspan=99, sticky="ew", padx=self.pady, pady=self.pady)
+        self.parent.bind_entry_functions(self.auto_entry)
+        ToolTip(self.auto_entry, "Enter aspect ratios separated by commas. As a ratio: 'W:H', or a decimal: '1.0'", 200, 6, 12)
 
 
     def create_option_widgets(self):
@@ -1087,53 +1137,26 @@ class CropInterface:
         # Expand From Center
         self.expand_from_center_var = tk.BooleanVar(value=False)
         self.expand_from_center_checkbutton = ttk.Checkbutton(options_frame, variable=self.expand_from_center_var, text="Expand From Center")
-        self.expand_from_center_checkbutton.grid(row=0, column=0, columnspan=3, padx=self.padx, pady=self.pady, sticky="w")
+        self.expand_from_center_checkbutton.grid(row=0, column=0, columnspan=3, padx=self.padxl, pady=self.pady, sticky="w")
         ToolTip(self.expand_from_center_checkbutton, "Expand selection from center outwards", 200, 6, 12)
-        # Fixed selection
-        self.fixed_selection_var = tk.BooleanVar(value=False)
-        self.fixed_selection_checkbutton = ttk.Checkbutton(options_frame, variable=self.fixed_selection_var, text="Fixed", command=self.toggle_widgets_by_mode)
-        self.fixed_selection_checkbutton.grid(row=1, column=0, padx=self.padx, pady=self.pady, sticky="w")
-        ToolTip(self.fixed_selection_checkbutton, "Enable fixed aspect ratio, width, height, or size", 200, 6, 12)
-        # Fixed selection Combobox
-        self.fixed_selection_option_var = tk.StringVar(value="Aspect Ratio")
-        self.fixed_selection_option_combobox = ttk.Combobox(options_frame, values=["Aspect Ratio", "Width", "Height", "Size"], state="readonly", textvariable=self.fixed_selection_option_var, width=12)
-        self.fixed_selection_option_combobox.grid(row=1, column=1, columnspan=2, sticky="ew", padx=self.padx, pady=self.pady)
-        ToolTip(self.fixed_selection_option_combobox, "Choose what to be fixed", 200, 6, 12)
-        self.fixed_selection_option_combobox.bind("<<ComboboxSelected>>", self.toggle_widgets_by_mode)
-        self.fixed_selection_option_combobox.bind("<MouseWheel>", self.toggle_widgets_by_mode)
-        # Entry Frame
-        entry_frame = tk.Frame(options_frame)
-        entry_frame.grid(row=2, column=0, columnspan=3, sticky="ew", padx=self.padx, pady=self.pady)
-        # Insert Button
-        self.insert_button = ttk.Button(entry_frame, text="<", width=1, command=self.insert_selection_dimension)
-        self.insert_button.pack(side="right")
-        ToolTip(self.insert_button, "Insert current selection dimensions relative to the selected mode", 200, 6, 12)
-        # Selection Entry
-        self.fixed_selection_entry_var = tk.StringVar(value="1:1")
-        self.fixed_selection_entry = ttk.Entry(entry_frame, textvariable=self.fixed_selection_entry_var, width=12)
-        self.fixed_selection_entry.pack(side="right")
-        self.fixed_selection_entry_tooltip = ToolTip(self.fixed_selection_entry, "Enter a ratio 'W:H' or a decimal '1.0'", 200, 6, 12)
-        self.parent.bind_entry_functions(self.fixed_selection_entry)
-        self.fixed_selection_entry.bind("<KeyRelease>", lambda event: self.update_widget_values(resize=True))
-        self.selection_error_pip = tk.Label(entry_frame)
-        self.selection_error_pip.pack(side="right")
-        self.selection_error_pip_tooltip = ToolTip(self.selection_error_pip, 100, 6, 12, state="disabled")
-        # Auto Mode
-        self.auto_aspect_var = tk.BooleanVar(value=False)
-        self.auto_aspect_checkbutton = ttk.Checkbutton(entry_frame, text="Auto", variable=self.auto_aspect_var, command=self.update_auto_entry_state, state="disabled")
-        self.auto_aspect_checkbutton.pack(side="left")
-        ToolTip(self.auto_aspect_checkbutton, "Automatically select the best aspect ratio for the selection based on the predefined ratios and the aspect ratio of the displayed image.\n\n'Fixed' and 'Aspect Ratio' must be enabled!", 200, 6, 12, wraplength=240)
-        # Auto Entry
-        self.auto_entry_var = tk.StringVar(value="1:1, 5:4, 4:5, 4:3, 3:4, 3:2, 2:3, 16:9, 9:16, 2:1, 1:2")
-        self.auto_entry = ttk.Entry(options_frame, textvariable=self.auto_entry_var, width=12, state="disabled")
-        self.auto_entry.grid(row=3, column=0, columnspan=3, sticky="ew", padx=self.padx, pady=self.pady)
-        ToolTip(self.auto_entry, "Enter aspect ratios separated by commas. As a ratio: 'W:H', or a decimal: '1.0'", 200, 6, 12)
-        self.parent.bind_entry_functions(self.auto_entry)
         # Highlight
         self.overlay_var = tk.BooleanVar(value=True)
-        self.overlay_checkbutton = ttk.Checkbutton(options_frame, variable=self.overlay_var, text="Overlay/Highlight", command=self.toggle_overlay)
-        self.overlay_checkbutton.grid(row=4, column=0, padx=self.padx, pady=self.pady, sticky="w")
+        self.overlay_checkbutton = ttk.Checkbutton(options_frame, variable=self.overlay_var, text="Highlight", command=self.toggle_overlay)
+        self.overlay_checkbutton.grid(row=4, column=0, padx=self.padxl, pady=self.pady, sticky="w")
         ToolTip(self.overlay_checkbutton, "Toggle the overlay/highlight that darkens the background during selection", 200, 6, 12)
+
+
+    def create_transform_widgets(self):
+        transform_frame = ttk.LabelFrame(self.control_panel, text="Transform")
+        transform_frame.pack(pady=self.pady, padx=self.padx, fill="x")
+        # Rotate
+        rotate_button = ttk.Button(transform_frame, text="Rotate", command=lambda: self.transform_image("rotate_270"))
+        rotate_button.pack(side="left", fill="x", pady=self.pady, padx=2)
+        # Flip
+        flipx_button = ttk.Button(transform_frame, text="Flip X", command=lambda: self.transform_image("flip_x"))
+        flipx_button.pack(side="left", fill="x", pady=self.pady, padx=2)
+        flipy_button = ttk.Button(transform_frame, text="Flip Y", command=lambda: self.transform_image("flip_y"))
+        flipy_button.pack(side="left", fill="x", pady=self.pady, padx=2)
 
 
 # --------------------------------------
@@ -1269,7 +1292,7 @@ class CropInterface:
             self.selection_error_pip.config(bg="#fd8a8a")
             self.selection_error_pip_tooltip.config(state="normal", text=message)
         if state == "normal":
-            self.selection_error_pip.config(bg=self.selection_error_pip.master.cget("bg"))
+            self.selection_error_pip.config(bg="SystemButtonFace")
             self.selection_error_pip_tooltip.config(state="disabled")
 
 
@@ -1375,7 +1398,39 @@ class CropInterface:
 
 
 # --------------------------------------
-# Misc - To be replaced/removed
+# Transform Image
+# --------------------------------------
+    def transform_image(self, mode):
+        path = self.image_files[self.current_index]
+        img = self.img_canvas.original_img
+        if mode == "flip_x":
+            transform = Image.FLIP_LEFT_RIGHT
+        elif mode == "flip_y":
+            transform = Image.FLIP_TOP_BOTTOM
+        elif mode == "rotate_270":
+            transform = Image.ROTATE_270
+        else:
+            raise ValueError(f"Unsupported transformation mode: {mode}")
+        if path.lower().endswith('.gif'):
+            self.process_gif_frames(img, path, lambda frame: frame.transpose(transform))
+        else:
+            transformed_img = img.transpose(transform)
+            transformed_img.save(path)
+        self.img_canvas._display_image(self.img_canvas.img_path)
+        self.crop_selection.clear_selection()
+
+
+    def process_gif_frames(self, img, path, transform_function):
+        frames = [frame.copy() for frame in ImageSequence.Iterator(img)]
+        transformed_frames = [transform_function(frame) for frame in frames]
+        durations = [frame.info.get('duration', 34) for frame in frames]
+        first_frame = transformed_frames[0]
+        rest_frames = transformed_frames[1:]
+        first_frame.save(path, append_images=rest_frames, save_all=True, duration=durations, loop=0)
+
+
+# --------------------------------------
+# Misc - To be replaced, removed, or organized
 # --------------------------------------
     def open_directory_dialog(self):
         dir_path = filedialog.askdirectory()
