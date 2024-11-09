@@ -55,14 +55,18 @@ class CropSelection:
         self.rect_height = 0
 
         # Initialize handles manager
-        self.handles_manager = CropSelectionHandles(self, img_canvas)
+        self.handles_manager = CropSelHandles(self, img_canvas)
 
+        # Bind events
         self.img_canvas.bind("<ButtonPress-1>", self._on_button_press)
         self.img_canvas.bind("<B1-Motion>", self._on_move_press, add="+")
         self.img_canvas.bind("<ButtonRelease-1>", self._on_button_release, add="+")
         self.img_canvas.bind("<Motion>", self.handles_manager._update_cursor_icon)
 
 
+# --------------------------------------
+# Events
+# --------------------------------------
     def _on_button_press(self, event):
         if not self.img_canvas.img_path:
             return
@@ -119,7 +123,7 @@ class CropSelection:
                 self._start_selection(event, x_off, y_off, x_max, y_max)
                 return
             self.rect = self.img_canvas.create_rectangle(x1, y1, x2, y2, outline='white', tags='rect')
-            self._update_overlay()
+            self.update_overlay()
             if mode == "Size":
                 self._start_moving_rect(event, x1, y1, x2, y2)
             return
@@ -127,6 +131,49 @@ class CropSelection:
             pass
 
 
+    def _on_move_press(self, event):
+        if not self.img_canvas.img_path or not self.rect:
+            return
+        x_off, y_off = self.img_canvas.x_off, self.img_canvas.y_off
+        x_max = x_off + self.img_canvas.new_size[0]
+        y_max = y_off + self.img_canvas.new_size[1]
+        if self.handles_manager._is_resizing():
+            x1, y1, x2, y2 = self.handles_manager._resize(event)
+            self.parent.update_widget_values(resize=True)
+        elif self.moving_rectangle:
+            x1, y1, x2, y2 = self._calculate_moving_rect(event, x_off, y_off, x_max, y_max)
+        else:
+            x1, y1, x2, y2 = self._calculate_selection_rect(event, x_off, y_off, x_max, y_max)
+            self.parent.update_widget_values(resize=True)
+        self.update_rect(x1, y1, x2, y2)
+
+
+    def _on_button_release(self, event):
+        if not self.img_canvas.img_path or not self.rect:
+            return
+        coords = self.img_canvas.coords(self.rect)
+        if len(coords) != 4:
+            return
+        x1, y1, x2, y2 = coords
+        if self.handles_manager._is_resizing():
+            self.handles_manager._stop_resizing()
+        elif self.moving_rectangle:
+            self.moving_rectangle = False
+        else:
+            if x1 == x2 or y1 == y2:
+                self.clear_selection()
+                return
+            self.handles_manager.update_handles(create=True)
+            self.update_overlay()
+        self._calculate_image_selection_coords(x1, y1, x2, y2)
+        self.handles_manager.show_handles()
+        self.parent.update_widget_values()
+        self.handles_manager._hide_handles_based_on_mode()
+
+
+# --------------------------------------
+# Event Helpers
+# --------------------------------------
     def _start_moving_rect(self, event, x1, y1, x2, y2):
         self.moving_rectangle = True
         if self.parent.fixed_selection_var.get() and self.parent.fixed_selection_option_var.get() == "Size":
@@ -158,169 +205,10 @@ class CropSelection:
         self.rect = self.img_canvas.create_rectangle(self.start_x, self.start_y, self.start_x, self.start_y, outline='white', tags='rect')
 
 
-    def _on_move_press(self, event):
-        if not self.img_canvas.img_path or not self.rect:
-            return
-        x_off, y_off = self.img_canvas.x_off, self.img_canvas.y_off
-        x_max = x_off + self.img_canvas.new_size[0]
-        y_max = y_off + self.img_canvas.new_size[1]
-        if self.handles_manager._is_resizing():
-            x1, y1, x2, y2 = self.handles_manager._resize(event)
-            self.parent.update_widget_values(resize=True)
-        elif self.moving_rectangle:
-            x1, y1, x2, y2 = self._calculate_moving_rect(event, x_off, y_off, x_max, y_max)
-        else:
-            x1, y1, x2, y2 = self._calculate_selection_rect(event, x_off, y_off, x_max, y_max)
-            self.parent.update_widget_values(resize=True)
-        self.update_rectangle(x1, y1, x2, y2)
-
-
-    def _calculate_moving_rect(self, event, x_off, y_off, x_max, y_max):
-        x1 = max(x_off, min(event.x - self.move_offset_x, x_max - self.rect_width))
-        y1 = max(y_off, min(event.y - self.move_offset_y, y_max - self.rect_height))
-        x2 = x1 + self.rect_width
-        y2 = y1 + self.rect_height
-        return x1, y1, x2, y2
-
-
-    def _calculate_selection_rect(self, event, x_off, y_off, x_max, y_max):
-        curX = max(min(event.x, x_max), x_off)
-        curY = max(min(event.y, y_max), y_off)
-        if self.parent.expand_from_center_var.get():
-            if not hasattr(self, 'center_x') or not hasattr(self, 'center_y'):
-                self.center_x = (x_off + x_max) / 2
-                self.center_y = (y_off + y_max) / 2
-            x1 = max(x_off, min(2 * self.center_x - curX, x_max))
-            y1 = max(y_off, min(2 * self.center_y - curY, y_max))
-            x2 = curX
-            y2 = curY
-        else:
-            x1, y1 = self.start_x, self.start_y
-            x2, y2 = curX, curY
-        if self.parent.fixed_selection_var.get():
-            x1, y1, x2, y2 = self._apply_fixed_selection(x1, y1, x2, y2, x_off, y_off, x_max, y_max)
-        return x1, y1, x2, y2
-
-
-    def _apply_fixed_selection(self, x1, y1, x2, y2, x_off, y_off, x_max, y_max):
-        scale = self.img_canvas.img_scale_ratio
-        mode = self.parent.fixed_selection_option_var.get()
-        value = self.parent.fixed_selection_entry_var.get()
-        if mode == "Size":
-            if "x" in value:
-                value = value.split("x")
-            else:
-                value = value.split(",")
-        elif mode == "Aspect Ratio":
-            pass
-        else:
-            try:
-                value = float(value)
-            except ValueError:
-                return x1, y1, x2, y2
-        width = abs(x2 - x1)
-        height = abs(y2 - y1)
-        if width == 0 or height == 0:
-            width, height = 1, 1
-        if mode == "Aspect Ratio":
-            try:
-                if ":" in value:
-                    width_str, height_str = value.split(":")
-                    width_ratio = float(width_str.strip())
-                    height_ratio = float(height_str.strip())
-                    if width_ratio == 0 or height_ratio == 0:
-                        return x1, y1, x2, y2
-                    ratio = width_ratio / height_ratio
-                else:
-                    ratio = float(value)
-                if ratio == 0:
-                    return x1, y1, x2, y2
-            except (ValueError, ZeroDivisionError):
-                return x1, y1, x2, y2
-            if width / height > ratio:
-                width = height * ratio
-            else:
-                height = width / ratio
-            if x2 != x1 and y2 != y1:  # Diagonal
-                width = abs(x2 - x1)
-                height = width / ratio if width / height > ratio else height
-            elif x2 != x1:  # Horizontal
-                width = abs(x2 - x1)
-                height = width / ratio
-            elif y2 != y1:  # Vertical
-                height = abs(y2 - y1)
-                width = height * ratio
-        elif mode == "Width":
-            try:
-                width = int(value * scale)
-            except ValueError:
-                return x1, y1, x2, y2
-            if width == 0:
-                return x1, y1, x2, y2
-            height = width / (width / height)
-        elif mode == "Height":
-            try:
-                height = int(value * scale)
-            except ValueError:
-                return x1, y1, x2, y2
-            if height == 0:
-                return x1, y1, x2, y2
-            width = height * (width / height)
-        elif mode == "Size":
-            try:
-                width_str, height_str = value
-                width = int(width_str.strip()) * scale
-                height = int(height_str.strip()) * scale
-            except (ValueError, IndexError):
-                return x1, y1, x2, y2
-            if width == 0 or height == 0:
-                return x1, y1, x2, y2
-        if self.parent.expand_from_center_var.get() and self.parent.fixed_selection_var.get() and mode in ["Aspect Ratio", "Width", "Height"]:
-            x1 = self.center_x - width / 2
-            y1 = self.center_y - height / 2
-            x2 = self.center_x + width / 2
-            y2 = self.center_y + height / 2
-        else:
-            x2 = x1 + width if x2 >= x1 else x1 - width
-            y2 = y1 + height if y2 >= y1 else y1 - height
-        x2 = min(max(x2, x_off), x_max)
-        y2 = min(max(y2, y_off), y_max)
-        return x1, y1, x2, y2
-
-
-    def update_rectangle(self, x1, y1, x2, y2):
-        self.img_canvas.coords(self.rect, x1, y1, x2, y2)
-        self.rect_width = x2 - x1
-        self.rect_height = y2 - y1
-        self._update_selection_coords(x1, y1, x2, y2)
-        self.handles_manager.update_handles()
-        self._update_overlay()
-
-
-    def _on_button_release(self, event):
-        if not self.img_canvas.img_path or not self.rect:
-            return
-        coords = self.img_canvas.coords(self.rect)
-        if len(coords) != 4:
-            return
-        x1, y1, x2, y2 = coords
-        if self.handles_manager._is_resizing():
-            self.handles_manager._stop_resizing()
-        elif self.moving_rectangle:
-            self.moving_rectangle = False
-        else:
-            if x1 == x2 or y1 == y2:
-                self.clear_selection()
-                return
-            self.handles_manager.update_handles(create=True)
-            self._update_overlay()
-        self._update_selection_coords(x1, y1, x2, y2)
-        self.handles_manager.show_handles()
-        self.parent.update_widget_values()
-        self.handles_manager._hide_handles_based_on_mode()
-
-
-    def _update_selection_coords(self, x1, y1, x2, y2):
+# --------------------------------------
+# Rectangle Calculations
+# --------------------------------------
+    def _calculate_image_selection_coords(self, x1, y1, x2, y2):
         # Retrieve canvas offsets and scale ratio
         cx_off, cy_off = self.img_canvas.x_off, self.img_canvas.y_off
         scale_ratio = self.img_canvas.img_scale_ratio
@@ -358,6 +246,63 @@ class CropSelection:
         self.coords = (x1_orig, y1_orig, x2_orig, y2_orig) if x1_orig != x2_orig and y1_orig != y2_orig else None
 
 
+    def _calculate_moving_rect(self, event, x_off, y_off, x_max, y_max):
+        x1 = max(x_off, min(event.x - self.move_offset_x, x_max - self.rect_width))
+        y1 = max(y_off, min(event.y - self.move_offset_y, y_max - self.rect_height))
+        x2 = x1 + self.rect_width
+        y2 = y1 + self.rect_height
+        return x1, y1, x2, y2
+
+
+    def _calculate_selection_rect(self, event, x_off, y_off, x_max, y_max):
+        curX = max(min(event.x, x_max), x_off)
+        curY = max(min(event.y, y_max), y_off)
+        if self.parent.expand_from_center_var.get():
+            if not hasattr(self, 'center_x') or not hasattr(self, 'center_y'):
+                self.center_x = (x_off + x_max) / 2
+                self.center_y = (y_off + y_max) / 2
+            x1 = max(x_off, min(2 * self.center_x - curX, x_max))
+            y1 = max(y_off, min(2 * self.center_y - curY, y_max))
+            x2 = curX
+            y2 = curY
+        else:
+            x1, y1 = self.start_x, self.start_y
+            x2, y2 = curX, curY
+        if self.parent.fixed_selection_var.get():
+            x1, y1, x2, y2 = self._apply_fixed_selection(x1, y1, x2, y2, x_off, y_off, x_max, y_max)
+        return x1, y1, x2, y2
+
+
+# --------------------------------------
+# Updates
+# --------------------------------------
+    def update_rect(self, x1, y1, x2, y2):
+        self.img_canvas.coords(self.rect, x1, y1, x2, y2)
+        self.rect_width = x2 - x1
+        self.rect_height = y2 - y1
+        self._calculate_image_selection_coords(x1, y1, x2, y2)
+        self.handles_manager.update_handles()
+        self.update_overlay()
+
+
+    def update_overlay(self):
+        if self.overlay:
+            self.img_canvas.delete("overlay")
+        self.overlay = []
+        if self.rect:
+            x1, y1, x2, y2 = self.img_canvas.coords(self.rect)
+            canvas_width = self.img_canvas.winfo_width()
+            canvas_height = self.img_canvas.winfo_height()
+            overlay_coords = [
+                (0, 0, canvas_width, y1),
+                (0, y1, x1, y2),
+                (x2, y1, canvas_width, y2),
+                (0, y2, canvas_width, canvas_height)
+                ]
+            self.overlay = [self.img_canvas.create_rectangle(*coords, fill="black", stipple="gray50", outline="", tags="overlay") for coords in overlay_coords]
+            self.img_canvas.tag_lower("overlay", 'rect')
+
+
     def clear_selection(self):
         if self.rect:
             self.img_canvas.delete(self.rect)
@@ -376,33 +321,139 @@ class CropSelection:
         self.parent.update_widget_values()
 
 
-    def _update_overlay(self):
-        if self.overlay:
-            self.img_canvas.delete("overlay")
-        self.overlay = []
-        if self.rect:
-            x1, y1, x2, y2 = self.img_canvas.coords(self.rect)
-            canvas_width = self.img_canvas.winfo_width()
-            canvas_height = self.img_canvas.winfo_height()
-            overlay_coords = [
-                (0, 0, canvas_width, y1),
-                (0, y1, x1, y2),
-                (x2, y1, canvas_width, y2),
-                (0, y2, canvas_width, canvas_height)
-                ]
-            self.overlay = [self.img_canvas.create_rectangle(*coords, fill="black", stipple="gray50", outline="", tags="overlay") for coords in overlay_coords]
-            self.img_canvas.tag_lower("overlay", 'rect')
-
-
-    def redraw(self):
+    def redraw_rect(self):
         if self.rect and self.coords:
-            x1 = self.coords[0] + self.img_canvas.x_off
-            y1 = self.coords[1] + self.img_canvas.y_off
-            x2 = self.coords[2] + self.img_canvas.x_off
-            y2 = self.coords[3] + self.img_canvas.y_off
+            scale_ratio = self.img_canvas.img_scale_ratio
+            x_off = self.img_canvas.x_off
+            y_off = self.img_canvas.y_off
+            x1 = self.coords[0] * scale_ratio + x_off
+            y1 = self.coords[1] * scale_ratio + y_off
+            x2 = self.coords[2] * scale_ratio + x_off
+            y2 = self.coords[3] * scale_ratio + y_off
             self.rect = self.img_canvas.create_rectangle(x1, y1, x2, y2, outline='white', tags='rect')
             self.handles_manager.update_handles(create=True)
-            self._update_overlay()
+            self.update_overlay()
+
+
+# --------------------------------------
+# Fixed Selection
+# --------------------------------------
+    def _apply_fixed_selection(self, x1, y1, x2, y2, x_off, y_off, x_max, y_max):
+        scale = self.img_canvas.img_scale_ratio
+        mode = self.parent.fixed_selection_option_var.get()
+        value = self.parent.fixed_selection_entry_var.get()
+        if mode == "Size":
+            if "x" in value:
+                value = value.split("x")
+            else:
+                value = value.split(",")
+        elif mode == "Aspect Ratio":
+            return self._apply_fixed_aspect_ratio(x1, y1, x2, y2, x_off, y_off, x_max, y_max, value)
+        else:
+            try:
+                value = float(value)
+            except ValueError:
+                return x1, y1, x2, y2
+        width = abs(x2 - x1)
+        height = abs(y2 - y1)
+        if width == 0 or height == 0:
+            width, height = 1, 1
+        if mode == "Width":
+            try:
+                width = int(value * scale)
+            except ValueError:
+                return x1, y1, x2, y2
+            if width == 0:
+                return x1, y1, x2, y2
+            height = width / (width / height)
+        elif mode == "Height":
+            try:
+                height = int(value * scale)
+            except ValueError:
+                return x1, y1, x2, y2
+            if height == 0:
+                return x1, y1, x2, y2
+            width = height * (width / height)
+        elif mode == "Size":
+            try:
+                width_str, height_str = value
+                width = int(width_str.strip()) * scale
+                height = int(height_str.strip()) * scale
+            except (ValueError, IndexError):
+                return x1, y1, x2, y2
+            if width == 0 or height == 0:
+                return x1, y1, x2, y2
+        if self.parent.expand_from_center_var.get() and self.parent.fixed_selection_var.get() and mode in ["Aspect Ratio", "Width", "Height"]:
+            x1 = self.center_x - width / 2
+            y1 = self.center_y - height / 2
+            x2 = self.center_x + width / 2
+            y2 = self.center_y + height / 2
+        else:
+            x2 = x1 + width if x2 >= x1 else x1 - width
+            y2 = y1 + height if y2 >= y1 else y1 - height
+        x2 = min(max(x2, x_off), x_max)
+        y2 = min(max(y2, y_off), y_max)
+        return x1, y1, x2, y2
+
+
+    def _apply_fixed_aspect_ratio(self, x1, y1, x2, y2, x_off, y_off, x_max, y_max, value):
+        try:
+            if ":" in value:
+                width_str, height_str = value.split(":")
+                width_ratio = float(width_str.strip())
+                height_ratio = float(height_str.strip())
+                if width_ratio == 0 or height_ratio == 0:
+                    return x1, y1, x2, y2
+                ratio = width_ratio / height_ratio
+            else:
+                ratio = float(value)
+            if ratio == 0:
+                return x1, y1, x2, y2
+        except (ValueError, ZeroDivisionError):
+            return x1, y1, x2, y2
+        width = abs(x2 - x1)
+        height = abs(y2 - y1)
+        if self.parent.expand_from_center_var.get():
+            if x2 != x1 and y2 != y1:  # Diagonal
+                width = abs(x2 - x1)
+                height = width / ratio
+            elif x2 != x1:  # Horizontal
+                width = abs(x2 - x1)
+                height = width / ratio
+            elif y2 != y1:  # Vertical
+                height = abs(y2 - y1)
+                width = height * ratio
+            x1 = self.center_x - width / 2
+            y1 = self.center_y - height / 2
+            x2 = self.center_x + width / 2
+            y2 = self.center_y + height / 2
+        else:
+            if x2 != x1 and y2 != y1:  # Diagonal
+                width = abs(x2 - x1)
+                height = width / ratio
+                if y1 + height > y_max:
+                    height = y_max - y1
+                    width = height * ratio
+                elif y1 + height < y_off:
+                    height = y1 - y_off
+                    width = height * ratio
+                y2 = y1 + height if y2 >= y1 else y1 - height
+                x2 = x1 + width if x2 >= x1 else x1 - width
+            elif x2 != x1:  # Horizontal
+                width = abs(x2 - x1)
+                height = width / ratio
+                if y1 + height > y_max:
+                    height = y_max - y1
+                    width = height * ratio
+                y2 = y1 + height if y2 >= y1 else y1 - height
+            elif y2 != y1:  # Vertical
+                height = abs(y2 - y1)
+                width = height * ratio
+                if x1 + width > x_max:
+                    width = x_max - x1
+                    height = width / ratio
+                x2 = x1 + width if x2 >= x1 else x1 - width
+        return x1, y1, x2, y2
 
 
 # --------------------------------------
@@ -423,7 +474,7 @@ class CropSelection:
             y2 = new_y + (y2 - y1)
             y1 = new_y
         if self.parent.expand_from_center_var.get():
-            x1, y1, x2, y2 = self._expand_from_center(x1, y1, x2, y2, width, height, c_size)
+            x1, y1, x2, y2 = self._calculate_center_expansion(x1, y1, x2, y2, width, height, c_size)
         else:
             if width is not None:
                 width = int(min(width, c_size[0]))
@@ -432,10 +483,10 @@ class CropSelection:
                 height = int(min(height, c_size[1]))
                 y2 = y1 + height
         x1, y1, x2, y2 = self._clamp_coords_to_image(x1, y1, x2, y2, cx_off, cy_off, c_size)
-        self.update_rectangle(round(x1), round(y1), round(x2), round(y2))
+        self.update_rect(round(x1), round(y1), round(x2), round(y2))
 
 
-    def _expand_from_center(self, x1, y1, x2, y2, width, height, c_size):
+    def _calculate_center_expansion(self, x1, y1, x2, y2, width, height, c_size):
         center_x = (x1 + x2) / 2
         center_y = (y1 + y2) / 2
         if width is not None:
@@ -470,7 +521,7 @@ class CropSelection:
 #region CLS: CropSelHandles
 
 
-class CropSelectionHandles:
+class CropSelHandles:
     def __init__(self, crop_selection, img_canvas):
         self.crop_selection = crop_selection
         self.img_canvas = img_canvas
@@ -494,6 +545,9 @@ class CropSelectionHandles:
             }
 
 
+# --------------------------------------
+# Handle Updates
+# --------------------------------------
     def update_handles(self, create=False):
         if not self.crop_selection.rect:
             return
@@ -546,6 +600,9 @@ class CropSelectionHandles:
             return self.handle_size
 
 
+# --------------------------------------
+# Handle Visibility
+# --------------------------------------
     def _hide_handles_except(self, active_handle):
         for key, handle in self.handles.items():
             if key != active_handle:
@@ -562,6 +619,16 @@ class CropSelectionHandles:
             self.img_canvas.itemconfigure(handle, state='normal')
 
 
+    def delete_handles(self):
+        for handle in self.handles.values():
+            self.img_canvas.delete(handle)
+        self.handles.clear()
+        self.resizing_handle = None
+
+
+# --------------------------------------
+# Handle Events
+# --------------------------------------
     def _is_handle_clicked(self, event):
         items = self.img_canvas.find_overlapping(event.x, event.y, event.x, event.y)
         for key, handle in self.handles.items():
@@ -584,13 +651,9 @@ class CropSelectionHandles:
         self.img_canvas.config(cursor=cursor)
 
 
-    def delete_handles(self):
-        for handle in self.handles.values():
-            self.img_canvas.delete(handle)
-        self.handles.clear()
-        self.resizing_handle = None
-
-
+# --------------------------------------
+# Handle Resizing
+# --------------------------------------
     def _is_resizing(self):
         return self.resizing_handle is not None
 
@@ -764,7 +827,7 @@ class ImageCanvas(tk.Canvas):
         self.delete("all")
         self.create_image(self.x_off, self.y_off, anchor="nw", image=self.img_thumbnail)
         if hasattr(self, 'crop_selection'):
-            self.crop_selection.clear_selection()
+            self.crop_selection.redraw_rect()
 
 
 #endregion
@@ -834,19 +897,8 @@ class CropInterface:
         top_frame.grid_columnconfigure(3, weight=1)
         # Close
         ttk.Button(top_frame, text="<---Close", width=15, command=self.close_crop_ui).grid(row=0, column=0, sticky="w")
-        # After Crop
-        self.after_crop_menu = ttk.Menubutton(top_frame, text="After Crop...")
-        self.after_crop_menu.grid(row=0, column=1, padx=self.padx, sticky="w")
-        self.after_crop_menu.menu = tk.Menu(self.after_crop_menu, tearoff=0)
-        self.after_crop_menu["menu"] = self.after_crop_menu.menu
-        self.after_crop_option = tk.StringVar(value="Save & Close")
-        self.after_crop_menu.menu.add_radiobutton(label="Save & Close", variable=self.after_crop_option, value="Save & Close")
-        self.after_crop_menu.menu.add_radiobutton(label="Save & Next", variable=self.after_crop_option, value="Save & Next")
-        self.after_crop_menu.menu.add_radiobutton(label="Save As...", variable=self.after_crop_option, value="Save As...")
-        self.after_crop_menu.menu.add_separator()
-        self.after_crop_menu.menu.add_radiobutton(label="Overwrite", variable=self.after_crop_option, value="Overwrite")
         # Crop Info
-        self.crop_info_label = ttk.Label(top_frame, text="Crop to: 0x0 (0:0)", anchor="w", width=30)
+        self.crop_info_label = ttk.Label(top_frame, text="Crop to: 0x0 (0:0)", anchor="w")
         self.crop_info_label.grid(row=0, column=2, padx=self.padx, sticky="ew")
         # Directory
         directory_frame = tk.Frame(top_frame)
@@ -887,12 +939,33 @@ class CropInterface:
 
 
     def create_nav_and_crop_widgets(self):
-        # Navigation
-        nav_frame = tk.Frame(self.control_panel)
-        nav_frame.pack(pady=self.pady, padx=self.padx, fill="x")
-        self.prev_button = ttk.Button(nav_frame, text="<---Previous", width=12, command=self.show_previous_image)
+        top_frame = tk.Frame(self.control_panel, width=12)
+        top_frame.pack(pady=self.pady, padx=self.padx, fill="x")
+        # After Crop
+        self.after_crop_var = tk.StringVar(value="Save & Close")
+        after_crop_menu = ttk.Menubutton(top_frame, text="After Crop")
+        after_crop_menu.pack(side="left", padx=(2,0), pady=self.pady, fill="x", expand=True)
+        after_crop_menu.menu = tk.Menu(after_crop_menu, tearoff=0)
+        after_crop_menu["menu"] = after_crop_menu.menu
+        after_crop_menu.menu.add_radiobutton(label="Save & Close", variable=self.after_crop_var, value="Save & Close")
+        after_crop_menu.menu.add_radiobutton(label="Save & Next", variable=self.after_crop_var, value="Save & Next")
+        after_crop_menu.menu.add_radiobutton(label="Save As...", variable=self.after_crop_var, value="Save As...")
+        after_crop_menu.menu.add_separator()
+        after_crop_menu.menu.add_radiobutton(label="Overwrite", variable=self.after_crop_var, value="Overwrite")
+        # Index
+        index_frame = tk.Frame(top_frame, width=12)
+        index_frame.pack(side="left", padx=5, pady=self.pady, fill="x", expand=True)
+        self.image_index_spinbox = ttk.Spinbox(index_frame, from_=1, to=len(self.image_files), width=5, command=self.image_index_changed)
+        self.image_index_spinbox.pack(side="left", fill="x", expand=True)
+        self.image_index_spinbox.bind("<Return>", self.image_index_changed)
+        self.parent.bind_entry_functions(self.image_index_spinbox)
+        ttk.Label(index_frame, text=f"of {len(self.image_files)}").pack(side="left", fill="x", expand=True)
+        # Nav Buttons
+        nav_button_frame = tk.Frame(self.control_panel)
+        nav_button_frame.pack(pady=self.pady, padx=self.padx, fill="x")
+        self.prev_button = ttk.Button(nav_button_frame, text="<---Previous", width=12, command=self.show_previous_image)
         self.prev_button.pack(side="left", fill="x", expand=True)
-        self.next_button = ttk.Button(nav_frame, text="Next--->", width=12, command=self.show_next_image)
+        self.next_button = ttk.Button(nav_button_frame, text="Next--->", width=12, command=self.show_next_image)
         self.next_button.pack(side="left", fill="x", expand=True)
         # Crop Button
         self.crop_button = ttk.Button(self.control_panel, text="Crop Selection", command=self.crop_image)
@@ -963,7 +1036,7 @@ class CropInterface:
         self.fixed_selection_var = tk.BooleanVar(value=False)
         self.fixed_selection_checkbutton = ttk.Checkbutton(options_frame, variable=self.fixed_selection_var, text="Fixed", command=self.toggle_widgets_by_mode)
         self.fixed_selection_checkbutton.grid(row=1, column=0, padx=self.padx, pady=self.pady)
-        ToolTip(self.fixed_selection_checkbutton, "Enable lock of aspect ratio, width, height, or size", 200, 6, 12)
+        ToolTip(self.fixed_selection_checkbutton, "Enable fixed aspect ratio, width, height, or size", 200, 6, 12)
         # Fixed selection Combobox
         self.fixed_selection_option_var = tk.StringVar(value="Aspect Ratio")
         self.fixed_selection_option_combobox = ttk.Combobox(options_frame, values=["Aspect Ratio", "Width", "Height", "Size"], state="readonly", textvariable=self.fixed_selection_option_var, width=12)
@@ -982,6 +1055,7 @@ class CropInterface:
         self.fixed_selection_entry_var = tk.StringVar(value="1:1")
         self.fixed_selection_entry = ttk.Entry(entry_frame, textvariable=self.fixed_selection_entry_var, width=12)
         self.fixed_selection_entry.pack(side="right")
+        self.fixed_selection_entry_tooltip = ToolTip(self.fixed_selection_entry, "Enter a ratio 'W:H' or a decimal '1.0'", 200, 6, 12)
         self.parent.bind_entry_functions(self.fixed_selection_entry)
         self.fixed_selection_entry.bind("<KeyRelease>", lambda event: self.update_widget_values(resize=True))
         self.selection_error_pip = tk.Label(entry_frame)
@@ -996,6 +1070,7 @@ class CropInterface:
         self.auto_entry_var = tk.StringVar(value="1:1, 5:4, 4:5, 4:3, 3:4, 3:2, 2:3, 16:9, 9:16, 2:1, 1:2")
         self.auto_entry = ttk.Entry(options_frame, textvariable=self.auto_entry_var, width=12, state="disabled")
         self.auto_entry.grid(row=3, column=0, columnspan=3, sticky="ew", padx=self.padx, pady=self.pady)
+        ToolTip(self.auto_entry, "Enter aspect ratios separated by commas. As a ratio: 'W:H', or a decimal: '1.0'", 200, 6, 12)
         self.parent.bind_entry_functions(self.auto_entry)
 
 
@@ -1098,6 +1173,12 @@ class CropInterface:
     def toggle_widgets_by_mode(self, event=None):
         width = self.width_spinbox
         height = self.height_spinbox
+        message_map = {
+            "Aspect Ratio": "Enter a ratio 'W:H' or a decimal '1.0'",
+            "Width": "Enter a whole number",
+            "Height": "Enter a whole number",
+            "Size": "Enter 'W x H' OR 'W , H'"
+            }
         if self.fixed_selection_var.get():
             state_map = {# Mode: {Widget: State}
                 "Aspect Ratio": {width: "disabled", height: "disabled"},
@@ -1118,6 +1199,7 @@ class CropInterface:
             self.auto_aspect_checkbutton.config(state="disabled")
             self.auto_aspect_var.set(False)
             self.update_auto_entry_state()
+        self.fixed_selection_entry_tooltip.config(text=message_map.get(self.fixed_selection_option_var.get(), ""))
 
 
     def set_error_pip_color(self, state=None, message=None, event=None):
@@ -1173,6 +1255,8 @@ class CropInterface:
         self.update_imageinfo(percent_scale)
         self.width_spinbox.config(to=self.img_canvas.original_img_width)
         self.height_spinbox.config(to=self.img_canvas.original_img_height)
+        self.image_index_spinbox.config(from_=1, to=len(self.image_files))
+        self.image_index_spinbox.set(self.current_index + 1)
 
 
     def show_previous_image(self):
@@ -1278,6 +1362,16 @@ class CropInterface:
         self.menu.entryconfig("Crop...", command=self.parent.show_crop_ui)
         self.parent.show_primary_paned_window()
         self.parent.refresh_text_box()
+
+
+    def image_index_changed(self, event=None):
+        try:
+            index = int(self.image_index_spinbox.get()) - 1
+            if 0 <= index < len(self.image_files):
+                self.current_index = index
+                self.display_image(self.image_files[self.current_index])
+        except ValueError:
+            pass
 
 
 #endregion
