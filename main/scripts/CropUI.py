@@ -467,6 +467,14 @@ class CropSelection:
             elif y2 != y1:  # Vertical
                 height = abs(y2 - y1)
                 width = height * ratio
+            max_possible_width = min(2 * (self.center_x - x_off), 2 * (x_max - self.center_x))
+            max_possible_height = min(2 * (self.center_y - y_off), 2 * (y_max - self.center_y))
+            if width > max_possible_width:
+                width = max_possible_width
+                height = width / ratio
+            if height > max_possible_height:
+                height = max_possible_height
+                width = height * ratio
             x1 = self.center_x - width / 2
             y1 = self.center_y - height / 2
             x2 = self.center_x + width / 2
@@ -497,6 +505,11 @@ class CropSelection:
                     width = x_max - x1
                     height = width / ratio
                 x2 = x1 + width if x2 >= x1 else x1 - width
+        # Final bounds check
+        x1 = max(x_off, min(x_max, x1))
+        x2 = max(x_off, min(x_max, x2))
+        y1 = max(y_off, min(y_max, y1))
+        y2 = max(y_off, min(y_max, y2))
         return x1, y1, x2, y2
 
 
@@ -1079,7 +1092,7 @@ class CropInterface:
         # Fixed selection
         self.fixed_selection_var = tk.BooleanVar(value=False)
         self.fixed_selection_checkbutton = ttk.Checkbutton(options_frame, variable=self.fixed_selection_var, text="Fixed", command=self.toggle_widgets_by_mode)
-        self.fixed_selection_checkbutton.grid(row=1, column=0, padx=self.padx, pady=self.pady)
+        self.fixed_selection_checkbutton.grid(row=1, column=0, padx=self.padx, pady=self.pady, sticky="w")
         ToolTip(self.fixed_selection_checkbutton, "Enable fixed aspect ratio, width, height, or size", 200, 6, 12)
         # Fixed selection Combobox
         self.fixed_selection_option_var = tk.StringVar(value="Aspect Ratio")
