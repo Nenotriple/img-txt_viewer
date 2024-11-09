@@ -1013,6 +1013,7 @@ class CropInterface:
         after_crop_menu.menu.add_radiobutton(label="Save & Close", variable=self.after_crop_var, value="Save & Close")
         after_crop_menu.menu.add_radiobutton(label="Save & Next", variable=self.after_crop_var, value="Save & Next")
         after_crop_menu.menu.add_radiobutton(label="Save As...", variable=self.after_crop_var, value="Save As...")
+        after_crop_menu.menu.add_radiobutton(label="Save", variable=self.after_crop_var, value="Save")
         after_crop_menu.menu.add_separator()
         after_crop_menu.menu.add_radiobutton(label="Overwrite", variable=self.after_crop_var, value="Overwrite")
         # Index
@@ -1134,15 +1135,16 @@ class CropInterface:
     def create_option_widgets(self):
         options_frame = ttk.LabelFrame(self.control_panel, text="Options")
         options_frame.pack(pady=self.pady, padx=self.padx, fill="x")
+        options_frame.columnconfigure(0, weight=1)
         # Expand From Center
         self.expand_from_center_var = tk.BooleanVar(value=False)
-        self.expand_from_center_checkbutton = ttk.Checkbutton(options_frame, variable=self.expand_from_center_var, text="Expand From Center")
-        self.expand_from_center_checkbutton.grid(row=0, column=0, columnspan=3, padx=self.padxl, pady=self.pady, sticky="w")
+        self.expand_from_center_checkbutton = ttk.Checkbutton(options_frame, variable=self.expand_from_center_var, text="Expand Center")
+        self.expand_from_center_checkbutton.grid(row=0, column=0, padx=self.padxl, pady=self.pady, sticky="w")
         ToolTip(self.expand_from_center_checkbutton, "Expand selection from center outwards", 200, 6, 12)
         # Highlight
         self.overlay_var = tk.BooleanVar(value=True)
         self.overlay_checkbutton = ttk.Checkbutton(options_frame, variable=self.overlay_var, text="Highlight", command=self.toggle_overlay)
-        self.overlay_checkbutton.grid(row=4, column=0, padx=self.padxl, pady=self.pady, sticky="w")
+        self.overlay_checkbutton.grid(row=0, column=1, padx=self.padxl, pady=self.pady, sticky="e")
         ToolTip(self.overlay_checkbutton, "Toggle the overlay/highlight that darkens the background during selection", 200, 6, 12)
 
 
@@ -1369,7 +1371,44 @@ class CropInterface:
         display_height = min(height, max_height)
         coords = (pos_x, pos_y, pos_x + display_width, pos_y + display_height)
         cropped_img = self.img_canvas.original_img.crop(coords)
-        cropped_img.show()
+        self.after_crop_option(cropped_img)
+
+
+    def after_crop_option(self, cropped_img):
+        after_crop_option = self.after_crop_var.get()
+        if after_crop_option == "Save & Close":
+            save_path = self.generate_unique_filename(self.img_canvas.img_path)
+            cropped_img.save(save_path)
+            self.close_crop_ui()
+        elif after_crop_option == "Save & Next":
+            save_path = self.generate_unique_filename(self.img_canvas.img_path)
+            cropped_img.save(save_path)
+            self.show_next_image()
+        elif after_crop_option == "Save As...":
+            save_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG files", "*.png"), ("All files", "*.*")])
+            if save_path:
+                cropped_img.save(save_path)
+        elif after_crop_option == "Save":
+            save_path = self.generate_unique_filename(self.img_canvas.img_path)
+            cropped_img.save(save_path)
+        elif after_crop_option == "Overwrite":
+            confirm = messagebox.askyesno("Confirm Overwrite", "Are you sure you want to overwrite the original image?")
+            if confirm:
+                cropped_img.save(self.img_canvas.img_path)
+                self.img_canvas._display_image(self.img_canvas.img_path)
+                self.crop_selection.clear_selection()
+
+
+    def generate_unique_filename(self, original_path):
+        directory, filename = os.path.split(original_path)
+        name, ext = os.path.splitext(filename)
+        counter = 1
+        while True:
+            new_filename = f"{name}_crop_{counter}{ext}"
+            new_filepath = os.path.join(directory, new_filename)
+            if not os.path.exists(new_filepath):
+                return new_filepath
+            counter += 1
 
 
 # --------------------------------------
@@ -1479,6 +1518,8 @@ class CropInterface:
         self.menu.entryconfig("Crop...", command=self.parent.show_crop_ui)
         self.parent.show_primary_paned_window()
         self.parent.refresh_text_box()
+        self.parent.refresh_file_lists()
+        self.parent.update_thumbnail_panel()
 
 
     def image_index_changed(self, event=None):
