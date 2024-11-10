@@ -217,11 +217,10 @@ class CropSelection:
         ctrl_pressed = event.state & 0x0004
         mode = self.parent.fixed_sel_mode_var.get()
         step = 10 if delta > 0 else -10
-
         if self.parent.fixed_sel_toggle_var.get():
             if mode == "Aspect Ratio":
-                # Resize both width and height
-                self._resize_selection_with_mousewheel(True, True, step)
+                # Resize both width and height while maintaining aspect ratio
+                self._resize_selection_with_mousewheel(True, True, step, maintain_aspect_ratio=True)
             elif mode == "Width":
                 # Only resize height
                 self._resize_selection_with_mousewheel(False, True, step)
@@ -274,11 +273,26 @@ class CropSelection:
         self.rect = self.img_canvas.create_rectangle(self.start_x, self.start_y, self.start_x, self.start_y, outline='white', tags='rect')
 
 
-    def _resize_selection_with_mousewheel(self, delta_width, delta_height, step):
+    def _resize_selection_with_mousewheel(self, delta_width, delta_height, step, maintain_aspect_ratio=False):
         x1, y1, x2, y2 = self.img_canvas.coords(self.rect)
         cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
         new_width = (x2 - x1) + (step if delta_width else 0)
         new_height = (y2 - y1) + (step if delta_height else 0)
+        if maintain_aspect_ratio:
+            aspect_ratio_str = self.parent.fixed_sel_entry_var.get()
+            if ':' in aspect_ratio_str:
+                width_ratio, height_ratio = map(float, aspect_ratio_str.split(':'))
+                aspect_ratio = width_ratio / height_ratio
+            else:
+                aspect_ratio = float(aspect_ratio_str)
+            if delta_width and delta_height:
+                new_height = new_width / aspect_ratio
+            elif delta_width:
+                new_height = new_width / aspect_ratio
+            elif delta_height:
+                new_width = new_height * aspect_ratio
+            if abs(new_width / new_height - aspect_ratio) > 1:
+                return
         new_width = max(new_width, 10)
         new_height = max(new_height, 10)
         x1_new = cx - new_width / 2
