@@ -91,13 +91,13 @@ class CropSelection:
                 self.clear_selection()
         if not (x_off <= event.x <= x_max and y_off <= event.y <= y_max):
             return
-        if not self.parent.fixed_selection_var.get():
+        if not self.parent.fixed_sel_toggle_var.get():
             self._start_selection(event, x_off, y_off, x_max, y_max)
             return
-        mode = self.parent.fixed_selection_option_var.get()
+        mode = self.parent.fixed_sel_mode_var.get()
         try:
             if mode == "Size":
-                value = self.parent.fixed_selection_entry_var.get()
+                value = self.parent.fixed_sel_entry_var.get()
                 if "x" in value:
                     value = value.split("x")
                 else:
@@ -111,14 +111,14 @@ class CropSelection:
                 x2 = x1 + width
                 y2 = y1 + height
             elif mode == "Width":
-                width = int(float(self.parent.fixed_selection_entry_var.get()) * self.img_canvas.img_scale_ratio)
+                width = int(float(self.parent.fixed_sel_entry_var.get()) * self.img_canvas.img_scale_ratio)
                 width = min(width, x_max - x_off)
                 x1 = max(x_off, min(event.x - width / 2, x_max - width))
                 x2 = x1 + width
                 y1 = y2 = event.y
                 self.start_x, self.start_y = x1, y1
             elif mode == "Height":
-                height = int(float(self.parent.fixed_selection_entry_var.get()) * self.img_canvas.img_scale_ratio)
+                height = int(float(self.parent.fixed_sel_entry_var.get()) * self.img_canvas.img_scale_ratio)
                 height = min(height, y_max - y_off)
                 y1 = max(y_off, min(event.y - height / 2, y_max - height))
                 y2 = y1 + height
@@ -215,10 +215,10 @@ class CropSelection:
             return
         shift_pressed = event.state & 0x0001
         ctrl_pressed = event.state & 0x0004
-        mode = self.parent.fixed_selection_option_var.get()
+        mode = self.parent.fixed_sel_mode_var.get()
         step = 10 if delta > 0 else -10
 
-        if self.parent.fixed_selection_var.get():
+        if self.parent.fixed_sel_toggle_var.get():
             if mode == "Aspect Ratio":
                 # Resize both width and height
                 self._resize_selection_with_mousewheel(True, True, step)
@@ -245,7 +245,7 @@ class CropSelection:
 # --------------------------------------
     def _start_moving_rect(self, event, x1, y1, x2, y2):
         self.moving_rectangle = True
-        if self.parent.fixed_selection_var.get() and self.parent.fixed_selection_option_var.get() == "Size":
+        if self.parent.fixed_sel_toggle_var.get() and self.parent.fixed_sel_mode_var.get() == "Size":
             self.move_offset_x = (x2 - x1) / 2
             self.move_offset_y = (y2 - y1) / 2
         else:
@@ -259,11 +259,11 @@ class CropSelection:
     def _start_selection(self, event, x_off, y_off, x_max, y_max):
         self.start_x = max(min(event.x, x_max), x_off)
         self.start_y = max(min(event.y, y_max), y_off)
-        if self.parent.expand_from_center_var.get():
+        if self.parent.expand_center_toggle_var.get():
             self.center_x = self.start_x
             self.center_y = self.start_y
-        if self.parent.fixed_selection_var.get() and self.parent.fixed_selection_option_var.get() in ["Aspect Ratio", "Width", "Height"]:
-            if self.parent.expand_from_center_var.get():
+        if self.parent.fixed_sel_toggle_var.get() and self.parent.fixed_sel_mode_var.get() in ["Aspect Ratio", "Width", "Height"]:
+            if self.parent.expand_center_toggle_var.get():
                 self.center_x = (x_off + x_max) / 2
                 self.center_y = (y_off + y_max) / 2
                 self.start_x = self.center_x
@@ -349,7 +349,7 @@ class CropSelection:
     def _calculate_selection_rect(self, event, x_off, y_off, x_max, y_max):
         curX = max(min(event.x, x_max), x_off)
         curY = max(min(event.y, y_max), y_off)
-        if self.parent.expand_from_center_var.get():
+        if self.parent.expand_center_toggle_var.get():
             if not hasattr(self, 'center_x') or not hasattr(self, 'center_y'):
                 self.center_x = (x_off + x_max) / 2
                 self.center_y = (y_off + y_max) / 2
@@ -360,7 +360,7 @@ class CropSelection:
         else:
             x1, y1 = self.start_x, self.start_y
             x2, y2 = curX, curY
-        if self.parent.fixed_selection_var.get():
+        if self.parent.fixed_sel_toggle_var.get():
             x1, y1, x2, y2 = self._apply_fixed_selection(x1, y1, x2, y2, x_off, y_off, x_max, y_max)
         return x1, y1, x2, y2
 
@@ -443,8 +443,8 @@ class CropSelection:
 # --------------------------------------
     def _apply_fixed_selection(self, x1, y1, x2, y2, x_off, y_off, x_max, y_max):
         scale = self.img_canvas.img_scale_ratio
-        mode = self.parent.fixed_selection_option_var.get()
-        value = self.parent.fixed_selection_entry_var.get()
+        mode = self.parent.fixed_sel_mode_var.get()
+        value = self.parent.fixed_sel_entry_var.get()
         if mode == "Size":
             if "x" in value:
                 value = value.split("x")
@@ -486,7 +486,7 @@ class CropSelection:
                 return x1, y1, x2, y2
             if width == 0 or height == 0:
                 return x1, y1, x2, y2
-        if self.parent.expand_from_center_var.get() and self.parent.fixed_selection_var.get() and mode in ["Aspect Ratio", "Width", "Height"]:
+        if self.parent.expand_center_toggle_var.get() and self.parent.fixed_sel_toggle_var.get() and mode in ["Aspect Ratio", "Width", "Height"]:
             x1 = self.center_x - width / 2
             y1 = self.center_y - height / 2
             x2 = self.center_x + width / 2
@@ -516,7 +516,7 @@ class CropSelection:
             return x1, y1, x2, y2
         width = abs(x2 - x1)
         height = abs(y2 - y1)
-        if self.parent.expand_from_center_var.get():
+        if self.parent.expand_center_toggle_var.get():
             if x2 != x1 and y2 != y1:  # Diagonal
                 width = abs(x2 - x1)
                 height = width / ratio
@@ -589,7 +589,7 @@ class CropSelection:
             new_y += cy_off
             y2 = new_y + (y2 - y1)
             y1 = new_y
-        if self.parent.expand_from_center_var.get():
+        if self.parent.expand_center_toggle_var.get():
             x1, y1, x2, y2 = self._calculate_center_expansion(x1, y1, x2, y2, width, height, c_size)
         else:
             if width is not None:
@@ -688,8 +688,8 @@ class CropSelHandles:
 
 
     def _hide_handles_based_on_mode(self):
-        if self.crop_selection.parent.fixed_selection_var.get():
-            mode = self.crop_selection.parent.fixed_selection_option_var.get()
+        if self.crop_selection.parent.fixed_sel_toggle_var.get():
+            mode = self.crop_selection.parent.fixed_sel_mode_var.get()
             hide_handles_dict = {
                 "Aspect Ratio": ["n", "e", "s", "w"],
                 "Width": ["e", "w", "ne", "nw", "se", "sw"],
@@ -784,10 +784,10 @@ class CropSelHandles:
         x_off, y_off = self.img_canvas.x_off, self.img_canvas.y_off
         x_max = x_off + self.img_canvas.new_size[0]
         y_max = y_off + self.img_canvas.new_size[1]
-        expand_from_center = self.crop_selection.parent.expand_from_center_var.get()
+        expand_from_center = self.crop_selection.parent.expand_center_toggle_var.get()
         handle = self.resizing_handle
         m_size = 10
-        if self.crop_selection.parent.fixed_selection_var.get() and self.crop_selection.parent.fixed_selection_option_var.get() == "Aspect Ratio":
+        if self.crop_selection.parent.fixed_sel_toggle_var.get() and self.crop_selection.parent.fixed_sel_mode_var.get() == "Aspect Ratio":
             return self._resize_with_aspect_ratio(event, x1, y1, x2, y2, x_off, y_off, x_max, y_max, expand_from_center, m_size)
         if expand_from_center:
             cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
@@ -817,7 +817,7 @@ class CropSelHandles:
     def _resize_with_aspect_ratio(self, event, x1, y1, x2, y2, x_off, y_off, x_max, y_max, expand_from_center, m_size):
         handle = self.resizing_handle
         try:
-            value = self.crop_selection.parent.fixed_selection_entry_var.get()
+            value = self.crop_selection.parent.fixed_sel_entry_var.get()
             if ':' in value:
                 width_ratio, height_ratio = map(float, value.split(':'))
                 target_ratio = width_ratio / height_ratio
@@ -953,20 +953,36 @@ class ImageCanvas(tk.Canvas):
 
 class CropInterface:
     def __init__(self):
+        # Primary variables
         self.parent = None
         self.root = None
         self.version = None
         self.menu = None
         self.image_path = None
-        self.image_files = []
 
+        # Image Variables
+        self.image_files = []
         self.image_info_cache = {}
         self.selection_aspect = 0
         self.current_index = 0
+
+        # UI
         self.pady = 5
         self.padx = 10
         self.padxl = (5,2)
         self.padxr = (2,5)
+
+        # Settings
+        self.overlay_var = tk.BooleanVar(value=True)
+        self.after_crop_var = tk.StringVar(value="Save & Close")
+        self.expand_center_toggle_var = tk.BooleanVar(value=False)
+
+        # Fixed Selection
+        self.fixed_sel_toggle_var = tk.BooleanVar(value=False)
+        self.fixed_sel_entry_var = tk.StringVar(value="1:1")
+        self.fixed_sel_mode_var = tk.StringVar(value="Aspect Ratio")
+        self.auto_aspect_var = tk.BooleanVar(value=False)
+        self.auto_entry_var = tk.StringVar(value="1:1, 5:4, 4:5, 4:3, 3:4, 3:2, 2:3, 16:9, 9:16, 2:1, 1:2")
 
 
 # --------------------------------------
@@ -1064,7 +1080,6 @@ class CropInterface:
         top_frame = tk.Frame(self.control_panel)
         top_frame.pack(pady=self.pady, padx=self.padx, fill="x")
         # After Crop
-        self.after_crop_var = tk.StringVar(value="Save & Close")
         after_crop_menu = ttk.Menubutton(top_frame, text="After Crop")
         after_crop_menu.pack(side="left", padx=(2,0), pady=self.pady, fill="x", expand=True)
         after_crop_menu.menu = tk.Menu(after_crop_menu, tearoff=0)
@@ -1152,19 +1167,16 @@ class CropInterface:
         fixed_selection_frame.pack(pady=self.pady, padx=self.padx, fill="x")
         fixed_selection_frame.columnconfigure(1, weight=1)
         # Fixed selection
-        self.fixed_selection_var = tk.BooleanVar(value=False)
-        self.fixed_selection_checkbutton = ttk.Checkbutton(fixed_selection_frame, variable=self.fixed_selection_var, text="Fixed", command=self.toggle_widgets_by_mode)
+        self.fixed_selection_checkbutton = ttk.Checkbutton(fixed_selection_frame, variable=self.fixed_sel_toggle_var, text="Fixed", command=self.toggle_widgets_by_mode)
         self.fixed_selection_checkbutton.grid(row=0, column=0, padx=self.padxl, pady=self.pady, sticky="w")
         ToolTip(self.fixed_selection_checkbutton, "Enable fixed aspect ratio, width, height, or size", 200, 6, 12)
         # Fixed selection Combobox
-        self.fixed_selection_option_var = tk.StringVar(value="Aspect Ratio")
-        self.fixed_selection_option_combobox = ttk.Combobox(fixed_selection_frame, values=["Aspect Ratio", "Width", "Height", "Size"], state="readonly", textvariable=self.fixed_selection_option_var, width=16)
+        self.fixed_selection_option_combobox = ttk.Combobox(fixed_selection_frame, values=["Aspect Ratio", "Width", "Height", "Size"], state="readonly", textvariable=self.fixed_sel_mode_var, width=16)
         self.fixed_selection_option_combobox.grid(row=0, column=1, columnspan=99, sticky="e", padx=self.pady, pady=self.pady)
         self.fixed_selection_option_combobox.bind("<<ComboboxSelected>>", self.toggle_widgets_by_mode)
         self.fixed_selection_option_combobox.bind("<MouseWheel>", self.toggle_widgets_by_mode)
         ToolTip(self.fixed_selection_option_combobox, "Choose what to be fixed", 200, 6, 12)
         # Auto Mode
-        self.auto_aspect_var = tk.BooleanVar(value=False)
         self.auto_aspect_checkbutton = ttk.Checkbutton(fixed_selection_frame, text="Auto", variable=self.auto_aspect_var, command=self.update_auto_entry_state, state="disabled")
         self.auto_aspect_checkbutton.grid(row=1, column=0, padx=self.padxl, pady=self.pady, sticky="w")
         ToolTip(self.auto_aspect_checkbutton, "Automatically select the best aspect ratio for the selection based on the predefined ratios and the aspect ratio of the displayed image.\n\n'Fixed' and 'Aspect Ratio' must be enabled!", 200, 6, 12, wraplength=240)
@@ -1173,8 +1185,7 @@ class CropInterface:
         self.selection_error_pip.grid(row=1, column=1, pady=self.pady, sticky="w")
         self.selection_error_pip_tooltip = ToolTip(self.selection_error_pip, 100, 6, 12, state="disabled")
         # Selection Entry
-        self.fixed_selection_entry_var = tk.StringVar(value="1:1")
-        self.fixed_selection_entry = ttk.Entry(fixed_selection_frame, textvariable=self.fixed_selection_entry_var, width=12)
+        self.fixed_selection_entry = ttk.Entry(fixed_selection_frame, textvariable=self.fixed_sel_entry_var, width=12)
         self.fixed_selection_entry.grid(row=1, column=2, padx=self.pady, pady=self.pady, sticky="ew")
         self.fixed_selection_entry_tooltip = ToolTip(self.fixed_selection_entry, "Enter a ratio 'W:H' or a decimal '1.0'", 200, 6, 12)
         self.fixed_selection_entry.bind("<KeyRelease>", lambda event: self.update_widget_values(resize=True))
@@ -1184,7 +1195,6 @@ class CropInterface:
         self.insert_button.grid(row=1, column=3, padx=self.pady, pady=self.pady, sticky="e")
         ToolTip(self.insert_button, "Insert current selection dimensions relative to the selected mode", 200, 6, 12)
         # Auto Entry
-        self.auto_entry_var = tk.StringVar(value="1:1, 5:4, 4:5, 4:3, 3:4, 3:2, 2:3, 16:9, 9:16, 2:1, 1:2")
         self.auto_entry = ttk.Entry(fixed_selection_frame, textvariable=self.auto_entry_var, width=12, state="disabled")
         self.auto_entry.grid(row=3, column=0, columnspan=99, sticky="ew", padx=self.pady, pady=self.pady)
         self.parent.bind_entry_functions(self.auto_entry)
@@ -1196,12 +1206,10 @@ class CropInterface:
         options_frame.pack(pady=self.pady, padx=self.padx, fill="x")
         options_frame.columnconfigure(0, weight=1)
         # Expand From Center
-        self.expand_from_center_var = tk.BooleanVar(value=False)
-        self.expand_from_center_checkbutton = ttk.Checkbutton(options_frame, variable=self.expand_from_center_var, text="Expand Center")
+        self.expand_from_center_checkbutton = ttk.Checkbutton(options_frame, variable=self.expand_center_toggle_var, text="Expand Center")
         self.expand_from_center_checkbutton.grid(row=0, column=0, padx=self.padxl, pady=self.pady, sticky="w")
         ToolTip(self.expand_from_center_checkbutton, "Expand selection from center outwards", 200, 6, 12)
         # Highlight
-        self.overlay_var = tk.BooleanVar(value=True)
         self.overlay_checkbutton = ttk.Checkbutton(options_frame, variable=self.overlay_var, text="Highlight", command=self.toggle_overlay)
         self.overlay_checkbutton.grid(row=0, column=1, padx=self.padxl, pady=self.pady, sticky="e")
         ToolTip(self.overlay_checkbutton, "Toggle the overlay/highlight that darkens the background during selection", 200, 6, 12)
@@ -1243,7 +1251,7 @@ class CropInterface:
             update_label(aspect_ratio)
 
         def handle_fixed_selection(value, width, height):
-            option = self.fixed_selection_option_var.get()
+            option = self.fixed_sel_mode_var.get()
             try:
                 if option == "Width":
                     width = int(value)
@@ -1288,8 +1296,8 @@ class CropInterface:
             self.pos_x_spinbox.set(x)
             self.pos_y_spinbox.set(y)
             if resize:
-                if self.fixed_selection_var.get():
-                    handle_fixed_selection(self.fixed_selection_entry_var.get(), width, height)
+                if self.fixed_sel_toggle_var.get():
+                    handle_fixed_selection(self.fixed_sel_entry_var.get(), width, height)
                 else:
                     set_spinbox_values(width, height, aspect_ratio)
             else:
@@ -1299,8 +1307,8 @@ class CropInterface:
 
 
     def insert_selection_dimension(self):
-        mode = self.fixed_selection_option_var.get()
-        entry = self.fixed_selection_entry_var
+        mode = self.fixed_sel_mode_var.get()
+        entry = self.fixed_sel_entry_var
         if mode == "Aspect Ratio":
             entry.set(self.selection_aspect)
         elif mode == "Width":
@@ -1325,27 +1333,27 @@ class CropInterface:
             "Height": "Enter a whole number",
             "Size": "Enter 'W x H' OR 'W , H'"
             }
-        if self.fixed_selection_var.get():
+        if self.fixed_sel_toggle_var.get():
             state_map = {# Mode: {Widget: State}
                 "Aspect Ratio": {width: "disabled", height: "disabled"},
                 "Width": {width: "disabled", height: "normal"},
                 "Height": {width: "normal", height: "disabled"},
                 "Size": {width: "disabled", height: "disabled"}
                 }
-            mode = self.fixed_selection_option_var.get()
+            mode = self.fixed_sel_mode_var.get()
             for widget, widget_state in state_map.get(mode, {}).items():
                 widget.config(state=widget_state)
         else:
             width.config(state="normal")
             height.config(state="normal")
-        if self.fixed_selection_var.get() and self.fixed_selection_option_var.get() == "Aspect Ratio":
+        if self.fixed_sel_toggle_var.get() and self.fixed_sel_mode_var.get() == "Aspect Ratio":
             self.auto_aspect_checkbutton.config(state="normal")
             self.update_auto_entry_state()
         else:
             self.auto_aspect_checkbutton.config(state="disabled")
             self.auto_aspect_var.set(False)
             self.update_auto_entry_state()
-        self.fixed_selection_entry_tooltip.config(text=message_map.get(self.fixed_selection_option_var.get(), ""))
+        self.fixed_selection_entry_tooltip.config(text=message_map.get(self.fixed_sel_mode_var.get(), ""))
 
 
     def set_error_pip_color(self, state=None, message=None, event=None):
@@ -1358,7 +1366,7 @@ class CropInterface:
 
 
     def update_auto_entry_state(self):
-        if self.fixed_selection_var.get() and self.fixed_selection_option_var.get() == "Aspect Ratio":
+        if self.fixed_sel_toggle_var.get() and self.fixed_sel_mode_var.get() == "Aspect Ratio":
             if self.auto_aspect_var.get():
                 self.auto_entry.config(state="normal")
                 self.fixed_selection_entry.config(state="disabled")
@@ -1389,9 +1397,42 @@ class CropInterface:
         self.fixed_selection_entry.config(state="disabled")
 
 
+    def image_index_changed(self, event=None):
+        try:
+            index = int(self.image_index_spinbox.get()) - 1
+            if 0 <= index < len(self.image_files):
+                self.current_index = index
+                self.display_image(self.image_files[self.current_index])
+        except ValueError:
+            pass
+
+
+    def show_help(self):
+        help_message = ("Not Implemented!")
+        messagebox.showinfo("CropUI Help", help_message)
+
+
+    def toggle_overlay(self):
+        self.crop_selection.overlay_enabled.set(self.overlay_var.get())
+        self.crop_selection.update_overlay()
+
+
 # --------------------------------------
 # Main
 # --------------------------------------
+    def open_directory_dialog(self):
+        dir_path = filedialog.askdirectory()
+        if (dir_path and os.path.exists(dir_path)):
+            self.image_files = [os.path.join(dir_path, f) for f in os.listdir(dir_path) if f.lower().endswith((".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif"))]
+            self.current_index = 0
+            if self.image_files:
+                self.display_image(self.image_files[self.current_index])
+                self.path_entry.delete(0, "end")
+                self.path_entry.insert(0, dir_path)
+            else:
+                messagebox.showerror("Error", "No image files found in the selected directory.")
+
+
     def display_image(self, img_path):
         self.img_canvas._display_image(img_path)
         self.crop_selection.clear_selection()
@@ -1528,22 +1569,8 @@ class CropInterface:
 
 
 # --------------------------------------
-# Misc - To be replaced, removed, or organized
+# Image Info
 # --------------------------------------
-    def open_directory_dialog(self):
-        dir_path = filedialog.askdirectory()
-        if (dir_path and os.path.exists(dir_path)):
-            self.image_files = [os.path.join(dir_path, f) for f in os.listdir(dir_path) if f.lower().endswith((".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif"))]
-            self.current_index = 0
-            if self.image_files:
-                self.display_image(self.image_files[self.current_index])
-                self.path_entry.delete(0, "end")
-                self.path_entry.insert(0, dir_path)
-                self.path_tooltip.config(text=dir_path)
-            else:
-                messagebox.showerror("Error", "No image files found in the selected directory.")
-
-
     def update_imageinfo(self, percent_scale=0):
         if self.image_files:
             self.image_file = self.image_files[self.current_index]
@@ -1565,11 +1592,9 @@ class CropInterface:
         return {"filename": filename, "resolution": f"{width}x{height}", "size": size_str, "color_mode": color_mode}
 
 
-    def show_help(self):
-        help_message = ("Not Implemented!")
-        messagebox.showinfo("CropUI Help", help_message)
-
-
+# --------------------------------------
+# Close CropUI
+# --------------------------------------
     def close_crop_ui(self, event=None):
         self.root.minsize(545, 200) # Width x Height
         self.parent.sync_title_with_content()
@@ -1579,21 +1604,6 @@ class CropInterface:
         self.parent.refresh_text_box()
         self.parent.refresh_file_lists()
         self.parent.update_thumbnail_panel()
-
-
-    def image_index_changed(self, event=None):
-        try:
-            index = int(self.image_index_spinbox.get()) - 1
-            if 0 <= index < len(self.image_files):
-                self.current_index = index
-                self.display_image(self.image_files[self.current_index])
-        except ValueError:
-            pass
-
-
-    def toggle_overlay(self):
-        self.crop_selection.overlay_enabled.set(self.overlay_var.get())
-        self.crop_selection.update_overlay()
 
 
 #endregion
