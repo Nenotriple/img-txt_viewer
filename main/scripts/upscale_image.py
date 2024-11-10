@@ -46,7 +46,7 @@ class Upscale:
 
         # Other Filepaths
         self.executable_path = os.path.join(self.parent.application_path, "main/resrgan/realesrgan-ncnn-vulkan.exe")
-        self.extra_models_path = os.path.join(self.parent.application_path, "models".lower())
+        self.extra_models_path = os.path.join(self.parent.application_path, "nccn_models".lower())
         self.batch_filepath = os.path.dirname(self.filepath)
         self.converted_filepath = None
 
