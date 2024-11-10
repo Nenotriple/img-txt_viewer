@@ -1042,7 +1042,7 @@ class CropInterface:
         self.parent.bind_entry_functions(self.path_entry)
         browse_button = ttk.Button(directory_frame, text="Browse...", width=9, command=self.open_directory_dialog)
         browse_button.pack(side="left")
-        open_button = ttk.Button(directory_frame, text="Open", width=9)
+        open_button = ttk.Button(directory_frame, text="Open", width=9, command=lambda: self.parent.open_directory(self.path_entry.get()))
         open_button.pack(side="left")
         # Help
         help_button = ttk.Button(top_frame, text="?", width=2, command=self.show_help)
