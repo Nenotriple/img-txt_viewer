@@ -62,7 +62,7 @@ from PIL import (Image, ImageTk, ImageSequence,
 from main.scripts import (about_img_txt_viewer,
                           settings_manager,
                           upscale_image,
-                          crop_image,
+                          CropUI,
                           batch_crop_images,
                           resize_image,
                           image_grid,
@@ -313,14 +313,10 @@ class ImgTxtViewer:
         self.about_window = about_img_txt_viewer.AboutWindow(self, self.master, VERSION, self.blank_image)
         self.settings_manager = settings_manager.SettingsManager(self, self.master, VERSION)
         self.onnx_tagger = OnnxTagger(self)
+        self.crop_ui = CropUI.CropInterface()
 
         # Setup UI state
-        self.ui_state = {
-            "ImgTxtViewer": True,
-            "BatchTagEdit": False,
-            "BatchResizeImages": False,
-            "FindDupeFile": False,
-            }
+        self.ui_state = "ImgTxtViewer"
 
         # Window drag variables
         self.drag_x = None
@@ -650,7 +646,7 @@ class ImgTxtViewer:
         self.toolsMenu.add_cascade(label="Edit Current pair", underline=0, state="disable", menu=self.individual_operations_menu)
         self.individual_operations_menu.add_command(label="Rename Pair", underline=0, command=self.manually_rename_single_pair)
         self.individual_operations_menu.add_command(label="Upscale...", underline=0, command=lambda: self.upscale_image(batch=False))
-        self.individual_operations_menu.add_command(label="Crop...", underline=0, command=self.open_crop_tool)
+        self.individual_operations_menu.add_command(label="Crop...", underline=0, command=self.show_crop_ui)
         self.individual_operations_menu.add_command(label="Resize...", underline=0, command=self.resize_image)
         self.individual_operations_menu.add_command(label="Expand", underline=1, command=self.expand_image)
         self.individual_operations_menu.add_command(label="Rotate", underline=1, command=self.rotate_current_image)
@@ -1330,6 +1326,7 @@ class ImgTxtViewer:
 
 
     def interrogate_image_tags(self):
+        self.text_notebook.select(self.tab4)
         image_path = self.image_files[self.current_index]
         selected_model_path = self.onnx_model_dict.get(self.auto_tag_model_combobox.get())
         if not selected_model_path or not os.path.exists(selected_model_path):
@@ -1676,10 +1673,10 @@ class ImgTxtViewer:
         self.imageContext_menu.add_command(label="Upscale...", command=lambda: self.upscale_image(batch=False))
         self.imageContext_menu.add_command(label="Resize...", command=self.resize_image)
         if not self.image_file.lower().endswith('.gif'):
-            self.imageContext_menu.add_command(label="Crop...", command=self.open_crop_tool)
+            self.imageContext_menu.add_command(label="Crop...", command=self.show_crop_ui)
             self.imageContext_menu.add_command(label="Expand", command=self.expand_image)
         else:
-            self.imageContext_menu.add_command(label="Crop...", state="disabled", command=self.open_crop_tool)
+            self.imageContext_menu.add_command(label="Crop...", state="disabled", command=self.show_crop_ui)
             self.imageContext_menu.add_command(label="Expand", state="disabled", command=self.expand_image)
         self.imageContext_menu.add_command(label="Rotate", command=self.rotate_current_image)
         self.imageContext_menu.add_command(label="Flip", command=self.flip_current_image)
@@ -2111,7 +2108,7 @@ class ImgTxtViewer:
         menu = self.batch_operations_menu
         text_files = self.text_files
         self.batch_tag_edit.setup_window(parent, root, version, menu, text_files)
-        self.update_ui_state("BatchTagEdit")
+        self.toggle_alt_ui_menus("BatchTagEdit")
 
 
     def show_batch_resize_images(self, event=None):
@@ -2121,7 +2118,7 @@ class ImgTxtViewer:
         menu = self.batch_operations_menu
         path = self.image_dir.get()
         self.batch_resize_images.setup_window(parent, root, version, menu, path)
-        self.update_ui_state("BatchResizeImages")
+        self.toggle_alt_ui_menus("BatchResizeImages")
 
 
     def show_find_dupe_file(self, event=None):
@@ -2131,15 +2128,26 @@ class ImgTxtViewer:
         menu = self.batch_operations_menu
         path = self.image_dir.get()
         self.find_dupe_file.setup_window(parent, root, version, menu, path)
-        self.update_ui_state("FindDupeFile")
+        self.toggle_alt_ui_menus("FindDupeFile")
+
+
+    def show_crop_ui(self):
+        parent = self
+        root = self.master
+        version = VERSION
+        menu = self.individual_operations_menu
+        path = self.image_dir.get()
+        image_paths = self.image_files
+        self.crop_ui.setup_window(parent, root, version, menu, path, image_paths)
+        self.toggle_alt_ui_menus("CropUI")
 
 
 # --------------------------------------
-# Handle Primary Paned Window
+# Handle Primary Paned Window (ImgTxtViewer)
 # --------------------------------------
     def show_primary_paned_window(self, event=None):
         self.primary_paned_window.grid()
-        self.update_ui_state("ImgTxtViewer")
+        self.toggle_alt_ui_menus("ImgTxtViewer")
 
 
     def hide_primary_paned_window(self, event=None):
@@ -2149,32 +2157,44 @@ class ImgTxtViewer:
 # --------------------------------------
 # Handle UI State
 # --------------------------------------
-    def toggle_alt_ui_menus(self):
-        menu = self.batch_operations_menu
-        menu_items = {
-            "BatchResizeImages": "Batch Resize Images...",
-            "BatchTagEdit": "Batch Tag Edit...",
-            "FindDupeFile": "Find Duplicate Files..."
-            }
-        if self.ui_state.get("ImgTxtViewer", False):
-            for menu_label in menu_items.values():
-                menu.entryconfig(menu_label, state="normal")
+    def toggle_alt_ui_menus(self, state):
+        self.ui_state = state
+        if state == "ImgTxtViewer":
+            self.toggle_batch_ops_menu_items(all=True, state="normal")
+            self.toggle_indiv_ops_menu_items(all=True, state="normal")
         else:
-            for key, state in self.ui_state.items():
-                menu_label = menu_items.get(key)
-                if menu_label:
-                    if state:
-                        menu.entryconfig(menu_label, state="normal")
-                    else:
-                        menu.entryconfig(menu_label, state="disabled")
+            self.toggle_batch_ops_menu_items(all=True, state="disabled")
+            self.toggle_indiv_ops_menu_items(all=True, state="disabled")
+            if state == "BatchTagEdit":
+                self.toggle_batch_ops_menu_items(item="Batch Tag Edit...", state="normal")
+            elif state == "BatchResizeImages":
+                self.toggle_batch_ops_menu_items(item="Batch Resize Images...", state="normal")
+            elif state == "FindDupeFile":
+                self.toggle_batch_ops_menu_items(item="Find Duplicate Files...", state="normal")
+            elif state == "CropUI":
+                self.toggle_indiv_ops_menu_items(item="Crop...", state="normal")
 
 
-    def update_ui_state(self, key):
-        for k in self.ui_state:
-            self.ui_state[k] = False
-        if key in self.ui_state:
-            self.ui_state[key] = True
-        self.toggle_alt_ui_menus()
+    def toggle_batch_ops_menu_items(self, all=False, item=None, state="disabled", event=None):
+        menu = self.batch_operations_menu
+        menu_items = ["Batch Resize Images...", "Batch Tag Edit...", "Find Duplicate Files..."]
+        if all:
+            for item in menu_items:
+                menu.entryconfig(item, state=state)
+        else:
+            if item in menu_items:
+                menu.entryconfig(item, state=state)
+
+
+    def toggle_indiv_ops_menu_items(self, all=False, item=None, state="disabled", event=None):
+        menu = self.individual_operations_menu
+        menu_items = ["Rename Pair", "Upscale...", "Crop...", "Resize...", "Expand", "Rotate", "Flip", "Duplicate img-txt Pair", "Delete img-txt Pair", "Undo Delete"]
+        if all:
+            for item in menu_items:
+                menu.entryconfig(item, state=state)
+        else:
+            if item in menu_items:
+                menu.entryconfig(item, state=state)
 
 
 #endregion
@@ -3415,14 +3435,6 @@ class ImgTxtViewer:
         batch_crop_images.BatchCrop(self.master, filepath, window_x, window_y)
 
 
-    def open_crop_tool(self):
-        filepath = self.image_files[self.current_index]
-        if filepath.lower().endswith('.gif'):
-            messagebox.showerror("Error: open_crop_tool()", "Unsupported filetype: .GIF")
-            return
-        crop_image.Crop(self.master, filepath)
-
-
     def duplicate_pair(self):
         self.save_text_file()
         filename = self.image_files[self.current_index]
@@ -4624,11 +4636,9 @@ root.mainloop()
 **v1.96 Changes**  |  https://github.com/Nenotriple/img-txt_viewer/compare/v1.95...v1.96
 
 
-This release incorporates many new features, including AutoTag for automatically tagging images using ONNX vision models, a reworked Batch Tag Edit tool, a Thumbnail Panel for quick navigation, and an Edit Image Panel for adjusting image properties. Additionally, numerous bugs have been fixed, such as issues with the Delete Pair tool, image quality degradation, and memory leaks.
+This release incorporates many new features, including AutoTag for automatically tagging images using ONNX vision models *(wd14)*, reworked Batch Tag Edit and Crop tools, a Thumbnail Panel for quick navigation, and an Edit Image Panel for adjusting image properties. Additionally, numerous bugs have been fixed, such as issues with the Delete Pair tool, image quality degradation, and memory leaks.
 
-Many aspects of the script have been refactored to be more modular and better handle additional tools and features.
-
-The app now targets Windows 11, and while it doesn't offer an complete `Aero` theme, many widgets have been updated to utilize a more modern theme where appropriate.
+The app now targets Windows 11, most widgets should have a more modern look and feel.
 
 Starting from this release, the `Lite` version will no longer be provided. All tools are now built-in.
 
@@ -4652,6 +4662,9 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - FIXED: The following resize modes not working/causing an error: `Longer Side`, and `Height`
   - FIXED: The resize operation is now threaded, allowing the app to remain responsive during the resizing process.
 - `Find Duplicate Files`: No longer a standalone tool, the tool has been integrated into the main app.
+- `Crop...`: The crop tool has been totally reworked, it has new features and it's more convenient to use.
+  - All the normal cropping features you would expect are present.
+  - A special `Auto` fixed aspect ratio mode allows you to quickly create a crop based on the image's aspect ratio and a list of predefined aspect ratios.
 - New feature `Thumbnail Panel`: Displayed below the current image for quick navigation.
 - New feature `Edit Image Panel`: Enabled from the options/image menu, this section allows you to edit the `Brightness`, `Contrast`, `Saturation`, `Sharpness`, `Highlights`, and `Shadows` of the current image.
 - New feature `Edit Image...`: Open the current image in an external editor, the default is MS Paint.
@@ -4733,6 +4746,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - New: `Rounded Corners` The popup now supports rounded corners. (Default: 30px)
 - `Batch Crop`(v1.03), `Resize Images`(v1.02), `Image Grid`(v1.04):
   - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
+- `crop_image` has been replaced with `CropUI`.
 
 
 </details>
