@@ -167,7 +167,6 @@ class Autocomplete:
         cache_file = os.path.join(cache_dir, f'{dictionary_name}_pre-cache')
         cache_timestamp_file = os.path.join(cache_dir, f'{dictionary_name}_pre-cache-timestamp')
         os.makedirs(cache_dir, exist_ok=True)
-
         cache_is_stale = True
         if os.path.exists(cache_file) and os.path.exists(cache_timestamp_file):
             with open(cache_timestamp_file, 'r') as f:
@@ -1298,19 +1297,19 @@ class ImgTxtViewer:
 
 
     def set_other_tag_options(self):
-        def validate_spinbox_value(spinbox, default_value):
+        def validate_spinbox_value(spinbox, default_value, from_, to):
             try:
                 value = float(spinbox.get())
-                if 0 <= value <= 1:
+                if from_ <= value <= to:
                     return value
             except ValueError:
                 pass
             spinbox.set(default_value)
             return default_value
 
-        validate_spinbox_value(self.auto_tag_max_tags_spinbox, 40)
-        self.onnx_tagger.general_threshold = validate_spinbox_value(self.auto_tag_general_threshold_spinbox, 0.35)
-        self.onnx_tagger.character_threshold = validate_spinbox_value(self.auto_tag_character_threshold_spinbox, 0.85)
+        validate_spinbox_value(self.auto_tag_max_tags_spinbox, 40, 1, 999)
+        self.onnx_tagger.general_threshold = validate_spinbox_value(self.auto_tag_general_threshold_spinbox, 0.35, 0, 1)
+        self.onnx_tagger.character_threshold = validate_spinbox_value(self.auto_tag_character_threshold_spinbox, 0.85, 0, 1)
         self.onnx_tagger.exclude_tags.clear()
         self.onnx_tagger.keep_tags.clear()
         self.onnx_tagger.replace_tag_dict.clear()
