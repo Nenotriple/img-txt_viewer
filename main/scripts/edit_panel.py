@@ -29,6 +29,7 @@ class EditPanel:
     def __init__(self, parent, root):
         self.parent = parent
         self.root = root
+        self.edit_is_reverted_var = False
 
 
 #endregion
@@ -233,7 +234,7 @@ class EditPanel:
 
 
     def _reset_edit(self, event=None):
-        self.parent.edit_is_reverted_var = False
+        self.edit_is_reverted_var = False
         self.edit_revert_image_button.config(text="Revert")
         for option in self.parent.edit_slider_dict:
             self.parent.edit_slider_dict[option] = 0
@@ -352,7 +353,7 @@ class EditPanel:
 # Undo/Redo
 # --------------------------------------
     def revert_image_edit(self):
-        if self.parent.edit_is_reverted_var:
+        if self.edit_is_reverted_var:
             self.edit_revert_image_button.config(text="Revert")
             self.parent.edit_slider_dict.update(self.edit_last_slider_dict)
             for option, value in self.parent.edit_slider_dict.items():
@@ -361,7 +362,7 @@ class EditPanel:
                     self.edit_slider.set(value)
                     self.edit_value_label.config(text=str(value))
                     self.apply_image_edit()
-            self.parent.edit_is_reverted_var = False
+            self.edit_is_reverted_var = False
         else:
             self.edit_revert_image_button.config(text="Restore")
             self.edit_last_slider_dict = {option: value for option, value in self.parent.edit_slider_dict.items() if value != 0}
@@ -370,7 +371,7 @@ class EditPanel:
                 self.parent.edit_slider_dict[option] = 0
             self.edit_slider.set(0)
             self.edit_value_label.config(text="0")
-            self.parent.edit_is_reverted_var = True
+            self.edit_is_reverted_var = True
 
 
 #endregion
