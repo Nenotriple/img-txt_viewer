@@ -578,3 +578,12 @@ class PyTrominosGame:
         while not self.check_collision(piece=ghost_piece, dy=1):
             ghost_piece.y_pos += 1
         self.ghost_piece = ghost_piece
+
+
+# Run the game
+#import tkinter as tk
+#root = tk.Tk()
+#root.withdraw()
+#game = PyTrominosGame(root)
+#game.run()
+#root.mainloop()
