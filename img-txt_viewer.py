@@ -4678,6 +4678,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 - A quick guided setup will run on the app's first launch, or if the settings file is deleted/reset.
   - This will set the preferred autocomplete dictionaries and matching settings.
 - You can now press `CTRL+W` to close the current window.
+- Added an `Easter Egg` game that can be opened from the ImgTxtViewer About Window.
 
 
 <br>
