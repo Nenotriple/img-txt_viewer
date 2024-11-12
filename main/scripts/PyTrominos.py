@@ -1,5 +1,4 @@
 # Standard Library
-import os
 import random
 from collections import deque
 
@@ -13,11 +12,8 @@ GRID_WIDTH = 10
 GRID_HEIGHT = 20
 CELL_SIZE = 20
 INITIAL_SPEED = 500
-MINIMUM_SPEED = 20
-SPEED_STEP = 50
-LOCK_DELAY = 500
-WALL_KICKS = [(-1, 0), (1, 0), (0, -1)]  # Left, right, up
-
+INITIAL_MOVE_DELAY = 100
+MOVE_REPEAT_RATE = 50
 
 # Tromino shapes
 SHAPES = [
@@ -61,6 +57,7 @@ class PyTrominosGame:
         self.root.resizable(False, False)
         self.root.focus_set()
         self.icon_path = icon_path
+        self.movement_keys = {}
 
 
     def run(self):
@@ -148,7 +145,6 @@ class PyTrominosGame:
         self.after_id = None
         self.lock_timer = None
         self.down_key_pressed = False
-        self.pressed_keys = set()
         self.score = 0
         self.level = 1
         self.lines_cleared = 0
@@ -157,15 +153,22 @@ class PyTrominosGame:
         self.draw_next_piece()
         self.draw_held_piece()
         self.animate()
-        self.update_piece_position()
+        self.ghost_piece = None
 
 
     def draw_block_on_canvas(self, canvas, x, y, color):
         canvas.create_rectangle(x * CELL_SIZE, y * CELL_SIZE, (x + 1) * CELL_SIZE, (y + 1) * CELL_SIZE, fill=color, outline="black")
 
 
-    def draw_block(self, x, y, color):
-        self.draw_block_on_canvas(self.game_canvas, x, y, color)
+    def draw_block(self, x, y, color, ghost=False):
+        if ghost:
+            self.game_canvas.create_rectangle(
+                x * CELL_SIZE, y * CELL_SIZE, (x + 1) * CELL_SIZE, (y + 1) * CELL_SIZE,
+                fill=color, outline='', stipple='gray50')
+        else:
+            self.game_canvas.create_rectangle(
+                x * CELL_SIZE, y * CELL_SIZE, (x + 1) * CELL_SIZE, (y + 1) * CELL_SIZE,
+                fill=color, outline='black')
 
 
     def draw_board(self):
@@ -176,6 +179,15 @@ class PyTrominosGame:
                 color = self.board[y][x]
                 if color:
                     self.draw_block(x, y, color)
+        self.calculate_ghost_position()
+        # Ghost
+        for i, row in enumerate(self.ghost_piece.shape):
+            for j, val in enumerate(row):
+                if val:
+                    x = self.ghost_piece.x_pos + j
+                    y = self.ghost_piece.y_pos + i
+                    self.draw_block(x, y, self.ghost_piece.color, ghost=True)
+        # Current
         for i, row in enumerate(self.current_piece.shape):
             for j, val in enumerate(row):
                 if val:
@@ -235,6 +247,7 @@ class PyTrominosGame:
             if self.lock_timer is not None:
                 self.root.after_cancel(self.lock_timer)
                 self.lock_timer = None
+            self.calculate_ghost_position()
             return True
 
 
@@ -244,7 +257,7 @@ class PyTrominosGame:
         if not self.paused:
             if not self.move_piece(0, 1):
                 if self.lock_timer is None:
-                    self.lock_timer = self.root.after(LOCK_DELAY, self.lock_piece_and_spawn)
+                    self.lock_timer = self.root.after(500, self.lock_piece_and_spawn)
             else:
                 if self.lock_timer is not None:
                     self.root.after_cancel(self.lock_timer)
@@ -268,7 +281,7 @@ class PyTrominosGame:
         old_y = self.current_piece.y_pos
         self.current_piece.rotate_clockwise()
         if self.check_collision():
-            horizontal_kicks = [kick for kick in WALL_KICKS if kick[1] == 0]
+            horizontal_kicks = [kick for kick in [(-1, 0), (1, 0)] if kick[1] == 0]
             piece_bottom = self.current_piece.y_pos + len(self.current_piece.shape)
             near_bottom = piece_bottom >= GRID_HEIGHT - 1
             kicks_to_try = horizontal_kicks.copy()
@@ -286,14 +299,17 @@ class PyTrominosGame:
             if self.lock_timer is not None:
                 self.root.after_cancel(self.lock_timer)
                 self.lock_timer = None
+        self.calculate_ghost_position()
 
 
-    def check_collision(self):
-        for i, row in enumerate(self.current_piece.shape):
+    def check_collision(self, piece=None, dx=0, dy=0):
+        if piece is None:
+            piece = self.current_piece
+        for i, row in enumerate(piece.shape):
             for j, val in enumerate(row):
                 if val:
-                    x = self.current_piece.x_pos + j
-                    y = self.current_piece.y_pos + i
+                    x = piece.x_pos + j + dx
+                    y = piece.y_pos + i + dy
                     if x < 0 or x >= GRID_WIDTH or y >= GRID_HEIGHT:
                         return True
                     if y >= 0 and self.board[y][x]:
@@ -340,7 +356,7 @@ class PyTrominosGame:
         new_board = [row for y, row in enumerate(self.board) if y not in lines]
         lines_cleared = len(lines)
         self.lines_cleared += lines_cleared
-        self.score += lines_cleared * 10
+        self.score += 10 * lines_cleared * (lines_cleared + 1) // 2 * min(self.level, 3)
         while len(new_board) < GRID_HEIGHT:
             new_board.insert(0, [None for _ in range(GRID_WIDTH)])
         self.board = new_board
@@ -379,8 +395,10 @@ class PyTrominosGame:
 
 
     def update_level(self):
-        self.level = self.lines_cleared // 10 + 1
-        self.speed = max(MINIMUM_SPEED, INITIAL_SPEED - (self.level - 1) * SPEED_STEP)
+        speed_step = 50
+        min_speed = 20
+        self.level = self.score // 100 + 1
+        self.speed = max(min_speed, INITIAL_SPEED - (self.level - 1) * speed_step)
         self.level_label.config(text=f"Level: {self.level}")
         self.update_score()
 
@@ -416,48 +434,51 @@ class PyTrominosGame:
 
 
     def key_press(self, event):
-        self.pressed_keys.add(event.keysym)
-        self.update_piece_position()
+        keysym = event.keysym
+        if keysym in ("Left", "Right", "Down", "Up"):
+            if keysym not in self.movement_keys:
+                self.move_piece_key(keysym)  # Initial movement
+                after_id = self.root.after(INITIAL_MOVE_DELAY, self.move_repeat, keysym)
+                self.movement_keys[keysym] = after_id
+        elif keysym == "space":
+            self.instant_drop()
+        elif keysym == "c":
+            self.hold_piece()
+        elif keysym == "p":
+            self.toggle_pause()
 
 
     def key_release(self, event):
-        if event.keysym in self.pressed_keys:
-            self.pressed_keys.remove(event.keysym)
-        self.update_piece_position()
+        keysym = event.keysym
+        if keysym in self.movement_keys:
+            self.root.after_cancel(self.movement_keys[keysym])
+            del self.movement_keys[keysym]
 
 
-    def update_piece_position(self):
-        if "Left" in self.pressed_keys:
+    def move_repeat(self, keysym):
+        self.move_piece_key(keysym)
+        if keysym in self.movement_keys:
+            repeat_rate = 10 if keysym == "Down" else MOVE_REPEAT_RATE
+            after_id = self.root.after(repeat_rate, self.move_repeat, keysym)
+            self.movement_keys[keysym] = after_id
+
+
+    def move_piece_key(self, keysym):
+        if keysym == "Left":
             self.move_piece(-1, 0)
-        if "Right" in self.pressed_keys:
+        elif keysym == "Right":
             self.move_piece(1, 0)
-        if "Down" in self.pressed_keys:
-            self.down_key_pressed = True
-            self.update_speed()
-        else:
-            self.down_key_pressed = False
-            self.update_speed()
-        if "Up" in self.pressed_keys:
+        elif keysym == "Down":
+            self.move_piece(0, 1)
+        elif keysym == "Up":
             self.rotate_piece()
-
-
-    def update_speed(self):
-        if self.down_key_pressed:
-            new_speed = 20
-        else:
-            new_speed = max(MINIMUM_SPEED, INITIAL_SPEED - (self.level - 1) * SPEED_STEP)
-        if new_speed != self.speed:
-            self.speed = new_speed
-            if self.after_id:
-                self.root.after_cancel(self.after_id)
-            self.after_id = self.root.after(self.speed, self.drop_piece)
 
 
     def animate(self):
         if not self.paused:
             self.draw_board()
             if not self.game_over:
-                self.root.after(50, self.animate)
+                self.root.after(16, self.animate)
             else:
                 self.draw_text_on_canvas(text="Game Over")
 
@@ -507,7 +528,6 @@ class PyTrominosGame:
         self.lines_cleared = 0
         self.speed = INITIAL_SPEED
         self.down_key_pressed = False
-        self.pressed_keys = set()
         self.update_level()
         self.update_score()
         self.after_id = self.root.after(self.speed, self.drop_piece)
@@ -549,3 +569,12 @@ class PyTrominosGame:
             "\n\nHold: C"
         )
         self.toggle_pause()
+
+
+    def calculate_ghost_position(self):
+        ghost_piece = Tromino(self.game_canvas, shape=[row[:] for row in self.current_piece.shape], color=self.current_piece.color)
+        ghost_piece.x_pos = self.current_piece.x_pos
+        ghost_piece.y_pos = self.current_piece.y_pos
+        while not self.check_collision(piece=ghost_piece, dy=1):
+            ghost_piece.y_pos += 1
+        self.ghost_piece = ghost_piece
