@@ -18,6 +18,7 @@ import tkinter as tk
 
 # Third-Party Libraries
 from TkToolTip.TkToolTip import TkToolTip as ToolTip
+from main.scripts import PyTrominos
 
 
 # --------------------------------------
@@ -29,6 +30,7 @@ class AboutWindow:
         self.root = root
         self.version = version
         self.icon_img = icon
+        self.icon_path = None
         self._create_header_text()
 
 
@@ -137,6 +139,7 @@ class AboutWindow:
         self.bottom_row_frame = Frame(self.about_window)
         self.bottom_row_frame.pack(fill="x")
         self._create_url_button()
+        self._create_game_button()
         self._create_made_by_label()
 
 
@@ -144,6 +147,12 @@ class AboutWindow:
         self.url_button = ttk.Button(self.bottom_row_frame, text=f"{self.github_url}", command=self._open_github_url)
         self.url_button.pack(side="left", fill="x", padx=10, ipadx=10)
         ToolTip.create(self.url_button, "Click this button to open the repo in your default browser", 10, 6, 12)
+
+
+    def _create_game_button(self):
+        self.game_button = ttk.Button(self.bottom_row_frame, text=f"Play PyTrominos", command=self._open_game)
+        self.game_button.pack(side="left", fill="x", padx=10, ipadx=10)
+        ToolTip.create(self.game_button, "Click this button to play PyTrominos", 10, 6, 12)
 
 
     def _create_made_by_label(self):
@@ -161,6 +170,13 @@ class AboutWindow:
 
     def _open_github_url(self):
         webbrowser.open(f"{self.github_url}")
+
+
+    def _open_game(self):
+        self.close_about_window()
+        icon_path = self.icon_path
+        game = PyTrominos.PyTrominosGame(self.root, icon_path)
+        game.run()
 
 
     def close_about_window(self):
