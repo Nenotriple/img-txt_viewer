@@ -61,6 +61,9 @@ class CropSelection:
         # Initialize handles manager
         self.handles_manager = CropSelHandles(self, img_canvas)
 
+        # Initialize guidelines manager
+        self.guidelines_manager = CropSelGuidelines(self, img_canvas)
+
         # Bind events
         self.img_canvas.bind("<ButtonPress-1>", self._on_button_press)
         self.img_canvas.bind("<B1-Motion>", self._on_move_press, add="+")
@@ -391,6 +394,7 @@ class CropSelection:
         self._calculate_image_selection_coords(x1, y1, x2, y2)
         self.handles_manager.update_handles()
         self.update_overlay()
+        self.guidelines_manager.update_guidelines(self.parent.guidelines_combobox.get())
 
 
     def update_overlay(self):
@@ -426,6 +430,7 @@ class CropSelection:
         if self.highlight_rect:
             self.img_canvas.delete(self.highlight_rect)
         self.handles_manager.delete_handles()
+        self.guidelines_manager.clear_guidelines()
         self.rect = None
         self.coords = None
         self.start_x = None
@@ -891,6 +896,75 @@ class CropSelHandles:
 
 #endregion
 #########################################################################################################
+#region CLS: CropSelGuidelines
+
+
+class CropSelGuidelines:
+    def __init__(self, crop_selection, img_canvas):
+        self.crop_selection = crop_selection
+        self.img_canvas = img_canvas
+        self.guidelines = []
+        self.mode = None
+
+
+    def update_guidelines(self, mode=None, event=None):
+        self.clear_guidelines()
+        if not self.crop_selection.rect or mode in (None, 'No Guides'):
+            return
+        self.mode = mode
+        x1, y1, x2, y2 = self.img_canvas.coords(self.crop_selection.rect)
+        if self.mode == 'Center Lines':
+            self._draw_center_line_guidelines(x1, y1, x2, y2)
+        elif self.mode == 'Rule of Thirds':
+            self._draw_rule_of_thirds_guidelines(x1, y1, x2, y2)
+        elif self.mode == 'Diagonal Lines':
+            self._draw_diagonal_lines_guidelines(x1, y1, x2, y2)
+
+
+    def _draw_center_line_guidelines(self, x1, y1, x2, y2):
+        cx = (x1 + x2) / 2
+        cy = (y1 + y2) / 2
+        # Draw vertical guideline
+        v_line = self.img_canvas.create_line(cx, y1, cx, y2, fill='white', dash=(2, 2))
+        # Draw horizontal guideline
+        h_line = self.img_canvas.create_line(x1, cy, x2, cy, fill='white', dash=(2, 2))
+        self.guidelines.extend([v_line, h_line])
+
+
+    def _draw_rule_of_thirds_guidelines(self, x1, y1, x2, y2):
+        third_x = (x2 - x1) / 3
+        third_y = (y2 - y1) / 3
+        # Draw vertical guidelines
+        v_line1 = self.img_canvas.create_line(x1 + third_x, y1, x1 + third_x, y2, fill='white', dash=(2, 2))
+        v_line2 = self.img_canvas.create_line(x1 + 2 * third_x, y1, x1 + 2 * third_x, y2, fill='white', dash=(2, 2))
+        # Draw horizontal guidelines
+        h_line1 = self.img_canvas.create_line(x1, y1 + third_y, x2, y1 + third_y, fill='white', dash=(2, 2))
+        h_line2 = self.img_canvas.create_line(x1, y1 + 2 * third_y, x2, y1 + 2 * third_y, fill='white', dash=(2, 2))
+        self.guidelines.extend([v_line1, v_line2, h_line1, h_line2])
+
+
+    def _draw_diagonal_lines_guidelines(self, x1, y1, x2, y2):
+        # Calculate the length of the sides of the rectangle
+        width = x2 - x1
+        height = y2 - y1
+        # Calculate the length of the diagonal
+        diagonal_length = min(width, height)
+        # Draw diagonal guidelines
+        d_line1 = self.img_canvas.create_line(x1, y1, x1 + diagonal_length, y1 + diagonal_length, fill='white', dash=(2, 2))
+        d_line2 = self.img_canvas.create_line(x2, y1, x2 - diagonal_length, y1 + diagonal_length, fill='white', dash=(2, 2))
+        d_line3 = self.img_canvas.create_line(x1, y2, x1 + diagonal_length, y2 - diagonal_length, fill='white', dash=(2, 2))
+        d_line4 = self.img_canvas.create_line(x2, y2, x2 - diagonal_length, y2 - diagonal_length, fill='white', dash=(2, 2))
+        self.guidelines.extend([d_line1, d_line2, d_line3, d_line4])
+
+
+    def clear_guidelines(self):
+        for line in self.guidelines:
+            self.img_canvas.delete(line)
+        self.guidelines.clear()
+
+
+#endregion
+#########################################################################################################
 #region CLS: ImageCanvas
 
 
@@ -1205,9 +1279,9 @@ class CropInterface:
         self.fixed_selection_entry.bind("<KeyRelease>", lambda event: self.update_widget_values(resize=True))
         self.parent.bind_entry_functions(self.fixed_selection_entry)
         # Insert Button
-        self.insert_button = ttk.Button(fixed_selection_frame, text="<", width=1, command=self.insert_selection_dimension)
-        self.insert_button.grid(row=1, column=3, padx=self.pady, pady=self.pady, sticky="e")
-        ToolTip(self.insert_button, "Insert current selection dimensions relative to the selected mode", 200, 6, 12)
+        insert_button = ttk.Button(fixed_selection_frame, text="<", width=1, command=self.insert_selection_dimension)
+        insert_button.grid(row=1, column=3, padx=self.pady, pady=self.pady, sticky="e")
+        ToolTip(insert_button, "Insert current selection dimensions relative to the selected mode", 200, 6, 12)
         # Auto Entry
         self.auto_entry = ttk.Entry(fixed_selection_frame, textvariable=self.auto_entry_var, width=12, state="disabled")
         self.auto_entry.grid(row=3, column=0, columnspan=99, sticky="ew", padx=self.pady, pady=self.pady)
@@ -1219,14 +1293,22 @@ class CropInterface:
         options_frame = ttk.LabelFrame(self.control_panel, text="Options")
         options_frame.pack(pady=self.pady, padx=self.padx, fill="x")
         options_frame.columnconfigure(0, weight=1)
+        checkbutton_frame = tk.Frame(options_frame)
+        checkbutton_frame.grid(row=0, column=0, sticky="ew")
+        checkbutton_frame.columnconfigure(0, weight=1)
         # Expand From Center
-        self.expand_from_center_checkbutton = ttk.Checkbutton(options_frame, variable=self.expand_center_toggle_var, text="Expand Center")
-        self.expand_from_center_checkbutton.grid(row=0, column=0, padx=self.padxl, pady=self.pady, sticky="w")
-        ToolTip(self.expand_from_center_checkbutton, "Expand selection from center outwards", 200, 6, 12)
+        expand_from_center_checkbutton = ttk.Checkbutton(checkbutton_frame, variable=self.expand_center_toggle_var, text="Expand Center")
+        expand_from_center_checkbutton.grid(row=0, column=0, padx=self.padxl, pady=self.pady, sticky="w")
+        ToolTip(expand_from_center_checkbutton, "Expand selection from center outwards", 200, 6, 12)
         # Highlight
-        self.overlay_checkbutton = ttk.Checkbutton(options_frame, variable=self.overlay_var, text="Highlight", command=self.toggle_overlay)
-        self.overlay_checkbutton.grid(row=0, column=1, padx=self.padxl, pady=self.pady, sticky="e")
-        ToolTip(self.overlay_checkbutton, "Toggle the overlay/highlight that darkens the background during selection", 200, 6, 12)
+        overlay_checkbutton = ttk.Checkbutton(checkbutton_frame, variable=self.overlay_var, text="Highlight", command=self.toggle_overlay)
+        overlay_checkbutton.grid(row=0, column=1, padx=self.padxl, pady=self.pady, sticky="e")
+        ToolTip(overlay_checkbutton, "Toggle the overlay/highlight that darkens the background during selection", 200, 6, 12)
+        # Guidelines
+        self.guidelines_combobox = ttk.Combobox(options_frame, values=["No Guides", "Center Lines", "Rule of Thirds", "Diagonal Lines"], state="readonly", width=16)
+        self.guidelines_combobox.grid(row=1, column=0, padx=self.pady, pady=self.pady, sticky="ew")
+        self.guidelines_combobox.set("No Guides")
+        self.guidelines_combobox.bind("<<ComboboxSelected>>", lambda event: self.crop_selection.guidelines_manager.update_guidelines(self.guidelines_combobox.get()))
 
 
     def create_transform_widgets(self):
