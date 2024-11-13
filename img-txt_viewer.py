@@ -404,6 +404,8 @@ class ImgTxtViewer:
         self.onnx_model_dict = {}
         self.onnx_models_dir = "onnx_models"
         self.auto_insert_mode = StringVar(value="disable")
+        self.batch_interrogate_images_var = BooleanVar(value=False)
+        self.auto_exclude_tags_var = BooleanVar(value=False)
 
         # Font Settings
         self.font_var = StringVar()
@@ -1103,6 +1105,9 @@ class ImgTxtViewer:
         auto_insert_menu.add_radiobutton(label="Append", variable=self.auto_insert_mode, value="append")
         auto_insert_menu.add_radiobutton(label="Replace", variable=self.auto_insert_mode, value="replace")
         auto_insert_menubutton.config(menu=auto_insert_menu)
+        batch_interrogate_checkbutton = ttk.Checkbutton(top_frame, text="Batch", takefocus=False, variable=self.batch_interrogate_images_var)
+        batch_interrogate_checkbutton.pack(side='right')
+        ToolTip.create(batch_interrogate_checkbutton, "Interrogate all images\nAn Auto-Insert mode must be selected", 200, 6, 12)
         # Main Frame
         widget_frame = Frame(self.tab4)
         widget_frame.pack(fill='both', expand=True)
@@ -1191,7 +1196,6 @@ class ImgTxtViewer:
         self.excluded_tags_entry = ttk.Entry(excluded_entry_frame, width=25)
         self.excluded_tags_entry.pack(side='left', fill='both', expand=True)
         self.bind_entry_functions(self.excluded_tags_entry)
-        self.auto_exclude_tags_var = BooleanVar(value=False)
         auto_exclude_tags_checkbutton = ttk.Checkbutton(excluded_entry_frame, text="Auto", takefocus=False, variable=self.auto_exclude_tags_var)
         auto_exclude_tags_checkbutton.pack(side='left', anchor='w', padx=2, pady=2)
         self.auto_exclude_tags_tooltip = ToolTip.create(auto_exclude_tags_checkbutton, "Automatically exclude tags that are already in the text box", 200, 6, 12)
@@ -1326,6 +1330,9 @@ class ImgTxtViewer:
 
     def interrogate_image_tags(self):
         self.text_notebook.select(self.tab4)
+        if self.batch_interrogate_images_var.get():
+            self.batch_interrogate_images()
+            return
         image_path = self.image_files[self.current_index]
         selected_model_path = self.onnx_model_dict.get(self.auto_tag_model_combobox.get())
         if not selected_model_path or not os.path.exists(selected_model_path):
@@ -1338,11 +1345,11 @@ class ImgTxtViewer:
         max_tags = int(self.auto_tag_max_tags_spinbox.get())
         tag_list = tag_list[:max_tags]
         tag_dict = {k: v for k, v in list(tag_dict.items())[:max_tags]}
-        self.parse_interrogation_result(tag_dict)
+        self.populate_auto_tag_listbox(tag_dict)
         self.auto_insert_tags(tag_list)
 
 
-    def parse_interrogation_result(self, tag_dict):
+    def populate_auto_tag_listbox(self, tag_dict):
         self.auto_tag_listbox.delete(0, "end")
         if not tag_dict:
             self.update_auto_tag_stats_label()
@@ -1393,6 +1400,90 @@ class ImgTxtViewer:
             first_model_key = None
         if first_model_key:
             self.auto_tag_model_combobox.set(first_model_key)
+
+
+    def batch_interrogate_images(self):
+        def stop_batch_process():
+            self.stop_batch = True
+            popup.destroy()
+            messagebox.showinfo("Batch Interrogate", f"Batch interrogation stopped\n\n{index} out of {total_images} images were interrogated")
+
+        if self.auto_insert_mode.get() == "disable":
+            messagebox.showinfo("Batch Interrogate", "Auto-Insert must be enabled to use Batch Interrogate")
+            return
+        try:
+            confirm = messagebox.askyesno("Batch Interrogate", "Interrogate all images in the current directory?")
+            if not confirm:
+                return
+            self.stop_batch = False
+            popup = Toplevel(self.master)
+            popup.title("Batch Interrogate")
+            popup.geometry("300x150")
+            self.master.update_idletasks()
+            x = (self.master.winfo_screenwidth() - popup.winfo_reqwidth()) // 2
+            y = (self.master.winfo_screenheight() - popup.winfo_reqheight()) // 2
+            popup.geometry(f"+{x}+{y}")
+            label = Label(popup, text="Working...")
+            label.pack(expand=True)
+            stop_button = ttk.Button(popup, text="Stop", command=stop_batch_process)
+            stop_button.pack(pady=10)
+            popup.transient(self.master)
+            popup.grab_set()
+            self.master.update()
+            popup.protocol("WM_DELETE_WINDOW", stop_batch_process)
+            selected_model_path = self.onnx_model_dict.get(self.auto_tag_model_combobox.get())
+            if not selected_model_path or not os.path.exists(selected_model_path):
+                confirm = messagebox.askyesno("Error", f"Model file not found: {selected_model_path}\n\nWould you like to view the Auto-Tag Help?")
+                if confirm:
+                    self.show_auto_tag_help()
+                popup.destroy()
+                return
+            self.set_other_tag_options()
+            max_tags = int(self.auto_tag_max_tags_spinbox.get())
+            total_images = len(self.image_files)
+            for index, (image_path, text_file_path) in enumerate(zip(self.image_files, self.text_files), start=1):
+                if self.stop_batch:
+                    break
+                tag_list, tag_dict = self.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
+                tag_list = tag_list[:max_tags]
+                tag_dict = {k: v for k, v in list(tag_dict.items())[:max_tags]}
+                self.auto_insert_batch_tags(tag_list, text_file_path)
+                label.config(text=f"Working... {index} out of {total_images}")
+                self.master.update()
+            popup.destroy()
+            if not self.stop_batch:
+                messagebox.showinfo("Batch Interrogate", f"Batch interrogation complete\n\n{total_images} images were interrogated")
+        except TclError:
+            pass
+        finally:
+            self.refresh_text_box()
+            if popup:
+                popup.destroy()
+
+
+    def auto_insert_batch_tags(self, tags, text_file_path):
+        mode = self.auto_insert_mode.get()
+        if mode == "disable":
+            return
+        tags_str = ', '.join(tags)
+        current_text = ''
+        if os.path.exists(text_file_path):
+            with open(text_file_path, 'r', encoding='utf-8') as f:
+                current_text = f.read().strip()
+        else:
+            with open(text_file_path, 'w', encoding='utf-8') as f:
+                f.write('')
+        if mode == "prefix":
+            new_text = tags_str + ', ' + current_text if current_text else tags_str
+        elif mode == "append":
+            new_text = current_text + ', ' + tags_str if current_text else tags_str
+        elif mode == "replace":
+            new_text = tags_str
+        else:
+            return
+        new_text = new_text.strip(', ')
+        with open(text_file_path, 'w', encoding='utf-8') as f:
+            f.write(new_text)
 
 
     # --------------------------------------
