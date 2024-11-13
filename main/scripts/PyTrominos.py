@@ -569,6 +569,7 @@ class PyTrominosGame:
             "\n\nHold: C"
         )
         self.toggle_pause()
+        self.root.focus_set()
 
 
     def calculate_ghost_position(self):
