@@ -1300,7 +1300,26 @@ class ImgTxtViewer:
         return selected_items, extracted_tags
 
 
-    def set_other_tag_options(self):
+    def set_other_tag_options(self, current_tags=None):
+        self.onnx_tagger.exclude_tags.clear()
+        self.onnx_tagger.keep_tags.clear()
+        self.onnx_tagger.replace_tag_dict.clear()
+        excluded_tags = [tag.strip().replace(' ', '_') for tag in self.excluded_tags_entry.get().strip().split(',')]
+        if self.auto_exclude_tags_var.get():
+            if current_tags is not None:
+                source_tags = current_tags.strip()
+            else:
+                source_tags = self.text_box.get("1.0", "end-1c").strip()
+            excluded_tags.extend(tag.strip().replace(' ', '_') for tag in source_tags.split(','))
+        self.onnx_tagger.exclude_tags = [tag.strip() for tag in excluded_tags if tag.strip()]
+        keep_tags = self.keep_tags_entry.get().strip().split(',')
+        self.onnx_tagger.keep_tags = [tag.strip() for tag in keep_tags if tag.strip()]
+        replace_tags = self.replace_tags_entry.get().strip().split(',')
+        replace_with_tags = self.replace_with_tags_entry.get().strip().split(',')
+        self.onnx_tagger.replace_tag_dict = {tag.strip(): replace_with_tags[i].strip() for i, tag in enumerate(replace_tags) if tag.strip() and i < len(replace_with_tags) and replace_with_tags[i].strip()}
+
+
+    def set_general_tag_options(self):
         def validate_spinbox_value(spinbox, default_value, from_, to):
             try:
                 value = float(spinbox.get())
@@ -1314,18 +1333,6 @@ class ImgTxtViewer:
         validate_spinbox_value(self.auto_tag_max_tags_spinbox, 40, 1, 999)
         self.onnx_tagger.general_threshold = validate_spinbox_value(self.auto_tag_general_threshold_spinbox, 0.35, 0, 1)
         self.onnx_tagger.character_threshold = validate_spinbox_value(self.auto_tag_character_threshold_spinbox, 0.85, 0, 1)
-        self.onnx_tagger.exclude_tags.clear()
-        self.onnx_tagger.keep_tags.clear()
-        self.onnx_tagger.replace_tag_dict.clear()
-        excluded_tags = [tag.strip().replace(' ', '_') for tag in self.excluded_tags_entry.get().strip().split(',')]
-        if self.auto_exclude_tags_var.get():
-            excluded_tags.extend(tag.strip().replace(' ', '_') for tag in self.text_box.get("1.0", "end-1c").strip().split(','))
-        self.onnx_tagger.exclude_tags = [tag.strip() for tag in excluded_tags if tag.strip()]
-        keep_tags = self.keep_tags_entry.get().strip().split(',')
-        self.onnx_tagger.keep_tags = [tag.strip() for tag in keep_tags if tag.strip()]
-        replace_tags = self.replace_tags_entry.get().strip().split(',')
-        replace_with_tags = self.replace_with_tags_entry.get().strip().split(',')
-        self.onnx_tagger.replace_tag_dict = {tag.strip(): replace_with_tags[i].strip() for i, tag in enumerate(replace_tags) if tag.strip() and i < len(replace_with_tags) and replace_with_tags[i].strip()}
 
 
     def interrogate_image_tags(self):
@@ -1340,6 +1347,7 @@ class ImgTxtViewer:
             if confirm:
                 self.show_auto_tag_help()
             return
+        self.set_general_tag_options()
         self.set_other_tag_options()
         tag_list, tag_dict = self.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
         max_tags = int(self.auto_tag_max_tags_spinbox.get())
@@ -1423,8 +1431,10 @@ class ImgTxtViewer:
             x = (self.master.winfo_screenwidth() - popup.winfo_reqwidth()) // 2
             y = (self.master.winfo_screenheight() - popup.winfo_reqheight()) // 2
             popup.geometry(f"+{x}+{y}")
-            label = Label(popup, text="Working...")
+            label = Label(popup, text="Starting...")
             label.pack(expand=True)
+            progress = ttk.Progressbar(popup, orient="horizontal", length=200, mode="determinate")
+            progress.pack(pady=10)
             stop_button = ttk.Button(popup, text="Stop", command=stop_batch_process)
             stop_button.pack(pady=10)
             popup.transient(self.master)
@@ -1438,17 +1448,33 @@ class ImgTxtViewer:
                     self.show_auto_tag_help()
                 popup.destroy()
                 return
-            self.set_other_tag_options()
+            self.set_general_tag_options()
             max_tags = int(self.auto_tag_max_tags_spinbox.get())
             total_images = len(self.image_files)
+            progress["maximum"] = total_images
+            start_time = time.time()
             for index, (image_path, text_file_path) in enumerate(zip(self.image_files, self.text_files), start=1):
                 if self.stop_batch:
                     break
+                current_text = ""
+                if os.path.exists(text_file_path):
+                    with open(text_file_path, "r", encoding="utf-8") as f:
+                        current_text = f.read().strip()
+                if self.auto_exclude_tags_var.get() and self.batch_interrogate_images_var.get():
+                    self.set_other_tag_options(current_tags=current_text)
+                else:
+                    self.set_other_tag_options()
                 tag_list, tag_dict = self.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
                 tag_list = tag_list[:max_tags]
                 tag_dict = {k: v for k, v in list(tag_dict.items())[:max_tags]}
                 self.auto_insert_batch_tags(tag_list, text_file_path)
-                label.config(text=f"Working... {index} out of {total_images}")
+                elapsed_time = time.time() - start_time
+                avg_time_per_image = elapsed_time / index if index > 0 else 0
+                remaining_images = total_images - index
+                eta_seconds = avg_time_per_image * remaining_images
+                eta_formatted = time.strftime("%H:%M:%S", time.gmtime(eta_seconds))
+                label.config(text=f"Working... {index} out of {total_images}\nETA: {eta_formatted}")
+                progress["value"] = index
                 self.master.update()
             popup.destroy()
             if not self.stop_batch:
