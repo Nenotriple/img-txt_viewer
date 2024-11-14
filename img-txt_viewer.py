@@ -4759,10 +4759,9 @@ root.mainloop()
 
 **v1.96 Changes**  |  https://github.com/Nenotriple/img-txt_viewer/compare/v1.95...v1.96
 
+This release introduces several new features and improvements, including AutoTag for automatic image tagging using ONNX vision models, revamped Batch Tag Edit and Crop tools, a Thumbnail Panel for quick navigation, and an Edit Image Panel for adjusting image properties. Additionally, numerous bugs have been fixed, such as issues with the Delete Pair tool, image quality degradation, and memory leaks.
 
-This release incorporates many new features, including AutoTag for automatically tagging images using ONNX vision models *(wd14)*, reworked Batch Tag Edit and Crop tools, a Thumbnail Panel for quick navigation, and an Edit Image Panel for adjusting image properties. Additionally, numerous bugs have been fixed, such as issues with the Delete Pair tool, image quality degradation, and memory leaks.
-
-The app now targets Windows 11, most widgets should have a more modern look and feel.
+The app now targets Windows 11, providing a more modern look and feel for most widgets.
 
 Starting from this release, the `Lite` version will no longer be provided. All tools are now built-in.
 
@@ -4771,42 +4770,38 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
 
 ### New:
-- `AutoTag`: Automatically tag images using ONNX vision models like `wd-v1-4-vit-tagger-v2`.
-  - Download additional models from https://huggingface.co/SmilingWolf
+- **AutoTag**: Automatically tag images using ONNX vision models like `wd-v1-4-vit-tagger-v2`.
+  - Download additional models from [Hugging Face](https://huggingface.co/SmilingWolf).
   - Place models in subfolders within the `onnx_models` directory, located in the same folder as this program. The subfolder name will be used as the model name.
-  - Each model subfolder should contain a `model.onnx` file and a 'selected_tags.csv' file.
+  - Each model subfolder should contain a `model.onnx` file and a `selected_tags.csv` file.
   - Auto-Tagging was primarily tested with the `wd-v1-4-moat-tagger-v2` model.
-- `Batch Tag Delete` has been renamed to `Batch Tag Edit`.
-  - This tool has been completely reworked to allow for more versatile tag editing.
+- **Batch Tag Edit**: Previously known as Batch Tag Delete, this tool has been completely reworked for more versatile tag editing.
   - The interface is now more convenient and user-friendly, allowing you to see all pending changes before committing them.
   - It is no longer supported as a standalone tool.
-- `Batch Resize Images`:
-  - No longer a standalone tool, the tool has been integrated into the main app.
+- **Batch Resize Images**: Integrated into the main app.
   - NEW: A timer is now displayed in the bottom row.
-  - FIXED: The following resize modes not working/causing an error: `Longer Side`, and `Height`
+  - FIXED: The following resize modes not working/causing an error: `Longer Side`, and `Height`.
   - FIXED: The resize operation is now threaded, allowing the app to remain responsive during the resizing process.
-- `Find Duplicate Files`: No longer a standalone tool, the tool has been integrated into the main app.
-- `Crop...`: The crop tool has been totally reworked, it has new features and it's more convenient to use.
-  - All the normal cropping features you would expect are present.
-  - A special `Auto` fixed aspect ratio mode allows you to quickly create a crop based on the image's aspect ratio and a list of predefined aspect ratios.
-- New feature `Thumbnail Panel`: Displayed below the current image for quick navigation.
-- New feature `Edit Image Panel`: Enabled from the options/image menu, this section allows you to edit the `Brightness`, `Contrast`, `Saturation`, `Sharpness`, `Highlights`, and `Shadows` of the current image.
-- New feature `Edit Image...`: Open the current image in an external editor, the default is MS Paint.
+- **Find Duplicate Files**: Integrated into the main app.
+- **Crop Tool**: Completely reworked with new features and improved usability.
+  - Includes all standard cropping features.
+  - Special `Auto` fixed aspect ratio mode for quick cropping based on the image's aspect ratio and predefined aspect ratios.
+- **Thumbnail Panel**: Displayed below the current image for quick navigation.
+- **Edit Image Panel**: Enabled from the options/image menu, this section allows you to edit the `Brightness`, `Contrast`, `Saturation`, `Sharpness`, `Highlights`, and `Shadows` of the current image.
+- **Edit Image**: Open the current image in an external editor, with MS Paint as the default.
   - Running `Set Default Image Editor` will open a dialog to select the executable (or `.py`, `.pyw`) path to use as the default image editor.
-  - This should work with any app that accepts a file path as a launch argument. (GIMP, Krita, Photoshop, etc.)
-- New tool `Create Wildcard From Captions`: Combine all image captions into a single text file, each set of image captions separated by a newline.
-- Added `Copy` command to the right-click textbox context menu.
-- Added `Last` to the index entry right-click context menu to quickly jump to the last img-txt pair.
- - Added two additional upscale models: `AnimeSharp-4x` and `UltraSharp-4x`.
-- Additional NCNN upscale models can now be loaded by placing them in the `models` directory.
-- Now you can insert a suggestion by simply clicking it.
-- A quick guided setup will run on the app's first launch, or if the settings file is deleted/reset.
+  - This should work with any app that accepts a file path as a launch argument (e.g., GIMP, Krita, Photoshop).
+- **Create Wildcard From Captions**: Combine all image captions into a single text file, each set of image captions separated by a newline.
+- **Copy Command**: Added to the right-click textbox context menu.
+- **Last Command**: Added to the index entry right-click context menu to quickly jump to the last img-txt pair.
+- **Additional Upscale Models**: Added `AnimeSharp-4x` and `UltraSharp-4x`.
+- **NCNN Upscale Models**: Additional models can now be loaded by placing them in the `models` directory.
+- **Insert Suggestion**: Now you can insert a suggestion by simply clicking it.
+- **Guided Setup**: A quick guided setup will run on the app's first launch, or if the settings file is deleted/reset.
   - This will set the preferred autocomplete dictionaries and matching settings.
-- You can now press `CTRL+W` to close the current window.
-- Added an `Easter Egg` game that can be opened from the ImgTxtViewer About Window.
-
-
-<br>
+- **Close Window Shortcut**: Press `CTRL+W` to close the current window.
+- **Danbooru (Safe)**: Added to the list of available dictionaries, a great choice to load with the English dictionary.
+- **Easter Egg Game**: Can be opened from the ImgTxtViewer About Window.
 
 
 ### Fixed:
@@ -4817,49 +4812,43 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 - Fixed an issue where landscape images were improperly scaled, leading to an incorrect aspect ratio.
   - Additionally, large landscape images now scale to fit the window frame better.
 - Fixed `Open Text Directory...` not respecting the actual filepath if set by `Set Text File Path...`.
-- Fixed issue where the file lists were not updated when using the internal function "jump_to_image()".
+- Fixed issue where the file lists were not updated when using the internal function `jump_to_image()`.
 - Fixed an issue where the `alt text path` could be set to `.` when declining to reload the last directory.
 - Fixed a bug where the window height would enlarge slightly when dragging the window from by the displayed image.
-- Fixed the following tools not respecting the `Loading Order > Descending` setting, causing them to jump to the wrong index.
-  - `Image Grid`, `Upscale Image`, `Resize Image`
+- Fixed the following tools not respecting the `Loading Order > Descending` setting, causing them to jump to the wrong index:
+  - `Image Grid`, `Upscale Image`, `Resize Image`.
 - Potential fix for the `Stats > PPI` calculation returning "0.00".
-- if `clean-text` is enabled: The primary text box is now properly refreshed when saving.
+- If `clean-text` is enabled: The primary text box is now properly refreshed when saving.
 - Fixed an issue when deleting tags that are a substring of another tag using middle-mouse-click. #38
 - Fixed an issue where the system clipboard would become unresponsive after deleting a tag with the middle mouse button. #38
 
 
-<br>
-
-
-### Other changes:
+### Other Changes:
 - Autocomplete suggestions are now cached, so re-typing the same words returns suggestions quicker.
-    - Some pre-caching is done for Autocomplete suggestions, which does slow down the initial launch slightly.
+  - Some pre-caching is done for Autocomplete suggestions, which does slow down the initial launch slightly.
 - Using `Open Current Directory...` will now automatically select the current image in the file explorer. #30
   - The `Open` button will also select the current image if the path being opened is the same as the image path.
 - The Image info (the stats displayed above the image) is now cached for quicker access.
 - `Zip Dataset...` Now only zips images and text files in the selected directory, omitting subfolders.
-- The `Options`, and `Tools` menus have been reorganized.
+- The `Options` and `Tools` menus have been reorganized.
 - The color mode is now displayed in the image info panel.
 - You can now close the `Crop Image` window with the `Escape` key.
 - The message box is now removed.
   - You can now check the title for a visual indicator of the text state.
   - All tools that used the message box for notifications now use a message popup.
 - Custom and duplicate highlights now use a range of pastel colors.
-- I have switched to Windows 11, so that's now the target operating system for this project. You may notice some UI changes.
+- The target operating system for this project is now Windows 11, resulting in some UI changes.
   - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
 
 
-<br>
-
-
 ### Project Changes:
-- `Upscale`, `Batch Upscale`: v1.05:
+- **Upscale, Batch Upscale**: v1.05:
   - FIXED: Prevent the app from hanging while upscaling a GIF.
   - Batch Upscale: Added a label to display the number of images upscaled and the total number of images.
   - Batch Upscale: Added a timer and ETA label to show the total time taken and the estimated time remaining.
   - Batch Upscale: Entry path ToolTips are now updated when the path is changed.
   - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
-- `TkToolTip`: v1.06:
+- **TkToolTip**: v1.06:
   - NEW: `justify` parameter: Configure text justification in the tooltip. (Default is "center")
   - NEW: `wraplength` parameter: Configure the maximum line width for text wrapping. (Default is 0, which disables wrapping)
   - NEW: `fade_in` and `fade_out` parameters: Configure fade-in and fade-out times. (Default is 75ms)
@@ -4867,9 +4856,9 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - FIXED: Issue where the underlying widget would be impossible to interact with after hiding the tooltip.
   - CHANGE: Now uses `TkDefaultFont` instead of Tahoma as the default font for the tooltip text.
   - CHANGE: The default background color is now "#ffffee", less yellow and more "off-white".
-- `PopUpZoom`v1.02:
-  - New: `Rounded Corners` The popup now supports rounded corners. (Default: 30px)
-- `Batch Crop`(v1.03), `Resize Images`(v1.02), `Image Grid`(v1.04):
+- **PopUpZoom**: v1.02:
+  - NEW: `Rounded Corners` The popup now supports rounded corners. (Default: 30px)
+- **Batch Crop** (v1.03), **Resize Images** (v1.02), **Image Grid** (v1.04):
   - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
 - `crop_image` has been replaced with `CropUI`.
 
