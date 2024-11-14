@@ -1300,7 +1300,7 @@ class ImgTxtViewer:
         return selected_items, extracted_tags
 
 
-    def set_other_tag_options(self, current_tags=None):
+    def update_tag_options(self, current_tags=None):
         self.onnx_tagger.exclude_tags.clear()
         self.onnx_tagger.keep_tags.clear()
         self.onnx_tagger.replace_tag_dict.clear()
@@ -1319,7 +1319,7 @@ class ImgTxtViewer:
         self.onnx_tagger.replace_tag_dict = {tag.strip(): replace_with_tags[i].strip() for i, tag in enumerate(replace_tags) if tag.strip() and i < len(replace_with_tags) and replace_with_tags[i].strip()}
 
 
-    def set_general_tag_options(self):
+    def update_tag_thresholds(self):
         def validate_spinbox_value(spinbox, default_value, from_, to):
             try:
                 value = float(spinbox.get())
@@ -1347,8 +1347,8 @@ class ImgTxtViewer:
             if confirm:
                 self.show_auto_tag_help()
             return
-        self.set_general_tag_options()
-        self.set_other_tag_options()
+        self.update_tag_thresholds()
+        self.update_tag_options()
         tag_list, tag_dict = self.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
         max_tags = int(self.auto_tag_max_tags_spinbox.get())
         tag_list = tag_list[:max_tags]
@@ -1448,7 +1448,7 @@ class ImgTxtViewer:
                     self.show_auto_tag_help()
                 popup.destroy()
                 return
-            self.set_general_tag_options()
+            self.update_tag_thresholds()
             max_tags = int(self.auto_tag_max_tags_spinbox.get())
             total_images = len(self.image_files)
             progress["maximum"] = total_images
@@ -1461,9 +1461,9 @@ class ImgTxtViewer:
                     with open(text_file_path, "r", encoding="utf-8") as f:
                         current_text = f.read().strip()
                 if self.auto_exclude_tags_var.get() and self.batch_interrogate_images_var.get():
-                    self.set_other_tag_options(current_tags=current_text)
+                    self.update_tag_options(current_tags=current_text)
                 else:
-                    self.set_other_tag_options()
+                    self.update_tag_options()
                 tag_list, tag_dict = self.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
                 tag_list = tag_list[:max_tags]
                 tag_dict = {k: v for k, v in list(tag_dict.items())[:max_tags]}
@@ -2375,9 +2375,9 @@ class ImgTxtViewer:
             if index == self.current_index:
                 thumbnail_button.config(style="Highlighted.TButton")
             # Bind events
-            thumbnail_button.bind("<Button-3>", lambda event, btn=thumbnail_button, idx=index:self.show_thumbContext_menu(btn, event, idx))
+            thumbnail_button.bind("<Button-3>", self.create_thumb_context_menu(thumbnail_button, index))
             thumbnail_button.bind("<MouseWheel>", self.mouse_scroll)
-            ToolTip.create(thumbnail_button, f"#{index + 1} | {image_info['filename']} | {image_info['resolution']} | "f"{image_info['size']} | {image_info['color_mode']}", delay=100, pady=-25, origin='widget')
+            ToolTip.create(thumbnail_button, f"#{index + 1} | {image_info['filename']} | {image_info['resolution']} | {image_info['size']} | {image_info['color_mode']}", delay=100, pady=-25, origin='widget')
             # Add to the list of thumbnail buttons
             thumbnail_buttons.append(thumbnail_button)
         # Display the thumbnails
@@ -2386,22 +2386,24 @@ class ImgTxtViewer:
         self.thumbnail_panel.update_idletasks()
 
 
-    def show_thumbContext_menu(self, thumbnail_button, event, index):
-        thumb_menu = Menu(thumbnail_button, tearoff=0)
-        # Open Image
-        thumb_menu.add_command(label="Open Image", command=lambda: self.open_image(index=index))
-        thumb_menu.add_command(label="Delete Pair", command=lambda: self.delete_pair(index=index))
-        thumb_menu.add_command(label="Edit Image", command=lambda: self.open_image_in_editor(index=index))
-        thumb_menu.add_separator()
-        # Toggle Thumbnail Panel
-        thumb_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.update_thumbnail_panel)
-        # Thumbnail Size
-        thumbnail_size_menu = Menu(thumb_menu, tearoff=0)
-        thumb_menu.add_cascade(label="Thumbnail Size", menu=thumbnail_size_menu)
-        thumbnail_sizes = {"Small": 25, "Medium": 50, "Large": 100}
-        for label, size in thumbnail_sizes.items():
-            thumbnail_size_menu.add_radiobutton(label=label, variable=self.thumbnail_width, value=size, command=self.update_thumbnail_panel)
-        thumb_menu.tk_popup(event.x_root, event.y_root)
+    def create_thumb_context_menu(self, thumbnail_button, index):
+        def show_context_menu(event):
+            thumb_menu = Menu(thumbnail_button, tearoff=0)
+            # Open Image
+            thumb_menu.add_command(label="Open Image", command=lambda: self.open_image(index=index))
+            thumb_menu.add_command(label="Delete Pair", command=lambda: self.delete_pair(index=index))
+            thumb_menu.add_command(label="Edit Image", command=lambda: self.open_image_in_editor(index=index))
+            thumb_menu.add_separator()
+            # Toggle Thumbnail Panel
+            thumb_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.update_thumbnail_panel)
+            # Thumbnail Size
+            thumbnail_size_menu = Menu(thumb_menu, tearoff=0)
+            thumb_menu.add_cascade(label="Thumbnail Size", menu=thumbnail_size_menu)
+            thumbnail_sizes = {"Small": 25, "Medium": 50, "Large": 100}
+            for label, size in thumbnail_sizes.items():
+                thumbnail_size_menu.add_radiobutton(label=label, variable=self.thumbnail_width, value=size, command=self.update_thumbnail_panel)
+            thumb_menu.tk_popup(event.x_root, event.y_root)
+        return show_context_menu
 
 
     def set_custom_ttk_button_highlight_style(self):
@@ -4903,10 +4905,6 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - Related to how (Alt-L, and Alt-R) are bound to disable_button()
 
 - (Low) Sometimes when an image is loaded it isn't refreshed.
-
-- THUMBNAILS:
-  - (Low) A 'TypeError' error can occur when using the Mouse Wheel while scrolling over the thumbnail panel.
-          - It appears to be related to the ToolTip binding.
 
 
   '''
