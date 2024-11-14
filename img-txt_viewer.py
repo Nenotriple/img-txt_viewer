@@ -456,6 +456,7 @@ class ImgTxtViewer:
 
         # Autocomplete
         self.csv_danbooru = BooleanVar(value=True)
+        self.csv_danbooru_safe = BooleanVar(value=False)
         self.csv_derpibooru = BooleanVar(value=False)
         self.csv_e621 = BooleanVar(value=False)
         self.csv_english_dictionary = BooleanVar(value=False)
@@ -583,6 +584,7 @@ class ImgTxtViewer:
         autocompleteSettingsMenu.add_cascade(label="Dictionary", underline=11, menu=dictionaryMenu)
         dictionaryMenu.add_checkbutton(label="English Dictionary", underline=0, variable=self.csv_english_dictionary, command=self.update_autocomplete_dictionary)
         dictionaryMenu.add_checkbutton(label="Danbooru", underline=0, variable=self.csv_danbooru, command=self.update_autocomplete_dictionary)
+        dictionaryMenu.add_checkbutton(label="Danbooru (Safe)", underline=0, variable=self.csv_danbooru_safe, command=self.update_autocomplete_dictionary)
         dictionaryMenu.add_checkbutton(label="Derpibooru", underline=0, variable=self.csv_derpibooru, command=self.update_autocomplete_dictionary)
         dictionaryMenu.add_checkbutton(label="e621", underline=0, variable=self.csv_e621, command=self.update_autocomplete_dictionary)
         dictionaryMenu.add_separator()
@@ -1821,6 +1823,7 @@ class ImgTxtViewer:
         suggestionContext_menu.add_cascade(label="Dictionary", menu=dictionaryMenu)
         dictionaryMenu.add_checkbutton(label="English Dictionary", underline=0, variable=self.csv_english_dictionary, command=self.update_autocomplete_dictionary)
         dictionaryMenu.add_checkbutton(label="Danbooru", underline=0, variable=self.csv_danbooru, command=self.update_autocomplete_dictionary)
+        dictionaryMenu.add_checkbutton(label="Danbooru (Safe)", underline=0, variable=self.csv_danbooru_safe, command=self.update_autocomplete_dictionary)
         dictionaryMenu.add_checkbutton(label="Derpibooru", underline=0, variable=self.csv_derpibooru, command=self.update_autocomplete_dictionary)
         dictionaryMenu.add_checkbutton(label="e621", underline=0, variable=self.csv_e621, command=self.update_autocomplete_dictionary)
         dictionaryMenu.add_separator()
@@ -2580,6 +2583,7 @@ class ImgTxtViewer:
     def update_autocomplete_dictionary(self):
         csv_vars = {
             'danbooru.csv': self.csv_danbooru,
+            'danbooru_safe.csv': self.csv_danbooru_safe,
             'e621.csv': self.csv_e621,
             'dictionary.csv': self.csv_english_dictionary,
             'derpibooru.csv': self.csv_derpibooru
@@ -2598,11 +2602,12 @@ class ImgTxtViewer:
 
     def set_suggestion_color(self, csv_file):
         color_mappings = {
-            'None':             {0: "black"},
-            'dictionary.csv':   {0: "black",    1: "black",     2: "black",     3: "black",     4: "black",     5: "black",     6: "black",     7: "black",     8: "black"},
-            'danbooru.csv':     {0: "black",    1: "#c00004",   2: "black",     3: "#a800aa",   4: "#00ab2c",   5: "#fd9200"},
-            'e621.csv':         {-1: "black",   0: "black",     1: "#f2ac08",   3: "#dd00dd",   4: "#00aa00",   5: "#ed5d1f",   6: "#ff3d3d",   7: "#ff3d3d",   8: "#228822"},
-            'derpibooru.csv':   {0: "black",    1: "#e5b021",   3: "#fd9961",   4: "#cf5bbe",   5: "#3c8ad9",   6: "#a6a6a6",   7: "#47abc1",   8: "#7871d0",   9: "#df3647",   10: "#c98f2b",  11: "#e87ebe"}
+            'None':                 {0: "black"},
+            'dictionary.csv':       {0: "black",    1: "black",     2: "black",     3: "black",     4: "black",     5: "black",     6: "black",     7: "black",     8: "black"},
+            'danbooru.csv':         {0: "black",    1: "#c00004",   2: "black",     3: "#a800aa",   4: "#00ab2c",   5: "#fd9200"},
+            'danbooru_safe.csv':    {0: "black",    1: "#c00004",   2: "black",     3: "#a800aa",   4: "#00ab2c",   5: "#fd9200"},
+            'e621.csv':             {-1: "black",   0: "black",     1: "#f2ac08",   3: "#dd00dd",   4: "#00aa00",   5: "#ed5d1f",   6: "#ff3d3d",   7: "#ff3d3d",   8: "#228822"},
+            'derpibooru.csv':       {0: "black",    1: "#e5b021",   3: "#fd9961",   4: "#cf5bbe",   5: "#3c8ad9",   6: "#a6a6a6",   7: "#47abc1",   8: "#7871d0",   9: "#df3647",   10: "#c98f2b",  11: "#e87ebe"}
             }
         black_mappings = {key: "black" for key in color_mappings[csv_file].keys()}
         self.suggestion_colors = color_mappings[csv_file] if self.colored_suggestion_var.get() else black_mappings
@@ -4044,11 +4049,12 @@ class ImgTxtViewer:
         dict_var = StringVar(value="English Dictionary")
         last_word_match_var = StringVar(value="Match Last Word")
         match_modes = {"Match Whole String": False, "Match Last Word": True}
-        dictionaries = ["English Dictionary", "Danbooru", "e621", "Derpibooru"]
+        dictionaries = ["English Dictionary", "Danbooru", "Danbooru (Safe)", "e621", "Derpibooru"]
 
         def save_and_continue(close=False, back=False):
             selected_dict = dict_var.get()
             self.csv_danbooru.set(selected_dict == "Danbooru")
+            self.csv_danbooru_safe.set(selected_dict == "Danbooru (Safe)")
             self.csv_derpibooru.set(selected_dict == "Derpibooru")
             self.csv_e621.set(selected_dict == "e621")
             self.csv_english_dictionary.set(selected_dict == "English Dictionary")
@@ -4058,7 +4064,7 @@ class ImgTxtViewer:
             elif back:
                 clear_widgets()
                 create_dictionary_selection_widgets()
-                setup_window.geometry("400x200")
+                setup_window.geometry("400x250")
             else:
                 self.settings_manager.save_settings()
                 clear_widgets()
@@ -4092,7 +4098,7 @@ class ImgTxtViewer:
             setup_window = Toplevel(self.master)
             setup_window.title("First Time Setup")
             setup_window.iconphoto(False, self.blank_image)
-            window_width, window_height = 400, 200
+            window_width, window_height = 400, 250
             position_right = root.winfo_screenwidth() // 2 - window_width // 2
             position_top = root.winfo_screenheight() // 2 - window_height // 2
             setup_window.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
@@ -4886,8 +4892,6 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 - (Med) Go through all tools that touch text files and make sure they work with alt-text paths.
 
 - (Low) Find Dupe Files, could/should automatically move captions if they are found.
-
-- (Very Low) Create a `Danbooru (safe)` autocomplete dictionary. (I have no idea how to effectively filter the naughty words.)
 
 
 ### Tofix
