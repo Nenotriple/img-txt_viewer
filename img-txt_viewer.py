@@ -2404,8 +2404,18 @@ class ImgTxtViewer:
             thumbnail_sizes = {"Small": 25, "Medium": 50, "Large": 100}
             for label, size in thumbnail_sizes.items():
                 thumbnail_size_menu.add_radiobutton(label=label, variable=self.thumbnail_width, value=size, command=self.update_thumbnail_panel)
-            thumb_menu.tk_popup(event.x_root, event.y_root)
+            thumb_menu.add_separator()
+            # Clear and Rebuild Cache
+            thumb_menu.add_command(label="Refresh Thumbnails", command=self.refresh_thumbnails)
+            thumb_menu.post(event.x_root, event.y_root)
         return show_context_menu
+
+
+    def refresh_thumbnails(self):
+        self.thumbnail_cache.clear()
+        self.image_info_cache.clear()
+        self.refresh_file_lists()
+        self.update_thumbnail_panel()
 
 
     def set_custom_ttk_button_highlight_style(self):
@@ -2961,9 +2971,12 @@ class ImgTxtViewer:
 
 
     def get_image_info(self, image_file):
-        with Image.open(image_file) as image:
-            width, height = image.size
-            color_mode = image.mode
+        try:
+            with Image.open(image_file) as image:
+                width, height = image.size
+                color_mode = image.mode
+        except (FileNotFoundError, UnidentifiedImageError):
+            return {"filename": "Image not found", "resolution": "0 x 0", "size": "0 KB", "color_mode": "N/A"}
         size = os.path.getsize(image_file)
         size_kb = size / 1024
         size_str = f"{round(size_kb)} KB" if size_kb < 1024 else f"{round(size_kb / 1024, 2)} MB"
@@ -4883,10 +4896,6 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
 
 ### Tofix
-- (Med) Image info, and thumbnail cache doesn't update when the image is changed.
-  - This is because the cache is built using the filename as the key.
-  - The cache dictionary should include the hash of the image file to ensure it's up-to-date.
-  - All cache for that image should be cleared when the hash changes.
 
 - (low) When reloading the last directory: The whole process is messy and should be made more modular.
   - set_working_directory(), set_text_file_path(), jump_to_image(); need to be optimized.
