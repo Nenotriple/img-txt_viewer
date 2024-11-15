@@ -280,6 +280,9 @@ class CropSelection:
     def _resize_selection_with_mousewheel(self, delta_width, delta_height, step, maintain_aspect_ratio=False):
         x1, y1, x2, y2 = self.img_canvas.coords(self.rect)
         cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
+        x_off, y_off = self.img_canvas.x_off, self.img_canvas.y_off
+        img_width = self.img_canvas.new_size[0]
+        img_height = self.img_canvas.new_size[1]
         new_width = (x2 - x1) + (step if delta_width else 0)
         new_height = (y2 - y1) + (step if delta_height else 0)
         if maintain_aspect_ratio:
@@ -289,27 +292,28 @@ class CropSelection:
                 aspect_ratio = width_ratio / height_ratio
             else:
                 aspect_ratio = float(aspect_ratio_str)
-            if delta_width and delta_height:
-                new_height = new_width / aspect_ratio
-            elif delta_width:
+            if delta_width:
                 new_height = new_width / aspect_ratio
             elif delta_height:
                 new_width = new_height * aspect_ratio
-            if abs(new_width / new_height - aspect_ratio) > 1:
-                return
+            max_width = img_width
+            max_height = img_height
+            if new_width > max_width:
+                new_width = max_width
+                new_height = new_width / aspect_ratio
+            if new_height > max_height:
+                new_height = max_height
+                new_width = new_height * aspect_ratio
         new_width = max(new_width, 10)
         new_height = max(new_height, 10)
         x1_new = cx - new_width / 2
         x2_new = cx + new_width / 2
         y1_new = cy - new_height / 2
         y2_new = cy + new_height / 2
-        x_off, y_off = self.img_canvas.x_off, self.img_canvas.y_off
-        x_max = x_off + self.img_canvas.new_size[0]
-        y_max = y_off + self.img_canvas.new_size[1]
         x1_new = max(x_off, x1_new)
         y1_new = max(y_off, y1_new)
-        x2_new = min(x_max, x2_new)
-        y2_new = min(y_max, y2_new)
+        x2_new = min(x_off + img_width, x2_new)
+        y2_new = min(y_off + img_height, y2_new)
         self.update_rect(x1_new, y1_new, x2_new, y2_new)
         self.handles_manager.update_handles()
         self.parent.update_widget_values(resize=True)
