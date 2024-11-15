@@ -1790,11 +1790,10 @@ class ImgTxtViewer:
         self.imageContext_menu.add_command(label="Rename Pair", command=self.manually_rename_single_pair)
         self.imageContext_menu.add_command(label="Upscale...", command=lambda: self.upscale_image(batch=False))
         self.imageContext_menu.add_command(label="Resize...", command=self.resize_image)
+        self.imageContext_menu.add_command(label="Crop...", command=self.show_crop_ui)
         if not self.image_file.lower().endswith('.gif'):
-            self.imageContext_menu.add_command(label="Crop...", command=self.show_crop_ui)
             self.imageContext_menu.add_command(label="Expand", command=self.expand_image)
         else:
-            self.imageContext_menu.add_command(label="Crop...", state="disabled", command=self.show_crop_ui)
             self.imageContext_menu.add_command(label="Expand", state="disabled", command=self.expand_image)
         self.imageContext_menu.add_command(label="Rotate", command=self.rotate_current_image)
         self.imageContext_menu.add_command(label="Flip", command=self.flip_current_image)
