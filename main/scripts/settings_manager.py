@@ -6,6 +6,7 @@ import configparser
 
 # Standard Library - GUI
 from tkinter import messagebox
+import traceback
 
 # --------------------------------------
 # Class: SettingsManager
@@ -146,7 +147,11 @@ class SettingsManager:
             else:
                 self.parent.prompt_first_time_setup()
         except Exception as e:
-            messagebox.showerror("Error: read_settings()", f"An unexpected error occurred.\n\n{e}")
+            error_message = traceback.format_exc()
+            if messagebox.askokcancel("Error: read_settings()", f"An unexpected error occurred.\n\n{e}\n\n{error_message}\n\nPress OK to copy the error message to the clipboard."):
+                self.root.clipboard_clear()
+                self.root.clipboard_append(error_message)
+                self.root.update()
 
 
     def _is_current_version(self):
@@ -154,8 +159,7 @@ class SettingsManager:
 
 
     def _read_config_settings(self):
-        if not self._read_directory_settings():
-            return
+        self._read_directory_settings()
         #self.read_window_settings()
         self._read_autocomplete_settings()
         #self._read_ONNX_settings()
@@ -164,18 +168,17 @@ class SettingsManager:
 
     def _read_directory_settings(self):
         last_img_directory = self.config.get("Path", "last_img_directory", fallback=None)
-        if last_img_directory and os.path.exists(last_img_directory) and messagebox.askyesno("Confirmation", "Reload last directory?"):
-            self.external_image_editor_path = self.config.get("Path", "external_image_editor_path", fallback="mspaint")
-            self.parent.load_order_var.set(value=self.config.get("Path", "load_order", fallback="Name (default)"))
-            self.parent.reverse_load_order_var.set(value=self.config.getboolean("Path", "reverse_load_order", fallback=False))
-            self.parent.image_dir.set(last_img_directory)
-            self.parent.set_working_directory()
-            self.parent.set_text_file_path(str(self.config.get("Path", "last_txt_directory", fallback=last_img_directory)))
-            last_index = int(self.config.get("Path", "last_index", fallback=1))
-            num_files = len([name for name in os.listdir(last_img_directory) if os.path.isfile(os.path.join(last_img_directory, name))])
-            self.parent.jump_to_image(min(last_index, num_files))
-            return True
-        return False
+        if not last_img_directory or not os.path.exists(last_img_directory) or not messagebox.askyesno("Confirmation", "Reload last directory?"):
+            return
+        self.external_image_editor_path = self.config.get("Path", "external_image_editor_path", fallback="mspaint")
+        self.parent.load_order_var.set(value=self.config.get("Path", "load_order", fallback="Name (default)"))
+        self.parent.reverse_load_order_var.set(value=self.config.getboolean("Path", "reverse_load_order", fallback=False))
+        self.parent.image_dir.set(last_img_directory)
+        self.parent.set_working_directory(silent=True)
+        self.parent.set_text_file_path(str(self.config.get("Path", "last_txt_directory", fallback=last_img_directory)), silent=True)
+        last_index = int(self.config.get("Path", "last_index", fallback=1))
+        num_files = len([name for name in os.listdir(last_img_directory) if os.path.isfile(os.path.join(last_img_directory, name))])
+        self.parent.jump_to_image(min(last_index, num_files))
 
 
     def _read_window_settings(self):
@@ -224,7 +227,8 @@ class SettingsManager:
         self.parent.set_image_quality()
         self.parent.font_var.set(value=self.config.get("Other", "font", fallback="Courier New"))
         self.parent.font_size_var.set(value=self.config.getint("Other", "font_size", fallback=10))
-        self.parent.text_box.config(font=(self.parent.font_var.get(), self.parent.font_size_var.get()))
+        if hasattr(self.parent, 'text_box'):
+            self.parent.text_box.config(font=(self.parent.font_var.get(), self.parent.font_size_var.get()))
         self.parent.list_mode_var.set(value=self.config.getboolean("Other", "list_mode", fallback=False))
 
 

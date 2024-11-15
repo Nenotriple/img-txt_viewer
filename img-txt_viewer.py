@@ -408,7 +408,7 @@ class ImgTxtViewer:
         self.auto_exclude_tags_var = BooleanVar(value=False)
 
         # Font Settings
-        self.font_var = StringVar()
+        self.font_var = StringVar(value="Courier New")
         self.font_size_var = IntVar(value=10)
 
         # List Mode Settings
@@ -880,6 +880,7 @@ class ImgTxtViewer:
             self.text_box = ScrolledText(self.text_frame, wrap="word", undo=True, maxundo=200, inactiveselectbackground="#0078d7")
             self.text_box.pack(side="top", expand="yes", fill="both")
             self.text_box.tag_configure("highlight", background="#5da9be", foreground="white")
+            self.text_box.config(font=(self.font_var.get(), self.font_size_var.get()))
             self.set_text_box_binds()
             self.get_default_font()
         if not hasattr(self, 'text_widget_frame'):
@@ -1962,7 +1963,7 @@ class ImgTxtViewer:
             self.browse_context_menu.grab_release()
 
 
-    def set_text_file_path(self, path=None):
+    def set_text_file_path(self, path=None, silent=False):
         if path == None:
             self.text_dir = filedialog.askdirectory()
         else:
@@ -1976,7 +1977,8 @@ class ImgTxtViewer:
             if not os.path.exists(text_file_path):
                 self.new_text_files.append(text_filename)
             self.text_files.append(text_file_path)
-        self.show_pair()
+        if not silent:
+            self.show_pair()
         self.update_text_path_indicator()
 
 
@@ -2750,7 +2752,7 @@ class ImgTxtViewer:
 #region - Primary Functions
 
 
-    def load_pairs(self):
+    def load_pairs(self, silent=False):
         self.master.title(self.title)
         self.info_text.pack_forget()
         current_image_path = self.image_files[self.current_index] if self.image_files else None
@@ -2758,7 +2760,10 @@ class ImgTxtViewer:
         self.enable_menu_options()
         self.create_text_box()
         self.restore_previous_index(current_image_path)
-        self.update_pair(save=False)
+        if not silent:
+            self.update_pair(save=False)
+        else:
+            self.update_pair(save=False, silent=True)
         self.configure_pane_position()
         self.calculate_file_stats()
 
@@ -2990,7 +2995,7 @@ class ImgTxtViewer:
 #region - Navigation
 
 
-    def update_pair(self, direction=None, save=True, step=1):
+    def update_pair(self, direction=None, save=True, step=1, silent=False):
         if self.image_dir.get() == "Choose Directory..." or len(self.image_files) == 0:
             return
         self.is_alt_arrow_pressed = True
@@ -3006,7 +3011,8 @@ class ImgTxtViewer:
                 self.current_index = (self.current_index + step) % len(self.image_files)
             elif direction == 'prev':
                 self.current_index = (self.current_index - step) % len(self.image_files)
-            self.show_pair()
+            if not silent:
+                self.show_pair()
             self.image_index_entry.delete(0, "end")
             self.image_index_entry.insert(0, f"{self.current_index + 1}")
 
@@ -4321,7 +4327,7 @@ class ImgTxtViewer:
             messagebox.showwarning("Error", f"There was an unexpected issue setting the folder path:\n\n{e}")
 
 
-    def set_working_directory(self, event=None):
+    def set_working_directory(self, silent=False, event=None):
         try:
             if self.auto_save_var.get():
                 self.save_text_file()
@@ -4331,17 +4337,14 @@ class ImgTxtViewer:
             if self.check_if_contains_images(directory):
                 self.image_dir.set(os.path.normpath(directory))
                 self.current_index = 0
-                self.load_pairs()
-                self.set_text_file_path(directory)
-            else:
-                if hasattr(self, 'image_file'):
-                    self.image_dir.set(os.path.dirname(self.image_file))
-                    self.set_working_directory()
+                if not silent:
+                    self.load_pairs()
+                    self.set_text_file_path(directory)
+                else:
+                    self.load_pairs(silent=True)
+                    self.set_text_file_path(directory, silent=True)
         except FileNotFoundError:
             messagebox.showwarning("Invalid Directory", f"The system cannot find the path specified:\n\n{self.directory_entry.get()}")
-            if hasattr(self, 'image_file'):
-                self.image_dir.set(os.path.dirname(self.image_file))
-                self.set_working_directory()
 
 
     def open_directory(self, directory):
@@ -4771,7 +4774,7 @@ root.mainloop()
 
 **v1.96 Changes**  |  https://github.com/Nenotriple/img-txt_viewer/compare/v1.95...v1.96
 
-This release introduces several new features and improvements, including AutoTag for automatic image tagging using ONNX vision models, revamped Batch Tag Edit and Crop tools, a Thumbnail Panel for quick navigation, and an Edit Image Panel for adjusting image properties. Additionally, numerous bugs have been fixed, such as issues with the Delete Pair tool, image quality degradation, and memory leaks.
+This release introduces several new features and improvements, including AutoTag for automatic image tagging using ONNX vision models (WD14), revamped Batch Tag Edit and Crop tools, a Thumbnail Panel for quick navigation, and an Edit Image Panel for adjusting image properties. Additionally, numerous bugs have been fixed, such as issues with the Delete Pair tool, image quality degradation, and memory leaks.
 
 The app now targets Windows 11, providing a more modern look and feel for most widgets.
 
@@ -4836,6 +4839,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 - If `clean-text` is enabled: The primary text box is now properly refreshed when saving.
 - Fixed an issue when deleting tags that are a substring of another tag using middle-mouse-click. #38
 - Fixed an issue where the system clipboard would become unresponsive after deleting a tag with the middle mouse button. #38
+- Reloading the last directory is a little faster / smoother now.
 
 
 ### Other Changes:
@@ -4897,14 +4901,6 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
 
 ### Tofix
-
-- (low) When reloading the last directory: The whole process is messy and should be made more modular.
-  - set_working_directory(), set_text_file_path(), jump_to_image(); need to be optimized.
-  - When reloading the last directory, the displayed image is resized like 8 times because of repeated calls to show_pair() and display_image(), etc.
-  - (low) When restoring the previous directory: The first image index is initially loaded, and then the last view image is loaded.
-
-- (Low) Sometimes after navigating (perhaps only when using the ALT+Arrow-keys bind), the suggestion navigation fails to register on the first press of ALT.
-  - Related to how (Alt-L, and Alt-R) are bound to disable_button()
 
 - (Low) Sometimes when an image is loaded it isn't refreshed.
 
