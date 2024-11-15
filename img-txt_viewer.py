@@ -2268,6 +2268,7 @@ class ImgTxtViewer:
     def show_primary_paned_window(self, event=None):
         self.primary_paned_window.grid()
         self.toggle_alt_ui_menus("ImgTxtViewer")
+        self.show_pair()
 
 
     def hide_primary_paned_window(self, event=None):
@@ -4843,6 +4844,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 - If `clean-text` is enabled: The primary text box is now properly refreshed when saving.
 - Fixed an issue when deleting tags that are a substring of another tag using middle-mouse-click. #38
 - Fixed an issue where the system clipboard would become unresponsive after deleting a tag with the middle mouse button. #38
+- Fixed issue where settings were not restored when choosing to not reload the last directory.
 - Reloading the last directory is a little faster / smoother now.
 
 
@@ -4908,7 +4910,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
 ### Tofix
 
-- (Low) Sometimes when an image is loaded it isn't refreshed.
+-
 
 
   '''
