@@ -505,18 +505,12 @@ class ImgTxtViewer:
         # Main
         menubar = Menu(self.master)
         self.master.config(menu=menubar)
-
-
         # Options
         self.optionsMenu = Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Options", underline=0, menu=self.optionsMenu)
-
-
         # Tools
         self.toolsMenu = Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Tools", underline=0, menu=self.toolsMenu)
-
-
         # About
         menubar.add_command(label="About", underline=0, command=self.toggle_about_window)
 
@@ -542,8 +536,6 @@ class ImgTxtViewer:
         self.options_subMenu.add_checkbutton(label="Vertical View", underline=0, variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
         self.options_subMenu.add_checkbutton(label="Swap img-txt Sides", underline=0, variable=self.panes_swap_ew_var, command=self.swap_pane_sides)
         self.options_subMenu.add_command(label="Set Default Image Editor", underline=0, command=self.set_external_image_editor_path)
-
-
         # Image Display Quality Menu
         image_quality_menu = Menu(self.options_subMenu, tearoff=0)
         self.options_subMenu.add_cascade(label="Image Display Quality", underline=1, menu=image_quality_menu)
@@ -558,12 +550,10 @@ class ImgTxtViewer:
         load_order_menu = Menu(self.optionsMenu, tearoff=0)
         self.optionsMenu.add_cascade(label="Loading Order", underline=6, state="disable", menu=load_order_menu)
 
-
         # Loading Order Options
         order_options = ["Name (default)", "File size", "Date created", "Extension", "Last Access time", "Last write time"]
         for option in order_options:
             load_order_menu.add_radiobutton(label=option, variable=self.load_order_var, value=option, command=self.load_pairs)
-
 
         # Loading Order Direction
         load_order_menu.add_separator()
@@ -578,7 +568,6 @@ class ImgTxtViewer:
         autocompleteSettingsMenu = Menu(self.optionsMenu, tearoff=0)
         self.optionsMenu.add_cascade(label="Autocomplete", underline=11, state="disable", menu=autocompleteSettingsMenu)
 
-
         # Suggestion Dictionary Menu
         dictionaryMenu = Menu(autocompleteSettingsMenu, tearoff=0)
         autocompleteSettingsMenu.add_cascade(label="Dictionary", underline=11, menu=dictionaryMenu)
@@ -590,20 +579,17 @@ class ImgTxtViewer:
         dictionaryMenu.add_separator()
         dictionaryMenu.add_command(label="Clear Selection", underline=0, command=self.clear_dictionary_csv_selection)
 
-
         # Suggestion Threshold Menu
         suggestion_threshold_menu = Menu(autocompleteSettingsMenu, tearoff=0)
         autocompleteSettingsMenu.add_cascade(label="Threshold", underline=11, menu=suggestion_threshold_menu)
         for level in ["Slow", "Normal", "Fast", "Faster"]:
             suggestion_threshold_menu.add_radiobutton(label=level, variable=self.suggestion_threshold_var, value=level, command=self.set_suggestion_threshold)
 
-
         # Suggestion Quantity Menu
         suggestion_quantity_menu = Menu(autocompleteSettingsMenu, tearoff=0)
         autocompleteSettingsMenu.add_cascade(label="Quantity", underline=11, menu=suggestion_quantity_menu)
         for quantity in range(0, 10):
             suggestion_quantity_menu.add_radiobutton(label=str(quantity), variable=self.suggestion_quantity_var, value=quantity, command=lambda suggestion_quantity=quantity: self.set_suggestion_quantity(suggestion_quantity))
-
 
         # Match Mode Menu
         match_mode_menu = Menu(autocompleteSettingsMenu, tearoff=0)
@@ -692,14 +678,12 @@ class ImgTxtViewer:
         self.primary_paned_window.grid(row=0, column=0, sticky="nsew")
         self.primary_paned_window.bind('<ButtonRelease-1>', self.snap_sash_to_half)
 
-
         # master_image_frame : is exclusively used for the displayed image, thumbnails, image info.
         self.master_image_frame = Frame(self.master)
         self.master_image_frame.bind('<Configure>', lambda event: self.debounce_update_thumbnail_panel(event))
         self.master_image_frame.grid_rowconfigure(1, weight=1)
         self.master_image_frame.grid_columnconfigure(0, weight=1)
         self.primary_paned_window.add(self.master_image_frame, stretch="always")
-
 
         # master_control_frame : serves as a container for all primary UI frames, with the exception of the master_image_frame.
         self.master_control_frame = Frame(self.master)
@@ -716,7 +700,6 @@ class ImgTxtViewer:
         self.label_image_stats = Label(self.stats_frame, text="...")
         self.label_image_stats.grid(row=0, column=0, sticky="ew")
 
-
         # Primary Image
         self.primary_display_image = Label(self.master_image_frame, cursor="hand2")
         self.primary_display_image.grid(row=1, column=0, sticky="nsew")
@@ -731,19 +714,16 @@ class ImgTxtViewer:
         self.toggle_zoom_var = BooleanVar(value=self.popup_zoom.zoom_enabled.get())
         self.image_preview_tooltip = ToolTip.create(self.primary_display_image, "Right-Click for more\nMiddle-click to open in file explorer\nDouble-Click to open in your system image viewer\nALT+Left/Right or Mouse-Wheel to move between pairs", 1000, 6, 12)
 
-
         # Thumbnail Panel
         self.set_custom_ttk_button_highlight_style()
         self.thumbnail_panel = Frame(self.master_image_frame)
         self.thumbnail_panel.grid(row=3, column=0, sticky="ew")
         self.thumbnail_panel.bind("<MouseWheel>", self.mouse_scroll)
 
-
         # Edit Image Panel
         self.edit_image_panel = Frame(self.master_image_frame, relief="ridge", bd=1)
         self.edit_image_panel.grid(row=2, column=0, sticky="ew")
         self.edit_image_panel.grid_remove()
-
 
         # Directory Selection
         directory_frame = Frame(self.master_control_frame)
@@ -777,7 +757,6 @@ class ImgTxtViewer:
         self.open_button = ttk.Button(directory_frame, text="Open", width=8, takefocus=False, command=lambda: self.open_directory(self.directory_entry.get()))
         self.open_button.pack(side="left", pady=2)
 
-
         # Image Index
         self.index_frame = Frame(self.master_control_frame, relief="raised")
         self.index_frame.pack(side="top", fill="x", padx=2)
@@ -797,14 +776,12 @@ class ImgTxtViewer:
         self.total_images_label = Label(self.index_frame, text=f"of {len(self.image_files)}", state="disabled")
         self.total_images_label.pack(side="left")
 
-
         # Save Button
         self.save_button = ttk.Button(self.index_frame, text="Save", state="disabled", style="Blue.TButton", padding=(5, 5), takefocus=False, command=self.save_text_file)
         self.save_button.pack(side="left", pady=2, fill="x", expand=True)
         ToolTip.create(self.save_button, "CTRL+S to save\n\nRight-Click to make the save button larger", 1000, 6, 12)
         self.auto_save_checkbutton = ttk.Checkbutton(self.index_frame, width=10, text="Auto-save", state="disabled", variable=self.auto_save_var, takefocus=False, command=self.sync_title_with_content)
         self.auto_save_checkbutton.pack(side="left")
-
 
         # Navigation Buttons
         nav_button_frame = Frame(self.master_control_frame)
@@ -815,7 +792,6 @@ class ImgTxtViewer:
         self.prev_button.pack(side="right", fill="x", expand=True)
         ToolTip.create(self.next_button, "Hotkey: ALT+R\nHold shift to advance by 5", 1000, 6, 12)
         ToolTip.create(self.prev_button, "Hotkey: ALT+L\nHold shift to advance by 5", 1000, 6, 12)
-
 
         # Suggestion text
         self.suggestion_textbox = Text(self.master_control_frame, height=1, borderwidth=0, highlightthickness=0, bg='#f0f0f0', state="disabled", cursor="arrow")
@@ -840,7 +816,6 @@ class ImgTxtViewer:
                                "  Red = Invalid, Meta\n"
                                "  Dark Green = Lore",
                                1000, 6, 12)
-
 
         # Startup info text
         self.info_text = ScrolledText(self.master_control_frame)
@@ -2434,9 +2409,9 @@ class ImgTxtViewer:
 #region - Autocomplete
 
 
-### Display Suggestions ##################################################
-
-
+# --------------------------------------
+# Display Suggestions
+# --------------------------------------
     def handle_suggestion_event(self, event):
         keysym = event.keysym
         if keysym == "Tab":
@@ -2543,9 +2518,9 @@ class ImgTxtViewer:
         self.suggestion_textbox.config(state='disabled')
 
 
-### Insert Suggestion ##################################################
-
-
+# --------------------------------------
+# Insert Suggestion
+# --------------------------------------
     def insert_selected_suggestion(self, selected_suggestion):
         selected_suggestion = selected_suggestion.strip()
         text = self.text_box.get("1.0", "insert").rstrip()
@@ -2590,9 +2565,9 @@ class ImgTxtViewer:
         self.clear_suggestions()
 
 
-### Suggestion Settings ##################################################
-
-
+# --------------------------------------
+# Suggestion Settings
+# --------------------------------------
     def update_autocomplete_dictionary(self):
         csv_vars = {
             'danbooru.csv': self.csv_danbooru,
@@ -3089,6 +3064,7 @@ class ImgTxtViewer:
             self.update_pair('next', step=step)
         else:
             self.update_pair('prev', step=step)
+
 
 #endregion
 ################################################################################################################################################
@@ -4905,7 +4881,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
 
 ### Todo
-- (Med) Go through all tools that touch text files and make sure they work with alt-text paths.
+- (Very Low) Go through all tools that touch text files and make sure they work with alt-text paths.
 
 
 ### Tofix
