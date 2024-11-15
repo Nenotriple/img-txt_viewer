@@ -525,75 +525,56 @@ class CropSelection:
 
     def _apply_fixed_aspect_ratio(self, x1, y1, x2, y2, x_off, y_off, x_max, y_max, value):
         try:
-            if ":" in value:
-                width_str, height_str = value.split(":")
-                width_ratio = float(width_str.strip())
-                height_ratio = float(height_str.strip())
-                if width_ratio == 0 or height_ratio == 0:
-                    return x1, y1, x2, y2
-                ratio = width_ratio / height_ratio
-            else:
-                ratio = float(value)
-            if ratio == 0:
+            ratio = float(value.split(":")[0]) / float(value.split(":")[1]) if ":" in value else float(value)
+            if ratio <= 0:
                 return x1, y1, x2, y2
         except (ValueError, ZeroDivisionError):
             return x1, y1, x2, y2
         width = abs(x2 - x1)
-        height = abs(y2 - y1)
+        height = width / ratio if width != 0 else abs(y2 - y1) * ratio
         if self.parent.expand_center_toggle_var.get():
-            if x2 != x1 and y2 != y1:  # Diagonal
-                width = abs(x2 - x1)
+            max_width = min(2 * (self.center_x - x_off), 2 * (x_max - self.center_x))
+            max_height = min(2 * (self.center_y - y_off), 2 * (y_max - self.center_y))
+            if width > max_width:
+                width = max_width
                 height = width / ratio
-            elif x2 != x1:  # Horizontal
-                width = abs(x2 - x1)
-                height = width / ratio
-            elif y2 != y1:  # Vertical
-                height = abs(y2 - y1)
+            if height > max_height:
+                height = max_height
                 width = height * ratio
-            max_possible_width = min(2 * (self.center_x - x_off), 2 * (x_max - self.center_x))
-            max_possible_height = min(2 * (self.center_y - y_off), 2 * (y_max - self.center_y))
-            if width > max_possible_width:
-                width = max_possible_width
-                height = width / ratio
-            if height > max_possible_height:
-                height = max_possible_height
-                width = height * ratio
-            x1 = self.center_x - width / 2
-            y1 = self.center_y - height / 2
-            x2 = self.center_x + width / 2
-            y2 = self.center_y + height / 2
+            half_width = width / 2
+            half_height = height / 2
+            x1 = self.center_x - half_width
+            x2 = self.center_x + half_width
+            y1 = self.center_y - half_height
+            y2 = self.center_y + half_height
         else:
-            if x2 != x1 and y2 != y1:  # Diagonal
-                width = abs(x2 - x1)
-                height = width / ratio
-                if y1 + height > y_max:
-                    height = y_max - y1
-                    width = height * ratio
-                elif y1 + height < y_off:
-                    height = y1 - y_off
-                    width = height * ratio
-                y2 = y1 + height if y2 >= y1 else y1 - height
-                x2 = x1 + width if x2 >= x1 else x1 - width
-            elif x2 != x1:  # Horizontal
-                width = abs(x2 - x1)
-                height = width / ratio
-                if y1 + height > y_max:
-                    height = y_max - y1
-                    width = height * ratio
-                y2 = y1 + height if y2 >= y1 else y1 - height
-            elif y2 != y1:  # Vertical
-                height = abs(y2 - y1)
-                width = height * ratio
-                if x1 + width > x_max:
-                    width = x_max - x1
+            if width != 0 or abs(y2 - y1) != 0:
+                is_horizontal = width != 0
+                is_dragging_right = x2 > x1
+                is_dragging_down = y2 > y1
+                if is_horizontal:
                     height = width / ratio
-                x2 = x1 + width if x2 >= x1 else x1 - width
-        # Final bounds check
-        x1 = max(x_off, min(x_max, x1))
-        x2 = max(x_off, min(x_max, x2))
-        y1 = max(y_off, min(y_max, y1))
-        y2 = max(y_off, min(y_max, y2))
-        return x1, y1, x2, y2
+                    max_height = y_max - y1 if is_dragging_down else y1 - y_off
+                    if height > max_height:
+                        height = max_height
+                        width = height * ratio
+                    x2 = x1 + (width if is_dragging_right else -width)
+                    y2 = y1 + (height if is_dragging_down else -height)
+                else:
+                    height = abs(y2 - y1)
+                    width = height * ratio
+                    max_width = x_max - x1 if is_dragging_right else x1 - x_off
+                    if width > max_width:
+                        width = max_width
+                        height = width / ratio
+                    x2 = x1 + (width if is_dragging_right else -width)
+                    y2 = y1 + (height if is_dragging_down else -height)
+        return (
+            max(x_off, min(x_max, x1)),
+            max(y_off, min(y_max, y1)),
+            max(x_off, min(x_max, x2)),
+            max(y_off, min(y_max, y2))
+            )
 
 
 # --------------------------------------
