@@ -66,6 +66,7 @@ class FindDupeFile:
         self.dupe_handling_mode = StringVar(value="Single")
         self.scanning_mode = StringVar(value="Images")
         self.recursive_mode = BooleanVar(value=False)
+        self.move_captions = BooleanVar(value=False)
 
 
 #endregion
@@ -79,15 +80,12 @@ class FindDupeFile:
         self.version = version
         self.menu = menu
         self.working_dir = path
-
         self.root.minsize(750, 250) # Width x Height
         self.root.title(f"{self.version} - img-txt Viewer - Find Duplicate Files")
         self.menu.entryconfig("Find Duplicate Files...", command=self.close_find_dupe_files)
         self.setup_ui()
-
         if path:
             self.folder_entry.insert(0, path)
-
         self.all_widgets = [
                              self.close_button,
                              self.file_menu_button,
@@ -198,7 +196,6 @@ class FindDupeFile:
         self.widget_frame = ttk.Frame(self.find_dupe_files_frame)
         self.widget_frame.pack(side="top", fill="both", padx=4, pady=4)
 
-
         # Frame - Folder Frame
         self.folder_frame = ttk.Frame(self.widget_frame)
         self.folder_frame.pack(fill="both", expand=True)
@@ -221,7 +218,6 @@ class FindDupeFile:
         self.clear_button = ttk.Button(self.folder_frame, text="X", width=2, command=lambda: self.folder_entry.delete(0, 'end'))
         ToolTip.create(self.clear_button, "Clear folder entry.", delay=150, padx=6, pady=6)
         self.clear_button.pack(side="left")
-
 
         # Radio Buttons - Duplicate Handling Mode
         self.radio_single = ttk.Radiobutton(self.widget_frame, text="Single", variable=self.dupe_handling_mode, value="Single")
@@ -259,12 +255,16 @@ class FindDupeFile:
         ToolTip.create(self.recursive_checkbutton, "Enable to scan subfolders.\nNOTE: This only compares files within the same subfolder, not across all scanned folders.", delay=150, padx=6, pady=6)
         self.recursive_checkbutton.pack(side="left")
 
+        # Checkbutton - Move Captions
+        self.move_captions_checkbutton = ttk.Checkbutton(self.widget_frame, text="Move Captions", variable=self.move_captions, offvalue=False)
+        ToolTip.create(self.move_captions_checkbutton, "Move caption text files with images.", padx=6, pady=6)
+        self.move_captions_checkbutton.pack(side="left")
+        self.scanning_mode.trace_add('write', self.toggle_move_captions_option)
 
         # Textlog
         self.create_textlog()
         self.startup_text = ("This tool will find any duplicate files by matching file hash.\n\nDuplicate files will be moved to a '_Duplicate__Files' folder within the scanned directory.")
         self.insert_to_textlog(self.startup_text)
-
 
         # Label - Tray - Status
         self.tray_label_status = ttk.Label(self.find_dupe_files_frame, width=15, relief="groove", text=" Idle...")
@@ -395,11 +395,11 @@ class FindDupeFile:
                     if self.dupe_handling_mode.get() == "Both":
                         group_folder = os.path.join(duplicates_folder, file_hash)
                         os.makedirs(group_folder, exist_ok=True)
-                        shutil.move(file_path, group_folder)
+                        self.move_file_with_caption(file_path, group_folder)
                         if os.path.exists(hash_dict[file_hash]):
-                            shutil.move(hash_dict[file_hash], group_folder)
+                            self.move_file_with_caption(hash_dict[file_hash], group_folder)
                     else:
-                        shutil.move(file_path, duplicates_folder)
+                        self.move_file_with_caption(file_path, duplicates_folder)
                 else:
                     hash_dict[file_hash] = file_path
                 self.progress['value'] = i
@@ -464,6 +464,23 @@ class FindDupeFile:
             self.undo_file_move()
 
 
+    def move_file_with_caption(self, file_path, destination_folder):
+        shutil.move(file_path, destination_folder)
+        if self.move_captions.get() and self.scanning_mode.get() == "Images":
+            base_name, _ = os.path.splitext(os.path.basename(file_path))
+            caption_file = os.path.join(os.path.dirname(file_path), base_name + '.txt')
+            if os.path.exists(caption_file):
+                shutil.move(caption_file, destination_folder)
+
+
+    def toggle_move_captions_option(self, *args):
+        if self.scanning_mode.get() == "Images":
+            self.move_captions_checkbutton.config(state="normal")
+        else:
+            self.move_captions_checkbutton.config(state="disabled")
+            self.move_captions.set(False)
+
+
 #endregion
 ################################################################################################################################################
 #region -  Undo
@@ -513,7 +530,8 @@ class FindDupeFile:
                     self.progress['value'] = self.file_count
                 elif os.path.isdir(os.path.join(duplicates_folder, filename)):
                     for sub_filename in os.listdir(os.path.join(duplicates_folder, filename)):
-                        shutil.move(os.path.join(duplicates_folder, filename, sub_filename), folder_path)
+                        sub_file_path = os.path.join(duplicates_folder, filename, sub_filename)
+                        shutil.move(sub_file_path, folder_path)
                         self.file_count += 1
                         self.progress['value'] = self.file_count
                     os.rmdir(os.path.join(duplicates_folder, filename))
@@ -588,6 +606,7 @@ class FindDupeFile:
                                 new_file_path = os.path.join(root_duplicates_folder, f"{base}_{counter}{ext}")
                                 counter += 1
                             shutil.move(file_path, new_file_path)
+                            self.move_caption_with_image(file_path, new_file_path)
                         elif os.path.isdir(file_path):
                             for sub_filename in os.listdir(file_path):
                                 sub_file_path = os.path.join(file_path, sub_filename)
@@ -598,12 +617,32 @@ class FindDupeFile:
                                     new_sub_file_path = os.path.join(root_duplicates_folder, f"{base}_{counter}{ext}")
                                     counter += 1
                                 shutil.move(sub_file_path, new_sub_file_path)
+                                self.move_caption_with_image(sub_file_path, new_sub_file_path)
                             if not os.listdir(file_path):
                                 os.rmdir(file_path)
                     if not os.listdir(duplicates_folder):
                         os.rmdir(duplicates_folder)
         except Exception as e:
             self.insert_to_textlog(f"\nERROR - move_all_duplicates_to_root: Exception: {e}")
+
+
+    def get_unique_file_path(self, folder, filename):
+        counter = 1
+        new_file_path = os.path.join(folder, filename)
+        while os.path.exists(new_file_path):
+            base, ext = os.path.splitext(filename)
+            new_file_path = os.path.join(folder, f"{base}_{counter}{ext}")
+            counter += 1
+        return new_file_path
+
+
+    def move_caption_with_image(self, original_file_path, new_file_path):
+        if self.move_captions.get() and self.scanning_mode.get() == "Images":
+            base_name, _ = os.path.splitext(os.path.basename(original_file_path))
+            caption_file = os.path.join(os.path.dirname(original_file_path), base_name + '.txt')
+            if os.path.exists(caption_file):
+                new_caption_path = os.path.join(os.path.dirname(new_file_path), base_name + '.txt')
+                shutil.move(caption_file, new_caption_path)
 
 
 #endregion
@@ -721,23 +760,24 @@ class FindDupeFile:
 
 v1.02 changes:
 
-  - New:
-    -
-
-
-<br>
-
-  - Fixed:
-    -
+- New:
+  - New Feature: Added "Move Captions" option.
+    - Moves text files with the same name as images when duplicates are found.
+    - Only works in "Images" scanning mode.
 
 <br>
 
-  - Other changes:
-    - Refactored to be a built-in tool.
+- Fixed:
+  -
 
 <br>
 
-  - To fix:
-    -
+- Other changes:
+  - Refactored to be a built-in tool.
+
+<br>
+
+- To fix:
+  -
 
 '''
