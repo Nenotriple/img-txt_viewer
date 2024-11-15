@@ -473,7 +473,7 @@ class ImgTxtViewer:
 # --------------------------------------
     def setup_general_binds(self):
         self.master.bind("<Control-f>", lambda event: self.toggle_highlight_all_duplicates())
-        self.master.bind("<Control-s>", lambda event: self.save_text_file())
+        self.master.bind("<Control-s>", lambda event: self.save_text_file(highlight=True))
         self.master.bind("<Alt-Right>", lambda event: self.next_pair(event))
         self.master.bind("<Alt-Left>", lambda event: self.prev_pair(event))
         self.master.bind('<Shift-Delete>', lambda event: self.delete_pair())
@@ -767,14 +767,14 @@ class ImgTxtViewer:
         self.dir_context_menu.add_separator()
         self.dir_context_menu.add_command(label="Set Text File Path...", state="disabled", command=self.set_text_file_path)
         self.dir_context_menu.add_command(label="Reset Text Path To Image Path", state="disabled", command=lambda: self.set_text_file_path(self.image_dir.get()))
-        self.browse_button = ttk.Button(directory_frame, text="Browse...", width=8, command=self.choose_working_directory)
+        self.browse_button = ttk.Button(directory_frame, text="Browse...", width=8, takefocus=False, command=self.choose_working_directory)
         self.browse_button.pack(side="left", pady=2)
         ToolTip.create(self.browse_button, "Right click to set an alternate path for text files", 250, 6, 12)
         self.browse_context_menu = Menu(self.browse_button, tearoff=0)
         self.browse_context_menu.add_command(label="Set Text File Path...", state="disabled", command=self.set_text_file_path)
         self.browse_context_menu.add_command(label="Reset Text Path To Image Path", state="disabled", command=lambda: self.set_text_file_path(self.image_dir.get()))
         self.browse_button.bind("<Button-3>", self.open_browse_context_menu)
-        self.open_button = ttk.Button(directory_frame, text="Open", width=8, command=lambda: self.open_directory(self.directory_entry.get()))
+        self.open_button = ttk.Button(directory_frame, text="Open", width=8, takefocus=False, command=lambda: self.open_directory(self.directory_entry.get()))
         self.open_button.pack(side="left", pady=2)
 
 
@@ -799,18 +799,18 @@ class ImgTxtViewer:
 
 
         # Save Button
-        self.save_button = ttk.Button(self.index_frame, text="Save", state="disabled", style="Blue.TButton", padding=(5, 5), command=self.save_text_file)
+        self.save_button = ttk.Button(self.index_frame, text="Save", state="disabled", style="Blue.TButton", padding=(5, 5), takefocus=False, command=self.save_text_file)
         self.save_button.pack(side="left", pady=2, fill="x", expand=True)
         ToolTip.create(self.save_button, "CTRL+S to save\n\nRight-Click to make the save button larger", 1000, 6, 12)
-        self.auto_save_checkbutton = ttk.Checkbutton(self.index_frame, width=10, text="Auto-save", state="disabled", variable=self.auto_save_var, command=self.sync_title_with_content)
+        self.auto_save_checkbutton = ttk.Checkbutton(self.index_frame, width=10, text="Auto-save", state="disabled", variable=self.auto_save_var, takefocus=False, command=self.sync_title_with_content)
         self.auto_save_checkbutton.pack(side="left")
 
 
         # Navigation Buttons
         nav_button_frame = Frame(self.master_control_frame)
         nav_button_frame.pack(fill="x", padx=2)
-        self.next_button = ttk.Button(nav_button_frame, text="Next--->", width=12, state="disabled", command=lambda: self.update_pair("next"))
-        self.prev_button = ttk.Button(nav_button_frame, text="<---Previous", width=12, state="disabled", command=lambda: self.update_pair("prev"))
+        self.next_button = ttk.Button(nav_button_frame, text="Next--->", width=12, state="disabled", takefocus=False, command=lambda: self.update_pair("next"))
+        self.prev_button = ttk.Button(nav_button_frame, text="<---Previous", width=12, state="disabled", takefocus=False, command=lambda: self.update_pair("prev"))
         self.next_button.pack(side="right", fill="x", expand=True)
         self.prev_button.pack(side="right", fill="x", expand=True)
         ToolTip.create(self.next_button, "Hotkey: ALT+R\nHold shift to advance by 5", 1000, 6, 12)
@@ -2425,6 +2425,7 @@ class ImgTxtViewer:
         style.configure("Highlighted.TButton", background="#005dd7")
         style.configure("Red.TButton", foreground="red")
         style.configure("Blue.TButton", foreground="blue")
+        style.configure("Blue+.TButton", foreground="blue", background="#005dd7")
 
 
 #endregion
@@ -4145,7 +4146,7 @@ class ImgTxtViewer:
 #region - Save and close
 
 
-    def save_text_file(self):
+    def save_text_file(self, highlight=False):
         try:
             if self.image_dir.get() != "Choose Directory..." and self.check_if_directory() and self.text_files:
                 file_saved = self._save_file()
@@ -4153,6 +4154,9 @@ class ImgTxtViewer:
                     self.refresh_text_box()
                 if file_saved:
                     self.master.title(self.title)
+                    if highlight:
+                        self.save_button.configure(style="Blue+.TButton")
+                        self.master.after(120, lambda: self.save_button.configure(style="Blue.TButton"))
                 else:
                     self.master.title(self.title)
         except (PermissionError, IOError, TclError) as e:
@@ -4856,6 +4860,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - You can now check the title for a visual indicator of the text state.
   - All tools that used the message box for notifications now use a message popup.
 - Custom and duplicate highlights now use a range of pastel colors.
+- Saving using the `CTRL + S` hotkey will now highlight the save button for a brief moment.
 - The target operating system for this project is now Windows 11, resulting in some UI changes.
   - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
 
@@ -4884,6 +4889,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
 </details>
 <br>
+
 
 '''
 
