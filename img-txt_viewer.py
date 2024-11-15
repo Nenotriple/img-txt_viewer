@@ -4794,7 +4794,10 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - NEW: A timer is now displayed in the bottom row.
   - FIXED: The following resize modes not working/causing an error: `Longer Side`, and `Height`.
   - FIXED: The resize operation is now threaded, allowing the app to remain responsive during the resizing process.
-- **Find Duplicate Files**: Integrated into the main app.
+- **Find Duplicate Files**:
+  - Integrated into the main app.
+  - New Feature: Added "Move Captions" option.
+    - Moves text pairs when found. Only works in "Images" scanning mode.
 - **Crop Tool**: Completely reworked with new features and improved usability.
   - Includes all standard cropping features.
   - Special `Auto` fixed aspect ratio mode for quick cropping based on the image's aspect ratio and predefined aspect ratios.
@@ -4891,8 +4894,6 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
 ### Todo
 - (Med) Go through all tools that touch text files and make sure they work with alt-text paths.
-
-- (Low) Find Dupe Files, could/should automatically move captions if they are found.
 
 
 ### Tofix
