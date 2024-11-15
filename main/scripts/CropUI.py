@@ -1516,7 +1516,7 @@ class CropInterface:
     def toggle_overlay(self):
         self.crop_selection.overlay_enabled.set(self.overlay_var.get())
         self.crop_selection.update_overlay()
-
+        #self.img_canvas.refresh_image()
 
 # --------------------------------------
 # Main
