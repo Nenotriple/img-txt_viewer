@@ -1563,6 +1563,7 @@ class CropInterface:
         if self.image_file.lower().endswith('.gif'):
             self.extract_gif_frames()
             self.extract_gif_button.config(state="normal")
+            self.highlight_thumbnail(index=0)
         else:
             self.thumbnail_container.grid_remove()
             self.extract_gif_button.config(state="disabled")
@@ -1741,14 +1742,15 @@ class CropInterface:
 
 
     def display_gif_thumbnails(self, frames):
-        def save_image(frame):
+        def save_image(img, index):
             try:
                 trash_folder = os.path.join(os.path.dirname(self.image_files[0]), "Trash")
                 os.makedirs(trash_folder, exist_ok=True)
                 filename = os.path.basename(self.image_files[self.current_index])
-                temp_file_path = os.path.join(trash_folder, f"{filename}.png")
-                frame.save(temp_file_path)
-                self.display_image(temp_file_path)
+                save_img_path = os.path.join(trash_folder, f"{filename}.png")
+                img.save(save_img_path)
+                self.display_image(save_img_path)
+                self.highlight_thumbnail(index)
             except Exception as e:
                 messagebox.showerror("Error", f"An error occurred while saving the image: {e}")
 
@@ -1762,11 +1764,18 @@ class CropInterface:
             new_width = int(fixed_height * aspect_ratio)
             thumb = thumb.resize((new_width, fixed_height), Image.BILINEAR)
             thumb_image = ImageTk.PhotoImage(thumb)
-            thumb_button = ttk.Button(self.thumbnail_frame, image=thumb_image)
+            thumb_button = ttk.Button(self.thumbnail_frame, image=thumb_image, takefocus=False)
             thumb_button.image = thumb_image
-            thumb_button.bind("<Button-1>", lambda e, frame=frame: save_image(frame))
+            thumb_button.bind("<Button-1>", lambda e, img=frame, index=i: save_image(img, index))
             thumb_button.bind("<MouseWheel>", lambda event: self.thumbnail_canvas.xview_scroll(-1 * (event.delta // 120), "units"))
             thumb_button.pack(side='left')
+
+
+    def highlight_thumbnail(self, index):
+        for i, widget in enumerate(self.thumbnail_frame.winfo_children()):
+            widget.config(style="TButton")
+            if i == index:
+                widget.config(style="Highlighted.TButton")
 
 
 # --------------------------------------
