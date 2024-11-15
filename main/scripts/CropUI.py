@@ -18,6 +18,7 @@ Create a UI that allows the user to open an image file and crop a selection from
 
 # Standard Library
 import os
+import tempfile
 
 
 # Standard Library GUI
@@ -1097,7 +1098,7 @@ class CropInterface:
             self.path_entry.insert(0, path)
             self.current_index = self.parent.current_index
             self.display_image(self.image_files[self.current_index])
-        self.root.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == self.root else None, add="+")
+        #self.root.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == self.root else None, add="+")
 
 
     def create_main_frame(self):
@@ -1143,12 +1144,28 @@ class CropInterface:
         stats_frame = tk.Frame(self.crop_ui_frame)
         stats_frame.grid(row=1, column=0, sticky="ew", pady=self.pady)
         self.img_stats_label = ttk.Label(stats_frame)
-        self.img_stats_label.pack(fill="x")
+        self.img_stats_label.grid(row=0, column=0, sticky="ew")
         # Image Canvas
         canvas_frame = tk.Frame(self.crop_ui_frame)
         canvas_frame.grid(row=2, column=0, sticky="nsew")
+        canvas_frame.grid_rowconfigure(0, weight=1)
+        canvas_frame.grid_columnconfigure(0, weight=1)
         self.img_canvas = ImageCanvas(self, canvas_frame)
-        self.img_canvas.pack(fill="both", expand=True)
+        self.img_canvas.grid(row=0, column=0, sticky="nsew")
+        # GIF Thumbnails
+        self.thumbnail_container = tk.Frame(canvas_frame)
+        self.thumbnail_container.grid(row=1, column=0, sticky="ew")
+        self.thumbnail_container.columnconfigure(0, weight=1)
+        self.thumbnail_canvas = tk.Canvas(self.thumbnail_container, height=72)
+        self.thumbnail_canvas.grid(row=0, column=0, sticky="ew")
+        self.thumbnail_scrollbar = ttk.Scrollbar(self.thumbnail_container, orient="horizontal", command=self.thumbnail_canvas.xview)
+        self.thumbnail_scrollbar.grid(row=1, column=0, sticky="ew")
+        self.thumbnail_canvas.configure(xscrollcommand=self.thumbnail_scrollbar.set)
+        self.thumbnail_frame = tk.Frame(self.thumbnail_canvas)
+        self.thumbnail_canvas.create_window((0, 0), window=self.thumbnail_frame, anchor='nw')
+        self.thumbnail_frame.bind("<Configure>", lambda event: self.thumbnail_canvas.configure(scrollregion=self.thumbnail_canvas.bbox("all")))
+        self.thumbnail_scrollbar.bind("<MouseWheel>", lambda event: self.thumbnail_canvas.xview_scroll(-1 * (event.delta // 120), "units"))
+        self.thumbnail_container.grid_remove()
 
 
     def create_control_panel(self):
@@ -1322,6 +1339,9 @@ class CropInterface:
         flipx_button.pack(side="left", fill="x", pady=self.pady, padx=2)
         flipy_button = ttk.Button(transform_frame, text="Flip Y", command=lambda: self.transform_image("flip_y"))
         flipy_button.pack(side="left", fill="x", pady=self.pady, padx=2)
+        # Extract GIF
+        self.extract_gif_button = ttk.Button(transform_frame, text="Extract GIF", state="disable", command=self.save_all_gif_frames)
+        self.extract_gif_button.pack(side="left", fill="x", pady=self.pady, padx=2)
 
 
 # --------------------------------------
@@ -1540,6 +1560,12 @@ class CropInterface:
         self.height_spinbox.config(to=self.img_canvas.original_img_height)
         self.image_index_spinbox.config(from_=1, to=len(self.image_files))
         self.image_index_spinbox.set(self.current_index + 1)
+        if self.image_file.lower().endswith('.gif'):
+            self.extract_gif_frames()
+            self.extract_gif_button.config(state="normal")
+        else:
+            self.thumbnail_container.grid_remove()
+            self.extract_gif_button.config(state="disabled")
 
 
     def show_previous_image(self):
@@ -1596,7 +1622,8 @@ class CropInterface:
 
 
     def generate_unique_filename(self, original_path):
-        directory, filename = os.path.split(original_path)
+        _, filename = os.path.split(original_path)
+        directory = self.path_entry.get()
         name, ext = os.path.splitext(filename)
         counter = 1
         while True:
@@ -1662,6 +1689,84 @@ class CropInterface:
         first_frame = transformed_frames[0]
         rest_frames = transformed_frames[1:]
         first_frame.save(path, append_images=rest_frames, save_all=True, duration=durations, loop=0)
+
+
+# --------------------------------------
+# Handle GIF
+# --------------------------------------
+    def save_all_gif_frames(self):
+        confirm = messagebox.askyesno(
+            "Extract GIF Frames",
+            "Are you sure you want to extract all frames from the GIF?\n\n"
+            "This will create a folder with all the frames in the same directory as the GIF.\n\n"
+            "Please be patient, depending on the number of frames, this may take a while."
+            )
+        if not confirm:
+            return
+        if not self.img_canvas.img_path or not self.img_canvas.img_path.lower().endswith('.gif'):
+            messagebox.showerror("Error", "No GIF file selected.")
+            return
+        try:
+            frames = self.extract_gif_frames(display=False)
+            base_path, _ = os.path.splitext(self.img_canvas.img_path)
+            folder_path = f"{base_path}_frames"
+            os.makedirs(folder_path, exist_ok=True)
+            for i, frame in enumerate(frames):
+                frame_path = os.path.join(folder_path, f"frame_{i:04d}.png")
+                frame.save(frame_path)
+            frame_count = len(frames)
+            final_confirm = messagebox.askokcancel(
+                "Extract GIF Frames",
+                f"All {frame_count} frames extracted and saved to:\n{folder_path}\n\n"
+                "Click 'OK' to open the folder."
+                )
+            if final_confirm:
+                os.startfile(folder_path)
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred while extracting GIF frames: {e}")
+
+
+    def extract_gif_frames(self, display=True, event=None):
+        if not self.img_canvas.img_path or not self.img_canvas.img_path.lower().endswith('.gif'):
+            return []
+        try:
+            with Image.open(self.img_canvas.img_path) as img:
+                frames = [frame.copy() for frame in ImageSequence.Iterator(img)]
+                if display:
+                    self.display_gif_thumbnails(frames)
+                return frames
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred while extracting frames: {e}")
+            return []
+
+
+    def display_gif_thumbnails(self, frames):
+        def save_image(frame):
+            try:
+                trash_folder = os.path.join(os.path.dirname(self.image_files[0]), "Trash")
+                os.makedirs(trash_folder, exist_ok=True)
+                filename = os.path.basename(self.image_files[self.current_index])
+                temp_file_path = os.path.join(trash_folder, f"{filename}.png")
+                frame.save(temp_file_path)
+                self.display_image(temp_file_path)
+            except Exception as e:
+                messagebox.showerror("Error", f"An error occurred while saving the image: {e}")
+
+        for widget in self.thumbnail_frame.winfo_children():
+            widget.destroy()
+        self.thumbnail_container.grid()
+        fixed_height = 64
+        for i, frame in enumerate(frames):
+            thumb = frame.copy()
+            aspect_ratio = thumb.width / thumb.height
+            new_width = int(fixed_height * aspect_ratio)
+            thumb = thumb.resize((new_width, fixed_height), Image.BILINEAR)
+            thumb_image = ImageTk.PhotoImage(thumb)
+            thumb_button = ttk.Button(self.thumbnail_frame, image=thumb_image)
+            thumb_button.image = thumb_image
+            thumb_button.bind("<Button-1>", lambda e, frame=frame: save_image(frame))
+            thumb_button.bind("<MouseWheel>", lambda event: self.thumbnail_canvas.xview_scroll(-1 * (event.delta // 120), "units"))
+            thumb_button.pack(side='left')
 
 
 # --------------------------------------
