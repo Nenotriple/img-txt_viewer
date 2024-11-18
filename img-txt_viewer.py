@@ -473,7 +473,7 @@ class ImgTxtViewer:
         # primary_paned_window : is used to contain the ImgTxtViewer UI.
         self.primary_paned_window = PanedWindow(self.master, orient="horizontal", sashwidth=6, bg="#d0d0d0", bd=0)
         self.primary_paned_window.grid(row=0, column=0, sticky="nsew")
-        self.primary_paned_window.bind('<ButtonRelease-1>', self.snap_sash_to_half)
+        self.primary_paned_window.bind("<B1-Motion>", self.disable_button)
 
         # master_image_frame : is exclusively used for the displayed image, thumbnails, image info.
         self.master_image_frame = Frame(self.master)
@@ -494,8 +494,23 @@ class ImgTxtViewer:
         # Image stats
         self.stats_frame = Frame(self.master_image_frame)
         self.stats_frame.grid(row=0, column=0, sticky="ew")
+        # View Menu
+        self.view_menubutton = ttk.Menubutton(self.stats_frame, text="View", state="disable")
+        self.view_menubutton.grid(row=0, column=0)
+        self.view_menu = Menu(self.view_menubutton, tearoff=0)
+        self.view_menubutton.config(menu=self.view_menu)
+        self.view_menu.add_checkbutton(label="Toggle Zoom", accelerator="F1", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
+        self.view_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.update_thumbnail_panel)
+        self.view_menu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
+        self.view_menu.add_checkbutton(label="Vertical View", underline=0, variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
+        self.view_menu.add_checkbutton(label="Swap img-txt Sides", underline=0, variable=self.panes_swap_ew_var, command=self.swap_pane_sides)
+        image_quality_menu = Menu(self.optionsMenu, tearoff=0)
+        self.view_menu.add_cascade(label="Image Display Quality", menu=image_quality_menu)
+        for value in ["High", "Normal", "Low"]:
+            image_quality_menu.add_radiobutton(label=value, variable=self.image_quality_var, value=value, command=self.set_image_quality)
+        # Image Stats
         self.label_image_stats = Label(self.stats_frame, text="...")
-        self.label_image_stats.grid(row=0, column=0, sticky="ew")
+        self.label_image_stats.grid(row=0, column=1, sticky="ew")
 
         # Primary Image
         self.primary_display_image = Label(self.master_image_frame, cursor="hand2")
@@ -591,8 +606,11 @@ class ImgTxtViewer:
         ToolTip.create(self.prev_button, "Hotkey: ALT+L\nHold shift to advance by 5", 1000, 6, 12)
 
         # Suggestion text
-        self.suggestion_textbox = Text(self.master_control_frame, height=1, borderwidth=0, highlightthickness=0, bg='#f0f0f0', state="disabled", cursor="arrow")
-        self.suggestion_textbox.pack(side="top", fill="x", pady=4)
+        self.suggestion_frame = Frame(self.master_control_frame, bg='#f0f0f0')
+        self.suggestion_frame.pack(side="top", fill="x", pady=2)
+        # Suggestion Text
+        self.suggestion_textbox = Text(self.suggestion_frame, height=1, width=1, borderwidth=0, highlightthickness=0, bg='#f0f0f0', state="disabled", cursor="arrow")
+        self.suggestion_textbox.pack(side="left", fill="x", expand=True)
         self.suggestion_textbox.bind("<Button-1>", self.disable_button)
         self.suggestion_textbox.bind("<B1-Motion>", self.disable_button)
         ToolTip.create(self.suggestion_textbox,
@@ -613,6 +631,10 @@ class ImgTxtViewer:
                                "  Red = Invalid, Meta\n"
                                "  Dark Green = Lore",
                                1000, 6, 12)
+        # Suggestion Options
+        self.suggestion_menubutton = ttk.Button(self.suggestion_frame, text="☰", takefocus=False, width=2)
+        self.suggestion_menubutton.pack(side="right", padx=2)
+        self.suggestion_menubutton.bind("<Button-1>", self.show_suggestionContext_menu)
 
         # Startup info text
         self.info_text = ScrolledText(self.master_control_frame)
@@ -655,6 +677,8 @@ class ImgTxtViewer:
             self.text_box.config(font=(self.font_var.get(), self.font_size_var.get()))
             self.set_text_box_binds()
             self.get_default_font()
+            self.primary_paned_window.unbind("<B1-Motion>")
+            self.primary_paned_window.bind('<ButtonRelease-1>', self.snap_sash_to_half)
         if not hasattr(self, 'text_widget_frame'):
             self.create_text_control_frame()
 
@@ -1590,6 +1614,8 @@ class ImgTxtViewer:
     # --------------------------------------
     def show_suggestionContext_menu(self, event):
         suggestionContext_menu = Menu(self.master, tearoff=0)
+        suggestionContext_menu.add_command(label="Suggestion Options", state="disabled")
+        suggestionContext_menu.add_separator()
         # Selected Dictionary
         dictionaryMenu = Menu(suggestionContext_menu, tearoff=0)
         suggestionContext_menu.add_cascade(label="Dictionary", menu=dictionaryMenu)
@@ -1899,6 +1925,7 @@ class ImgTxtViewer:
         self.next_button.configure(state="normal")
         self.prev_button.configure(state="normal")
         self.auto_save_checkbutton.configure(state="normal")
+        self.view_menubutton.configure(state="normal")
         # Bindings
         self.suggestion_textbox.bind("<Button-3>", self.show_suggestionContext_menu)
         self.image_index_entry.bind("<Button-3>", self.open_index_context_menu)
@@ -2746,7 +2773,7 @@ class ImgTxtViewer:
             if self.image_file not in self.image_info_cache:
                 self.image_info_cache[self.image_file] = self.get_image_info(self.image_file)
             image_info = self.image_info_cache[self.image_file]
-            self.label_image_stats.config(text=f"{image_info['filename']}  |  {image_info['resolution']}  |  {percent_scale}%  |  {image_info['size']}  |  {image_info['color_mode']}", anchor="w")
+            self.label_image_stats.config(text=f"  |  {image_info['filename']}  |  {image_info['resolution']}  |  {percent_scale}%  |  {image_info['size']}  |  {image_info['color_mode']}", anchor="w")
 
 
     def get_image_info(self, image_file):
