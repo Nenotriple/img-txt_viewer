@@ -38,37 +38,34 @@ from collections import Counter
 
 
 # Standard Library - GUI
-import tkinter.font
-from tkinter.scrolledtext import ScrolledText
 from tkinter import (ttk, Tk, Toplevel, messagebox, filedialog, simpledialog,
                      StringVar, BooleanVar, IntVar,
-                     Frame, PanedWindow, Menu,
-                     Label, Text, Listbox, Scrollbar,
-                     Event, TclError
+                     Frame, PanedWindow, Menu, Scrollbar, scrolledtext,
+                     Label, Text, Listbox,
+                     Event, font, TclError
                      )
 
 
 # Third-Party Libraries
 import numpy
 from TkToolTip.TkToolTip import TkToolTip as ToolTip
-from PIL import (Image, ImageTk, ImageSequence,
-                 ImageOps, UnidentifiedImageError
-                 )
+from PIL import (Image, ImageTk, ImageSequence, ImageOps, UnidentifiedImageError)
 
 
 # Custom Libraries
-from main.scripts import (about_img_txt_viewer,
-                          settings_manager,
-                          upscale_image,
-                          CropUI,
-                          batch_crop_images,
-                          resize_image,
-                          image_grid,
-                          batch_tag_edit,
-                          batch_resize_images,
-                          find_dupe_file,
-                          edit_panel
-                          )
+from main.scripts import (
+    about_img_txt_viewer,
+    batch_resize_images,
+    batch_crop_images,
+    settings_manager,
+    batch_tag_edit,
+    find_dupe_file,
+    upscale_image,
+    resize_image,
+    image_grid,
+    edit_panel,
+    CropUI,
+    )
 from main.scripts.Autocomplete import Autocomplete
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
 from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
@@ -636,7 +633,7 @@ class ImgTxtViewer:
         self.suggestion_menubutton.pack(side="right", padx=2)
 
         # Startup info text
-        self.info_text = ScrolledText(self.master_control_frame)
+        self.info_text = scrolledtext.ScrolledText(self.master_control_frame)
         self.info_text.pack(expand=True, fill="both")
         for header, section in zip(self.about_window.info_headers, self.about_window.info_content):
             self.info_text.insert("end", header + "\n", "header")
@@ -670,7 +667,7 @@ class ImgTxtViewer:
             self.text_frame = Frame(self.master_control_frame)
             self.text_pane.add(self.text_frame, stretch="always")
             self.text_pane.paneconfigure(self.text_frame, minsize=80)
-            self.text_box = ScrolledText(self.text_frame, wrap="word", undo=True, maxundo=200, inactiveselectbackground="#0078d7")
+            self.text_box = scrolledtext.ScrolledText(self.text_frame, wrap="word", undo=True, maxundo=200, inactiveselectbackground="#0078d7")
             self.text_box.pack(side="top", expand="yes", fill="both")
             self.text_box.tag_configure("highlight", background="#5da9be", foreground="white")
             self.text_box.config(font=(self.font_var.get(), self.font_size_var.get()))
@@ -774,7 +771,7 @@ class ImgTxtViewer:
         ToolTip.create(regex_search_replace_checkbutton, "Use Regular Expressions in 'Search'", 200, 6, 12)
         text_frame = Frame(tab_frame, borderwidth=0)
         text_frame.pack(side='top', fill="both")
-        description_textbox = ScrolledText(text_frame, bg="#f0f0f0")
+        description_textbox = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
         description_textbox.pack(side='bottom', fill='both')
         description_textbox.insert("1.0", "Use this tool to search for a string of text across all text files in the selected directory.\n\n"
                                    "If a match is found, it will be replaced exactly with the given text.\n\n"
@@ -817,7 +814,7 @@ class ImgTxtViewer:
         ToolTip.create(undo_button, "Revert last action", 200, 6, 12)
         text_frame = Frame(tab_frame, borderwidth=0)
         text_frame.pack(side='top', fill="both")
-        description_textbox = ScrolledText(text_frame, bg="#f0f0f0")
+        description_textbox = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
         description_textbox.pack(side='bottom', fill='both')
         description_textbox.insert("1.0", "Use this tool to prefix all text files in the selected directory with the entered text.\n\n"
                                    "This means that the entered text will appear at the start of each text file.\n\n"
@@ -850,7 +847,7 @@ class ImgTxtViewer:
         ToolTip.create(undo_button, "Revert last action", 200, 6, 12)
         text_frame = Frame(tab_frame, borderwidth=0)
         text_frame.pack(side='top', fill="both")
-        description_textbox = ScrolledText(text_frame, bg="#f0f0f0")
+        description_textbox = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
         description_textbox.pack(side='bottom', fill='both')
         description_textbox.insert("1.0", "Use this tool to append all text files in the selected directory with the entered text.\n\n"
                                    "This means that the entered text will appear at the end of each text file.\n\n"
@@ -1339,7 +1336,7 @@ class ImgTxtViewer:
         ToolTip.create(self.empty_files_checkbutton, "Check this to show only empty text files\n\nImages without a text pair are also considered as empty", 200, 6, 12)
         text_frame = Frame(tab_frame, borderwidth=0)
         text_frame.pack(side='top', fill="both")
-        description_textbox = ScrolledText(text_frame, bg="#f0f0f0")
+        description_textbox = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
         description_textbox.pack(side='bottom', fill='both')
         description_textbox.insert("1.0", "This tool will filter all img-txt pairs based on the provided text.\n\n"
                                    "Enter any string of text to display only img-txt pairs containing that text.\n"
@@ -1376,7 +1373,7 @@ class ImgTxtViewer:
         ToolTip.create(self.regex_highlight_checkbutton, "Use Regular Expressions for highlighting text", 200, 6, 12)
         text_frame = Frame(tab_frame, borderwidth=0)
         text_frame.pack(side='top', fill="both")
-        description_textbox = ScrolledText(text_frame, bg="#f0f0f0")
+        description_textbox = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
         description_textbox.pack(side='bottom', fill='both')
         description_textbox.insert("1.0", "Enter the text you want to highlight each time you move to a new img-txt pair.\n\n"
                                    "Use ' + ' to highlight multiple strings of text\n\n"
@@ -1405,7 +1402,7 @@ class ImgTxtViewer:
         font_label = Label(self.tab7, width=8, text="Font:")
         font_label.pack(side="left", anchor="n", pady=4)
         ToolTip.create(font_label, "Recommended Fonts: Courier New, Ariel, Consolas, Segoe UI", 200, 6, 12)
-        font_box = ttk.Combobox(self.tab7, textvariable=self.font_var, width=4, takefocus=False, state="readonly", values=list(tkinter.font.families()))
+        font_box = ttk.Combobox(self.tab7, textvariable=self.font_var, width=4, takefocus=False, state="readonly", values=list(font.families()))
         font_box.set(self.current_font_name)
         font_box.bind("<<ComboboxSelected>>", lambda event: set_font_and_size(self.font_var.get(), self.size_scale.get()))
         font_box.pack(side="left", anchor="n", pady=4, fill="x", expand=True)
@@ -1453,7 +1450,7 @@ class ImgTxtViewer:
         description_text.insert("1.0", "Create a custom dictionary of tags.\n"
                                       "Use newlines to separate tags.")
         description_text.config(state="disabled", wrap="word", height=3)
-        self.custom_dictionary_textbox = ScrolledText(text_frame, wrap="word")
+        self.custom_dictionary_textbox = scrolledtext.ScrolledText(text_frame, wrap="word")
         self.custom_dictionary_textbox.pack(side='top', fill='both', expand=True)
         with open(self.my_tags_csv, 'r') as file:
             content = self.remove_lines_starting_with_hashes(self.remove_extra_newlines(file.read()))
@@ -1480,7 +1477,7 @@ class ImgTxtViewer:
         process_images_checkbutton = ttk.Checkbutton(button_frame, text="Process Image Stats", takefocus=False, variable=self.process_image_stats_var)
         process_images_checkbutton.pack(side='right')
         ToolTip.create(process_images_checkbutton, "Enable/Disable image stat processing (Can be slow with many HD images)", 200, 6, 12)
-        self.tab8_stats_textbox = ScrolledText(tab_frame, wrap="word", state="disabled")
+        self.tab8_stats_textbox = scrolledtext.ScrolledText(tab_frame, wrap="word", state="disabled")
         self.tab8_stats_textbox.pack(fill='both', expand=True)
 
 

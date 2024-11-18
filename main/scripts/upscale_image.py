@@ -24,8 +24,7 @@ import subprocess
 
 
 # Standard Library - GUI
-from tkinter import ttk, Toplevel, messagebox, Frame, Label, Button, IntVar, DoubleVar, StringVar, TclError
-from tkinter.filedialog import askdirectory
+from tkinter import ttk, Toplevel, messagebox, filedialog, Frame, Label, Button, IntVar, DoubleVar, StringVar, TclError
 
 
 # Third-Party Libraries
@@ -662,7 +661,7 @@ class Upscale:
 
 
     def choose_directory(self, entry_path_var, tooltip):
-        directory = os.path.normpath(askdirectory())
+        directory = os.path.normpath(filedialog.askdirectory())
         if directory:
             entry_path_var.set(directory)
             tooltip.config(text=directory)

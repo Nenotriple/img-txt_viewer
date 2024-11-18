@@ -1,5 +1,6 @@
 """This script reads a CSV file and filters rows based on a blacklist of words."""
 
+
 import csv
 import re
 
@@ -23,7 +24,6 @@ def filter_csv(input_file, output_file, blacklist):
     with open(input_file, mode='r', newline='', encoding='utf-8') as infile:
         reader = csv.reader(infile)
         filtered_rows = [row for row in reader if not is_blacklisted(row, blacklist) and row[1] != "1"]
-
     # Write the filtered rows to a new CSV file
     with open(output_file, mode='w', newline='', encoding='utf-8') as outfile:
         writer = csv.writer(outfile)

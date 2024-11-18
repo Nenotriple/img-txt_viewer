@@ -27,8 +27,7 @@ import subprocess
 
 # Standard Library - GUI
 import tkinter as tk
-from tkinter import ttk, Toplevel, filedialog, messagebox
-from tkinter.scrolledtext import ScrolledText
+from tkinter import ttk, Toplevel, filedialog, messagebox, scrolledtext
 
 
 # Third-Party Libraries
@@ -78,7 +77,7 @@ class AboutWindow(Toplevel):
 
 
     def create_info_text(self):
-        self.info_text = ScrolledText(self)
+        self.info_text = scrolledtext.ScrolledText(self)
         self.info_text.pack(expand=True, fill='both')
         for first_header, (header, section) in enumerate(AboutWindow.info_dict.items()):
             if first_header == 0:

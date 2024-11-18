@@ -23,7 +23,7 @@ from tkinter import Toplevel, BooleanVar, Canvas
 # Third-Party Libraries
 from PIL import Image, ImageTk, ImageDraw
 
-
+#endregion
 ################################################################################################################################################
 #region - CLASS: PopUpZoom
 
@@ -238,6 +238,10 @@ class PopUpZoom:
         self.resized_image = self.saved_resized_image
         self.resized_width = self.saved_resized_width
         self.resized_height = self.saved_resized_height
+
+
+#endregion
+
 
 '''
 

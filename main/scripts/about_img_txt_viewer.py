@@ -11,9 +11,8 @@ import webbrowser
 
 
 # Standard Library - GUI
-from tkinter.scrolledtext import ScrolledText
-from tkinter import ttk, Frame, Label, TclError
 import tkinter as tk
+from tkinter import ttk, Frame, scrolledtext, Label, TclError
 
 
 # Third-Party Libraries
@@ -125,7 +124,7 @@ class AboutWindow:
 
 
     def _create_textbox(self):
-        self.info_text = ScrolledText(self.about_window)
+        self.info_text = scrolledtext.ScrolledText(self.about_window)
         self.info_text.pack(expand=True, fill='both')
         for header, section in zip(self.info_headers, self.info_content):
             self.info_text.insert("end", header + "\n", "header")
