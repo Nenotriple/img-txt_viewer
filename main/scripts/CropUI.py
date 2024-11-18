@@ -907,46 +907,72 @@ class CropSelGuidelines:
             self._draw_diagonal_lines_guidelines(x1, y1, x2, y2)
 
 
+    def draw_guideline(self, x1, y1, x2, y2, offset=1):
+        # Draw main guideline in white
+        line_white = self.img_canvas.create_line(x1, y1, x2, y2, fill='white', dash=(2, 2))
+        # Draw offset line in black
+        x1_off, y1_off, x2_off, y2_off = self.offset_line(x1, y1, x2, y2, offset)
+        line_black = self.img_canvas.create_line(x1_off, y1_off, x2_off, y2_off, fill='black', dash=(2, 2))
+        # Add lines to guidelines list
+        self.guidelines.extend([line_white, line_black])
+
+
     def _draw_center_line_guidelines(self, x1, y1, x2, y2):
         cx = (x1 + x2) / 2
         cy = (y1 + y2) / 2
-        # Draw vertical guideline
-        v_line = self.img_canvas.create_line(cx, y1, cx, y2, fill='white', dash=(2, 2))
-        # Draw horizontal guideline
-        h_line = self.img_canvas.create_line(x1, cy, x2, cy, fill='white', dash=(2, 2))
-        self.guidelines.extend([v_line, h_line])
+        self.draw_guideline(cx, y1, cx, y2)
+        self.draw_guideline(x1, cy, x2, cy)
 
 
     def _draw_rule_of_thirds_guidelines(self, x1, y1, x2, y2):
         third_x = (x2 - x1) / 3
         third_y = (y2 - y1) / 3
-        # Draw vertical guidelines
-        v_line1 = self.img_canvas.create_line(x1 + third_x, y1, x1 + third_x, y2, fill='white', dash=(2, 2))
-        v_line2 = self.img_canvas.create_line(x1 + 2 * third_x, y1, x1 + 2 * third_x, y2, fill='white', dash=(2, 2))
-        # Draw horizontal guidelines
-        h_line1 = self.img_canvas.create_line(x1, y1 + third_y, x2, y1 + third_y, fill='white', dash=(2, 2))
-        h_line2 = self.img_canvas.create_line(x1, y1 + 2 * third_y, x2, y1 + 2 * third_y, fill='white', dash=(2, 2))
-        self.guidelines.extend([v_line1, v_line2, h_line1, h_line2])
+        x_positions = [x1 + third_x, x1 + 2 * third_x]
+        y_positions = [y1 + third_y, y1 + 2 * third_y]
+        for x in x_positions:
+            self.draw_guideline(x, y1, x, y2)
+        for y in y_positions:
+            self.draw_guideline(x1, y, x2, y)
 
 
     def _draw_diagonal_lines_guidelines(self, x1, y1, x2, y2):
-        # Calculate the length of the sides of the rectangle
-        width = x2 - x1
-        height = y2 - y1
         # Calculate the length of the diagonal
-        diagonal_length = min(width, height)
+        diagonal_length = min(x2 - x1, y2 - y1)
+        offset = 1  # px
+        # Define diagonal lines coordinates
+        diagonals = [
+            (x1, y1, x1 + diagonal_length, y1 + diagonal_length),
+            (x2, y1, x2 - diagonal_length, y1 + diagonal_length),
+            (x1, y2, x1 + diagonal_length, y2 - diagonal_length),
+            (x2, y2, x2 - diagonal_length, y2 - diagonal_length)
+        ]
         # Draw diagonal guidelines
-        d_line1 = self.img_canvas.create_line(x1, y1, x1 + diagonal_length, y1 + diagonal_length, fill='white', dash=(2, 2))
-        d_line2 = self.img_canvas.create_line(x2, y1, x2 - diagonal_length, y1 + diagonal_length, fill='white', dash=(2, 2))
-        d_line3 = self.img_canvas.create_line(x1, y2, x1 + diagonal_length, y2 - diagonal_length, fill='white', dash=(2, 2))
-        d_line4 = self.img_canvas.create_line(x2, y2, x2 - diagonal_length, y2 - diagonal_length, fill='white', dash=(2, 2))
-        self.guidelines.extend([d_line1, d_line2, d_line3, d_line4])
+        for x1, y1, x2, y2 in diagonals:
+            self.draw_guideline(x1, y1, x2, y2, offset)
 
 
     def clear_guidelines(self):
         for line in self.guidelines:
             self.img_canvas.delete(line)
         self.guidelines.clear()
+
+
+    def offset_line(self, x1, y1, x2, y2, offset):
+        # Compute direction vector
+        dx = x2 - x1
+        dy = y2 - y1
+        length = (dx**2 + dy**2)**0.5
+        if length == 0:
+            return x1, y1, x2, y2  # Can't offset zero-length line
+        # Compute perpendicular vector
+        px = -dy / length
+        py = dx / length
+        # Offset points
+        x1_off = x1 + px * offset
+        y1_off = y1 + py * offset
+        x2_off = x2 + px * offset
+        y2_off = y2 + py * offset
+        return x1_off, y1_off, x2_off, y2_off
 
 
 #endregion
@@ -1050,6 +1076,7 @@ class CropInterface:
         self.overlay_var = tk.BooleanVar(value=True)
         self.after_crop_var = tk.StringVar(value="Save & Close")
         self.expand_center_toggle_var = tk.BooleanVar(value=False)
+        self.guidelines_var = tk.StringVar(value="No Guides")
 
         # Fixed Selection
         self.fixed_sel_toggle_var = tk.BooleanVar(value=False)
@@ -1261,7 +1288,7 @@ class CropInterface:
         self.fixed_selection_checkbutton.grid(row=0, column=0, padx=self.padxl, pady=self.pady, sticky="w")
         ToolTip(self.fixed_selection_checkbutton, "Enable fixed aspect ratio, width, height, or size", 200, 6, 12)
         # Fixed selection Combobox
-        self.fixed_selection_option_combobox = ttk.Combobox(fixed_selection_frame, values=["Aspect Ratio", "Width", "Height", "Size"], state="readonly", textvariable=self.fixed_sel_mode_var, width=16)
+        self.fixed_selection_option_combobox = ttk.Combobox(fixed_selection_frame, values=["Aspect Ratio", "Width", "Height", "Size"], textvariable=self.fixed_sel_mode_var, state="readonly", width=16)
         self.fixed_selection_option_combobox.grid(row=0, column=1, columnspan=99, sticky="e", padx=self.pady, pady=self.pady)
         self.fixed_selection_option_combobox.bind("<<ComboboxSelected>>", self.toggle_widgets_by_mode)
         self.fixed_selection_option_combobox.bind("<MouseWheel>", self.toggle_widgets_by_mode)
@@ -1307,10 +1334,9 @@ class CropInterface:
         overlay_checkbutton.grid(row=0, column=1, padx=self.padxl, pady=self.pady, sticky="e")
         ToolTip(overlay_checkbutton, "Toggle the overlay/highlight that darkens the background during selection", 200, 6, 12)
         # Guidelines
-        self.guidelines_combobox = ttk.Combobox(options_frame, values=["No Guides", "Center Lines", "Rule of Thirds", "Diagonal Lines"], state="readonly", width=16)
+        self.guidelines_combobox = ttk.Combobox(options_frame, values=["No Guides", "Center Lines", "Rule of Thirds", "Diagonal Lines"], textvariable=self.guidelines_var, state="readonly", width=16)
         self.guidelines_combobox.grid(row=1, column=0, padx=self.pady, pady=self.pady, sticky="ew")
-        self.guidelines_combobox.set("No Guides")
-        self.guidelines_combobox.bind("<<ComboboxSelected>>", lambda event: self.crop_selection.guidelines_manager.update_guidelines(self.guidelines_combobox.get()))
+        self.guidelines_combobox.bind("<<ComboboxSelected>>", lambda event: self.crop_selection.guidelines_manager.update_guidelines(self.guidelines_var.get()))
 
 
     def create_transform_widgets(self):
