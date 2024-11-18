@@ -146,7 +146,6 @@ class ImgTxtViewer:
         self.panes_swap_ns_var = BooleanVar(value=False)
         self.text_modified_var = False
         self.is_alt_arrow_pressed = False
-        self.filepath_contains_images_var = False
         self.toggle_zoom_var = None
         self.undo_state = StringVar(value="disabled")
         self.previous_window_size = (self.master.winfo_width(), self.master.winfo_height())
@@ -4093,10 +4092,8 @@ class ImgTxtViewer:
 
     def check_if_contains_images(self, directory):
         if any(fname.lower().endswith(('.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif')) for fname in os.listdir(directory)):
-            self.filepath_contains_images_var = True
             return True
         else:
-            self.filepath_contains_images_var = False
             messagebox.showwarning("No Images", "The selected directory does not contain any images.")
             return False
 
