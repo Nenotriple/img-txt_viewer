@@ -1426,7 +1426,7 @@ class ImgTxtViewer:
                 content  = self.remove_extra_newlines(self.custom_dictionary_textbox.get("1.0", "end-1c"))
                 file.write(content)
                 self.master.after(100, self.refresh_custom_dictionary)
-        self.create_custom_dictionary()
+        self.create_custom_dictionary(refresh=False)
         tab_frame = Frame(self.tab8)
         tab_frame.pack(side='top', fill='both', expand=True)
         button_frame = Frame(tab_frame)
@@ -1456,6 +1456,7 @@ class ImgTxtViewer:
             content = self.remove_lines_starting_with_hashes(self.remove_extra_newlines(file.read()))
             self.custom_dictionary_textbox.insert('end', content)
         self.custom_dictionary_textbox.configure(undo=True)
+        self.refresh_custom_dictionary()
 
 
     # --------------------------------------
@@ -4026,13 +4027,14 @@ class ImgTxtViewer:
             self.update_autocomplete_dictionary()
 
 
-    def create_custom_dictionary(self, reset=False):
+    def create_custom_dictionary(self, reset=False, refresh=True):
         try:
             csv_filename = self.my_tags_csv
             if reset or not os.path.isfile(csv_filename):
                 with open(csv_filename, 'w', newline='', encoding="utf-8") as file:
                     file.write("")
-                self.refresh_custom_dictionary()
+                if refresh:
+                    self.refresh_custom_dictionary()
         except (PermissionError, IOError, TclError) as e:
             messagebox.showerror("Error: create_custom_dictionary()", f"An error occurred while creating the custom dictionary file:\n\n{csv_filename}\n\n{e}")
 
@@ -4642,7 +4644,8 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 - If `clean-text` is enabled: The primary text box is now properly refreshed when saving.
 - Fixed an issue when deleting tags that are a substring of another tag using middle-mouse-click. #38
 - Fixed an issue where the system clipboard would become unresponsive after deleting a tag with the middle mouse button. #38
-- Fixed issue where settings were not restored when choosing to not reload the last directory.
+- Fixed an issue where settings were not restored when choosing to not reload the last directory.
+- Fixed an error when loading the app and `my_tags.csv` didn't exist.
 - Reloading the last directory is a little faster / smoother now.
 
 

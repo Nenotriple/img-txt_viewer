@@ -59,10 +59,12 @@ class Autocomplete:
         application_path = self._get_application_path()
         data_file_path = os.path.join(application_path, "dict", self.data_file)
         additional_file_path = os.path.join(application_path, self.my_tags_csv)
+        if not os.path.isfile(additional_file_path):
+            self.include_my_tags = False
         autocomplete_data = {}
         similar_names_dict = defaultdict(list)
         self._read_csv(data_file_path, autocomplete_data, similar_names_dict)
-        if self.include_my_tags and os.path.isfile(additional_file_path):
+        if self.include_my_tags:
             self._read_csv(additional_file_path, autocomplete_data, similar_names_dict, include_classifier_id=False)
         return autocomplete_data, similar_names_dict
 
