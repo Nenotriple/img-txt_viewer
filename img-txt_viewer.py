@@ -4108,13 +4108,7 @@ class ImgTxtViewer:
             else:
                 original_auto_save_var = self.auto_save_var.get()
                 self.auto_save_var.set(value=False)
-            initialdir = self.image_dir.get()
-            if not initialdir or initialdir == "Choose Directory...":
-                initialdir = self.settings_manager.config.get("Path", "last_img_directory", fallback=None)
-                if not initialdir or not os.path.exists(initialdir):
-                    initialdir = os.path.dirname(__file__)
-            if 'temp' in initialdir.lower():
-                initialdir = os.path.expanduser("~")  # Default to the user's home directory
+            initialdir = self.get_initial_directory()
             directory = filedialog.askdirectory(initialdir=initialdir)
             if directory and directory != self.image_dir.get():
                 if hasattr(self, 'text_box'):
@@ -4129,6 +4123,17 @@ class ImgTxtViewer:
                 self.auto_save_var.set(original_auto_save_var)
         except Exception as e:
             messagebox.showwarning("Error", f"There was an unexpected issue setting the folder path:\n\n{e}")
+
+
+    def get_initial_directory(self):
+        initialdir = self.image_dir.get()
+        if not initialdir or initialdir == "Choose Directory...":
+            initialdir = self.settings_manager.config.get("Path", "last_img_directory", fallback=None)
+            if not initialdir or not os.path.exists(initialdir):
+                initialdir = os.path.dirname(__file__)
+        if 'temp' in initialdir.lower():
+            initialdir = os.path.expanduser("~")
+        return initialdir
 
 
     def set_working_directory(self, silent=False, event=None):
