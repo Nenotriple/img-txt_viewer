@@ -54,6 +54,7 @@ class Upscale:
 
         # Included Models
         self.ncnn_models = ["realesr-animevideov3-x4", "RealESRGAN_General_x4_v3", "realesrgan-x4plus", "realesrgan-x4plus-anime", "AnimeSharp-4x", "UltraSharp-4x"]
+        self.ncnn_models = self.find_additional_models()
 
         # Window Dragging
         self.start_x = None
@@ -158,7 +159,7 @@ class Upscale:
 
         self.label_upscale_model = Label(frame_model, text="Upscale Model")
         self.label_upscale_model.pack(anchor="w", side="top", padx=5, pady=5)
-        self.combobox_upscale_model = ttk.Combobox(frame_model, width=25, state="readonly", values=self.find_additional_models())
+        self.combobox_upscale_model = ttk.Combobox(frame_model, width=25, state="readonly", values=self.ncnn_models)
         self.combobox_upscale_model.pack(side="top", fill="x", padx=5, pady=5)
         ToolTip.create(self.combobox_upscale_model, "Select the RESRGAN upscale model", 250, 6, 12)
         self.combobox_upscale_model.set("realesr-animevideov3-x4")
@@ -623,13 +624,13 @@ class Upscale:
 
     def find_additional_models(self):
         if not os.path.exists(self.extra_models_path):
-            return
+            return self.ncnn_models
         all_files = os.listdir(self.extra_models_path)
         bin_files = {os.path.splitext(f)[0] for f in all_files if f.endswith('.bin')}
         param_files = {os.path.splitext(f)[0] for f in all_files if f.endswith('.param')}
         paired_models = bin_files & param_files
-        additional_models = [model for model in paired_models if model not in self.ncnn_models]
-        combined_models = self.ncnn_models + additional_models
+        additional_models = {model for model in paired_models if model not in self.ncnn_models}
+        combined_models = list(set(self.ncnn_models) | additional_models)
         return combined_models
 
 
