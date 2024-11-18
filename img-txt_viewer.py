@@ -518,7 +518,7 @@ class ImgTxtViewer:
         self.primary_display_image.bind("<Double-1>", lambda event: self.open_image(index=self.current_index, event=event))
         self.primary_display_image.bind('<Button-2>', self.open_image_directory)
         self.primary_display_image.bind("<MouseWheel>", self.mouse_scroll)
-        self.primary_display_image.bind("<Button-3>", self.show_imageContext_menu)
+        self.primary_display_image.bind("<Button-3>", self.show_image_context_menu)
         self.primary_display_image.bind("<ButtonPress-1>", self.start_drag)
         self.primary_display_image.bind("<ButtonRelease-1>", self.stop_drag)
         self.primary_display_image.bind("<B1-Motion>", self.dragging_window)
@@ -632,9 +632,8 @@ class ImgTxtViewer:
                                "  Dark Green = Lore",
                                1000, 6, 12)
         # Suggestion Options
-        self.suggestion_menubutton = ttk.Button(self.suggestion_frame, text="☰", takefocus=False, width=2)
+        self.suggestion_menubutton = ttk.Button(self.suggestion_frame, text="☰", takefocus=False, width=2, command=lambda: self.show_suggestion_context_menu(button=True))
         self.suggestion_menubutton.pack(side="right", padx=2)
-        self.suggestion_menubutton.bind("<Button-1>", self.show_suggestionContext_menu)
 
         # Startup info text
         self.info_text = ScrolledText(self.master_control_frame)
@@ -644,7 +643,7 @@ class ImgTxtViewer:
             self.info_text.insert("end", section + "\n", "section")
         self.info_text.tag_config("header", font=("Segoe UI", 9, "bold"))
         self.info_text.tag_config("section", font=("Segoe UI", 9))
-        self.info_text.bind("<Button-3>", self.show_textContext_menu)
+        self.info_text.bind("<Button-3>", self.show_text_context_menu)
         self.info_text.config(state='disabled', wrap="word")
 
 
@@ -1494,7 +1493,7 @@ class ImgTxtViewer:
         self.text_box.bind("<Triple-1>", lambda event: self.custom_select_line_for_text(event, self.text_box))
         self.text_box.bind("<Button-1>", lambda event: (self.remove_tag(), self.clear_suggestions()))
         self.text_box.bind("<Button-2>", lambda event: (self.delete_tag_under_mouse(event), self.sync_title_with_content(event)))
-        self.text_box.bind("<Button-3>", lambda event: (self.show_textContext_menu(event)))
+        self.text_box.bind("<Button-3>", lambda event: (self.show_text_context_menu(event)))
         # Update the autocomplete suggestion label after every KeyRelease event.
         self.text_box.bind("<KeyRelease>", lambda event: (self.update_suggestions(event), self.sync_title_with_content(event)))
         # Insert a newline after inserting an autocomplete suggestion when list_mode is active.
@@ -1526,11 +1525,11 @@ class ImgTxtViewer:
     # --------------------------------------
     # Text Box Context Menu
     # --------------------------------------
-    def show_textContext_menu(self, event):
+    def show_text_context_menu(self, event):
         if hasattr(self, 'text_box'):
             self.text_box.focus_set()
         widget_in_focus = root.focus_get()
-        textContext_menu = Menu(root, tearoff=0)
+        text_context_menu = Menu(root, tearoff=0)
         if widget_in_focus in [self.info_text, getattr(self, 'text_box', None)]:
             widget_in_focus.focus_set()
             if widget_in_focus == getattr(self, 'text_box', None):
@@ -1542,108 +1541,110 @@ class ImgTxtViewer:
                         select_state = "normal"
                 except TclError:
                     pass
-                textContext_menu.add_command(label="Cut", accelerator="Ctrl+X", command=lambda: (widget_in_focus.event_generate('<<Cut>>'), self.sync_title_with_content()))
-                textContext_menu.add_command(label="Copy", accelerator="Ctrl+C", command=lambda: (widget_in_focus.event_generate('<<Copy>>')))
-                textContext_menu.add_command(label="Paste", accelerator="Ctrl+V", command=lambda: (widget_in_focus.event_generate('<<Paste>>'), self.sync_title_with_content()))
-                textContext_menu.add_command(label="Delete", accelerator="Del", command=lambda: (widget_in_focus.event_generate('<<Clear>>'), self.sync_title_with_content()))
-                textContext_menu.add_command(label="Refresh", command=self.refresh_text_box)
-                textContext_menu.add_separator()
-                textContext_menu.add_command(label="Undo", accelerator="Ctrl+Z", command=lambda: (widget_in_focus.event_generate('<<Undo>>'), self.sync_title_with_content()))
-                textContext_menu.add_command(label="Redo", accelerator="Ctrl+Y", command=lambda: (widget_in_focus.event_generate('<<Redo>>'), self.sync_title_with_content()))
-                textContext_menu.add_separator()
-                textContext_menu.add_command(label="Open Text Directory...", command=self.open_text_directory)
-                textContext_menu.add_command(label="Open Text File...", command=self.open_textfile)
-                textContext_menu.add_command(label="Add Selected Text to MyTags", state=select_state, command=self.add_to_custom_dictionary)
-                textContext_menu.add_separator()
-                textContext_menu.add_command(label="Highlight all Duplicates", accelerator="Ctrl+F", command=self.highlight_all_duplicates)
-                textContext_menu.add_command(label="Next Empty Text File", accelerator="Ctrl+E", command=self.index_goto_next_empty)
-                textContext_menu.add_separator()
-                textContext_menu.add_checkbutton(label="Highlight Selection", variable=self.highlight_selection_var)
-                textContext_menu.add_checkbutton(label="Clean-Text", variable=self.cleaning_text_var, command=self.toggle_list_menu)
-                textContext_menu.add_checkbutton(label="List View", variable=self.list_mode_var, state=cleaning_state, command=self.toggle_list_mode)
+                text_context_menu.add_command(label="Cut", accelerator="Ctrl+X", command=lambda: (widget_in_focus.event_generate('<<Cut>>'), self.sync_title_with_content()))
+                text_context_menu.add_command(label="Copy", accelerator="Ctrl+C", command=lambda: (widget_in_focus.event_generate('<<Copy>>')))
+                text_context_menu.add_command(label="Paste", accelerator="Ctrl+V", command=lambda: (widget_in_focus.event_generate('<<Paste>>'), self.sync_title_with_content()))
+                text_context_menu.add_command(label="Delete", accelerator="Del", command=lambda: (widget_in_focus.event_generate('<<Clear>>'), self.sync_title_with_content()))
+                text_context_menu.add_command(label="Refresh", command=self.refresh_text_box)
+                text_context_menu.add_separator()
+                text_context_menu.add_command(label="Undo", accelerator="Ctrl+Z", command=lambda: (widget_in_focus.event_generate('<<Undo>>'), self.sync_title_with_content()))
+                text_context_menu.add_command(label="Redo", accelerator="Ctrl+Y", command=lambda: (widget_in_focus.event_generate('<<Redo>>'), self.sync_title_with_content()))
+                text_context_menu.add_separator()
+                text_context_menu.add_command(label="Open Text Directory...", command=self.open_text_directory)
+                text_context_menu.add_command(label="Open Text File...", command=self.open_textfile)
+                text_context_menu.add_command(label="Add Selected Text to MyTags", state=select_state, command=self.add_to_custom_dictionary)
+                text_context_menu.add_separator()
+                text_context_menu.add_command(label="Highlight all Duplicates", accelerator="Ctrl+F", command=self.highlight_all_duplicates)
+                text_context_menu.add_command(label="Next Empty Text File", accelerator="Ctrl+E", command=self.index_goto_next_empty)
+                text_context_menu.add_separator()
+                text_context_menu.add_checkbutton(label="Highlight Selection", variable=self.highlight_selection_var)
+                text_context_menu.add_checkbutton(label="Clean-Text", variable=self.cleaning_text_var, command=self.toggle_list_menu)
+                text_context_menu.add_checkbutton(label="List View", variable=self.list_mode_var, state=cleaning_state, command=self.toggle_list_mode)
             elif widget_in_focus == self.info_text:
-                textContext_menu.add_command(label="Copy", command=lambda: widget_in_focus.event_generate('<<Copy>>'))
-            textContext_menu.tk_popup(event.x_root, event.y_root)
+                text_context_menu.add_command(label="Copy", command=lambda: widget_in_focus.event_generate('<<Copy>>'))
+            text_context_menu.tk_popup(event.x_root, event.y_root)
 
 
     # --------------------------------------
     # Image Context Menu
     # --------------------------------------
-    def show_imageContext_menu(self, event):
-        self.imageContext_menu = Menu(self.master, tearoff=0)
+    def show_image_context_menu(self, event):
+        self.image_context_menu = Menu(self.master, tearoff=0)
         # Open
-        self.imageContext_menu.add_command(label="Open Current Directory...", command=self.open_image_directory)
-        self.imageContext_menu.add_command(label="Open Current Image...", command=self.open_image)
-        self.imageContext_menu.add_command(label="Open Image-Grid...", accelerator="F2", command=self.open_image_grid)
-        self.imageContext_menu.add_command(label="Edit Image...", accelerator="F4", command=self.open_image_in_editor)
-        self.imageContext_menu.add_command(label="AutoTag", command=self.interrogate_image_tags)
-        self.imageContext_menu.add_separator()
+        self.image_context_menu.add_command(label="Open Current Directory...", command=self.open_image_directory)
+        self.image_context_menu.add_command(label="Open Current Image...", command=self.open_image)
+        self.image_context_menu.add_command(label="Open Image-Grid...", accelerator="F2", command=self.open_image_grid)
+        self.image_context_menu.add_command(label="Edit Image...", accelerator="F4", command=self.open_image_in_editor)
+        self.image_context_menu.add_command(label="AutoTag", command=self.interrogate_image_tags)
+        self.image_context_menu.add_separator()
         # File
-        self.imageContext_menu.add_command(label="Duplicate img-txt pair", command=self.duplicate_pair)
-        self.imageContext_menu.add_command(label="Delete img-txt Pair", accelerator="Shift+Del", command=self.delete_pair)
-        self.imageContext_menu.add_command(label="Undo Delete", command=self.undo_delete_pair, state=self.undo_state.get())
-        self.imageContext_menu.add_separator()
+        self.image_context_menu.add_command(label="Duplicate img-txt pair", command=self.duplicate_pair)
+        self.image_context_menu.add_command(label="Delete img-txt Pair", accelerator="Shift+Del", command=self.delete_pair)
+        self.image_context_menu.add_command(label="Undo Delete", command=self.undo_delete_pair, state=self.undo_state.get())
+        self.image_context_menu.add_separator()
         # Edit
-        self.imageContext_menu.add_command(label="Rename Pair", command=self.manually_rename_single_pair)
-        self.imageContext_menu.add_command(label="Upscale...", command=lambda: self.upscale_image(batch=False))
-        self.imageContext_menu.add_command(label="Resize...", command=self.resize_image)
-        self.imageContext_menu.add_command(label="Crop...", command=self.show_crop_ui)
+        self.image_context_menu.add_command(label="Rename Pair", command=self.manually_rename_single_pair)
+        self.image_context_menu.add_command(label="Upscale...", command=lambda: self.upscale_image(batch=False))
+        self.image_context_menu.add_command(label="Resize...", command=self.resize_image)
+        self.image_context_menu.add_command(label="Crop...", command=self.show_crop_ui)
         if not self.image_file.lower().endswith('.gif'):
-            self.imageContext_menu.add_command(label="Expand", command=self.expand_image)
+            self.image_context_menu.add_command(label="Expand", command=self.expand_image)
         else:
-            self.imageContext_menu.add_command(label="Expand", state="disabled", command=self.expand_image)
-        self.imageContext_menu.add_command(label="Rotate", command=self.rotate_current_image)
-        self.imageContext_menu.add_command(label="Flip", command=self.flip_current_image)
-        self.imageContext_menu.add_separator()
+            self.image_context_menu.add_command(label="Expand", state="disabled", command=self.expand_image)
+        self.image_context_menu.add_command(label="Rotate", command=self.rotate_current_image)
+        self.image_context_menu.add_command(label="Flip", command=self.flip_current_image)
+        self.image_context_menu.add_separator()
         # Misc
-        self.imageContext_menu.add_checkbutton(label="Toggle Zoom", accelerator="F1", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
-        self.imageContext_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.update_thumbnail_panel)
-        self.imageContext_menu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
-        self.imageContext_menu.add_checkbutton(label="Vertical View", underline=0, variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
-        self.imageContext_menu.add_checkbutton(label="Swap img-txt Sides", underline=0, variable=self.panes_swap_ew_var, command=self.swap_pane_sides)
+        self.image_context_menu.add_checkbutton(label="Toggle Zoom", accelerator="F1", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
+        self.image_context_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.update_thumbnail_panel)
+        self.image_context_menu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
+        self.image_context_menu.add_checkbutton(label="Vertical View", underline=0, variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
+        self.image_context_menu.add_checkbutton(label="Swap img-txt Sides", underline=0, variable=self.panes_swap_ew_var, command=self.swap_pane_sides)
         # Image Display Quality
         image_quality_menu = Menu(self.optionsMenu, tearoff=0)
-        self.imageContext_menu.add_cascade(label="Image Display Quality", menu=image_quality_menu)
+        self.image_context_menu.add_cascade(label="Image Display Quality", menu=image_quality_menu)
         for value in ["High", "Normal", "Low"]:
             image_quality_menu.add_radiobutton(label=value, variable=self.image_quality_var, value=value, command=self.set_image_quality)
-        self.imageContext_menu.tk_popup(event.x_root, event.y_root)
+        self.image_context_menu.tk_popup(event.x_root, event.y_root)
 
 
     # --------------------------------------
     # Suggestion Context Menu
     # --------------------------------------
-    def show_suggestionContext_menu(self, event):
-        suggestionContext_menu = Menu(self.master, tearoff=0)
-        suggestionContext_menu.add_command(label="Suggestion Options", state="disabled")
-        suggestionContext_menu.add_separator()
+    def show_suggestion_context_menu(self, event=None, button=False):
+        suggestion_context_menu = Menu(self.master, tearoff=0)
+        suggestion_context_menu.add_command(label="Suggestion Options", state="disabled")
+        suggestion_context_menu.add_separator()
         # Selected Dictionary
-        dictionaryMenu = Menu(suggestionContext_menu, tearoff=0)
-        suggestionContext_menu.add_cascade(label="Dictionary", menu=dictionaryMenu)
-        dictionaryMenu.add_checkbutton(label="English Dictionary", underline=0, variable=self.csv_english_dictionary, command=self.update_autocomplete_dictionary)
-        dictionaryMenu.add_checkbutton(label="Danbooru", underline=0, variable=self.csv_danbooru, command=self.update_autocomplete_dictionary)
-        dictionaryMenu.add_checkbutton(label="Danbooru (Safe)", underline=0, variable=self.csv_danbooru_safe, command=self.update_autocomplete_dictionary)
-        dictionaryMenu.add_checkbutton(label="Derpibooru", underline=0, variable=self.csv_derpibooru, command=self.update_autocomplete_dictionary)
-        dictionaryMenu.add_checkbutton(label="e621", underline=0, variable=self.csv_e621, command=self.update_autocomplete_dictionary)
-        dictionaryMenu.add_separator()
-        dictionaryMenu.add_command(label="Clear Selection", underline=0, command=self.clear_dictionary_csv_selection)
+        dictionary_menu = Menu(suggestion_context_menu, tearoff=0)
+        suggestion_context_menu.add_cascade(label="Dictionary", menu=dictionary_menu)
+        dictionary_menu.add_checkbutton(label="English Dictionary", underline=0, variable=self.csv_english_dictionary, command=self.update_autocomplete_dictionary)
+        dictionary_menu.add_checkbutton(label="Danbooru", underline=0, variable=self.csv_danbooru, command=self.update_autocomplete_dictionary)
+        dictionary_menu.add_checkbutton(label="Danbooru (Safe)", underline=0, variable=self.csv_danbooru_safe, command=self.update_autocomplete_dictionary)
+        dictionary_menu.add_checkbutton(label="Derpibooru", underline=0, variable=self.csv_derpibooru, command=self.update_autocomplete_dictionary)
+        dictionary_menu.add_checkbutton(label="e621", underline=0, variable=self.csv_e621, command=self.update_autocomplete_dictionary)
+        dictionary_menu.add_separator()
+        dictionary_menu.add_command(label="Clear Selection", underline=0, command=self.clear_dictionary_csv_selection)
         # Suggestion Threshold
-        suggestion_threshold_menu = Menu(suggestionContext_menu, tearoff=0)
-        suggestionContext_menu.add_cascade(label="Threshold", menu=suggestion_threshold_menu)
+        suggestion_threshold_menu = Menu(suggestion_context_menu, tearoff=0)
+        suggestion_context_menu.add_cascade(label="Threshold", menu=suggestion_threshold_menu)
         threshold_levels = ["Slow", "Normal", "Fast", "Faster"]
         for level in threshold_levels:
             suggestion_threshold_menu.add_radiobutton(label=level, variable=self.suggestion_threshold_var, value=level, command=self.set_suggestion_threshold)
         # Suggestion Quantity
-        suggestion_quantity_menu = Menu(suggestionContext_menu, tearoff=0)
-        suggestionContext_menu.add_cascade(label="Quantity", menu=suggestion_quantity_menu)
+        suggestion_quantity_menu = Menu(suggestion_context_menu, tearoff=0)
+        suggestion_context_menu.add_cascade(label="Quantity", menu=suggestion_quantity_menu)
         for quantity in range(0, 10):
             suggestion_quantity_menu.add_radiobutton(label=str(quantity), variable=self.suggestion_quantity_var, value=quantity, command=lambda suggestion_quantity=quantity: self.set_suggestion_quantity(suggestion_quantity))
         # Match Mode
-        match_mode_menu = Menu(suggestionContext_menu, tearoff=0)
-        suggestionContext_menu.add_cascade(label="Match Mode", menu=match_mode_menu)
+        match_mode_menu = Menu(suggestion_context_menu, tearoff=0)
+        suggestion_context_menu.add_cascade(label="Match Mode", menu=match_mode_menu)
         match_modes = {"Match Whole String": False, "Match Last Word": True}
         for mode, value in match_modes.items():
             match_mode_menu.add_radiobutton(label=mode, variable=self.last_word_match_var, value=value)
-        suggestionContext_menu.tk_popup(event.x_root, event.y_root)
+        # Position
+        x, y = (event.x_root, event.y_root) if not button else (self.suggestion_menubutton.winfo_rootx(), self.suggestion_menubutton.winfo_rooty())
+        suggestion_context_menu.tk_popup(x, y)
 
 
     # --------------------------------------
@@ -1927,7 +1928,7 @@ class ImgTxtViewer:
         self.auto_save_checkbutton.configure(state="normal")
         self.view_menubutton.configure(state="normal")
         # Bindings
-        self.suggestion_textbox.bind("<Button-3>", self.show_suggestionContext_menu)
+        self.suggestion_textbox.bind("<Button-3>", self.show_suggestion_context_menu)
         self.image_index_entry.bind("<Button-3>", self.open_index_context_menu)
         self.total_images_label.bind("<Button-3>", self.open_index_context_menu)
         self.index_pair_label.bind("<Button-3>", self.open_index_context_menu)
@@ -1950,8 +1951,8 @@ class ImgTxtViewer:
         self.popup_zoom.zoom_enabled.set(new_state)
         self.toggle_zoom_var.set(new_state)
         self.options_subMenu.entryconfig("Toggle Zoom", variable=self.toggle_zoom_var)
-        if hasattr(self, 'imageContext_menu'):
-            self.imageContext_menu.entryconfig("Toggle Zoom", variable=self.toggle_zoom_var)
+        if hasattr(self, 'image_context_menu'):
+            self.image_context_menu.entryconfig("Toggle Zoom", variable=self.toggle_zoom_var)
         state, text = ("disabled", "") if new_state else ("normal", "Double-Click to open in system image viewer \n\nMiddle click to open in file explorer\n\nALT+Left/Right or Mouse-Wheel to move between img-txt pairs")
         self.image_preview_tooltip.config(state=state, text=text)
         if new_state:
