@@ -17,7 +17,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 ---
 
 
-### New:
+**New:**
 - **AutoTag**: Automatically tag images using ONNX vision models like `wd-v1-4-vit-tagger-v2`.
   - Download additional models from [Hugging Face](https://huggingface.co/SmilingWolf).
   - Place models in subfolders within the `onnx_models` directory, located in the same folder as this program. The subfolder name will be used as the model name.
@@ -55,7 +55,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 - **Easter Egg Game**: Can be opened from the ImgTxtViewer About Window.
 
 
-### Fixed:
+**Fixed:**
 - Fixed issue where the `Delete Pair` tool would overwrite the next index with the deleted text. #31
 - Fixed an issue that was degrading the quality of the displayed image and not respecting the `Image Display Quality` setting.
 - Fixed a memory leak that could occur whenever the primary image is displayed.
@@ -77,7 +77,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 - Reloading the last directory is a little faster / smoother now.
 
 
-### Other Changes:
+**Other Changes:**
 - Autocomplete suggestions are now cached, so re-typing the same words returns suggestions quicker.
   - Some pre-caching is done for Autocomplete suggestions, which does slow down the initial launch slightly.
 - Using `Open Current Directory...` will now automatically select the current image in the file explorer. #30
@@ -97,7 +97,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
 
 
-### Project Changes:
+**Project Changes:**
 - **Upscale, Batch Upscale**: v1.05:
   - FIXED: Prevent the app from hanging while upscaling a GIF.
   - Batch Upscale: Added a label to display the number of images upscaled and the total number of images.
@@ -600,7 +600,7 @@ Here's some new tools, fixes, and changes for version 1.90:
 ---
 
 
-### Batch Tag Delete
+Batch Tag Delete
 v1.06 changes:
 
 
@@ -851,7 +851,7 @@ This makes it way more simple and easier to use these tools.
 ---
 
 
-### Batch Token Delete
+Batch Token Delete
 v1.04 changes:
 
 
@@ -902,7 +902,7 @@ v1.04 changes:
 ---
 
 
-### Batch Token Delete
+Batch Token Delete
 v1.03 changes:
 
 
