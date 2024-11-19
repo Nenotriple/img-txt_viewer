@@ -1421,40 +1421,107 @@ class ImgTxtViewer:
     # --------------------------------------
     def create_custom_dictionary_widgets_tab8(self):
         def save():
+            tags = self.custom_dictionary_listbox.get(0, 'end')
+            content = '\n'.join(tags) + '\n'
             with open(self.my_tags_csv, 'w') as file:
-                content  = self.remove_extra_newlines(self.custom_dictionary_textbox.get("1.0", "end-1c"))
                 file.write(content)
-                self.master.after(100, self.refresh_custom_dictionary)
+            self.master.after(100, self.refresh_custom_dictionary)
+
+        def add_tag():
+            tag = tag_entry.get().strip()
+            if tag:
+                self.custom_dictionary_listbox.insert('end', tag)
+                tag_entry.delete(0, 'end')
+
+        def remove_tag():
+            selected_indices = self.custom_dictionary_listbox.curselection()
+            for index in reversed(selected_indices):
+                self.custom_dictionary_listbox.delete(index)
+
+        def edit_tag():
+            selected_indices = self.custom_dictionary_listbox.curselection()
+            if selected_indices:
+                index = selected_indices[0]
+                tag = self.custom_dictionary_listbox.get(index)
+                tag_entry.delete(0, 'end')
+                tag_entry.insert(0, tag)
+                self.custom_dictionary_listbox.delete(index)
+
+        def load_tag_file():
+            with open(self.my_tags_csv, 'r') as file:
+                content = self.remove_lines_starting_with_hashes(self.remove_extra_newlines(file.read()))
+                tags = content.split('\n')
+                for tag in tags:
+                    if tag.strip():
+                        self.custom_dictionary_listbox.insert('end', tag.strip())
+
+        def insert_tag(position='end'):
+            selected_indices = self.custom_dictionary_listbox.curselection()
+            for index in selected_indices:
+                tag = self.custom_dictionary_listbox.get(index)
+                current_text = self.text_box.get('1.0', 'end-1c')
+                separator = ', ' if current_text else ''
+
+                if position == 'start':
+                    self.text_box.insert('1.0', f"{tag}{separator}")
+                else:  # position == 'end'
+                    self.text_box.insert('end', f"{separator}{tag}")
+
+        def move(direction):
+            selected_indices = self.custom_dictionary_listbox.curselection()
+            delta = -1 if direction == 'up' else 1
+
+            for index in (selected_indices if direction == 'up' else reversed(selected_indices)):
+                new_index = index + delta
+                if 0 <= new_index < self.custom_dictionary_listbox.size():
+                    tag = self.custom_dictionary_listbox.get(index)
+                    self.custom_dictionary_listbox.delete(index)
+                    self.custom_dictionary_listbox.insert(new_index, tag)
+                    self.custom_dictionary_listbox.selection_set(new_index)
+
         self.create_custom_dictionary(refresh=False)
         tab_frame = Frame(self.tab8)
         tab_frame.pack(side='top', fill='both', expand=True)
-        button_frame = Frame(tab_frame)
-        button_frame.pack(side='top', fill='x', pady=4)
-        info_label = Label(button_frame, text="^^^Expand this frame^^^")
+        # Top Row
+        top_frame = Frame(tab_frame)
+        top_frame.pack(side='top', fill='x', pady=4)
+        info_label = Label(top_frame, text="Manage your custom tags:")
         info_label.pack(side='left')
-        ToolTip.create(info_label, "Click and drag the gray bar up to reveal the text box", 200, 6, 12)
-        open_mytags_button = ttk.Button(button_frame, width=10, text="Open", takefocus=False, command=lambda: self.open_textfile("my_tags.csv"))
-        open_mytags_button.pack(side='right', fill='x')
-        ToolTip.create(open_mytags_button, "Open the 'my_tags.csv' file in your default system app.", 200, 6, 12)
-        save_mytags_button = ttk.Button(button_frame, width=10, text="Save", takefocus=False, command=save)
-        save_mytags_button.pack(side='right', fill='x')
-        ToolTip.create(save_mytags_button, "Save the contents of the textbox to 'my_tags.csv'", 200, 6, 12)
-        use_mytags_checkbutton = ttk.Checkbutton(button_frame, text="Use MyTags", variable=self.use_mytags_var, takefocus=False, command=self.refresh_custom_dictionary)
+        save_button = ttk.Button(top_frame, text="Save Tags", takefocus=False, command=save)
+        save_button.pack(side='right')
+        use_mytags_checkbutton = ttk.Checkbutton(top_frame, text="Use MyTags", variable=self.use_mytags_var, takefocus=False, command=self.refresh_custom_dictionary)
         use_mytags_checkbutton.pack(side='right', fill='x')
-        ToolTip.create(use_mytags_checkbutton, "Enable or disable these tags for use with autocomplete.", 200, 6, 12)
+        # Middle Row
         text_frame = Frame(tab_frame)
-        text_frame.pack(side='top', fill='both')
-        description_text = Text(text_frame, bg="#f0f0f0")
-        description_text.pack(side='top', fill="both", expand=True)
-        description_text.insert("1.0", "Create a custom dictionary of tags.\n"
-                                      "Use newlines to separate tags.")
-        description_text.config(state="disabled", wrap="word", height=3)
-        self.custom_dictionary_textbox = scrolledtext.ScrolledText(text_frame, wrap="word")
-        self.custom_dictionary_textbox.pack(side='top', fill='both', expand=True)
-        with open(self.my_tags_csv, 'r') as file:
-            content = self.remove_lines_starting_with_hashes(self.remove_extra_newlines(file.read()))
-            self.custom_dictionary_textbox.insert('end', content)
-        self.custom_dictionary_textbox.configure(undo=True)
+        text_frame.pack(side='top', fill='both', expand=True)
+        self.custom_dictionary_listbox = Listbox(text_frame, selectmode='extended', height=1)
+        self.custom_dictionary_listbox.pack(side='left', fill='both', expand=True)
+        # Sidebar
+        listbox_button_frame = Frame(text_frame)
+        listbox_button_frame.pack(side='left', fill='both')
+        prefix_button = ttk.Button(listbox_button_frame, text="Prefix", command=lambda: insert_tag('start'))
+        prefix_button.grid(row=0, column=0)
+        append_button = ttk.Button(listbox_button_frame, text="Append", command=insert_tag)
+        append_button.grid(row=0, column=1)
+        ttk.Separator(listbox_button_frame, orient='horizontal').grid(row=1, column=0, columnspan=2, sticky='ew', pady=4)
+        edit_button = ttk.Button(listbox_button_frame, text="Edit", command=edit_tag)
+        edit_button.grid(row=2, column=0)
+        remove_button = ttk.Button(listbox_button_frame, text="Remove", command=remove_tag)
+        remove_button.grid(row=2, column=1)
+        ttk.Separator(listbox_button_frame, orient='horizontal').grid(row=3, column=0, columnspan=2, sticky='ew', pady=4)
+        move_up_button = ttk.Button(listbox_button_frame, text="Move Up", command=lambda: move('up'))
+        move_up_button.grid(row=4, column=0)
+        move_down_button = ttk.Button(listbox_button_frame, text="Move Down", command=lambda: move('down'))
+        move_down_button.grid(row=4, column=1)
+        # Bottom Row
+        entry_frame = Frame(tab_frame)
+        entry_frame.pack(side='top', fill='x', pady=4)
+        tag_entry = ttk.Entry(entry_frame)
+        tag_entry.pack(side='left', fill='x', expand=True)
+        tag_entry.bind('<Return>', lambda event: add_tag())
+        add_button = ttk.Button(entry_frame, text="Add", command=add_tag)
+        add_button.pack(side='left')
+        load_tag_file()
         self.refresh_custom_dictionary()
 
 
@@ -4021,8 +4088,11 @@ class ImgTxtViewer:
     def refresh_custom_dictionary(self):
         with open(self.my_tags_csv, 'r') as file:
             content = self.remove_extra_newlines(file.read())
-            self.custom_dictionary_textbox.delete("1.0", 'end')
-            self.custom_dictionary_textbox.insert('end', content)
+            tags = content.split('\n')
+            self.custom_dictionary_listbox.delete(0, 'end')
+            for tag in tags:
+                if tag.strip():
+                    self.custom_dictionary_listbox.insert('end', tag.strip())
             self.update_autocomplete_dictionary()
 
 
@@ -4668,6 +4738,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - All tools that used the message box for notifications now use a message popup.
 - Custom and duplicate highlights now use a range of pastel colors.
 - Saving using the `CTRL + S` hotkey will now highlight the save button for a brief moment.
+- The MyTags tab got an overhaul with more features.
 - The target operating system for this project is now Windows 11, resulting in some UI changes.
   - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
 
