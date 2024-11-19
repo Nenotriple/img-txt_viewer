@@ -1,16 +1,26 @@
 """This module contains the SettingsManager class, which is responsible for saving and loading user settings."""
 
+
+#endregion
+################################################################################################################################################
+#region Imports
+
+
 # Standard Library
 import os
 import configparser
 
+
 # Standard Library - GUI
-from tkinter import messagebox
+from tkinter import ttk, messagebox, BooleanVar, StringVar, Toplevel, Frame, Label
 import traceback
 
-# --------------------------------------
-# Class: SettingsManager
-# --------------------------------------
+
+#endregion
+################################################################################################################################################
+#region CLS: SettingsManager
+
+
 class SettingsManager:
     def __init__(self, parent, root, version):
         self.parent = parent
@@ -21,9 +31,11 @@ class SettingsManager:
         self.edit_panel = self.parent.edit_panel
 
 
-# --------------------------------------
-# Save
-# --------------------------------------
+#endregion
+################################################################################################################################################
+#region Save
+
+
     def save_settings(self):
         """Saves the current user settings to a file."""
         try:
@@ -130,9 +142,10 @@ class SettingsManager:
             self.config.write(f)
 
 
-# --------------------------------------
-# Read
-# --------------------------------------
+#endregion
+################################################################################################################################################
+#region Read
+
     def read_settings(self):
         """Reads the user settings from the configuration file."""
         try:
@@ -232,9 +245,11 @@ class SettingsManager:
         self.parent.list_mode_var.set(value=self.config.getboolean("Other", "list_mode", fallback=False))
 
 
-# --------------------------------------
-# Reset
-# --------------------------------------
+#endregion
+################################################################################################################################################
+#region Reset
+
+
     def reset_settings(self):
         """Resets all settings to their default values."""
         if not messagebox.askokcancel("Confirm Reset", "Reset all settings to their default parameters?"):
@@ -263,7 +278,7 @@ class SettingsManager:
         self.parent.clear_search_and_replace_tab()
         self.parent.prefix_entry.delete(0, 'end')
         self.parent.append_entry.delete(0, 'end')
-        self.parent.revert_text_image_filter(clear=True)
+        self.parent.revert_text_image_filter(clear=True, quiet=False)
         self.parent.clear_highlight_tab()
         self.parent.list_mode_var.set(value=False)
         self.parent.toggle_list_mode()
@@ -312,4 +327,121 @@ class SettingsManager:
         # Title
         self.parent.sync_title_with_content()
         # Guided setup
-        self.parent.prompt_first_time_setup()
+        self.prompt_first_time_setup()
+
+
+#endregion
+################################################################################################################################################
+#region - Setup
+
+
+    def prompt_first_time_setup(self):
+        dictionary_vars = {
+            "English Dictionary": BooleanVar(value=True),
+            "Danbooru": BooleanVar(),
+            "Danbooru (Safe)": BooleanVar(),
+            "e621": BooleanVar(),
+            "Derpibooru": BooleanVar()
+            }
+        last_word_match_var = StringVar(value="Match Last Word")
+        match_modes = {"Match Whole String": False, "Match Last Word": True}
+
+        def save_and_continue(close=False, back=False):
+            self.parent.csv_english_dictionary.set(dictionary_vars["English Dictionary"].get())
+            self.parent.csv_danbooru.set(dictionary_vars["Danbooru"].get())
+            self.parent.csv_danbooru_safe.set(dictionary_vars["Danbooru (Safe)"].get())
+            self.parent.csv_e621.set(dictionary_vars["e621"].get())
+            self.parent.csv_derpibooru.set(dictionary_vars["Derpibooru"].get())
+            self.parent.last_word_match_var.set(match_modes.get(last_word_match_var.get(), False))
+            if close:
+                save_and_close()
+            elif back:
+                clear_widgets()
+                create_dictionary_selection_widgets()
+                setup_window.geometry("400x250")
+            else:
+                self.save_settings()
+                clear_widgets()
+                setup_last_word_match_frame()
+                setup_window.geometry("400x250")
+
+        def clear_widgets():
+            for widget in setup_window.winfo_children():
+                widget.destroy()
+
+        def setup_last_word_match_frame():
+            options = [
+                ("Match only the last word", "Matches only the last word typed.\nExample: Typing 'blue sky' matches 'sky'.", "Match Last Word"),
+                ("Match entire tag", "Matches the entire tag, including multiple words.\nExample: Typing 'blue sky' matches 'blue sky'.", "Match Whole String")
+            ]
+            Label(setup_window, text="Select tag matching method").pack(pady=5)
+            ttk.Separator(setup_window, orient="horizontal").pack(fill="x", padx=5, pady=5)
+            for header, description, value in options:
+                ttk.Radiobutton(setup_window, text=header, variable=last_word_match_var, value=value).pack(pady=5)
+                Label(setup_window, text=description).pack(pady=5)
+            ttk.Separator(setup_window, orient="horizontal").pack(fill="x", padx=5, pady=5)
+            ttk.Button(setup_window, text="Back", width=10, command=lambda: save_and_continue(back=True)).pack(side="left", anchor="w", pady=5, padx=10)
+            ttk.Button(setup_window, text="Done", width=10, command=lambda: save_and_continue(close=True)).pack(side="right", anchor="e", pady=5, padx=10)
+
+        def save_and_close():
+            self.save_settings()
+            setup_window.destroy()
+            self.parent.update_autocomplete_dictionary()
+
+        def create_setup_window():
+            setup_window = Toplevel(self.parent.master)
+            setup_window.title("Dictionary Setup")
+            setup_window.iconphoto(False, self.parent.blank_image)
+            window_width, window_height = 400, 250
+            position_right = self.root.winfo_screenwidth() // 2 - window_width // 2
+            position_top = self.root.winfo_screenheight() // 2 - window_height // 2
+            setup_window.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
+            setup_window.resizable(False, False)
+            setup_window.grab_set()
+            setup_window.protocol("WM_DELETE_WINDOW", save_and_close)
+            return setup_window
+
+        def create_dictionary_selection_widgets():
+            def toggle_danbooru_safe(*args):
+                if dictionary_vars["Danbooru"].get():
+                    danbooru_safe_checkbutton.config(state="disabled")
+                else:
+                    danbooru_safe_checkbutton.config(state="normal")
+
+            def toggle_danbooru(*args):
+                if dictionary_vars["Danbooru (Safe)"].get():
+                    danbooru_checkbutton.config(state="disabled")
+                else:
+                    danbooru_checkbutton.config(state="normal")
+
+            # Widgets
+            Label(setup_window, text="Please select your preferred autocomplete dictionaries").pack(pady=5)
+            ttk.Separator(setup_window, orient="horizontal").pack(fill="x", padx=5, pady=5)
+            # Centering frame vertically
+            frame_container = Frame(setup_window)
+            frame_container.pack(expand=True, fill="both")
+            frame = Frame(frame_container)
+            frame.pack(padx=5, pady=5, expand=True)
+            frame.rowconfigure(0, weight=1)
+            # First row (centered)
+            frame_top = Frame(frame)
+            frame_top.grid(row=0, column=0, columnspan=3)
+            ttk.Checkbutton(frame_top, text="English Dictionary", variable=dictionary_vars["English Dictionary"]).pack(side="left", padx=5, pady=5)
+            danbooru_safe_checkbutton = ttk.Checkbutton(frame_top, text="Danbooru (Safe)", variable=dictionary_vars["Danbooru (Safe)"])
+            danbooru_safe_checkbutton.pack(side="left", padx=5, pady=5)
+            dictionary_vars["Danbooru (Safe)"].trace_add("write", toggle_danbooru)
+            # Second row (filled)
+            danbooru_checkbutton = ttk.Checkbutton(frame, text="Danbooru", variable=dictionary_vars["Danbooru"])
+            danbooru_checkbutton.grid(row=1, column=0, padx=5, pady=5)
+            dictionary_vars["Danbooru"].trace_add("write", toggle_danbooru_safe)
+            ttk.Checkbutton(frame, text="e621", variable=dictionary_vars["e621"]).grid(row=1, column=1, padx=5, pady=5)
+            ttk.Checkbutton(frame, text="Derpibooru", variable=dictionary_vars["Derpibooru"]).grid(row=1, column=2, padx=5, pady=5)
+            # Third row (centered)
+            ttk.Separator(setup_window, orient="horizontal").pack(fill="x", padx=5, pady=5)
+            Label(setup_window, text="The autocomplete dictionaries and settings can be changed at any time.").pack(pady=5)
+            ttk.Button(setup_window, text="Next", width=10, command=save_and_continue).pack(side="bottom", anchor="e", pady=5, padx=10)
+        setup_window = create_setup_window()
+        create_dictionary_selection_widgets()
+
+
+#endregion
