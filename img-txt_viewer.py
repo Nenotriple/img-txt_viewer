@@ -2600,7 +2600,7 @@ class ImgTxtViewer:
                 image_file_path = os.path.join(self.image_dir.get(), filename)
                 self.image_files.append(image_file_path)
                 text_filename = os.path.splitext(filename)[0] + ".txt"
-                text_file_path = os.path.join(self.image_dir.get(), text_filename)
+                text_file_path = os.path.join(self.text_dir, text_filename)
                 if not os.path.exists(text_file_path):
                     self.new_text_files.append(filename)
                 self.text_files.append(text_file_path)
@@ -4710,7 +4710,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
 
 ### Todo
-- (Very Low) Go through all tools that touch text files and make sure they work with alt-text paths.
+-
 
 
 ### Tofix
