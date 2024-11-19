@@ -49,7 +49,7 @@ from tkinter import (ttk, Tk, Toplevel, messagebox, filedialog, simpledialog,
 # Third-Party Libraries
 import numpy
 from TkToolTip.TkToolTip import TkToolTip as ToolTip
-from PIL import (Image, ImageTk, ImageSequence, ImageOps, UnidentifiedImageError)
+from PIL import Image, ImageTk, ImageSequence, ImageOps, UnidentifiedImageError
 
 
 # Custom Libraries

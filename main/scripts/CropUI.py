@@ -18,7 +18,6 @@ Create a UI that allows the user to open an image file and crop a selection from
 
 # Standard Library
 import os
-import tempfile
 
 
 # Standard Library GUI
@@ -945,7 +944,7 @@ class CropSelGuidelines:
             (x2, y1, x2 - diagonal_length, y1 + diagonal_length),
             (x1, y2, x1 + diagonal_length, y2 - diagonal_length),
             (x2, y2, x2 - diagonal_length, y2 - diagonal_length)
-        ]
+            ]
         # Draw diagonal guidelines
         for x1, y1, x2, y2 in diagonals:
             self.draw_guideline(x1, y1, x2, y2, offset)

@@ -144,6 +144,7 @@ class BatchResizeImages:
         self.create_bottom_row()
         self.additional_setup()
 
+
     def setup_primary_frame(self):
         self.parent.hide_primary_paned_window()
         self.batch_resize_images_frame = tk.Frame(self.root)
@@ -666,6 +667,7 @@ class BatchResizeImages:
         thread = threading.Thread(target=self.resize_thread)
         thread.start()
 
+
     def resize_thread(self):
         self.percent_complete.set(0)
         self.stop = False
@@ -834,7 +836,6 @@ class BatchResizeImages:
                                     "\n\nexiftool.exe does not exist in the root path. (Check spelling)"
                                     "\n\nDownload the Windows executable from exiftool.org and place in the same folder as batch_resize_images.exe, restart the program and try again."
                                     "\n\nThe resize operation will now stop.")
-
 
 
 #endregion

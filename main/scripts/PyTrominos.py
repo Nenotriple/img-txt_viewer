@@ -28,6 +28,7 @@ INITIAL_SPEED = 500
 INITIAL_MOVE_DELAY = 100
 MOVE_REPEAT_RATE = 50
 
+
 # Tromino shapes
 SHAPES = [
     # I
@@ -56,6 +57,7 @@ SHAPES = [
     [[1, 1, 0],
      [0, 1, 1]]
 ]
+
 
 # Tromino colors
 COLORS = ["#00bde7", "#6d47e8", "#e26a00", "#e4b507", "#94e606", "#9a2daa", "#ec0054"]

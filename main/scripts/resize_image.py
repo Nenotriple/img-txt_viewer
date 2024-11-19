@@ -98,6 +98,7 @@ class ResizeTool:
 
         self.calculate_image_size()
 
+
 #endregion
 ################################################################################################################################################
 #region -  Interface Setup
@@ -564,8 +565,6 @@ class ResizeTool:
 #region - File Management
 
 
-
-
     def calculate_image_size(self, event=None):
         if self.new_image_width.get() > 12000 or self.new_image_height.get() > 12000:
             self.label_new_size.config(text="???")
@@ -636,7 +635,6 @@ class ResizeTool:
             messagebox.showerror("Error", "Invalid values. Please enter valid digits.")
         except (PermissionError, IOError):
             messagebox.showerror("Error", "An error occurred while saving the image.")
-
 
 
 #endregion

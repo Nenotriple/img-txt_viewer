@@ -6,17 +6,18 @@
 
 # Standard Library
 import os
+import re
 import sys
 import csv
-import re
-import itertools
 import pickle
+import itertools
 from collections import defaultdict
 
 
 #endregion
 ################################################################################################################################################
 #region CLS: Autocomplete
+
 
 class Autocomplete:
     def __init__(self, data_file, include_my_tags=True):

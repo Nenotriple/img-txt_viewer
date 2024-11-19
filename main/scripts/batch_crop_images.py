@@ -36,18 +36,17 @@ from PIL import Image
 ################################################################################################################################################
 #region - CLASS: BatchCrop
 
+
 class BatchCrop:
     def __init__(self, master, filepath, window_x, window_y):
+        self.filepath = filepath
+        self.supported_formats = {".jpg", ".jpeg", ".png", ".jfif", ".jpg_large", ".bmp", ".webp"}
         self.top = Toplevel(master, borderwidth=2, relief="groove")
         self.top.overrideredirect("true")
         self.top.geometry("+{}+{}".format(window_x, window_y))
+        self.top.bind("<Escape>", self.close_window)
         self.top.grab_set()
         self.top.focus_force()
-        self.top.bind("<Escape>", self.close_window)
-
-        self.filepath = filepath
-        self.supported_formats = {".jpg", ".jpeg", ".png", ".jfif", ".jpg_large", ".bmp", ".webp"}
-
         self.create_interface()
 
 
@@ -57,70 +56,55 @@ class BatchCrop:
 
 
     def create_interface(self):
-
+        # Title Bar
         self.frame_container = Frame(self.top)
         self.frame_container.pack(expand=True, fill="both")
-
-
-        # Title
         title = Label(self.frame_container, cursor="size", text="Batch Crop Images", font=("", 16))
         title.pack(side="top", fill="x", padx=5, pady=5)
         title.bind("<ButtonPress-1>", self.start_drag)
         title.bind("<ButtonRelease-1>", self.stop_drag)
         title.bind("<B1-Motion>", self.dragging_window)
-
         self.button_close = Button(self.frame_container, text="X", overrelief="groove", relief="flat", command=self.close_window)
         self.button_close.place(anchor="nw", relx=0.92, height=40, width=40, x=-10, y=0)
         self.bind_widget_highlight(self.button_close, color='#ffcac9')
-
         separator = ttk.Separator(self.frame_container)
         separator.pack(side="top", fill="x")
-
-
         # Width and Height Entry
         self.frame_width_height = Frame(self.top)
         self.frame_width_height.pack(side="top", fill="x", padx=10, pady=10)
-
+        # Width Entry
         self.frame_width = Frame(self.frame_width_height)
         self.frame_width.pack(side="left", fill="x", padx=10, pady=10)
-
         self.label_width = Label(self.frame_width, text="Width (px)")
         self.label_width.pack(anchor="w", side="top", padx=5, pady=5)
         self.entry_width_var = StringVar()
         self.entry_width = ttk.Entry(self.frame_width, textvariable=self.entry_width_var)
         self.entry_width.pack(side="top", padx=5, pady=5)
         self.entry_width.bind("<Return>", self.process_images)
-
+        # Height Entry
         self.frame_height = Frame(self.frame_width_height)
         self.frame_height.pack(side="left", fill="x", padx=10, pady=10)
-
         self.label_height = Label(self.frame_height, text="Height (px)")
         self.label_height.pack(anchor="w", side="top", padx=5, pady=5)
         self.entry_height_var = StringVar()
         self.entry_height = ttk.Entry(self.frame_height, textvariable=self.entry_height_var)
         self.entry_height.pack(side="top", padx=5, pady=5)
         self.entry_height.bind("<Return>", self.process_images)
-
-
         # Crop Anchor Combobox
         self.frame_anchor = Frame(self.top)
         self.frame_anchor.pack(side="top", padx=10, pady=10)
-
         self.label_anchor = Label(self.frame_anchor, text="Crop Anchor")
         self.label_anchor.pack(side="left", padx=5, pady=5)
-
         self.combo_anchor = ttk.Combobox(self.frame_anchor, values=['Center', 'North', 'East', 'South', 'West', 'North-East',  'North-West', 'South-East', 'South-West'], state="readonly")
         self.combo_anchor.set("Center")
         self.combo_anchor.pack(side="left", padx=5, pady=5)
-
-
         # Primary Buttons
         self.frame_primary_buttons = Frame(self.top)
         self.frame_primary_buttons.pack(side="top", fill="x")
-
+        # Crop Button
         self.button_crop = ttk.Button(self.frame_primary_buttons, text="Crop", command=self.process_images)
         self.button_crop.pack(side="left", expand=True, fill="x", padx=5, pady=5)
-
+        # Cancel Button
         self.button_cancel = ttk.Button(self.frame_primary_buttons, text="Cancel", command=self.close_window)
         self.button_cancel.pack(side="left", expand=True, fill="x", padx=5, pady=5)
 

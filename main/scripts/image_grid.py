@@ -46,7 +46,6 @@ class ImageGrid:
 
 
     def __init__(self, master, img_txt_viewer, window_x, window_y, jump_to_image):
-
         # Window configuration
         self.create_window(master, window_x, window_y)
 
@@ -114,18 +113,17 @@ class ImageGrid:
     def create_top_handle(self):
         self.frame_top_Handle = Frame(self.top)
         self.frame_top_Handle.pack(fill="both")
-
+        # Title bar
         title = Label(self.frame_top_Handle, cursor="size", text="Image-Grid", font=("", 16))
         title.pack(side="top", fill="x", padx=5, pady=5)
         title.bind("<ButtonPress-1>", self.start_drag)
         title.bind("<ButtonRelease-1>", self.stop_drag)
         title.bind("<B1-Motion>", self.dragging_window)
-
+        # Close button
         self.button_close = Button(self.frame_top_Handle, text="X", overrelief="groove", relief="flat", command=self.close_window)
         self.button_close.place(anchor="nw", relx=0.945, height=40, width=40)
         self.bind_widget_highlight(self.button_close, color='#ffcac9')
         ToolTip.create(self.button_close, "Close", 500, 6, 12)
-
         separator = ttk.Separator(self.frame_top_Handle)
         separator.pack(side="top", fill="x")
 
@@ -133,19 +131,14 @@ class ImageGrid:
     def create_canvas(self):
         self.frame_main = Frame(self.top)
         self.frame_main.pack(fill="both", expand=True)
-
         self.scrollbar = Scrollbar(self.frame_main)
         self.scrollbar.pack(side="right", fill="y")
-
         self.frame_thumbnails = Frame(self.frame_main)
         self.frame_thumbnails.pack(side="left", fill="both", expand=True)
-
         self.canvas_thumbnails = Canvas(self.frame_thumbnails, yscrollcommand=self.scrollbar.set)
         self.canvas_thumbnails.pack(side="top", fill="both", expand=True)
         self.canvas_thumbnails.bind("<MouseWheel>", self.on_mousewheel)
-
         self.scrollbar.config(command=self.canvas_thumbnails.yview)
-
         self.frame_image_grid = Frame(self.canvas_thumbnails)
         self.frame_image_grid.bind("<MouseWheel>", self.on_mousewheel)
 
@@ -153,32 +146,31 @@ class ImageGrid:
     def create_control_row(self):
         self.frame_bottom = Frame(self.frame_thumbnails)
         self.frame_bottom.pack(side="bottom", fill="x", padx=5)
-
-        self.label_image_info = Label(self.frame_bottom, text="Size:")
-        self.label_image_info.pack(side="left", padx=5)
-        ToolTip.create(self.label_image_info, "Adjust grid size", 500, 6, 12)
-
+        # Size slider
+        self.label_size = Label(self.frame_bottom, text="Size:")
+        self.label_size.pack(side="left", padx=5)
+        ToolTip.create(self.label_size, "Adjust grid size", 500, 6, 12)
         self.slider_image_size = ttk.Scale(self.frame_bottom, variable=self.image_size, orient="horizontal", from_=1, to=3, command=self.round_scale_input)
         self.slider_image_size.bind("<ButtonRelease-1>", lambda event: self.reload_grid())
         self.slider_image_size.pack(side="left")
         ToolTip.create(self.slider_image_size, "Adjust grid size", 500, 6, 12)
-
+        # Grip
         self.grip_window_size = ttk.Sizegrip(self.frame_bottom)
         self.grip_window_size.pack(side="right", padx=(5, 0))
         ToolTip.create(self.grip_window_size, "Adjust window size", 500, 6, 12)
-
+        # Refresh
         self.button_refresh = ttk.Button(self.frame_bottom, text="Refresh", command=self.reload_grid)
         self.button_refresh.pack(side="right", padx=5)
         ToolTip.create(self.button_refresh, "Refresh the image grid. Useful when you've added or removed images, or altered the text pairs.", 500, 6, 12)
-
+        # Load All
         self.button_load_all = ttk.Button(self.frame_bottom, text="Load All", command=lambda: self.load_images(all_images=True))
         self.button_load_all.pack(side="right", padx=5)
         ToolTip.create(self.button_load_all, "Load all images in the folder (Slow)", 500, 6, 12)
-
+        # Image Info
         self.label_image_info = Label(self.frame_bottom, width=14)
         self.label_image_info.pack(side="right", padx=5)
         ToolTip.create(self.label_image_info, "Filtered Images : Loaded Images, Total Images", 500, 6, 12)
-
+        # Auto-Close
         self.checkbutton_auto_close = ttk.Checkbutton(self.frame_bottom, text="Auto-Close", variable=self.auto_close)
         self.checkbutton_auto_close.pack(side="right", padx=5)
         ToolTip.create(self.checkbutton_auto_close, "Uncheck this to keep the window open after selecting an image", 500, 6, 12)
@@ -188,43 +180,43 @@ class ImageGrid:
         self.button_toggle_frame = ttk.Button(self.frame_bottom, text="Filtering", command=self.toggle_filterframe_visibility)
         self.button_toggle_frame.pack(side="left", padx=5)
         ToolTip.create(self.button_toggle_frame, "Show or hide the filtering options", 500, 6, 12)
-
+        # Filtering frame
         self.frame_filtering = Frame(self.frame_thumbnails)
         self.filterframe_visible = False
-
+        # Separator
         hori_separator = ttk.Separator(self.frame_filtering)
         hori_separator.pack(side="top", fill="x")
-
         vert_separator = ttk.Separator(self.frame_filtering, orient="vertical")
         vert_separator.pack(side="left", fill="y")
-
+        # Filter Radiobuttons - All, Paired, Unpaired
         self.pair_filter_var = StringVar(value="All")
+        # All
         self.radiobutton_all = ttk.Radiobutton(self.frame_filtering, text="All", variable=self.pair_filter_var, value="All", command=self.reload_grid)
         self.radiobutton_all.pack(side="left", padx=1)
         ToolTip.create(self.radiobutton_all, "Display all LOADED images", 500, 6, 12)
-
+        # Paired
         self.radiobutton_paired = ttk.Radiobutton(self.frame_filtering, text="Paired", variable=self.pair_filter_var, value="Paired", command=self.reload_grid)
         self.radiobutton_paired.pack(side="left", padx=1)
         ToolTip.create(self.radiobutton_paired, "Display images with text pairs", 500, 6, 12)
-
+        # Unpaired
         self.radiobutton_unpaired = ttk.Radiobutton(self.frame_filtering, text="Unpaired", variable=self.pair_filter_var, value="Unpaired", command=self.reload_grid)
         self.radiobutton_unpaired.pack(side="left", padx=1)
         ToolTip.create(self.radiobutton_unpaired, "Display images without text pairs", 500, 6, 12)
-
+        # Separator
         vert_separator = ttk.Separator(self.frame_filtering, orient="vertical")
         vert_separator.pack(side="left", fill="y")
-
+        # Extra Filtering Toggle
         self.enable_extra_filter_var = BooleanVar(value=0)
         self.checkbutton_enable_extra_filter = ttk.Checkbutton(self.frame_filtering, variable=self.enable_extra_filter_var, command=self.toggle_filter_widgets)
         self.checkbutton_enable_extra_filter.pack(side="left")
-
+        # Extra Filtering Options
         self.filter_options = ["Resolution", "Aspect Ratio", "Filesize", "Filename", "Filetype", "Tags"]
         self.filter_var = StringVar(value=self.filter_options[0])
         self.combobox_filter = ttk.Combobox(self.frame_filtering, textvariable=self.filter_var, values=self.filter_options, width=12, state="disabled")
         self.combobox_filter.pack(side="left", padx=5)
         self.combobox_filter.bind('<<ComboboxSelected>>', lambda event: self.handle_filter_options())
         ToolTip.create(self.combobox_filter, "Filter images by the selected option", 500, 6, 12)
-
+        # Filtering Operator
         self.operator_var = StringVar(value="=")
         self.operator_options = ["=", "<", ">", "*"]
         self.menu_button_operator = ttk.Menubutton(self.frame_filtering, textvariable=self.operator_var, state="disabled")
@@ -235,7 +227,7 @@ class ImageGrid:
             self.menu_button_operator.menu.add_radiobutton(label=option, variable=self.operator_var, value=option, command=self.reload_grid)
         self.menu_button_operator.pack(side="left", padx=5)
         ToolTip.create(self.menu_button_operator, "Select a filter operator", 500, 6, 12)
-
+        # Filtering Entry
         self.filter_entry = ttk.Entry(self.frame_filtering, state="disabled", width=15)
         self.filter_entry.pack(side="left", padx=5, fill="x", expand=True)
         self.filter_entry.bind("<KeyRelease>", lambda event: self.reload_grid())
@@ -246,10 +238,10 @@ class ImageGrid:
         self.filter_entry_tooltiptext_filetype = "Enter an appropriate filter value for: Filetype\n\nEnter a file extension. Not case sensitive."
         self.filter_entry_tooltiptext_tags = "Enter an appropriate filter value for: Tags\n\nEnter a tag or string of text."
         self.filter_entry_tooltip = ToolTip.create(self.filter_entry, self.filter_entry_tooltiptext_resolution, 500, 6, 12)
-
+        #Label
         self.label_filtertext = Label(self.frame_filtering, state="disabled", text="WxH", width=3)
         self.label_filtertext.pack(side="left", padx=5)
-
+        # Extra Filtering Combobox
         self.filter_extra_options = {
             "Resolution": ["256x256", "640x360", "512x512", "800x600", "768x768", "1024x768", "1280x720", "1360x768", "1024x1024", "1400x900", "1600x900", "1920x1080", "1536x1536", "2560x1440", "2048x2048", "2560x2560", "3840x2160", "3072x3072", "3582x3582", "4096x4096"],
             "Aspect Ratio": ["1:3", "1:2", "9:16", "2:3", "5:7", "3:4", "4:5", "1:1", "5:4", "4:3", "3:2", "16:10", "16:9", "1.85:1", "21:9", "2.35:1"],
@@ -263,11 +255,13 @@ class ImageGrid:
         self.combobox_filterinput.pack(side="left", padx=5)
         self.combobox_filterinput.bind("<<ComboboxSelected>>", self.update_filter_entry)
 
+
     def update_filter_entry(self, event):
         selected_value = self.combobox_filterinput.get()
         self.filter_entry.delete(0, "end")
         self.filter_entry.insert(0, selected_value)
         self.reload_grid()
+
 
 #endregion
 ################################################################################################################################################
@@ -323,9 +317,10 @@ class ImageGrid:
 
 
     def set_size_settings(self):
-        size_settings = {1: (45, 45, 13),
-                         2: (80, 80, 8),
-                         3: (170, 170, 4)}
+        size_settings = {
+            1: (45, 45, 13),
+            2: (80, 80, 8),
+            3: (170, 170, 4)}
         self.max_width, self.max_height, self.cols = size_settings.get(self.image_size.get(), (80, 80, 8))
 
 
@@ -540,7 +535,6 @@ class ImageGrid:
         return True
 
 
-
     def update_filtered_images(self):
         self.filtered_images = sum(1 for _ in filter(self.filter_images, sorted(self.image_file_list, key=self.sort_key, reverse=self.reverse_sort_direction_var)))
 
@@ -624,7 +618,8 @@ class ImageGrid:
 
     def handle_filter_options(self):
         filter = self.filter_var.get()
-        operator_menu = self.menu_button_operator.menu
+        menu = self.menu_button_operator.menu
+        label = self.label_filtertext
         equal_index = self.operator_options.index("=")
         new_options = self.filter_extra_options.get(filter, [])
         self.combobox_filterinput.config(values=new_options)
@@ -635,33 +630,33 @@ class ImageGrid:
             self.filter_extra_var.set('')
             self.combobox_filterinput.config(state="disabled")
         if filter == "Resolution":
-            self.label_filtertext.config(text="WxH")
-            operator_menu.entryconfig(equal_index, state="normal")
+            label.config(text="WxH")
+            menu.entryconfig(equal_index, state="normal")
             self.filter_entry_tooltip.config(text=self.filter_entry_tooltiptext_resolution)
         elif filter == "Aspect Ratio":
-            self.label_filtertext.config(text="1:1")
-            operator_menu.entryconfig(equal_index, state="normal")
+            label.config(text="1:1")
+            menu.entryconfig(equal_index, state="normal")
             self.filter_entry_tooltip.config(text=self.filter_entry_tooltiptext_aspectratio)
         elif filter == "Filesize":
-            self.label_filtertext.config(text="MB")
-            operator_menu.entryconfig(equal_index, state="normal")
+            label.config(text="MB")
+            menu.entryconfig(equal_index, state="normal")
             self.filter_entry_tooltip.config(text=self.filter_entry_tooltiptext_filesize)
         elif filter == "Filename":
-            operator_menu.entryconfig(equal_index, state="normal")
-            self.label_filtertext.config(text="")
+            menu.entryconfig(equal_index, state="normal")
+            label.config(text="")
             self.filter_entry_tooltip.config(text=self.filter_entry_tooltiptext_filename)
         elif filter == "Filetype":
-            operator_menu.entryconfig(equal_index, state="normal")
-            self.label_filtertext.config(text="")
+            menu.entryconfig(equal_index, state="normal")
+            label.config(text="")
             self.filter_entry_tooltip.config(text=self.filter_entry_tooltiptext_filetype)
         elif filter == "Tags":
             self.operator_var.set("*")
-            operator_menu.entryconfig(equal_index, state="disabled")
-            self.label_filtertext.config(text="")
+            menu.entryconfig(equal_index, state="disabled")
+            label.config(text="")
             self.filter_entry_tooltip.config(text=self.filter_entry_tooltiptext_tags)
         else:
-            self.label_filtertext.config(text="")
-            operator_menu.entryconfig(equal_index, state="normal")
+            label.config(text="")
+            menu.entryconfig(equal_index, state="normal")
 
 
     def toggle_filter_widgets(self):
@@ -763,6 +758,7 @@ class ImageGrid:
          except Exception as e:
              messagebox.showerror("Error", f"Error: An unexpected error occurred.\n\n{e}")
 
+
 #endregion
 ################################################################################################################################################
 #region -  Widget highlighting
@@ -792,36 +788,21 @@ class ImageGrid:
 
 
     def create_window(self, master, window_x, window_y):
-        # Create a new transparent top-level widget that will appear in the taskbar
         self.transparent_top = Toplevel(master)
         self.transparent_top.attributes('-alpha', 0.0)
         self.transparent_top.iconify()
         self.transparent_top.title("Image-Grid")
-
-        # Redirect focus to the top-level window when the transparent window is focused
         self.transparent_top.bind("<FocusIn>", lambda event: self.top.focus_force())
-
-        # Create a new top-level widget without window decorations
         self.top = Toplevel(master, borderwidth=2, relief="groove")
         self.top.overrideredirect(True)
-
-        # Set the geometry (size and position) of the window
         window_size = "750x600"
         window_position = f"+{window_x}+{window_y}"
         self.top.geometry(f"{window_size}{window_position}")
-
-        # Set the minimum and maximum size of the window
         self.top.minsize(750, 300)
         self.top.maxsize(750, 6000)
-
-        # Make the window modal, set focus to it, set always on top
         self.top.focus_force()
-
-        # Bind the Escape and F2 keys to the close_window method
         self.top.bind("<Escape>", lambda event: self.close_window(event))
         self.top.bind('<F2>', lambda event: self.close_window(event))
-
-        # When the undecorated window is closed, also destroy the transparent window
         self.top.protocol('WM_DELETE_WINDOW', self.close_window)
 
 
@@ -853,6 +834,7 @@ v1.04 changes:
 
 '''
 
+
 #endregion
 ################################################################################################################################################
 #region - Todo
@@ -867,5 +849,6 @@ v1.04 changes:
   -
 
 '''
+
 
 #endregion

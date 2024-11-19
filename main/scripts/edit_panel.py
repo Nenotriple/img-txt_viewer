@@ -63,37 +63,30 @@ class EditPanel:
         self.edit_combobox.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
         self.edit_combobox.set("Brightness")
         self.edit_combobox.bind("<<ComboboxSelected>>", self.update_slider_value)
-
         # Edit Slider
         self.edit_slider = ttk.Scale(self.parent.edit_image_panel, from_=-100, to=100, orient="horizontal", command=self.update_edit_value)
         self.edit_slider.grid(row=0, column=1, pady=5, sticky="ew")
         self.edit_slider.bind("<MouseWheel>", self.adjust_slider_with_mouse_wheel)
         self.parent.edit_image_panel.columnconfigure(1, weight=1)
-
         # Edit Value Label
         self.edit_value_label = Label(self.parent.edit_image_panel, text="0", width=3)
         self.edit_value_label.grid(row=0, column=2, pady=5, sticky="ew")
-
         # Cumulative Edit Checkbutton
         self.cumulative_edit_checkbutton = ttk.Checkbutton(self.parent.edit_image_panel, variable=self.parent.edit_cumulative_var, command=self.apply_image_edit)
         self.cumulative_edit_checkbutton.grid(row=0, column=3, pady=5, sticky="ew")
         ToolTip.create(self.cumulative_edit_checkbutton, "If enabled, all edits will be done cumulatively; otherwise, only the selected option will be used.", 25, 6, 12, wraplength=200)
-
         # Revert Button
         self.edit_revert_image_button = ttk.Button(self.parent.edit_image_panel, text="Revert", width=7, command=self.revert_image_edit)
         self.edit_revert_image_button.grid(row=0, column=4, pady=5, sticky="ew")
         self.edit_revert_image_button.bind("<Button-3>", self._reset_edit)
         ToolTip.create(self.edit_revert_image_button, "Cancel changes and refresh the displayed image.\nRight-Click to reset the edit panel.", 500, 6, 12)
-
         # Save Button
         self.edit_save_image_button = ttk.Button(self.parent.edit_image_panel, text="Save", width=7, command=self.save_image_edit)
         self.edit_save_image_button.grid(row=0, column=5, padx=(0,5), pady=5, sticky="ew")
         ToolTip.create(self.edit_save_image_button, "Save the current changes.\nOptionally overwrite the current image.", 500, 6, 12)
-
         # Spinbox Frame - Highlights
         self.highlights_spinbox_frame = ttk.Frame(self.parent.edit_image_panel)
         self.highlights_spinbox_frame.grid(row=1, column=0, columnspan=2, pady=(0,5), sticky="ew")
-
         # Threshold
         self.highlights_threshold_label = ttk.Label(self.highlights_spinbox_frame, text="Threshold:")
         self.highlights_threshold_label.grid(row=0, column=0, padx=5, sticky="w")
@@ -102,7 +95,6 @@ class EditPanel:
         self.highlights_threshold_spinbox.grid(row=0, column=1, padx=5, sticky="ew")
         self.highlights_threshold_spinbox.set(128)
         self.highlights_threshold_spinbox.bind("<KeyRelease>", self.apply_image_edit)
-
         # Blur Radius
         self.highlights_blur_radius_label = ttk.Label(self.highlights_spinbox_frame, text="Blur Radius:")
         self.highlights_blur_radius_label.grid(row=0, column=2, padx=5, sticky="w")
@@ -111,11 +103,9 @@ class EditPanel:
         self.highlights_blur_radius_spinbox.grid(row=0, column=3, padx=5, sticky="ew")
         self.highlights_blur_radius_spinbox.set(0)
         self.highlights_blur_radius_spinbox.bind("<KeyRelease>", self.apply_image_edit)
-
         # Spinbox Frame - Shadows
         self.shadows_spinbox_frame = ttk.Frame(self.parent.edit_image_panel)
         self.shadows_spinbox_frame.grid(row=1, column=0, columnspan=2, pady=(0,5), sticky="ew")
-
         # Threshold
         self.shadows_threshold_label = ttk.Label(self.shadows_spinbox_frame, text="Threshold:")
         self.shadows_threshold_label.grid(row=0, column=0, padx=5, sticky="w")
@@ -124,7 +114,6 @@ class EditPanel:
         self.shadows_threshold_spinbox.grid(row=0, column=1, padx=5, sticky="ew")
         self.shadows_threshold_spinbox.set(128)
         self.shadows_threshold_spinbox.bind("<KeyRelease>", self.apply_image_edit)
-
         # Blur Radius
         self.shadows_blur_radius_label = ttk.Label(self.shadows_spinbox_frame, text="Blur Radius:")
         self.shadows_blur_radius_label.grid(row=0, column=2, padx=5, sticky="w")
@@ -133,11 +122,9 @@ class EditPanel:
         self.shadows_blur_radius_spinbox.grid(row=0, column=3, padx=5, sticky="ew")
         self.shadows_blur_radius_spinbox.set(0)
         self.shadows_blur_radius_spinbox.bind("<KeyRelease>", self.apply_image_edit)
-
         # Spinbox Frame - Sharpness
         self.sharpness_spinbox_frame = ttk.Frame(self.parent.edit_image_panel)
         self.sharpness_spinbox_frame.grid(row=1, column=0, columnspan=2, pady=(0,5), sticky="ew")
-
         # Boost
         self.sharpness_boost_label = ttk.Label(self.sharpness_spinbox_frame, text="Boost:")
         self.sharpness_boost_label.grid(row=0, column=0, padx=5, sticky="w")
@@ -146,7 +133,6 @@ class EditPanel:
         self.sharpness_boost_spinbox.grid(row=0, column=1, padx=5, sticky="ew")
         self.sharpness_boost_spinbox.set(1)
         self.sharpness_boost_spinbox.bind("<KeyRelease>", self.apply_image_edit)
-
         # Hide the spinbox frame
         self.highlights_spinbox_frame.grid_remove()
         self.shadows_spinbox_frame.grid_remove()
@@ -262,6 +248,7 @@ class EditPanel:
 ################################################################################################################################################
 #region - Primary Functions
 
+
 # --------------------------------------
 # Edit
 # --------------------------------------
@@ -284,7 +271,7 @@ class EditPanel:
             "Sharpness": self.adjust_sharpness,
             "Hue": self.adjust_hue if is_rgb else None,
             "Color Temperature": self.adjust_color_temperature if is_rgb else None
-        }
+            }
         if self.parent.edit_cumulative_var.get():
             for option, value in self.parent.edit_slider_dict.items():
                 if option in adjustment_methods and adjustment_methods[option] and value != 0:
@@ -330,7 +317,7 @@ class EditPanel:
                 "Sharpness": self.adjust_sharpness,
                 "Hue": self.adjust_hue if is_rgb else None,
                 "Color Temperature": self.adjust_color_temperature if is_rgb else None
-            }
+                }
             if self.parent.edit_cumulative_var.get():
                 for option, value in self.parent.edit_slider_dict.items():
                     if option in adjustment_methods and adjustment_methods[option]:

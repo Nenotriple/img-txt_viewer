@@ -43,12 +43,14 @@ from TkToolTip.TkToolTip import TkToolTip as ToolTip
 
 class FindDupeFile:
     def __init__(self):
+        # Inherited Variables
         self.parent = None
         self.root = None
         self.version = None
         self.menu = None
         self.working_dir = None
 
+        # Local Variables
         self.is_closing = False
         self.duplicates_count = 0
         self.total_duplicates = 0
@@ -57,11 +59,12 @@ class FindDupeFile:
         self.scanned_files = None
         self.startup = True
 
-        self.filetypes_to_scan = ['All']
-
+        # Handle process state
         self.process_stopped = BooleanVar(value=True)
         self.process_stopped.trace_add('write', self.toggle_widgets)
 
+        # Settings
+        self.filetypes_to_scan = ['All']
         self.process_mode = StringVar(value="md5")
         self.dupe_handling_mode = StringVar(value="Single")
         self.scanning_mode = StringVar(value="Images")
@@ -87,26 +90,26 @@ class FindDupeFile:
         if path:
             self.folder_entry.insert(0, path)
         self.all_widgets = [
-                             self.close_button,
-                             self.file_menu_button,
-                             self.options_menu_button,
-                             self.folder_entry,
-                             self.browse_button,
-                             #self.open_button,
-                             self.clear_button,
-                             self.radio_single,
-                             self.radio_both,
-                             self.undo_button,
-                             self.run_button,
-                             #self.stop_button,
-                             self.radio_images,
-                             self.radio_all_files,
-                             self.recursive_checkbutton,
-                             #self.textlog,
-                             #tray_label_status,
-                             #self.tray_label_duplicates,
-                             #self.progress,
-                             ]
+            self.close_button,
+            self.file_menu_button,
+            self.options_menu_button,
+            self.folder_entry,
+            self.browse_button,
+            #self.open_button,
+            self.clear_button,
+            self.radio_single,
+            self.radio_both,
+            self.undo_button,
+            self.run_button,
+            #self.stop_button,
+            self.radio_images,
+            self.radio_all_files,
+            self.recursive_checkbutton,
+            #self.textlog,
+            #tray_label_status,
+            #self.tray_label_duplicates,
+            #self.progress,
+            ]
 
 
     def setup_ui(self):
@@ -129,12 +132,11 @@ class FindDupeFile:
     def setup_top_row(self):
         self.top_frame = ttk.Frame(self.find_dupe_files_frame)
         self.top_frame.pack(fill="x", padx=2, pady=2)
-
+        # Close Button
         self.close_button = ttk.Button(self.top_frame, text="<---Close", width=15, command=self.close_find_dupe_files)
         self.close_button.pack(side="left", fill="x", padx=2, pady=2)
-
         self.create_menubar()
-
+        # Help Button
         self.help_button = ttk.Button(self.top_frame, text="?", width=2)
         self.help_button.pack(side="right", fill="x", padx=2, pady=2)
         ToolTip.create(self.help_button, "Show/Hide Help", 50, 6, 12)
@@ -153,19 +155,16 @@ class FindDupeFile:
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Delete All Duplicates", command=self.delete_all_duplicates)
         self.file_menu_button.pack(side="left")
-
         # Options Menu
         self.options_menu_button = ttk.Menubutton(self.top_frame, text="Options")
         self.options_menu = Menu(self.options_menu_button, tearoff=0)
         self.options_menu_button.config(menu=self.options_menu)
         self.options_menu_button.pack(side="left")
-
         # Process Mode Menu
         self.process_mode_menu = Menu(self.options_menu, tearoff=0)
         self.options_menu.add_cascade(label="Process Mode", menu=self.process_mode_menu)
         self.process_mode_menu.add_radiobutton(label="MD5 - Fast", variable=self.process_mode, value="md5")
         self.process_mode_menu.add_radiobutton(label="SHA-256 - Slow", variable=self.process_mode, value="sha-256")
-
         # Scanning Options Menu
         self.scan_options_menu = Menu(self.options_menu, tearoff=0)
         self.options_menu.add_cascade(label="Scanning Options", menu=self.scan_options_menu)
@@ -174,13 +173,11 @@ class FindDupeFile:
         self.scan_options_menu.add_separator()
         self.scan_options_menu.add_checkbutton(label="Use Recursive Scanning", variable=self.recursive_mode)
         self.scan_options_menu.add_separator()
-
         # Scanning Mode Menu
         self.scanning_mode_menu = Menu(self.scan_options_menu, tearoff=0)
         self.scan_options_menu.add_cascade(label="Set Scanning Mode", menu=self.scanning_mode_menu)
         self.scanning_mode_menu.add_radiobutton(label="Images", variable=self.scanning_mode, value="Images")
         self.scanning_mode_menu.add_radiobutton(label="All Files", variable=self.scanning_mode, value="All Files")
-
         # Duplication Handling Menu
         self.duplication_handling_menu = Menu(self.options_menu, tearoff=0)
         self.options_menu.add_cascade(label="Duplication Handling", menu=self.duplication_handling_menu)
@@ -195,30 +192,24 @@ class FindDupeFile:
         # Frame - Widget Frame
         self.widget_frame = ttk.Frame(self.find_dupe_files_frame)
         self.widget_frame.pack(side="top", fill="both", padx=4, pady=4)
-
         # Frame - Folder Frame
         self.folder_frame = ttk.Frame(self.widget_frame)
         self.folder_frame.pack(fill="both", expand=True)
-
         # Entry - Folder Entry
         self.folder_entry = ttk.Entry(self.folder_frame)
         self.folder_entry.pack(side="left", fill="x", expand=True)
-
         # Button - Browse
         self.browse_button = ttk.Button(self.folder_frame, text="Browse...", command=self.select_folder)
         ToolTip.create(self.browse_button, "Select a folder to analyze for duplicate files.", delay=150, padx=6, pady=6)
         self.browse_button.pack(side="left")
-
         # Button - Open
         self.open_button = ttk.Button(self.folder_frame, text="Open", command=self.open_folder)
         ToolTip.create(self.open_button, "Open path from folder entry.", delay=150, padx=6, pady=6)
         self.open_button.pack(side="left")
-
         # Button - Clear
         self.clear_button = ttk.Button(self.folder_frame, text="X", width=2, command=lambda: self.folder_entry.delete(0, 'end'))
         ToolTip.create(self.clear_button, "Clear folder entry.", delay=150, padx=6, pady=6)
         self.clear_button.pack(side="left")
-
         # Radio Buttons - Duplicate Handling Mode
         self.radio_single = ttk.Radiobutton(self.widget_frame, text="Single", variable=self.dupe_handling_mode, value="Single")
         ToolTip.create(self.radio_single, "Move extra duplicate files, leaving a copy behind.\nFiles will be stored in the '_Duplicate__Files' folder located in the parent folder.", delay=150, padx=6, pady=6)
@@ -226,22 +217,18 @@ class FindDupeFile:
         self.radio_both = ttk.Radiobutton(self.widget_frame, text="Both", variable=self.dupe_handling_mode, value="Both")
         ToolTip.create(self.radio_both, "Move all duplicate files, leaving no copy behind.\nFiles will be stored in the '_Duplicate__Files' folder located in the parent folder.\nDuplicates will be grouped into subfolders.", delay=150, padx=6, pady=6)
         self.radio_both.pack(side="left")
-
         # Button - Undo
         self.undo_button = ttk.Button(self.widget_frame, text="Undo", width=6, command=self.undo_file_move)
         ToolTip.create(self.undo_button, "Restore all files to their original path.\nEnable 'Recursive' To also restore all files within subfolders.", delay=150, padx=6, pady=6)
         self.undo_button.pack(side="left")
-
         # Button - Run
         self.run_button = ttk.Button(self.widget_frame, text="Find Duplicates", command=self.find_duplicates)
         ToolTip.create(self.run_button, "Process the selected folder.", delay=1000, padx=6, pady=6)
         self.run_button.pack(side="left", fill="x", expand=True)
-
         # Button - Stop
         self.stop_button = ttk.Button(self.widget_frame, text="Stop!", width=6, command=self.stop_process)
         ToolTip.create(self.stop_button, "Stop all running processes.", delay=150, padx=6, pady=6)
         self.stop_button.pack(side="left", fill="x")
-
         # Radio Buttons - Scanning Mode
         self.radio_images = ttk.Radiobutton(self.widget_frame, text="Images", variable=self.scanning_mode, value="Images")
         ToolTip.create(self.radio_images, "Scan only image filetypes.", delay=150, padx=6, pady=6)
@@ -249,38 +236,31 @@ class FindDupeFile:
         self.radio_all_files = ttk.Radiobutton(self.widget_frame, text="All Files", variable=self.scanning_mode, value="All Files")
         ToolTip.create(self.radio_all_files, "Scan all filetypes.", delay=150, padx=6, pady=6)
         self.radio_all_files.pack(side="left")
-
         # Checkbutton - Subfolder Scanning
         self.recursive_checkbutton = ttk.Checkbutton(self.widget_frame, text="Recursive", variable=self.recursive_mode, offvalue=False)
         ToolTip.create(self.recursive_checkbutton, "Enable to scan subfolders.\nNOTE: This only compares files within the same subfolder, not across all scanned folders.", delay=150, padx=6, pady=6)
         self.recursive_checkbutton.pack(side="left")
-
         # Checkbutton - Move Captions
         self.move_captions_checkbutton = ttk.Checkbutton(self.widget_frame, text="Move Captions", variable=self.move_captions, offvalue=False)
         ToolTip.create(self.move_captions_checkbutton, "Move caption text files with images.", padx=6, pady=6)
         self.move_captions_checkbutton.pack(side="left")
         self.scanning_mode.trace_add('write', self.toggle_move_captions_option)
-
         # Textlog
         self.create_textlog()
         self.startup_text = ("This tool will find any duplicate files by matching file hash.\n\nDuplicate files will be moved to a '_Duplicate__Files' folder within the scanned directory.")
         self.insert_to_textlog(self.startup_text)
-
         # Label - Tray - Status
         self.tray_label_status = ttk.Label(self.find_dupe_files_frame, width=15, relief="groove", text=" Idle...")
         ToolTip.create(self.tray_label_status, "App status.", delay=150, padx=6, pady=6)
         self.tray_label_status.pack(side="left", padx=2, ipadx=2, ipady=2)
-
         # Label - Tray - Total Duplicates
         self.tray_label_duplicates = ttk.Label(self.find_dupe_files_frame, width=15, relief="groove", text="Duplicates: 00000")
         ToolTip.create(self.tray_label_duplicates, "Total number of duplicate files across all scanned folders.", delay=150, padx=6, pady=6)
         self.tray_label_duplicates.pack(side="left", padx=2, ipadx=2, ipady=2)
-
         # Label - Tray - Total Images Checked
         self.tray_label_total_files = ttk.Label(self.find_dupe_files_frame, width=19, relief="groove", text="Files Checked: 000000")
         ToolTip.create(self.tray_label_total_files, "Total number of files checked across all scanned folders.", delay=150, padx=6, pady=6)
         self.tray_label_total_files.pack(side="left", padx=2, ipadx=2, ipady=2)
-
         # Progressbar
         self.progress = ttk.Progressbar(self.find_dupe_files_frame, length=100, mode='determinate')
         ToolTip.create(self.progress, "Progressbar.", delay=150, padx=6, pady=6)
@@ -438,7 +418,7 @@ class FindDupeFile:
             ".heic", ".heif", ".avif", ".apng", ".jp2", ".j2k",
             ".jpf", ".jpx", ".jpm", ".mj2", ".dds", ".exr",
             ".hdr", ".icns", ".ai", ".indd"
-        ]
+            ]
         _, file_extension = os.path.splitext(file_path)
         return file_extension.lower() in image_file_extensions
 

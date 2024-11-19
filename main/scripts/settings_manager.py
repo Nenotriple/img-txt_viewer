@@ -18,7 +18,7 @@ from tkinter import ttk, Toplevel, messagebox, StringVar, BooleanVar, Frame, Lab
 
 #endregion
 ################################################################################################################################################
-#region CLS: SettingsManager
+#region CLS SettingsManager
 
 
 class SettingsManager:
@@ -144,6 +144,7 @@ class SettingsManager:
 #endregion
 ################################################################################################################################################
 #region Read
+
 
     def read_settings(self):
         """Reads the user settings from the configuration file."""

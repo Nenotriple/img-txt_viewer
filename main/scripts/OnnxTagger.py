@@ -1,3 +1,10 @@
+"""This module contains the OnnxTagger class, which is responsible for loading an ONNX vision model and tagging images."""
+
+
+################################################################################################################################################
+#region Imports
+
+
 # Standard Library
 import os
 import csv
@@ -11,14 +18,18 @@ from PIL import Image
 from onnxruntime import InferenceSession
 
 
+#endregion
+################################################################################################################################################
+#region CLS OnnxTagger
+
+
 class OnnxTagger:
     """This module contains the OnnxTagger class, which is responsible for loading an ONNX vision model and tagging images."""
-
     def __init__(self, parent):
         # Parent class
         self.parent = parent
 
-        # Model related attributes
+        # Model related variables
         self.model = None
         self.model_path = None
         self.model_input = None
@@ -51,9 +62,11 @@ class OnnxTagger:
         self.tags_with_underscore = ["0_0", "(o)_(o)", "o_o", ">_o", "u_u", "x_x", "|_|", "||_||", "._.", "^_^", ">_<", "@_@", ">_@", "+_+", "+_-", "=_=", "<o>_<o>", "<|>_<|>", "ಠ_ಠ", "3_3", "6_9"]
 
 
-    # --------------------------------------
-    # Handle Model
-    # --------------------------------------
+#endregion
+################################################################################################################################################
+#region Handle Model
+
+
     def _load_model(self):
         if self.model_path != self.last_model_path:
             self.model = InferenceSession(self.model_path, providers=['CPUExecutionProvider'])
@@ -63,9 +76,11 @@ class OnnxTagger:
             self.last_model_path = self.model_path
 
 
-    # --------------------------------------
-    # Handle Tags
-    # --------------------------------------
+#endregion
+################################################################################################################################################
+#region Handle Tags
+
+
     def _read_csv_tags(self):
         if (self.model_path != self.last_model_path or self.exclude_tags != self.last_exclude_tags):
             self.model_tags.clear()
@@ -123,9 +138,11 @@ class OnnxTagger:
         return tag_list, tag_dict
 
 
-    # --------------------------------------
-    # Handle Image
-    # --------------------------------------
+#endregion
+################################################################################################################################################
+#region Handle Image
+
+
     def _preprocess_image(self, image):
         if image.mode != 'RGB':
             image = image.convert('RGB')
@@ -160,9 +177,11 @@ class OnnxTagger:
         return tag_confidence_pairs
 
 
-    # --------------------------------------
-    # Tag Image
-    # --------------------------------------
+#endregion
+################################################################################################################################################
+#region Tag Image
+
+
     def tag_image(self, image_path, model_path):
         """
         Tags an image using the specified ONNX Vision model.
@@ -187,3 +206,6 @@ class OnnxTagger:
             return
         tag_list, tag_dict = self._format_results(inferred_tags)
         return tag_list, tag_dict
+
+
+#endregion

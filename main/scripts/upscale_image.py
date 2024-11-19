@@ -11,6 +11,7 @@ Upscale a single/batch image using realesrgan-ncnn-vulkan.exe
 
 """
 
+
 ################################################################################################################################################
 #region -  Imports
 
@@ -30,6 +31,7 @@ from tkinter import ttk, Toplevel, messagebox, filedialog, Frame, Label, Button,
 # Third-Party Libraries
 from PIL import Image, ImageSequence
 from TkToolTip.TkToolTip import TkToolTip as ToolTip
+
 
 #endregion
 ################################################################################################################################################
@@ -689,6 +691,7 @@ class Upscale:
 ################################################################################################################################################
 #region -  Changelog
 
+
 '''
 
 
@@ -716,6 +719,7 @@ v1.05 changes:
 
 '''
 
+
 #endregion
 ################################################################################################################################################
 #region - Todo
@@ -730,6 +734,7 @@ v1.05 changes:
   -
 
 '''
+
 
 #endregion
 
