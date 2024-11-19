@@ -1019,10 +1019,18 @@ class ImageCanvas(tk.Canvas):
         new_width, new_height = self.winfo_width(), self.winfo_height()
         ratio = min(new_width / self.original_img_width, new_height / self.original_img_height)
         new_size = (int(self.original_img_width * ratio), int(self.original_img_height * ratio))
+        filter_type = Image.NEAREST
         if new_size != self.new_size and new_size[0] > 0 and new_size[1] > 0:
             self.img_scale_ratio = ratio
             self.new_size = new_size
-            self.img_resized = self.original_img.resize(self.new_size, Image.NEAREST)
+            max_size = max(self.original_img_width, self.original_img_height)
+            if max_size > 768:
+                filter_type = Image.NEAREST
+            elif 480 < max_size <= 768:
+                filter_type = Image.BILINEAR
+            else:
+                filter_type = Image.LANCZOS
+            self.img_resized = self.original_img.resize(self.new_size, filter_type)
             self.img_thumbnail = ImageTk.PhotoImage(self.img_resized)
             percent_scale = self.img_scale_ratio * 100
             self.parent.update_imageinfo(int(percent_scale))
@@ -1032,7 +1040,8 @@ class ImageCanvas(tk.Canvas):
         self.create_image(self.x_off, self.y_off, anchor="nw", image=self.img_thumbnail)
         if self.resize_after_id:
             self.after_cancel(self.resize_after_id)
-        self.resize_after_id = self.after(250, self.refresh_image)
+        if filter_type != Image.LANCZOS:
+            self.resize_after_id = self.after(250, self.refresh_image)
 
 
     def refresh_image(self):
@@ -1061,6 +1070,7 @@ class CropInterface:
         self.image_path = None
 
         # Image Variables
+        self.gif_frames = []
         self.image_files = []
         self.image_info_cache = {}
         self.selection_aspect = 0
@@ -1168,15 +1178,20 @@ class CropInterface:
         self.thumbnail_container = tk.Frame(canvas_frame)
         self.thumbnail_container.grid(row=1, column=0, sticky="ew")
         self.thumbnail_container.columnconfigure(0, weight=1)
+        self.thumbnail_container.columnconfigure(1, weight=0)
         self.thumbnail_canvas = tk.Canvas(self.thumbnail_container, height=72)
-        self.thumbnail_canvas.grid(row=0, column=0, sticky="ew")
+        self.thumbnail_canvas.grid(row=0, column=0, columnspan=99, sticky="ew")
         self.thumbnail_scrollbar = ttk.Scrollbar(self.thumbnail_container, orient="horizontal", command=self.thumbnail_canvas.xview)
-        self.thumbnail_scrollbar.grid(row=1, column=0, sticky="ew")
+        self.thumbnail_scrollbar.grid(row=1, column=0, columnspan=99, sticky="ew")
         self.thumbnail_canvas.configure(xscrollcommand=self.thumbnail_scrollbar.set)
         self.thumbnail_frame = tk.Frame(self.thumbnail_canvas)
         self.thumbnail_canvas.create_window((0, 0), window=self.thumbnail_frame, anchor='nw')
         self.thumbnail_frame.bind("<Configure>", lambda event: self.thumbnail_canvas.configure(scrollregion=self.thumbnail_canvas.bbox("all")))
         self.thumbnail_scrollbar.bind("<MouseWheel>", lambda event: self.thumbnail_canvas.xview_scroll(-1 * (event.delta // 120), "units"))
+        self.thumbnail_timeline_slider = ttk.Scale(self.thumbnail_container, from_=0, to=0, orient="horizontal", command=self.thumbnail_timeline_changed)
+        self.thumbnail_timeline_slider.grid(row=2, column=0, sticky="ew")
+        self.thumbnail_timeline_label = ttk.Label(self.thumbnail_container, text="0/0")
+        self.thumbnail_timeline_label.grid(row=2, column=1, sticky="e")
         self.thumbnail_container.grid_remove()
 
 
@@ -1724,6 +1739,7 @@ class CropInterface:
             folder_path = f"{base_path}_frames"
             os.makedirs(folder_path, exist_ok=True)
             for i, frame in enumerate(frames):
+                frame = frame.convert("RGBA")
                 frame_path = os.path.join(folder_path, f"frame_{i:04d}.png")
                 frame.save(frame_path)
             frame_count = len(frames)
@@ -1743,17 +1759,18 @@ class CropInterface:
             return []
         try:
             with Image.open(self.img_canvas.img_path) as img:
-                frames = [frame.copy() for frame in ImageSequence.Iterator(img)]
+                self.gif_frames = [frame.copy().convert("RGBA") for frame in ImageSequence.Iterator(img)]
                 if display:
-                    self.display_gif_thumbnails(frames)
-                return frames
+                    self.display_gif_thumbnails(self.gif_frames)
+                    self.thumbnail_timeline_label.config(text=f"01/{len(self.gif_frames)}")
+                return self.gif_frames
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred while extracting frames: {e}")
             return []
 
 
     def display_gif_thumbnails(self, frames):
-        def save_image(img, index):
+        def save_and_display_frame(img, index):
             try:
                 trash_folder = os.path.join(os.path.dirname(self.image_files[0]), "Trash")
                 os.makedirs(trash_folder, exist_ok=True)
@@ -1762,12 +1779,14 @@ class CropInterface:
                 img.save(save_img_path)
                 self.display_image(save_img_path)
                 self.highlight_thumbnail(index)
+                self.thumbnail_timeline_slider.set(index)
             except Exception as e:
                 messagebox.showerror("Error", f"An error occurred while saving the image: {e}")
-
         for widget in self.thumbnail_frame.winfo_children():
             widget.destroy()
         self.thumbnail_container.grid()
+        self.thumbnail_timeline_slider.configure(to=len(frames)-1)
+        self.thumbnail_timeline_slider.set(0)
         fixed_height = 64
         for i, frame in enumerate(frames):
             thumb = frame.copy()
@@ -1777,9 +1796,11 @@ class CropInterface:
             thumb_image = ImageTk.PhotoImage(thumb)
             thumb_button = ttk.Button(self.thumbnail_frame, image=thumb_image, takefocus=False)
             thumb_button.image = thumb_image
-            thumb_button.bind("<Button-1>", lambda e, img=frame, index=i: save_image(img, index))
+            thumb_button.bind("<Button-1>", lambda e, img=frame, index=i: save_and_display_frame(img, index))
             thumb_button.bind("<MouseWheel>", lambda event: self.thumbnail_canvas.xview_scroll(-1 * (event.delta // 120), "units"))
             thumb_button.pack(side='left')
+        if frames:
+            save_and_display_frame(frames[0], 0)
 
 
     def highlight_thumbnail(self, index):
@@ -1787,6 +1808,41 @@ class CropInterface:
             widget.config(style="TButton")
             if i == index:
                 widget.config(style="Highlighted.TButton")
+
+
+    def thumbnail_timeline_changed(self, event=None):
+        if not self.gif_frames:
+            return
+        try:
+            index = int(float(self.thumbnail_timeline_slider.get()))
+            frame = self.gif_frames[index]
+            trash_folder = os.path.join(os.path.dirname(self.image_files[0]), "Trash")
+            os.makedirs(trash_folder, exist_ok=True)
+            filename = os.path.basename(self.image_files[self.current_index])
+            save_img_path = os.path.join(trash_folder, f"{filename}.png")
+            frame.save(save_img_path)
+            self.display_image(save_img_path)
+            self.highlight_thumbnail(index)
+            self.ensure_thumbnail_visible(index)
+            padded_index = str(index + 1).zfill(len(str(len(self.gif_frames))))
+            self.thumbnail_timeline_label.config(text=f"{padded_index}/{len(self.gif_frames)}")
+        except (ValueError, IndexError) as e:
+            messagebox.showerror("Error", f"An error occurred while changing the frame: {e}")
+
+
+    def ensure_thumbnail_visible(self, index):
+        thumbnail_widgets = self.thumbnail_frame.winfo_children()
+        if index < 0 or index >= len(thumbnail_widgets):
+            return
+        widget = thumbnail_widgets[index]
+        widget_x = widget.winfo_x()
+        widget_width = widget.winfo_width()
+        canvas_x = self.thumbnail_canvas.canvasx(0)
+        canvas_width = self.thumbnail_canvas.winfo_width()
+        if widget_x < canvas_x:
+            self.thumbnail_canvas.xview_moveto(widget_x / self.thumbnail_canvas.bbox("all")[2])
+        elif widget_x + widget_width > canvas_x + canvas_width:
+            self.thumbnail_canvas.xview_moveto((widget_x + widget_width - canvas_width) / self.thumbnail_canvas.bbox("all")[2])
 
 
 # --------------------------------------
