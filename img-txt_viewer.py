@@ -3157,7 +3157,7 @@ class ImgTxtViewer:
         self.update_image_file_count()
         self.current_index = last_index if last_index < len(self.image_files) else 0
         self.show_pair()
-        if not quiet:
+        if quiet != False:
             messagebox.showinfo("Filter", "Filter has been cleared.")
         self.revert_filter_button.config(style="")
         self.revert_filter_button_tooltip.config(text="Filter is inactive\n\nClear any filtering applied")
@@ -3928,88 +3928,6 @@ class ImgTxtViewer:
 
 #endregion
 ################################################################################################################################################
-#region - User Setup
-
-
-    def prompt_first_time_setup(self):
-        dict_var = StringVar(value="English Dictionary")
-        last_word_match_var = StringVar(value="Match Last Word")
-        match_modes = {"Match Whole String": False, "Match Last Word": True}
-        dictionaries = ["English Dictionary", "Danbooru", "Danbooru (Safe)", "e621", "Derpibooru"]
-
-        def save_and_continue(close=False, back=False):
-            selected_dict = dict_var.get()
-            self.csv_danbooru.set(selected_dict == "Danbooru")
-            self.csv_danbooru_safe.set(selected_dict == "Danbooru (Safe)")
-            self.csv_derpibooru.set(selected_dict == "Derpibooru")
-            self.csv_e621.set(selected_dict == "e621")
-            self.csv_english_dictionary.set(selected_dict == "English Dictionary")
-            self.last_word_match_var.set(match_modes.get(last_word_match_var.get(), False))
-            if close:
-                save_and_close()
-            elif back:
-                clear_widgets()
-                create_dictionary_selection_widgets()
-                setup_window.geometry("400x250")
-            else:
-                self.settings_manager.save_settings()
-                clear_widgets()
-                setup_last_word_match_frame()
-                setup_window.geometry("400x250")
-
-        def clear_widgets():
-            for widget in setup_window.winfo_children():
-                widget.destroy()
-
-        def setup_last_word_match_frame():
-            options = [
-                ("Match only the last word", "Matches only the last word typed.\nExample: Typing 'blue sky' matches 'sky'.", "Match Last Word"),
-                ("Match entire tag", "Matches the entire tag, including multiple words.\nExample: Typing 'blue sky' matches 'blue sky'.", "Match Whole String")
-            ]
-            Label(setup_window, text="Select tag matching method").pack(pady=5)
-            ttk.Separator(setup_window, orient="horizontal").pack(fill="x", padx=5, pady=5)
-            for text, description, value in options:
-                ttk.Radiobutton(setup_window, text=text, variable=last_word_match_var, value=value).pack(pady=5)
-                Label(setup_window, text=description).pack(pady=5)
-            ttk.Separator(setup_window, orient="horizontal").pack(fill="x", padx=5, pady=5)
-            ttk.Button(setup_window, text="Back", width=10, command=lambda: save_and_continue(back=True)).pack(side="left", anchor="w", pady=5, padx=10)
-            ttk.Button(setup_window, text="Done", width=10, command=lambda: save_and_continue(close=True)).pack(side="right", anchor="e", pady=5, padx=10)
-
-        def save_and_close():
-            self.settings_manager.save_settings()
-            setup_window.destroy()
-            self.update_autocomplete_dictionary()
-
-        def create_setup_window():
-            setup_window = Toplevel(self.master)
-            setup_window.title("First Time Setup")
-            setup_window.iconphoto(False, self.blank_image)
-            window_width, window_height = 400, 250
-            position_right = root.winfo_screenwidth() // 2 - window_width // 2
-            position_top = root.winfo_screenheight() // 2 - window_height // 2
-            setup_window.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
-            setup_window.resizable(False, False)
-            setup_window.grab_set()
-            setup_window.protocol("WM_DELETE_WINDOW", save_and_close)
-            return setup_window
-
-        def create_dictionary_selection_widgets():
-            Label(setup_window, text="Please pick your preferred autocomplete dictionary").pack(pady=5)
-            ttk.Separator(setup_window, orient="horizontal").pack(fill="x", padx=5, pady=5)
-            frame = Frame(setup_window)
-            frame.pack(padx=5, pady=5)
-            for i, dictionary in enumerate(dictionaries):
-                ttk.Radiobutton(frame, text=dictionary, variable=dict_var, value=dictionary).grid(row=i // 2, column=i % 2, padx=5, pady=5)
-            ttk.Separator(setup_window, orient="horizontal").pack(fill="x", padx=5, pady=5)
-            Label(setup_window, text="The autocomplete dictionary and settings can be changed at any time.").pack(pady=5)
-            ttk.Button(setup_window, text="Next", width=10, command=save_and_continue).pack(side="bottom", anchor="e", pady=5, padx=10)
-
-        setup_window = create_setup_window()
-        create_dictionary_selection_widgets()
-
-
-#endregion
-################################################################################################################################################
 #region - Save and close
 
 
@@ -4187,7 +4105,7 @@ class ImgTxtViewer:
             directory = filedialog.askdirectory(initialdir=initialdir)
             if directory and directory != self.image_dir.get():
                 if hasattr(self, 'text_box'):
-                    self.revert_text_image_filter(clear=True)
+                    self.revert_text_image_filter(clear=True, quiet=True)
                 if self.check_if_contains_images(directory):
                     self.delete_text_backup()
                     self.image_dir.set(os.path.normpath(directory))
@@ -4216,7 +4134,7 @@ class ImgTxtViewer:
             if self.auto_save_var.get():
                 self.save_text_file()
             if hasattr(self, 'text_box'):
-                self.revert_text_image_filter(clear=True)
+                self.revert_text_image_filter(clear=True, quiet=True)
             directory = self.directory_entry.get()
             if self.check_if_contains_images(directory):
                 self.image_dir.set(os.path.normpath(directory))
