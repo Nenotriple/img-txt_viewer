@@ -928,6 +928,7 @@ class ImgTxtViewer:
         listbox_context_menu.add_command(label="Selection: All", command=all_selection)
         listbox_context_menu.add_command(label="Selection: Invert", command=invert_selection)
         listbox_context_menu.add_command(label="Selection: Clear", command=clear_selection)
+        listbox_context_menu.add_command(label="Selection: Add to MyTags", command=lambda: self.add_to_custom_dictionary(origin="auto_tag"))
         # Control Frame
         control_frame = Frame(widget_frame)
         control_frame.pack(side='left', fill='both', expand=True)
@@ -1616,7 +1617,7 @@ class ImgTxtViewer:
                 text_context_menu.add_separator()
                 text_context_menu.add_command(label="Open Text Directory...", command=self.open_text_directory)
                 text_context_menu.add_command(label="Open Text File...", command=self.open_textfile)
-                text_context_menu.add_command(label="Add Selected Text to MyTags", state=select_state, command=self.add_to_custom_dictionary)
+                text_context_menu.add_command(label="Add Selected Text to MyTags", state=select_state, command=lambda: self.add_to_custom_dictionary(origin="text_box"))
                 text_context_menu.add_separator()
                 text_context_menu.add_command(label="Highlight all Duplicates", accelerator="Ctrl+F", command=self.highlight_all_duplicates)
                 text_context_menu.add_command(label="Next Empty Text File", accelerator="Ctrl+E", command=self.index_goto_next_empty)
@@ -4108,9 +4109,13 @@ class ImgTxtViewer:
             messagebox.showerror("Error: create_custom_dictionary()", f"An error occurred while creating the custom dictionary file:\n\n{csv_filename}\n\n{e}")
 
 
-    def add_to_custom_dictionary(self):
+    def add_to_custom_dictionary(self, origin):
         try:
-            selected_text = self.text_box.get("sel.first", "sel.last")
+            if origin == "text_box":
+                selected_text = self.text_box.get("sel.first", "sel.last")
+            elif origin == "auto_tag":
+                selected_text = self.auto_tag_listbox.get("active")
+                selected_text = selected_text.split(':', 1)[-1].strip()
             with open(self.my_tags_csv, 'a', newline='', encoding="utf-8") as f:
                 writer = csv.writer(f)
                 writer.writerow([selected_text])
