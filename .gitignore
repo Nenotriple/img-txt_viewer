@@ -24,6 +24,10 @@ build/
 settings.cfg
 
 
+# MyTags file
+my_tags.csv
+!my_tags.csv
+
 #ONNX Models
 onnx_models/*
 !onnx_models/ONNX vision models go here
