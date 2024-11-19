@@ -8,12 +8,12 @@
 
 # Standard Library
 import os
+import traceback
 import configparser
 
 
 # Standard Library - GUI
-from tkinter import ttk, messagebox, BooleanVar, StringVar, Toplevel, Frame, Label
-import traceback
+from tkinter import ttk, Toplevel, messagebox, StringVar, BooleanVar, Frame, Label
 
 
 #endregion
@@ -28,7 +28,6 @@ class SettingsManager:
         self.version = version
 
         self.config = configparser.ConfigParser()
-        self.edit_panel = self.parent.edit_panel
 
 
 #endregion
@@ -235,7 +234,7 @@ class SettingsManager:
         self.parent.auto_delete_blank_files_var.set(value=self.config.getboolean("Other", "auto_delete_blank_files", fallback=False))
         self.parent.thumbnails_visible.set(value=self.config.getboolean("Other", "thumbnails_visible", fallback=True))
         self.parent.edit_panel_visible_var.set(value=self.config.getboolean("Other", "edit_panel_visible", fallback=False))
-        self.edit_panel.toggle_edit_panel()
+        self.parent.edit_panel.toggle_edit_panel()
         self.parent.image_quality_var.set(value=self.config.get("Other", "image_quality", fallback="Normal"))
         self.parent.set_image_quality()
         self.parent.font_var.set(value=self.config.get("Other", "font", fallback="Courier New"))
@@ -323,7 +322,7 @@ class SettingsManager:
         self.parent.thumbnails_visible.set(value=True)
         self.parent.update_thumbnail_panel()
         self.parent.edit_panel_visible_var.set(value=False)
-        self.edit_panel.toggle_edit_panel()
+        self.parent.edit_panel.toggle_edit_panel()
         # Title
         self.parent.sync_title_with_content()
         # Guided setup
