@@ -22,10 +22,11 @@ import shutil
 
 
 # Standard Library - GUI
-from tkinter import (ttk, Toplevel, messagebox,
-                     StringVar,
-                     Frame, Label, Button,
-                    )
+from tkinter import (
+    ttk, Toplevel, messagebox,
+    StringVar,
+    Frame, Label, Button,
+)
 
 
 # Third-Party Libraries

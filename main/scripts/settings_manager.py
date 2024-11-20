@@ -342,7 +342,7 @@ class SettingsManager:
             "Danbooru (Safe)": BooleanVar(),
             "e621": BooleanVar(),
             "Derpibooru": BooleanVar()
-            }
+        }
         last_word_match_var = StringVar(value="Match Last Word")
         match_modes = {"Match Whole String": False, "Match Last Word": True}
 

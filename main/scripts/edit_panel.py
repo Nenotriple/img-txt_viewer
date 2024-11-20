@@ -271,7 +271,7 @@ class EditPanel:
             "Sharpness": self.adjust_sharpness,
             "Hue": self.adjust_hue if is_rgb else None,
             "Color Temperature": self.adjust_color_temperature if is_rgb else None
-            }
+        }
         if self.parent.edit_cumulative_var.get():
             for option, value in self.parent.edit_slider_dict.items():
                 if option in adjustment_methods and adjustment_methods[option] and value != 0:
@@ -317,7 +317,7 @@ class EditPanel:
                 "Sharpness": self.adjust_sharpness,
                 "Hue": self.adjust_hue if is_rgb else None,
                 "Color Temperature": self.adjust_color_temperature if is_rgb else None
-                }
+            }
             if self.parent.edit_cumulative_var.get():
                 for option, value in self.parent.edit_slider_dict.items():
                     if option in adjustment_methods and adjustment_methods[option]:

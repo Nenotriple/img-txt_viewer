@@ -60,7 +60,22 @@ SHAPES = [
 
 
 # Tromino colors
-COLORS = ["#00bde7", "#6d47e8", "#e26a00", "#e4b507", "#94e606", "#9a2daa", "#ec0054"]
+COLORS = [
+    # I
+    "#00bde7",
+    # J
+    "#6d47e8",
+    # L
+    "#e26a00",
+    # O
+    "#e4b507",
+    # S
+    "#94e606",
+    # T
+    "#9a2daa",
+    # Z
+    "#ec0054"
+]
 
 
 #endregion

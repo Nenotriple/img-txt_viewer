@@ -23,12 +23,13 @@ from collections import Counter
 
 
 # Standard Library - GUI
-from tkinter import (ttk, messagebox, simpledialog,
-                     BooleanVar,
-                     Frame, Menu,
-                     Label, Listbox, Scrollbar,
-                     TclError
-                     )
+from tkinter import (
+    ttk, messagebox, simpledialog,
+    BooleanVar,
+    Frame, Menu,
+    Label, Listbox, Scrollbar,
+    TclError
+)
 
 
 # Third-Party Libraries
@@ -277,7 +278,7 @@ class BatchTagEdit:
             "   - Revert Sel: Revert the selected tags to their original state.\n"
             "   - Revert All: Revert all tags to their original state. (Reset)\n"
             "8) Click the *Close* button to exit the Batch Tag Edit without saving and pending changes.\n"
-            )
+        )
         self.help_message.grid(row=1, column=0, padx=2, pady=2, sticky="nw")
         self.help_frame.grid_remove()
 
@@ -341,28 +342,26 @@ class BatchTagEdit:
 
 
     def apply_commands_to_listbox(self, event=None, delete=False, edit=None):
-        tags = self.listbox.curselection()  # Get the selected tags
-        selected_items = [self.original_tags[i][0] for i in tags]  # Get tag names
+        tags = self.listbox.curselection()
+        selected_items = [self.original_tags[i][0] for i in tags]
         if edit is None:  # If None, use the edit entry
             edit = self.edit_entry.get()
         if edit == "":  # If empty, delete the tags
             delete = True
         for i, item in zip(reversed(tags), reversed(selected_items)):
-            # Get the current text from the listbox
             current_text = self.listbox.get(i)
             # If the item is already altered, remove the previous alteration
             if current_text.startswith("DELETE :") or current_text.startswith("EDIT :"):
                 # Strip away "DELETE :" or "EDIT :" to get the original item
                 item = current_text.split(":", 1)[1].strip().split(">", 1)[0].strip()
-            # Apply the new commands (delete or edit)
             if delete:  # If the delete, add delete command
                 self.listbox.delete(i)
                 self.listbox.insert(i, f"DELETE : {item}")
-                self.listbox.itemconfig(i, {'fg': 'red'})  # Change font color to red
+                self.listbox.itemconfig(i, {'fg': 'red'})
             else:  # If not delete, add edit command
                 self.listbox.delete(i)
                 self.listbox.insert(i, f"EDIT : {item} > {edit}")
-                self.listbox.itemconfig(i, {'fg': 'green'})  # Change font color to green
+                self.listbox.itemconfig(i, {'fg': 'green'})
         self.count_listbox_tags()
 
 
@@ -480,13 +479,15 @@ class BatchTagEdit:
 # --------------------------------------
     def toggle_filter_and_sort_widgets(self, event=None):
         try:
-            widgets = [self.sort_label,
-                       self.sort_options_combobox,
-                       self.reverse_sort_checkbutton,
-                       self.filter_label,
-                       self.filter_combobox,
-                       self.filter_entry,
-                       self.filter_apply_button]
+            widgets = [
+                self.sort_label,
+                self.sort_options_combobox,
+                self.reverse_sort_checkbutton,
+                self.filter_label,
+                self.filter_combobox,
+                self.filter_entry,
+                self.filter_apply_button
+            ]
             state = "disabled" if self.pending_delete or self.pending_edit else "normal"
             for widget in widgets:
                 if isinstance(widget, ttk.Combobox):

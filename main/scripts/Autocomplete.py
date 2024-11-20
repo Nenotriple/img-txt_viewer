@@ -177,7 +177,7 @@ class Autocomplete:
             for true_name, (classifier_id, similar_names)
             in itertools.islice(self.autocomplete_dict.items(), threshold)
             if pattern.match(true_name)
-            }
+        }
 
 
     def _include_similar_name_suggestions(self, pattern, suggestions):

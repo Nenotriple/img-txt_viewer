@@ -26,10 +26,11 @@ import threading
 
 
 # Standard Library - GUI
-from tkinter import (ttk, messagebox, simpledialog, filedialog,
-                     StringVar, BooleanVar,
-                     Menu, Text,
-                     )
+from tkinter import (
+    ttk, messagebox, simpledialog, filedialog,
+    StringVar, BooleanVar,
+    Menu, Text,
+)
 
 
 # Custom Libraries
@@ -109,7 +110,7 @@ class FindDupeFile:
             #tray_label_status,
             #self.tray_label_duplicates,
             #self.progress,
-            ]
+        ]
 
 
     def setup_ui(self):
@@ -418,7 +419,7 @@ class FindDupeFile:
             ".heic", ".heif", ".avif", ".apng", ".jp2", ".j2k",
             ".jpf", ".jpx", ".jpm", ".mj2", ".dds", ".exr",
             ".hdr", ".icns", ".ai", ".indd"
-            ]
+        ]
         _, file_extension = os.path.splitext(file_path)
         return file_extension.lower() in image_file_extensions
 

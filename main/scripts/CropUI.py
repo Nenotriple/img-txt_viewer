@@ -330,11 +330,11 @@ class CropSelection:
         x1, x2 = sorted([
             max(cx_off, min(x1, cx_off + c_ns[0])),
             max(cx_off, min(x2, cx_off + c_ns[0]))
-            ])
+        ])
         y1, y2 = sorted([
             max(cy_off, min(y1, cy_off + c_ns[1])),
             max(cy_off, min(y2, cy_off + c_ns[1]))
-            ])
+        ])
         # Adjust coordinates relative to image
         x1_adj, y1_adj = x1 - cx_off, y1 - cy_off
         x2_adj, y2_adj = x2 - cx_off, y2 - cy_off
@@ -350,11 +350,11 @@ class CropSelection:
         x1_orig, x2_orig = sorted([
             max(0, min(orig_img_width, x1_orig)),
             max(0, min(orig_img_width, x2_orig))
-            ])
+        ])
         y1_orig, y2_orig = sorted([
             max(0, min(orig_img_height, y1_orig)),
             max(0, min(orig_img_height, y2_orig))
-            ])
+        ])
         # Update coords if valid rectangle
         self.coords = (x1_orig, y1_orig, x2_orig, y2_orig) if x1_orig != x2_orig and y1_orig != y2_orig else None
 
@@ -421,7 +421,7 @@ class CropSelection:
                 (0, y1, x1, y2),
                 (x2, y1, canvas_width, y2),
                 (0, y2, canvas_width, canvas_height)
-                ]
+            ]
             self.overlay = [self.img_canvas.create_rectangle(*coords, fill="black", stipple="gray50", outline="", tags="overlay") for coords in overlay_coords]
             self.img_canvas.tag_lower("overlay", 'rect')
 
@@ -573,7 +573,7 @@ class CropSelection:
             max(y_off, min(y_max, y1)),
             max(x_off, min(x_max, x2)),
             max(y_off, min(y_max, y2))
-            )
+        )
 
 
 # --------------------------------------
@@ -662,7 +662,7 @@ class CropSelHandles:
             'nw': 'top_left_corner',
             'se': 'bottom_right_corner',
             'sw': 'bottom_left_corner'
-            }
+        }
 
 
 # --------------------------------------
@@ -683,7 +683,7 @@ class CropSelHandles:
             'nw': (x1, y1),
             'se': (x2, y2),
             'sw': (x1, y2)
-            }
+        }
         for key, (cx, cy) in positions.items():
             if create:
                 self.handles[key] = self.img_canvas.create_rectangle(cx - size, cy - size, cx + size, cy + size, fill=self.handle_color, tags='handle')
@@ -698,7 +698,7 @@ class CropSelHandles:
                 "Aspect Ratio": ["n", "e", "s", "w"],
                 "Width": ["e", "w", "ne", "nw", "se", "sw"],
                 "Height": ["n", "s", "ne", "nw", "se", "sw"]
-                }
+            }
             hide_handles = hide_handles_dict.get(mode, [])
             for key, handle in self.handles.items():
                 if key in hide_handles:
@@ -805,7 +805,7 @@ class CropSelHandles:
                 's': lambda y: min(y_max, max(y, y1 + m_size)),
                 'w': lambda x: max(x_off, min(x, x2 - m_size)),
                 'e': lambda x: min(x_max, max(x, x1 + m_size))
-                }
+            }
             for direction in handle:
                 if direction in adjustments:
                     if direction in ['n', 's']:
@@ -944,7 +944,7 @@ class CropSelGuidelines:
             (x2, y1, x2 - diagonal_length, y1 + diagonal_length),
             (x1, y2, x1 + diagonal_length, y2 - diagonal_length),
             (x2, y2, x2 - diagonal_length, y2 - diagonal_length)
-            ]
+        ]
         # Draw diagonal guidelines
         for x1, y1, x2, y2 in diagonals:
             self.draw_guideline(x1, y1, x2, y2, offset)
@@ -1421,7 +1421,7 @@ class CropInterface:
                     "Height": "Expected whole number (Integer)",
                     "Size": "Expected 'W x H' OR 'W , H' (Integer x Integer OR Integer , Integer)",
                     "Aspect Ratio": "Expected ratio: 'W:H' (Integer:Integer); or a float '1.0'"
-                    }[option]
+                }[option]
                 self.set_error_pip_color("error", error_message)
         try:
             x1, y1, x2, y2 = self.crop_selection.coords
@@ -1473,14 +1473,14 @@ class CropInterface:
             "Width": "Enter a whole number",
             "Height": "Enter a whole number",
             "Size": "Enter 'W x H' OR 'W , H'"
-            }
+        }
         if self.fixed_sel_toggle_var.get():
-            state_map = {# Mode: {Widget: State}
+            state_map = {
                 "Aspect Ratio": {width: "disabled", height: "disabled"},
                 "Width": {width: "disabled", height: "normal"},
                 "Height": {width: "normal", height: "disabled"},
                 "Size": {width: "disabled", height: "disabled"}
-                }
+            }
             mode = self.fixed_sel_mode_var.get()
             for widget, widget_state in state_map.get(mode, {}).items():
                 widget.config(state=widget_state)
@@ -1677,7 +1677,7 @@ class CropInterface:
             self.height_spinbox: 'height',
             self.pos_x_spinbox: 'new_x',
             self.pos_y_spinbox: 'new_y'
-            }
+        }
         scale = self.img_canvas.img_scale_ratio
         scaled_value = int(original_value * scale)
         kwargs = {spinbox_map[widget]: scaled_value, 'original_value': original_value}
@@ -1721,12 +1721,11 @@ class CropInterface:
 # Handle GIF
 # --------------------------------------
     def save_all_gif_frames(self):
-        confirm = messagebox.askyesno(
-            "Extract GIF Frames",
+        confirm = messagebox.askyesno("Extract GIF Frames",
             "Are you sure you want to extract all frames from the GIF?\n\n"
             "This will create a folder with all the frames in the same directory as the GIF.\n\n"
             "Please be patient, depending on the number of frames, this may take a while."
-            )
+        )
         if not confirm:
             return
         if not self.img_canvas.img_path or not self.img_canvas.img_path.lower().endswith('.gif'):
@@ -1742,11 +1741,10 @@ class CropInterface:
                 frame_path = os.path.join(folder_path, f"frame_{i:04d}.png")
                 frame.save(frame_path)
             frame_count = len(frames)
-            final_confirm = messagebox.askokcancel(
-                "Extract GIF Frames",
+            final_confirm = messagebox.askokcancel("Extract GIF Frames",
                 f"All {frame_count} frames extracted and saved to:\n{folder_path}\n\n"
                 "Click 'OK' to open the folder."
-                )
+            )
             if final_confirm:
                 os.startfile(folder_path)
         except Exception as e:

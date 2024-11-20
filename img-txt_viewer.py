@@ -38,12 +38,13 @@ from collections import Counter
 
 
 # Standard Library - GUI
-from tkinter import (ttk, Tk, Toplevel, messagebox, filedialog, simpledialog,
-                     StringVar, BooleanVar, IntVar,
-                     Frame, PanedWindow, Menu, Scrollbar, scrolledtext,
-                     Label, Text, Listbox,
-                     Event, font, TclError
-                     )
+from tkinter import (
+    ttk, Tk, Toplevel, messagebox, filedialog, simpledialog,
+    StringVar, BooleanVar, IntVar,
+    Frame, PanedWindow, Menu, Scrollbar, scrolledtext,
+    Label, Text, Listbox,
+    Event, font, TclError
+)
 
 
 # Third-Party Libraries
@@ -65,7 +66,7 @@ from main.scripts import (
     image_grid,
     edit_panel,
     CropUI,
-    )
+)
 from main.scripts.Autocomplete import Autocomplete
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
 from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
@@ -177,7 +178,7 @@ class ImgTxtViewer:
             "#c0dbea", "#f2d8d8", "#cbffa9", "#f9f3cc", "#acb1d6",
             "#a1ccd1", "#dba39a", "#c4d7b2", "#ffd9b7", "#d9acf5",
             "#7895b2", "#ff8787", "#90a17d", "#f8c4b4", "#af7ab3"
-            ]# Blue     Pink       Green      Brown      Purple
+        ]   # Blue     Pink       Green      Brown      Purple
 
 
 # --------------------------------------
@@ -610,23 +611,24 @@ class ImgTxtViewer:
         self.suggestion_textbox.bind("<Button-1>", self.disable_button)
         self.suggestion_textbox.bind("<B1-Motion>", self.disable_button)
         ToolTip.create(self.suggestion_textbox,
-                               "TAB: Insert the highlighted suggestion\n"
-                               "ALT: Cycle suggestion selection\n\n"
-                               "Danbooru Color Code:\n"
-                               "  Black = Normal Tag\n"
-                               "  Red = Artist\n"
-                               "  Purple = Copyright\n"
-                               "  Green = Character\n"
-                               "  Orange = Other\n\n"
-                               "e621 Color Code:\n"
-                               "  Black = General\n"
-                               "  Light Orange = Artist\n"
-                               "  Purple = Copyright\n"
-                               "  Green = Character\n"
-                               "  Dark Orange = Species\n"
-                               "  Red = Invalid, Meta\n"
-                               "  Dark Green = Lore",
-                               1000, 6, 12)
+            "TAB: Insert the highlighted suggestion\n"
+            "ALT: Cycle suggestion selection\n\n"
+            "Danbooru Color Code:\n"
+            "  Black = Normal Tag\n"
+            "  Red = Artist\n"
+            "  Purple = Copyright\n"
+            "  Green = Character\n"
+            "  Orange = Other\n\n"
+            "e621 Color Code:\n"
+            "  Black = General\n"
+            "  Light Orange = Artist\n"
+            "  Purple = Copyright\n"
+            "  Green = Character\n"
+            "  Dark Orange = Species\n"
+            "  Red = Invalid, Meta\n"
+            "  Dark Green = Lore",
+            1000, 6, 12
+        )
         # Suggestion Options
         self.suggestion_menubutton = ttk.Button(self.suggestion_frame, text="☰", takefocus=False, width=2, command=lambda: self.show_suggestion_context_menu(button=True))
         self.suggestion_menubutton.pack(side="right", padx=2)
@@ -729,7 +731,7 @@ class ImgTxtViewer:
             'Font': 60,
             'MyTags': 240,
             'Stats': 240
-            }
+        }
         selected_tab = event.widget.tab("current", "text")
         tab_height = 60 if self.initialize_text_pane else tab_heights.get(selected_tab, 60)
         self.initialize_text_pane = False
@@ -772,13 +774,15 @@ class ImgTxtViewer:
         text_frame.pack(side='top', fill="both")
         description_textbox = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
         description_textbox.pack(side='bottom', fill='both')
-        description_textbox.insert("1.0", "Use this tool to search for a string of text across all text files in the selected directory.\n\n"
-                                   "If a match is found, it will be replaced exactly with the given text.\n\n"
-                                   "Example:\n"
-                                   "Search for: the big brown dog\n"
-                                   "Replace with: the big red dog\n\n"
-                                   "This will replace all instances of 'the big brown dog' with 'the big red dog'.\n\n"
-                                   "If a filter is applied, only text files that match the filter will be affected.")
+        description_textbox.insert("1.0",
+            "Use this tool to search for a string of text across all text files in the selected directory.\n\n"
+            "If a match is found, it will be replaced exactly with the given text.\n\n"
+            "Example:\n"
+            "Search for: the big brown dog\n"
+            "Replace with: the big red dog\n\n"
+            "This will replace all instances of 'the big brown dog' with 'the big red dog'.\n\n"
+            "If a filter is applied, only text files that match the filter will be affected."
+        )
         description_textbox.config(state="disabled", wrap="word")
 
 
@@ -815,9 +819,11 @@ class ImgTxtViewer:
         text_frame.pack(side='top', fill="both")
         description_textbox = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
         description_textbox.pack(side='bottom', fill='both')
-        description_textbox.insert("1.0", "Use this tool to prefix all text files in the selected directory with the entered text.\n\n"
-                                   "This means that the entered text will appear at the start of each text file.\n\n"
-                                   "If a filter is applied, only text files that match the filter will be affected.")
+        description_textbox.insert("1.0",
+            "Use this tool to prefix all text files in the selected directory with the entered text.\n\n"
+            "This means that the entered text will appear at the start of each text file.\n\n"
+            "If a filter is applied, only text files that match the filter will be affected."
+        )
         description_textbox.config(state="disabled", wrap="word")
 
 
@@ -848,9 +854,11 @@ class ImgTxtViewer:
         text_frame.pack(side='top', fill="both")
         description_textbox = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
         description_textbox.pack(side='bottom', fill='both')
-        description_textbox.insert("1.0", "Use this tool to append all text files in the selected directory with the entered text.\n\n"
-                                   "This means that the entered text will appear at the end of each text file.\n\n"
-                                   "If a filter is applied, only text files that match the filter will be affected.")
+        description_textbox.insert("1.0",
+            "Use this tool to append all text files in the selected directory with the entered text.\n\n"
+            "This means that the entered text will appear at the end of each text file.\n\n"
+            "If a filter is applied, only text files that match the filter will be affected."
+        )
         description_textbox.config(state="disabled", wrap="word")
 
 
@@ -1058,7 +1066,8 @@ class ImgTxtViewer:
             "      └── wd-v1-4-moat-tagger-v2/\n"
             "          ├── model.onnx\n"
             "          └── selected_tags.csv\n\n"
-            "Auto-Tagging was primarily tested with the 'wd-v1-4-moat-tagger-v2' model.\n\nCopy URL to clipboard?")
+            "Auto-Tagging was primarily tested with the 'wd-v1-4-moat-tagger-v2' model.\n\nCopy URL to clipboard?"
+        )
         if confirm:
             self.text_box.clipboard_clear()
             self.text_box.clipboard_append("https://huggingface.co/SmilingWolf")
@@ -1338,14 +1347,16 @@ class ImgTxtViewer:
         text_frame.pack(side='top', fill="both")
         description_textbox = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
         description_textbox.pack(side='bottom', fill='both')
-        description_textbox.insert("1.0", "This tool will filter all img-txt pairs based on the provided text.\n\n"
-                                   "Enter any string of text to display only img-txt pairs containing that text.\n"
-                                   "Use ' + ' to include multiple strings when filtering.\n"
-                                   "Use '!' before the text to exclude any pairs containing that text.\n\n"
-                                   "Examples:\n"
-                                   "'dog' (shows only pairs containing the text dog)\n"
-                                   "'!dog' (removes all pairs containing the text dog)\n"
-                                   "'!dog + cat' (remove dog pairs, display cat pairs)")
+        description_textbox.insert("1.0",
+            "This tool will filter all img-txt pairs based on the provided text.\n\n"
+            "Enter any string of text to display only img-txt pairs containing that text.\n"
+            "Use ' + ' to include multiple strings when filtering.\n"
+            "Use '!' before the text to exclude any pairs containing that text.\n\n"
+            "Examples:\n"
+            "'dog' (shows only pairs containing the text dog)\n"
+            "'!dog' (removes all pairs containing the text dog)\n"
+            "'!dog + cat' (remove dog pairs, display cat pairs)"
+        )
         description_textbox.config(state="disabled", wrap="word")
 
 
@@ -1375,9 +1386,11 @@ class ImgTxtViewer:
         text_frame.pack(side='top', fill="both")
         description_textbox = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
         description_textbox.pack(side='bottom', fill='both')
-        description_textbox.insert("1.0", "Enter the text you want to highlight each time you move to a new img-txt pair.\n\n"
-                                   "Use ' + ' to highlight multiple strings of text\n\n"
-                                   "Example: dog + cat")
+        description_textbox.insert("1.0",
+            "Enter the text you want to highlight each time you move to a new img-txt pair.\n\n"
+            "Use ' + ' to highlight multiple strings of text\n\n"
+            "Example: dog + cat"
+        )
         description_textbox.config(state="disabled", wrap="word")
 
 
@@ -1961,21 +1974,21 @@ class ImgTxtViewer:
 # Misc setup
 # --------------------------------------
     def enable_menu_options(self):
-        tool_commands =       [
-                             "Batch Operations",
-                             "Edit Current pair",
-                             "Open Current Directory...",
-                             "Open Current Image...",
-                             "Edit Image...",
-                             "Next Empty Text File",
-                             "Open Image-Grid...",
-                             ]
-        options_commands =   [
-                              "Options",
-                              "Loading Order",
-                              "Autocomplete",
-                              "Reset Settings"
-                              ]
+        tool_commands = [
+            "Batch Operations",
+            "Edit Current pair",
+            "Open Current Directory...",
+            "Open Current Image...",
+            "Edit Image...",
+            "Next Empty Text File",
+            "Open Image-Grid...",
+        ]
+        options_commands = [
+            "Options",
+            "Loading Order",
+            "Autocomplete",
+            "Reset Settings"
+        ]
         for t_command in tool_commands:
             self.toolsMenu.entryconfig(t_command, state="normal")
         for o_command in options_commands:
@@ -2486,7 +2499,7 @@ class ImgTxtViewer:
             'danbooru_safe.csv':    {0: "black",    1: "#c00004",   2: "black",     3: "#a800aa",   4: "#00ab2c",   5: "#fd9200"},
             'e621.csv':             {-1: "black",   0: "black",     1: "#f2ac08",   3: "#dd00dd",   4: "#00aa00",   5: "#ed5d1f",   6: "#ff3d3d",   7: "#ff3d3d",   8: "#228822"},
             'derpibooru.csv':       {0: "black",    1: "#e5b021",   3: "#fd9961",   4: "#cf5bbe",   5: "#3c8ad9",   6: "#a6a6a6",   7: "#47abc1",   8: "#7871d0",   9: "#df3647",   10: "#c98f2b",  11: "#e87ebe"}
-            }
+        }
         black_mappings = {key: "black" for key in color_mappings[csv_file].keys()}
         self.suggestion_colors = color_mappings[csv_file] if self.colored_suggestion_var.get() else black_mappings
 
@@ -2502,7 +2515,7 @@ class ImgTxtViewer:
             "Normal": 130000,
             "Fast"  : 75000,
             "Faster": 40000
-            }
+        }
         self.autocomplete.suggestion_threshold = thresholds.get(self.suggestion_threshold_var.get())
 
 
@@ -3183,20 +3196,10 @@ class ImgTxtViewer:
 
     def toggle_filter_widgets(self, state): # Filter
             if state:
-                for widget in [
-                               self.filter_label,
-                               self.filter_entry,
-                               self.filter_button,
-                               self.regex_filter_checkbutton
-                               ]:
+                for widget in [self.filter_label, self.filter_entry, self.filter_button, self.regex_filter_checkbutton]:
                     widget.config(state="disabled")
             else:
-                for widget in [
-                               self.filter_label,
-                               self.filter_entry,
-                               self.filter_button,
-                               self.regex_filter_checkbutton
-                               ]:
+                for widget in [self.filter_label, self.filter_entry, self.filter_button, self.regex_filter_checkbutton]:
                     widget.config(state="normal")
 
 
@@ -3297,7 +3300,7 @@ class ImgTxtViewer:
             "This tool works by expanding the shorter side to a square resolution divisible by 8 "
             "and stretching the pixels around the long side to fill the space.\n\n"
             "A new image will be saved in the same format and with '_ex' appended to the filename."
-            )
+        )
         if not messagebox.askyesno("Expand Image", confirmation):
             return
         try:
@@ -3336,7 +3339,7 @@ class ImgTxtViewer:
                 "Yes: Rename and convert all images and text files.\n"
                 "No: Only rename files.\n"
                 "Cancel: Cancel the operation."
-                )
+            )
             if convert_confirmation is None:
                 return
             self.check_working_directory()
@@ -3554,7 +3557,7 @@ class ImgTxtViewer:
             "High"  : (1536, Image.LANCZOS),
             "Normal": (1280, Image.BILINEAR),
             "Low"   : (768,  Image.NEAREST)
-            }
+        }
         var = self.image_quality_var.get()
         if var in quality_settings:
             self.quality_max_size, self.quality_filter = quality_settings[var]

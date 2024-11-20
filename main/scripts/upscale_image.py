@@ -25,7 +25,13 @@ import subprocess
 
 
 # Standard Library - GUI
-from tkinter import ttk, Toplevel, messagebox, filedialog, Frame, Label, Button, IntVar, DoubleVar, StringVar, TclError
+from tkinter import (
+    ttk, Toplevel, messagebox, filedialog,
+    StringVar, IntVar, DoubleVar,
+    Frame,
+    Label, Button,
+    TclError
+)
 
 
 # Third-Party Libraries
@@ -92,36 +98,39 @@ class Upscale:
 
 
     def create_interface(self):
+        self.create_top_row()
+        self.create_upscale_model_selection_widgets()
+        self.create_upscale_settings_widgets()
+        self.create_info_widgets()
+        self.create_primary_buttons()
+
+
+    def create_top_row(self):
         self.frame_container = Frame(self.top)
         self.frame_container.pack(expand=True, fill="both")
-
+        # Title
         title_text = "Upscale Image" if not self.batch_mode else "Batch Upscale"
         title = Label(self.frame_container, cursor="size", text=title_text, font=("", 16))
         title.pack(side="top", fill="x", padx=5, pady=5)
         title.bind("<ButtonPress-1>", self.start_drag)
         title.bind("<ButtonRelease-1>", self.stop_drag)
         title.bind("<B1-Motion>", self.dragging_window)
-
-
+        # Close Button
         self.button_close = Button(self.frame_container, text="X", overrelief="groove", relief="flat", command=self.close_window)
         button_close_padding = 0.945 if self.batch_mode else 0.92
         self.button_close.place(anchor="nw", relx=button_close_padding, height=40, width=40, x=-15, y=0)
         self.bind_widget_highlight(self.button_close, color='#ffcac9')
-
-
         separator = ttk.Separator(self.frame_container)
         separator.pack(side="top", fill="x")
 
 
-####### Options ##################################################
-        frame_comboboxes = Frame(self.frame_container)
-        frame_comboboxes.pack(side="top", fill="x", padx=10, pady=10)
-
+    def create_upscale_model_selection_widgets(self):
+        self.frame_comboboxes = Frame(self.frame_container)
+        self.frame_comboboxes.pack(side="top", fill="x", padx=10, pady=10)
         if self.batch_mode:
-            frame_input_batch_directory = Frame(frame_comboboxes)
+            # Input Path
+            frame_input_batch_directory = Frame(self.frame_comboboxes)
             frame_input_batch_directory.pack(side="top", fill="x", padx=10, pady=10)
-
-            # Input
             self.label_batch_upscale_path = Label(frame_input_batch_directory, text="Upscale Path")
             self.label_batch_upscale_path.pack(anchor="w", side="top", padx=5, pady=5)
             self.batch_upscale_path = StringVar(value=self.batch_filepath)
@@ -129,36 +138,26 @@ class Upscale:
             self.entry_batch_upscale_path.pack(side="left", fill="x", padx=5, pady=5)
             self.entry_batch_upscale_path.config()
             self.input_tooltip = ToolTip.create(self.entry_batch_upscale_path, self.batch_upscale_path.get(), 250, 6, 12)
-
             self.button_browse_batch_input = ttk.Button(frame_input_batch_directory, text="Browse...", command=lambda: self.choose_directory(self.batch_upscale_path, self.input_tooltip))
             self.button_browse_batch_input.pack(side="left", fill="x", padx=2, pady=2)
-
             self.button_open_batch_input = ttk.Button(frame_input_batch_directory, text="Open", command=lambda: self.open_directory(self.batch_upscale_path.get()))
             self.button_open_batch_input.pack(side="left", fill="x", padx=2, pady=2)
-
-            frame_output_batch_directory = Frame(frame_comboboxes)
+            # Output Path
+            frame_output_batch_directory = Frame(self.frame_comboboxes)
             frame_output_batch_directory.pack(side="top", fill="x", padx=10, pady=10)
-
-            # Output
             self.label_batch_output_path = Label(frame_output_batch_directory, text="Output Path")
             self.label_batch_output_path.pack(anchor="w", side="top", padx=5, pady=5)
-
             self.batch_output_path = StringVar(value=os.path.join(self.batch_upscale_path.get(), "Upscale_Output"))
-
             self.entry_batch_output_path = ttk.Entry(frame_output_batch_directory, width=50, textvariable=self.batch_output_path)
             self.entry_batch_output_path.pack(side="left", fill="x", padx=5, pady=5)
             self.output_tooltip = ToolTip.create(self.entry_batch_output_path, self.batch_output_path.get(), 250, 6, 12)
-
             self.browse_batch_output_button = ttk.Button(frame_output_batch_directory, text="Browse...", command=lambda: self.choose_directory(self.batch_output_path, self.output_tooltip))
             self.browse_batch_output_button.pack(side="left", fill="x", padx=2, pady=2)
-
             self.open_batch_output_button = ttk.Button(frame_output_batch_directory, text="Open", command=lambda: self.open_directory(self.batch_output_path.get()))
             self.open_batch_output_button.pack(side="left", fill="x", padx=2, pady=2)
-
-
-        frame_model = Frame(frame_comboboxes)
+        # Upscale Model
+        frame_model = Frame(self.frame_comboboxes)
         frame_model.pack(side="top", fill="x", padx=10, pady=10)
-
         self.label_upscale_model = Label(frame_model, text="Upscale Model")
         self.label_upscale_model.pack(anchor="w", side="top", padx=5, pady=5)
         self.combobox_upscale_model = ttk.Combobox(frame_model, width=25, state="readonly", values=self.ncnn_models)
@@ -167,9 +166,10 @@ class Upscale:
         self.combobox_upscale_model.set("realesr-animevideov3-x4")
 
 
-        frame_size = Frame(frame_comboboxes)
+    def create_upscale_settings_widgets(self):
+        # Upscale Factor
+        frame_size = Frame(self.frame_comboboxes)
         frame_size.pack(side="top", fill="x", padx=10, pady=10)
-
         self.label_size = Label(frame_size, text="Upscale Factor")
         self.label_size.pack(anchor="w", side="top", padx=5, pady=5)
         self.upscale_factor_value = DoubleVar(value=2.00)
@@ -179,103 +179,89 @@ class Upscale:
         self.label_upscale_factor_value = Label(frame_size, textvariable=self.upscale_factor_value, width=5)
         self.label_upscale_factor_value.pack(side="left", anchor="w", padx=5, pady=5)
 
-
-        frame_slider = Frame(frame_comboboxes)
-        frame_slider.pack(side="top", fill="x", padx=10, pady=10)
-
-        self.label_upscale_strength = Label(frame_slider, text="Upscale Strength")
+        # Upscale Strength
+        frame_strength = Frame(self.frame_comboboxes)
+        frame_strength.pack(side="top", fill="x", padx=10, pady=10)
+        self.label_upscale_strength = Label(frame_strength, text="Upscale Strength")
         self.label_upscale_strength.pack(anchor="w", side="top", padx=5, pady=5)
         self.upscale_strength_value = IntVar(value=100)
-        self.slider_upscale_strength = ttk.Scale(frame_slider, from_=0, to=100, orient="horizontal", command=self.update_strength_label)
+        self.slider_upscale_strength = ttk.Scale(frame_strength, from_=0, to=100, orient="horizontal", command=self.update_strength_label)
         self.slider_upscale_strength.pack(side="left", fill="x", expand=True, padx=5, pady=5)
         ToolTip.create(self.slider_upscale_strength, "Adjust the upscale strength to determine the final blending value of the output image.\n\n0% = Only original image, 100% = Only upscaled image.", 250, 6, 12)
-        self.label_upscale_strength_percent = Label(frame_slider, width=5)
+        self.label_upscale_strength_percent = Label(frame_strength, width=5)
         self.label_upscale_strength_percent.pack(anchor="w", side="left", padx=5, pady=5)
         self.slider_upscale_strength.set(100)
 
 
-####### Info ##################################################
-
-
+    def create_info_widgets(self):
         if self.batch_mode:
             self.frame_info = Frame(self.top)
             self.frame_info.pack(side="top", expand=True, fill="x", padx=10, pady=10)
-
-
             separator = ttk.Separator(self.frame_info)
             separator.pack(side="top", fill="x")
-
-
+            # Output info
             self.frame_labels = Frame(self.frame_info)
             self.frame_labels.pack(side="left", expand=True, fill="x", padx=10, pady=10)
-
-            label_num_images = Label(self.frame_labels, text="Upscaled:")
-            label_num_images.pack(anchor="w", side="top", padx=5, pady=5)
-
+            Label(self.frame_labels, text="Upscaled:").pack(anchor="w", side="top", padx=5, pady=5)
+            # Timer
             self.label_timer = Label(self.frame_labels, text="Timer: 00:00:00")
             self.label_timer.pack(anchor="w", side="top", padx=5, pady=5)
-
-
+            # Output info
             self.frame_dimensions = Frame(self.frame_info)
             self.frame_dimensions.pack(side="left", expand=True, fill="x", padx=10, pady=10)
-
+            # Number of images
             self.label_number_of_images = Label(self.frame_dimensions, text=f"0 of {self.total_images}", width=20)
             self.label_number_of_images.pack(anchor="w", side="top", padx=5, pady=5)
-
+            # ETA
             self.label_timer_eta = Label(self.frame_dimensions, text="ETA: 00:00:00", width=20)
             self.label_timer_eta.pack(anchor="w", side="top", padx=5, pady=5)
-
-
         else:
             self.frame_info = Frame(self.top)
             self.frame_info.pack(side="top", expand=True, fill="x", padx=10, pady=10)
-
-
             separator = ttk.Separator(self.frame_info)
             separator.pack(side="top", fill="x")
-
-
+            # Output info
             self.frame_labels = Frame(self.frame_info)
             self.frame_labels.pack(side="left", expand=True, fill="x", padx=10, pady=10)
-
+            # Current Size
             label_current = Label(self.frame_labels, text="Current Size:")
             label_current.pack(anchor="w", side="top", padx=5, pady=5)
+            # New Size
             label_new = Label(self.frame_labels, text="New Size:")
             label_new.pack(anchor="w", side="top", padx=5, pady=5)
+            # GIF Frames
             if self.filepath.lower().endswith(".gif"):
                 label_frames = Label(self.frame_labels, text="Frames:")
                 label_frames.pack(anchor="w", side="top", padx=5, pady=5)
-
-
+            # Output info
             self.frame_dimensions = Frame(self.frame_info)
             self.frame_dimensions.pack(side="left", expand=True, fill="x", padx=10, pady=10)
-
+            # Current Size
             self.label_current_dimensions = Label(self.frame_dimensions, text=f"{self.original_image_width} x {self.original_image_height}", width=20)
             self.label_current_dimensions.pack(anchor="w", side="top", padx=5, pady=5)
+            # New Size
             self.label_new_dimensions = Label(self.frame_dimensions, text="0 x 0", width=20)
             self.label_new_dimensions.pack(anchor="w", side="top", padx=5, pady=5)
             ToolTip.create(self.label_new_dimensions, " The final size of the image after upscaling ", 250, 6, 12)
+            # GIF Frames
             if self.filepath.lower().endswith(".gif"):
                 self.label_framecount = Label(self.frame_dimensions, text=f"{self.current_gif_frame} of {self.total_gif_frames}", width=20)
                 self.label_framecount.pack(anchor="w", side="top", padx=5, pady=5)
 
 
-####### Primary Buttons ##################################################
+    def create_primary_buttons(self):
         self.frame_primary_buttons = Frame(self.top)
         self.frame_primary_buttons.pack(side="top", fill="x")
-
-
+        # Progress Bar
         self.progress_bar = ttk.Progressbar(self.frame_primary_buttons, maximum=100)
         self.progress_bar.pack(side="top", expand=True, fill="x", padx=10, pady=10)
-
-
-        button_command = self.determine_image_type
-        self.button_upscale = ttk.Button(self.frame_primary_buttons, text="Upscale", command=button_command)
+        # Upscale Button
+        self.button_upscale = ttk.Button(self.frame_primary_buttons, text="Upscale", command=self.determine_image_type)
         self.button_upscale.pack(side="left", expand=True, fill="x", padx=5, pady=5)
-
-
+        # Cancel Button
         self.button_cancel = ttk.Button(self.frame_primary_buttons, text="Cancel", command=self.close_window)
         self.button_cancel.pack(side="left", expand=True, fill="x", padx=5, pady=5)
+
 
 #endregion
 ################################################################################################################################################
@@ -385,7 +371,8 @@ class Upscale:
                     "-o", upscaled_frame_path,
                     "-n", model,
                     "-s", "4",
-                    "-f", "jpg"]
+                    "-f", "jpg"
+                ]
                 if model not in self.ncnn_models:
                     upscale_command.extend(["-m", self.extra_models_path])
                 upscale_process = subprocess.Popen(upscale_command, creationflags=subprocess.CREATE_NO_WINDOW)
@@ -439,7 +426,8 @@ class Upscale:
                 "-o", output_image_path,
                 "-n", model,
                 "-s", "4",
-                "-f", "jpg"]
+                "-f", "jpg"
+            ]
             if model not in self.ncnn_models:
                 upscale_command.extend(["-m", self.extra_models_path])
             upscale_process = subprocess.Popen(upscale_command, creationflags=subprocess.CREATE_NO_WINDOW)

@@ -23,10 +23,11 @@ import configparser
 
 
 # Standard Library - GUI
-from tkinter import (ttk, Toplevel, messagebox,
-                     IntVar, StringVar, BooleanVar,
-                     Frame, Label, Button, Menu, Scrollbar, Canvas,
-                     )
+from tkinter import (
+    ttk, Toplevel, messagebox,
+    IntVar, StringVar, BooleanVar,
+    Frame, Label, Button, Menu, Scrollbar, Canvas,
+)
 
 
 # Third-Party Libraries
@@ -320,7 +321,8 @@ class ImageGrid:
         size_settings = {
             1: (45, 45, 13),
             2: (80, 80, 8),
-            3: (170, 170, 4)}
+            3: (170, 170, 4)
+        }
         self.max_width, self.max_height, self.cols = size_settings.get(self.image_size.get(), (80, 80, 8))
 
 
@@ -733,12 +735,10 @@ class ImageGrid:
             # Read existing settings
             if os.path.exists(self.settings_file):
                 self.config.read(self.settings_file)
-
             # Auto-Close
             if not self.config.has_section("Other"):
                 self.config.add_section("Other")
             self.config.set("Other", "auto_close", str(self.auto_close.get()))
-
             # Write updated settings back to file
             with open(self.settings_file, "w", encoding="utf-8") as f:
                 self.config.write(f)
@@ -751,10 +751,8 @@ class ImageGrid:
              # Read existing settings
              if os.path.exists(self.settings_file):
                  self.config.read(self.settings_file)
-
                  # Auto-Close
                  self.auto_close.set(value=self.config.getboolean("Other", "auto_close", fallback=False))
-
          except Exception as e:
              messagebox.showerror("Error", f"Error: An unexpected error occurred.\n\n{e}")
 

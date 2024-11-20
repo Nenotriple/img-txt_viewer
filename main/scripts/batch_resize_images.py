@@ -801,10 +801,11 @@ class BatchResizeImages:
         else:
             self.stop = True
             messagebox.showerror("Error!",
-                                    "Could not copy metadata from PNG-to-WEBP."
-                                    "\n\nexiftool.exe does not exist in the root path. (Check spelling)"
-                                    "\n\nDownload the Windows executable from exiftool.org and place in the same folder as batch_resize_images.exe, restart the program and try again."
-                                    "\n\nThe resize operation will now stop.")
+                "Could not copy metadata from PNG-to-WEBP."
+                "\n\nexiftool.exe does not exist in the root path. (Check spelling)"
+                "\n\nDownload the Windows executable from exiftool.org and place in the same folder as batch_resize_images.exe, restart the program and try again."
+                "\n\nThe resize operation will now stop."
+            )
 
 
 # --------------------------------------
@@ -832,10 +833,11 @@ class BatchResizeImages:
         else:
             self.stop = True
             messagebox.showerror("Error!",
-                                    "Could not copy metadata from WEBP-to-WEBP."
-                                    "\n\nexiftool.exe does not exist in the root path. (Check spelling)"
-                                    "\n\nDownload the Windows executable from exiftool.org and place in the same folder as batch_resize_images.exe, restart the program and try again."
-                                    "\n\nThe resize operation will now stop.")
+                "Could not copy metadata from WEBP-to-WEBP."
+                "\n\nexiftool.exe does not exist in the root path. (Check spelling)"
+                "\n\nDownload the Windows executable from exiftool.org and place in the same folder as batch_resize_images.exe, restart the program and try again."
+                "\n\nThe resize operation will now stop."
+            )
 
 
 #endregion

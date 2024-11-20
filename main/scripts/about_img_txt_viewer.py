@@ -90,7 +90,7 @@ class AboutWindow:
             " ⦁ Check the auto-save box to save text when switching between image-text pairs or closing the window.\n"
             " ⦁ Text cleanup (e.g., removing duplicate tags, trailing commas, extra spaces) happens automatically on save, and can be disabled from the options menu.\n"
             " ⦁ Text cleanup is optimized for CSV-format captions and can be disabled via the Clean-Text option in the menu.\n"
-            ]
+        ]
 
 
 # --------------------------------------
