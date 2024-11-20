@@ -43,7 +43,6 @@ class SettingsManager:
             self._save_path_settings()
             self._save_window_settings()
             self._save_autocomplete_settings()
-            #self._save_ONNX_settings()
             self._save_other_settings()
             self.write_settings_to_file()
         except (PermissionError, IOError) as e:
@@ -108,15 +107,6 @@ class SettingsManager:
         self.config.set("Autocomplete", "last_word_match", str(self.parent.last_word_match_var.get()))
 
 
-    #def _save_ONNX_settings(self):
-    #    self._add_section("ONNX")
-    #    self.config.set("ONNX", "ONNX_model", str(self.parent.onnx_model_var.get()))
-    #    self.config.set("ONNX", "general_threshold", str(self.parent.general_threshold_var.get()))
-    #    self.config.set("ONNX", "character_threshold", str(self.parent.character_threshold_var.get()))
-    #    self.config.set("ONNX", "custom_exclude_tags", str(self.parent.custom_exclude_tags_var.get()))
-    #    self.config.set("ONNX", "exclude_current_tags", str(self.parent.exclude_current_tags_var.get()))
-
-
     def _save_other_settings(self):
         self._add_section("Other")
         self.config.set("Other", "auto_save", str(self.parent.auto_save_var.get()))
@@ -173,9 +163,7 @@ class SettingsManager:
 
     def _read_config_settings(self):
         self._read_directory_settings()
-        #self.read_window_settings()
         self._read_autocomplete_settings()
-        #self._read_ONNX_settings()
         self._read_other_settings()
 
 
@@ -194,15 +182,6 @@ class SettingsManager:
         self.parent.jump_to_image(min(last_index, num_files))
 
 
-    def _read_window_settings(self):
-        self.parent.panes_swap_ew_var.set(value=self.config.getboolean("Window", "panes_swap_ew_var", fallback=False))
-        self.parent.panes_swap_ns_var.set(value=self.config.getboolean("Window", "panes_swap_ns_var", fallback=False))
-        self.parent.swap_pane_sides(swap_state=self.parent.panes_swap_ew_var.get())
-        self.parent.swap_pane_orientation(swap_state=self.parent.panes_swap_ns_var.get())
-        self.parent.always_on_top_var.set(value=self.config.getboolean("Window", "always_on_top_var", fallback=False))
-        self.parent.set_always_on_top()
-
-
     def _read_autocomplete_settings(self):
         self.parent.csv_danbooru.set(value=self.config.getboolean("Autocomplete", "csv_danbooru", fallback=True))
         self.parent.csv_danbooru_safe.set(value=self.config.getboolean("Autocomplete", "csv_danbooru_safe", fallback=False))
@@ -214,14 +193,6 @@ class SettingsManager:
         self.parent.suggestion_threshold_var.set(value=self.config.get("Autocomplete", "suggestion_threshold", fallback="Normal"))
         self.parent.last_word_match_var.set(value=self.config.getboolean("Autocomplete", "last_word_match", fallback=False))
         self.parent.update_autocomplete_dictionary()
-
-
-    #def _read_ONNX_settings(self):
-    #    self.parent.onnx_model_var.set(value=self.config.get("ONNX", "ONNX_model", fallback=""))
-    #    self.parent.general_threshold_var.set(value=self.config.getfloat("ONNX", "general_threshold", fallback=0.35))
-    #    self.parent.character_threshold_var.set(value=self.config.getfloat("ONNX", "character_threshold", fallback=0.8))
-    #    self.parent.custom_exclude_tags_var.set(value=self.config.get("ONNX", "custom_exclude_tags", fallback=""))
-    #    self.parent.exclude_current_tags_var.set(value=self.config.getboolean("ONNX", "exclude_current_tags", fallback=False))
 
 
     def _read_other_settings(self):
@@ -269,11 +240,18 @@ class SettingsManager:
         self.parent.suggestion_threshold_var.set(value="Normal")
         self.parent.last_word_match_var.set(value=False)
         # ONNX
-        #self.parent.onnx_model_var.set(value="")
-        #self.parent.general_threshold_var.set(value=0.35)
-        #self.parent.character_threshold_var.set(value=0.8)
-        #self.parent.custom_exclude_tags_var.set(value="")
-        #self.parent.exclude_current_tags_var.set(value=False)
+        self.parent.auto_insert_mode_var.set(value="disable")
+        self.parent.batch_interrogate_images_var.set(value=False)
+        self.parent.auto_tag_general_threshold_spinbox.set(value=0.35)
+        self.parent.auto_tag_character_threshold_spinbox.set(value=0.8)
+        self.parent.auto_tag_max_tags_spinbox.set(value=40)
+        self.parent.onnx_tagger.keep_underscore.set(value=False)
+        self.parent.onnx_tagger.keep_escape_character.set(value=True)
+        self.parent.excluded_tags_entry.delete(0, 'end')
+        self.parent.auto_exclude_tags_var.set(value=False)
+        self.parent.keep_tags_entry.delete(0, 'end')
+        self.parent.replace_tags_entry.delete(0, 'end')
+        self.parent.replace_with_tags_entry.delete(0, 'end')
         # Other
         self.parent.clear_search_and_replace_tab()
         self.parent.prefix_entry.delete(0, 'end')
