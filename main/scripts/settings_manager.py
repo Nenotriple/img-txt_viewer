@@ -118,6 +118,7 @@ class SettingsManager:
         self.config.set("Other", "use_mytags", str(self.parent.use_mytags_var.get()))
         self.config.set("Other", "auto_delete_blank_files", str(self.parent.auto_delete_blank_files_var.get()))
         self.config.set("Other", "thumbnails_visible", str(self.parent.thumbnails_visible.get()))
+        self.config.set("Other", "thumbnail_width", str(self.parent.thumbnail_width.get()))
         self.config.set("Other", "edit_panel_visible", str(self.parent.edit_panel_visible_var.get()))
         self.config.set("Other", "image_quality", str(self.parent.image_quality_var.get()))
         self.config.set("Other", "font", str(self.parent.font_var.get()))
@@ -205,6 +206,7 @@ class SettingsManager:
         self.parent.use_mytags_var.set(value=self.config.getboolean("Other", "use_mytags", fallback=True))
         self.parent.auto_delete_blank_files_var.set(value=self.config.getboolean("Other", "auto_delete_blank_files", fallback=False))
         self.parent.thumbnails_visible.set(value=self.config.getboolean("Other", "thumbnails_visible", fallback=True))
+        self.parent.thumbnail_width.set(value=self.config.getint("Other", "thumbnail_width", fallback=50))
         self.parent.edit_panel_visible_var.set(value=self.config.getboolean("Other", "edit_panel_visible", fallback=False))
         self.parent.edit_panel.toggle_edit_panel()
         self.parent.image_quality_var.set(value=self.config.get("Other", "image_quality", fallback="Normal"))
@@ -273,6 +275,7 @@ class SettingsManager:
         self.parent.external_image_editor_path = "mspaint"
         self.parent.image_quality_var.set(value="Normal")
         self.parent.set_image_quality()
+        self.parent.big_save_button_var.set(value=True)
         # Window
         self.parent.always_on_top_var.set(value=False)
         self.parent.set_always_on_top()
@@ -299,8 +302,12 @@ class SettingsManager:
             self.parent.create_custom_dictionary(reset=True)
         # Extra panels
         self.parent.thumbnails_visible.set(value=True)
+        self.parent.thumbnail_width.set(value=50)
         self.parent.update_thumbnail_panel()
         self.parent.edit_panel_visible_var.set(value=False)
+        self.parent.edit_cumulative_var.set(value=False)
+        self.parent.edit_last_slider_dict.clear()
+        self.parent.edit_slider_dict = {"Brightness": 0, "Contrast": 0, "AutoContrast": 0, "Highlights": 0, "Shadows": 0, "Saturation": 0, "Sharpness": 0, "Hue": 0, "Color Temperature": 0}
         self.parent.edit_panel.toggle_edit_panel()
         # Title
         self.parent.sync_title_with_content()
