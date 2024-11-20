@@ -134,13 +134,13 @@ class ImageGrid:
         self.frame_main.pack(fill="both", expand=True)
         self.scrollbar = Scrollbar(self.frame_main)
         self.scrollbar.pack(side="right", fill="y")
-        self.frame_thumbnails = Frame(self.frame_main)
+        self.frame_thumbnails = Frame(self.frame_main, takefocus=False)
         self.frame_thumbnails.pack(side="left", fill="both", expand=True)
-        self.canvas_thumbnails = Canvas(self.frame_thumbnails, yscrollcommand=self.scrollbar.set)
+        self.canvas_thumbnails = Canvas(self.frame_thumbnails, takefocus=False, yscrollcommand=self.scrollbar.set)
         self.canvas_thumbnails.pack(side="top", fill="both", expand=True)
         self.canvas_thumbnails.bind("<MouseWheel>", self.on_mousewheel)
         self.scrollbar.config(command=self.canvas_thumbnails.yview)
-        self.frame_image_grid = Frame(self.canvas_thumbnails)
+        self.frame_image_grid = Frame(self.canvas_thumbnails, takefocus=False)
         self.frame_image_grid.bind("<MouseWheel>", self.on_mousewheel)
 
 
@@ -337,7 +337,7 @@ class ImageGrid:
     def populate_image_grid(self):
         for index, (image, filepath, image_index) in enumerate(self.images):
             row, col = divmod(index, self.cols)
-            thumbnail = ttk.Button(self.frame_image_grid, image=image, command=lambda path=filepath: self.on_mouse_click(path))
+            thumbnail = ttk.Button(self.frame_image_grid, image=image, takefocus=False, command=lambda path=filepath: self.on_mouse_click(path))
             thumbnail.image = image
             thumbnail.grid(row=row, column=col)
             thumbnail.bind("<MouseWheel>", self.on_mousewheel)
