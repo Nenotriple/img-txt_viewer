@@ -123,7 +123,7 @@ class PyTrominosGame:
         self._center_window()
         self.setup_game_binds()
         self.start_game()
-        self.root.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == self.root else None, add="+")
+        #self.root.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == self.root else None, add="+")
 
 
     def create_interface(self):
