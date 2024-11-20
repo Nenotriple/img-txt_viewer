@@ -240,7 +240,7 @@ class SettingsManager:
         self.parent.suggestion_threshold_var.set(value="Normal")
         self.parent.last_word_match_var.set(value=False)
         # ONNX
-        self.parent.auto_insert_mode_var.set(value="disable")
+        self.parent.auto_insert_mode.set(value="disable")
         self.parent.batch_interrogate_images_var.set(value=False)
         self.parent.auto_tag_general_threshold_spinbox.set(value=0.35)
         self.parent.auto_tag_character_threshold_spinbox.set(value=0.8)
