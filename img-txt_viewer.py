@@ -1434,33 +1434,7 @@ class ImgTxtViewer:
     # Tab 8: MyTags
     # --------------------------------------
     def create_custom_dictionary_widgets_tab8(self):
-        def save():
-            tags = self.custom_dictionary_listbox.get(0, 'end')
-            content = '\n'.join(tags) + '\n'
-            with open(self.my_tags_csv, 'w') as file:
-                file.write(content)
-            self.master.after(100, self.refresh_custom_dictionary)
-
-        def add_tag():
-            tag = tag_entry.get().strip()
-            if tag:
-                self.custom_dictionary_listbox.insert('end', tag)
-                tag_entry.delete(0, 'end')
-
-        def remove_tag():
-            selected_indices = self.custom_dictionary_listbox.curselection()
-            for index in reversed(selected_indices):
-                self.custom_dictionary_listbox.delete(index)
-
-        def edit_tag():
-            selected_indices = self.custom_dictionary_listbox.curselection()
-            if selected_indices:
-                index = selected_indices[0]
-                tag = self.custom_dictionary_listbox.get(index)
-                tag_entry.delete(0, 'end')
-                tag_entry.insert(0, tag)
-                self.custom_dictionary_listbox.delete(index)
-
+        # LOAD
         def load_tag_file():
             with open(self.my_tags_csv, 'r') as file:
                 content = self.remove_lines_starting_with_hashes(self.remove_extra_newlines(file.read()))
@@ -1468,31 +1442,81 @@ class ImgTxtViewer:
                 for tag in tags:
                     if tag.strip():
                         self.custom_dictionary_listbox.insert('end', tag.strip())
-
+        # SAVE
+        def save():
+            tags = self.custom_dictionary_listbox.get(0, 'end')
+            content = '\n'.join(tags) + '\n'
+            with open(self.my_tags_csv, 'w') as file:
+                file.write(content)
+            self.master.after(100, self.refresh_custom_dictionary)
+        # ADD
+        def add_tag():
+            tag = tag_entry.get().strip()
+            if tag:
+                self.custom_dictionary_listbox.insert('end', tag)
+                tag_entry.delete(0, 'end')
+        # REMOVE
+        def remove_tag():
+            listbox = self.custom_dictionary_listbox
+            selected_indices = listbox.curselection()
+            for index in reversed(selected_indices):
+                listbox.delete(index)
+        # EDIT
+        def edit_tag():
+            listbox = self.custom_dictionary_listbox
+            selected_indices = listbox.curselection()
+            if selected_indices:
+                index = selected_indices[0]
+                tag = listbox.get(index)
+                tag_entry.delete(0, 'end')
+                tag_entry.insert(0, tag)
+                listbox.delete(index)
+        # INSERT
         def insert_tag(position='end'):
-            selected_indices = self.custom_dictionary_listbox.curselection()
+            listbox = self.custom_dictionary_listbox
+            selected_indices = listbox.curselection()
             for index in selected_indices:
-                tag = self.custom_dictionary_listbox.get(index)
+                tag = listbox.get(index)
                 current_text = self.text_box.get('1.0', 'end-1c')
                 separator = ', ' if current_text else ''
-
                 if position == 'start':
                     self.text_box.insert('1.0', f"{tag}{separator}")
                 else:  # position == 'end'
                     self.text_box.insert('end', f"{separator}{tag}")
-
+        # MOVE
         def move(direction):
-            selected_indices = self.custom_dictionary_listbox.curselection()
+            listbox = self.custom_dictionary_listbox
+            selected_indices = listbox.curselection()
             delta = -1 if direction == 'up' else 1
-
             for index in (selected_indices if direction == 'up' else reversed(selected_indices)):
                 new_index = index + delta
-                if 0 <= new_index < self.custom_dictionary_listbox.size():
-                    tag = self.custom_dictionary_listbox.get(index)
-                    self.custom_dictionary_listbox.delete(index)
-                    self.custom_dictionary_listbox.insert(new_index, tag)
-                    self.custom_dictionary_listbox.selection_set(new_index)
-
+                if 0 <= new_index < listbox.size():
+                    tag = listbox.get(index)
+                    listbox.delete(index)
+                    listbox.insert(new_index, tag)
+                    listbox.selection_set(new_index)
+        # CONTEXT MENU
+        def show_context_menu(event):
+            listbox = self.custom_dictionary_listbox
+            index = listbox.nearest(event.y)
+            if not listbox.curselection():
+                listbox.selection_clear(0, 'end')
+                listbox.selection_set(index)
+            elif index not in listbox.curselection():
+                listbox.selection_clear(0, 'end')
+                listbox.selection_set(index)
+            if listbox.curselection():
+                menu = Menu(listbox, tearoff=0)
+                menu.add_command(label="Prefix", command=lambda: insert_tag('start'))
+                menu.add_command(label="Append", command=lambda: insert_tag('end'))
+                menu.add_separator()
+                menu.add_command(label="Edit", command=edit_tag)
+                menu.add_command(label="Remove", command=remove_tag)
+                menu.add_separator()
+                menu.add_command(label="Move Up", command=lambda: move('up'))
+                menu.add_command(label="Move Down", command=lambda: move('down'))
+                menu.tk_popup(event.x_root, event.y_root)
+        # INTERFACE
         self.create_custom_dictionary(refresh=False)
         tab_frame = Frame(self.tab8)
         tab_frame.pack(side='top', fill='both', expand=True)
@@ -1510,6 +1534,7 @@ class ImgTxtViewer:
         text_frame.pack(side='top', fill='both', expand=True)
         self.custom_dictionary_listbox = Listbox(text_frame, selectmode='extended', height=1)
         self.custom_dictionary_listbox.pack(side='left', fill='both', expand=True)
+        self.custom_dictionary_listbox.bind("<Button-3>", show_context_menu)
         # Sidebar
         listbox_button_frame = Frame(text_frame)
         listbox_button_frame.pack(side='left', fill='both')
@@ -2359,7 +2384,7 @@ class ImgTxtViewer:
                 elements = [element.strip() for element in text.split(',')]
             current_word = elements[-1]
         current_word = current_word.strip()
-        if current_word and len(self.selected_csv_files) >= 1:
+        if current_word and (len(self.selected_csv_files) >= 1 or self.use_mytags_var.get()):
             suggestions = self.autocomplete.get_suggestion(current_word)
             suggestions.sort(key=lambda x: self.autocomplete.get_score(x[0], current_word), reverse=True)
             self.suggestions = [(suggestion[0].replace("_", " ") if suggestion[0] not in self.autocomplete.tags_with_underscore else suggestion[0], suggestion[1]) for suggestion in suggestions]
@@ -2374,13 +2399,14 @@ class ImgTxtViewer:
     def highlight_suggestions(self):
         def on_mouse_hover(tag_name, highlight, event=None):
             if highlight:
-                self.suggestion_textbox.tag_config(tag_name, relief='raised', borderwidth=1)
-                self.suggestion_textbox.config(cursor="hand2")
+                widget.tag_config(tag_name, relief='raised', borderwidth=1)
+                widget.config(cursor="hand2")
             else:
-                self.suggestion_textbox.tag_config(tag_name, relief='flat', borderwidth=0)
-                self.suggestion_textbox.config(cursor="")
-        self.suggestion_textbox.config(state='normal')
-        self.suggestion_textbox.delete('1.0', 'end')
+                widget.tag_config(tag_name, relief='flat', borderwidth=0)
+                widget.config(cursor="")
+        widget = self.suggestion_textbox
+        widget.config(state='normal')
+        widget.delete('1.0', 'end')
         configured_colors = set()
         num_suggestions = len(self.suggestions)
         for index, (suggestion_text, classifier_id) in enumerate(self.suggestions):
@@ -2388,18 +2414,18 @@ class ImgTxtViewer:
             color_index = int(classifier_id) % len(self.suggestion_colors) if classifier_id and classifier_id.isdigit() else 0
             suggestion_color = self.suggestion_colors[color_index]
             bullet_symbol = "⚫" if index == self.selected_suggestion_index else "⚪"
-            tag_name = f"suggestion_tag_{index}"
-            self.suggestion_textbox.insert('end', bullet_symbol)
-            self.suggestion_textbox.insert('end', f" {suggestion_text} ", (tag_name, suggestion_color))
+            suggestion = f"suggestion_tag_{index}"
+            widget.insert('end', bullet_symbol)
+            widget.insert('end', f" {suggestion_text} ", (suggestion, suggestion_color))
             if suggestion_color not in configured_colors:
-                self.suggestion_textbox.tag_config(suggestion_color, foreground=suggestion_color, font=('Segoe UI', '9'))
+                widget.tag_config(suggestion_color, foreground=suggestion_color, font=('Segoe UI', '9'))
                 configured_colors.add(suggestion_color)
-            self.suggestion_textbox.tag_bind(tag_name, '<Button-1>', partial(self.on_suggestion_click, index))
-            self.suggestion_textbox.tag_bind(tag_name, '<Enter>', partial(on_mouse_hover, tag_name, True))
-            self.suggestion_textbox.tag_bind(tag_name, '<Leave>', partial(on_mouse_hover, tag_name, False))
+            widget.tag_bind(suggestion, '<Button-1>', partial(self.on_suggestion_click, index))
+            widget.tag_bind(suggestion, '<Enter>', partial(on_mouse_hover, suggestion, True))
+            widget.tag_bind(suggestion, '<Leave>', partial(on_mouse_hover, suggestion, False))
             if index < num_suggestions - 1:
-                self.suggestion_textbox.insert('end', ', ')
-        self.suggestion_textbox.config(state='disabled')
+                widget.insert('end', ', ')
+        widget.config(state='disabled')
 
 
     def cursor_inside_tag(self, cursor_position):
