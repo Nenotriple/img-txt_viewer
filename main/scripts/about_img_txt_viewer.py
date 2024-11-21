@@ -34,7 +34,7 @@ class AboutWindow:
 
 
     def _create_header_text(self):
-        self.info_headers = ["Shortcuts", "Tips", "Text Tools", "Other Tools", "Auto-Save"]
+        self.info_headers = [" Shortcuts", " Tips", " Text Tools", " Other Tools", " Auto-Save"]
         self.info_content = [
             # Shortcuts
             " ⦁ ALT + LEFT/RIGHT: Quickly move between image-text pairs.\n"
@@ -74,12 +74,13 @@ class AboutWindow:
             " ⦁ Cleanup Text: Fix typos across all text files, such as duplicate tags, extra spaces, commas, and more.\n",
 
             # Other Tools
+            " ⦁ AutoTag: Automatically tag images using ONNX vision models like `wd-v1-4-vit-tagger-v2`.\n"
             " ⦁ Batch Resize Images: Resize all images in a folder using different methods and conditions.\n"
             " ⦁ Resize Image: Resize the current image by exact resolution or percentage.\n"
             " ⦁ Batch Crop Images: Crop all images to a specified resolution.\n"
-            " ⦁ Crop Image: Crop the current image to a square or freeform ratio.\n"
+            " ⦁ Crop Image: Crop an image or GIF using a variety of methods and tools.\n"
             " ⦁ Upscale Image: Upscale images using models like RESRGAN, AnimeSharp-4x, and UltraSharp-4x. Additional models can be added to the 'models' folder.\n"
-            " ⦁ Find Duplicate Files: Identify and separate duplicate files in a folder.\n"
+            " ⦁ Find Duplicate Files: Identify and separate duplicate files.\n"
             " ⦁ Expand: Expand an image to a square ratio instead of cropping.\n"
             " ⦁ Thumbnail Panel: Display thumbnails under the current image for quick navigation.\n"
             " ⦁ Edit Image Panel: Adjust brightness, contrast, saturation, sharpness, highlights, and shadows of the current image.\n"
@@ -90,6 +91,10 @@ class AboutWindow:
             " ⦁ Check the auto-save box to save text when switching between image-text pairs or closing the window.\n"
             " ⦁ Text cleanup (e.g., removing duplicate tags, trailing commas, extra spaces) happens automatically on save, and can be disabled from the options menu.\n"
             " ⦁ Text cleanup is optimized for CSV-format captions and can be disabled via the Clean-Text option in the menu.\n"
+            "\n"
+            "\n"
+            " For more detailed information regarding the tools and features, please refer to the User Guide found in the repo docs.\n\n"
+            " github.com/Nenotriple/img-txt_viewer\n"
         ]
 
 
