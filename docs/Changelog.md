@@ -74,6 +74,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 - Fixed an issue where the system clipboard would become unresponsive after deleting a tag with the middle mouse button. #38
 - Fixed an issue where settings were not restored when choosing to not reload the last directory.
 - Fixed an error when loading the app and `my_tags.csv` didn't exist.
+- Fixed an issue where suggestions weren't generated from `my_tags.csv` if no primary dictionary was loaded.
 - Reloading the last directory is a little faster / smoother now.
 
 
