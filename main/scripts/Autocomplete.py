@@ -57,9 +57,9 @@ class Autocomplete:
 
     def load_autocomplete_data(self):
         """Load the autocomplete data from CSV files."""
-        application_path = self._get_application_path()
-        data_file_path = os.path.join(application_path, "dict", self.data_file)
-        additional_file_path = os.path.join(application_path, self.my_tags_csv)
+        app_path = self._get_app_path()
+        data_file_path = os.path.join(app_path, "main\dict", self.data_file)
+        additional_file_path = os.path.join(app_path, self.my_tags_csv)
         if not os.path.isfile(additional_file_path):
             self.include_my_tags = False
         autocomplete_data = {}
@@ -70,11 +70,11 @@ class Autocomplete:
         return autocomplete_data, similar_names_dict
 
 
-    def _get_application_path(self):
+    def _get_app_path(self):
         """Get the application path for the autocomplete data files."""
         if getattr(sys, 'frozen', False):
             return sys._MEIPASS
-        path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         return path
 
 
@@ -101,11 +101,11 @@ class Autocomplete:
 # --------------------------------------
     def _precache_single_letter_suggestions(self):
         """Pre-cache suggestions for all single-letter inputs (a-z, 0-9)."""
-        dictionary_file_path = os.path.join(self._get_application_path(), "dict", self.data_file)
+        dictionary_file_path = os.path.join(self._get_app_path(), "main\dict", self.data_file)
         if not os.path.exists(dictionary_file_path):
             return
         dictionary_name = os.path.splitext(self.data_file)[0]
-        cache_dir = os.path.join(self._get_application_path(), 'dict/cache')
+        cache_dir = os.path.join(self._get_app_path(), 'main\dict\cache')
         cache_file = os.path.join(cache_dir, f'{dictionary_name}_pre-cache')
         cache_timestamp_file = os.path.join(cache_dir, f'{dictionary_name}_pre-cache-timestamp')
         os.makedirs(cache_dir, exist_ok=True)
