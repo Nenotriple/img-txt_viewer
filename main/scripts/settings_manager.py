@@ -184,7 +184,7 @@ class SettingsManager:
 
 
     def _read_autocomplete_settings(self):
-        self.parent.csv_danbooru.set(value=self.config.getboolean("Autocomplete", "csv_danbooru", fallback=True))
+        self.parent.csv_danbooru.set(value=self.config.getboolean("Autocomplete", "csv_danbooru", fallback=False))
         self.parent.csv_danbooru_safe.set(value=self.config.getboolean("Autocomplete", "csv_danbooru_safe", fallback=False))
         self.parent.csv_derpibooru.set(value=self.config.getboolean("Autocomplete", "csv_derpibooru", fallback=False))
         self.parent.csv_e621.set(value=self.config.getboolean("Autocomplete", "csv_e621", fallback=False))
@@ -232,7 +232,7 @@ class SettingsManager:
         self.parent.load_order_var.set(value="Name (default)")
         self.parent.reverse_load_order_var.set(value=False)
         # Autocomplete
-        self.parent.csv_danbooru.set(value=True)
+        self.parent.csv_danbooru.set(value=False)
         self.parent.csv_danbooru_safe.set(value=False)
         self.parent.csv_derpibooru.set(value=False)
         self.parent.csv_e621.set(value=False)

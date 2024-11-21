@@ -249,7 +249,7 @@ class ImgTxtViewer:
         Image.MAX_IMAGE_PIXELS = 300000000  # ~(17320x17320)px
 
         # Autocomplete
-        self.csv_danbooru = BooleanVar(value=True)
+        self.csv_danbooru = BooleanVar(value=False)
         self.csv_danbooru_safe = BooleanVar(value=False)
         self.csv_derpibooru = BooleanVar(value=False)
         self.csv_e621 = BooleanVar(value=False)
