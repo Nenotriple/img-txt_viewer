@@ -1188,7 +1188,7 @@ class CropInterface:
         self.thumbnail_frame.bind("<Configure>", lambda event: self.thumbnail_canvas.configure(scrollregion=self.thumbnail_canvas.bbox("all")))
         self.thumbnail_scrollbar.bind("<MouseWheel>", lambda event: self.thumbnail_canvas.xview_scroll(-1 * (event.delta // 120), "units"))
         self.thumbnail_timeline_slider = ttk.Scale(self.thumbnail_container, from_=0, to=0, orient="horizontal", command=self.thumbnail_timeline_changed)
-        self.thumbnail_timeline_slider.grid(row=2, column=0, sticky="ew")
+        self.thumbnail_timeline_slider.grid(row=2, column=0, sticky="ew", padx=self.padx)
         self.thumbnail_timeline_label = ttk.Label(self.thumbnail_container, text="0/0")
         self.thumbnail_timeline_label.grid(row=2, column=1, sticky="e")
         self.thumbnail_container.grid_remove()
