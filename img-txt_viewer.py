@@ -74,9 +74,9 @@ from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
 
 
 class ImgTxtViewer:
-    def __init__(self, master):
+    def __init__(self, root):
         self.app_version = "v1.96"
-        self.master = master
+        self.root = root
         self.application_path = self.get_app_path()
         self.set_appid()
         self.setup_window()
@@ -95,11 +95,11 @@ class ImgTxtViewer:
 
     def initial_class_setup(self):
         # Setup tools
-        self.about_window = about_img_txt_viewer.AboutWindow(self, self.master, self.blank_image)
-        self.settings_manager = settings_manager.SettingsManager(self, self.master)
-        self.stat_calculator = calculate_file_stats.CalculateFileStats(self, self.master)
+        self.about_window = about_img_txt_viewer.AboutWindow(self, self.root, self.blank_image)
+        self.settings_manager = settings_manager.SettingsManager(self, self.root)
+        self.stat_calculator = calculate_file_stats.CalculateFileStats(self, self.root)
         self.batch_resize_images = batch_resize_images.BatchResizeImages()
-        self.edit_panel = edit_panel.EditPanel(self, self.master)
+        self.edit_panel = edit_panel.EditPanel(self, self.root)
         self.batch_tag_edit = batch_tag_edit.BatchTagEdit()
         self.find_dupe_file = find_dupe_file.FindDupeFile()
         self.crop_ui = CropUI.CropInterface()
@@ -146,7 +146,7 @@ class ImgTxtViewer:
         self.is_alt_arrow_pressed = False
         self.toggle_zoom_var = None
         self.undo_state = StringVar(value="disabled")
-        self.previous_window_size = (self.master.winfo_width(), self.master.winfo_height())
+        self.previous_window_size = (self.root.winfo_width(), self.root.winfo_height())
         self.initialize_text_pane = True
 
         # 'after()' Job IDs
@@ -263,17 +263,17 @@ class ImgTxtViewer:
 # Bindings
 # --------------------------------------
     def setup_general_binds(self):
-        self.master.bind("<Control-f>", lambda event: self.toggle_highlight_all_duplicates())
-        self.master.bind("<Control-s>", lambda event: self.save_text_file(highlight=True))
-        self.master.bind("<Alt-Right>", lambda event: self.next_pair(event))
-        self.master.bind("<Alt-Left>", lambda event: self.prev_pair(event))
-        self.master.bind('<Shift-Delete>', lambda event: self.delete_pair())
-        self.master.bind('<Configure>', self.handle_window_configure)
-        self.master.bind('<F1>', lambda event: self.toggle_zoom_popup(event))
-        self.master.bind('<F2>', lambda event: self.open_image_grid(event))
-        self.master.bind('<F4>', lambda event: self.open_image_in_editor(event))
-        self.master.bind('<F5>', lambda event: self.show_batch_tag_edit(event))
-        self.master.bind('<Control-w>', lambda event: self.on_closing(event))
+        self.root.bind("<Control-f>", lambda event: self.toggle_highlight_all_duplicates())
+        self.root.bind("<Control-s>", lambda event: self.save_text_file(highlight=True))
+        self.root.bind("<Alt-Right>", lambda event: self.next_pair(event))
+        self.root.bind("<Alt-Left>", lambda event: self.prev_pair(event))
+        self.root.bind('<Shift-Delete>', lambda event: self.delete_pair())
+        self.root.bind('<Configure>', self.handle_window_configure)
+        self.root.bind('<F1>', lambda event: self.toggle_zoom_popup(event))
+        self.root.bind('<F2>', lambda event: self.open_image_grid(event))
+        self.root.bind('<F4>', lambda event: self.open_image_in_editor(event))
+        self.root.bind('<F5>', lambda event: self.show_batch_tag_edit(event))
+        self.root.bind('<Control-w>', lambda event: self.on_closing(event))
 
         # Display window size on resize:
         #self.master.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == self.master else None, add="+")
@@ -294,8 +294,8 @@ class ImgTxtViewer:
 # --------------------------------------
     def initialize_menu(self):
         # Main
-        menubar = Menu(self.master)
-        self.master.config(menu=menubar)
+        menubar = Menu(self.root)
+        self.root.config(menu=menubar)
         # Options
         self.optionsMenu = Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Options", underline=0, menu=self.optionsMenu)
@@ -461,23 +461,23 @@ class ImgTxtViewer:
 
     def setup_primary_frames(self):
         # Configure the grid weights for the master window frame
-        self.master.grid_rowconfigure(0, weight=1)
-        self.master.grid_columnconfigure(0, weight=1)
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
 
         # primary_paned_window : is used to contain the ImgTxtViewer UI.
-        self.primary_paned_window = PanedWindow(self.master, orient="horizontal", sashwidth=6, bg="#d0d0d0", bd=0)
+        self.primary_paned_window = PanedWindow(self.root, orient="horizontal", sashwidth=6, bg="#d0d0d0", bd=0)
         self.primary_paned_window.grid(row=0, column=0, sticky="nsew")
         self.primary_paned_window.bind("<B1-Motion>", self.disable_button)
 
         # master_image_frame : is exclusively used for the displayed image, thumbnails, image info.
-        self.master_image_frame = Frame(self.master)
+        self.master_image_frame = Frame(self.root)
         self.master_image_frame.bind('<Configure>', lambda event: self.debounce_update_thumbnail_panel(event))
         self.master_image_frame.grid_rowconfigure(1, weight=1)
         self.master_image_frame.grid_columnconfigure(0, weight=1)
         self.primary_paned_window.add(self.master_image_frame, stretch="always")
 
         # master_control_frame : serves as a container for all primary UI frames, with the exception of the master_image_frame.
-        self.master_control_frame = Frame(self.master)
+        self.master_control_frame = Frame(self.root)
         self.primary_paned_window.add(self.master_control_frame, stretch="always")
         self.primary_paned_window.paneconfigure(self.master_control_frame, minsize=300)
         self.primary_paned_window.update()
@@ -1226,12 +1226,12 @@ class ImgTxtViewer:
             if not confirm:
                 return
             self.stop_batch = False
-            popup = Toplevel(self.master)
+            popup = Toplevel(self.root)
             popup.title("Batch Interrogate")
             popup.geometry("300x150")
-            self.master.update_idletasks()
-            x = (self.master.winfo_screenwidth() - popup.winfo_reqwidth()) // 2
-            y = (self.master.winfo_screenheight() - popup.winfo_reqheight()) // 2
+            self.root.update_idletasks()
+            x = (self.root.winfo_screenwidth() - popup.winfo_reqwidth()) // 2
+            y = (self.root.winfo_screenheight() - popup.winfo_reqheight()) // 2
             popup.geometry(f"+{x}+{y}")
             label = Label(popup, text="Starting...")
             label.pack(expand=True)
@@ -1239,9 +1239,9 @@ class ImgTxtViewer:
             progress.pack(pady=10)
             stop_button = ttk.Button(popup, text="Stop", command=stop_batch_process)
             stop_button.pack(pady=10)
-            popup.transient(self.master)
+            popup.transient(self.root)
             popup.grab_set()
-            self.master.update()
+            self.root.update()
             popup.protocol("WM_DELETE_WINDOW", stop_batch_process)
             selected_model_path = self.onnx_model_dict.get(self.auto_tag_model_combobox.get())
             if not selected_model_path or not os.path.exists(selected_model_path):
@@ -1277,7 +1277,7 @@ class ImgTxtViewer:
                 eta_formatted = time.strftime("%H:%M:%S", time.gmtime(eta_seconds))
                 label.config(text=f"Working... {index} out of {total_images}\nETA: {eta_formatted}")
                 progress["value"] = index
-                self.master.update()
+                self.root.update()
             popup.destroy()
             if not self.stop_batch:
                 messagebox.showinfo("Batch Interrogate", f"Batch interrogation complete\n\n{total_images} images were interrogated")
@@ -1446,7 +1446,7 @@ class ImgTxtViewer:
             content = '\n'.join(tags) + '\n'
             with open(self.my_tags_csv, 'w') as file:
                 file.write(content)
-            self.master.after(100, self.refresh_custom_dictionary)
+            self.root.after(100, self.refresh_custom_dictionary)
         # ADD
         def add_tag():
             tag = tag_entry.get().strip()
@@ -1670,7 +1670,7 @@ class ImgTxtViewer:
     # Image Context Menu
     # --------------------------------------
     def show_image_context_menu(self, event):
-        self.image_context_menu = Menu(self.master, tearoff=0)
+        self.image_context_menu = Menu(self.root, tearoff=0)
         # Open
         self.image_context_menu.add_command(label="Open Current Directory...", command=self.open_image_directory)
         self.image_context_menu.add_command(label="Open Current Image...", command=self.open_image)
@@ -1713,7 +1713,7 @@ class ImgTxtViewer:
     # Suggestion Context Menu
     # --------------------------------------
     def show_suggestion_context_menu(self, event=None, button=False):
-        suggestion_context_menu = Menu(self.master, tearoff=0)
+        suggestion_context_menu = Menu(self.root, tearoff=0)
         suggestion_context_menu.add_command(label="Suggestion Options", state="disabled")
         suggestion_context_menu.add_separator()
         # Selected Dictionary
@@ -1832,7 +1832,7 @@ class ImgTxtViewer:
     def show_entry_context_menu(self, event):
         widget = event.widget
         if isinstance(widget, ttk.Entry):
-            context_menu = Menu(self.master, tearoff=0)
+            context_menu = Menu(self.root, tearoff=0)
             try:
                 widget.selection_get()
                 has_selection = True
@@ -2066,7 +2066,7 @@ class ImgTxtViewer:
 # PanedWindow
 # --------------------------------------
     def configure_pane_position(self):
-        window_width = self.master.winfo_width()
+        window_width = self.root.winfo_width()
         self.primary_paned_window.sash_place(0, window_width // 2, 0)
         self.configure_pane()
 
@@ -2084,7 +2084,7 @@ class ImgTxtViewer:
         else:
             self.primary_paned_window.add(self.master_image_frame)
             self.primary_paned_window.add(self.master_control_frame)
-        self.master.after_idle(self.configure_pane_position)
+        self.root.after_idle(self.configure_pane_position)
 
 
     def swap_pane_orientation(self, swap_state=None):
@@ -2095,10 +2095,10 @@ class ImgTxtViewer:
         new_orient = 'vertical' if swap_state else 'horizontal'
         self.primary_paned_window.configure(orient=new_orient)
         if new_orient == 'horizontal':
-            self.master.minsize(0, 200)
+            self.root.minsize(0, 200)
         else:
-            self.master.minsize(200, 0)
-        self.master.after_idle(self.configure_pane_position)
+            self.root.minsize(200, 0)
+        self.root.after_idle(self.configure_pane_position)
 
 
     def snap_sash_to_half(self, event):
@@ -2124,7 +2124,7 @@ class ImgTxtViewer:
 
     def show_batch_tag_edit(self, event=None):
         parent = self
-        root = self.master
+        root = self.root
         menu = self.batch_operations_menu
         text_files = self.text_files
         self.batch_tag_edit.setup_window(parent, root, menu, text_files)
@@ -2133,7 +2133,7 @@ class ImgTxtViewer:
 
     def show_batch_resize_images(self, event=None):
         parent = self
-        root = self.master
+        root = self.root
         menu = self.batch_operations_menu
         path = self.image_dir.get()
         self.batch_resize_images.setup_window(parent, root, menu, path)
@@ -2142,7 +2142,7 @@ class ImgTxtViewer:
 
     def show_find_dupe_file(self, event=None):
         parent = self
-        root = self.master
+        root = self.root
         menu = self.batch_operations_menu
         path = self.image_dir.get()
         self.find_dupe_file.setup_window(parent, root, menu, path)
@@ -2151,7 +2151,7 @@ class ImgTxtViewer:
 
     def show_crop_ui(self):
         parent = self
-        root = self.master
+        root = self.root
         menu = self.individual_operations_menu
         path = self.image_dir.get()
         image_paths = self.image_files
@@ -2222,8 +2222,8 @@ class ImgTxtViewer:
 
     def debounce_update_thumbnail_panel(self, event):
         if self.update_thumbnail_job_id is not None:
-            self.master.after_cancel(self.update_thumbnail_job_id)
-        self.update_thumbnail_job_id = self.master.after(250, self.update_thumbnail_panel)
+            self.root.after_cancel(self.update_thumbnail_job_id)
+        self.update_thumbnail_job_id = self.root.after(250, self.update_thumbnail_panel)
 
 
     def update_thumbnail_panel(self):
@@ -2319,7 +2319,7 @@ class ImgTxtViewer:
 
 
     def set_custom_ttk_button_highlight_style(self):
-        style = ttk.Style(self.master)
+        style = ttk.Style(self.root)
         style.configure("Highlighted.TButton", background="#005dd7")
         style.configure("Red.TButton", foreground="red")
         style.configure("Blue.TButton", foreground="blue")
@@ -2638,7 +2638,7 @@ class ImgTxtViewer:
 
     def remove_highlight(self):
         self.text_box.tag_remove("highlight", "1.0", "end")
-        self.master.after(100, lambda: self.remove_tag())
+        self.root.after(100, lambda: self.remove_tag())
 
 
     def remove_tag(self):
@@ -2653,7 +2653,7 @@ class ImgTxtViewer:
 
 
     def load_pairs(self, silent=False):
-        self.master.title(self.title)
+        self.root.title(self.title)
         self.info_text.pack_forget()
         current_image_path = self.image_files[self.current_index] if self.image_files else None
         self.refresh_file_lists()
@@ -2859,7 +2859,7 @@ class ImgTxtViewer:
 
 
     def handle_window_configure(self, event):  # Window resize
-        if event.widget == self.master:
+        if event.widget == self.root:
             current_size = (event.width, event.height)
             if current_size != self.previous_window_size:
                 self.previous_window_size = current_size
@@ -2901,7 +2901,7 @@ class ImgTxtViewer:
         self.is_alt_arrow_pressed = True
         self.check_image_dir()
         if not self.text_modified_var:
-            self.master.title(self.title)
+            self.root.title(self.title)
         self.text_box.config(undo=False)
         self.text_box.edit_reset()
         if self.auto_save_var.get() and save:
@@ -3007,7 +3007,7 @@ class ImgTxtViewer:
                 self.text_box.delete("1.0", "end")
                 self.text_box.insert("end", file_content)
                 self.text_modified_var = False
-                self.master.title(self.title)
+                self.root.title(self.title)
                 self.toggle_list_mode()
 
 
@@ -3440,7 +3440,7 @@ class ImgTxtViewer:
         window_x = root.winfo_x() + -200 + main_window_width // 2
         window_y = root.winfo_y() - 200 + main_window_height // 2
         filepath = self.image_files[self.current_index]
-        resize_image.ResizeTool(self.master, self, filepath, window_x, window_y, self.update_pair, self.jump_to_image)
+        resize_image.ResizeTool(self.root, self, filepath, window_x, window_y, self.update_pair, self.jump_to_image)
 
 
     def upscale_image(self, batch):
@@ -3455,7 +3455,7 @@ class ImgTxtViewer:
         window_x = root.winfo_x() + x_offset + main_window_width // 2
         window_y = root.winfo_y() - y_offset + main_window_height // 2
         filepath = self.image_files[self.current_index]
-        upscale_image.Upscale(self, self.master, filepath, batch, window_x, window_y)
+        upscale_image.Upscale(self, self.root, filepath, batch, window_x, window_y)
 
 
     def batch_crop_images(self):
@@ -3464,7 +3464,7 @@ class ImgTxtViewer:
         window_x = root.winfo_x() + -155 + main_window_width // 2
         window_y = root.winfo_y() - 100 + main_window_height // 2
         filepath = str(self.image_dir.get())
-        batch_crop_images.BatchCrop(self.master, filepath, window_x, window_y)
+        batch_crop_images.BatchCrop(self.root, filepath, window_x, window_y)
 
 
     def duplicate_pair(self):
@@ -3487,7 +3487,7 @@ class ImgTxtViewer:
         main_window_height = root.winfo_height()
         window_x = root.winfo_x() + -330 + main_window_width // 2
         window_y = root.winfo_y() - 300 + main_window_height // 2
-        image_grid.ImageGrid(self.master, self, window_x, window_y, self.jump_to_image)
+        image_grid.ImageGrid(self.root, self, window_x, window_y, self.jump_to_image)
 
 
     def open_image_in_editor(self, event=None, index=None):
@@ -3536,9 +3536,9 @@ class ImgTxtViewer:
                 except FileNotFoundError:
                     file_content = ""
                 if self.text_box.get("1.0", "end-1c") == file_content:
-                    self.master.title(self.title)
+                    self.root.title(self.title)
                 else:
-                    self.master.title(self.title + " ⚪")
+                    self.root.title(self.title + " ⚪")
 
 
     def disable_button(self, event):
@@ -3566,7 +3566,7 @@ class ImgTxtViewer:
             self.options_subMenu.entryconfig("List View", state="disabled")
             if self.list_mode_var.get():
                 self.toggle_list_mode(skip=True)
-            if not self.master.title().endswith(" ⚪"):
+            if not self.root.title().endswith(" ⚪"):
                 if self.filepath_contains_images_var:
                     self.refresh_text_box()
             self.list_mode_var.set(False)
@@ -3605,11 +3605,11 @@ class ImgTxtViewer:
         if self.drag_x is not None and self.drag_y is not None:
             dx = event.x - self.drag_x
             dy = event.y - self.drag_y
-            x = self.master.winfo_x() + dx
-            y = self.master.winfo_y() + dy
-            width = self.master.winfo_width()
-            height = self.master.winfo_height()
-            self.master.geometry(f"{width}x{height}+{x}+{y}")
+            x = self.root.winfo_x() + dx
+            y = self.root.winfo_y() + dy
+            width = self.root.winfo_width()
+            height = self.root.winfo_height()
+            self.root.geometry(f"{width}x{height}+{x}+{y}")
 
 #endregion
 ################################################################################################################################################
@@ -3698,12 +3698,12 @@ class ImgTxtViewer:
                 if self.cleaning_text_var.get() or self.list_mode_var.get():
                     self.refresh_text_box()
                 if file_saved:
-                    self.master.title(self.title)
+                    self.root.title(self.title)
                     if highlight:
                         self.save_button.configure(style="Blue+.TButton")
-                        self.master.after(120, lambda: self.save_button.configure(style="Blue.TButton"))
+                        self.root.after(120, lambda: self.save_button.configure(style="Blue.TButton"))
                 else:
-                    self.master.title(self.title)
+                    self.root.title(self.title)
         except (PermissionError, IOError, TclError) as e:
             messagebox.showerror("Error: save_text_file()", f"An error occurred while saving the current text file.\n\n{e}")
 
@@ -3746,7 +3746,7 @@ class ImgTxtViewer:
 
 
     def check_saved_and_quit(self):
-        if not self.master.title().endswith(" ⚪"):
+        if not self.root.title().endswith(" ⚪"):
             root.destroy()
         elif self.auto_save_var.get():
             self.cleanup_all_text_files(show_confirmation=False)
@@ -4276,8 +4276,8 @@ class ImgTxtViewer:
 
     def setup_window(self):
         self.title = f"{self.app_version} - img-txt Viewer"
-        self.master.title(self.title)
-        self.master.minsize(545, 200) # Width x Height
+        self.root.title(self.title)
+        self.root.minsize(545, 200) # Width x Height
         window_width = 1110
         window_height = 660
         position_right = root.winfo_screenwidth()//2 - window_width//2
@@ -4288,14 +4288,14 @@ class ImgTxtViewer:
 
     def additional_window_setup(self):
         self.set_always_on_top(initial=True)
-        self.master.attributes('-topmost', 0)
-        self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.root.attributes('-topmost', 0)
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
 
     def set_icon(self):
         self.icon_path = os.path.join(self.application_path, "icon.ico")
         try:
-            self.master.iconbitmap(self.icon_path)
+            self.root.iconbitmap(self.icon_path)
         except TclError: pass
         # Blank image (app icon)
         self.icon_path = os.path.join(self.application_path, "icon.ico")
