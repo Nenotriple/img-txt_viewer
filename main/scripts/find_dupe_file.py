@@ -190,9 +190,22 @@ class FindDupeFile:
 # General Widgets
 # --------------------------------------
     def create_widgets(self):
+        self.create_widget_frame()
+        self.create_folder_selection()
+        self.create_duplicate_handling_mode()
+        self.create_run_stop_buttons()
+        self.create_scan_mode_options()
+        self.create_textlog()
+        self.create_status_tray()
+
+
+    def create_widget_frame(self):
         # Frame - Widget Frame
         self.widget_frame = ttk.Frame(self.find_dupe_files_frame)
         self.widget_frame.pack(side="top", fill="both", padx=4, pady=4)
+
+
+    def create_folder_selection(self):
         # Frame - Folder Frame
         self.folder_frame = ttk.Frame(self.widget_frame)
         self.folder_frame.pack(fill="both", expand=True)
@@ -211,6 +224,9 @@ class FindDupeFile:
         self.clear_button = ttk.Button(self.folder_frame, text="X", width=2, command=lambda: self.folder_entry.delete(0, 'end'))
         ToolTip.create(self.clear_button, "Clear folder entry.", delay=150, padx=6, pady=6)
         self.clear_button.pack(side="left")
+
+
+    def create_duplicate_handling_mode(self):
         # Radio Buttons - Duplicate Handling Mode
         self.radio_single = ttk.Radiobutton(self.widget_frame, text="Single", variable=self.dupe_handling_mode, value="Single")
         ToolTip.create(self.radio_single, "Move extra duplicate files, leaving a copy behind.\nFiles will be stored in the '_Duplicate__Files' folder located in the parent folder.", delay=150, padx=6, pady=6)
@@ -222,6 +238,9 @@ class FindDupeFile:
         self.undo_button = ttk.Button(self.widget_frame, text="Undo", width=6, command=self.undo_file_move)
         ToolTip.create(self.undo_button, "Restore all files to their original path.\nEnable 'Recursive' To also restore all files within subfolders.", delay=150, padx=6, pady=6)
         self.undo_button.pack(side="left")
+
+
+    def create_run_stop_buttons(self):
         # Button - Run
         self.run_button = ttk.Button(self.widget_frame, text="Find Duplicates", command=self.find_duplicates)
         ToolTip.create(self.run_button, "Process the selected folder.", delay=1000, padx=6, pady=6)
@@ -229,7 +248,10 @@ class FindDupeFile:
         # Button - Stop
         self.stop_button = ttk.Button(self.widget_frame, text="Stop!", width=6, command=self.stop_process)
         ToolTip.create(self.stop_button, "Stop all running processes.", delay=150, padx=6, pady=6)
-        self.stop_button.pack(side="left", fill="x")
+        self.stop_button.pack(side="left")
+
+
+    def create_scan_mode_options(self):
         # Radio Buttons - Scanning Mode
         self.radio_images = ttk.Radiobutton(self.widget_frame, text="Images", variable=self.scanning_mode, value="Images")
         ToolTip.create(self.radio_images, "Scan only image filetypes.", delay=150, padx=6, pady=6)
@@ -246,10 +268,26 @@ class FindDupeFile:
         ToolTip.create(self.move_captions_checkbutton, "Move caption text files with images.", padx=6, pady=6)
         self.move_captions_checkbutton.pack(side="left")
         self.scanning_mode.trace_add('write', self.toggle_move_captions_option)
-        # Textlog
-        self.create_textlog()
+
+
+    def create_textlog(self):
+        text_frame = ttk.Frame(self.find_dupe_files_frame)
+        text_frame.pack(side="top", expand="yes", fill="both", padx="2", pady="2")
+        vscrollbar = ttk.Scrollbar(text_frame, orient="vertical")
+        hscrollbar = ttk.Scrollbar(text_frame, orient="horizontal")
+        self.textlog = Text(text_frame, height=1, wrap="none", state='disabled', yscrollcommand=vscrollbar.set, xscrollcommand=hscrollbar.set, font=("Consolas", 8))
+        vscrollbar.grid(row=0, column=1, sticky="ns")
+        hscrollbar.grid(row=1, column=0, sticky="we")
+        self.textlog.grid(row=0, column=0, sticky="nsew")
+        vscrollbar.config(command=self.textlog.yview)
+        hscrollbar.config(command=self.textlog.xview)
+        text_frame.grid_columnconfigure(0, weight=1)
+        text_frame.grid_rowconfigure(0, weight=1)
         self.startup_text = ("This tool will find any duplicate files by matching file hash.\n\nDuplicate files will be moved to a '_Duplicate__Files' folder within the scanned directory.")
         self.insert_to_textlog(self.startup_text)
+
+
+    def create_status_tray(self):
         # Label - Tray - Status
         self.tray_label_status = ttk.Label(self.find_dupe_files_frame, width=15, relief="groove", text=" Idle...")
         ToolTip.create(self.tray_label_status, "App status.", delay=150, padx=6, pady=6)
@@ -271,21 +309,6 @@ class FindDupeFile:
 # --------------------------------------
 # Textlog
 # --------------------------------------
-    def create_textlog(self):
-        separator = ttk.Separator(self.find_dupe_files_frame)
-        separator.pack(fill="x")
-        text_frame = ttk.Frame(self.find_dupe_files_frame)
-        text_frame.pack(side="top", expand="yes", fill="both", padx="2", pady="2")
-        vscrollbar = ttk.Scrollbar(text_frame, orient="vertical")
-        hscrollbar = ttk.Scrollbar(text_frame, orient="horizontal")
-        self.textlog = Text(text_frame, height=1, wrap="none", state='disabled', yscrollcommand=vscrollbar.set, xscrollcommand=hscrollbar.set, font=("Consolas", 8))
-        vscrollbar.grid(row=0, column=1, sticky="ns")
-        hscrollbar.grid(row=1, column=0, sticky="we")
-        self.textlog.grid(row=0, column=0, sticky="nsew")
-        vscrollbar.config(command=self.textlog.yview)
-        hscrollbar.config(command=self.textlog.xview)
-        text_frame.grid_columnconfigure(0, weight=1)
-        text_frame.grid_rowconfigure(0, weight=1)
 
 
 #endregion
