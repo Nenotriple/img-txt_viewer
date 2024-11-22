@@ -27,6 +27,8 @@ CELL_SIZE = 20
 INITIAL_SPEED = 500
 INITIAL_MOVE_DELAY = 100
 MOVE_REPEAT_RATE = 50
+PADX = 10
+PADY = 10
 
 
 # Tromino shapes
@@ -127,35 +129,33 @@ class PyTrominosGame:
 
 
     def create_interface(self):
-        padx = 10
-        pady = 10
         mini_canvas_size = 6 * CELL_SIZE
         game_frame = Frame(self.root, relief="groove", borderwidth=5)
-        game_frame.pack(side="left", anchor="nw", padx=padx, pady=(pady+6))
+        game_frame.pack(side="left", anchor="nw", padx=PADX, pady=(PADY+6))
         self.game_canvas = Canvas(game_frame, width=GRID_WIDTH*CELL_SIZE + 1, height=GRID_HEIGHT*CELL_SIZE + 1, highlightthickness=0)
-        self.game_canvas.pack(side="left", padx=padx, pady=pady)
+        self.game_canvas.pack(side="left", padx=PADX, pady=PADY)
         sidebar = Frame(self.root)
         sidebar.pack(side="left", fill="y")
         next_shape_frame = LabelFrame(sidebar, text="  Next  ", relief="groove", borderwidth=5)
-        next_shape_frame.pack(padx=padx, pady=pady)
+        next_shape_frame.pack(padx=PADX, pady=PADY)
         self.next_shape_canvas = Canvas(next_shape_frame, width=mini_canvas_size, height=mini_canvas_size)
         self.next_shape_canvas.pack()
         hold_shape_frame = LabelFrame(sidebar, text="  Hold - C  ", relief="groove", borderwidth=5)
-        hold_shape_frame.pack(padx=padx, pady=pady)
+        hold_shape_frame.pack(padx=PADX, pady=PADY)
         self.hold_shape_canvas = Canvas(hold_shape_frame, width=mini_canvas_size, height=mini_canvas_size)
         self.hold_shape_canvas.pack()
         frame1 = Frame(sidebar)
-        frame1.pack(padx=padx, pady=(pady,5), fill="x")
+        frame1.pack(padx=PADX, pady=(PADY,5), fill="x")
         self.level_label = Label(frame1, text=f"Level: 1")
         self.level_label.pack(side="left", anchor="w")
         help_button = ttk.Button(frame1, text="?", width=1, takefocus=False, command=self.show_help)
         help_button.pack(side="right", padx=1)
         frame2 = Frame(sidebar)
-        frame2.pack(padx=padx, pady=pady, fill="x")
+        frame2.pack(padx=PADX, pady=PADY, fill="x")
         self.score_label = Label(frame2, text=f"Score: 0")
         self.score_label.pack(side="left", anchor="w")
         button_frame = Frame(sidebar)
-        button_frame.pack(padx=(0,padx), pady=(5,pady))
+        button_frame.pack(padx=(0,PADX), pady=(5,PADY))
         pause_button = ttk.Button(button_frame, text="Pause", takefocus=False, command=self.toggle_pause)
         pause_button.pack(side="left", padx=1)
         restart_button = ttk.Button(button_frame, text="Restart", takefocus=False, command=self.restart_game)
