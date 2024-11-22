@@ -31,10 +31,8 @@ import time
 import shutil
 import ctypes
 import zipfile
-import statistics
 import subprocess
 from functools import partial
-from collections import Counter
 
 
 # Standard Library - GUI
@@ -70,6 +68,7 @@ from main.scripts import (
 from main.scripts.Autocomplete import Autocomplete
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
 from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
+from main.scripts.calculate_file_stats import CalculateFileStats
 
 
 #endregion
@@ -98,7 +97,7 @@ class ImgTxtViewer:
 
     def initial_class_setup(self):
         # Setup tools
-        self.caption_counter = Counter()
+        self.stat_calculator = CalculateFileStats(self, self.master)
         self.autocomplete = Autocomplete
         self.batch_tag_edit = batch_tag_edit.BatchTagEdit()
         self.batch_resize_images = batch_resize_images.BatchResizeImages()
@@ -591,6 +590,7 @@ class ImgTxtViewer:
         ToolTip.create(self.save_button, "CTRL+S to save\n\nRight-Click to make the save button larger", 1000, 6, 12)
         self.auto_save_checkbutton = ttk.Checkbutton(self.index_frame, width=10, text="Auto-save", state="disabled", variable=self.auto_save_var, takefocus=False, command=self.sync_title_with_content)
         self.auto_save_checkbutton.pack(side="left")
+        ToolTip.create(self.auto_save_checkbutton, "Automatically save the current text file when:\nNavigating img-txt pairs, changing active directory, or closing the app", 1000, 6, 12)
 
         # Navigation Buttons
         nav_button_frame = Frame(self.master_control_frame)
@@ -1574,7 +1574,7 @@ class ImgTxtViewer:
         button_frame.pack(side='top', fill='x', pady=4)
         info_label = Label(button_frame, text="^^^Expand this frame^^^")
         info_label.pack(side='left')
-        refresh_button = ttk.Button(button_frame, width=10, text="Refresh", takefocus=False, command=lambda: self.calculate_file_stats(manual_refresh=True))
+        refresh_button = ttk.Button(button_frame, width=10, text="Refresh", takefocus=False, command=lambda: self.stat_calculator.calculate_file_stats(manual_refresh=True))
         refresh_button.pack(side='right')
         ToolTip.create(refresh_button, "Refresh the file stats", 200, 6, 12)
         truncate_checkbutton = ttk.Checkbutton(button_frame, text="Truncate Captions", takefocus=False, variable=self.truncate_stat_captions_var)
@@ -2671,7 +2671,7 @@ class ImgTxtViewer:
         else:
             self.update_pair(save=False, silent=True)
         self.configure_pane_position()
-        self.calculate_file_stats()
+        self.stat_calculator.calculate_file_stats()
 
 
     def restore_previous_index(self, current_image_path):
@@ -3588,269 +3588,6 @@ class ImgTxtViewer:
         if var in quality_settings:
             self.quality_max_size, self.quality_filter = quality_settings[var]
         self.refresh_image()
-
-
-#endregion
-################################################################################################################################################
-#region - Calculate File Stats
-
-
-    def calculate_file_stats(self, manual_refresh=None):
-        self.caption_counter.clear()
-        total_chars = total_words = total_captions = 0
-        total_sentences = total_paragraphs = 0
-        total_text_filesize = total_image_filesize = 0
-        word_counter, char_counter = Counter(), Counter()
-        image_resolutions_counter, aspect_ratios_counter = Counter(), Counter()
-        unique_words, image_formats, longest_words = set(), set(), set()
-        word_lengths, sentence_lengths = [], []
-        file_word_counts, file_char_counts, file_caption_counts = [], [], []
-        square_images = portrait_images = landscape_images = total_ppi = 0
-        _, num_txt_files, num_img_files, formatted_total_files = self.filter_and_update_textfiles()
-
-        # Process text files
-        for text_file in self.text_files:
-            try:
-                filedata, words, sentences, paragraphs, captions = self.process_text_file(text_file)
-                total_chars += len(filedata)
-                total_words += len(words)
-                word_counter.update(words)
-                unique_words.update(words)
-                char_counter.update(filedata)
-                word_lengths.extend(len(word) for word in words)
-                total_sentences += len(sentences)
-                sentence_lengths.extend(len(re.findall(r'\b\w+\b', sentence)) for sentence in sentences)
-                total_paragraphs += len(paragraphs)
-                self.update_caption_counter(captions)
-                captions_count = len(captions)
-                total_captions += captions_count
-                file_word_counts.append((os.path.basename(text_file), len(words)))
-                file_char_counts.append((os.path.basename(text_file), len(filedata)))
-                file_caption_counts.append((os.path.basename(text_file), captions_count))
-                for word in words:
-                    longest_words.add(word)
-                    if len(longest_words) > 5:
-                        longest_words = set(sorted(longest_words, key=len, reverse=True)[:5])
-                total_text_filesize += os.path.getsize(text_file)
-            except FileNotFoundError: pass
-            except Exception as e:
-                messagebox.showerror("Error: calculate_file_stats()", f"An error occurred while processing {os.path.basename(text_file)}:\n\n{e}")
-
-        # Process image files
-        if self.process_image_stats_var.get():
-            for image_file in self.image_files:
-                try:
-                    width, height, dpi, aspect_ratio, image_format = self.process_image_file(image_file)
-                    total_image_filesize += os.path.getsize(image_file)
-                    image_formats.add(image_format)
-                    total_ppi += dpi[0]
-                    image_resolutions_counter[(width, height)] += 1
-                    aspect_ratios_counter[round(aspect_ratio, 2)] += 1
-                    if aspect_ratio == 1:
-                        square_images += 1
-                    elif aspect_ratio > 1:
-                        landscape_images += 1
-                    else:
-                        portrait_images += 1
-                except FileNotFoundError: pass
-                except Exception as e:
-                    messagebox.showerror("Error: calculate_file_stats()", f"An error occurred while processing {os.path.basename(image_file)}:\n\n{e}")
-
-        # Calculate averages
-        avg_chars = total_chars / num_txt_files if num_txt_files > 0 else 0
-        avg_words = total_words / num_txt_files if num_txt_files > 0 else 0
-        avg_captions = total_captions / num_txt_files if num_txt_files > 0 else 0
-        avg_ppi = total_ppi / num_img_files if num_img_files > 0 else 0
-        avg_word_length = sum(word_lengths) / len(word_lengths) if word_lengths else 0
-        median_word_length = statistics.median(word_lengths) if word_lengths else 0
-        avg_sentence_length = sum(sentence_lengths) / len(sentence_lengths) if sentence_lengths else 0
-
-        # Format statistics
-        most_common_words = word_counter.most_common(50)
-        most_common_words = sorted(most_common_words, key=lambda x: (-x[1], x[0].lower()))
-        formatted_common_words = "\n".join([f"{count:03}x, {word}" for word, count in most_common_words])
-        most_common_chars = char_counter.most_common()
-        formatted_common_chars = "\n".join([f"{count:03}x, {char}" for char, count in most_common_chars])
-        self.sorted_captions = self.get_sorted_captions()
-        formatted_captions = self.get_formatted_captions(self.sorted_captions)
-        sorted_resolutions = sorted(image_resolutions_counter.items(), key=lambda x: (-x[1], -(x[0][0] * x[0][1])))
-        formatted_resolutions = "\n".join([f"{count:03}x, {res[0]}x{res[1]}" for res, count in sorted_resolutions])
-        sorted_aspect_ratios = sorted(aspect_ratios_counter.items(), key=lambda x: (-x[1], x[0]))
-        formatted_aspect_ratios = "\n".join([f"{count:03}x, {aspect_ratio}" for aspect_ratio, count in sorted_aspect_ratios])
-        formatted_longest_words = "\n".join([f"- {word}" for word in sorted(longest_words, key=lambda x: (-len(x), x.lower()))])
-        top_5_files_words = sorted(file_word_counts, key=lambda x: (-x[1], x[0].lower()))[:5]
-        formatted_top_5_files_words = "\n".join([f"{count}x, {file}" for file, count in top_5_files_words])
-        top_5_files_chars = sorted(file_char_counts, key=lambda x: (-x[1], x[0].lower()))[:5]
-        formatted_top_5_files_chars = "\n".join([f"{count}x, {file}" for file, count in top_5_files_chars])
-        top_5_files_captions = sorted(file_caption_counts, key=lambda x: (-x[1], x[0].lower()))[:5]
-        formatted_top_5_files_captions = "\n".join([f"{count}x, {file}" for file, count in top_5_files_captions])
-        word_page_count = total_words / 500 if total_words > 0 else 0
-        formatted_filepath = os.path.normpath(self.image_dir.get())
-        formatted_total_filesize = self.format_filesize(total_image_filesize + total_text_filesize)
-        stats = {
-            'filepath': formatted_filepath,
-            'formatted_total_files': formatted_total_files,
-            'total_text_filesize': self.format_filesize(total_text_filesize),
-            'total_image_filesize': self.format_filesize(total_image_filesize),
-            'total_filesize': formatted_total_filesize,
-            'total_chars': total_chars,
-            'total_words': total_words,
-            'word_page_count': word_page_count,
-            'total_captions': total_captions,
-            'total_sentences': total_sentences,
-            'total_paragraphs': total_paragraphs,
-            'unique_words': unique_words,
-            'avg_chars': avg_chars,
-            'avg_words': avg_words,
-            'avg_captions': avg_captions,
-            'avg_word_length': avg_word_length,
-            'median_word_length': median_word_length,
-            'avg_sentence_length': avg_sentence_length,
-            'image_formats': image_formats,
-            'square_images': square_images,
-            'portrait_images': portrait_images,
-            'landscape_images': landscape_images,
-            'avg_ppi': avg_ppi,
-            'formatted_resolutions': formatted_resolutions,
-            'formatted_aspect_ratios': formatted_aspect_ratios,
-            'formatted_top_5_files_words': formatted_top_5_files_words,
-            'formatted_top_5_files_chars': formatted_top_5_files_chars,
-            'formatted_top_5_files_captions': formatted_top_5_files_captions,
-            'formatted_longest_words': formatted_longest_words,
-            'formatted_common_words': formatted_common_words,
-            'formatted_common_chars': formatted_common_chars,
-            'formatted_captions': formatted_captions
-        }
-        stats_text = self.format_stats_text(stats)
-        self.update_tab8_textbox(stats_text, manual_refresh)
-
-
-    def format_stats_text(self, stats):
-        stats_text = (
-            f"{stats['filepath']}\n\n"
-            f"--- File Summary ---\n"
-            f"Total Files: {stats['formatted_total_files']}\n"
-            f"Total Text Filesize: {stats['total_text_filesize']}\n"
-            f"Total Image Filesize: {stats['total_image_filesize']}\n"
-            f"Total Filesize: {stats['total_filesize']}\n"
-
-            f"\n--- Text Statistics ---\n"
-            f"Total Characters: {stats['total_chars']}\n"
-            f"Total Words: {stats['total_words']} ({stats['word_page_count']:.2f} pages)\n"
-            f"Total Captions: {stats['total_captions']}\n"
-            f"Total Sentences: {stats['total_sentences']}\n"
-            f"Total Paragraphs: {stats['total_paragraphs']}\n"
-            f"Unique Words: {len(stats['unique_words'])}\n"
-
-            f"\n--- Average Text Statistics ---\n"
-            f"Average Characters per File: {stats['avg_chars']:.2f}\n"
-            f"Average Words per File: {stats['avg_words']:.2f}\n"
-            f"Average Captions per File: {stats['avg_captions']:.2f}\n"
-            f"Average Word Length: {stats['avg_word_length']:.2f}\n"
-            f"Median Word Length: {stats['median_word_length']:.2f}\n"
-            f"Average Sentence Length: {stats['avg_sentence_length']:.2f}\n"
-
-            f"\n--- Image Information ---\n"
-            f"Image File Formats: {', '.join(stats['image_formats'])}\n"
-            f"Square Images: {stats['square_images']}\n"
-            f"Portrait Images: {stats['portrait_images']}\n"
-            f"Landscape Images: {stats['landscape_images']}\n"
-            f"Average PPI for All Images: {stats['avg_ppi']:.2f}\n"
-
-            f"\n--- Image Resolutions ---\n"
-            f"{stats['formatted_resolutions']}\n"
-            f"\n--- Image Aspect Ratios ---\n"
-            f"{stats['formatted_aspect_ratios']}\n"
-            f"\n--- Top 5 Files by Word Count ---\n"
-            f"{stats['formatted_top_5_files_words']}\n"
-            f"\n--- Top 5 Files by Character Count ---\n"
-            f"{stats['formatted_top_5_files_chars']}\n"
-            f"\n--- Top 5 Files by Caption Count ---\n"
-            f"{stats['formatted_top_5_files_captions']}\n"
-            f"\n--- Top 5 Longest Words ---\n"
-            f"{stats['formatted_longest_words']}\n"
-            f"\n--- Top 50 Most Common Words ---\n"
-            f"{stats['formatted_common_words']}\n"
-            f"\n--- Character Occurrence ---\n"
-            f"{stats['formatted_common_chars']}\n"
-            f"\n--- Unique Captions ---\n"
-            f"{stats['formatted_captions']}\n"
-        )
-        return stats_text
-
-
-    def update_caption_counter(self, captions):
-        for caption in captions:
-            caption_words = caption.split()
-            if self.truncate_stat_captions_var.get() and (len(caption_words) > 8 or len(caption) > 50):
-                caption = ' '.join(caption_words[:8]) + "..." if len(caption_words) > 8 else caption[:50] + "..."
-            self.caption_counter[caption] += 1
-
-
-    def get_sorted_captions(self):
-        sorted_captions = self.caption_counter.most_common()
-        return sorted(sorted_captions, key=lambda x: (-x[1], x[0].lower()))
-
-
-    def get_formatted_captions(self, sorted_captions):
-        return "\n".join([f"{count:03}x, {caption}" for caption, count in sorted_captions])
-
-
-    def filter_and_update_textfiles(self):
-        self.text_files = [text_file for text_file in self.text_files if os.path.exists(text_file)]
-        num_txt_files, num_img_files = len(self.text_files), len(self.image_files)
-        num_total_files = num_img_files + num_txt_files
-        formatted_total_files = f"{num_total_files} (Text: {num_txt_files}, Images: {num_img_files})"
-        self.refresh_file_lists()
-        return num_total_files, num_txt_files, num_img_files, formatted_total_files
-
-
-    def format_filesize(self, size):
-        if size >= 1_000_000:
-            return f"{size} bytes ({size / 1_000_000:.2f} MB)"
-        elif size >= 1_000:
-            return f"{size} bytes ({size / 1_000:.2f} KB)"
-        else:
-            return f"{size} bytes"
-
-
-    def process_text_file(self, text_file):
-        with open(text_file, 'r', encoding="utf-8") as file:
-            filedata = file.read()
-        words = re.findall(r'\b\w+\b', filedata.lower())
-        sentences = re.split(r'[.!?]', filedata)
-        paragraphs = filedata.split('\n\n')
-        captions = [cap.strip() for cap in filedata.split(',')]
-        return filedata, words, sentences, paragraphs, captions
-
-
-    def process_image_file(self, image_file):
-        with Image.open(image_file) as image:
-            diagonal_inches = 10
-            width, height = image.size
-            dpi = image.info.get('dpi', (0, 0))
-            if isinstance(dpi, tuple) and len(dpi) == 2:
-                try:
-                    dpi = (float(dpi[0]), float(dpi[1]))
-                    if dpi[0] == 0 or dpi[1] == 0:
-                        raise ValueError("Invalid DPI value")
-                except ValueError:
-                    diagonal_pixels = (width**2 + height**2)**0.5
-                    dpi = (diagonal_pixels / diagonal_inches, diagonal_pixels / diagonal_inches)
-            else:
-                diagonal_pixels = (width**2 + height**2)**0.5
-                dpi = (diagonal_pixels / diagonal_inches, diagonal_pixels / diagonal_inches)
-            aspect_ratio = width / height
-        return width, height, dpi, aspect_ratio, image.format
-
-
-    def update_tab8_textbox(self, stats_text, manual_refresh=None):
-        self.tab8_stats_textbox.config(state="normal")
-        self.tab8_stats_textbox.delete("1.0", "end")
-        self.tab8_stats_textbox.insert("1.0", stats_text)
-        self.tab8_stats_textbox.config(state="disabled")
-        if manual_refresh:
-            messagebox.showinfo("Stats Calculated", "Stats have been updated!")
 
 
 #endregion
