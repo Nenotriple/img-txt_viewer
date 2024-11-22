@@ -22,10 +22,10 @@ from tkinter import ttk, Toplevel, messagebox, StringVar, BooleanVar, Frame, Lab
 
 
 class SettingsManager:
-    def __init__(self, parent, root, version):
+    def __init__(self, parent, root):
         self.parent = parent
         self.root = root
-        self.version = version
+        self.version = self.parent.app_version
 
         self.config = configparser.ConfigParser()
 

@@ -24,10 +24,9 @@ from main.scripts import PyTrominos
 # Class - AboutWindow
 # --------------------------------------
 class AboutWindow:
-    def __init__(self, parent, root, version, icon):
+    def __init__(self, parent, root, icon):
         self.parent = parent
         self.root = root
-        self.version = version
         self.icon_img = icon
         self.icon_path = None
         self.info_headers, self.info_content = self._create_header_text()
@@ -169,7 +168,7 @@ class AboutWindow:
 
 
     def _create_made_by_label(self):
-        self.made_by_label = Label(self.bottom_row_frame, text=f"{self.version} - img-txt_viewer - Created by: Nenotriple (2023-2024)", font=("Segoe UI", 10))
+        self.made_by_label = Label(self.bottom_row_frame, text=f"{self.parent.app_version} - img-txt_viewer - Created by: Nenotriple (2023-2024)", font=("Segoe UI", 10))
         self.made_by_label.pack(side="right", padx=10, pady=10)
         ToolTip.create(self.made_by_label, "🤍Thank you for using my app!🤍 (^‿^)", 10, 6, 12)
 

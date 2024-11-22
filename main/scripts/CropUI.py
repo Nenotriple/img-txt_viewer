@@ -1064,9 +1064,9 @@ class CropInterface:
         # Primary variables
         self.parent = None
         self.root = None
-        self.version = None
         self.menu = None
         self.image_path = None
+        self.version = None
 
         # Image Variables
         self.gif_frames = []
@@ -1098,14 +1098,15 @@ class CropInterface:
 # --------------------------------------
 # UI
 # --------------------------------------
-    def setup_window(self, parent, root, version, menu, path=None, image_paths=None):
+    def setup_window(self, parent, root, menu, path=None, image_paths=None):
         self.parent = parent
         self.root = root
-        self.version = version
         self.menu = menu
         if os.path.exists(path):
             self.image_path = path
         self.image_files = image_paths
+        self.version = self.parent.app_version
+        # Window
         self.root.minsize(530, 370)
         self.root.title(f"{self.version} - img-txt Viewer - Crop Image")
         self.menu.entryconfig("Crop...", command=self.close_crop_ui)

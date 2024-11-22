@@ -14,9 +14,6 @@ More info here: https://github.com/Nenotriple/img-txt_viewer
 """
 
 
-VERSION = "v1.96"
-
-
 ################################################################################################################################################
 #region - Imports
 
@@ -54,6 +51,7 @@ from PIL import Image, ImageTk, ImageSequence, ImageOps, UnidentifiedImageError
 # Custom Libraries
 from main.scripts import (
     about_img_txt_viewer,
+    calculate_file_stats,
     batch_resize_images,
     batch_crop_images,
     settings_manager,
@@ -68,7 +66,6 @@ from main.scripts import (
 from main.scripts.Autocomplete import Autocomplete
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
 from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
-from main.scripts.calculate_file_stats import CalculateFileStats
 
 
 #endregion
@@ -78,6 +75,7 @@ from main.scripts.calculate_file_stats import CalculateFileStats
 
 class ImgTxtViewer:
     def __init__(self, master):
+        self.app_version = "v1.96"
         self.master = master
         self.application_path = self.get_app_path()
         self.set_appid()
@@ -97,16 +95,16 @@ class ImgTxtViewer:
 
     def initial_class_setup(self):
         # Setup tools
-        self.stat_calculator = CalculateFileStats(self, self.master)
-        self.autocomplete = Autocomplete
-        self.batch_tag_edit = batch_tag_edit.BatchTagEdit()
+        self.about_window = about_img_txt_viewer.AboutWindow(self, self.master, self.blank_image)
+        self.settings_manager = settings_manager.SettingsManager(self, self.master)
+        self.stat_calculator = calculate_file_stats.CalculateFileStats(self, self.master)
         self.batch_resize_images = batch_resize_images.BatchResizeImages()
-        self.find_dupe_file = find_dupe_file.FindDupeFile()
         self.edit_panel = edit_panel.EditPanel(self, self.master)
-        self.about_window = about_img_txt_viewer.AboutWindow(self, self.master, VERSION, self.blank_image)
-        self.settings_manager = settings_manager.SettingsManager(self, self.master, VERSION)
-        self.onnx_tagger = OnnxTagger(self)
+        self.batch_tag_edit = batch_tag_edit.BatchTagEdit()
+        self.find_dupe_file = find_dupe_file.FindDupeFile()
         self.crop_ui = CropUI.CropInterface()
+        self.onnx_tagger = OnnxTagger(self)
+        self.autocomplete = Autocomplete
 
         # Setup UI state
         self.ui_state = "ImgTxtViewer"
@@ -2127,41 +2125,37 @@ class ImgTxtViewer:
     def show_batch_tag_edit(self, event=None):
         parent = self
         root = self.master
-        version = VERSION
         menu = self.batch_operations_menu
         text_files = self.text_files
-        self.batch_tag_edit.setup_window(parent, root, version, menu, text_files)
+        self.batch_tag_edit.setup_window(parent, root, menu, text_files)
         self.toggle_alt_ui_menus("BatchTagEdit")
 
 
     def show_batch_resize_images(self, event=None):
         parent = self
         root = self.master
-        version = VERSION
         menu = self.batch_operations_menu
         path = self.image_dir.get()
-        self.batch_resize_images.setup_window(parent, root, version, menu, path)
+        self.batch_resize_images.setup_window(parent, root, menu, path)
         self.toggle_alt_ui_menus("BatchResizeImages")
 
 
     def show_find_dupe_file(self, event=None):
         parent = self
         root = self.master
-        version = VERSION
         menu = self.batch_operations_menu
         path = self.image_dir.get()
-        self.find_dupe_file.setup_window(parent, root, version, menu, path)
+        self.find_dupe_file.setup_window(parent, root, menu, path)
         self.toggle_alt_ui_menus("FindDupeFile")
 
 
     def show_crop_ui(self):
         parent = self
         root = self.master
-        version = VERSION
         menu = self.individual_operations_menu
         path = self.image_dir.get()
         image_paths = self.image_files
-        self.crop_ui.setup_window(parent, root, version, menu, path, image_paths)
+        self.crop_ui.setup_window(parent, root, menu, path, image_paths)
         self.toggle_alt_ui_menus("CropUI")
 
 
@@ -4281,7 +4275,7 @@ class ImgTxtViewer:
 
 
     def setup_window(self):
-        self.title = f"{VERSION} - img-txt Viewer"
+        self.title = f"{self.app_version} - img-txt Viewer"
         self.master.title(self.title)
         self.master.minsize(545, 200) # Width x Height
         window_width = 1110

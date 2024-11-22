@@ -108,9 +108,9 @@ class BatchResizeImages:
     def __init__(self):
         self.parent = None
         self.root = None
-        self.version = None
         self.menu = None
         self.working_dir = None
+        self.version = None
 
         self.about_window = None
         self.files_processed = 0
@@ -123,12 +123,12 @@ class BatchResizeImages:
 #region -  Interface
 
 
-    def setup_window(self, parent, root, version, menu, path=None):
+    def setup_window(self, parent, root, menu, path=None):
         self.parent = parent
         self.root = root
-        self.version = version
         self.menu = menu
         self.working_dir = path
+        self.version = self.parent.app_version
 
         self.root.minsize(750, 280) # Width x Height
         self.root.title(f"{self.version} - img-txt Viewer - Batch Resize Images")
