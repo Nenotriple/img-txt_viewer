@@ -42,13 +42,13 @@ class AboutWindow:
         ]
         content = [
             # Shortcuts
-            " ⦁ ALT + LEFT/RIGHT: Quickly move between image-text pairs.\n"
+            " ⦁ ALT + LEFT/RIGHT: Quickly move between img-txt pairs.\n"
             " ⦁ SHIFT + DEL: Move the current pair to a local trash folder.\n"
             " ⦁ ALT: Cycle through auto-suggestions.\n"
             " ⦁ TAB: Insert the highlighted suggestion.\n"
             " ⦁ CTRL + S: Save the current text file.\n"
             " ⦁ CTRL + E: Jump to the next empty text file.\n"
-            " ⦁ CTRL + R: Jump to a random image-text pair.\n"
+            " ⦁ CTRL + R: Jump to a random img-txt pair.\n"
             " ⦁ CTRL + F: Highlight all duplicate words.\n"
             " ⦁ CTRL + Z / CTRL + Y: Undo / Redo.\n"
             " ⦁ CTRL + W: Close the window.\n"
@@ -95,7 +95,7 @@ class AboutWindow:
             " ⦁ Batch Rename/Convert: Rename and optionally convert image and text files, saving them sequentially with padded zeros.\n",
             " ⦁ Thumbnail Panel: Display thumbnails under the current image for quick navigation.\n"
             " ⦁ Edit Image...: Open the current image in an external editor (e.g., MS Paint).\n"
-            " ⦁ Check the auto-save box to save text when switching between image-text pairs or closing the window.\n"
+            " ⦁ Auto-Save: Save text when switching between img-txt pairs, changing the active directory, or closing the app.\n"
             " ⦁ Text cleanup (e.g., removing duplicate tags, trailing commas, extra spaces) happens automatically on save, and can be disabled from the options menu.\n"
             " ⦁ Text cleanup is optimized for CSV-format captions and can be disabled via the Clean-Text option in the menu.\n"
             "\n"

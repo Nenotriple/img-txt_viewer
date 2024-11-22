@@ -1,4 +1,4 @@
-<h1 align="center"><img src="https://github.com/Nenotriple/img-txt_viewer/assets/70049990/8342e197-25c7-4e78-a27d-38daa79b4330" alt="icon" width="50">img-txt Viewer</h1>
+<h1 align="center"><img src="https://github.com/Nenotriple/img-txt_viewer/assets/70049990/8342e197-25c7-4e78-a27d-38daa79b4330" alt="icon" width="50"> img-txt Viewer</h1>
 <p align="center">A Windows application for side-by-side image and text viewing, designed to streamline manual captioning or tagging.</p>
 <p align="center"><img src="https://github.com/Nenotriple/img-txt_viewer/assets/70049990/d7d9c754-aae4-4add-882d-fef105cd0531" alt="cover"></p>
 
@@ -19,13 +19,13 @@
 <br>
 
 
-- [📝Usage](#-usage)
-- [💡Tips and Features](#-tips-and-features)
-- [🛠️Install](#-install)
-- [🔒Privacy Policy](#-privacy-policy)
-- [📜Version History](#-version-history)
-- [✨Wiki](https://github.com/Nenotriple/img-txt_viewer/wiki)
-- [💾Download](https://github.com/Nenotriple/img-txt_viewer/releases?q=executable&expanded=true)
+- [📝 Usage](#-usage)
+- [💡 Tips and Features](#-tips-and-features)
+- [🛠️ Install](#-install)
+- [🔒 Privacy Policy](#-privacy-policy)
+- [📜 Version History](#-version-history)
+- [✨ User Guide](https://github.com/Nenotriple/img-txt_viewer/blob/v1.96_dev/docs/UserGuide.md)
+- [💾 Download](https://github.com/Nenotriple/img-txt_viewer/releases?q=executable&expanded=true)
 
 
 <br>
@@ -57,6 +57,7 @@ Images and text files can be loaded from different folder paths. Expand the sect
 
 
 By default, text files are loaded from the selected directory. To load text files from a different path:
+
 1. Select a directory as usual.
 2. Right-click the `Browse...` button and choose `Set Text File Path`.
 3. When an alternate path is chosen, a blue indicator appears to the left of the directory entry. Hover over the indicator to view the selected text path.
@@ -97,65 +98,66 @@ Example folder structures:
 
 # 💡 Tips and Features
 
-
-- Shortcuts:
+- **Shortcuts:**
   - `ALT + LEFT/RIGHT`: Quickly move between img-txt pairs.
   - `SHIFT + DEL`: Move the current pair to a local trash folder.
   - `ALT`: Cycle through auto-suggestions.
   - `TAB`: Insert the highlighted suggestion.
   - `CTRL + S`: Save the current text file.
-  - `CTRL + E`: jump to the next empty text file.
+  - `CTRL + E`: Jump to the next empty text file.
   - `CTRL + R`: Jump to a random img-txt pair.
   - `CTRL + F`: Highlight all duplicate words.
   - `CTRL + Z` / `CTRL + Y`: Undo / Redo.
+  - `CTRL + W`: Close the window.
   - `F1`: Toggle zoom popup.
   - `F2`: Open the Image-Grid view.
+  - `F4`: Open the current image in your default editor.
   - `F5`: Open Batch Tag Edit.
-  - `Middle-click`: A tag to quickly delete it.
+  - `Middle-click`: A tag to delete it.
 
-- Tips:
+- **Tips:**
   - A guided setup will run on first launch to configure your autocomplete dictionaries and matching settings.
-  - Highlight matching words by selecting text.
-  - Insert a suggestion by clicking on it.
+  - Insert a suggestion by clicking on it or pressing TAB.
+  - Highlight matching words by selecting similar text.
   - Quickly create text pairs by loading the image and saving the text.
   - List Mode: Display tags in a list format while saving them in standard format.
   - Get `Autocomplete Suggestions` while you type using Danbooru/Anime tags, the English Dictionary, etc.
+  - Match Modes: `Last Word` matches only the last word typed, `Whole String` matches the entire tag between commas.
+  - Use `Match Mode: Last Word` for more natural and less strict autocomplete.
   - Use an asterisk (*) while typing for fuzzy search autocomplete suggestions.
-    - For example: Typing `*lo*b` returns "<ins>**lo**</ins>oking <ins>**b**</ins>ack", and even "yel<ins>**lo**</ins>w <ins>**b**</ins>ackground"
-  - Use 'Match Mode: Last Word' for more natural autocomplete.
-  - Right-click the 'Browse...' button to set or clear the alternate text path, allowing you to load text files from a separate folder than images.
+  - Right-click the `Browse...` button to set or clear the alternate text path, allowing you to load text files from a separate folder than images.
 
-- Text Tools:
+- **Text Tools:**
   - `Search and Replace`: Find specific text and replace it with another.
   - `Prefix`: Insert text at the START of all text files.
   - `Append`: Insert text at the END of all text files.
+  - `AutoTag`: Automatically tag images using ONNX vision models like `wd-v1-4-vit-tagger-v2`.
   - `Filter`: Filter pairs based on text, missing text files, and more. Works with Search and Replace, Prefix, and Append.
   - `Highlight`: Always highlight specific text.
   - `My Tags`: Add your custom tags for autocomplete suggestions.
   - `Batch Tag Edit`: Edit and manage tags with a user-friendly interface that previews changes before applying them.
   - `Create Wildcard From Captions`: Combine all image captions into one text file, with each caption set separated by a newline.
-  - `Cleanup Text`: Fix simple typos in all text files of the selected folder.
+  - `Cleanup Text`: Fix typos across all text files, such as duplicate tags, extra spaces, commas, and more.
 
- - Other Tools
-   - `Batch Resize Images`: Resize all images in a folder using different methods and conditions.
-   - `Resize Image`: Resize the current image by exact resolution or percentage.
-   - `Batch Crop Images`: Crop all images to a specified resolution.
-   - `Crop Image`: Quickly crop an image to a square or freeform ratio.
-   - `Upscale Image`: Upscale images using models like RESRGAN, AnimeSharp-4x, and UltraSharp-4x. Additional models can be added to the 'models' folder.
-   - `Find Duplicate Files`: Identify and separate duplicate files in a folder.
-   - `Expand`: Expand an image to a square ratio instead of cropping.
-   - `Thumbnail Panel`: Display thumbnails under the current image for quick navigation.
-   - `Edit Image Panel`: Adjust brightness, contrast, saturation, sharpness, highlights, and shadows of the current image.
-   - `Edit Image...`: Open the current image in an external editor (e.g., MS Paint).
-   - `Batch Rename/Convert`: Rename and optionally convert image and text files, saving them sequentially with padded zeros.
+- **Image Tools:**
+  - `Batch Resize Images`: Resize all images in a folder using different methods and conditions.
+  - `Resize Image`: Resize the current image by exact resolution or percentage.
+  - `Batch Crop Images`: Crop all images to a specified resolution.
+  - `Crop Image`: Crop an image or GIF using a variety of methods and tools.
+  - `Upscale Image`: Upscale images using models like RESRGAN, AnimeSharp-4x, and UltraSharp-4x. Additional models can be added to the `ncnn_models` folder.
+  - `Find Duplicate Files`: Identify and separate duplicate files from your dataset.
+  - `Expand`: Expand an image to a square ratio instead of cropping. Designed for images with simple backgrounds and centered subjects.
+  - `Edit Image Panel`: Adjust brightness, contrast, saturation, sharpness, highlights, and shadows of the current image.
 
- - Auto-Save
-   - Check the auto-save box to save text when switching between image-text pairs or closing the window.
-   - Text cleanup (e.g., removing duplicate tags, trailing commas, extra spaces) happens automatically on save, and can be disabled from the options menu.
-   - Text cleanup is optimized for CSV-format captions and can be disabled via the Clean-Text option in the menu.
+- **Other:**
+  - `Batch Rename/Convert`: Rename and optionally convert image and text files, saving them sequentially with padded zeros.
+  - `Thumbnail Panel`: Display thumbnails under the current image for quick navigation.
+  - `Edit Image...`: Open the current image in an external editor (e.g., MS Paint).
+  - `Auto-Save` Save text when switching between img-txt pairs, changing the active directory, or closing the app.
+  - `Text cleanup`: (e.g., removing duplicate tags, trailing commas, extra spaces) happens automatically on save, and can be disabled from the options menu.
+  - Text cleanup is optimized for CSV-format captions and can be disabled via the Clean-Text option in the menu.
 
-
-For a more detailed feature guide, please visit the repo [✨Wiki](https://github.com/Nenotriple/img-txt_viewer/wiki).
+For more detailed information regarding the tools and features, please refer to the [UserGuide✨](https://github.com/Nenotriple/img-txt_viewer/blob/v1.96_dev/docs/UserGuide.md)found in the repo docs.
 
 
 <br>
@@ -219,7 +221,7 @@ pip install -r requirements.txt
 
 7. **Launch the app:**
 ```
-python img-txt_viewer.pyw
+python img-txt_viewer.py
 ```
 
 
@@ -233,8 +235,8 @@ python img-txt_viewer.pyw
 
 **img-txt Viewer** is completely private, in every sense of the word.
 - The app operates entirely on your device, ensuring your data remains solely under your control.
-- No data is collected, transmitted, or stored, aside from a basic configuration file for app settings.
-- The app functions 100% offline and never connects to external servers. No data is ever shared or sent elsewhere.
+- **No data is collected, transmitted, or stored**, aside from a basic configuration file for app settings.
+- The app functions 100% offline and never connects to external servers. **No data is ever shared or sent elsewhere.**
 
 
 <br>
@@ -243,292 +245,4 @@ python img-txt_viewer.pyw
 # 📜 Version History
 
 
-[💾v1.96](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.96)
-
-
-<details>
-  <summary>Release Notes for v1.96</summary>
-
-
-**v1.96 Changes**  |  https://github.com/Nenotriple/img-txt_viewer/compare/v1.95...v1.96
-
-
-This release incorporates several new features, including a reworked Batch Tag Edit tool, a Thumbnail Panel for quick navigation, and an Edit Image Panel for adjusting image properties. Additionally, numerous bugs have been fixed, such as issues with the Delete Pair tool, image quality degradation, and memory leaks.
-
-Aspects of the script have been refactored to be more modular and better handle additional tools and features.
-
-The app now targets Windows 11, and while it doesn't offer an complete `Aero` theme, many widgets have been updated to utilize a more modern theme where appropriate.
-
-Starting from this release, the `Lite` version will no longer be provided. All tools are now built-in.
-
----
-
-### New:
-- `Batch Tag Delete` has been renamed to `Batch Tag Edit`.
-  - This tool has been completely reworked to allow for more versatile tag editing.
-  - The interface is now more convenient and user-friendly, allowing you to see all pending changes before committing them.
-  - It is no longer supported as a standalone tool.
-- `Batch Resize Images`:
-  - No longer a standalone tool, the tool has been integrated into the main app.
-  - NEW: A timer is now displayed in the bottom row.
-  - FIXED: The following resize modes not working/causing an error: `Longer Side`, and `Height`
-  - FIXED: The resize operation is now threaded, allowing the app to remain responsive during the resizing process.
-- New feature `Thumbnail Panel`: Displayed below the current image for quick navigation.
-- New feature `Edit Image Panel`: Enabled from the options/image menu, this section allows you to edit the `Brightness`, `Contrast`, `Saturation`, `Sharpness`, `Highlights`, and `Shadows` of the current image.
-- New feature `Edit Image...`: Open the current image in an external editor, the default is MS Paint.
-  - Running `Set Default Image Editor` will open a dialog to select the executable (or `.py`, `.pyw`) path to use as the default image editor.
-  - This should work with any app that accepts a file path as a launch argument. (GIMP, Krita, Photoshop, etc.)
-- New tool `Create Wildcard From Captions`: Combine all image captions into a single text file, each set of image captions separated by a newline.
-- Added `Copy` command to the right-click textbox context menu.
-- Added `Last` to the index entry right-click context menu to quickly jump to the last img-txt pair.
-- A quick guided setup will run on the app's first launch, or if the settings file is deleted/reset.
-  - This will set the preferred autocomplete dictionaries and matching settings.
-- You can now press `CTRL+W` to close the current window.
-
-
-<br>
-
-
-### Fixed:
-- Fixed issue where the `Delete Pair` tool would overwrite the next index with the deleted text. #31
-- Fixed an issue that was degrading the quality of the displayed image and not respecting the `Image Display Quality` setting.
-- Fixed a memory leak that could occur whenever the primary image is displayed.
-- Fixed Next/Previous button not properly displaying their relief when clicked.
-- Fixed an issue where landscape images were improperly scaled, leading to an incorrect aspect ratio.
-  - Additionally, large landscape images now scale to fit the window frame better.
-- Fixed `Open Text Directory...` not respecting the actual filepath if set by `Set Text File Path...`.
-- Fixed issue where the file lists were not updated when using the internal function "jump_to_image()".
-- Fixed an issue where the `alt text path` could be set to `.` when declining to reload the last directory.
-- Fixed a bug where the window height would enlarge slightly when dragging the window from by the displayed image.
-- Fixed the following tools not respecting the `Loading Order > Descending` setting, causing them to jump to the wrong index.
-  - `Image Grid`, `Upscale Image`, `Resize Image`
-- Potential fix for the `Stats > PPI` calculation returning "0.00".
-- if `clean-text` is enabled: The primary text box is now properly refreshed when saving.
-
-
-<br>
-
-
-### Other changes:
-- Using `Open Current Directory...` will now automatically select the current image in the file explorer. #30
-  - The `Open` button will also select the current image if the path being opened is the same as the image path.
-- The Image info (the stats displayed above the image) is now cached for quicker access.
-- `Zip Dataset...` Now only zips images and text files in the selected directory, omitting subfolders.
-- The `Options`, and `Tools` menus have been reorganized.
-- The color mode is now displayed in the image info panel.
-- You can now close the `Crop Image` window with the `Escape` key.
-- I have switched to Windows 11, so that's now the target operating system for this project. You may notice some UI changes.
-  - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
-
-
-<br>
-
-
-### Project Changes:
-- `Upscale`, `Batch Upscale`: v1.05:
-  - FIXED: Prevent the app from hanging while upscaling a GIF.
-  - Batch Upscale: Added a label to display the number of images upscaled and the total number of images.
-  - Batch Upscale: Added a timer and ETA label to show the total time taken and the estimated time remaining.
-  - Batch Upscale: Entry path ToolTips are now updated when the path is changed.
-  - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
-- `TkToolTip`: v1.06:
-  - NEW: `justify` parameter: Configure text justification in the tooltip. (Default is "center")
-  - NEW: `wraplength` parameter: Configure the maximum line width for text wrapping. (Default is 0, which disables wrapping)
-  - NEW: `fade_in` and `fade_out` parameters: Configure fade-in and fade-out times. (Default is 75ms)
-  - NEW: `origin` parameter: Configure the origin point of the tooltip. (Default is "mouse")
-  - FIXED: Issue where the underlying widget would be impossible to interact with after hiding the tooltip.
-  - CHANGE: Now uses `TkDefaultFont` instead of Tahoma as the default font for the tooltip text.
-  - CHANGE: The default background color is now "#ffffee", less yellow and more "off-white".
-- `PopUpZoom`v1.02:
-  - New: `Rounded Corners` The popup now supports rounded corners. (Default: 30px)
-- `Batch Crop`(v1.03), `Resize Images`(v1.02), `Image Grid`(v1.04):
-  - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
-
-
-</details>
-
-
-<br>
-
-
-[💾v1.95](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.95)
-
-
-<details>
-
-
-  <summary>Release Notes for: v1.95</summary>
-
-
-  - New:
-    - New tab `Stats`: View file stats related to the current directory, including total files, characters, captions, average characters, words, captions per file, lists of captions, resolutions, common words, and more.
-    - New option `Loading Order`: Set the loading order based on name, file size, date, ascending/descending, etc.
-    - New option `Reset Settings`: Reset all user settings to their default parameters, with an option to reset “My Tags”.
-    - New option `Auto-Delete Blank Files`: Enable this setting to automatically remove blank text files when they're saved. [#25](https://github.com/Nenotriple/img-txt_viewer/issues/25)
-    - New tool `Rename Pair`: Manually rename a single img-txt pair.
-    - New tool `Create Blank Text Pairs`: This tool will create a text file for any un-paired image.
-    - New tool `Archive Dataset`: Use this to quickly zip the current working folder.
-    - New Tool `Batch Upscale`: Same as 'Upscale Image', but this can upscale an entire folder of images.
-    - Enhanced text selection for the primary text box and most text entries, treating common punctuation and symbols as word boundaries on double-click and allowing selection of entire entry text strings with a triple-click. [#26](https://github.com/Nenotriple/img-txt_viewer/issues/26)
-    - New text box right-click menu option: `Open Text File...`
-
-
-<br>
-
-
-  - Fixed:
-    - Filtering using regex patterns now works as intended. [#27](https://github.com/Nenotriple/img-txt_viewer/issues/27)
-    - Fixed right-click not triggering the primary text box context menu if the textbox wasn't initially focused with a left-click.
-    - Fixed AttributeError when refreshing the custom dictionary.
-    - Fixed the issue where using the `CTRL+S` hotkey to save the text wouldn't display *Saved* in the message label.
-    - Fixed `Rename and Convert` improperly naming text file pairs.
-    - Improved image loading to prevent [WinError 32], also fixing issues with the “Delete Pair” tool.
-    - Improved UI handling of situations where filtering would result in zero matches.
-    - Prevented the Image-Grid from opening when there aren't any images to display.
-    - The file filter is now cleared when changing the selected directory.
-    - Fixed issue where settings were not reset when clicking NO to reset "my_tags"
-
-
-<br>
-
-
-  - Other changes:
-    - Toggle Zoom - The popup is now centered next to the mouse and behaves better around the screen edges.
-    - `Delete img-txt Pair` now allows you to send the pair to the recycle bin.
-    - Navigating pairs while auto-save is enabled is now much faster.
-    - You can now set a filter by using the enter/return key with the filter widget in focus.
-    - You can now quickly open the "settings.cfg", and "my_tags.csv" files in your default system app.
-    - You can now use Regex patterns in the `Search` field of the Search and Replace tool, along with the Highlight tool.
-    - You can now use the Up/Down arrow keys to navigate while the img-txt index entry is focus.
-    - You can now hold Shift when navigating (all methods) to advance by 5 instead of 1.
-    - This message label now displays "No Changes" when attempting to save a file without making changes to it.
-    - Ensured auto_save_var is properly restored to its original value if the text box does not exist when changing the working directory.
-    - The "Clear" button in the Filter tab now turns red when the filter is active, and the tooltip also changes to show the filter state.
-    - The tools *'Rename img-txt Pairs'* and *'Rename and Convert img-txt Pairs'* have been combined into a single tool called `Batch Rename and/or Convert`.
-    - Using Undo after S&R/Prefix/Append, will now delete text files that previously didn't exist at the time when those tools were ran.
-    - This version comes with many small tweaks and updates, along with some minor internal code refactoring.
-
-
-<br>
-
-
-  - Project Changes:
-    - **Image-Grid:** v1.03
-      - New:
-        - Filtering options are now moved to a new menu.
-        - You can now filter images by `Resolution`, `Aspect Ratio`, `Filesize`, `Filename`, `Filetype`, and `Tags`.
-          - Along with these operators, `=`, `<`, `>`, `*`
-        - Resolution and Filesize are now displayed in the image tooltip.
-        - `Auto-Close`: This setting is now saved to the `settings.cfg` file. [#24](https://github.com/Nenotriple/img-txt_viewer/issues/24)
-      - Fixed:
-        - Fixed the issue of not being able to focus on the image grid window when selecting it from the taskbar. [#24](https://github.com/Nenotriple/img-txt_viewer/issues/24)
-      - Other changes:
-        - Increased the default number of images loaded from 150 to 250.
-        - Improved image and text cache.
-        - Update index logic to support new loading order options.
-    - **Upscale Image:** v1.04
-      - New:
-        - Now supports batch upscaling a folder of  images.
-        - The `Upscale Factor` widget is now a slider allowing you to select `from 0.25`, `to 8.0`, in `0.25 increments`.
-        - New settings: `Strength` Set this from 0%, to 100% to define how much of the original image is visible after upscaling.
-      - Fixed:
-        - Settings are now disabled while upscaling to prevent them from being adjusted while upscaling.
-        - Fixed issues with opening and holding-up images in the process.
-    - **TkToolTip:** v1.04
-      - New:
-        - Now supports an ipadx, or ipady value for interior spacing. The default value is 2.
-      - Other changes:
-        - x_offset, and y_offset have been renamed to padx, and pady.
-
-
-</details>
-
-
-<br>
-
-
-[💾v1.94](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.94)
-
-
-<details>
-
-
-  <summary>Release Notes for: v1.94</summary>
-
-
-  - New:
-    - New option: `Toggle Zoom`, This allows you to hover the mouse over the current image and display a zoomed in preview.
-      - Use the Mouse-Wheel to zoom in and out.
-      - Use Shift+Mouse-Wheel to increase or decrease the popup size.
-
-
-<br>
-
-
-  - Fixed:
-    - `Image Grid`, Fixed issue where supported file types were case sensitive, leading to images not appearing, and indexing issues.
-
-
-<br>
-
-
-  - Other changes:
-    - Improved performance of Autocomplete by optimizing: data loading, similar names, string operations, and suggestion retrieval. Up to 50% faster than v1.92
-    - `Image Grid`, Now reuses image cache across instances to speed up loading.
-
-
-</details>
-
-
-<br>
-
-
-[💾v1.93.1](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.93.1)
-
-
-<details>
-
-
-  <summary>Release Notes for: v1.93.1</summary>
-
-
-  - New:
-    - New autocomplete matching modes: `Match Whole String`, and `Match Last Word` [732120e](https://github.com/Nenotriple/img-txt_viewer/commit/732120e61dbe0758f8f00c4852edf3f435b32c29)
-      - `Match Whole String`, This option works exactly as before. All characters in the selected tag are considered for matching.
-      - `Match Last Word`, This option will only match (and replace) the last word typed. This allows you to use autocomplete with natural sentences. You can type using an underscore as a space to join words together.
-    - New option for image grid view: `Auto-Close`, Unchecking this option allows you to keep the image grid open after making a selection. [67593f4](https://github.com/Nenotriple/img-txt_viewer/commit/67593f4876daf0cdbc6170dbb7c8820b99d8636d)
-    - New Tool: `Rename img-txt pairs`, Use this to clean-up the filenames of your dataset without converting the image types. [8f24a7e](https://github.com/Nenotriple/img-txt_viewer/commit/8f24a7e41a4fb4770fb5bd06d9dd2337b31c6270)
-    - You can now choose the crop anchor point when using `Batch Crop Images`. [9d247ea](https://github.com/Nenotriple/img-txt_viewer/commit/9d247ea582218366be7969b4c30d20fb7e8fbe87)
-
-
-<br>
-
-
-  - Fixed:
-    - Fixed issue #23 where initially loading a directory could result in the first text file displayed being erased. [ae56143](https://github.com/Nenotriple/img-txt_viewer/commit/ae561433a8a98fbcbbb3c1a1a6a35c05b412d9cc)
-
-
-<br>
-
-
-  - Other changes:
-    - Improved performance of Autocomplete, by handling similar names more efficiently. Up to 40% faster than before. [d8be0f2](https://github.com/Nenotriple/img-txt_viewer/commit/d8be0f28ff681be45beb8ca7694e9fc4fb4aa55c)
-    - Improved performance when viewing animated GIFs by first resizing all frames to the required size and caching them. [c8bd32a](https://github.com/Nenotriple/img-txt_viewer/commit/c8bd32a408213fab5cba0dd5842c9f9bb050e4fa)
-    - Improved efficiency of TkToolTip by reusing tooltip widgets, adding visibility checks, and reducing unnecessary method calls. [8b6c0dc](https://github.com/Nenotriple/img-txt_viewer/commit/8b6c0dc70c7547bbb0c873cbc9e02235a8725cdd)
-    - Slightly faster image loading by using PIL's thumbnail function to reduce aspect ratio calculation. [921b4d3](https://github.com/Nenotriple/img-txt_viewer/commit/921b4d38132e82078c34316fd12b45fc4e61694b)
-
-
-<br>
-
-
-  - Project Changes:
-    - **Batch Resize Images:** v1.06 [19d5b4d](https://github.com/Nenotriple/img-txt_viewer/commit/19d5b4d5fbe3ac6629d0755e24f3b560be800125)
-      - See full list of changes here: https://github.com/Nenotriple/batch_resize_images/releases
-    - **Upscale:** v1.02 [616ddaa](https://github.com/Nenotriple/img-txt_viewer/commit/616ddaa6ebd897b3f63cf921406f0e5ed958f930)
-      - The current and total GIF frames are now displayed in the UI.
-
-
-</details>
-
-
-<br>
+Please see the [changelog](https://github.com/Nenotriple/img-txt_viewer/blob/v1.96_dev/docs/Changelog.md) for a detailed history of all changes made in each version.
