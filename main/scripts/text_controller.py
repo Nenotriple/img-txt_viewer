@@ -1,3 +1,4 @@
+"""Module to handle text manipulation functions and widget creation for the ImgTxtViewer UI."""
 
 
 ################################################################################################################################################
@@ -38,6 +39,7 @@ class TextController:
         self.parent = parent
         self.root = root
 
+        # AutoTag
         self.onnx_model_dict = {}
         self.auto_insert_mode_var = StringVar(value="disable")
         self.batch_interrogate_images_var = BooleanVar(value=False)
