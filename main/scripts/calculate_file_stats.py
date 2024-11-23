@@ -373,9 +373,9 @@ class CalculateFileStats:
 
     def update_tab8_textbox(self, stats_text, manual_refresh=None):
         """Update the GUI textbox with the calculated statistics."""
-        self.parent.tab8_stats_textbox.config(state="normal")
-        self.parent.tab8_stats_textbox.delete("1.0", "end")
-        self.parent.tab8_stats_textbox.insert("1.0", stats_text)
-        self.parent.tab8_stats_textbox.config(state="disabled")
+        self.parent.text_controller.tab8_stats_textbox.config(state="normal")
+        self.parent.text_controller.tab8_stats_textbox.delete("1.0", "end")
+        self.parent.text_controller.tab8_stats_textbox.insert("1.0", stats_text)
+        self.parent.text_controller.tab8_stats_textbox.config(state="disabled")
         if manual_refresh:
             messagebox.showinfo("Stats Calculated", "Stats have been updated!")

@@ -149,7 +149,7 @@ class SettingsManager:
                 if hasattr(self.parent, 'text_box'):
                     self.parent.show_pair()
             else:
-                self.parent.prompt_first_time_setup()
+                self.prompt_first_time_setup()
         except Exception as e:
             error_message = traceback.format_exc()
             if messagebox.askokcancel("Error: read_settings()", f"An unexpected error occurred.\n\n{e}\n\n{error_message}\n\nPress OK to copy the error message to the clipboard."):
@@ -242,24 +242,24 @@ class SettingsManager:
         self.parent.suggestion_threshold_var.set(value="Normal")
         self.parent.last_word_match_var.set(value=False)
         # ONNX
-        self.parent.auto_insert_mode.set(value="disable")
-        self.parent.batch_interrogate_images_var.set(value=False)
-        self.parent.auto_tag_general_threshold_spinbox.set(value=0.35)
-        self.parent.auto_tag_character_threshold_spinbox.set(value=0.8)
-        self.parent.auto_tag_max_tags_spinbox.set(value=40)
+        self.parent.text_controller.auto_insert_mode_var.set(value="disable")
+        self.parent.text_controller.batch_interrogate_images_var.set(value=False)
+        self.parent.text_controller.auto_tag_general_threshold_spinbox.set(value=0.35)
+        self.parent.text_controller.auto_tag_character_threshold_spinbox.set(value=0.8)
+        self.parent.text_controller.auto_tag_max_tags_spinbox.set(value=40)
         self.parent.onnx_tagger.keep_underscore.set(value=False)
         self.parent.onnx_tagger.keep_escape_character.set(value=True)
-        self.parent.excluded_tags_entry.delete(0, 'end')
-        self.parent.auto_exclude_tags_var.set(value=False)
-        self.parent.keep_tags_entry.delete(0, 'end')
-        self.parent.replace_tags_entry.delete(0, 'end')
-        self.parent.replace_with_tags_entry.delete(0, 'end')
+        self.parent.text_controller.excluded_tags_entry.delete(0, 'end')
+        self.parent.text_controller.auto_exclude_tags_var.set(value=False)
+        self.parent.text_controller.keep_tags_entry.delete(0, 'end')
+        self.parent.text_controller.replace_tags_entry.delete(0, 'end')
+        self.parent.text_controller.replace_with_tags_entry.delete(0, 'end')
         # Other
-        self.parent.clear_search_and_replace_tab()
-        self.parent.prefix_entry.delete(0, 'end')
-        self.parent.append_entry.delete(0, 'end')
-        self.parent.revert_text_image_filter(clear=True, quiet=False)
-        self.parent.clear_highlight_tab()
+        self.parent.text_controller.clear_search_and_replace_tab()
+        self.parent.text_controller.prefix_entry.delete(0, 'end')
+        self.parent.text_controller.append_entry.delete(0, 'end')
+        self.parent.text_controller.revert_text_image_filter(clear=True, quiet=False)
+        self.parent.text_controller.clear_highlight_tab()
         self.parent.list_mode_var.set(value=False)
         self.parent.toggle_list_mode()
         self.parent.cleaning_text_var.set(value=True)
@@ -288,8 +288,8 @@ class SettingsManager:
         if hasattr(self.parent, 'text_box'):
             self.parent.font_var.set(value="Courier New")
             self.parent.font_size_var.set(value=10)
-            self.parent.size_scale.set(value=10)
-            self.parent.font_size_label.config(text=f"Size: 10")
+            self.parent.text_controller.size_scale.set(value=10)
+            self.parent.text_controller.font_size_label.config(text=f"Size: 10")
             current_text = self.parent.text_box.get("1.0", "end-1c")
             self.parent.text_box.config(font=(self.parent.default_font, self.parent.default_font_size))
         self.parent.load_pairs()
@@ -305,9 +305,6 @@ class SettingsManager:
         self.parent.thumbnail_width.set(value=50)
         self.parent.update_thumbnail_panel()
         self.parent.edit_panel_visible_var.set(value=False)
-        self.parent.edit_cumulative_var.set(value=False)
-        self.parent.edit_last_slider_dict.clear()
-        self.parent.edit_slider_dict = {"Brightness": 0, "Contrast": 0, "AutoContrast": 0, "Highlights": 0, "Shadows": 0, "Saturation": 0, "Sharpness": 0, "Hue": 0, "Color Temperature": 0}
         self.parent.edit_panel.toggle_edit_panel()
         # Title
         self.parent.sync_title_with_content()
@@ -374,7 +371,7 @@ class SettingsManager:
             self.parent.autocomplete.update_autocomplete_dictionary()
 
         def create_setup_window():
-            setup_window = Toplevel(self.parent.master)
+            setup_window = Toplevel(self.parent.root)
             setup_window.title("Dictionary Setup")
             setup_window.iconphoto(False, self.parent.blank_image)
             window_width, window_height = 400, 250
