@@ -234,9 +234,6 @@ class ImgTxtViewer:
 
         # Edit Panel
         self.edit_panel_visible_var = BooleanVar(value=False)
-        self.edit_slider_dict = {"Brightness": 0, "Contrast": 0, "AutoContrast": 0, "Highlights": 0, "Shadows": 0, "Saturation": 0, "Sharpness": 0, "Hue": 0, "Color Temperature": 0}
-        self.edit_last_slider_dict = {}
-        self.edit_cumulative_var = BooleanVar(value=False)
 
         # Image Quality
         self.image_quality_var = StringVar(value="Normal")

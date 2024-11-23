@@ -10,7 +10,7 @@ import os
 
 
 # Standard Library - GUI
-from tkinter import ttk, messagebox, Frame, Label, TclError
+from tkinter import ttk, messagebox, Frame, Label, BooleanVar, TclError
 
 
 # Third-Party Libraries
@@ -29,8 +29,12 @@ class EditPanel:
     def __init__(self, parent, root):
         self.parent = parent
         self.root = root
-        self.edit_is_reverted_var = False
 
+        # Initialize Variables
+        self.slider_value_dict = {"Brightness": 0, "Contrast": 0, "AutoContrast": 0, "Highlights": 0, "Shadows": 0, "Saturation": 0, "Sharpness": 0, "Hue": 0, "Color Temperature": 0}
+        self.edit_last_slider_dict = {}
+        self.edit_is_reverted_var = False
+        self.edit_cumulative_var = BooleanVar(value=False)
 
 #endregion
 ################################################################################################################################################
@@ -72,7 +76,7 @@ class EditPanel:
         self.edit_value_label = Label(self.parent.edit_image_panel, text="0", width=3)
         self.edit_value_label.grid(row=0, column=2, pady=5, sticky="ew")
         # Cumulative Edit Checkbutton
-        self.cumulative_edit_checkbutton = ttk.Checkbutton(self.parent.edit_image_panel, variable=self.parent.edit_cumulative_var, command=self.apply_image_edit)
+        self.cumulative_edit_checkbutton = ttk.Checkbutton(self.parent.edit_image_panel, variable=self.edit_cumulative_var, command=self.apply_image_edit)
         self.cumulative_edit_checkbutton.grid(row=0, column=3, pady=5, sticky="ew")
         ToolTip.create(self.cumulative_edit_checkbutton, "If enabled, all edits will be done cumulatively; otherwise, only the selected option will be used.", 25, 6, 12, wraplength=200)
         # Revert Button
@@ -151,8 +155,8 @@ class EditPanel:
         if current_option in rgb_required_options and not is_rgb:
             messagebox.showwarning("Unsupported Color Mode", f"{current_option} adjustment only supports images in RGB color mode!\n\nImage Color Mode: {self.parent.current_image.mode}\n\nAdjustments will be ignored.")
             return
-        self.edit_slider.set(self.parent.edit_slider_dict[current_option])
-        self.edit_value_label.config(text=str(self.parent.edit_slider_dict[current_option]))
+        self.edit_slider.set(self.slider_value_dict[current_option])
+        self.edit_value_label.config(text=str(self.slider_value_dict[current_option]))
         if current_option == "Highlights":
             self.shadows_spinbox_frame.grid_remove()
             self.sharpness_spinbox_frame.grid_remove()
@@ -175,7 +179,7 @@ class EditPanel:
         value = int(float(value))
         self.edit_value_label.config(text=value)
         current_option = self.edit_combobox.get()
-        self.parent.edit_slider_dict[current_option] = value
+        self.slider_value_dict[current_option] = value
         self.apply_image_edit()
 
 
@@ -222,9 +226,9 @@ class EditPanel:
     def _reset_edit(self, event=None):
         self.edit_is_reverted_var = False
         self.edit_revert_image_button.config(text="Revert")
-        for option in self.parent.edit_slider_dict:
-            self.parent.edit_slider_dict[option] = 0
-        self.edit_last_slider_dict = self.parent.edit_slider_dict.copy()
+        for option in self.slider_value_dict:
+            self.slider_value_dict[option] = 0
+        self.edit_last_slider_dict = self.slider_value_dict.copy()
         self.edit_slider.set(0)
         self.edit_value_label.config(text="0")
         self.highlights_threshold_spinbox.set(128)
@@ -272,13 +276,13 @@ class EditPanel:
             "Hue": self.adjust_hue if is_rgb else None,
             "Color Temperature": self.adjust_color_temperature if is_rgb else None
         }
-        if self.parent.edit_cumulative_var.get():
-            for option, value in self.parent.edit_slider_dict.items():
+        if self.edit_cumulative_var.get():
+            for option, value in self.slider_value_dict.items():
                 if option in adjustment_methods and adjustment_methods[option] and value != 0:
                     adjustment_methods[option](value, image_type="display")
         else:
             option = self.edit_combobox.get()
-            value = self.parent.edit_slider_dict.get(option)
+            value = self.slider_value_dict.get(option)
             if option in adjustment_methods and adjustment_methods[option] and value != 0:
                 adjustment_methods[option](value, image_type="display")
         self.update_edited_image()
@@ -299,7 +303,7 @@ class EditPanel:
 # Save
 # --------------------------------------
     def save_image_edit(self):
-        if all(value == 0 for value in self.parent.edit_slider_dict.values()):
+        if all(value == 0 for value in self.slider_value_dict.values()):
             messagebox.showinfo("No Changes", "No changes to save.")
             return
         if not messagebox.askyesno("Save Image", "Do you want to save the edited image?"):
@@ -318,13 +322,13 @@ class EditPanel:
                 "Hue": self.adjust_hue if is_rgb else None,
                 "Color Temperature": self.adjust_color_temperature if is_rgb else None
             }
-            if self.parent.edit_cumulative_var.get():
-                for option, value in self.parent.edit_slider_dict.items():
+            if self.edit_cumulative_var.get():
+                for option, value in self.slider_value_dict.items():
                     if option in adjustment_methods and adjustment_methods[option]:
                         original_image = adjustment_methods[option](value, image_type="original", image=original_image)
             else:
                 option = self.edit_combobox.get()
-                value = self.parent.edit_slider_dict.get(option)
+                value = self.slider_value_dict.get(option)
                 if option in adjustment_methods and adjustment_methods[option]:
                     original_image = adjustment_methods[option](value, image_type="original", image=original_image)
             directory, filename = os.path.split(original_filepath)
@@ -342,8 +346,8 @@ class EditPanel:
     def revert_image_edit(self):
         if self.edit_is_reverted_var:
             self.edit_revert_image_button.config(text="Revert")
-            self.parent.edit_slider_dict.update(self.edit_last_slider_dict)
-            for option, value in self.parent.edit_slider_dict.items():
+            self.slider_value_dict.update(self.edit_last_slider_dict)
+            for option, value in self.slider_value_dict.items():
                 if value != 0:
                     self.edit_combobox.set(option)
                     self.edit_slider.set(value)
@@ -352,10 +356,10 @@ class EditPanel:
             self.edit_is_reverted_var = False
         else:
             self.edit_revert_image_button.config(text="Restore")
-            self.edit_last_slider_dict = {option: value for option, value in self.parent.edit_slider_dict.items() if value != 0}
+            self.edit_last_slider_dict = {option: value for option, value in self.slider_value_dict.items() if value != 0}
             self.parent.refresh_image()
-            for option in self.parent.edit_slider_dict:
-                self.parent.edit_slider_dict[option] = 0
+            for option in self.slider_value_dict:
+                self.slider_value_dict[option] = 0
             self.edit_slider.set(0)
             self.edit_value_label.config(text="0")
             self.edit_is_reverted_var = True
