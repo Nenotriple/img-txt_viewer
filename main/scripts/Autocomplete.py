@@ -1,4 +1,4 @@
-"""Autocomplete module for suggestions based on input text."""
+"""Module providing autocomplete functionality based on tag databases."""
 
 ################################################################################################################################################
 #region - Imports
@@ -21,6 +21,15 @@ from functools import partial
 
 
 class Autocomplete:
+    """
+    Tag autocomplete engine using CSV data sources.
+
+    Expected CSV format:
+    - Column 1: Tag name (required) - used for matching
+    - Column 2: Classifier ID (optional) - used for color-coding
+    - Column 3: Tag ranking (optional) - used for sorting
+    - Column 4: Similar names (comma-separated, optional) - used for suggestions
+    """
     def __init__(self, data_file, include_my_tags=True):
         # Data
         self.data_file = data_file
@@ -51,13 +60,13 @@ class Autocomplete:
 # Load/Read Data
 # --------------------------------------
     def _load_data(self):
-        """Load autocomplete data, only if not already cached."""
+        """Load autocomplete data if not cached."""
         if not self.autocomplete_dict:
             self.autocomplete_dict, self.similar_names_dict = self.load_autocomplete_data()
 
 
     def load_autocomplete_data(self):
-        """Load the autocomplete data from CSV files."""
+        """Load and merge tag data from primary and custom CSV sources."""
         app_path = self._get_app_path()
         data_file_path = os.path.join(app_path, "main\dict", self.data_file)
         additional_file_path = os.path.join(app_path, self.my_tags_csv)
@@ -72,7 +81,7 @@ class Autocomplete:
 
 
     def _get_app_path(self):
-        """Get the application path for the autocomplete data files."""
+        """Get absolute path to application root directory."""
         if getattr(sys, 'frozen', False):
             return sys._MEIPASS
         path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -80,7 +89,7 @@ class Autocomplete:
 
 
     def _read_csv(self, file_path, data, similar_names_dict, include_classifier_id=True):
-        """Read the CSV file and populate the data dictionary."""
+        """Parse CSV file and populate tag data and similar names dictionaries."""
         if os.path.isfile(file_path):
             with open(file_path, newline='', encoding='utf-8') as csvfile:
                 reader = csv.reader(csvfile)
@@ -101,7 +110,7 @@ class Autocomplete:
 # Pre-Cache Single-Letter Suggestions
 # --------------------------------------
     def _precache_single_letter_suggestions(self):
-        """Pre-cache suggestions for all single-letter inputs (a-z, 0-9)."""
+        """Build and save cache of suggestions for single-letter inputs."""
         dictionary_file_path = os.path.join(self._get_app_path(), "main\dict", self.data_file)
         if not os.path.exists(dictionary_file_path):
             return
@@ -138,7 +147,7 @@ class Autocomplete:
 # Get Suggestions
 # --------------------------------------
     def get_suggestion(self, text):
-        """Main entry point to get suggestions based on input text."""
+        """Return ranked suggestions matching input text."""
         self._load_data()
         if not self.autocomplete_dict:
             return None
@@ -156,13 +165,13 @@ class Autocomplete:
 
 
     def _compile_pattern(self, text):
-        """Compile the regex pattern with support for wildcard matching."""
+        """Create regex pattern supporting wildcards from input text."""
         text_with_asterisks = re.escape(text).replace("\\*", ".*")
         return re.compile(text_with_asterisks)
 
 
     def _get_or_cache_threshold_results(self, pattern):
-        """Cache and retrieve results for threshold-based searches."""
+        """Return cached or new matching results within threshold limit."""
         cache_key = (pattern.pattern, self.suggestion_threshold)
         if cache_key in self.previous_threshold_results:
             return self.previous_threshold_results[cache_key]
@@ -172,7 +181,7 @@ class Autocomplete:
 
 
     def _find_matching_names(self, pattern, threshold):
-        """Find matching names in the main data based on the regex pattern."""
+        """Find tags matching pattern within threshold limit."""
         return {
             true_name: (classifier_id, similar_names)
             for true_name, (classifier_id, similar_names)
@@ -182,7 +191,7 @@ class Autocomplete:
 
 
     def _include_similar_name_suggestions(self, pattern, suggestions):
-        """Include suggestions based on similar names matching the pattern."""
+        """Add matching similar names to suggestions."""
         for sim_name, true_names in self.similar_names_dict.items():
             if pattern.match(sim_name):
                 for true_name in true_names:
@@ -190,12 +199,12 @@ class Autocomplete:
 
 
     def _sort_suggestions(self, suggestions, text):
-        """Sort suggestions based on their matching score."""
+        """Sort suggestions by relevance score."""
         return sorted(suggestions.items(), key=lambda x: self.get_score(x[0], text), reverse=True)
 
 
     def _cache_suggestions(self, text, sorted_suggestions, pattern):
-        """Cache the current suggestions for potential reuse."""
+        """Store current suggestions for reuse."""
         self.previous_text = text
         self.previous_suggestions = sorted_suggestions
         self.previous_pattern = pattern
@@ -205,7 +214,7 @@ class Autocomplete:
 # Score Calculation
 # --------------------------------------
     def get_score(self, suggestion, text):
-        """Calculate a score for the suggestion based on its similarity to the input text."""
+        """Calculate suggestion relevance score based on match quality."""
         score = 0
         if suggestion == text:
             return len(text) * 2
@@ -226,6 +235,7 @@ class Autocomplete:
 
 
 class SuggestionHandler:
+    """Manages suggestion display and interaction in the UI."""
     def __init__(self, parent):
         self.parent = parent
         self.autocomplete = Autocomplete
@@ -235,6 +245,7 @@ class SuggestionHandler:
 
 
     def _handle_suggestion_event(self, event):
+        """Process keyboard events for suggestion navigation."""
         keysym = event.keysym
         if keysym == "Tab":
             if self.selected_suggestion_index < len(self.suggestions):
@@ -256,6 +267,7 @@ class SuggestionHandler:
 
 
     def update_suggestions(self, event=None):
+        """Refresh suggestions based on current input state."""
         if event is None:
             event = type('', (), {})()
             event.keysym = ''
@@ -291,6 +303,7 @@ class SuggestionHandler:
 
 
     def _highlight_suggestions(self):
+        """Update suggestion display with highlighting and interactivity."""
         def on_mouse_hover(tag_name, highlight, event=None):
             if highlight:
                 widget.tag_config(tag_name, relief='raised', borderwidth=1)
@@ -323,6 +336,7 @@ class SuggestionHandler:
 
 
     def _cursor_inside_tag(self, cursor_position):
+        """Check if cursor is within an existing tag."""
         line, column = map(int, cursor_position.split('.'))
         line_text = self.parent.text_box.get(f"{line}.0", f"{line}.end")
         if self.parent.list_mode_var.get():
@@ -333,6 +347,7 @@ class SuggestionHandler:
 
 
     def clear_suggestions(self):
+        """Reset suggestion display to default state."""
         self.suggestions = []
         self.selected_suggestion_index = 0
         self.parent.suggestion_textbox.config(state='normal')
@@ -345,6 +360,7 @@ class SuggestionHandler:
 # Insert Suggestion
 # --------------------------------------
     def _insert_selected_suggestion(self, selected_suggestion):
+        """Insert chosen suggestion at cursor position."""
         selected_suggestion = selected_suggestion.strip()
         text = self.parent.text_box.get("1.0", "insert").rstrip()
         if self.parent.last_word_match_var.get():
@@ -366,6 +382,7 @@ class SuggestionHandler:
 
 
     def insert_newline_listmode(self, event=None, called_from_insert=False):
+        """Handle newline insertion in list mode."""
         if self.parent.list_mode_var.get():
             self.parent.text_box.insert("insert", '\n')
             if called_from_insert and self.parent.text_box.index("insert") != self.parent.text_box.index("end-1c"):
@@ -374,6 +391,7 @@ class SuggestionHandler:
 
 
     def _on_suggestion_click(self, suggestion_index, event=None):
+        """Handle suggestion selection via mouse click."""
         selected_suggestion, _ = self.suggestions[suggestion_index]
         self._insert_selected_suggestion(selected_suggestion.strip())
         self.clear_suggestions()
@@ -383,6 +401,7 @@ class SuggestionHandler:
 # Suggestion Settings
 # --------------------------------------
     def update_autocomplete_dictionary(self):
+        """Update tag database based on selected CSV sources."""
         csv_vars = {
             'danbooru.csv': self.parent.csv_danbooru,
             'danbooru_safe.csv': self.parent.csv_danbooru_safe,
@@ -403,6 +422,7 @@ class SuggestionHandler:
 
 
     def _set_suggestion_color(self, csv_file):
+        """Configure suggestion color scheme based on data source."""
         color_mappings = {
             'None':                 {0: "black"},
             'dictionary.csv':       {0: "black",    1: "black",     2: "black",     3: "black",     4: "black",     5: "black",     6: "black",     7: "black",     8: "black"},
@@ -416,11 +436,13 @@ class SuggestionHandler:
 
 
     def set_suggestion_quantity(self, suggestion_quantity):
+        """Set maximum number of displayed suggestions."""
         self.autocomplete.max_suggestions = suggestion_quantity
         self.update_suggestions(event=None)
 
 
     def set_suggestion_threshold(self):
+        """Set performance/completeness tradeoff threshold."""
         thresholds = {
             "Slow"  : 275000,
             "Normal": 130000,
@@ -431,6 +453,7 @@ class SuggestionHandler:
 
 
     def clear_dictionary_csv_selection(self):
+        """Reset CSV source selection to none."""
         for attr in ['csv_danbooru', 'csv_derpibooru', 'csv_e621', 'csv_english_dictionary']:
             getattr(self, attr).set(False)
         self.update_autocomplete_dictionary()
