@@ -267,7 +267,7 @@ class ImgTxtViewer:
         self.root.bind('<Control-w>', lambda event: self.on_closing(event))
 
         # Display window size on resize:
-        #self.master.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == self.master else None, add="+")
+        #self.root.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == self.root else None, add="+")
 
 
 #endregion
@@ -1551,11 +1551,19 @@ class ImgTxtViewer:
         sort_key = self.get_file_sort_key()
         files_in_dir = sorted(os.listdir(self.image_dir.get()), key=sort_key, reverse=self.reverse_load_order_var.get())
         self.validate_files(files_in_dir)
-        self.original_image_files = list(self.image_files)
-        self.original_text_files = list(self.text_files)
-        if hasattr(self, 'total_images_label'):
-            self.total_images_label.config(text=f"of {len(self.image_files)}")
+        if not self.text_controller.filter_is_active:
+            self.original_image_files = list(self.image_files)
+            self.original_text_files = list(self.text_files)
+        self.update_total_image_label()
         self.prev_num_files = len(files_in_dir)
+
+
+    def update_total_image_label(self):
+        if hasattr(self, 'total_images_label'):
+            if not self.text_controller.filter_is_active:
+                self.total_images_label.config(text=f"of {len(self.image_files)}")
+            else:
+                self.total_images_label.config(text=f"of {len(self.text_controller.filtered_image_files)}")
 
 
     def validate_files(self, files_in_dir):
@@ -1839,7 +1847,7 @@ class ImgTxtViewer:
         self.image_files = [file for ext in extensions for file in glob.glob(f"{self.image_dir.get()}/*{ext}")]
         self.image_files.sort(key=self.get_file_sort_key(), reverse=self.reverse_load_order_var.get())
         self.text_files = [os.path.splitext(file)[0] + '.txt' for file in self.image_files]
-        self.total_images_label.config(text=f"of {len(self.image_files)}")
+        self.update_total_image_label()
 
 
     def mouse_scroll(self, event):
@@ -2545,7 +2553,7 @@ class ImgTxtViewer:
             directory = filedialog.askdirectory(initialdir=initialdir)
             if directory and directory != self.image_dir.get():
                 if hasattr(self, 'text_box'):
-                    self.text_controller.revert_text_image_filter(clear=True, quiet=True)
+                    self.text_controller.revert_text_image_filter(clear=True, silent=True)
                 if self.check_if_contains_images(directory):
                     self.delete_text_backup()
                     self.image_dir.set(os.path.normpath(directory))
@@ -2574,7 +2582,7 @@ class ImgTxtViewer:
             if self.auto_save_var.get():
                 self.save_text_file()
             if hasattr(self, 'text_box'):
-                self.text_controller.revert_text_image_filter(clear=True, quiet=True)
+                self.text_controller.revert_text_image_filter(clear=True, silent=True)
             directory = self.directory_entry.get()
             if self.check_if_contains_images(directory):
                 self.image_dir.set(os.path.normpath(directory))
@@ -2879,7 +2887,7 @@ class ImgTxtViewer:
                             deleted_pair.append((file_list, index, trash_file))
                             del file_list[index]
                     self.deleted_pairs.append(deleted_pair)
-                    self.total_images_label.config(text=f"of {len(self.image_files)}")
+                    self.update_total_image_label()
                     if index >= len(self.image_files):
                         index = len(self.image_files) - 1
                     if index >= 1:
@@ -2903,7 +2911,7 @@ class ImgTxtViewer:
                             deleted_pair.append((file_list, index, None))
                             del file_list[index]
                     self.deleted_pairs = [pair for pair in self.deleted_pairs if pair != deleted_pair]
-                    self.total_images_label.config(text=f"of {len(self.image_files)}")
+                    self.update_total_image_label()
                     if index >= len(self.image_files):
                         index = len(self.image_files) - 1
                     if index >= 1:
@@ -2936,7 +2944,7 @@ class ImgTxtViewer:
                     self.jump_to_image(index_value)
                 else:
                     self.load_text_file(original_path)
-            self.total_images_label.config(text=f"of {len(self.image_files)}")
+            self.update_total_image_label()
             if not self.deleted_pairs:
                 self.undo_state.set("disabled")
                 self.individual_operations_menu.entryconfig("Undo Delete", state="disabled")

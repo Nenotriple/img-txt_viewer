@@ -44,6 +44,7 @@ class TextController:
         self.auto_insert_mode_var = StringVar(value="disable")
         self.batch_interrogate_images_var = BooleanVar(value=False)
         self.auto_exclude_tags_var = BooleanVar(value=False)
+        self.filter_is_active = False
 
 
 #endregion
@@ -772,7 +773,7 @@ class TextController:
         if not self.parent.check_if_directory():
             return
         if not self.parent.filter_empty_files_var.get():
-            self.revert_text_image_filter(quiet=True)
+            self.revert_text_image_filter(silent=True)
         filter_string = self.parent.filter_string_var.get()
         if not filter_string and not self.parent.filter_empty_files_var.get():
             self.parent.image_index_entry.delete(0, "end")
@@ -814,6 +815,7 @@ class TextController:
         if not self.filtered_image_files:
             messagebox.showinfo("Filter", f"0 images found matching the filter:\n\n{filter_string}")
             return
+        self.filter_is_active = True
         self.parent.image_files = self.filtered_image_files
         self.parent.text_files = self.filtered_text_files
         if hasattr(self, 'total_images_label'):
@@ -823,9 +825,11 @@ class TextController:
         messagebox.showinfo("Filter", f"Filter applied successfully.\n\n{len(self.parent.image_files)} images found.")
         self.revert_filter_button.config(style="Red.TButton")
         self.revert_filter_button_tooltip.config(text="Filter is active\n\nClear any filtering applied")
+        self.parent.update_total_image_label()
 
 
-    def revert_text_image_filter(self, clear=None, quiet=False): # Filter
+
+    def revert_text_image_filter(self, clear=None, silent=False): # Filter
         last_index = self.parent.current_index
         if clear:
             self.parent.filter_string_var.set("")
@@ -835,8 +839,9 @@ class TextController:
         self.parent.update_image_file_count()
         self.parent.current_index = last_index if last_index < len(self.parent.image_files) else 0
         self.parent.show_pair()
-        if quiet != False:
+        if not silent:
             messagebox.showinfo("Filter", "Filter has been cleared.")
+        self.filter_is_active = False
         self.revert_filter_button.config(style="")
         self.revert_filter_button_tooltip.config(text="Filter is inactive\n\nClear any filtering applied")
         self.parent.filter_empty_files_var.set(False)
@@ -855,7 +860,7 @@ class TextController:
             self.parent.filter_use_regex_var.set(False)
             self.toggle_filter_widgets(state=True)
         else:
-            self.revert_text_image_filter()
+            self.revert_text_image_filter(silent=True)
             self.toggle_filter_widgets(state=False)
 
 

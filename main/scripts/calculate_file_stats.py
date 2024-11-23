@@ -35,7 +35,7 @@ class CalculateFileStats:
     def calculate_file_stats(self, manual_refresh=None):
         """Calculate and display file statistics."""
         self.initialize_counters()
-        num_total_files, num_txt_files, num_img_files, formatted_total_files = self.filter_and_update_textfiles()
+        num_total_files, num_txt_files, num_img_files, formatted_total_files = self.filter_and_update_textfiles(initial_call=True)
         # Process text and image files to calculate statistics
         self.process_text_files()
         if self.parent.process_image_stats_var.get():
@@ -346,13 +346,14 @@ class CalculateFileStats:
             self.caption_counter[caption] += 1
 
 
-    def filter_and_update_textfiles(self):
+    def filter_and_update_textfiles(self, initial_call=False):
         """Filter out non-existent text files and update the text file list."""
         self.parent.text_files = [text_file for text_file in self.parent.text_files if os.path.exists(text_file)]
         num_txt_files, num_img_files = len(self.parent.text_files), len(self.parent.image_files)
         num_total_files = num_img_files + num_txt_files
         formatted_total_files = f"{num_total_files} (Text: {num_txt_files}, Images: {num_img_files})"
-        self.parent.refresh_file_lists()
+        if not initial_call:
+            self.parent.refresh_file_lists()
         return num_total_files, num_txt_files, num_img_files, formatted_total_files
 
 
