@@ -193,7 +193,7 @@ class SettingsManager:
         self.parent.colored_suggestion_var.set(value=self.config.getboolean("Autocomplete", "use_colored_suggestions", fallback=True))
         self.parent.suggestion_threshold_var.set(value=self.config.get("Autocomplete", "suggestion_threshold", fallback="Normal"))
         self.parent.last_word_match_var.set(value=self.config.getboolean("Autocomplete", "last_word_match", fallback=False))
-        self.parent.update_autocomplete_dictionary()
+        self.parent.autocomplete.update_autocomplete_dictionary()
 
 
     def _read_other_settings(self):
@@ -371,7 +371,7 @@ class SettingsManager:
         def save_and_close():
             self.save_settings()
             setup_window.destroy()
-            self.parent.update_autocomplete_dictionary()
+            self.parent.autocomplete.update_autocomplete_dictionary()
 
         def create_setup_window():
             setup_window = Toplevel(self.parent.master)
