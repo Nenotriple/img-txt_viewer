@@ -234,19 +234,19 @@ class SuggestionHandler:
         self.suggestion_colors = {}
 
 
-    def handle_suggestion_event(self, event):
+    def _handle_suggestion_event(self, event):
         keysym = event.keysym
         if keysym == "Tab":
             if self.selected_suggestion_index < len(self.suggestions):
                 selected_suggestion = self.suggestions[self.selected_suggestion_index]
                 if isinstance(selected_suggestion, tuple):
                     selected_suggestion = selected_suggestion[0]
-                self.insert_selected_suggestion(selected_suggestion.strip())
+                self._insert_selected_suggestion(selected_suggestion.strip())
             self.clear_suggestions()
         elif keysym in ("Alt_L", "Alt_R"):
             if self.suggestions and not self.is_alt_arrow_pressed:
                 self.selected_suggestion_index = (self.selected_suggestion_index - 1) % len(self.suggestions) if keysym == "Alt_R" else (self.selected_suggestion_index + 1) % len(self.suggestions)
-                self.highlight_suggestions()
+                self._highlight_suggestions()
             self.is_alt_arrow_pressed = False
         elif keysym in ("Up", "Down", "Left", "Right") or event.char == ",":
             self.clear_suggestions()
@@ -261,10 +261,10 @@ class SuggestionHandler:
             event.keysym = ''
             event.char = ''
         cursor_position = self.parent.text_box.index("insert")
-        if self.cursor_inside_tag(cursor_position):
+        if self._cursor_inside_tag(cursor_position):
             self.clear_suggestions()
             return
-        if self.handle_suggestion_event(event):
+        if self._handle_suggestion_event(event):
             return
         text = self.parent.text_box.get("1.0", "insert")
         self.clear_suggestions()
@@ -283,14 +283,14 @@ class SuggestionHandler:
             suggestions.sort(key=lambda x: self.autocomplete.get_score(x[0], current_word), reverse=True)
             self.suggestions = [(suggestion[0].replace("_", " ") if suggestion[0] not in self.autocomplete.tags_with_underscore else suggestion[0], suggestion[1]) for suggestion in suggestions]
             if self.suggestions:
-                self.highlight_suggestions()
+                self._highlight_suggestions()
             else:
                 self.clear_suggestions()
         else:
             self.clear_suggestions()
 
 
-    def highlight_suggestions(self):
+    def _highlight_suggestions(self):
         def on_mouse_hover(tag_name, highlight, event=None):
             if highlight:
                 widget.tag_config(tag_name, relief='raised', borderwidth=1)
@@ -314,7 +314,7 @@ class SuggestionHandler:
             if suggestion_color not in configured_colors:
                 widget.tag_config(suggestion_color, foreground=suggestion_color, font=('Segoe UI', '9'))
                 configured_colors.add(suggestion_color)
-            widget.tag_bind(suggestion, '<Button-1>', partial(self.on_suggestion_click, index))
+            widget.tag_bind(suggestion, '<Button-1>', partial(self._on_suggestion_click, index))
             widget.tag_bind(suggestion, '<Enter>', partial(on_mouse_hover, suggestion, True))
             widget.tag_bind(suggestion, '<Leave>', partial(on_mouse_hover, suggestion, False))
             if index < num_suggestions - 1:
@@ -322,7 +322,7 @@ class SuggestionHandler:
         widget.config(state='disabled')
 
 
-    def cursor_inside_tag(self, cursor_position):
+    def _cursor_inside_tag(self, cursor_position):
         line, column = map(int, cursor_position.split('.'))
         line_text = self.parent.text_box.get(f"{line}.0", f"{line}.end")
         if self.parent.list_mode_var.get():
@@ -344,7 +344,7 @@ class SuggestionHandler:
 # --------------------------------------
 # Insert Suggestion
 # --------------------------------------
-    def insert_selected_suggestion(self, selected_suggestion):
+    def _insert_selected_suggestion(self, selected_suggestion):
         selected_suggestion = selected_suggestion.strip()
         text = self.parent.text_box.get("1.0", "insert").rstrip()
         if self.parent.last_word_match_var.get():
@@ -373,9 +373,9 @@ class SuggestionHandler:
             return 'break'
 
 
-    def on_suggestion_click(self, suggestion_index, event=None):
+    def _on_suggestion_click(self, suggestion_index, event=None):
         selected_suggestion, _ = self.suggestions[suggestion_index]
-        self.insert_selected_suggestion(selected_suggestion.strip())
+        self._insert_selected_suggestion(selected_suggestion.strip())
         self.clear_suggestions()
 
 
@@ -398,11 +398,11 @@ class SuggestionHandler:
             for csv_file in self.selected_csv_files[1:]:
                 self.autocomplete.autocomplete_dict.update(Autocomplete(csv_file).autocomplete_dict, include_my_tags=self.parent.use_mytags_var.get())
         self.clear_suggestions()
-        self.set_suggestion_color(self.selected_csv_files[0] if self.selected_csv_files else "None")
+        self._set_suggestion_color(self.selected_csv_files[0] if self.selected_csv_files else "None")
         self.set_suggestion_threshold()
 
 
-    def set_suggestion_color(self, csv_file):
+    def _set_suggestion_color(self, csv_file):
         color_mappings = {
             'None':                 {0: "black"},
             'dictionary.csv':       {0: "black",    1: "black",     2: "black",     3: "black",     4: "black",     5: "black",     6: "black",     7: "black",     8: "black"},
