@@ -28,6 +28,9 @@ settings.cfg
 my_tags.csv
 
 
-#ONNX Models
+# ONNX Models
 onnx_models/*
 !onnx_models/ONNX vision models go here
+
+# Misc
+docs/Workpad.md
