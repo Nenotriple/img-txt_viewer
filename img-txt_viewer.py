@@ -2504,12 +2504,6 @@ class ImgTxtViewer:
         return result
 
 
-    def remove_lines_starting_with_hashes(self, text):
-        lines = text.split('\n')
-        cleaned_lines = [line for line in lines if not line.strip().startswith('###')]
-        return '\n'.join(cleaned_lines)
-
-
 #endregion
 ################################################################################################################################################
 #region - File Management
