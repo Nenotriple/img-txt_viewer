@@ -70,6 +70,7 @@ With the primary text box in focus, press `ALT+LEFT` or `ALT+RIGHT` to move betw
 `ALT+RIGHT` Moves forward to the next image.
 
 ---
+
 ### SHIFT+DEL
 #### *(Delete the current pair)*
 
@@ -84,18 +85,21 @@ Also available via the Tools menu and the image right-click context menu.
 If the trash folder already contains a file with the same name, you will be prompted to overwrite it or cancel the operation.
 
 ---
+
 ### ALT
 #### *(Cycle through autocomplete suggestions)*
 
 With the primary text box in focus, press `LEFT-ALT` or `RIGHT-ALT` to move the autocomplete selector left or right.
 
 ---
+
 ### TAB
 #### *(Insert the selected autocomplete tag)*
 
 With the primary text box in focus, press `TAB` to insert the selected autocomplete tag.
 
 ---
+
 ### CTRL+S
 #### *(Save the current text file)*
 
@@ -107,6 +111,7 @@ With the primary text box in focus, press `CTRL+S` to save the text to the paire
 Also available via the `Save` button.
 
 ---
+
 ### CTRL+E
 #### *(Jump to the next empty text file)*
 
@@ -115,6 +120,7 @@ With the primary text box in focus, press `CTRL+E` to jump to the next empty tex
 Also available via the index entry right-click context menu.
 
 ---
+
 ### CTRL+R
 #### *(Jump to a random img-txt pair)*
 
@@ -123,6 +129,7 @@ With the primary text box in focus, press `CTRL+R` to jump to a random img-txt p
 Also available via the index entry right-click context menu.
 
 ---
+
 ### CTRL+F
 #### *(Highlight all duplicate words)*
 
@@ -137,6 +144,7 @@ Example text: "this cute **dog**, happy **dog**gy, small **dog**"
 Also available via the primary text box right-click context menu.
 
 ---
+
 ### CTRL+Z / CTRL+Y
 #### *(Undo/Redo)*
 
@@ -147,6 +155,7 @@ With the primary text box in focus, press `CTRL+Z` to undo the last action or `C
 Also available via the primary text box right-click context menu.
 
 ---
+
 ### Popup Zoom
 #### *(Toggle zoom popup)*
 
@@ -158,6 +167,7 @@ The Popup Zoom feature allows you to create a small popup window beside the mous
   - Hold `Shift` while scrolling to adjust the popup size.
 
 ---
+
 ### F2
 #### *(Open the Image-Grid view)*
 
@@ -168,6 +178,7 @@ See the [Image-Grid](#image-grid) section for more information.
 **Shortcut:** With the primary text box in focus, press `F2` to open the Image Grid view.
 
 ---
+
 ### F4
 #### *(Open the current image in your default editor)*
 
@@ -181,11 +192,12 @@ See the [Image-Grid](#image-grid) section for more information.
 
 Once you have set your default image editor, you can easily open the current image in it by pressing `F4` with the image in focus.
 
-- **Tips**
+- **Tips:**
   - Ensure that the path to the image editor is correctly set to avoid any issues when opening images.
   - You can change the default image editor at any time by repeating the steps above.
 
 ---
+
 ### F5
 #### *(Open Batch Tag Edit)*
 
@@ -194,14 +206,15 @@ With the primary text box in focus, press `F5` to open Batch Tag Edit.
 See the [Batch Tag Edit](#batch-tag-edit) section for more information.
 
 ---
+
 ### Middle-click
 #### *(Middle-click a tag to delete it)*
 
-- **Use**
+- **Use:**
   1. **Hover Over the Tag**: Move your mouse cursor over the tag you want to delete.
   2. **Middle-Click**: Press the `Middle-Click` mouse button to delete the entire tag.
 
-- **Tips**
+- **Tips:**
   - The entire comma-separated value will be deleted.
   - Ensure that the text cleaning feature is enabled for the deletion to work.
 
@@ -222,19 +235,24 @@ Use this tool to search for a string of text across all text files in the select
 
 If a match is found, it will be replaced exactly with the given text.
 
-Example:
-
-Search for: `the big brown dog`
-
-Replace with: `the big red dog`
+- **Use:**
+  1. Search for: `the big brown dog`
+  2. Replace with: `the big red dog`
 
 This will replace all instances of `the big brown dog` with `the big red dog`.
 
-- **Undo**
-  - When using `Search and Replace`, `Prefix`, or `Append`, a backup of the text files will be made and saved to the working directory before making any changes.
-  - Pressing `Undo` will restore the text backup. `Undo` only creates one history of backups, and using another tool will erase the previous backup.
+- **Tips:**
+  - Ensure that the search string is entered exactly as it appears in the text files.
+  - Use the "Regex" option for advanced search patterns using regular expressions.
+  - If a filter is applied, only text files that match the filter will be affected.
+  - The "Undo" button can revert the last search and replace action if needed.
+
+> [!NOTE]
+> - When using `Search and Replace`, `Prefix`, or `Append`, a backup of the text files will be made and saved to the working directory before making any changes.
+> - Pressing `Undo` will restore the text backup. `Undo` only creates one history of backups, and using another tool will erase the previous backup.
 
 ---
+
 ### Prefix
 #### *(Insert text at the START of all text files)*
 
@@ -242,11 +260,22 @@ Use this tool to prefix all text files in the selected directory with the entere
 
 This means that the entered text will appear at the start of each text file.
 
-- **Undo**
-  - When using `Search and Replace`, `Prefix`, or `Append`, a backup of the text files will be made and saved to the working directory before making any changes.
-  - Pressing `Undo` will restore the text backup. `Undo` only creates one history of backups, and using another tool will erase the previous backup.
+- **Use:**
+  1. Enter the text you want to insert at the start of all text files in the provided entry field.
+  2. Press the `Go!` button or hit `Enter` to apply the prefix to all text files.
+  3. A backup of the text files will be created before making any changes.
+
+- **Tips:**
+  - Ensure the text you want to prefix is entered exactly as you want it to appear.
+  - If a filter is applied, only text files that match the filter will be affected.
+  - The "Undo" button can revert the last prefix action if needed.
+
+> [!NOTE]
+> - When using `Search and Replace`, `Prefix`, or `Append`, a backup of the text files will be made and saved to the working directory before making any changes.
+> - Pressing `Undo` will restore the text backup. `Undo` only creates one history of backups, and using another tool will erase the previous backup.
 
 ---
+
 ### Append
 #### *(Insert text at the END of all text files)*
 
@@ -254,17 +283,29 @@ Use this tool to append all text files in the selected directory with the entere
 
 This means that the entered text will appear at the end of each text file.
 
-- **Undo**
-  - When using `Search and Replace`, `Prefix`, or `Append`, a backup of the text files will be made and saved to the working directory before making any changes.
-  - Pressing `Undo` will restore the text backup. `Undo` only creates one history of backups, and using another tool will erase the previous backup.
+- **Use:**
+  1. Enter the text you want to insert at the end of all text files in the provided entry field.
+  2. Press the `Go!` button or hit `Enter` to apply the append to all text files.
+  3. A backup of the text files will be created before making any changes.
+
+- **Tips:**
+  - Ensure the text you want to append is entered exactly as you want it to appear.
+  - If a filter is applied, only text files that match the filter will be affected.
+  - The "Undo" button can revert the last append action if needed.
+
+> [!NOTE]
+> - When using `Search and Replace`, `Prefix`, or `Append`, a backup of the text files will be made and saved to the working directory before making any changes.
+> - Pressing `Undo` will restore the text backup. `Undo` only creates one history of backups, and using another tool will erase the previous backup.
 
 ---
+
 ### AutoTag
 #### *(Automatically tag images using ONNX vision models)*
 
 Automatically tag images using ONNX vision models.
 
 ---
+
 ### Filter
 #### *(Filter pairs based on text, missing text files, and more)*
 
@@ -286,6 +327,7 @@ Examples:
 `!dog + cat` (remove dog pairs, display cat pairs)
 
 ---
+
 ### Highlight
 #### *(Always highlight specific text)*
 
@@ -296,6 +338,7 @@ Use ` + ` to highlight multiple strings of text.
 Example: `dog + cat`
 
 ---
+
 ### My Tags
 #### *(Add your custom tags for autocomplete suggestions)*
 
@@ -309,18 +352,21 @@ Use this text box to quickly edit the `my_tags.csv` file, allowing you to easily
     - Always save first, then refresh to fully commit your changes and update autocomplete.
 
 ---
+
 ### Batch Tag Edit
 #### *(Edit and manage tags with a user-friendly interface)*
 
 Edit and manage tags with a user-friendly interface.
 
 ---
+
 ### Create Wildcard From Captions
 #### *(Combine all captions into one text file)*
 
 Combine all captions into one text file.
 
 ---
+
 ### Cleanup Text
 #### *(Fix typos across all text files)*
 
@@ -403,6 +449,7 @@ Supported Filetypes: `jpg`, `jpeg`, `png`, `webp`, `bmp`, `tif`, `tiff`
   - if disabled, conflicting files will have '_#' appended to the filename.
 
 ---
+
 ### Resize Image
 #### *(Resize the current image by exact resolution or percentage)*
 
@@ -421,6 +468,7 @@ You can choose between the following resize methods: `Lanczos`, `Nearest`, `Bicu
 As you adjust the various settings, you can see the new dimensions and image size update in real time.
 
 ---
+
 ### Batch Crop Images
 #### *(Crop all images to a specified resolution)*
 
@@ -429,6 +477,7 @@ Via the `Tools Menu`.
 Crop all images to a specified resolution.
 
 ---
+
 ### Crop Image
 #### *(Crop an image or GIF using various methods and tools)*
 
@@ -444,6 +493,7 @@ Crop the currently displayed image in a pop-up window.
   - Saving multiple crops of the same image will increment the filename like this: `_crop01`, `_crop02`, etc.
 
 ---
+
 ### Upscale Image
 #### *(Upscale images using models like RESRGAN, AnimeSharp-4x, and UltraSharp-4x)*
 
@@ -462,6 +512,7 @@ Upscale the currently displayed image using [R-ESRGAN](https://github.com/xinnta
  The current size and new size are displayed in the UI after selecting an Upscale Factor.
 
 ---
+
 ### Find Duplicate Files
 #### *(Identify and separate duplicate files)*
 
@@ -489,6 +540,7 @@ It works by generating and comparing a hash value for each image. You can use ei
   - Using undo will restore all moved images back to their original file paths.
 
 ---
+
 ### Expand
 #### *(Expand images to square ratio for simple backgrounds)*
 
@@ -507,6 +559,7 @@ After expanding, a new image will be saved in the same format and directory as t
 This tool works great for images with solid or very smooth gradient backgrounds. It's not intended to be useful for images without simple backgrounds.
 
 ---
+
 ### Edit Image Panel
 #### *(Adjust image properties like brightness, contrast, etc.)*
 
@@ -538,24 +591,28 @@ Example input pair: `aH15520.jpg`, `AH15520.txt`
 Example output pair: `00001.jpg`, `00001.txt`
 
 ---
+
 ### Thumbnail Panel
 #### *(Display thumbnails for quick navigation)*
 
 Display thumbnails for quick navigation.
 
 ---
+
 ### Edit Image...
 #### *(Open images in external editor)*
 
 Open images in external editor.
 
 ---
+
 ### Auto-Save
 #### *(Save text automatically when switching pairs)*
 
 Save text automatically when switching pairs.
 
 ---
+
 ### Image-Grid
 #### *(Open the Image-Grid view)*
 
