@@ -60,6 +60,7 @@ img-txt_viewer comes with many tools that help ease the process of manually crea
 ## ✂️Shortcuts
 
 ### ALT+LEFT/RIGHT
+#### *(Navigate between img-txt pairs)*
 
 With the primary text box in focus, press `ALT+LEFT` or `ALT+RIGHT` to move between img-txt pairs.
 
@@ -69,6 +70,7 @@ With the primary text box in focus, press `ALT+LEFT` or `ALT+RIGHT` to move betw
 
 ---
 ### SHIFT+DEL
+#### *(Delete the current pair)*
 
 Press `SHIFT+DEL` to move the displayed image and text file to a trash folder.
 
@@ -82,25 +84,30 @@ If the trash folder already contains a file with the same name, you will be prom
 
 ---
 ### ALT
+#### *(Cycle through autocomplete suggestions)*
 
 With the primary text box in focus, press `LEFT-ALT` or `RIGHT-ALT` to move the autocomplete selector left or right.
 
 ---
 ### TAB
+#### *(Insert the selected autocomplete tag)*
 
 With the primary text box in focus, press `TAB` to insert the selected autocomplete tag.
 
 ---
 ### CTRL+S
+#### *(Save the current text file)*
 
 With the primary text box in focus, press `CTRL+S` to save the text to the paired text file.
 
-'Saving' a blank text file will delete it.
+- If the text box is blank, the paired text file will be deleted if `Auto-Delete Blank Files` is enabled.
+- If the paired text file does not exist, it will be created.
 
 Also available via the `Save` button.
 
 ---
 ### CTRL+E
+#### *(Jump to the next empty text file)*
 
 With the primary text box in focus, press `CTRL+E` to jump to the next empty text file from the current index position.
 
@@ -108,6 +115,7 @@ Also available via the index entry right-click context menu.
 
 ---
 ### CTRL+R
+#### *(Jump to a random img-txt pair)*
 
 With the primary text box in focus, press `CTRL+R` to jump to a random img-txt pair.
 
@@ -115,6 +123,7 @@ Also available via the index entry right-click context menu.
 
 ---
 ### CTRL+F
+#### *(Highlight all duplicate words)*
 
 With the primary text box in focus, press `CTRL+F` to highlight any duplicate words.
 
@@ -128,6 +137,7 @@ Also available via the primary text box right-click context menu.
 
 ---
 ### CTRL+Z / CTRL+Y
+#### *(Undo/Redo)*
 
 With the primary text box in focus, press `CTRL+Z` to undo the last action or `CTRL+Y` to redo the last undo.
 
@@ -137,31 +147,37 @@ Also available via the primary text box right-click context menu.
 
 ---
 ### CTRL+W
+#### *(Close the window)*
 
 With the primary text box in focus, press `CTRL+W` to close the window.
 
 ---
 ### F1
+#### *(Toggle zoom popup)*
 
 With the primary text box in focus, press `F1` to toggle the zoom popup.
 
 ---
 ### F2
+#### *(Open the Image-Grid view)*
 
 With the primary text box in focus, press `F2` to open the Image-Grid view.
 
 ---
 ### F4
+#### *(Open the current image in your default editor)*
 
 With the primary text box in focus, press `F4` to open the current image in your default editor.
 
 ---
 ### F5
+#### *(Open Batch Tag Edit)*
 
 With the primary text box in focus, press `F5` to open Batch Tag Edit.
 
 ---
 ### Middle-click
+#### *(Middle-click a tag to delete it)*
 
 With the mouse over a tag in the primary text box, press the `Middle-Click` mouse button to delete the entire tag.
 
@@ -178,6 +194,7 @@ The entire comma separated value will be deleted.
 ## 📜Text Tools
 
 ### Search and Replace
+#### *(Find and replace text across all text files)*
 
 Use this tool to search for a string of text across all text files in the selected directory.
 
@@ -197,6 +214,7 @@ This will replace all instances of `the big brown dog` with `the big red dog`.
 
 ---
 ### Prefix
+#### *(Insert text at the START of all text files)*
 
 Use this tool to prefix all text files in the selected directory with the entered text.
 
@@ -208,6 +226,7 @@ This means that the entered text will appear at the start of each text file.
 
 ---
 ### Append
+#### *(Insert text at the END of all text files)*
 
 Use this tool to append all text files in the selected directory with the entered text.
 
@@ -219,11 +238,13 @@ This means that the entered text will appear at the end of each text file.
 
 ---
 ### AutoTag
+#### *(Automatically tag images using ONNX vision models)*
 
 Automatically tag images using ONNX vision models.
 
 ---
 ### Filter
+#### *(Filter pairs based on text, missing text files, and more)*
 
 This tool will filter all img-txt pairs based on the provided text.
 
@@ -244,6 +265,7 @@ Examples:
 
 ---
 ### Highlight
+#### *(Always highlight specific text)*
 
 Enter the text you want to highlight each time you move to a new img-txt pair.
 
@@ -253,6 +275,7 @@ Example: `dog + cat`
 
 ---
 ### My Tags
+#### *(Add your custom tags for autocomplete suggestions)*
 
 Use this text box to quickly edit the `my_tags.csv` file, allowing you to easily add tags to the autocomplete dictionary.
 
@@ -265,16 +288,19 @@ Use this text box to quickly edit the `my_tags.csv` file, allowing you to easily
 
 ---
 ### Batch Tag Edit
+#### *(Edit and manage tags with a user-friendly interface)*
 
 Edit and manage tags with a user-friendly interface.
 
 ---
 ### Create Wildcard From Captions
+#### *(Combine all captions into one text file)*
 
 Combine all captions into one text file.
 
 ---
 ### Cleanup Text
+#### *(Fix typos across all text files)*
 
 Via the `Tools Menu`.
 
@@ -320,6 +346,7 @@ To: `dog, solo, happy`
 ## 📷Image Tools
 
 ### Batch Resize Images
+#### *(Resize all images using different methods and conditions)*
 
 Via the `Tools Menu`.
 
@@ -355,6 +382,7 @@ Supported Filetypes: `jpg`, `jpeg`, `png`, `webp`, `bmp`, `tif`, `tiff`
 
 ---
 ### Resize Image
+#### *(Resize the current image by exact resolution or percentage)*
 
 Via the `Tools Menu` or the `image right-click context menu`.
 
@@ -372,6 +400,7 @@ As you adjust the various settings, you can see the new dimensions and image siz
 
 ---
 ### Batch Crop Images
+#### *(Crop all images to a specified resolution)*
 
 Via the `Tools Menu`.
 
@@ -379,6 +408,7 @@ Crop all images to a specified resolution.
 
 ---
 ### Crop Image
+#### *(Crop an image or GIF using various methods and tools)*
 
 Via the `Tools Menu` or the `image right-click context menu`.
 
@@ -393,6 +423,7 @@ Crop the currently displayed image in a pop-up window.
 
 ---
 ### Upscale Image
+#### *(Upscale images using models like RESRGAN, AnimeSharp-4x, and UltraSharp-4x)*
 
 Via the `Tools Menu` or the `image right-click context menu`.
 
@@ -410,6 +441,7 @@ Upscale the currently displayed image using [R-ESRGAN](https://github.com/xinnta
 
 ---
 ### Find Duplicate Files
+#### *(Identify and separate duplicate files)*
 
 Via the `Tools Menu`.
 
@@ -436,6 +468,7 @@ It works by generating and comparing a hash value for each image. You can use ei
 
 ---
 ### Expand
+#### *(Expand images to square ratio for simple backgrounds)*
 
 Via the `Tools Menu` or the `image right-click context menu`.
 
@@ -453,6 +486,7 @@ This tool works great for images with solid or very smooth gradient backgrounds.
 
 ---
 ### Edit Image Panel
+#### *(Adjust image properties like brightness, contrast, etc.)*
 
 Adjust image properties like brightness, contrast, etc.
 
@@ -467,6 +501,7 @@ Adjust image properties like brightness, contrast, etc.
 ## 📦Other Tools
 
 ### Batch Rename/Convert
+#### *(Rename and convert files sequentially with padded zeros)*
 
 Via the `Tools Menu`.
 
@@ -482,16 +517,19 @@ Example output pair: `00001.jpg`, `00001.txt`
 
 ---
 ### Thumbnail Panel
+#### *(Display thumbnails for quick navigation)*
 
 Display thumbnails for quick navigation.
 
 ---
 ### Edit Image...
+#### *(Open images in external editor)*
 
 Open images in external editor.
 
 ---
 ### Auto-Save
+#### *(Save text automatically when switching pairs)*
 
 Save text automatically when switching pairs.
 
