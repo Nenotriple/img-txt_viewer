@@ -47,6 +47,7 @@ img-txt_viewer comes with many tools that help ease the process of manually crea
 - [`Thumbnail Panel`](#thumbnail-panel) - Display thumbnails for quick navigation.
 - [`Edit Image...`](#edit-image) - Open images in external editor.
 - [`Auto-Save`](#auto-save) - Save text automatically when switching pairs.
+- [`Image-Grid`](#image-grid) - Open the Image-Grid view.
 
 
 ---
@@ -129,7 +130,7 @@ With the primary text box in focus, press `CTRL+F` to highlight any duplicate wo
 
 All matching words will be highlighted with the same color, but colors are randomized each time the hotkey is pressed.
 
-This matches any duplicate string of text (minimum of 3 characters) and not just tags or words.
+This matches any duplicate string of text (minimum of 3 characters) and not just tags or words. Words shorter than 3 characters or words that appear only once will not be highlighted.
 
 Example text: "this cute **dog**, happy **dog**gy, small **dog**"
 
@@ -146,28 +147,43 @@ With the primary text box in focus, press `CTRL+Z` to undo the last action or `C
 Also available via the primary text box right-click context menu.
 
 ---
-### CTRL+W
-#### *(Close the window)*
-
-With the primary text box in focus, press `CTRL+W` to close the window.
-
----
-### F1
+### Popup Zoom
 #### *(Toggle zoom popup)*
 
-With the primary text box in focus, press `F1` to toggle the zoom popup.
+The Popup Zoom feature allows you to create a small popup window beside the mouse that displays a zoomed view of the image underneath.
+
+#### Shortcuts:
+- **F1**: Press `F1` to toggle the zoom popup.
+- **Mouse Wheel**: Scroll to adjust the zoom factor or popup size.
+  - Hold `Shift` while scrolling to adjust the popup size.
 
 ---
 ### F2
 #### *(Open the Image-Grid view)*
 
-With the primary text box in focus, press `F2` to open the Image-Grid view.
+The Image Grid feature allows you to view and interact with a grid of images.
+
+See the [Image-Grid](#image-grid) section for more information.
+
+**Shortcut:** With the primary text box in focus, press `F2` to open the Image Grid view.
 
 ---
 ### F4
 #### *(Open the current image in your default editor)*
 
-With the primary text box in focus, press `F4` to open the current image in your default editor.
+
+
+- **Set Default Image Editor:**
+    1. Open the application.
+    2. Navigate to the `Options` menu.
+    3. Select `Set Default Image Editor`.
+    4. Choose the executable file of your preferred image editor.
+
+Once you have set your default image editor, you can easily open the current image in it by pressing `F4` with the image in focus.
+
+- **Tips**
+  - Ensure that the path to the image editor is correctly set to avoid any issues when opening images.
+  - You can change the default image editor at any time by repeating the steps above.
 
 ---
 ### F5
@@ -175,13 +191,19 @@ With the primary text box in focus, press `F4` to open the current image in your
 
 With the primary text box in focus, press `F5` to open Batch Tag Edit.
 
+See the [Batch Tag Edit](#batch-tag-edit) section for more information.
+
 ---
 ### Middle-click
 #### *(Middle-click a tag to delete it)*
 
-With the mouse over a tag in the primary text box, press the `Middle-Click` mouse button to delete the entire tag.
+- **Use**
+  1. **Hover Over the Tag**: Move your mouse cursor over the tag you want to delete.
+  2. **Middle-Click**: Press the `Middle-Click` mouse button to delete the entire tag.
 
-The entire comma separated value will be deleted.
+- **Tips**
+  - The entire comma-separated value will be deleted.
+  - Ensure that the text cleaning feature is enabled for the deletion to work.
 
 ---
 
@@ -532,5 +554,26 @@ Open images in external editor.
 #### *(Save text automatically when switching pairs)*
 
 Save text automatically when switching pairs.
+
+---
+### Image-Grid
+#### *(Open the Image-Grid view)*
+
+- **Open:**
+  - **Shortcut:** With the primary text box in focus, press `F2` to open the Image Grid view.
+
+- **Features**
+    - **Thumbnail Size:** Adjust the size of the thumbnails using the size slider at the bottom of the grid. The sizes range from small to large.
+    - **Auto-Close:** Toggle the auto-close feature to automatically close the Image Grid after selecting an image.
+    - **Filtering:** Use the filtering options to display all images, only paired images (images with text pairs), or only unpaired images (images without text pairs).
+    - **Extra Filtering:** Enable extra filtering to filter images by resolution, aspect ratio, file size, filename, file type, or tags.
+    - **Load More:** If there are more images than currently displayed, use the "Load More" button to load additional images. (250 images are loaded at a time)
+
+- **Tips**
+    - **Dragging the Window:** Click and drag the title bar to move the Image Grid window around.
+    - **Closing the Window:** Click the "X" button at the top right or press `Escape` to close the window.
+    - **Image Information:** Hover over an image to see detailed information, including the image index, filename, file size, and resolution.
+    - **Refresh:** Use the "Refresh" button to reload the image grid, especially useful if you’ve added or removed images or altered the text pairs.
+    - **Load All:** Use the "Load All" button to load all images in the folder. Note that this might be slow if there are many images.
 
 ---
