@@ -2018,7 +2018,7 @@ class ImgTxtViewer:
                 shutil.copy2(text_filepath, new_text_filepath)
             with Image.open(os.path.join(self.image_dir.get(), filename)) as img:
                 max_dim = max(width, height)
-                new_img = Image.new("RGB", (max_dim, max_dim))
+                new_img = Image.new("RGB", (max_dim, max_dim), (255, 255, 255))
                 x_offset = (max_dim - width) // 2
                 y_offset = (max_dim - height) // 2
                 new_img.paste(img, (x_offset, y_offset))
@@ -2030,7 +2030,7 @@ class ImgTxtViewer:
                 filled_img = Image.fromarray(np_img)
                 filled_img.save(new_filepath, quality=100 if file_extension in {".jpg", ".jpeg", ".jfif", ".jpg_large"} else 100)
                 self.check_image_dir()
-                index_value = int(self.image_files.index(new_filename))
+                index_value = self.image_files.index(new_filename)
                 self.jump_to_image(index_value)
         except Exception as e:
             messagebox.showerror("Error: expand_image()", f'Failed to process {filename}. Reason: {e}')
