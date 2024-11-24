@@ -2180,11 +2180,14 @@ class ImgTxtViewer:
         try:
             if self.image_files:
                 app_path = self.external_image_editor_path
+                if not os.path.isfile(app_path):
+                    raise FileNotFoundError(f"The specified image editor was not found:\n\n{app_path}")
                 image_index = index if index is not None else self.current_index
                 image_path = self.image_files[image_index]
                 subprocess.Popen([app_path, image_path])
-        except FileNotFoundError:
-            messagebox.showerror("Error: open_image_in_editor()", f"The specified image editor was not found:\n\n{app_path}")
+        except FileNotFoundError as e:
+            messagebox.showerror("Error: open_image_in_editor()", str(e))
+            self.set_external_image_editor_path()
         except PermissionError as e:
             messagebox.showerror("Error: open_image_in_editor()", f"Permission denied: {e}")
         except Exception as e:
@@ -2199,8 +2202,12 @@ class ImgTxtViewer:
         elif response:  # Yes, set path
             app_path = filedialog.askopenfilename(title="Select Default Image Editor", filetypes=[("Executable or Python Script", "*.exe;*.py;*.pyw")])
             if app_path:
-                self.external_image_editor_path = app_path
-                messagebox.showinfo("Success", f"External image editor set to:\n\n{app_path}")
+                if os.path.isfile(app_path):
+                    self.external_image_editor_path = app_path
+                    messagebox.showinfo("Success", f"External image editor set to:\n\n{app_path}")
+                else:
+                    messagebox.showerror("Error", f"The selected path is not a valid file:\n\n{app_path}")
+                    self.set_external_image_editor_path()
         else:  # No
             return
 
