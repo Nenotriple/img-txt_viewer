@@ -779,9 +779,9 @@ Expand the current image to a square aspect ratio.
   - Saves a new image with `_ex` appended to the filename.
   - Copies associated text files with `_ex` appended.
 
-- **Example:**
-  - Portrait image before: `|-|`
-  - After expansion: `|--|`
+- **Output:**
+  - A portrait image would expand like this: *input=*`|-|`, *output=*`|--|`
+  - A landscape image would expand like this: *input=*`|---|`, *output=*`|--|`
 
 
 ---
