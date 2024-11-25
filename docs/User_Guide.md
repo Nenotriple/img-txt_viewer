@@ -210,7 +210,7 @@ See the [Batch Tag Edit](#batch-tag-edit) section for more information.
 ### Middle-click
 #### *(Middle-click a tag to delete it)*
 
-- **Use:**
+- **Usage:**
   1. **Hover Over the Tag**: Move your mouse cursor over the tag you want to delete.
   2. **Middle-Click**: Press the `Middle-Click` mouse button to delete the entire tag.
 
@@ -235,7 +235,7 @@ Use this tool to search for a string of text across all text files in the select
 
 If a match is found, it will be replaced exactly with the given text.
 
-- **Use:**
+- **Usage:**
   1. Search for: `the big brown dog`
   2. Replace with: `the big red dog`
 
@@ -260,7 +260,7 @@ Use this tool to prefix all text files in the selected directory with the entere
 
 This means that the entered text will appear at the start of each text file.
 
-- **Use:**
+- **Usage:**
   1. Enter the text you want to insert at the start of all text files in the provided entry field.
   2. Press the `Go!` button or hit `Enter` to apply the prefix to all text files.
   3. A backup of the text files will be created before making any changes.
@@ -283,7 +283,7 @@ Use this tool to append all text files in the selected directory with the entere
 
 This means that the entered text will appear at the end of each text file.
 
-- **Use:**
+- **Usage:**
   1. Enter the text you want to insert at the end of all text files in the provided entry field.
   2. Press the `Go!` button or hit `Enter` to apply the append to all text files.
   3. A backup of the text files will be created before making any changes.
@@ -302,7 +302,27 @@ This means that the entered text will appear at the end of each text file.
 ### AutoTag
 #### *(Automatically tag images using ONNX vision models)*
 
-Automatically tag images using ONNX vision models.
+- **Usage:**
+  1. Select the image you want to tag.
+  2. Open the AutoTag tool from the toolbar below the text box, or by the right-click image context menu.
+  3. The tool will automatically analyze the image and generate tags based on the ONNX vision model.
+
+- **Tips:**
+  - Ensure that the ONNX models are placed in the `onnx_models` directory.
+  - The default model used is `wd-v1-4-vit-tagger-v2`, but you can add additional models to the `onnx_models` folder.
+  - Download additional models from [Hugging Face](https://huggingface.co/SmilingWolf).
+  - Place models in subfolders within the `onnx_models` directory. The subfolder name will be used as the model name.
+  - Each model subfolder should contain a `model.onnx` file and a `selected_tags.csv` file.
+  - Restart the program to load new models.
+
+Example directory structure for ONNX models:
+```plaintext
+img-txt_viewer/
+  └── onnx_models/
+      └── wd-v1-4-moat-tagger-v2/
+          ├── model.onnx
+          └── selected_tags.csv
+```
 
 ---
 
@@ -313,18 +333,18 @@ This tool will filter all img-txt pairs based on the provided text.
 
 Enter any string of text to display only img-txt pairs containing that text.
 
+- **Example input:**
+  1. `dog` *(shows only pairs containing the text dog)*
+  2. `!dog` *(removes all pairs containing the text dog)*
+  3. `!dog + cat` *(remove dog pairs, display cat pairs)*
 
-Use ` + ` to include multiple strings when filtering. *(Note the spaces!)*
-
-Use `!` before the text to exclude any pairs containing that text.
-
-Examples:
-
-`dog` (shows only pairs containing the text dog)
-
-`!dog` (removes all pairs containing the text dog)
-
-`!dog + cat` (remove dog pairs, display cat pairs)
+- **Tips:**
+  - Use ` + ` to include multiple strings/tags when filtering.
+  - Use `!` before the text to exclude any pairs containing that text.
+  - Use the `Regex` checkbox to enable regular expression filtering.
+  - Use the `Empty` checkbox to show only empty text files or images without a text pair.
+  - Press the `Go!` button or hit `Enter` in the filter entry box to apply the filter.
+  - Press the `Clear` button to remove any applied filters.
 
 ---
 
@@ -333,53 +353,144 @@ Examples:
 
 Enter the text you want to highlight each time you move to a new img-txt pair.
 
-Use ` + ` to highlight multiple strings of text.
+- **Example input:**
+  1. `dog` *(highlight the word dog)*
+  2. `dog + cat` *(highlight both dog and cat)*
 
-Example: `dog + cat`
+- **Tips:**
+  - Use ` + ` to include multiple strings/tags when highlighting.
+  - Use the `Regex` checkbox to enable regular expression highlighting.
+  - Press the `Go!` button or hit `Enter` in the highlight entry box to apply the highlight.
+  - Press the `Clear` button to remove any applied highlights.
+
+---
+
+### Font Settings
+#### *(Adjust the font size and line height)*
+
+The Font Settings allow you to customize the appearance of your text by adjusting the font size and line height. This can help improve readability and make your text more visually appealing.
+
+- **Usage:**
+  1. Navigate to the Font tab from the toolbar.
+  2. Use the sliders or input fields to adjust the font size and line height to your preference.
+  3. Changes will be applied in real-time, so you can see the effect immediately.
 
 ---
 
 ### My Tags
 #### *(Add your custom tags for autocomplete suggestions)*
 
-Use this text box to quickly edit the `my_tags.csv` file, allowing you to easily add tags to the autocomplete dictionary.
+Use this section to quickly edit the `my_tags.csv` file, allowing you to easily add tags to the autocomplete dictionary. Additionally, you can quickly insert tags into the primary text box.
 
-- Tags near the top of the list have a higher priority than lower tags.
-- Start any line with `###` to create a comment.
-- Save and Refresh:
-  - Save: Commit your changes to the `my_tags.csv` file.
-  - Refresh: Refresh the loaded autocomplete dictionary with your saved changes, or refresh the text box if you've made changes outside the app.
-    - Always save first, then refresh to fully commit your changes and update autocomplete.
+- **Usage:**
+  1. Open MyTags tab from the toolbar.
+  2. Add or modify tags as needed, placing higher priority tags at the top.
+  3. Save your changes to refresh the autocomplete dictionary.
+
+- **Features:**
+  - **Add Tags**: Enter a tag in the input box and press `Add` or hit Enter to add it to the list.
+  - **Edit Tags**: Select a tag, click `Edit`, modify it in the input box, and press Enter to save changes.
+  - **Remove Tags**: Select one or more tags from the list and click `Remove` to delete them.
+  - **Prefix Tags**: Select a tag, click `Prefix`, and the tag will be inserted at the start of the text box.
+  - **Append Tags**: Select a tag, click `Append`, and the tag will be inserted at the end of the text box.
+  - **Move Tags**: Select a tag and use `Move Up` or `Move Down` to change its position/priority in the list.
+  - **Context Menu**: Right-click on a tag to quickly access options like `Prefix`, `Append`, `Edit`, `Remove`, `Move Up`, and `Move Down`.
+  - **Save Tags**: Click `Save Tags` to save your changes to the `my_tags.csv` file.
+  - **Use MyTags**: Toggle the `Use MyTags` checkbox to enable or disable the custom tags in the autocomplete suggestions.
+
+- **Tips:**
+  - Go to `Options` > `Open MyTags File...` to quickly access the `my_tags.csv` file.
+  - Organize your tags by priority, placing the most important tags at the top of the list.
+  - Regularly save and refresh to ensure your changes are up-to-date and reflected in the autocomplete suggestions.
 
 ---
 
 ### Batch Tag Edit
 #### *(Edit and manage tags with a user-friendly interface)*
 
-Edit and manage tags with a user-friendly interface.
+The Batch Tag Edit tool allows you to quickly edit and manage tags across all files in a folder with an intuitive user interface.
+
+**Features:**
+
+- **Tag Listbox:** View all unique tags from your files in a scrollable list. You can select multiple tags using standard selection methods (Shift+Click, Ctrl+Click).
+
+- **Info Display:** At the top, see real-time counts of:
+  - Total unique tags
+  - Visible tags (after filtering)
+  - Selected tags
+  - Pending deletions
+  - Pending edits
+
+- **Sort Tags:**
+  - **Sort By:** Choose to sort tags by "Frequency" (how often a tag appears), "Name" (alphabetical order), or "Length" (number of characters).
+  - **Reverse Order:** Check this option to reverse the sorting order.
+
+- **Filter Tags:**
+  - **Filter Options:**
+    - `Tag`: Display tags containing the input text.
+    - `!Tag`: Display tags that do not contain the input text.
+    - `==`: Display tags exactly matching the input text.
+    - `!=`: Display tags not matching the input text.
+    - `<`: Display tags shorter than the given length.
+    - `>`: Display tags longer than the given length.
+  - **Multiple Values:** Except for `<` and `>`, you can input multiple values separated by commas.
+  - **Apply and Reset:** Use "Apply" to apply the filter and "Reset" to clear any filters or pending changes.
+
+- **Tag Selection Shortcuts:**
+  - **All:** Select all tags in the list.
+  - **Invert:** Invert the current selection.
+  - **Clear:** Clear the current selection.
+  - **Revert Sel:** Revert changes made to the selected tags.
+  - **Revert All:** Revert all tags to their original state (reset).
+  - **Copy:** Copy the selected tags to the clipboard.
+
+- **Tag Editing:**
+  - **Edit Tags:** Right-click on selected tags to edit them. You can rename tags or mark them for deletion.
+  - **Delete Tags:** Mark selected tags for deletion across all files.
+  - **Save Changes:** After making edits or deletions, click "Save Changes" to apply them to all files.
+
+- **Help and Tips:**
+  - **Help Button:** Click "?" to toggle help messages and tooltips throughout the interface.
+  - **Tooltips:** Hover over buttons and labels to see helpful tooltips.
+
+- **Keyboard Shortcuts:**
+  - **F5:** Close the Batch Tag Edit window.
+  - **Ctrl+C:** Copy selected tags to the clipboard.
+
+**Usage Tips:**
+
+- **Efficient Tag Management:** Use filtering and sorting to quickly find and manage specific tags.
+- **Multiple Edits:** You can select multiple tags and apply edits or deletions to all of them at once.
+- **Preview Changes:** Before saving, use the info display to review pending deletions and edits.
+- **Undo Changes:** If you change your mind, use "Revert Sel" or "Revert All" before saving to undo changes.
 
 ---
 
 ### Create Wildcard From Captions
 #### *(Combine all captions into one text file)*
 
-Combine all captions into one text file.
+Use this tool to combine all image captions into a single text file. Each set of image captions will be separated by a newline. The output file will be saved in the selected directory with a filename like `combined_captions.txt`.
+
+- **Usage:**
+  1. Select the directory containing the image-text pairs.
+  2. Open: `Tools` > `Batch Operations` > select `Create Wildcard From Captions...`
+  3. The tool will process all text files in the selected directory and combine their contents into one text file.
 
 ---
 
 ### Cleanup Text
 #### *(Fix typos across all text files)*
 
-Via the `Tools Menu`.
+Via the `Tools` menu.
 
 This operation will clean all text files from typos like: duplicate tags, extra commas, extra spaces, trailing commas and spaces, commas without spaces, and more.
 
 This is also performed whenever saving text and the option `Cleaning Text on Save` is enabled.
-So if you write all your tags with the app and the option enabled, it won't do anything.
+So if you write all your tags with the app and the option enabled, it won`t do anything.
 
 Example Cleanup:
 
-From: ` ,dog,solo,  ,happy  ,,`
+From: `dog,, ,dog,solo,  ,happy  ,,`
 
 To: `dog, solo, happy`
 
@@ -396,12 +507,23 @@ To: `dog, solo, happy`
     - Input: `Hello,,,World`, Output: `Hello,World`
   - Replace multiple backslashes with a single backslash:
     - Input: `Hello \\(World\)`, Output: `Hello \(World\)`
-  - Remove removes leading and trailing commas from the end of the text:
+  - Remove leading and trailing commas from the end of the text:
     - Input: `,Hello,World,`, Output: `Hello,World`
-  - Remove removes leading and trailing spaces from the end of the text:
+  - Remove leading and trailing spaces from the end of the text:
     - Input: ` Hello World `, Output: `Hello World`
   - Add a space after a comma if it’s not already there:
     - Input: `Hello,World`, Output: `Hello, World`
+
+- **Usage:**
+  1. **Initiate Cleanup**: Open: `Tools` > `Batch Operations` > select `Cleanup All Text Files...`
+  2. **Confirmation**: A confirmation dialog will appear explaining the cleanup process and showing an example. Confirm to proceed.
+  3. **Processing**: The tool will process all text files, applying the cleanup operations listed above.
+  4. **Completion**: A success message will appear once the cleanup is complete.
+
+- **Tips:**
+  - Enable `Cleaning Text on Save` to automatically clean text files whenever they are saved.
+  - If `Cleaning Text on Save` is enabled, the cleanup tool will not perform any operations.
+  - Regular use of the cleanup tool helps maintain clean and readable text files.
 
 ---
 
@@ -416,44 +538,81 @@ To: `dog, solo, happy`
 ### Batch Resize Images
 #### *(Resize all images using different methods and conditions)*
 
-Via the `Tools Menu`.
+Via the `Tools` > `Batch Operations` Menu.
 
-This stand-alone tool allows you to resize all images in a folder using various methods and conditions.
+This tool allows you to resize all images in a folder using various methods and conditions.
 
-Supported Filetypes: `jpg`, `jpeg`, `png`, `webp`, `bmp`, `tif`, `tiff`
+**Supported Filetypes**: `jpg`, `jpeg`, `png`, `webp`, `bmp`, `tif`, `tiff`
 
-- Resize To:
+- **Resize To**:
   - *Resize to Resolution*: Resize to a specific width and height, ignoring aspect ratio.
-  - *Resize to Percentage*: Resize the image by a percent scale.
-  - *Resize to Width*: Target the image width and resize it.
-  - *Resize to Height*: Target the image height and resize it.
-  - *Resize to Shorter Side*: Resize the shorter side of the image.
-  - *Resize to Longer Side*: Resize the longer side of the image.
+    - *(The following `Resize To` options preserve aspect ratio)*
+  - *Resize to Percentage*: Resize the image by a percentage scale.
+  - *Resize to Width*: Target the image width and resize it while preserving aspect ratio.
+  - *Resize to Height*: Target the image height and resize it while preserving aspect ratio.
+  - *Resize to Shorter Side*: Resize the shorter side of the image while preserving aspect ratio.
+  - *Resize to Longer Side*: Resize the longer side of the image while preserving aspect ratio.
 
-- Resize Condition:
-  - *Upscale and Downscale*: Resize the image to the new dimensions, regardless of whether they're larger or smaller than the original dimensions.
+- **Resize Condition**:
+  - *Upscale and Downscale*: Resize the image to the new dimensions, regardless of whether they`re larger or smaller than the original dimensions.
   - *Upscale Only*: Resize the image if the new dimensions are larger than the original dimensions.
   - *Downscale Only*: Resize the image if the new dimensions are smaller than the original dimensions.
 
-- Filetype:
-  - Select 'AUTO' to output with the same filetype as the input image.
-  - Alternatively, choose a specific filetype (JPG, PNG, or WEBP) to force all images to be saved with the chosen type.
-  - JPG and WEBP are always saved with the highest quality possible.
+- **Quality**:
+  - Used to control the output quality of JPG and WEBP images.
+  - A higher value results in higher quality output.
+  - This setting is ignored for PNG images, as they are lossless.
 
-- Use Output Folder:
+- **Filetype**:
+  - Select `AUTO` to output with the same filetype as the input image.
+  - Alternatively, choose a specific filetype (JPG, PNG, or WEBP) to force all images to be saved with the chosen type.
+
+- **Use Output Folder**:
   - If enabled, a folder `Resize Output` will be created, and the resized images will output there.
   - If disabled, the resized images will output to the selected directory.
 
-- Overwrite Files:
-  - if enabled, images will be overwritten when a filename conflict occurs.
-  - if disabled, conflicting files will have '_#' appended to the filename.
+- **Overwrite Files**:
+  - If enabled, images will be overwritten when a filename conflict occurs.
+  - If disabled, conflicting files will have `_#` appended to the filename.
+
+- **Save PNG Info**:
+  - If enabled, this option will automatically save any PNG chunk info to the resized output if saving as PNG.
+  - If converting from PNG to another type, a text file will be created containing the PNG info.
+
+- **Selecting a Directory**:
+  - Use the `Browse...` button to select the folder containing the images you wish to resize.
+  - Alternatively, enter the path directly into the entry field and press Enter.
+
+- **Adjusting Resize Settings**:
+  - Choose the desired `Resize To` mode based on how you want to resize your images.
+  - Enter the appropriate dimensions, percentage, or size according to the selected mode.
+  - Ensure the values entered are valid numbers to avoid errors.
+
+- **Quality Setting**:
+  - Adjust the `Quality` slider to balance between image quality and file size for JPG and WEBP images.
+  - Higher values result in better image quality but larger file sizes.
+
+- **Handling Metadata**:
+  - Enable `Save PNG Info` to preserve any metadata present in PNG images when resizing or converting.
+  - If converting from PNG to another format, the PNG metadata will be saved as a text file.
+
+- **Processing Images**:
+  - Click the `Resize` button to start the resizing process.
+  - The tool will process all supported image files in the selected directory.
+
+- **Viewing Resized Images**:
+  - After resizing, navigate to the output folder to view the resized images.
+  - If `Use Output Folder` is enabled, the images will be in the `Resize Output` folder.
+
+- **Help and Information**:
+  - Click the `?` button to toggle the help window, which provides detailed information about the tool`s features and options.
 
 ---
 
 ### Resize Image
 #### *(Resize the current image by exact resolution or percentage)*
 
-Via the `Tools Menu` or the `image right-click context menu`.
+Via the `Tools` menu or the `image right-click context menu`.
 
 Resize the currently displayed image using an exact resolution or by a percent scale.
 
@@ -472,7 +631,7 @@ As you adjust the various settings, you can see the new dimensions and image siz
 ### Batch Crop Images
 #### *(Crop all images to a specified resolution)*
 
-Via the `Tools Menu`.
+Via the `Tools` menu.
 
 Crop all images to a specified resolution.
 
@@ -481,7 +640,7 @@ Crop all images to a specified resolution.
 ### Crop Image
 #### *(Crop an image or GIF using various methods and tools)*
 
-Via the `Tools Menu` or the `image right-click context menu`.
+Via the `Tools` menu or the `image right-click context menu`.
 
 Crop the currently displayed image in a pop-up window.
 
@@ -497,7 +656,7 @@ Crop the currently displayed image in a pop-up window.
 ### Upscale Image
 #### *(Upscale images using models like RESRGAN, AnimeSharp-4x, and UltraSharp-4x)*
 
-Via the `Tools Menu` or the `image right-click context menu`.
+Via the `Tools` menu or the `image right-click context menu`.
 
 Upscale the currently displayed image using [R-ESRGAN](https://github.com/xinntao/Real-ESRGAN)
 
@@ -516,10 +675,10 @@ Upscale the currently displayed image using [R-ESRGAN](https://github.com/xinnta
 ### Find Duplicate Files
 #### *(Identify and separate duplicate files)*
 
-Via the `Tools Menu`.
+Via the `Tools` menu.
 
 This stand-alone tool allows you to find all duplicate files in a folder, or subfolder* and move them out for easy sorting.
-It works by generating and comparing a hash value for each image. You can use either `MD5`, or `SHA-256`. MD5 is faster and generally shouldn't result in false positive detections *(99.9% of the time, it's fine)*. SHA-256 is slower but should be much more resistant to false positives.
+It works by generating and comparing a hash value for each image. You can use either `MD5`, or `SHA-256`. MD5 is faster and generally shouldn`t result in false positive detections *(99.9% of the time, it`s fine)*. SHA-256 is slower but should be much more resistant to false positives.
 
 - Duplicate files will be moved to a `_Duplicate__Files` folder within the scanned directory.
 - Single or Both:
@@ -544,7 +703,7 @@ It works by generating and comparing a hash value for each image. You can use ei
 ### Expand
 #### *(Expand images to square ratio for simple backgrounds)*
 
-Via the `Tools Menu` or the `image right-click context menu`.
+Via the `Tools` menu or the `image right-click context menu`.
 
 Expand the currently displayed image to a square resolution without cropping.
 
@@ -556,7 +715,7 @@ This tool works by expanding the shorter side to a square resolution divisible b
 
 After expanding, a new image will be saved in the same format and directory as the original, with `_ex` appended to the filename.
 
-This tool works great for images with solid or very smooth gradient backgrounds. It's not intended to be useful for images without simple backgrounds.
+This tool works great for images with solid or very smooth gradient backgrounds. It`s not intended to be useful for images without simple backgrounds.
 
 ---
 
@@ -578,7 +737,7 @@ Adjust image properties like brightness, contrast, etc.
 ### Batch Rename/Convert
 #### *(Rename and convert files sequentially with padded zeros)*
 
-Via the `Tools Menu`.
+Via the `Tools` menu.
 
 This will rename and convert all images and text* files in the selected directory. **(Only rename text files)*
 
