@@ -956,7 +956,7 @@ class TextController:
         # LOAD
         def load_tag_file():
             with open(self.parent.my_tags_csv, 'r') as file:
-                content = self.remove_lines_starting_with_hashes(self.parent.remove_extra_newlines(file.read()))
+                content = self.parent.remove_extra_newlines(file.read())
                 tags = content.split('\n')
                 for tag in tags:
                     if tag.strip():
@@ -1081,12 +1081,6 @@ class TextController:
         add_button.pack(side='left')
         load_tag_file()
         self.parent.refresh_custom_dictionary()
-
-
-    def remove_lines_starting_with_hashes(self, text):
-        lines = text.split('\n')
-        cleaned_lines = [line for line in lines if not line.strip().startswith('###')]
-        return '\n'.join(cleaned_lines)
 
 
 #endregion
