@@ -72,7 +72,7 @@ If you have any questions, need further assistance, or anything else, please fee
 
 
 ### ALT+LEFT/RIGHT
-#### *(Navigate between img-txt pairs)*
+*(Navigate between img-txt pairs)*
 
 With the primary text box in focus, press `ALT+LEFT` or `ALT+RIGHT` to move between img-txt pairs.
 
@@ -84,7 +84,7 @@ With the primary text box in focus, press `ALT+LEFT` or `ALT+RIGHT` to move betw
 
 
 ### SHIFT+DEL
-#### *(Delete the current pair)*
+*(Delete the current pair)*
 
 Press `SHIFT+DEL` to move the displayed image and text file to a trash folder.
 
@@ -98,7 +98,7 @@ Press `SHIFT+DEL` to move the displayed image and text file to a trash folder.
 
 
 ### ALT
-#### *(Cycle through autocomplete suggestions)*
+*(Cycle through autocomplete suggestions)*
 
 With the primary text box in focus, press `LEFT ALT` or `RIGHT ALT` to move the autocomplete selector left or right.
 
@@ -107,7 +107,7 @@ With the primary text box in focus, press `LEFT ALT` or `RIGHT ALT` to move the 
 
 
 ### TAB
-#### *(Insert the selected autocomplete tag)*
+*(Insert the selected autocomplete tag)*
 
 With the primary text box in focus, press `TAB` to insert the selected autocomplete tag.
 
@@ -116,7 +116,7 @@ With the primary text box in focus, press `TAB` to insert the selected autocompl
 
 
 ### CTRL+S
-#### *(Save the current text file)*
+*(Save the current text file)*
 
 With the primary text box in focus, press `CTRL+S` to save the text to the paired text file.
 
@@ -129,7 +129,7 @@ With the primary text box in focus, press `CTRL+S` to save the text to the paire
 
 
 ### CTRL+E
-#### *(Jump to the next empty text file)*
+*(Jump to the next empty text file)*
 
 With the primary text box in focus, press `CTRL+E` to jump to the next empty text file from the current index position.
 
@@ -140,7 +140,7 @@ With the primary text box in focus, press `CTRL+E` to jump to the next empty tex
 
 
 ### CTRL+R
-#### *(Jump to a random img-txt pair)*
+*(Jump to a random img-txt pair)*
 
 With the primary text box in focus, press `CTRL+R` to jump to a random img-txt pair.
 
@@ -151,7 +151,7 @@ With the primary text box in focus, press `CTRL+R` to jump to a random img-txt p
 
 
 ### CTRL+F
-#### *(Highlight all duplicate words)*
+*(Highlight all duplicate words)*
 
 With the primary text box in focus, press `CTRL+F` to highlight any duplicate words.
 
@@ -166,7 +166,7 @@ With the primary text box in focus, press `CTRL+F` to highlight any duplicate wo
 
 
 ### CTRL+Z / CTRL+Y
-#### *(Undo/Redo)*
+*(Undo/Redo)*
 
 With the primary text box in focus, press `CTRL+Z` to undo the last action or `CTRL+Y` to redo the last undo.
 
@@ -178,7 +178,7 @@ With the primary text box in focus, press `CTRL+Z` to undo the last action or `C
 
 
 ### CTRL+W
-#### *(Close the app)*
+*(Close the app)*
 
 Press `CTRL+W` to immediately close the app.
 
@@ -186,11 +186,11 @@ Press `CTRL+W` to immediately close the app.
 
 
 ### F1 (Popup Zoom)
-#### *(toggle zoom popup)*
+*(toggle zoom popup)*
 
 The Popup Zoom feature allows you to create a small popup window beside the mouse that displays a zoomed view of the image underneath.
 
-#### Shortcuts:
+Shortcuts:
 - **F1**: Press `F1` to toggle the zoom popup.
 - **Mouse Wheel**: Scroll to adjust the zoom factor or popup size.
   - Hold `Shift` while scrolling to adjust the popup size.
@@ -200,7 +200,7 @@ The Popup Zoom feature allows you to create a small popup window beside the mous
 
 
 ### F2
-#### *(Open the Image-Grid view)*
+*(Open the Image-Grid view)*
 
 With the primary text box in focus, press `F2` to open the Image-Grid view.
 
@@ -211,7 +211,7 @@ With the primary text box in focus, press `F2` to open the Image-Grid view.
 
 
 ### F4
-#### *(Open the current image in your default editor)*
+*(Open the current image in your default editor)*
 
 Once you have set your default image editor, you can open the current image in it by pressing `F4` with the image in focus.
 
@@ -229,7 +229,7 @@ Once you have set your default image editor, you can open the current image in i
 
 
 ### F5
-#### *(Open Batch Tag Edit)*
+*(Open Batch Tag Edit)*
 
 With the primary text box in focus, press `F5` to open Batch Tag Edit.
 
@@ -240,7 +240,7 @@ With the primary text box in focus, press `F5` to open Batch Tag Edit.
 
 
 ### Middle-click
-#### *(Delete a tag)*
+*(Delete a tag)*
 
 - **Usage:**
   - **Hover Over the Tag**: Move your mouse cursor over the tag you want to delete.
@@ -259,7 +259,7 @@ With the primary text box in focus, press `F5` to open Batch Tag Edit.
 
 
 ### Search and Replace
-#### *(Find and replace text across all text files)*
+*(Find and replace text across all text files)*
 
 Use this tool to search for a string of text across all text files in the selected directory. If a match is found, it will be replaced exactly with the given text.
 
@@ -281,7 +281,7 @@ Use this tool to search for a string of text across all text files in the select
 
 
 ### Prefix
-#### *(Insert text at the start of all text files)*
+*(Insert text at the start of all text files)*
 
 Use this tool to prefix all text files in the selected directory with the entered text. This means that the entered text will appear at the start of each text file.
 
@@ -298,7 +298,7 @@ Use this tool to prefix all text files in the selected directory with the entere
 
 
 ### Append
-#### *(Insert text at the end of all text files)*
+*(Insert text at the end of all text files)*
 
 Use this tool to append all text files in the selected directory with the entered text. This means that the entered text will appear at the end of each text file.
 
@@ -315,7 +315,7 @@ Use this tool to append all text files in the selected directory with the entere
 
 
 ### AutoTag
-#### *(Automatically tag images using ONNX vision models)*
+*(Automatically tag images using ONNX vision models)*
 
 Use this tool to automatically analyze images and generate tags based on the ONNX vision model.
 
@@ -342,7 +342,7 @@ img-txt_viewer/
 
 
 ### Filter
-#### *(Filter pairs based on text, missing text files, and more)*
+*(Filter pairs based on text, missing text files, and more)*
 
 Use this tool to filter img-txt pairs based on specific criteria.
 
@@ -366,7 +366,7 @@ Use this tool to filter img-txt pairs based on specific criteria.
 
 
 ### Highlight
-#### *(Always highlight specific text)*
+*(Always highlight specific text)*
 
 Specify text to highlight when moving to a new img-txt pair.
 
@@ -385,7 +385,7 @@ Specify text to highlight when moving to a new img-txt pair.
 
 
 ### Font Settings
-#### *(Adjust the font size and line height)*
+*(Adjust the font size and line height)*
 
 Customize text appearance by adjusting font size and line height.
 
@@ -399,7 +399,7 @@ Customize text appearance by adjusting font size and line height.
 
 
 ### My Tags
-#### *(Add your custom tags for autocomplete suggestions)*
+*(Add your custom tags for autocomplete suggestions)*
 
 Quickly edit the `my_tags.csv` file to add custom tags to the autocomplete dictionary.
 
@@ -428,7 +428,7 @@ Quickly edit the `my_tags.csv` file to add custom tags to the autocomplete dicti
 
 
 ### Stats
-#### *(Display various file stats)*
+*(Display various file stats)*
 
 Display statistics about the current datasets images and text contents.
 
@@ -492,7 +492,7 @@ Calculated statistics include:
 
 
 ### Batch Tag Edit
-#### *(Edit and manage tags with a user-friendly interface)*
+*(Edit and manage tags with a user-friendly interface)*
 
 Use the Batch Tag Edit tool to edit and manage tags across all files.
 
@@ -518,7 +518,7 @@ Use the Batch Tag Edit tool to edit and manage tags across all files.
 
 
 ### Create Wildcard From Captions
-#### *(Combine all captions into one text file)*
+*(Combine all captions into one text file)*
 
 Combine all image captions into a single file.
 
@@ -532,7 +532,7 @@ Combine all image captions into a single file.
 
 
 ### Cleanup Text
-#### *(Fix typos across all text files)*
+*(Fix typos across all text files)*
 
 Clean text files to fix issues like duplicate tags and extra spaces.
 
@@ -567,7 +567,7 @@ Clean text files to fix issues like duplicate tags and extra spaces.
 
 
 ### Batch Resize Images
-#### *(Resize all images using various methods and conditions)*
+*(Resize all images using various methods and conditions)*
 
 Use this tool to resize all images in a folder according to your needs.
 
@@ -618,7 +618,7 @@ Use this tool to resize all images in a folder according to your needs.
 
 
 ### Resize Image
-#### *(Resize the current image by exact resolution or percentage)*
+*(Resize the current image by exact resolution or percentage)*
 
 Adjust the size of the currently displayed image.
 
@@ -649,7 +649,7 @@ Adjust the size of the currently displayed image.
 
 
 ### Batch Crop Images
-#### *(Crop all images to a specified resolution)*
+*(Crop all images to a specified resolution)*
 
 Crop and resize multiple images to a specific resolution.
 
@@ -674,7 +674,7 @@ Crop and resize multiple images to a specific resolution.
 
 
 ### Crop Image
-#### *(Crop an image or GIF using various methods and tools)*
+*(Crop an image or GIF using various methods and tools)*
 
 Use the **CropUI** tool to precisely crop the current image or GIF.
 
@@ -703,7 +703,7 @@ Use the **CropUI** tool to precisely crop the current image or GIF.
 
 
 ### Upscale Image
-#### *(Upscale images using models like R-ESRGAN, AnimeSharp-4x, and UltraSharp-4x)*
+*(Upscale images using models like R-ESRGAN, AnimeSharp-4x, and UltraSharp-4x)*
 
 Enhance image resolution using upscaling models.
 
@@ -736,7 +736,7 @@ Enhance image resolution using upscaling models.
 
 
 ### Find Duplicate Files
-#### *(Identify and manage duplicate files)*
+*(Identify and manage duplicate files)*
 
 Scan folders to find and handle duplicate files.
 
@@ -765,7 +765,7 @@ Scan folders to find and handle duplicate files.
 
 
 ### Expand
-#### *(Expand images to a square ratio)*
+*(Expand images to a square ratio)*
 
 Expand the current image to a square aspect ratio.
 
@@ -788,7 +788,7 @@ Expand the current image to a square aspect ratio.
 
 
 ### Edit Image Panel
-#### *(Adjust image properties like brightness, contrast, etc.)*
+*(Adjust image properties like brightness, contrast, etc.)*
 
 Fine-tune image appearance by adjusting various properties.
 
@@ -826,7 +826,7 @@ Fine-tune image appearance by adjusting various properties.
 # 📦Other Tools
 
 ### Batch Rename/Convert
-#### *(Rename and convert images sequentially with padded zeros)*
+*(Rename and convert images sequentially with padded zeros)*
 
 Rename and optionally convert images in bulk.
 
@@ -853,7 +853,7 @@ Rename and optionally convert images in bulk.
 
 
 ### Thumbnail Panel
-#### *(Display thumbnails for quick navigation)*
+*(Display thumbnails for quick navigation)*
 
 View and navigate images using thumbnails.
 
@@ -871,7 +871,7 @@ View and navigate images using thumbnails.
 
 
 ### Auto-Save
-#### *(Save text automatically when switching pairs)*
+*(Save text automatically when switching pairs)*
 
 Automatically save text when certain actions occur.
 
@@ -888,7 +888,7 @@ Automatically save text when certain actions occur.
 
 
 ### Image-Grid
-#### *(Open the Image-Grid view)*
+*(Open the Image-Grid view)*
 
 Browse images in a grid layout for easy selection.
 
