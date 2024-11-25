@@ -258,7 +258,7 @@ class SettingsManager:
         self.parent.text_controller.clear_search_and_replace_tab()
         self.parent.text_controller.prefix_entry.delete(0, 'end')
         self.parent.text_controller.append_entry.delete(0, 'end')
-        self.parent.text_controller.revert_text_image_filter(clear=True, quiet=False)
+        self.parent.text_controller.revert_text_image_filter(clear=True, silent=False)
         self.parent.text_controller.clear_highlight_tab()
         self.parent.list_mode_var.set(value=False)
         self.parent.toggle_list_mode()
