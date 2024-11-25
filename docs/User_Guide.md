@@ -1,12 +1,19 @@
+*"Making something... Nurturing something is really great. You can see and learn so many things from the process."*
+
+
+# User Guide
+
+
 img-txt_viewer comes with many tools that help ease the process of manually creating a training dataset, as well as some others that may be helpful outside of this scope.
 
 The following guide will provide an overview of the various tools and features available in the application, along with detailed instructions on how to use them effectively.
 
 If you have any questions, need further assistance, or anything else, please feel free to [create an issue](https://github.com/Nenotriple/img-txt_viewer/issues/new) in the repo.
 
+
 # Index
 
- **✂️ Shortcuts**
+**✂️ Shortcuts**
 - [`ALT+LEFT/RIGHT`](#altleftright) - Quickly move between img-txt pairs.
 - [`SHIFT+DEL`](#shiftdel) - Send the current pair to a local trash folder.
 - [`ALT`](#alt) - Cycle through autocomplete suggestions.
@@ -23,7 +30,7 @@ If you have any questions, need further assistance, or anything else, please fee
 - [`F5`](#f5) - Open Batch Tag Edit.
 - [`Middle-click`](#middle-click) - Middle-click a tag to delete it.
 
- **📜 Text Tools**
+**📜 Text Tools**
 - [`Search and Replace`](#search-and-replace) - Find and replace text across all text files.
 - [`Prefix`](#prefix) - Insert text at the start of all text files.
 - [`Append`](#append) - Insert text at the end of all text files.
@@ -35,7 +42,7 @@ If you have any questions, need further assistance, or anything else, please fee
 - [`Create Wildcard From Captions`](#create-wildcard-from-captions) - Combine all captions into one text file.
 - [`Cleanup Text`](#cleanup-text) - Fix typos across all text files.
 
- **📷 Image Tools**
+**📷 Image Tools**
 - [`Batch Resize Images`](#batch-resize-images) - Resize all images using different methods and conditions.
 - [`Resize Image`](#resize-image) - Resize the current image by exact resolution or percentage.
 - [`Batch Crop Images`](#batch-crop-images) - Crop all images to a specified resolution.
@@ -46,7 +53,7 @@ If you have any questions, need further assistance, or anything else, please fee
 - [`Expand`](#expand) - Expand images to square ratio for simple backgrounds.
 - [`Edit Image Panel`](#edit-image-panel) - Adjust image properties like brightness, contrast, etc.
 
- **📦 Other Tools**
+**📦 Other Tools**
 - [`Batch Rename/Convert`](#batch-renameconvert) - Rename and convert images sequentially with padded zeros.
 - [`Thumbnail Panel`](#thumbnail-panel) - Display thumbnails for quick navigation.
 - [`Auto-Save`](#auto-save) - Save text automatically when switching pairs.
