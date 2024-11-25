@@ -37,14 +37,14 @@ img-txt_viewer comes with many tools that help ease the process of manually crea
 - [`Resize Image`](#resize-image) - Resize the current image by exact resolution or percentage.
 - [`Batch Crop Images`](#batch-crop-images) - Crop all images to a specified resolution.
 - [`Crop Image`](#crop-image) - Crop an image or GIF using various methods and tools.
-- [`Batch Upscale`](#batch-upscale) - Upscale images using models like RESRGAN, AnimeSharp-4x, and UltraSharp-4x.
-- [`Upscale Image`](#upscale-image) - Upscale images using models like RESRGAN, AnimeSharp-4x, and UltraSharp-4x.
+- [`Batch Upscale`](#upscale-image) - Upscale images using models like RESRGAN, AnimeSharp-4x, and UltraSharp-4x.
+- [`Upscale Image`](#upscale-image) - Upscale an image using models like RESRGAN, AnimeSharp-4x, and UltraSharp-4x.
 - [`Find Duplicate Files`](#find-duplicate-files) - Identify and separate duplicate files.
 - [`Expand`](#expand) - Expand images to square ratio for simple backgrounds.
 - [`Edit Image Panel`](#edit-image-panel) - Adjust image properties like brightness, contrast, etc.
 
  **📦Other Tools**
-- [`Batch Rename/Convert`](#batch-rename-convert) - Rename and convert files sequentially with padded zeros.
+- [`Batch Rename/Convert`](#batch-rename-convert) - Rename and convert images sequentially with padded zeros.
 - [`Thumbnail Panel`](#thumbnail-panel) - Display thumbnails for quick navigation.
 - [`Edit Image...`](#edit-image) - Open images in external editor.
 - [`Auto-Save`](#auto-save) - Save text automatically when switching pairs.
@@ -57,9 +57,7 @@ img-txt_viewer comes with many tools that help ease the process of manually crea
 <!--####################################################################################################-->
 <!--####################################################################################################-->
 
-<br>
-
-## ✂️Shortcuts
+# ✂️Shortcuts
 
 ### ALT+LEFT/RIGHT
 #### *(Navigate between img-txt pairs)*
@@ -217,15 +215,11 @@ See the [Batch Tag Edit](#batch-tag-edit) section for more information.
   - The entire comma-separated value will be deleted.
   - Ensure that the text cleaning feature is enabled for the deletion to work.
 
----
-
 <!--####################################################################################################-->
 <!--####################################################################################################-->
 <!--####################################################################################################-->
 
-<br>
-
-## 📜Text Tools
+# 📜Text Tools
 
 ### Search and Replace
 #### *(Find and replace text across all text files)*
@@ -309,7 +303,7 @@ This means that the entered text will appear at the end of each text file.
 - **Tips:**
   - Ensure that the ONNX models are placed in the `onnx_models` directory.
   - The default model used is `wd-v1-4-vit-tagger-v2`, but you can add additional models to the `onnx_models` folder.
-  - Download additional models from [Hugging Face](https://huggingface.co/SmilingWolf).
+  - Download additional models from https://huggingface.co/SmilingWolf.
   - Place models in subfolders within the `onnx_models` directory. The subfolder name will be used as the model name.
   - Each model subfolder should contain a `model.onnx` file and a `selected_tags.csv` file.
   - Restart the program to load new models.
@@ -484,7 +478,7 @@ Via the `Tools` menu.
 
 This operation will clean all text files from typos like: duplicate tags, extra commas, extra spaces, trailing commas and spaces, commas without spaces, and more.
 
-This is also performed whenever saving text and the option `Cleaning Text on Save` is enabled.
+This is also performed whenever saving text and the option `Clean-Text` is enabled.
 So if you write all your tags with the app and the option enabled, it won`t do anything.
 
 Example Cleanup:
@@ -520,19 +514,15 @@ To: `dog, solo, happy`
   - **Completion**: A success message will appear once the cleanup is complete.
 
 - **Tips:**
-  - Enable `Cleaning Text on Save` to automatically clean text files whenever they are saved.
-  - If `Cleaning Text on Save` is enabled, the cleanup tool will not perform any operations.
+  - Enable `Clean-Text` to automatically clean text files whenever they are saved.
+  - If `Clean-Text` is enabled, the cleanup tool will not perform any operations.
   - Regular use of the cleanup tool helps maintain clean and readable text files.
 
----
-
 <!--####################################################################################################-->
 <!--####################################################################################################-->
 <!--####################################################################################################-->
 
-<br>
-
-## 📷Image Tools
+# 📷Image Tools
 
 ### Batch Resize Images
 #### *(Resize all images using different methods and conditions)*
@@ -741,154 +731,209 @@ Crop the currently displayed image using the **CropUI** tool.
   - **Help and Support**:
     - Access the **Help** menu for detailed instructions and tips on using CropUI.
 
-
-
----
-
-### Batch Upscale
-#### *(Upscale images using models like RESRGAN, AnimeSharp-4x, and UltraSharp-4x)*
-
-...
-
 ---
 
 ### Upscale Image
-#### *(Upscale images using models like RESRGAN, AnimeSharp-4x, and UltraSharp-4x)*
+#### *(Upscale images using models like R-ESRGAN, AnimeSharp-4x, and UltraSharp-4x)*
 
 Via the `Tools` menu or the `image right-click context menu`.
 
-Upscale the currently displayed image using [R-ESRGAN](https://github.com/xinntao/Real-ESRGAN)
+Upscale the currently displayed image or a batch of images using [R-ESRGAN](https://github.com/xinntao/Real-ESRGAN).
 
-- Upscale Model:
-  - realesr-animevideov3-x4 (default)
-  - RealESRGAN_General_x4_v3
-  - realesrgan-x4plus
-  - realesrgan-x4plus-anime
+- **Upscale Model:**
+  - `realesr-animevideov3-x4` *(default)*
+  - `RealESRGAN_General_x4_v3`
+  - `realesrgan-x4plus`
+  - `realesrgan-x4plus-anime`
+  - `AnimeSharp-4x`
+  - `UltraSharp-4x`
 
-- Upscale Factor: 1x, 2x, 3x, 4x
+- **Upscale Factor:** 0.25x to 8.00x *(default is 2.00x)*
+  - Determines the final size of the image.
+  - Images are first upscaled by 4x and then resized according to the selected Upscale Factor.
+  - The final resolution is calculated as: `(4 * original size) / upscale factor`.
 
- The current size and new size are displayed in the UI after selecting an Upscale Factor.
+- **Upscale Strength:** 0% to 100% *(default is 100%)*
+  - Adjusts the blending between the original and upscaled image.
+  - `0%` = Only original image.
+  - `100%` = Only upscaled image.
+
+- **Usage:**
+  - Open the Upscale tool via the `Tools` menu or by right-clicking on the image and selecting `Upscale`.
+  - Select the desired Upscale Model from the dropdown menu.
+  - Adjust the Upscale Factor to set the final image size.
+  - Adjust the Upscale Strength to blend the upscaled image with the original.
+  - Press **Enter** or click the `Upscale` button to start the process.
+
+- **Batch Mode:**
+  - Upscale multiple images at once by selecting the batch mode option.
+  - Choose the input folder containing the images you want to upscale.
+  - Choose the output folder where the upscaled images will be saved.
+
+- **Tips:**
+  - Add additional ESRGAN models by placing them in the `ncnn_models` folder; they will be automatically detected when the app launches.
+  - Models should be of the ESRGAN architecture, and in the NCNN format. *(`.bin`, and `.param` files)*
+  - Can be used to upscale a GIF.
+  - Upscaling may take some time depending on the image size and the selected model.
 
 ---
 
 ### Find Duplicate Files
-#### *(Identify and separate duplicate files)*
+#### *(Identify and manage duplicate files)*
 
-Via the `Tools` menu.
+Access via the `Tools` > `Batch Operations` menu.
 
-This stand-alone tool allows you to find all duplicate files in a folder, or subfolder* and move them out for easy sorting.
-It works by generating and comparing a hash value for each image. You can use either `MD5`, or `SHA-256`. MD5 is faster and generally shouldn`t result in false positive detections *(99.9% of the time, it`s fine)*. SHA-256 is slower but should be much more resistant to false positives.
+This tool allows you to scan a folder and its subfolders for duplicate files and manage them efficiently. It works by generating and comparing hash values for each file, ensuring accurate detection of duplicates.
 
-- Duplicate files will be moved to a `_Duplicate__Files` folder within the scanned directory.
-- Single or Both:
-  - Single: Choosing this option will move *all but one* of the found duplicates to the `_Duplicate__Files` folder.
-  - Both: Choosing this option will move *all* of the found duplicates to the `_Duplicate__Files` folder.
-- Images or All Files:
-  - Images: Choosing this option will only check image files for duplicate matches, ignoring other files.
-  - All Files: Choosing this option will check all files for duplicate matches.
-- Recursive*:
-  - Enable this option to scan subfolders.
-  - NOTE: This only compares files within the same subfolder, not across all scanned folders.
-- Set Max Scan Size:
-  - Use this option to limit the maximum size of scanned files, ignoring files that are larger. (Default=2048 MB)
-- Set Filetypes to Scan:
-  - Use this option to limit the scanned files to only those listed, ignoring everything else.
 
-- **Undo**
-  - Using undo will restore all moved images back to their original file paths.
+- **Hash Algorithms**:
+  - **MD5**: Faster but slightly less accurate. Suitable for most cases.
+  - **SHA-256**: Slower but more resistant to false positives.
+
+- **Duplicate Handling**:
+  - **Single**: Moves all but one of each set of duplicate files to a `_Duplicate__Files` folder within the scanned directory.
+  - **Both**: Moves all duplicate files to the `_Duplicate__Files` folder.
+
+- **Scanning Mode**:
+  - **Images**: Scans only image files for duplicates.
+    - **Move Captions**: Option to move accompanying text files with the same name as duplicate images.
+  - **All Files**: Scans all files for duplicates.
+
+- **Recursive Scanning**:
+  - Enable this option to include subfolders in the scan.
+  - **Note**: This compares files across all scanned folders, not just within the same subfolder.
+
+- **Set Max Scan Size**:
+  - Limit the maximum size of files to scan. Files larger than this size will be ignored. *(Default: 2048 MB)*
+
+- **Set Filetypes to Scan**:
+  - Specify which file types to include in the scan. Files not matching these types will be ignored.
+
+- **Undo**:
+  - Restores all moved duplicates to their original locations.
+
+- **Move All Duplicates Upfront**:
+  - Moves all duplicate files to the root directory for easier management.
+
+- **Delete All Duplicates**:
+  - Permanently deletes all duplicates found in the `_Duplicate__Files` folder.
 
 ---
 
 ### Expand
-#### *(Expand images to square ratio for simple backgrounds)*
+#### *(Expand images to a square ratio)*
 
 Via the `Tools` menu or the `image right-click context menu`.
 
-Expand the currently displayed image to a square resolution without cropping.
+Expand the currently displayed image to a square resolution.
 
-This tool works by expanding the shorter side to a square resolution divisible by 8 and stretching the pixels around the long side to fill the space.
+This tool works by expanding the shorter side of an image to the length of the longer side, creating a square image. The expansion process is designed to work best with images that have simple backgrounds or gradients.
 
-- For example:
-  - A portrait image would expand like this: input=`||`, output=`| |`
-  - A portrait image would expand like this: input=`| |`, output=`||`
+- Example:
+  - A portrait image would expand like this: *input=*`|-|`, *output=*`|--|`
+  - A landscape image would expand like this: *input=*`|---|`, *output=*`|--|`
 
 After expanding, a new image will be saved in the same format and directory as the original, with `_ex` appended to the filename.
 
-This tool works great for images with solid or very smooth gradient backgrounds. It`s not intended to be useful for images without simple backgrounds.
+If a text file with the same base name as the image exists, it will also be copied with `_ex` appended to its filename.
 
 ---
 
 ### Edit Image Panel
 #### *(Adjust image properties like brightness, contrast, etc.)*
 
-Adjust image properties like brightness, contrast, etc.
+The Edit Image Panel allows you to enhance and adjust your images by modifying various properties such as brightness, contrast, saturation, sharpness, hue, color temperature, etc.
 
----
+- **Edit Modes:** Available options include:
+  - `Brightness`
+  - `Contrast`
+  - `AutoContrast`
+  - `Highlights`
+  - `Shadows`
+  - `Saturation`
+  - `Sharpness`
+  - `Hue`
+  - `Color Temperature`
+
+- **Adjustment Slider:** Use the slider to adjust the value of the selected property. The slider ranges from -100 to 100, and the current value is displayed next to it.
+
+- **Cumulative Edit Checkbox:** Enable this option to apply all edits cumulatively. When disabled, only the selected adjustment will be applied to the image.
+
+- **Revert Button:** Click to cancel changes and refresh the displayed image.
+  - **Tip:** Right-click the Revert button to reset all adjustments in the edit panel to their default values.
+
+- **Save Button:** Save the current changes to the image.
+  - **Note:** You can choose to overwrite the current image or save it as a new file.
+
+- **Additional Parameters:** For certain adjustments, additional parameters can be set using spinboxes:
+  - **Highlights and Shadows:**
+    - **Threshold:** Adjusts how many pixels are affected. For Highlights, lower values affect more pixels; for Shadows, higher values affect more pixels. (Range: 1 to 256)
+    - **Blur Radius:** Controls the smoothness of the effect. Higher values increase the blur effect. (Range: 0 to 10)
+  - **Sharpness:**
+    - **Boost:** Increases the sharpening effect by adding additional sharpening passes. (Range: 1 to 5)
+
+- **Usage Tips:**
+  - **Right-Click on Revert Button:** Resets all adjustments to default values.
+  - **Image Mode Requirements:** Some adjustments like AutoContrast, Hue, and Color Temperature require the image to be in RGB mode.
 
 <!--####################################################################################################-->
 <!--####################################################################################################-->
 <!--####################################################################################################-->
 
-<br>
-
-## 📦Other Tools
+# 📦Other Tools
 
 ### Batch Rename/Convert
-#### *(Rename and convert files sequentially with padded zeros)*
+#### *(Rename and convert images sequentially with padded zeros)*
 
-Via the `Tools` menu.
+Via the `Tools` > `Batch Operations` menu.
 
-This will rename and convert all images and text* files in the selected directory. **(Only rename text files)*
+This tool allows you to rename and convert all images and text files in the selected directory. **(Only rename text files)**
 
-Files are saved to a `Renamed Output` folder, nothing is overwritten.
+Files are saved to a `Renamed Output` folder, ensuring that nothing is overwritten.
 
-Images are converted to `JPG` type (except for `GIF` files), and then each img-txt pair is renamed in sequential order using padded zeros to ensure 5 characters.
+- **Image Conversion:** Images are converted to `JPG` format (except for `GIF` files). If you choose not to convert, images will only be renamed.
+- **Sequential Renaming:** Each image-text pair is renamed in sequential order using padded zeros.
 
-Example input pair: `aH15520.jpg`, `AH15520.txt`
-
-Example output pair: `00001.jpg`, `00001.txt`
+- **Example:**
+  - Input pairs: [`aH15520.jpg`, `aH15520.txt`], [`bH15521.png`, `bH15521.txt`] *(Messy filenames)*
+  - Output pairs: [`00001.jpg`, `00001.txt`], [`00002.jpg`, `00002.txt`] *(Clean and sequential filenames)*
 
 ---
 
 ### Thumbnail Panel
 #### *(Display thumbnails for quick navigation)*
 
-Display thumbnails for quick navigation.
+The Thumbnail Panel displays small preview images of all the images in your current directory, allowing for quick and easy navigation.
 
----
-
-### Edit Image...
-#### *(Open images in external editor)*
-
-Open images in external editor.
+- **Quick Navigation**: Click a thumbnail to open the image in the main viewer.
+- **Context Menu**: Right-click a thumbnail for options like opening, deleting, editing, Thumbnail size, etc.
 
 ---
 
 ### Auto-Save
 #### *(Save text automatically when switching pairs)*
 
-Save text automatically when switching pairs.
+Save text when switching between img-txt pairs, changing the active directory, or closing the app.
+
+If `Clean-Text` is enabled, the text will be cleaned before saving.
 
 ---
 
 ### Image-Grid
 #### *(Open the Image-Grid view)*
 
-- **Open:**
-  - **Shortcut:** With the primary text box in focus, press `F2` to open the Image Grid view.
-
 - **Features**
-    - **Thumbnail Size:** Adjust the size of the thumbnails using the size slider at the bottom of the grid. The sizes range from small to large.
-    - **Auto-Close:** Toggle the auto-close feature to automatically close the Image Grid after selecting an image.
-    - **Filtering:** Use the filtering options to display all images, only paired images (images with text pairs), or only unpaired images (images without text pairs).
-    - **Extra Filtering:** Enable extra filtering to filter images by resolution, aspect ratio, file size, filename, file type, or tags.
-    - **Load More:** If there are more images than currently displayed, use the "Load More" button to load additional images. (250 images are loaded at a time)
+  - **Thumbnail Size:** Adjust the size of the thumbnails using the size slider at the bottom of the grid. The sizes range from small to large.
+  - **Auto-Close:** Toggle the auto-close feature to automatically close the Image Grid after selecting an image.
+  - **Filtering:** Use the filtering options to display all images, only paired images (images with text pairs), or only unpaired images (images without text pairs).
+  - **Extra Filtering:** Enable extra filtering to filter images by resolution, aspect ratio, file size, filename, file type, or tags.
+  - **Load More:** If there are more images than currently displayed, use the "Load More" button to load additional images. (250 images are loaded at a time)
 
 - **Tips**
-    - **Dragging the Window:** Click and drag the title bar to move the Image Grid window around.
-    - **Closing the Window:** Click the "X" button at the top right or press `Escape` to close the window.
-    - **Image Information:** Hover over an image to see detailed information, including the image index, filename, file size, and resolution.
-    - **Refresh:** Use the "Refresh" button to reload the image grid, especially useful if you’ve added or removed images or altered the text pairs.
-    - **Load All:** Use the "Load All" button to load all images in the folder. Note that this might be slow if there are many images.
+  - **Dragging the Window:** Click and drag the title bar to move the Image Grid window around.
+  - **Closing the Window:** Click the "X" button at the top right or press `Escape` to close the window.
+  - **Image Information:** Hover over an image to see detailed information, including the image index, filename, file size, and resolution.
+  - **Refresh:** Use the "Refresh" button to reload the image grid, especially useful if you’ve added or removed images or altered the text pairs.
+  - **Load All:** Use the "Load All" button to load all images in the folder. Note that this might be slow if there are many images.
 
 ---
