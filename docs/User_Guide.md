@@ -37,6 +37,7 @@ img-txt_viewer comes with many tools that help ease the process of manually crea
 - [`Resize Image`](#resize-image) - Resize the current image by exact resolution or percentage.
 - [`Batch Crop Images`](#batch-crop-images) - Crop all images to a specified resolution.
 - [`Crop Image`](#crop-image) - Crop an image or GIF using various methods and tools.
+- [`Batch Upscale`](#batch-upscale) - Upscale images using models like RESRGAN, AnimeSharp-4x, and UltraSharp-4x.
 - [`Upscale Image`](#upscale-image) - Upscale images using models like RESRGAN, AnimeSharp-4x, and UltraSharp-4x.
 - [`Find Duplicate Files`](#find-duplicate-files) - Identify and separate duplicate files.
 - [`Expand`](#expand) - Expand images to square ratio for simple backgrounds.
@@ -182,13 +183,11 @@ See the [Image-Grid](#image-grid) section for more information.
 ### F4
 #### *(Open the current image in your default editor)*
 
-
-
 - **Set Default Image Editor:**
-    1. Open the application.
-    2. Navigate to the `Options` menu.
-    3. Select `Set Default Image Editor`.
-    4. Choose the executable file of your preferred image editor.
+  - Open the application.
+  - Navigate to the `Options` menu.
+  - Select `Set Default Image Editor`.
+  - Choose the executable file of your preferred image editor.
 
 Once you have set your default image editor, you can easily open the current image in it by pressing `F4` with the image in focus.
 
@@ -211,8 +210,8 @@ See the [Batch Tag Edit](#batch-tag-edit) section for more information.
 #### *(Middle-click a tag to delete it)*
 
 - **Usage:**
-  1. **Hover Over the Tag**: Move your mouse cursor over the tag you want to delete.
-  2. **Middle-Click**: Press the `Middle-Click` mouse button to delete the entire tag.
+  - **Hover Over the Tag**: Move your mouse cursor over the tag you want to delete.
+  - **Middle-Click**: Press the `Middle-Click` mouse button to delete the entire tag.
 
 - **Tips:**
   - The entire comma-separated value will be deleted.
@@ -236,8 +235,8 @@ Use this tool to search for a string of text across all text files in the select
 If a match is found, it will be replaced exactly with the given text.
 
 - **Usage:**
-  1. Search for: `the big brown dog`
-  2. Replace with: `the big red dog`
+  - Search for: `the big brown dog`
+  - Replace with: `the big red dog`
 
 This will replace all instances of `the big brown dog` with `the big red dog`.
 
@@ -261,9 +260,9 @@ Use this tool to prefix all text files in the selected directory with the entere
 This means that the entered text will appear at the start of each text file.
 
 - **Usage:**
-  1. Enter the text you want to insert at the start of all text files in the provided entry field.
-  2. Press the `Go!` button or hit `Enter` to apply the prefix to all text files.
-  3. A backup of the text files will be created before making any changes.
+  - Enter the text you want to insert at the start of all text files in the provided entry field.
+  - Press the `Go!` button or hit `Enter` to apply the prefix to all text files.
+  - A backup of the text files will be created before making any changes.
 
 - **Tips:**
   - Ensure the text you want to prefix is entered exactly as you want it to appear.
@@ -284,9 +283,9 @@ Use this tool to append all text files in the selected directory with the entere
 This means that the entered text will appear at the end of each text file.
 
 - **Usage:**
-  1. Enter the text you want to insert at the end of all text files in the provided entry field.
-  2. Press the `Go!` button or hit `Enter` to apply the append to all text files.
-  3. A backup of the text files will be created before making any changes.
+  - Enter the text you want to insert at the end of all text files in the provided entry field.
+  - Press the `Go!` button or hit `Enter` to apply the append to all text files.
+  - A backup of the text files will be created before making any changes.
 
 - **Tips:**
   - Ensure the text you want to append is entered exactly as you want it to appear.
@@ -303,9 +302,9 @@ This means that the entered text will appear at the end of each text file.
 #### *(Automatically tag images using ONNX vision models)*
 
 - **Usage:**
-  1. Select the image you want to tag.
-  2. Open the AutoTag tool from the toolbar below the text box, or by the right-click image context menu.
-  3. The tool will automatically analyze the image and generate tags based on the ONNX vision model.
+  - Select the image you want to tag.
+  - Open the AutoTag tool from the toolbar below the text box, or by the right-click image context menu.
+  - The tool will automatically analyze the image and generate tags based on the ONNX vision model.
 
 - **Tips:**
   - Ensure that the ONNX models are placed in the `onnx_models` directory.
@@ -334,9 +333,9 @@ This tool will filter all img-txt pairs based on the provided text.
 Enter any string of text to display only img-txt pairs containing that text.
 
 - **Example input:**
-  1. `dog` *(shows only pairs containing the text dog)*
-  2. `!dog` *(removes all pairs containing the text dog)*
-  3. `!dog + cat` *(remove dog pairs, display cat pairs)*
+  - `dog` *(shows only pairs containing the text dog)*
+  - `!dog` *(removes all pairs containing the text dog)*
+  - `!dog + cat` *(remove dog pairs, display cat pairs)*
 
 - **Tips:**
   - Use ` + ` to include multiple strings/tags when filtering.
@@ -354,8 +353,8 @@ Enter any string of text to display only img-txt pairs containing that text.
 Enter the text you want to highlight each time you move to a new img-txt pair.
 
 - **Example input:**
-  1. `dog` *(highlight the word dog)*
-  2. `dog + cat` *(highlight both dog and cat)*
+  - `dog` *(highlight the word dog)*
+  - `dog + cat` *(highlight both dog and cat)*
 
 - **Tips:**
   - Use ` + ` to include multiple strings/tags when highlighting.
@@ -371,9 +370,9 @@ Enter the text you want to highlight each time you move to a new img-txt pair.
 The Font Settings allow you to customize the appearance of your text by adjusting the font size and line height. This can help improve readability and make your text more visually appealing.
 
 - **Usage:**
-  1. Navigate to the Font tab from the toolbar.
-  2. Use the sliders or input fields to adjust the font size and line height to your preference.
-  3. Changes will be applied in real-time, so you can see the effect immediately.
+  - Navigate to the Font tab from the toolbar.
+  - Use the sliders or input fields to adjust the font size and line height to your preference.
+  - Changes will be applied in real-time, so you can see the effect immediately.
 
 ---
 
@@ -383,9 +382,9 @@ The Font Settings allow you to customize the appearance of your text by adjustin
 Use this section to quickly edit the `my_tags.csv` file, allowing you to easily add tags to the autocomplete dictionary. Additionally, you can quickly insert tags into the primary text box.
 
 - **Usage:**
-  1. Open MyTags tab from the toolbar.
-  2. Add or modify tags as needed, placing higher priority tags at the top.
-  3. Save your changes to refresh the autocomplete dictionary.
+  - Open MyTags tab from the toolbar.
+  - Add or modify tags as needed, placing higher priority tags at the top.
+  - Save your changes to refresh the autocomplete dictionary.
 
 - **Features:**
   - **Add Tags**: Enter a tag in the input box and press `Add` or hit Enter to add it to the list.
@@ -472,9 +471,9 @@ The Batch Tag Edit tool allows you to quickly edit and manage tags across all fi
 Use this tool to combine all image captions into a single text file. Each set of image captions will be separated by a newline. The output file will be saved in the selected directory with a filename like `combined_captions.txt`.
 
 - **Usage:**
-  1. Select the directory containing the image-text pairs.
-  2. Open: `Tools` > `Batch Operations` > select `Create Wildcard From Captions...`
-  3. The tool will process all text files in the selected directory and combine their contents into one text file.
+  - Select the directory containing the image-text pairs.
+  - Open: `Tools` > `Batch Operations` > select `Create Wildcard From Captions...`
+  - The tool will process all text files in the selected directory and combine their contents into one text file.
 
 ---
 
@@ -515,10 +514,10 @@ To: `dog, solo, happy`
     - Input: `Hello,World`, Output: `Hello, World`
 
 - **Usage:**
-  1. **Initiate Cleanup**: Open: `Tools` > `Batch Operations` > select `Cleanup All Text Files...`
-  2. **Confirmation**: A confirmation dialog will appear explaining the cleanup process and showing an example. Confirm to proceed.
-  3. **Processing**: The tool will process all text files, applying the cleanup operations listed above.
-  4. **Completion**: A success message will appear once the cleanup is complete.
+  - **Initiate Cleanup**: Open: `Tools` > `Batch Operations` > select `Cleanup All Text Files...`
+  - **Confirmation**: A confirmation dialog will appear explaining the cleanup process and showing an example. Confirm to proceed.
+  - **Processing**: The tool will process all text files, applying the cleanup operations listed above.
+  - **Completion**: A success message will appear once the cleanup is complete.
 
 - **Tips:**
   - Enable `Cleaning Text on Save` to automatically clean text files whenever they are saved.
@@ -612,19 +611,41 @@ This tool allows you to resize all images in a folder using various methods and 
 ### Resize Image
 #### *(Resize the current image by exact resolution or percentage)*
 
-Via the `Tools` menu or the `image right-click context menu`.
+Accessible via the `Tools` menu or the `image right-click context menu`.
 
-Resize the currently displayed image using an exact resolution or by a percent scale.
+The **Resize Image** tool allows you to resize the currently displayed image either by specifying exact dimensions (in pixels) or by scaling it by a percentage.
 
-Lock the aspect ratio to easily edit the width or height values without squishing or stretching the image.
+- **Resize Condition:**
+  - Choose between resizing by **Pixels** or **Percentage** using the radio buttons at the top of the window.
 
-Unlock the aspect ratio to allow entering a value that squishes or stretches the image.
+- **Width and Height Entries:**
+  - Adjust the **Width** and **Height** values as needed.
+  - **Locked Aspect Ratio:** Enable the **Locked** checkbox to maintain the original aspect ratio. When enabled, changing one dimension automatically updates the other.
+  - **Unlocked Aspect Ratio:** Uncheck the **Locked** checkbox to adjust width and height independently, allowing you to stretch or squish the image.
 
-For JPG and WEBP, you can adjust the output quality from 10%, to 100%.
+- **Quality Adjustment:**
+  - For **JPG** and **WEBP** formats, adjust the output quality from **10%** to **100%** using the quality slider.
 
-You can choose between the following resize methods: `Lanczos`, `Nearest`, `Bicubic`, `Hamming`, `Bilinear`, and `Box`. Lanczos is the recommended method.
+- **File Type Selection:**
+  - Choose the output file type from **JPG**, **PNG**, or **WEBP** using the dropdown menu.
 
-As you adjust the various settings, you can see the new dimensions and image size update in real time.
+- **Resize Method:**
+  - Select the resizing method from the following options:
+    - **Lanczos** (recommended)
+    - **Nearest** (Fast, Great for pixel art)
+    - **Bicubic**
+    - **Hamming**
+    - **Bilinear**
+    - **Box**
+
+- **Real-time Updates:**
+  - As you adjust settings, the new dimensions and estimated image size are updated in real time.
+
+- **Tips:**
+  - When enlarging images, using a higher quality setting and the **Lanczos** method helps preserve image clarity.
+  - Reducing the quality percentage can significantly decrease the file size, which is beneficial for web use.
+  - **Right-click** on the **Width** or **Height** entry fields to reset the value to the original dimension.
+  - **Overwrite Option:** Decide whether to overwrite the original file or save a new version.
 
 ---
 
@@ -633,7 +654,28 @@ As you adjust the various settings, you can see the new dimensions and image siz
 
 Via the `Tools` menu.
 
-Crop all images to a specified resolution.
+Crop and resize a batch of images to a specified resolution.
+
+- **Usage:**
+  - **Open the Batch Crop Images tool** from the `Tools` menu.
+  - **Enter the desired Width and Height** (in pixels) for your images.
+  - **Choose the Crop Anchor point** from the dropdown menu. This determines which part of the image is kept when cropping.
+  - **Click the "Crop" button** to start processing.
+
+- **Anchor Points:**
+   - **Center**: Crops around the center of the image.
+   - **North**: Crops from the top center.
+   - **South**: Crops from the bottom center.
+   - **East**: Crops from the right center.
+   - **West**: Crops from the left center.
+   - **North-East**: Crops from the top-right corner.
+   - **North-West**: Crops from the top-left corner.
+   - **South-East**: Crops from the bottom-right corner.
+   - **South-West**: Crops from the bottom-left corner.
+
+- **Tips:**
+  - Cropped images will be saved in a new folder named `cropped_images` within the current directory. Filenames will include the new resolution (e.g., `image_800x600.jpg`).
+  - Images smaller than the target resolution will be automatically resized before cropping.
 
 ---
 
@@ -642,14 +684,71 @@ Crop all images to a specified resolution.
 
 Via the `Tools` menu or the `image right-click context menu`.
 
-Crop the currently displayed image in a pop-up window.
+Crop the currently displayed image using the **CropUI** tool.
 
-- Drag with the mouse to define the area that will be cropped, and then press `Space` or use the `Right-Click Context Menu` to save the crop.
-- Click anywhere outside the crop area to clear the rectangle.
-- Double-Click to quickly create a 512x512, or 1024x1024 crop rectangle. (Automatic based on image size)
-- Enable `Freeform Crop` from the `Right-Click Context Menu` to define a non-square rectangle.
-- Each crop will have `_crop##` appended to the filename.
-  - Saving multiple crops of the same image will increment the filename like this: `_crop01`, `_crop02`, etc.
+---
+
+**CropUI** provides a user-friendly interface to crop images and GIFs.
+
+- **Selection Modes**:
+  - **Free Selection**: Click and drag to create a custom selection of any size.
+  - **Fixed Aspect Ratio**: Maintain a specific aspect ratio when creating or resizing the selection. Choose from common ratios or enter custom values.
+  - **Fixed Dimensions**: Set exact width and height for the selection area.
+
+- **Selection Adjustment**:
+  - **Move Selection**: Click and drag inside the selection to reposition it.
+  - **Resize Selection**: Use the handles around the selection rectangle to adjust its size.
+  - **Keyboard Shortcuts**:
+    - **Arrow Keys**: Move the selection by 1 pixel.
+    - **Shift + Arrow Keys**: Move the selection by 10 pixels.
+  - **Mouse Wheel Shortcuts**:
+    - **Scroll**: Adjust the selection size by scrolling up or down.
+    - **Shift + Scroll**: Adjust the selection width by scrolling up or down.
+    - **Ctrl + Scroll**: Adjust the selection height by scrolling up or down.
+
+- **Guidelines**:
+  - **Rule of Thirds**: Overlay guidelines to help compose your image according to the rule of thirds.
+  - **Center Lines**: Display vertical and horizontal center lines for alignment.
+  - **Diagonal Lines**: Show diagonal guidelines for balanced composition.
+
+- **Image Transformation**:
+  - **Rotate**: Rotate the image by 90-degree increments.
+  - **Flip**: Flip the image horizontally or vertically.
+
+- **GIF Support**:
+  - **Frame Extraction**: Extract all frames from a GIF.
+  - **Frame Navigation**: Navigate through frames using the thumbnail timeline, allowing you to crop any frame of a GIF.
+
+- **Tips:**
+  - **Creating a Selection**:
+    - Double-click on the image to create a selection that encompasses the entire image.
+    - Click and drag to create a custom selection area.
+    - Use the selection handles to adjust size and shape.
+  - **Fixed Selection**:
+    - Enable fixed aspect ratio or dimensions for precise cropping needs.
+    - Enter specific values or select from predefined options.
+  - **Guidelines**:
+    - Toggle guidelines to assist with image composition.
+    - Combine different guidelines for more precise alignment.
+  - **Cropping the Image**:
+    - After adjusting the selection, click the **Crop** button to apply the crop.
+    - Choose to overwrite the original image or save as a new file.
+  - **Navigating Images**:
+    - Use the **Previous** and **Next** buttons to cycle through images in the current directory.
+  - **Working with GIFs**:
+    - Extract frames for individual editing.
+    - View and select frames using the thumbnail timeline.
+  - **Help and Support**:
+    - Access the **Help** menu for detailed instructions and tips on using CropUI.
+
+
+
+---
+
+### Batch Upscale
+#### *(Upscale images using models like RESRGAN, AnimeSharp-4x, and UltraSharp-4x)*
+
+...
 
 ---
 
