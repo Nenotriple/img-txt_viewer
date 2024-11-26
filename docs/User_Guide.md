@@ -13,52 +13,73 @@ If you have any questions, need further assistance, or anything else, please fee
 
 # Index
 
-**✂️ Shortcuts**
-- [`ALT+LEFT/RIGHT`](#altleftright) - Quickly move between img-txt pairs.
-- [`SHIFT+DEL`](#shiftdel) - Send the current pair to a local trash folder.
-- [`ALT`](#alt) - Cycle through autocomplete suggestions.
-- [`TAB`](#tab) - Insert the highlighted suggestion.
-- [`CTRL+S`](#ctrls) - Save the current text file.
-- [`CTRL+E`](#ctrle) - Jump to the next empty text file.
-- [`CTRL+R`](#ctrlr) - Jump to a random img-txt pair.
-- [`CTRL+F`](#ctrlf) - Highlight all duplicate words.
-- [`CTRL+Z / CTRL+Y`](#ctrlz--ctrly) - Undo/Redo.
-- [`CTRL+W`](#ctrlw) - Close the window.
-- [`F1`](#f1-popup-zoom) - Toggle zoom popup.
-- [`F2`](#f2) - Open the Image-Grid view.
-- [`F4`](#f4) - Open the current image in your default editor.
-- [`F5`](#f5) - Open Batch Tag Edit.
-- [`Middle-click`](#middle-click) - Middle-click a tag to delete it.
-
-**📜 Text Tools**
-- [`Search and Replace`](#search-and-replace) - Find and replace text across all text files.
-- [`Prefix`](#prefix) - Insert text at the start of all text files.
-- [`Append`](#append) - Insert text at the end of all text files.
-- [`AutoTag`](#autotag) - Automatically tag images using ONNX vision models.
-- [`Filter`](#filter) - Filter pairs based on text, missing text files, and more.
-- [`Highlight`](#highlight) - Always highlight specific text.
-- [`My Tags`](#my-tags) - Add your custom tags for autocomplete suggestions.
-- [`Batch Tag Edit`](#batch-tag-edit) - Edit and manage tags with a user-friendly interface.
-- [`Create Wildcard From Captions`](#create-wildcard-from-captions) - Combine all captions into one text file.
-- [`Cleanup Text`](#cleanup-text) - Fix typos across all text files.
-
-**📷 Image Tools**
-- [`Batch Resize Images`](#batch-resize-images) - Resize all images using different methods and conditions.
-- [`Resize Image`](#resize-image) - Resize the current image by exact resolution or percentage.
-- [`Batch Crop Images`](#batch-crop-images) - Crop all images to a specified resolution.
-- [`Crop Image`](#crop-image) - Crop an image or GIF using various methods and tools.
-- [`Batch Upscale`](#upscale-image) - Upscale images using models like R-ESRGAN.
-- [`Upscale Image`](#upscale-image) - Upscale an image using models like R-ESRGAN.
-- [`Find Duplicate Files`](#find-duplicate-files) - Identify and separate duplicate files.
-- [`Expand`](#expand) - Expand images to square ratio for simple backgrounds.
-- [`Edit Image Panel`](#edit-image-panel) - Adjust image properties like brightness, contrast, etc.
-
-**📦 Other Tools**
-- [`Batch Rename/Convert`](#batch-renameconvert) - Rename and convert images sequentially with padded zeros.
-- [`Thumbnail Panel`](#thumbnail-panel) - Display thumbnails for quick navigation.
-- [`Auto-Save`](#auto-save) - Save text automatically when switching pairs.
-- [`Image-Grid`](#image-grid) - Open the Image-Grid view.
-
+- **✂️ Shortcuts**
+  - [`ALT+LEFT/RIGHT`](#altleftright) - Quickly move between img-txt pairs.
+  - [`SHIFT+DEL`](#shiftdel) - Send the current pair to a local trash folder.
+  - [`ALT`](#alt) - Cycle through autocomplete suggestions.
+  - [`TAB`](#tab) - Insert the highlighted suggestion.
+  - [`CTRL+S`](#ctrls) - Save the current text file.
+  - [`CTRL+E`](#ctrle) - Jump to the next empty text file.
+  - [`CTRL+R`](#ctrlr) - Jump to a random img-txt pair.
+  - [`CTRL+F`](#ctrlf) - Highlight all duplicate words.
+  - [`CTRL+Z / CTRL+Y`](#ctrlz--ctrly) - Undo/Redo.
+  - [`CTRL+W`](#ctrlw) - Close the window.
+  - [`F1`](#f1-popup-zoom) - Toggle zoom popup.
+  - [`F2`](#f2) - Open the Image-Grid view.
+  - [`F4`](#f4) - Open the current image in your default editor.
+  - [`F5`](#f5) - Open Batch Tag Edit.
+  - [`Middle-click`](#middle-click) - Middle-click a tag to delete it.
+- **📜 Text Tools**
+  - [`Search and Replace`](#search-and-replace) - Find and replace text across all text files.
+  - [`Prefix`](#prefix) - Insert text at the start of all text files.
+  - [`Append`](#append) - Insert text at the end of all text files.
+  - [`AutoTag`](#autotag) - Automatically tag images using ONNX vision models.
+  - [`Filter`](#filter) - Filter pairs based on text, missing text files, and more.
+  - [`Highlight`](#highlight) - Always highlight specific text.
+  - [`Font`](#font) - Adjust the font size and line height.
+  - [`My Tags`](#my-tags) - Add your custom tags for autocomplete suggestions.
+  - [`Stats`](#stats) - Display various file stats.
+  - [`Batch Tag Edit`](#batch-tag-edit) - Edit and manage tags with a user-friendly interface.
+  - [`Create Wildcard From Captions`](#create-wildcard-from-captions) - Combine all captions into one text file.
+  - [`Cleanup Text`](#cleanup-text) - Fix typos across all text files.
+- **📷 Image Tools**
+  - [`Batch Resize Images`](#batch-resize-images) - Resize all images using different methods and conditions.
+  - [`Resize Image`](#resize-image) - Resize the current image by exact resolution or percentage.
+  - [`Batch Crop Images`](#batch-crop-images) - Crop all images to a specified resolution.
+  - [`Crop Image`](#crop-image) - Crop an image or GIF using various methods and tools.
+  - [`Batch Upscale`](#upscale-image) - Upscale an image using models like R-ESRGAN.
+  - [`Upscale Image`](#upscale-image) - Upscale an image using models like R-ESRGAN.
+  - [`Find Duplicate Files`](#find-duplicate-files) - Identify and separate duplicate files.
+  - [`Expand`](#expand) - Expand images to square ratio for simple backgrounds.
+  - [`Edit Image Panel`](#edit-image-panel) - Adjust image properties like brightness, contrast, etc.
+- **📦 Other Tools**
+  - [`Batch Rename/Convert`](#batch-renameconvert) - Rename and convert images sequentially with padded zeros.
+  - [`Image-Grid`](#image-grid) - Open the Image-Grid view.
+  - [`Thumbnail Panel`](#thumbnail-panel) - Display thumbnails for quick navigation.
+- **⚙️ Settings**
+  - [`Auto-Save`](#auto-save) - Save text automatically when switching pairs.
+  - [`Clean-Text`](#clean-text) - Automatically clean text files.
+  - [`Auto-Delete Blank Files`](#auto-delete-blank-files) - Automatically delete blank text files.
+  - [`Colored Suggestions`](#colored-suggestions) - Colorize autocomplete suggestions.
+  - [`Highlight Selection`](#highlight-selection) - Highlight matching selected text.
+  - [`Big Save Button`](#big-save-button) - Enlarge the save button.
+  - [`List View`](#list-view) - Display the text box tags in a list view.
+  - [`Always On Top`](#always-on-top) - Keep the app window on top of other windows.
+  - [`Toggle Zoom`](#toggle-zoom) - Toggle the zoom popup.
+  - [`Toggle Thumbnail Panel`](#toggle-thumbnail-panel) - Toggle the thumbnail panel.
+  - [`Toggle Edit Panel`](#toggle-edit-panel) - Toggle the edit panel.
+  - [`Vertical View`](#vertical-view) - Switch between horizontal and vertical view.
+  - [`Swap Image Text Side`](#swap-image-text-side) - Swap the image and text sides.
+  - [`Image Display Quality`](#image-display-quality) - Adjust image display quality.
+  - [`Loading Order`](#loading-order) - Set the order for loading images and text files.
+  - Autocomplete Settings:
+    - [`Dictionary`](#dictionary) - Choose the autocomplete dictionary.
+    - [`Threshold`](#threshold) - Set the autocomplete threshold.
+    - [`Quantity`](#quantity) - Set the number of autocomplete suggestions.
+    - [`Match Mode`](#match-mode) - Set the autocomplete match mode.
+  - [`Reset Settings`](#reset-settings) - Reset all settings to default.
+  - [`Open Settings File...`](#open-settings-file) - Open the settings file.
+  - [`Open Mytags File...`](#open-mytags-file) - Open the mytags file.
 
 ---
 
@@ -263,6 +284,8 @@ With the primary text box in focus, press `F5` to open Batch Tag Edit.
 
 Use this tool to search for a string of text across all text files in the selected directory. If a match is found, it will be replaced exactly with the given text.
 
+- **Access:**
+  - Via the img-txt Viewer toolbar tab: `S&R`
 - **Usage:**
   - Search for: `the big brown dog`
   - Replace with: `the big red dog`
@@ -285,6 +308,8 @@ Use this tool to search for a string of text across all text files in the select
 
 Use this tool to prefix all text files in the selected directory with the entered text. This means that the entered text will appear at the start of each text file.
 
+- **Access:**
+  - Via the img-txt Viewer toolbar tab: `Prefix`
 - **Usage:**
   - Enter the text you want to insert at the start of all text files.
   - Press the `Go!` button or hit `Enter` to apply the prefix.
@@ -302,6 +327,8 @@ Use this tool to prefix all text files in the selected directory with the entere
 
 Use this tool to append all text files in the selected directory with the entered text. This means that the entered text will appear at the end of each text file.
 
+- **Access:**
+  - Via the img-txt Viewer toolbar tab: `Append`
 - **Usage:**
   - Enter the text you want to insert at the end of all text files.
   - Press the `Go!` button or hit `Enter` to apply the append.
@@ -319,6 +346,8 @@ Use this tool to append all text files in the selected directory with the entere
 
 Use this tool to automatically analyze images and generate tags based on the ONNX vision model.
 
+- **Access:**
+  - Via the img-txt Viewer toolbar tab: `AutoTag`
 - **Usage:**
   - Select the image you want to tag.
   - Open the AutoTag tool from the toolbar below the text box or by the image right-click context menu.
@@ -346,13 +375,14 @@ img-txt_viewer/
 
 Use this tool to filter img-txt pairs based on specific criteria.
 
+- **Access:**
+  - Via the img-txt Viewer toolbar tab: `Filter`
 - **Usage:**
   - Enter any string of text to display only pairs containing that text.
   - **Example Inputs:**
     - `dog` *(shows only pairs containing "dog")*
     - `!dog` *(excludes pairs containing "dog")*
     - `!dog + cat` *(excludes "dog" pairs, includes "cat" pairs)*
-
 - **Tips:**
   - Use ` + ` to include multiple strings or tags.
   - Use `!` before text to exclude pairs containing that text.
@@ -370,10 +400,11 @@ Use this tool to filter img-txt pairs based on specific criteria.
 
 Specify text to highlight when moving to a new img-txt pair.
 
+- **Access:**
+  - Via the img-txt Viewer toolbar tab: `Highlight`
 - **Example Inputs:**
   - `dog` *(highlights "dog")*
   - `dog + cat` *(highlights both "dog" and "cat")*
-
 - **Tips:**
   - Use ` + ` to include multiple strings or tags.
   - Enable `Regex` for regular expression matching.
@@ -384,11 +415,13 @@ Specify text to highlight when moving to a new img-txt pair.
 ---
 
 
-### Font Settings
+### Font
 *(Adjust the font size and line height)*
 
 Customize text appearance by adjusting font size and line height.
 
+- **Access:**
+  - Via the img-txt Viewer toolbar tab: `Font`
 - **Usage:**
   - Navigate to the **Font** tab.
   - Use sliders or input fields to adjust settings.
@@ -403,11 +436,12 @@ Customize text appearance by adjusting font size and line height.
 
 Quickly edit the `my_tags.csv` file to add custom tags to the autocomplete dictionary.
 
+- **Access:**
+  - Via the img-txt Viewer toolbar tab: `MyTags`
 - **Usage:**
   - Open the **MyTags** tab.
   - Add or modify tags in the list.
   - Save changes to refresh autocomplete.
-
 - **Features:**
   - **Add Tags:** Enter a tag and press `Add` or `Enter`.
   - **Edit Tags:** Select a tag, click `Edit`, modify it, and press `Enter`.
@@ -417,7 +451,6 @@ Quickly edit the `my_tags.csv` file to add custom tags to the autocomplete dicti
   - **Context Menu:** Right-click a tag for quick actions.
   - **Save Tags:** Click `Save Tags` to update `my_tags.csv`.
   - **Use MyTags:** Toggle the checkbox to enable custom tags.
-
 - **Tips:**
   - Access `my_tags.csv` via `Options` > `Open MyTags File...`.
   - Prioritize important tags by moving them to the top.
@@ -432,19 +465,19 @@ Quickly edit the `my_tags.csv` file to add custom tags to the autocomplete dicti
 
 Display statistics about the current datasets images and text contents.
 
+- **Access:**
+  - Via the img-txt Viewer toolbar tab: `Stats`
 - **Usage:**
   - Navigate to the **Stats** tab.
   - Click `Refresh` to update statistics.
   - Enable `Process Image Stats` to include image data.
   - Enable `Truncate Captions` to limit caption length if needed.
-
 Calculated statistics include:
 - **File Summary**
   - Total Files
   - Total Text Filesize
   - Total Image Filesize
   - Total Filesize
-
 - **Text Statistics**
   - Total Characters
   - Total Words
@@ -453,7 +486,6 @@ Calculated statistics include:
   - Total Sentences
   - Total Paragraphs
   - Unique Words
-
 - **Average Text Statistics**
   - Average Characters per File
   - Average Words per File
@@ -462,12 +494,10 @@ Calculated statistics include:
   - Average Word Length
   - Median Word Length
   - Average Sentence Length
-
 - **Additional Text Statistics**
   - Type-Token Ratio
   - Word Length Standard Deviation
   - Sentence Length Standard Deviation
-
 - **Image Information**
   - Image File Formats
   - Square Images
@@ -476,7 +506,6 @@ Calculated statistics include:
   - Average PPI for All Images
   - Average Image Width
   - Average Image Height
-
 - **Other Statistics**
   - Image Resolutions
   - Image Aspect Ratios
@@ -496,6 +525,8 @@ Calculated statistics include:
 
 Use the Batch Tag Edit tool to edit and manage tags across all files.
 
+- **Access:**
+  - Via the `Tools` > `Batch Operations` > `Batch Tag Edit...` menu.
 - **Features:**
   - **Tag List:** View all unique tags.
   - **Info Display:** See counts of total, visible, selected tags, pending deletions, and edits.
@@ -506,7 +537,6 @@ Use the Batch Tag Edit tool to edit and manage tags across all files.
   - **Save Changes:** Click to apply edits.
   - **Help:** Click "?" for help messages.
   - **Shortcuts:** `F5` to close, `Ctrl+C` to copy tags.
-
 - **Usage Tips:**
   - Filter and sort to manage specific tags.
   - Apply edits to multiple tags simultaneously.
@@ -522,9 +552,11 @@ Use the Batch Tag Edit tool to edit and manage tags across all files.
 
 Combine all image captions into a single file.
 
+- **Access:**
+  - Via the `Tools` > `Batch Operations` > `Create Wildcard From Captions...` menu.
 - **Usage:**
   - Select the directory with img-txt pairs.
-  - Go to `Tools` > `Batch Operations` > `Create Wildcard From Captions...`.
+  - Select the menu command.
   - Captions are saved as `combined_captions.txt` in the directory.
 
 
@@ -536,18 +568,14 @@ Combine all image captions into a single file.
 
 Clean text files to fix issues like duplicate tags and extra spaces.
 
-- **Usage:**
-  - Open `Tools` > `Batch Operations` > `Cleanup All Text Files...`
-  - Confirm to proceed when prompted.
-
+- **Access:**
+  - Via the `Tools` > `Batch Operations` > `Cleanup Text...` menu.
 - **Tips:**
-  - Enable `Clean-Text` to auto-clean when saving.
+  - Enable the `Clean-Text` setting to auto-clean when saving.
   - Regular cleaning maintains readability.
-
 - **Example:**
   - Before: `dog,, ,dog,solo,  ,happy  ,,`
   - After: `dog, solo, happy`
-
 - **Operations Include:**
   - Removing duplicates.
   - Fixing punctuation and spacing.
@@ -571,10 +599,10 @@ Clean text files to fix issues like duplicate tags and extra spaces.
 
 Use this tool to resize all images in a folder according to your needs.
 
-- **Access:** Via `Tools` > `Batch Operations` > `Batch Resize Images`.
-
-- **Supported File Types:** `jpg`, `jpeg`, `png`, `webp`, `bmp`, `tif`, `tiff`.
-
+- **Access:**
+  - Via the `Tools` > `Batch Operations` > `Batch Resize Images...` menu.
+- **Supported File Types:**
+ - `jpg`, `jpeg`, `png`, `webp`, `bmp`, `tif`, `tiff`.
 - **Resize Options:**
   - **Resize To:**
     - *Resolution:* Resize to specific width and height (ignoring aspect ratio).
@@ -583,32 +611,26 @@ Use this tool to resize all images in a folder according to your needs.
     - *Height:* Resize images to a specific height while preserving aspect ratio.
     - *Shorter Side:* Resize based on the shorter side while preserving aspect ratio.
     - *Longer Side:* Resize based on the longer side while preserving aspect ratio.
-
   - **Resize Condition:**
     - *Upscale and Downscale:* Resize regardless of original size.
     - *Upscale Only:* Resize only if the new dimensions are larger.
     - *Downscale Only:* Resize only if the new dimensions are smaller.
-
 - **Quality Settings:**
   - Control output quality for JPG and WEBP images.
   - Higher values yield better quality but larger file sizes.
   - Ignored for PNG images (always lossless).
-
 - **File Type Conversion:**
   - Choose `AUTO` to keep original file types.
   - Select JPG, PNG, or WEBP to convert images.
-
 - **Output Settings:**
   - **Use Output Folder:** Save resized images to a `Resize Output` folder.
   - **Overwrite Files:** Decide whether to overwrite existing files.
   - **Save PNG Info:** Preserve PNG metadata when resizing or converting.
-
 - **Usage Steps:**
   1. Open the tool via the menu.
   2. Select the directory containing images.
   3. Configure resize options and settings.
   4. Click `Resize` to start the process.
-
 - **Tips:**
   - Use valid input values to avoid errors.
   - Click the `?` button for detailed help.
@@ -622,26 +644,21 @@ Use this tool to resize all images in a folder according to your needs.
 
 Adjust the size of the currently displayed image.
 
-- **Access:** Via `Tools` menu or image right-click context menu.
-
+- **Access:**
+  - Via `Tools` > `Edit Current Pair` menu, or image right-click context menu.
 - **Resize Modes:**
   - **Pixels:** Specify exact width and height.
   - **Percentage:** Scale the image by a percentage.
-
 - **Aspect Ratio:**
   - **Locked:** Maintain original aspect ratio.
   - **Unlocked:** Adjust width and height independently.
-
 - **Quality and File Type:**
   - Adjust quality for JPG and WEBP formats.
   - Choose output file type: JPG, PNG, or WEBP.
-
 - **Resize Methods:**
   - Select from methods like Lanczos (recommended), Bicubic, Nearest, etc.
-
 - **Usage Tips:**
   - Right-click width or height fields to reset values.
-  - Decide whether to overwrite the original file or save a new one.
   - Real-time updates show new dimensions and estimated size.
 
 
@@ -653,17 +670,15 @@ Adjust the size of the currently displayed image.
 
 Crop and resize multiple images to a specific resolution.
 
-- **Access:** Via `Tools` > `Batch Operations` > `Batch Crop Images`.
-
+- **Access:**
+  - Via the `Tools` > `Batch Operations` > `Batch Crop Images...` menu.
 - **Usage Steps:**
   1. Enter the desired width and height.
   2. Choose a crop anchor point (e.g., Center, North-West).
   3. Click `Crop` to begin processing.
-
 - **Anchor Points:**
   - Determine which part of the image is kept when cropping.
   - Options include Center, Corners, and Sides.
-
 - **Tips:**
   - Cropped images are saved in a `cropped_images` folder.
   - Filenames include the new resolution (e.g., `image_800x600.jpg`).
@@ -678,8 +693,8 @@ Crop and resize multiple images to a specific resolution.
 
 Use the **CropUI** tool to precisely crop the current image or GIF.
 
-- **Access:** Via `Tools` menu or image right-click context menu.
-
+- **Access:**
+  - Via `Tools` > `Edit Current Pair` > `Crop` menu, or image right-click context menu.
 - **Features:**
   - **Selection Modes:**
     - *Free Selection:* Click and drag to create a custom selection.
@@ -692,7 +707,6 @@ Use the **CropUI** tool to precisely crop the current image or GIF.
     - Rotate or flip the image as needed.
   - **GIF Support:**
     - Extract and navigate frames for cropping.
-
 - **Usage Tips:**
   - Double-click the image to select the entire area.
   - Save cropped images as new files or overwrite originals.
@@ -705,27 +719,26 @@ Use the **CropUI** tool to precisely crop the current image or GIF.
 ### Upscale Image
 *(Upscale images using models like R-ESRGAN, AnimeSharp-4x, and UltraSharp-4x)*
 
-Enhance image resolution using upscaling models.
+Enhance image quality using AI upscaling models.
 
-- **Access:** Via `Tools` menu or image right-click context menu.
+This tool utilizes [Xinntao's Portable ESRGAN executable files (NCNN).](https://github.com/xinntao/Real-ESRGAN?tab=readme-ov-file#portable-executable-files-ncnn)
 
+- **Access:**
+  - Single: Via `Tools` > `Edit Current Pair` > `Upscale...` menu, or image right-click context menu.
+  - Batch: Via the `Tools` > `Batch Operations` > `Batch Upscale...` menu.
 - **Upscale Models:**
   - Choose from models like `realesrgan-x4plus`, `AnimeSharp-4x`, etc.
-
 - **Settings:**
   - **Upscale Factor:** From 0.25x to 8.00x (default 2.00x).
   - **Upscale Strength:** Blend between original and upscaled image (0% to 100%).
-
 - **Usage Steps:**
-  1. Open the Upscale tool.
-  2. Select the desired model.
-  3. Adjust the upscale factor and strength.
-  4. Click `Upscale` to start.
-
+  - Open the Upscale tool.
+  - Select the desired model.
+  - Adjust the upscale factor and strength.
+  - Click `Upscale` to start.
 - **Batch Mode:**
   - Upscale multiple images at once.
   - Choose input and output folders.
-
 - **Tips:**
   - Add additional models to the `ncnn_models` folder.
   - Models should be in NCNN format (`.bin` and `.param` files).
@@ -740,8 +753,8 @@ Enhance image resolution using upscaling models.
 
 Scan folders to find and handle duplicate files.
 
-- **Access:** Via `Tools` > `Batch Operations` > `Find Duplicate Files`.
-
+- **Access:**
+  - Via the `Tools` > `Batch Operations` > `Find Duplicate Files...` menu.
 - **Options:**
   - **Hash Algorithms:** Choose MD5 (faster) or SHA-256 (more accurate).
   - **Duplicate Handling:**
@@ -754,7 +767,6 @@ Scan folders to find and handle duplicate files.
   - **Recursive Scanning:** Include subfolders.
   - **Max Scan Size:** Set a size limit for files to scan.
   - **File Types:** Specify which file types to include.
-
 - **Additional Actions:**
   - **Undo:** Restore moved duplicates.
   - **Move Duplicates Upfront:** Move duplicates to root for easy management.
@@ -769,16 +781,14 @@ Scan folders to find and handle duplicate files.
 
 Expand the current image to a square aspect ratio.
 
-- **Access:** Via `Tools` menu or image right-click context menu.
-
+- **Access:**
+  - Via `Tools` > `Edit Current Pair` > `Expand...` menu, or image right-click context menu.
 - **Functionality:**
   - Expands the shorter side to match the longer side.
   - Ideal for images with simple backgrounds.
-
 - **Output:**
   - Saves a new image with `_ex` appended to the filename.
   - Copies associated text files with `_ex` appended.
-
 - **Output:**
   - A portrait image would expand like this: *input=*`|-|`, *output=*`|--|`
   - A landscape image would expand like this: *input=*`|---|`, *output=*`|--|`
@@ -792,28 +802,26 @@ Expand the current image to a square aspect ratio.
 
 Fine-tune image appearance by adjusting various properties.
 
-- **Access:** Via the image editing options.
-
+- **Access:**
+  - Via the `Options` menu, or image `View` menu.
 - **Adjustable Properties:**
   - `Brightness`, `Contrast`, `AutoContrast`
   - `Highlights`, `Shadows`
   - `Saturation`, `Sharpness`
   - `Hue`, `Color Temperature`
-
 - **Adjustment Controls:**
   - Use sliders ranging from -100 to 100.
   - **Cumulative Edit:** Apply edits cumulatively when enabled.
   - **Revert Button:** Cancel changes and refresh the image.
     - *Right-click* to reset all adjustments.
-
 - **Additional Parameters:**
   - **Highlights and Shadows:**
     - *Threshold:* Adjusts affected pixels.
     - *Blur Radius:* Controls smoothness.
   - **Sharpness:**
     - *Boost:* Increases sharpening effect.
-
 - **Usage Tips:**
+  - Right-Click the *Revert* button to reset all adjustments.
   - Some adjustments require the image to be in RGB mode.
   - Decide whether to overwrite the original image when saving.
 
@@ -830,58 +838,20 @@ Fine-tune image appearance by adjusting various properties.
 
 Rename and optionally convert images in bulk.
 
-- **Access:** Via `Tools` > `Batch Operations` > `Batch Rename/Convert`.
-
+- **Access:**
+  - Via the `Tools` > `Batch Operations` > `Batch Rename/Convert...` menu.
 - **Functionality:**
   - **Image Conversion:** Convert images to JPG format (except GIFs).
     - Option to rename without converting.
   - **Sequential Renaming:** Rename image-text pairs using padded zeros.
-
 - **Example:**
   - **Before:** `aH15520.jpg`, `aH15520.txt`; `bH15521.png`, `bH15521.txt`
   - **After:** `00001.jpg`, `00001.txt`; `00002.jpg`, `00002.txt`
-
 - **Output:**
   - Files are saved to a `Renamed Output` folder to prevent overwriting.
-
 - **Tips:**
   - Only text files are renamed, not converted.
   - Ensure files are properly paired before renaming.
-
-
----
-
-
-### Thumbnail Panel
-*(Display thumbnails for quick navigation)*
-
-View and navigate images using thumbnails.
-
-- **Features:**
-  - **Quick Navigation:** Click thumbnails to open images.
-  - **Context Menu:** Right-click for options like deleting or editing.
-  - **Thumbnail Size:** Adjust size for better visibility.
-
-- **Tips:**
-  - Use the thumbnail panel for efficient browsing.
-  - Customize thumbnail size to suit your preference.
-
-
----
-
-
-### Auto-Save
-*(Save text automatically when switching pairs)*
-
-Automatically save text when certain actions occur.
-
-- **Triggers:**
-  - Switching between img-txt pairs.
-  - Changing the active directory.
-  - Closing the application.
-
-- **Features:**
-  - Works with `Clean-Text` option to tidy text before saving.
 
 
 ---
@@ -892,8 +862,8 @@ Automatically save text when certain actions occur.
 
 Browse images in a grid layout for easy selection.
 
-- **Access:** Press `F2` or via the menu.
-
+- **Access:**
+  - Press `F2` or via the image `View` menu, or image right-click context menu.
 - **Features:**
   - **Thumbnail Size:** Adjust using the slider.
   - **Auto-Close:** Automatically close after selecting an image.
@@ -902,13 +872,260 @@ Browse images in a grid layout for easy selection.
   - **Extra Filtering:**
     - Filter by resolution, aspect ratio, file size, filename, file type, or tags.
   - **Load More:** Load additional images if not all are displayed.
-
 - **Tips:**
   - **Navigation:** Click and drag the title bar to move the window.
   - **Closing:** Click the "X" or press `Escape`.
   - **Image Info:** Hover to see details like filename and resolution.
   - **Refresh:** Reload the grid after making changes.
   - **Load All:** Be cautious as loading many images may be slow.
+
+
+<!--####################################################################################################-->
+<!--####################################################################################################-->
+<!--####################################################################################################-->
+
+
+# ⚙️Settings
+
+
+### Auto-Save
+*(Save text automatically when switching pairs)*
+
+Automatically save text when certain actions occur.
+
+- **Access:**
+  - Via the `Auto-Save` Checkbutton.
+- **Triggers:**
+  - Switching between img-txt pairs.
+  - Changing the active directory.
+  - Closing the application.
+- **Features:**
+  - Works with `Clean-Text` option to tidy text before saving.
+
+
+---
+
+
+### Clean-Text
+*(Automatically clean text files when saving)*
+
+- **Access:**
+  - Via `Options` > `Clean-Text`.
+
+
+---
+
+
+### Auto-Delete Blank Files
+*(Automatically delete blank text files)*
+
+- **Access:**
+  - Via `Options` > `Auto-Delete Blank Files`.
+
+---
+
+
+### Colored Suggestions
+*(Enable colorized autocomplete suggestions)*
+
+- **Access:**
+  - Via `Options` > `Colored Suggestions`.
+
+---
+
+
+### Highlight Selection
+*(Highlight matching selected text)*
+
+- **Access:**
+  - Via `Options` > `Highlight Selection`.
+
+
+---
+
+
+### Big Save Button
+*(Enlarge the save button)*
+
+- **Access:**
+  - Via `Options` > `Big Save Button`.
+
+---
+
+
+### List View
+*(Display the text box tags in a list view)*
+
+- **Access:**
+  - Via `Options` > `List View`.
+
+
+---
+
+
+### Always On Top
+*(Keep the app window on top of other windows)*
+
+- **Access:**
+  - Via `Options` > `Always On Top`.
+
+
+---
+
+
+### Toggle Zoom
+*(Toggle the zoom popup)*
+
+- **Access:**
+  - Via `Options` > `Toggle Zoom`.
+  - Via image `View` menu.
+
+
+---
+
+
+### Thumbnail Panel
+*(Display thumbnails for quick navigation)*
+
+View and navigate images using thumbnails.
+
+- **Access:**
+  - Via `Options` > `Toggle Thumbnail Panel`
+  - Via image `View` menu.
+- **Features:**
+  - **Quick Navigation:** Click thumbnails to open images.
+  - **Context Menu:** Right-click for options like deleting or editing.
+  - **Thumbnail Size:** Adjust size for better visibility.
+- **Tips:**
+  - Use the thumbnail panel for efficient browsing.
+  - Customize thumbnail size to suit your preference.
+
+
+---
+
+
+### Toggle Edit Panel
+*(Toggle the edit panel)*
+
+- **Access:**
+  - Via `Options` > `Toggle Edit Panel`
+  - Via image `View` menu.
+
+
+---
+
+
+### Vertical View
+*(Switch between horizontal and vertical view)*
+
+- **Access:**
+  - Via `Options` > `Vertical View`.
+  - Via image `View` menu.
+
+
+---
+
+
+### Swap Image Text Side
+*(Swap the image and text sides)*
+
+- **Access:**
+  - Via `Options` > `Swap img-txt Sides`.
+  - Via image `View` menu.
+
+
+---
+
+
+### Image Display Quality
+*(Adjust image display quality)*
+
+- **Access:**
+  - Via `Options` > `Image Display Quality`.
+  - Via image `View` menu.
+
+
+---
+
+
+### Loading Order
+*(Set the order for loading images and text files)*
+
+- **Access:**
+  - Via `Options` > `Loading Order`.
+
+
+---
+
+### Dictionary
+*(Choose the autocomplete dictionary)*
+
+- **Access:**
+  - Via `Options` > `Autocomplete` > `Dictionary`.
+  - Via the `☰` menu on the autocomplete row.
+
+
+---
+
+
+### Threshold
+*(Set the autocomplete threshold)*
+
+- **Access:**
+  - Via `Options` > `Autocomplete` > `Threshold`.
+  - Via the `☰` menu on the autocomplete row.
+
+
+---
+
+
+### Quantity
+*(Set the number of autocomplete suggestions)*
+
+- **Access:**
+  - Via `Options` > `Autocomplete` > `Quantity`.
+  - Via the `☰` menu on the autocomplete row.
+
+
+---
+
+
+### Match Mode
+*(Set the autocomplete match mode)*
+
+- **Access:**
+  - Via `Options` > `Autocomplete` > `Match Mode`.
+  - Via the `☰` menu on the autocomplete row.
+
+
+---
+
+
+### Reset Settings
+*(Reset all settings to default)*
+
+- **Access:**
+  - Via `Options` > `Reset Settings`.
+
+
+---
+
+
+### Open Settings File...
+*(Open the settings file)*
+
+- **Access:**
+  - Via `Options` > `Open Settings File...`
+
+
+---
+
+
+### Open MyTags File...
+*(Open the mytags file)*
+
+- **Access:**
+  - Via `Options` > `Open MyTags File...`
 
 
 ---
