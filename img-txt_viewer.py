@@ -600,23 +600,34 @@ class ImgTxtViewer:
         self.suggestion_textbox.bind("<Button-1>", self.disable_button)
         self.suggestion_textbox.bind("<B1-Motion>", self.disable_button)
         ToolTip.create(self.suggestion_textbox,
-            "TAB: Insert the highlighted suggestion\n"
-            "ALT: Cycle suggestion selection\n\n"
-            "Danbooru Color Code:\n"
-            "  Black = Normal Tag\n"
-            "  Red = Artist\n"
-            "  Purple = Copyright\n"
-            "  Green = Character\n"
-            "  Orange = Other\n\n"
-            "e621 Color Code:\n"
-            "  Black = General\n"
-            "  Light Orange = Artist\n"
-            "  Purple = Copyright\n"
-            "  Green = Character\n"
-            "  Dark Orange = Species\n"
-            "  Red = Invalid, Meta\n"
-            "  Dark Green = Lore",
-            1000, 6, 12
+            "Color Codes:\n"
+            "Danbooru:\n"
+            "  - General tags: Black\n"
+            "  - Artists: Red\n"
+            "  - Copyright: Magenta\n"
+            "  - Characters: Green\n"
+            "  - Meta: Orange\n"
+            "e621:\n"
+            "  - General tags: Black\n"
+            "  - Artists: Yellow\n"
+            "  - Copyright: Magenta\n"
+            "  - Characters: Green\n"
+            "  - Species: Orange\n"
+            "  - Meta: Red\n"
+            "  - Lore: Green\n"
+            "Derpibooru:\n"
+            "  - General tags: Black\n"
+            "  - Official Content: Yellow\n"
+            "  - Species: Light-Orange\n"
+            "  - Original Content: Pink\n"
+            "  - Rating: Blue\n"
+            "  - Body Type: Gray\n"
+            "  - Character: Teal\n"
+            "  - Original Content: Light-Purple\n"
+            "  - Error: Red\n"
+            "  - Official Content: Dark-Orange\n"
+            "  - Original Content: Light-Pink",
+            1000, 6, 12, justify="left"
         )
         # Suggestion Options
         self.suggestion_menubutton = ttk.Button(self.suggestion_frame, text="☰", takefocus=False, width=2, command=lambda: self.show_suggestion_context_menu(button=True))
