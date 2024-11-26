@@ -454,6 +454,6 @@ class SuggestionHandler:
 
     def clear_dictionary_csv_selection(self):
         """Reset CSV source selection to none."""
-        for attr in ['csv_danbooru', 'csv_derpibooru', 'csv_e621', 'csv_english_dictionary']:
+        for attr in ['csv_danbooru', 'danbooru_safe.csv', 'csv_derpibooru', 'csv_e621', 'csv_english_dictionary']:
             getattr(self, attr).set(False)
         self.update_autocomplete_dictionary()
