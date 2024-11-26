@@ -961,34 +961,35 @@ Automatically save text when certain actions occur.
 - **Functionality:**
   - Colorizes autocomplete suggestions for better visibility.
   - Colors are related to the dictionary used.
-  - Tags from `MyTags` are always <span style="background-color:black;color:white;"> Black </span>
+  - Tags from `MyTags` are always Black.
 - **Color Codes:**
   - **Danbooru:**
-    - General tags: <span style="background-color:black;color:white;"> Black </span>
-    - Artists: <span style="background-color:#c00004;color:white;"> #c00004 </span>
-    - Copyright: <span style="background-color:#a800aa;color:white;"> #a800aa </span>
-    - Characters: <span style="background-color:#00ab2c;color:white;"> #00ab2c </span>
-    - Meta: <span style="background-color:#fd9200;color:white;"> #fd9200 </span>
+    - General tags: `Black`
+    - Artists: `Red`
+    - Copyright: `Magenta`
+    - Characters: `Green`
+    - Meta: `Orange`
   - **e621:**
-    - General tags: <span style="background-color:black;color:white;"> Black </span>
-    - Artists: <span style="background-color:#f2ac08;color:white;"> #f2ac08 </span>
-    - Copyright: <span style="background-color:#dd00dd;color:white;"> #dd00dd </span>
-    - Characters: <span style="background-color:#00aa00;color:white;"> #00aa00 </span>
-    - Species: <span style="background-color:#ed5d1f;color:white;"> #ed5d1f </span>
-    - Meta: <span style="background-color:#ff3d3d;color:white;"> #ff3d3d </span>
-    - Lore: <span style="background-color:#228822;color:white;"> #228822 </span>
+    - General tags: `Black`
+    - Artists: `Yellow`
+    - Copyright: `Magenta`
+    - Characters: `Green`
+    - Species: `Orange`
+    - Meta: `Red`
+    - Lore: `Green`
   - **Derpibooru:**
-    - General tags: <span style="background-color:black;color:white;"> Black </span>
-    - Official Content: <span style="background-color:#e5b021;color:white;"> #e5b021 </span>
-    - Species: <span style="background-color:#fd9961;color:white;"> #fd9961 </span>
-    - Original Content: <span style="background-color:#cf5bbe;color:white;"> #cf5bbe </span>
-    - Rating: <span style="background-color:#3c8ad9;color:white;"> #3c8ad9 </span>
-    - Body Type: <span style="background-color:#a6a6a6;color:white;"> #a6a6a6 </span>
-    - Character: <span style="background-color:#47abc1;color:white;"> #47abc1 </span>
-    - Original Content: <span style="background-color:#7871d0;color:white;"> #7871d0 </span>
-    - Error: <span style="background-color:#df3647;color:white;"> #df3647 </span>
-    - Official Content: <span style="background-color:#c98f2b;color:white;"> #c98f2b </span>
-    - Original Content: <span style="background-color:#e87ebe;color:white;"> #e87ebe </span>
+    - General tags: `Black`
+    - Official Content: `Yellow`
+    - Species: `Light-Orange`
+    - Original Content: `Pink`
+    - Rating: `Blue`
+    - Body Type: `Gray`
+    - Character: `Teal`
+    - Original Content: `Light-Purple`
+    - Error: `Red`
+    - Official Content: `Dark-Orange`
+    - Original Content: `Light-Pink`
+
 
 ---
 
