@@ -28,7 +28,7 @@ If you have any questions, need further assistance, or anything else, please fee
   - [`F2`](#f2) - Open the Image-Grid view.
   - [`F4`](#f4) - Open the current image in your default editor.
   - [`F5`](#f5) - Open Batch Tag Edit.
-  - [`Middle-click`](#middle-click) - Middle-click a tag to delete it.
+  - [`Middle-click`](#middle-click) - Delete a tag.
 - **📜 Text Tools**
   - [`Search and Replace`](#search-and-replace) - Find and replace text across all text files.
   - [`Prefix`](#prefix) - Insert text at the start of all text files.
@@ -43,24 +43,23 @@ If you have any questions, need further assistance, or anything else, please fee
   - [`Create Wildcard From Captions`](#create-wildcard-from-captions) - Combine all captions into one text file.
   - [`Cleanup Text`](#cleanup-text) - Fix typos across all text files.
 - **📷 Image Tools**
-  - [`Batch Resize Images`](#batch-resize-images) - Resize all images using different methods and conditions.
+  - [`Batch Resize Images`](#batch-resize-images) - Resize all images using various methods and conditions.
   - [`Resize Image`](#resize-image) - Resize the current image by exact resolution or percentage.
   - [`Batch Crop Images`](#batch-crop-images) - Crop all images to a specified resolution.
   - [`Crop Image`](#crop-image) - Crop an image or GIF using various methods and tools.
-  - [`Batch Upscale`](#upscale-image) - Upscale an image using models like R-ESRGAN.
-  - [`Upscale Image`](#upscale-image) - Upscale an image using models like R-ESRGAN.
-  - [`Find Duplicate Files`](#find-duplicate-files) - Identify and separate duplicate files.
+  - [`Upscale Image`](#upscale-image) - Upscale image(s) using models like R-ESRGAN.
+  - [`Find Duplicate Files`](#find-duplicate-files) - Identify and manage duplicate files.
   - [`Expand`](#expand) - Expand images to square ratio for simple backgrounds.
   - [`Edit Image Panel`](#edit-image-panel) - Adjust image properties like brightness, contrast, etc.
 - **📦 Other Tools**
   - [`Batch Rename/Convert`](#batch-renameconvert) - Rename and convert images sequentially with padded zeros.
-  - [`Image-Grid`](#image-grid) - Open the Image-Grid view.
+  - [`Image-Grid`](#image-grid) - Browse images in a grid layout for easy selection.
   - [`Thumbnail Panel`](#thumbnail-panel) - Display thumbnails for quick navigation.
 - **⚙️ Settings**
   - [`Auto-Save`](#auto-save) - Save text automatically when switching pairs.
-  - [`Clean-Text`](#clean-text) - Automatically clean text files.
+  - [`Clean-Text`](#clean-text) - Automatically clean text files when saving.
   - [`Auto-Delete Blank Files`](#auto-delete-blank-files) - Automatically delete blank text files.
-  - [`Colored Suggestions`](#colored-suggestions) - Colorize autocomplete suggestions.
+  - [`Colored Suggestions`](#colored-suggestions) - Enable colorized autocomplete suggestions.
   - [`Highlight Selection`](#highlight-selection) - Highlight matching selected text.
   - [`Big Save Button`](#big-save-button) - Enlarge the save button.
   - [`List View`](#list-view) - Display the text box tags in a list view.
@@ -79,7 +78,7 @@ If you have any questions, need further assistance, or anything else, please fee
     - [`Match Mode`](#match-mode) - Set the autocomplete match mode.
   - [`Reset Settings`](#reset-settings) - Reset all settings to default.
   - [`Open Settings File...`](#open-settings-file) - Open the settings file.
-  - [`Open Mytags File...`](#open-mytags-file) - Open the mytags file.
+  - [`Open MyTags File...`](#open-mytags-file) - Open the mytags file.
 
 ---
 
@@ -89,7 +88,7 @@ If you have any questions, need further assistance, or anything else, please fee
 <!--####################################################################################################-->
 
 
-# ✂️Shortcuts
+# ✂️ Shortcuts
 
 
 ### ALT+LEFT/RIGHT
@@ -152,7 +151,7 @@ With the primary text box in focus, press `CTRL+S` to save the text to the paire
 ### CTRL+E
 *(Jump to the next empty text file)*
 
-With the primary text box in focus, press `CTRL+E` to jump to the next empty text file from the current index position.
+With the primary text box in focus, press `CTRL+E` to jump to the next img-txt pair where the text file is empty or does not exist.
 
 - Also available via the index entry right-click context menu.
 
@@ -176,10 +175,8 @@ With the primary text box in focus, press `CTRL+R` to jump to a random img-txt p
 
 With the primary text box in focus, press `CTRL+F` to highlight any duplicate words.
 
-- All matching words will be highlighted with the same color, but colors are randomized each time the hotkey is pressed.
-- This matches any duplicate string of text (minimum of 3 characters) and not just tags or words.
-- Words shorter than 3 characters or words that appear only once will not be highlighted.
-- Example text: "this cute **dog**, happy **dog**gy, small **dog**"
+- All matching words will be highlighted with the same color.
+- This matches any duplicate string of text (minimum of 3 characters), not just tags or words.
 - Also available via the primary text box right-click context menu.
 
 
@@ -207,7 +204,7 @@ Press `CTRL+W` to immediately close the app.
 
 
 ### F1 (Popup Zoom)
-*(toggle zoom popup)*
+*(Toggle zoom popup)*
 
 The Popup Zoom feature allows you to create a small popup window beside the mouse that displays a zoomed view of the image underneath.
 
@@ -225,7 +222,7 @@ Shortcuts:
 
 With the primary text box in focus, press `F2` to open the Image-Grid view.
 
-- See the [Image-Grid](#image-grid) section for more information.
+- **See:** [Image-Grid](#image-grid) for more information.
 
 
 ---
@@ -254,7 +251,7 @@ Once you have set your default image editor, you can open the current image in i
 
 With the primary text box in focus, press `F5` to open Batch Tag Edit.
 
-- See the [Batch Tag Edit](#batch-tag-edit) section for more information.
+- **See:** [Batch Tag Edit](#batch-tag-edit) for more information.
 
 
 ---
@@ -263,12 +260,10 @@ With the primary text box in focus, press `F5` to open Batch Tag Edit.
 ### Middle-click
 *(Delete a tag)*
 
-- **Usage:**
-  - **Hover Over the Tag**: Move your mouse cursor over the tag you want to delete.
-  - **Middle-Click**: Press the middle mouse button to delete the entire tag.
-- **Tips:**
-  - The entire comma-separated value will be deleted.
-  - Ensure that the text cleaning feature is enabled for the deletion to work.
+Hover over the tag you want to delete and press the middle mouse button to delete it.
+
+- The entire comma-separated value will be deleted.
+- Ensure the [Clean-Text](#clean-text) setting is enabled for the deletion to work.
 
 
 <!--####################################################################################################-->
@@ -276,7 +271,7 @@ With the primary text box in focus, press `F5` to open Batch Tag Edit.
 <!--####################################################################################################-->
 
 
-# 📜Text Tools
+# 📜 Text Tools
 
 
 ### Search and Replace
@@ -344,7 +339,7 @@ Use this tool to append all text files in the selected directory with the entere
 ### AutoTag
 *(Automatically tag images using ONNX vision models)*
 
-Use this tool to automatically analyze images and generate tags based on the ONNX vision model.
+Use this tool to automatically analyze images and generate tags using the selected ONNX vision model.
 
 - **Access:**
   - Via the img-txt Viewer toolbar tab: `AutoTag`
@@ -591,7 +586,7 @@ Clean text files to fix issues like duplicate tags and extra spaces.
 <!--####################################################################################################-->
 
 
-# 📷Image Tools
+# 📷 Image Tools
 
 
 ### Batch Resize Images
@@ -831,7 +826,7 @@ Fine-tune image appearance by adjusting various properties.
 <!--####################################################################################################-->
 
 
-# 📦Other Tools
+# 📦 Other Tools
 
 ### Batch Rename/Convert
 *(Rename and convert images sequentially with padded zeros)*
@@ -907,7 +902,7 @@ View and navigate images using thumbnails.
 <!--####################################################################################################-->
 
 
-# ⚙️Settings
+# ⚙️ Settings
 
 
 ### Auto-Save
@@ -916,13 +911,12 @@ View and navigate images using thumbnails.
 Automatically save text when certain actions occur.
 
 - **Access:**
-  - Via the `Auto-Save` Checkbutton.
+  - Via the `Auto-Save` checkbox.
 - **Triggers:**
   - Switching between img-txt pairs.
   - Changing the active directory.
   - Closing the application.
-- **Features:**
-  - Works with `Clean-Text` option to tidy text before saving.
+- Works with the [Clean-Text](#clean-text) option to tidy text before saving.
 
 
 ---
@@ -931,9 +925,16 @@ Automatically save text when certain actions occur.
 ### Clean-Text
 *(Automatically clean text files when saving)*
 
+Automatically clean up the text when saving, fixing issues like duplicate tags and extra spaces.
+
 - **Access:**
   - Via `Options` > `Clean-Text`.
-- See the [`Cleanup Text`](#cleanup-text) section for more information.
+- **Functionality:**
+  - Removes duplicates.
+  - Fixes punctuation and spacing.
+  - Trims leading/trailing commas and spaces.
+  - Adds spaces after commas.
+- **See:** [`Cleanup Text`](#cleanup-text) for more information.
 
 
 ---
@@ -956,21 +957,23 @@ Automatically save text when certain actions occur.
 ### Colored Suggestions
 *(Enable colorized autocomplete suggestions)*
 
+Enable this option to colorize autocomplete suggestions based on their category.
+
 - **Access:**
   - Via `Options` > `Colored Suggestions`.
 - **Functionality:**
   - Colorizes autocomplete suggestions for better visibility.
   - Colors are related to the dictionary used.
-  - Tags from `MyTags` are always Black.
+  - Tags from `MyTags` and `English Dictionary` are always black.
 - **Color Codes:**
   - **Danbooru:**
-    - General tags: `Black`
+    - General: `Black`
     - Artists: `Red`
     - Copyright: `Magenta`
     - Characters: `Green`
     - Meta: `Orange`
   - **e621:**
-    - General tags: `Black`
+    - General: `Black`
     - Artists: `Yellow`
     - Copyright: `Magenta`
     - Characters: `Green`
@@ -978,32 +981,29 @@ Automatically save text when certain actions occur.
     - Meta: `Red`
     - Lore: `Green`
   - **Derpibooru:**
-    - General tags: `Black`
+    - General: `Black`
     - Official Content: `Yellow`
-    - Species: `Light-Orange`
-    - Original Content: `Pink`
+    - Species: `Light Orange`
+    - OC: `Pink`
     - Rating: `Blue`
     - Body Type: `Gray`
     - Character: `Teal`
-    - Original Content: `Light-Purple`
+    - OC: `Light-Purple`
     - Error: `Red`
     - Official Content: `Dark-Orange`
-    - Original Content: `Light-Pink`
+    - OC: `Light-Pink`
 
 
 ---
 
 
 ### Highlight Selection
-*(Highlight matching selected text)*
+*(Highlight matching text when selecting)*
 
 - **Access:**
   - Via `Options` > `Highlight Selection`.
 - **Functionality:**
-  - Highlights all matching instances of the selected text.
-  - Helps identify repeated words or tags.
-  - Colors are randomized each time the selection changes.
-  - Only activated in the primary text box.
+  - When enabled, selecting text in the text box will automatically highlight all other instances of the selected text.
 
 
 ---
@@ -1015,7 +1015,7 @@ Automatically save text when certain actions occur.
 - **Access:**
   - Via `Options` > `Big Save Button`.
 - **Functionality:**
-  - Increases the size of the save button (double height) for easier access.
+  - Increases the size of the save button for easier access.
 
 
 ---
@@ -1058,7 +1058,7 @@ Automatically save text when certain actions occur.
 - **Functionality:**
   - Toggles the zoom popup feature on or off.
   - Use `F1` to toggle the zoom popup.
-- See the [`F1 (Popup Zoom)`](#f1-popup-zoom) section for more information.
+- **See:** [`F1 (Popup Zoom)`](#f1-popup-zoom) for more information.
 
 
 ---
@@ -1072,7 +1072,7 @@ Automatically save text when certain actions occur.
   - Via image `View` menu.
 - **Functionality:**
   - Toggles the thumbnail panel on or off.
-- See the [`Thumbnail Panel`](#thumbnail-panel) section for more information.
+- **See:** [`Thumbnail Panel`](#thumbnail-panel) for more information.
 
 
 ---
@@ -1085,8 +1085,8 @@ Automatically save text when certain actions occur.
   - Via `Options` > `Toggle Edit Panel`
   - Via image `View` menu.
 - **Functionality:**
-  - Toggles the edit panel on or off.
-- See the [`Edit Image Panel`](#edit-image-panel) section for more information.
+  - Toggles the visibility of the edit image panel.
+- **See:** [Edit Image Panel](#edit-image-panel) for more information.
 
 
 ---
@@ -1113,9 +1113,7 @@ Automatically save text when certain actions occur.
   - Via `Options` > `Swap img-txt Sides`.
   - Via image `View` menu.
 - **Functionality:**
-  - Swaps the positions of the image and text frames.
-  - Useful for different workflows or preferences.
-
+  - Swaps the positions of the image and text frames in the application layout.
 
 ---
 
