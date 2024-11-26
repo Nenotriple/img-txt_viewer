@@ -1,4 +1,4 @@
-*"Making something... Nurturing something is really great. You can see and learn so many things from the process."*
+*"Making something... Nurturing something is really great. You can see and learn so many things from the process."* - 🍉
 
 
 # User Guide
@@ -571,7 +571,7 @@ Clean text files to fix issues like duplicate tags and extra spaces.
 - **Access:**
   - Via the `Tools` > `Batch Operations` > `Cleanup Text...` menu.
 - **Tips:**
-  - Enable the `Clean-Text` setting to auto-clean when saving.
+  - Enable the [`Clean-Text`](#clean-text) setting to auto-clean when saving.
   - Regular cleaning maintains readability.
 - **Example:**
   - Before: `dog,, ,dog,solo,  ,happy  ,,`
@@ -863,7 +863,9 @@ Rename and optionally convert images in bulk.
 Browse images in a grid layout for easy selection.
 
 - **Access:**
-  - Press `F2` or via the image `View` menu, or image right-click context menu.
+  - Press `F2`
+  - Via the image `View` menu
+  - Via the image right-click context menu.
 - **Features:**
   - **Thumbnail Size:** Adjust using the slider.
   - **Auto-Close:** Automatically close after selecting an image.
@@ -878,6 +880,26 @@ Browse images in a grid layout for easy selection.
   - **Image Info:** Hover to see details like filename and resolution.
   - **Refresh:** Reload the grid after making changes.
   - **Load All:** Be cautious as loading many images may be slow.
+
+
+---
+
+
+### Thumbnail Panel
+*(Display thumbnails for quick navigation)*
+
+View and navigate images using thumbnails.
+
+- **Access:**
+  - Via `Options` > `Toggle Thumbnail Panel`
+  - Via image `View` menu.
+- **Features:**
+  - **Quick Navigation:** Click thumbnails to open images.
+  - **Context Menu:** Right-click for options like deleting or editing.
+  - **Thumbnail Size:** Adjust size for better visibility.
+- **Tips:**
+  - Use the thumbnail panel for efficient browsing.
+  - Customize thumbnail size to suit your preference.
 
 
 <!--####################################################################################################-->
@@ -911,6 +933,7 @@ Automatically save text when certain actions occur.
 
 - **Access:**
   - Via `Options` > `Clean-Text`.
+- See the [`Cleanup Text`](#cleanup-text) section for more information.
 
 
 ---
@@ -921,6 +944,11 @@ Automatically save text when certain actions occur.
 
 - **Access:**
   - Via `Options` > `Auto-Delete Blank Files`.
+- **Functionality:**
+  - Deletes text files with no content when saving.
+  - Prevents empty text files from cluttering the directory.
+  - If disabled, blank files are created/retained when saving.
+
 
 ---
 
@@ -930,6 +958,37 @@ Automatically save text when certain actions occur.
 
 - **Access:**
   - Via `Options` > `Colored Suggestions`.
+- **Functionality:**
+  - Colorizes autocomplete suggestions for better visibility.
+  - Colors are related to the dictionary used.
+  - Tags from `MyTags` are always <span style="background-color:black;color:white;"> Black </span>
+- **Color Codes:**
+  - **Danbooru:**
+    - General tags: <span style="background-color:black;color:white;"> Black </span>
+    - Artists: <span style="background-color:#c00004;color:white;"> #c00004 </span>
+    - Copyright: <span style="background-color:#a800aa;color:white;"> #a800aa </span>
+    - Characters: <span style="background-color:#00ab2c;color:white;"> #00ab2c </span>
+    - Meta: <span style="background-color:#fd9200;color:white;"> #fd9200 </span>
+  - **e621:**
+    - General tags: <span style="background-color:black;color:white;"> Black </span>
+    - Artists: <span style="background-color:#f2ac08;color:white;"> #f2ac08 </span>
+    - Copyright: <span style="background-color:#dd00dd;color:white;"> #dd00dd </span>
+    - Characters: <span style="background-color:#00aa00;color:white;"> #00aa00 </span>
+    - Species: <span style="background-color:#ed5d1f;color:white;"> #ed5d1f </span>
+    - Meta: <span style="background-color:#ff3d3d;color:white;"> #ff3d3d </span>
+    - Lore: <span style="background-color:#228822;color:white;"> #228822 </span>
+  - **Derpibooru:**
+    - General tags: <span style="background-color:black;color:white;"> Black </span>
+    - Official Content: <span style="background-color:#e5b021;color:white;"> #e5b021 </span>
+    - Species: <span style="background-color:#fd9961;color:white;"> #fd9961 </span>
+    - Original Content: <span style="background-color:#cf5bbe;color:white;"> #cf5bbe </span>
+    - Rating: <span style="background-color:#3c8ad9;color:white;"> #3c8ad9 </span>
+    - Body Type: <span style="background-color:#a6a6a6;color:white;"> #a6a6a6 </span>
+    - Character: <span style="background-color:#47abc1;color:white;"> #47abc1 </span>
+    - Original Content: <span style="background-color:#7871d0;color:white;"> #7871d0 </span>
+    - Error: <span style="background-color:#df3647;color:white;"> #df3647 </span>
+    - Official Content: <span style="background-color:#c98f2b;color:white;"> #c98f2b </span>
+    - Original Content: <span style="background-color:#e87ebe;color:white;"> #e87ebe </span>
 
 ---
 
@@ -939,6 +998,11 @@ Automatically save text when certain actions occur.
 
 - **Access:**
   - Via `Options` > `Highlight Selection`.
+- **Functionality:**
+  - Highlights all matching instances of the selected text.
+  - Helps identify repeated words or tags.
+  - Colors are randomized each time the selection changes.
+  - Only activated in the primary text box.
 
 
 ---
@@ -949,6 +1013,9 @@ Automatically save text when certain actions occur.
 
 - **Access:**
   - Via `Options` > `Big Save Button`.
+- **Functionality:**
+  - Increases the size of the save button (double height) for easier access.
+
 
 ---
 
@@ -958,6 +1025,11 @@ Automatically save text when certain actions occur.
 
 - **Access:**
   - Via `Options` > `List View`.
+- **Functionality:**
+  - Changes the appearance of the primary text box tags to a list view.
+  - Each tag is displayed on a new line.
+  - Pressing `,` or `Enter` adds a new line.
+  - Text is reformatted back to a comma-separated list when saving.
 
 
 ---
@@ -968,6 +1040,9 @@ Automatically save text when certain actions occur.
 
 - **Access:**
   - Via `Options` > `Always On Top`.
+- **Functionality:**
+  - Keeps the application window on top of other windows.
+  - Useful for multitasking or referencing other content.
 
 
 ---
@@ -979,26 +1054,24 @@ Automatically save text when certain actions occur.
 - **Access:**
   - Via `Options` > `Toggle Zoom`.
   - Via image `View` menu.
+- **Functionality:**
+  - Toggles the zoom popup feature on or off.
+  - Use `F1` to toggle the zoom popup.
+- See the [`F1 (Popup Zoom)`](#f1-popup-zoom) section for more information.
 
 
 ---
 
 
-### Thumbnail Panel
+### Toggle Thumbnail Panel
 *(Display thumbnails for quick navigation)*
-
-View and navigate images using thumbnails.
 
 - **Access:**
   - Via `Options` > `Toggle Thumbnail Panel`
   - Via image `View` menu.
-- **Features:**
-  - **Quick Navigation:** Click thumbnails to open images.
-  - **Context Menu:** Right-click for options like deleting or editing.
-  - **Thumbnail Size:** Adjust size for better visibility.
-- **Tips:**
-  - Use the thumbnail panel for efficient browsing.
-  - Customize thumbnail size to suit your preference.
+- **Functionality:**
+  - Toggles the thumbnail panel on or off.
+- See the [`Thumbnail Panel`](#thumbnail-panel) section for more information.
 
 
 ---
@@ -1010,6 +1083,9 @@ View and navigate images using thumbnails.
 - **Access:**
   - Via `Options` > `Toggle Edit Panel`
   - Via image `View` menu.
+- **Functionality:**
+  - Toggles the edit panel on or off.
+- See the [`Edit Image Panel`](#edit-image-panel) section for more information.
 
 
 ---
@@ -1021,6 +1097,9 @@ View and navigate images using thumbnails.
 - **Access:**
   - Via `Options` > `Vertical View`.
   - Via image `View` menu.
+- **Functionality:**
+  - Switches between horizontal and vertical view modes.
+  - Changes the layout of the image and text frames.
 
 
 ---
@@ -1032,6 +1111,9 @@ View and navigate images using thumbnails.
 - **Access:**
   - Via `Options` > `Swap img-txt Sides`.
   - Via image `View` menu.
+- **Functionality:**
+  - Swaps the positions of the image and text frames.
+  - Useful for different workflows or preferences.
 
 
 ---
@@ -1043,6 +1125,11 @@ View and navigate images using thumbnails.
 - **Access:**
   - Via `Options` > `Image Display Quality`.
   - Via image `View` menu.
+- **Functionality:**
+  - Adjusts the image display quality for better performance.
+  - Options include `Low`, `Medium`, and `High`.
+  - The `Medium` *(default)* setting should be sufficient for most users.
+  - Lower quality settings may improve performance on slower systems.
 
 
 ---
@@ -1053,9 +1140,21 @@ View and navigate images using thumbnails.
 
 - **Access:**
   - Via `Options` > `Loading Order`.
+- **Functionality:**
+  - Choose the order in which files are loaded.
+  - Options include:
+    - Name *(default)*
+    - File size
+    - Date created
+    - Extension
+    - Last Access time
+    - Last write time
+  - Along with the order, you can choose to sort in ascending or descending order.
+  - Only image file stats are used for sorting.
 
 
 ---
+
 
 ### Dictionary
 *(Choose the autocomplete dictionary)*
@@ -1063,6 +1162,12 @@ View and navigate images using thumbnails.
 - **Access:**
   - Via `Options` > `Autocomplete` > `Dictionary`.
   - Via the `☰` menu on the autocomplete row.
+- **Functionality:**
+  - Choose between the `English dictionary`, `Danbooru`, `Danbooru (safe)`, `e621`, and `Derpibooru` dictionaries.
+  - Multiple dictionaries can be enabled at once, but the suggestions are limited by the `Threshold` setting.
+  - You can disable all dictionaries and just use only `MyTags`.
+- **Usage Tips:**
+  - `English Dictionary` + `Danbooru (safe)` is a good choice for general use.
 
 
 ---
@@ -1074,6 +1179,17 @@ View and navigate images using thumbnails.
 - **Access:**
   - Via `Options` > `Autocomplete` > `Threshold`.
   - Via the `☰` menu on the autocomplete row.
+- **Description:**
+  - Adjusts the maximum number of tags the autocomplete engine considers when generating suggestions. A higher threshold may provide more comprehensive suggestions but could impact performance. Lowering the threshold can speed up suggestion generation but might miss some relevant tags.
+  - Autocomplete dictionaries are optimized to have `~100,000` tags each.
+- **Functionality:**
+  - **Slow**: 275,000 tags
+  - **Normal** *(default)*: 130,000 tags
+  - **Fast**: 75,000 tags
+  - **Faster**: 40,000 tags
+- **Usage Tips:**
+  - Increase the threshold if you want a wider range of suggestions and your system can handle the load.
+  - Decrease the threshold to improve performance if you notice slowdowns while typing.
 
 
 ---
@@ -1085,6 +1201,11 @@ View and navigate images using thumbnails.
 - **Access:**
   - Via `Options` > `Autocomplete` > `Quantity`.
   - Via the `☰` menu on the autocomplete row.
+- **Description:**
+  Defines how many autocomplete suggestions are displayed at once. Adjusting this setting allows you to control the number of options you see, helping to keep the interface clean or providing more choices as needed.
+- **Usage Tips:**
+  - Increase the quantity to view more suggestions simultaneously.
+  - Decrease the quantity for a simplified view with fewer suggestions.
 
 
 ---
@@ -1096,6 +1217,18 @@ View and navigate images using thumbnails.
 - **Access:**
   - Via `Options` > `Autocomplete` > `Match Mode`.
   - Via the `☰` menu on the autocomplete row.
+- **Description:**
+  Determines how your input text is matched against available tags. Different match modes can affect the relevance and ordering of suggestions based on your typing patterns.
+- **Functionality:**
+  - Mode: `Match Whole String`
+    - All text between commas in the current selection is used for matching.
+  - Mode: `Match Last Word`
+    - Only the last word of the input string is used for matching.
+- **Usage Tips:**
+  - Experiment with different match modes to find the one that best fits your workflow.
+  - Choose a match mode that complements the types of tags or keywords you frequently use.
+  - The mode `Match Whole String` is recommended for `booru` tags.
+  - The mode `Match Last Word` is recommended for the `English Dictionary`.
 
 
 ---
@@ -1106,6 +1239,10 @@ View and navigate images using thumbnails.
 
 - **Access:**
   - Via `Options` > `Reset Settings`.
+- **Functionality:**
+  - Resets all settings to their default values and restores the program to its initial state.
+  - Creates a set of guided dialogs to help reset and set your new settings.
+  - Does not affect the currently selected director.
 
 
 ---
@@ -1116,6 +1253,11 @@ View and navigate images using thumbnails.
 
 - **Access:**
   - Via `Options` > `Open Settings File...`
+- **Functionality:**
+  - Opens the `settings.cfg` file in your system default text editor.
+  - Allows manual editing of settings for advanced users.
+- **Usage Tips:**
+  - the `settings.cfg` file can also be deleted to reset all settings to default.
 
 
 ---
@@ -1126,6 +1268,11 @@ View and navigate images using thumbnails.
 
 - **Access:**
   - Via `Options` > `Open MyTags File...`
-
+- **Functionality:**
+  - Opens the `my_tags.csv` file in your system default text editor.
+  - Allows manual editing of custom tags for autocomplete suggestions.
+- **Usage Tips:**
+  - Prioritize important tags by moving them to the top.
+  - Restart the app to update the suggestions.
 
 ---
