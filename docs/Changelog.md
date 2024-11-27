@@ -42,9 +42,9 @@
 
 <!--###########################################################################-->
 
-### v1.96
-
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.96)
+## v1.96
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.96)
 
 
 <details>
@@ -167,13 +167,13 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 </details>
 <br>
 
----
 
 
 <!--###########################################################################-->
 
-### v1.95
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.95)
+## v1.95
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.95)
 
 <details>
   <summary>Release Notes for v1.96</summary>
@@ -266,13 +266,12 @@ Thank you to @MNeMoNiCuZ and @TeKett for your input!
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.94
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.94)
+## v1.94
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.94)
 
 <details>
   <summary>Release Notes for v1.94</summary>
@@ -301,13 +300,12 @@ Thank you to @MNeMoNiCuZ and @TeKett for your input!
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.93.1
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.93.1)
+## v1.93.1
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.93.1)
 
 <details>
   <summary>Release Notes for v1.93.1</summary>
@@ -354,13 +352,12 @@ Thank you to @MNeMoNiCuZ and @TeKett for your input!
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.92
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.92)
+## v1.92
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.92)
 
 <details>
   <summary>Release Notes for v1.92</summary>
@@ -421,13 +418,12 @@ Thank you to @MNeMoNiCuZ and @TeKett for your input!
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.91
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.91)
+## v1.91
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.91)
 
 <details>
   <summary>Release Notes for v1.91</summary>
@@ -503,13 +499,12 @@ Thank you to @MNeMoNiCuZ and @TeKett for your input!
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.90 🎉🎈
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.90)
+## v1.90 🎉🎈
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.90)
 
 <details>
   <summary>Release Notes for v1.90</summary>
@@ -602,13 +597,12 @@ Here's some new tools, fixes, and changes for version 1.90:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.85
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.85)
+## v1.85
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.85)
 
 <details>
   <summary>Release Notes for v1.85</summary>
@@ -624,13 +618,12 @@ Here's some new tools, fixes, and changes for version 1.90:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.84
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.84)
+## v1.84
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.84)
 
 <details>
   <summary>Release Notes for v1.84</summary>
@@ -673,13 +666,12 @@ v1.06 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.83
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.83)
+## v1.83
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.83)
 
 <details>
   <summary>Release Notes for v1.83</summary>
@@ -700,13 +692,12 @@ v1.06 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.82
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.82)
+## v1.82
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.82)
 
 <details>
   <summary>Release Notes for v1.82</summary>
@@ -743,13 +734,12 @@ This makes it way more simple and easier to use these tools.
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.81
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.81)
+## v1.81
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.81)
 
 <details>
   <summary>Release Notes for v1.81</summary>
@@ -776,13 +766,12 @@ This makes it way more simple and easier to use these tools.
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.80
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.80)
+## v1.80
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.80)
 
 <details>
   <summary>Release Notes for v1.80</summary>
@@ -836,13 +825,12 @@ This makes it way more simple and easier to use these tools.
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.79
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.79)
+## v1.79
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.79)
 
 <details>
   <summary>Release Notes for v1.79</summary>
@@ -938,13 +926,12 @@ v1.04 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.78
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.78)
+## v1.78
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.78)
 
 <details>
   <summary>Release Notes for v1.78</summary>
@@ -996,13 +983,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.77
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.77)
+## v1.77
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.77)
 
 <details>
   <summary>Release Notes for v1.77</summary>
@@ -1033,13 +1019,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.76
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.76)
+## v1.76
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.76)
 
 <details>
   <summary>Release Notes for v1.76</summary>
@@ -1065,13 +1050,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.75
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.75)
+## v1.75
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.75)
 
 <details>
   <summary>Release Notes for v1.75</summary>
@@ -1104,13 +1088,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.74
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.74)
+## v1.74
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.74)
 
 <details>
   <summary>Release Notes for v1.74</summary>
@@ -1135,13 +1118,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.73
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.73)
+## v1.73
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.73)
 
 <details>
   <summary>Release Notes for v1.73</summary>
@@ -1168,13 +1150,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.72
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.72)
+## v1.72
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.72)
 
 <details>
   <summary>Release Notes for v1.72</summary>
@@ -1191,13 +1172,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.71
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.71)
+## v1.71
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.71)
 
 <details>
   <summary>Release Notes for v1.71</summary>
@@ -1222,13 +1202,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.70
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.70)
+## v1.70
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.70)
 
 <details>
   <summary>Release Notes for v1.70</summary>
@@ -1265,13 +1244,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.68
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.68)
+## v1.68
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.68)
 
 <details>
   <summary>Release Notes for v1.68</summary>
@@ -1287,13 +1265,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.67
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.67)
+## v1.67
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.67)
 
 <details>
   <summary>Release Notes for v1.67</summary>
@@ -1305,13 +1282,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.66
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.66)
+## v1.66
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.66)
 
 <details>
   <summary>Release Notes for v1.66</summary>
@@ -1324,13 +1300,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.65
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.65)
+## v1.65
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.65)
 
 <details>
   <summary>Release Notes for v1.65</summary>
@@ -1344,13 +1319,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.63
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.63)
+## v1.63
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.63)
 
 <details>
   <summary>Release Notes for v1.63</summary>
@@ -1363,13 +1337,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.62
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.62)
+## v1.62
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.62)
 
 <details>
   <summary>Release Notes for v1.62</summary>
@@ -1386,13 +1359,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.60
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.6)
+## v1.60
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.6)
 
 <details>
   <summary>Release Notes for v1.60</summary>
@@ -1406,13 +1378,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.50
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v15.)
+## v1.50
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v15.)
 
 <details>
   <summary>Release Notes for v1.50</summary>
@@ -1425,13 +1396,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.42
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.42)
+## v1.42
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.42)
 
 <details>
   <summary>Release Notes for v1.42</summary>
@@ -1444,13 +1414,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.41
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.41)
+## v1.41
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.41)
 
 <details>
   <summary>Release Notes for v1.41</summary>
@@ -1462,13 +1431,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.40
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.4)
+## v1.40
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.4)
 
 <details>
   <summary>Release Notes for v1.40</summary>
@@ -1480,13 +1448,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.30
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.3)
+## v1.30
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.3)
 
 <details>
   <summary>Release Notes for v1.30</summary>
@@ -1499,13 +1466,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.20
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.2)
+## v1.20
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.2)
 
 <details>
   <summary>Release Notes for v1.20</summary>
@@ -1517,13 +1483,12 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 <!--###########################################################################-->
 
-### v1.0
-[💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.0)
+## v1.0
+- [⬆️](#index)
+- [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.0)
 
 <details>
   <summary>Release Notes for v1.0</summary>
@@ -1535,14 +1500,13 @@ v1.03 changes:
 </details>
 <br>
 
----
-
 
 
 <!--###########################################################################
 ## TEMPLATE
 
-### v1.
+## v1.
+- [⬆️](#index)
 
 <details>
   <summary>Release Notes for v1.</summary>
@@ -1552,6 +1516,5 @@ v1.03 changes:
 </details>
 <br>
 
----
 
 -->
