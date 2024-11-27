@@ -87,19 +87,19 @@ You can also find a copy of this guide in the [✨Wiki](https://github.com/Nenot
   - [`Open MyTags File...`](#open-mytags-file) - Open the mytags file.
 
 
-<!--####################################################################################################-->
-<!--####################################################################################################-->
-<!--####################################################################################################-->
+<!--###########################################################################-->
+<!--###########################################################################-->
+<!--###########################################################################-->
 
 
 # ✂️ Shortcuts
 
 
-[⬆️ Index ⬆️](#index)
+[⬆️](#index)
 
 
-### ALT+LEFT/RIGHT
-*(Navigate between img-txt pairs)*
+## ALT+LEFT/RIGHT
+[⬆️](#index) *(Navigate between img-txt pairs)*
 
 With the primary text box in focus, press `ALT+LEFT` or `ALT+RIGHT` to move between img-txt pairs.
 
@@ -107,11 +107,8 @@ With the primary text box in focus, press `ALT+LEFT` or `ALT+RIGHT` to move betw
 - `ALT+RIGHT` moves forward to the next image.
 
 
----
-
-
-### SHIFT+DEL
-*(Delete the current pair)*
+## SHIFT+DEL
+[⬆️](#index) *(Delete the current pair)*
 
 Press `SHIFT+DEL` to move the displayed image and text file to a trash folder.
 
@@ -121,29 +118,20 @@ Press `SHIFT+DEL` to move the displayed image and text file to a trash folder.
 - If the trash folder already contains a file with the same name, you will be prompted to overwrite it or cancel the operation.
 
 
----
-
-
-### ALT
-*(Cycle through autocomplete suggestions)*
+## ALT
+[⬆️](#index) *(Cycle through autocomplete suggestions)*
 
 With the primary text box in focus, press `LEFT ALT` or `RIGHT ALT` to move the autocomplete selector left or right.
 
 
----
-
-
-### TAB
-*(Insert the selected autocomplete tag)*
+## TAB
+[⬆️](#index) *(Insert the selected autocomplete tag)*
 
 With the primary text box in focus, press `TAB` to insert the selected autocomplete tag.
 
 
----
-
-
-### CTRL+S
-*(Save the current text file)*
+## CTRL+S
+[⬆️](#index) *(Save the current text file)*
 
 With the primary text box in focus, press `CTRL+S` to save the text to the paired text file.
 
@@ -152,33 +140,24 @@ With the primary text box in focus, press `CTRL+S` to save the text to the paire
 - Also available via the `Save` button.
 
 
----
-
-
-### CTRL+E
-*(Jump to the next empty text file)*
+## CTRL+E
+[⬆️](#index) *(Jump to the next empty text file)*
 
 With the primary text box in focus, press `CTRL+E` to jump to the next img-txt pair where the text file is empty or does not exist.
 
 - Also available via the index entry right-click context menu.
 
 
----
-
-
-### CTRL+R
-*(Jump to a random img-txt pair)*
+## CTRL+R
+[⬆️](#index) *(Jump to a random img-txt pair)*
 
 With the primary text box in focus, press `CTRL+R` to jump to a random img-txt pair.
 
 - Also available via the index entry right-click context menu.
 
 
----
-
-
-### CTRL+F
-*(Highlight all duplicate words)*
+## CTRL+F
+[⬆️](#index) *(Highlight all duplicate words)*
 
 With the primary text box in focus, press `CTRL+F` to highlight any duplicate words.
 
@@ -187,11 +166,8 @@ With the primary text box in focus, press `CTRL+F` to highlight any duplicate wo
 - Also available via the primary text box right-click context menu.
 
 
----
-
-
-### CTRL+Z / CTRL+Y
-*(Undo/Redo)*
+## CTRL+Z / CTRL+Y
+[⬆️](#index) *(Undo/Redo)*
 
 With the primary text box in focus, press `CTRL+Z` to undo the last action or `CTRL+Y` to redo the last undo.
 
@@ -199,19 +175,14 @@ With the primary text box in focus, press `CTRL+Z` to undo the last action or `C
 - Also available via the primary text box right-click context menu.
 
 
----
+## CTRL+W
+[⬆️](#index) *(Close the app)*
+
+Press `CTRL+W` to immediately close the app
 
 
-### CTRL+W
-*(Close the app)*
-
-Press `CTRL+W` to immediately close the app.
-
----
-
-
-### F1 (Popup Zoom)
-*(Toggle zoom popup)*
+## F1 (Popup Zoom)
+[⬆️](#index) *(Toggle zoom popup)*
 
 The Popup Zoom feature allows you to create a small popup window beside the mouse that displays a zoomed view of the image underneath.
 
@@ -221,22 +192,16 @@ Shortcuts:
   - Hold `Shift` while scrolling to adjust the popup size.
 
 
----
-
-
-### F2
-*(Open the Image-Grid view)*
+## F2
+[⬆️](#index) *(Open the Image-Grid view)*
 
 With the primary text box in focus, press `F2` to open the Image-Grid view.
 
 - **See:** [Image-Grid](#image-grid) for more information.
 
 
----
-
-
-### F4
-*(Open the current image in your default editor)*
+## F4
+[⬆️](#index) *(Open the current image in your default editor)*
 
 Once you have set your default image editor, you can open the current image in it by pressing `F4` with the image in focus.
 
@@ -250,22 +215,16 @@ Once you have set your default image editor, you can open the current image in i
   - You can change the default image editor at any time by repeating the steps above.
 
 
----
-
-
-### F5
-*(Open Batch Tag Edit)*
+## F5
+[⬆️](#index) *(Open Batch Tag Edit)*
 
 With the primary text box in focus, press `F5` to open Batch Tag Edit.
 
 - **See:** [Batch Tag Edit](#batch-tag-edit) for more information.
 
 
----
-
-
-### Middle-click
-*(Delete a tag)*
+## Middle-click
+[⬆️](#index) *(Delete a tag)*
 
 Hover over the tag you want to delete and press the middle mouse button to delete it.
 
@@ -273,19 +232,19 @@ Hover over the tag you want to delete and press the middle mouse button to delet
 - Ensure the [Clean-Text](#clean-text) setting is enabled for the deletion to work.
 
 
-<!--####################################################################################################-->
-<!--####################################################################################################-->
-<!--####################################################################################################-->
+<!--###########################################################################-->
+<!--###########################################################################-->
+<!--###########################################################################-->
 
 
 # 📜 Text Tools
 
 
-[⬆️ Index ⬆️](#index)
+[⬆️](#index)
 
 
-### Search and Replace
-*(Find and replace text across all text files)*
+## Search and Replace
+[⬆️](#index) *(Find and replace text across all text files)*
 
 Use this tool to search for a string of text across all text files in the selected directory. If a match is found, it will be replaced exactly with the given text.
 
@@ -305,11 +264,8 @@ Use this tool to search for a string of text across all text files in the select
 > - Pressing `Undo` will restore the text backup. `Undo` only creates one history of backups, and using another tool will erase the previous backup.
 
 
----
-
-
-### Prefix
-*(Insert text at the start of all text files)*
+## Prefix
+[⬆️](#index) *(Insert text at the start of all text files)*
 
 Use this tool to prefix all text files in the selected directory with the entered text. This means that the entered text will appear at the start of each text file.
 
@@ -324,11 +280,8 @@ Use this tool to prefix all text files in the selected directory with the entere
   - The `Undo` button can revert the last prefix action if needed.
 
 
----
-
-
-### Append
-*(Insert text at the end of all text files)*
+## Append
+[⬆️](#index) *(Insert text at the end of all text files)*
 
 Use this tool to append all text files in the selected directory with the entered text. This means that the entered text will appear at the end of each text file.
 
@@ -343,11 +296,8 @@ Use this tool to append all text files in the selected directory with the entere
   - The `Undo` button can revert the last append action if needed.
 
 
----
-
-
-### AutoTag
-*(Automatically tag images using ONNX vision models)*
+## AutoTag
+[⬆️](#index) *(Automatically tag images using ONNX vision models)*
 
 Use this tool to automatically analyze images and generate tags using the selected ONNX vision model.
 
@@ -372,11 +322,8 @@ img-txt_viewer/
 ```
 
 
----
-
-
-### Filter
-*(Filter pairs based on text, missing text files, and more)*
+## Filter
+[⬆️](#index) *(Filter pairs based on text, missing text files, and more)*
 
 Use this tool to filter img-txt pairs based on specific criteria.
 
@@ -397,11 +344,8 @@ Use this tool to filter img-txt pairs based on specific criteria.
   - Press `Clear` to remove filters.
 
 
----
-
-
-### Highlight
-*(Always highlight specific text)*
+## Highlight
+[⬆️](#index) *(Always highlight specific text)*
 
 Specify text to highlight when moving to a new img-txt pair.
 
@@ -417,11 +361,8 @@ Specify text to highlight when moving to a new img-txt pair.
   - Press `Clear` to remove highlights.
 
 
----
-
-
-### Font
-*(Adjust the font size and line height)*
+## Font
+[⬆️](#index) *(Adjust the font size and line height)*
 
 Customize text appearance by adjusting font size and line height.
 
@@ -433,11 +374,8 @@ Customize text appearance by adjusting font size and line height.
   - Changes apply in real-time.
 
 
----
-
-
-### My Tags
-*(Add your custom tags for autocomplete suggestions)*
+## My Tags
+[⬆️](#index) *(Add your custom tags for autocomplete suggestions)*
 
 Quickly edit the `my_tags.csv` file to add custom tags to the autocomplete dictionary.
 
@@ -462,11 +400,8 @@ Quickly edit the `my_tags.csv` file to add custom tags to the autocomplete dicti
   - Regularly save and refresh to update suggestions.
 
 
----
-
-
-### Stats
-*(Display various file stats)*
+## Stats
+[⬆️](#index) *(Display various file stats)*
 
 Display statistics about the current datasets images and text contents.
 
@@ -520,13 +455,11 @@ Calculated statistics include:
   - Top 5 Longest Words
   - Top 50 Most Common Words
   - Character Occurrence
-  - Unique Captions
-
----
+  - Unique Caption
 
 
-### Batch Tag Edit
-*(Edit and manage tags with a user-friendly interface)*
+## Batch Tag Edit
+[⬆️](#index) *(Edit and manage tags with a user-friendly interface)*
 
 Use the Batch Tag Edit tool to edit and manage tags across all files.
 
@@ -549,11 +482,8 @@ Use the Batch Tag Edit tool to edit and manage tags across all files.
   - Use revert options before saving to undo changes.
 
 
----
-
-
-### Create Wildcard From Captions
-*(Combine all captions into one text file)*
+## Create Wildcard From Captions
+[⬆️](#index) *(Combine all captions into one text file)*
 
 Combine all image captions into a single file.
 
@@ -565,11 +495,8 @@ Combine all image captions into a single file.
   - Captions are saved as `combined_captions.txt` in the directory.
 
 
----
-
-
-### Cleanup Text
-*(Fix typos across all text files)*
+## Cleanup Text
+[⬆️](#index) *(Fix typos across all text files)*
 
 Clean text files to fix issues like duplicate tags and extra spaces.
 
@@ -588,19 +515,19 @@ Clean text files to fix issues like duplicate tags and extra spaces.
   - Adding spaces after commas.
 
 
-<!--####################################################################################################-->
-<!--####################################################################################################-->
-<!--####################################################################################################-->
+<!--###########################################################################-->
+<!--###########################################################################-->
+<!--###########################################################################-->
 
 
 # 📷 Image Tools
 
 
-[⬆️ Index ⬆️](#index)
+[⬆️](#index)
 
 
-### Batch Resize Images
-*(Resize all images using various methods and conditions)*
+## Batch Resize Images
+[⬆️](#index) *(Resize all images using various methods and conditions)*
 
 Use this tool to resize all images in a folder according to your needs.
 
@@ -641,11 +568,8 @@ Use this tool to resize all images in a folder according to your needs.
   - Click the `?` button for detailed help.
 
 
----
-
-
-### Resize Image
-*(Resize the current image by exact resolution or percentage)*
+## Resize Image
+[⬆️](#index) *(Resize the current image by exact resolution or percentage)*
 
 Adjust the size of the currently displayed image.
 
@@ -667,11 +591,8 @@ Adjust the size of the currently displayed image.
   - Real-time updates show new dimensions and estimated size.
 
 
----
-
-
-### Batch Crop Images
-*(Crop all images to a specified resolution)*
+## Batch Crop Images
+[⬆️](#index) *(Crop all images to a specified resolution)*
 
 Crop and resize multiple images to a specific resolution.
 
@@ -690,11 +611,8 @@ Crop and resize multiple images to a specific resolution.
   - Images smaller than the target resolution are resized before cropping.
 
 
----
-
-
-### Crop Image
-*(Crop an image or GIF using various methods and tools)*
+## Crop Image
+[⬆️](#index) *(Crop an image or GIF using various methods and tools)*
 
 Use the **CropUI** tool to precisely crop the current image or GIF.
 
@@ -718,11 +636,8 @@ Use the **CropUI** tool to precisely crop the current image or GIF.
   - Access the **Help** menu for detailed instructions.
 
 
----
-
-
-### Upscale Image
-*(Upscale images using models like R-ESRGAN, AnimeSharp-4x, and UltraSharp-4x)*
+## Upscale Image
+[⬆️](#index) *(Upscale images using models like R-ESRGAN, AnimeSharp-4x, and UltraSharp-4x)*
 
 Enhance image quality using AI upscaling models.
 
@@ -750,11 +665,8 @@ This tool utilizes [Xinntao's Portable ESRGAN executable files (NCNN).](https://
   - Upscaling may take time depending on image size and model.
 
 
----
-
-
-### Find Duplicate Files
-*(Identify and manage duplicate files)*
+## Find Duplicate Files
+[⬆️](#index) *(Identify and manage duplicate files)*
 
 Scan folders to find and handle duplicate files.
 
@@ -778,11 +690,8 @@ Scan folders to find and handle duplicate files.
   - **Delete Duplicates:** Permanently delete duplicates in `_Duplicate__Files`.
 
 
----
-
-
-### Expand
-*(Expand images to a square ratio)*
+## Expand
+[⬆️](#index) *(Expand images to a square ratio)*
 
 Expand the current image to a square aspect ratio.
 
@@ -796,14 +705,11 @@ Expand the current image to a square aspect ratio.
   - Copies associated text files with `_ex` appended.
 - **Output:**
   - A portrait image would expand like this: *input=*`|-|`, *output=*`|--|`
-  - A landscape image would expand like this: *input=*`|---|`, *output=*`|--|`
+  - A landscape image would expand like this: *input=|`, *output=*`|--|`
 
 
----
-
-
-### Edit Image Panel
-*(Adjust image properties like brightness, contrast, etc.)*
+## Edit Image Panel
+[⬆️](#index) *(Adjust image properties like brightness, contrast, etc.)*
 
 Fine-tune image appearance by adjusting various properties.
 
@@ -831,19 +737,19 @@ Fine-tune image appearance by adjusting various properties.
   - Decide whether to overwrite the original image when saving.
 
 
-<!--####################################################################################################-->
-<!--####################################################################################################-->
-<!--####################################################################################################-->
+<!--###########################################################################-->
+<!--###########################################################################-->
+<!--###########################################################################-->
 
 
 # 📦 Other Tools
 
 
-[⬆️ Index ⬆️](#index)
+[⬆️](#index)
 
 
-### Batch Rename/Convert
-*(Rename and convert images sequentially with padded zeros)*
+## Batch Rename/Convert
+[⬆️](#index) *(Rename and convert images sequentially with padded zeros)*
 
 Rename and optionally convert images in bulk.
 
@@ -863,11 +769,8 @@ Rename and optionally convert images in bulk.
   - Ensure files are properly paired before renaming.
 
 
----
-
-
-### Image-Grid
-*(Open the Image-Grid view)*
+## Image-Grid
+[⬆️](#index) *(Open the Image-Grid view)*
 
 Browse images in a grid layout for easy selection.
 
@@ -891,11 +794,8 @@ Browse images in a grid layout for easy selection.
   - **Load All:** Be cautious as loading many images may be slow.
 
 
----
-
-
-### Thumbnail Panel
-*(Display thumbnails for quick navigation)*
+## Thumbnail Panel
+[⬆️](#index) *(Display thumbnails for quick navigation)*
 
 View and navigate images using thumbnails.
 
@@ -911,19 +811,19 @@ View and navigate images using thumbnails.
   - Customize thumbnail size to suit your preference.
 
 
-<!--####################################################################################################-->
-<!--####################################################################################################-->
-<!--####################################################################################################-->
+<!--###########################################################################-->
+<!--###########################################################################-->
+<!--###########################################################################-->
 
 
 # ⚙️ Settings
 
 
-[⬆️ Index ⬆️](#index)
+[⬆️](#index)
 
 
-### Auto-Save
-*(Save text automatically when switching pairs)*
+## Auto-Save
+[⬆️](#index) *(Save text automatically when switching pairs)*
 
 Automatically save text when certain actions occur.
 
@@ -936,11 +836,8 @@ Automatically save text when certain actions occur.
 - Works with the [Clean-Text](#clean-text) option to tidy text before saving.
 
 
----
-
-
-### Clean-Text
-*(Automatically clean text files when saving)*
+## Clean-Text
+[⬆️](#index) *(Automatically clean text files when saving)*
 
 Automatically clean up the text when saving, fixing issues like duplicate tags and extra spaces.
 
@@ -954,11 +851,8 @@ Automatically clean up the text when saving, fixing issues like duplicate tags a
 - **See:** [`Cleanup Text`](#cleanup-text) for more information.
 
 
----
-
-
-### Auto-Delete Blank Files
-*(Automatically delete blank text files)*
+## Auto-Delete Blank Files
+[⬆️](#index) *(Automatically delete blank text files)*
 
 - **Access:**
   - Via `Options` > `Auto-Delete Blank Files`.
@@ -968,11 +862,8 @@ Automatically clean up the text when saving, fixing issues like duplicate tags a
   - If disabled, blank files are created/retained when saving.
 
 
----
-
-
-### Colored Suggestions
-*(Enable colorized autocomplete suggestions)*
+## Colored Suggestions
+[⬆️](#index) *(Enable colorized autocomplete suggestions)*
 
 Enable this option to colorize autocomplete suggestions based on their category.
 
@@ -1011,11 +902,8 @@ Enable this option to colorize autocomplete suggestions based on their category.
     - OC: `Light-Pink`
 
 
----
-
-
-### Highlight Selection
-*(Highlight matching text when selecting)*
+## Highlight Selection
+[⬆️](#index) *(Highlight matching text when selecting)*
 
 - **Access:**
   - Via `Options` > `Highlight Selection`.
@@ -1023,11 +911,8 @@ Enable this option to colorize autocomplete suggestions based on their category.
   - When enabled, selecting text in the text box will automatically highlight all other instances of the selected text.
 
 
----
-
-
-### Big Save Button
-*(Enlarge the save button)*
+## Big Save Button
+[⬆️](#index) *(Enlarge the save button)*
 
 - **Access:**
   - Via `Options` > `Big Save Button`.
@@ -1035,11 +920,8 @@ Enable this option to colorize autocomplete suggestions based on their category.
   - Increases the size of the save button for easier access.
 
 
----
-
-
-### List View
-*(Display the text box tags in a list view)*
+## List View
+[⬆️](#index) *(Display the text box tags in a list view)*
 
 - **Access:**
   - Via `Options` > `List View`.
@@ -1050,11 +932,8 @@ Enable this option to colorize autocomplete suggestions based on their category.
   - Text is reformatted back to a comma-separated list when saving.
 
 
----
-
-
-### Always On Top
-*(Keep the app window on top of other windows)*
+## Always On Top
+[⬆️](#index) *(Keep the app window on top of other windows)*
 
 - **Access:**
   - Via `Options` > `Always On Top`.
@@ -1063,11 +942,8 @@ Enable this option to colorize autocomplete suggestions based on their category.
   - Useful for multitasking or referencing other content.
 
 
----
-
-
-### Toggle Zoom
-*(Toggle the zoom popup)*
+## Toggle Zoom
+[⬆️](#index) *(Toggle the zoom popup)*
 
 - **Access:**
   - Via `Options` > `Toggle Zoom`.
@@ -1078,11 +954,8 @@ Enable this option to colorize autocomplete suggestions based on their category.
 - **See:** [`F1 (Popup Zoom)`](#f1-popup-zoom) for more information.
 
 
----
-
-
-### Toggle Thumbnail Panel
-*(Display thumbnails for quick navigation)*
+## Toggle Thumbnail Panel
+[⬆️](#index) *(Display thumbnails for quick navigation)*
 
 - **Access:**
   - Via `Options` > `Toggle Thumbnail Panel`
@@ -1092,11 +965,8 @@ Enable this option to colorize autocomplete suggestions based on their category.
 - **See:** [`Thumbnail Panel`](#thumbnail-panel) for more information.
 
 
----
-
-
-### Toggle Edit Panel
-*(Toggle the edit panel)*
+## Toggle Edit Panel
+[⬆️](#index) *(Toggle the edit panel)*
 
 - **Access:**
   - Via `Options` > `Toggle Edit Panel`
@@ -1106,11 +976,8 @@ Enable this option to colorize autocomplete suggestions based on their category.
 - **See:** [Edit Image Panel](#edit-image-panel) for more information.
 
 
----
-
-
-### Vertical View
-*(Switch between horizontal and vertical view)*
+## Vertical View
+[⬆️](#index) *(Switch between horizontal and vertical view)*
 
 - **Access:**
   - Via `Options` > `Vertical View`.
@@ -1120,23 +987,18 @@ Enable this option to colorize autocomplete suggestions based on their category.
   - Changes the layout of the image and text frames.
 
 
----
-
-
-### Swap Image Text Side
-*(Swap the image and text sides)*
+## Swap Image Text Side
+[⬆️](#index) *(Swap the image and text sides)*
 
 - **Access:**
   - Via `Options` > `Swap img-txt Sides`.
   - Via image `View` menu.
 - **Functionality:**
-  - Swaps the positions of the image and text frames in the application layout.
-
----
+  - Swaps the positions of the image and text frames in the application layout
 
 
-### Image Display Quality
-*(Adjust image display quality)*
+## Image Display Quality
+[⬆️](#index) *(Adjust image display quality)*
 
 - **Access:**
   - Via `Options` > `Image Display Quality`.
@@ -1148,11 +1010,8 @@ Enable this option to colorize autocomplete suggestions based on their category.
   - Lower quality settings may improve performance on slower systems.
 
 
----
-
-
-### Loading Order
-*(Set the order for loading images and text files)*
+## Loading Order
+[⬆️](#index) *(Set the order for loading images and text files)*
 
 - **Access:**
   - Via `Options` > `Loading Order`.
@@ -1169,11 +1028,8 @@ Enable this option to colorize autocomplete suggestions based on their category.
   - Only image file stats are used for sorting.
 
 
----
-
-
-### Dictionary
-*(Choose the autocomplete dictionary)*
+## Dictionary
+[⬆️](#index) *(Choose the autocomplete dictionary)*
 
 - **Access:**
   - Via `Options` > `Autocomplete` > `Dictionary`.
@@ -1186,11 +1042,8 @@ Enable this option to colorize autocomplete suggestions based on their category.
   - `English Dictionary` + `Danbooru (safe)` is a good choice for general use.
 
 
----
-
-
-### Threshold
-*(Set the autocomplete threshold)*
+## Threshold
+[⬆️](#index) *(Set the autocomplete threshold)*
 
 - **Access:**
   - Via `Options` > `Autocomplete` > `Threshold`.
@@ -1208,11 +1061,8 @@ Enable this option to colorize autocomplete suggestions based on their category.
   - Decrease the threshold to improve performance if you notice slowdowns while typing.
 
 
----
-
-
-### Quantity
-*(Set the number of autocomplete suggestions)*
+## Quantity
+[⬆️](#index) *(Set the number of autocomplete suggestions)*
 
 - **Access:**
   - Via `Options` > `Autocomplete` > `Quantity`.
@@ -1224,11 +1074,8 @@ Enable this option to colorize autocomplete suggestions based on their category.
   - Decrease the quantity for a simplified view with fewer suggestions.
 
 
----
-
-
-### Match Mode
-*(Set the autocomplete match mode)*
+## Match Mode
+[⬆️](#index) *(Set the autocomplete match mode)*
 
 - **Access:**
   - Via `Options` > `Autocomplete` > `Match Mode`.
@@ -1247,11 +1094,8 @@ Enable this option to colorize autocomplete suggestions based on their category.
   - The mode `Match Last Word` is recommended for the `English Dictionary`.
 
 
----
-
-
-### Reset Settings
-*(Reset all settings to default)*
+## Reset Settings
+[⬆️](#index) *(Reset all settings to default)*
 
 - **Access:**
   - Via `Options` > `Reset Settings`.
@@ -1261,11 +1105,8 @@ Enable this option to colorize autocomplete suggestions based on their category.
   - Does not affect the currently selected director.
 
 
----
-
-
-### Open Settings File...
-*(Open the settings file)*
+## Open Settings File...
+[⬆️](#index) *(Open the settings file)*
 
 - **Access:**
   - Via `Options` > `Open Settings File...`
@@ -1276,11 +1117,8 @@ Enable this option to colorize autocomplete suggestions based on their category.
   - the `settings.cfg` file can also be deleted to reset all settings to default.
 
 
----
-
-
-### Open MyTags File...
-*(Open the mytags file)*
+## Open MyTags File...
+[⬆️](#index) *(Open the mytags file)*
 
 - **Access:**
   - Via `Options` > `Open MyTags File...`
@@ -1292,7 +1130,4 @@ Enable this option to colorize autocomplete suggestions based on their category.
   - Restart the app to update the suggestions.
 
 
----
-
-
-[⬆️ Index ⬆️](#index)
+[⬆️](#index)
