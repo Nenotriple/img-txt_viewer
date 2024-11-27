@@ -19,7 +19,7 @@ You can also find a copy of this guide in the [✨Wiki](https://github.com/Nenot
 
 # Index
 
-- ✂️ [**Shortcuts**](#✂-shortcuts)
+- ✂️ [**Shortcuts**](#-shortcuts)
   - [`ALT+LEFT/RIGHT`](#altleftright) - Quickly move between img-txt pairs.
   - [`SHIFT+DEL`](#shiftdel) - Send the current pair to a local trash folder.
   - [`ALT`](#alt) - Cycle through autocomplete suggestions.
