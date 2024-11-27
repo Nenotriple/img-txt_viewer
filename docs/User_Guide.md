@@ -8,12 +8,18 @@ img-txt_viewer comes with many tools that help ease the process of manually crea
 
 The following guide will provide an overview of the various tools and features available in the application, along with detailed instructions on how to use them effectively.
 
-If you have any questions, need further assistance, or anything else, please feel free to [create an issue](https://github.com/Nenotriple/img-txt_viewer/issues/new) in the repo.
+If you have any questions, need further assistance, or anything else, please feel free to [🚩create an issue](https://github.com/Nenotriple/img-txt_viewer/issues/new) in the repo.
+
+Repo link: https://github.com/Nenotriple/img-txt_viewer
+
+Check for updates: https://github.com/Nenotriple/img-txt_viewer/releases
+
+You can also find a copy of this guide in the [✨Wiki](https://github.com/Nenotriple/img-txt_viewer/wiki) section of the repo.
 
 
 # Index
 
-- **✂️ Shortcuts**
+- ✂️ [**Shortcuts**](#✂️-shortcuts)
   - [`ALT+LEFT/RIGHT`](#altleftright) - Quickly move between img-txt pairs.
   - [`SHIFT+DEL`](#shiftdel) - Send the current pair to a local trash folder.
   - [`ALT`](#alt) - Cycle through autocomplete suggestions.
@@ -29,7 +35,7 @@ If you have any questions, need further assistance, or anything else, please fee
   - [`F4`](#f4) - Open the current image in your default editor.
   - [`F5`](#f5) - Open Batch Tag Edit.
   - [`Middle-click`](#middle-click) - Delete a tag.
-- **📜 Text Tools**
+- 📜 [**Text Tools**](#📜-text-tools)
   - [`Search and Replace`](#search-and-replace) - Find and replace text across all text files.
   - [`Prefix`](#prefix) - Insert text at the start of all text files.
   - [`Append`](#append) - Insert text at the end of all text files.
@@ -42,7 +48,7 @@ If you have any questions, need further assistance, or anything else, please fee
   - [`Batch Tag Edit`](#batch-tag-edit) - Edit and manage tags with a user-friendly interface.
   - [`Create Wildcard From Captions`](#create-wildcard-from-captions) - Combine all captions into one text file.
   - [`Cleanup Text`](#cleanup-text) - Fix typos across all text files.
-- **📷 Image Tools**
+- 📷 [**Image Tools**](#📷-image-tools)
   - [`Batch Resize Images`](#batch-resize-images) - Resize all images using various methods and conditions.
   - [`Resize Image`](#resize-image) - Resize the current image by exact resolution or percentage.
   - [`Batch Crop Images`](#batch-crop-images) - Crop all images to a specified resolution.
@@ -51,11 +57,11 @@ If you have any questions, need further assistance, or anything else, please fee
   - [`Find Duplicate Files`](#find-duplicate-files) - Identify and manage duplicate files.
   - [`Expand`](#expand) - Expand images to square ratio for simple backgrounds.
   - [`Edit Image Panel`](#edit-image-panel) - Adjust image properties like brightness, contrast, etc.
-- **📦 Other Tools**
+- 📦 [**Other Tools**](#📦-other-tools)
   - [`Batch Rename/Convert`](#batch-renameconvert) - Rename and convert images sequentially with padded zeros.
   - [`Image-Grid`](#image-grid) - Browse images in a grid layout for easy selection.
   - [`Thumbnail Panel`](#thumbnail-panel) - Display thumbnails for quick navigation.
-- **⚙️ Settings**
+- ⚙️ [**Settings**](#⚙️-settings)
   - [`Auto-Save`](#auto-save) - Save text automatically when switching pairs.
   - [`Clean-Text`](#clean-text) - Automatically clean text files when saving.
   - [`Auto-Delete Blank Files`](#auto-delete-blank-files) - Automatically delete blank text files.
@@ -80,8 +86,6 @@ If you have any questions, need further assistance, or anything else, please fee
   - [`Open Settings File...`](#open-settings-file) - Open the settings file.
   - [`Open MyTags File...`](#open-mytags-file) - Open the mytags file.
 
----
-
 
 <!--####################################################################################################-->
 <!--####################################################################################################-->
@@ -89,6 +93,9 @@ If you have any questions, need further assistance, or anything else, please fee
 
 
 # ✂️ Shortcuts
+
+
+[⬆️ Index ⬆️](#index)
 
 
 ### ALT+LEFT/RIGHT
@@ -272,6 +279,9 @@ Hover over the tag you want to delete and press the middle mouse button to delet
 
 
 # 📜 Text Tools
+
+
+[⬆️ Index ⬆️](#index)
 
 
 ### Search and Replace
@@ -578,15 +588,15 @@ Clean text files to fix issues like duplicate tags and extra spaces.
   - Adding spaces after commas.
 
 
----
-
-
 <!--####################################################################################################-->
 <!--####################################################################################################-->
 <!--####################################################################################################-->
 
 
 # 📷 Image Tools
+
+
+[⬆️ Index ⬆️](#index)
 
 
 ### Batch Resize Images
@@ -828,6 +838,10 @@ Fine-tune image appearance by adjusting various properties.
 
 # 📦 Other Tools
 
+
+[⬆️ Index ⬆️](#index)
+
+
 ### Batch Rename/Convert
 *(Rename and convert images sequentially with padded zeros)*
 
@@ -903,6 +917,9 @@ View and navigate images using thumbnails.
 
 
 # ⚙️ Settings
+
+
+[⬆️ Index ⬆️](#index)
 
 
 ### Auto-Save
@@ -1274,4 +1291,8 @@ Enable this option to colorize autocomplete suggestions based on their category.
   - Prioritize important tags by moving them to the top.
   - Restart the app to update the suggestions.
 
+
 ---
+
+
+[⬆️ Index ⬆️](#index)
