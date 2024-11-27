@@ -42,7 +42,7 @@
 
 <!--###########################################################################-->
 
-###  [⬆️](#index) v1.96
+### [⬆️](#index) v1.96
 
 [💾 - Release Page](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.96)
 
