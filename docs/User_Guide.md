@@ -61,7 +61,7 @@ You can also find a copy of this guide in the [✨Wiki](https://github.com/Nenot
   - [`Batch Rename/Convert`](#batch-renameconvert) - Rename and convert images sequentially with padded zeros.
   - [`Image-Grid`](#image-grid) - Browse images in a grid layout for easy selection.
   - [`Thumbnail Panel`](#thumbnail-panel) - Display thumbnails for quick navigation.
-- ⚙️ [**Settings**](#⚙settings)
+- ⚙️ [**Settings**](#settings)
   - [`Auto-Save`](#auto-save) - Save text automatically when switching pairs.
   - [`Clean-Text`](#clean-text) - Automatically clean text files when saving.
   - [`Auto-Delete Blank Files`](#auto-delete-blank-files) - Automatically delete blank text files.
@@ -93,9 +93,6 @@ You can also find a copy of this guide in the [✨Wiki](https://github.com/Nenot
 
 
 # Shortcuts
-
-
-[⬆️](#index)
 
 
 ## ALT+LEFT/RIGHT
@@ -238,9 +235,6 @@ Hover over the tag you want to delete and press the middle mouse button to delet
 
 
 # Text Tools
-
-
-[⬆️](#index)
 
 
 ## Search and Replace
@@ -523,9 +517,6 @@ Clean text files to fix issues like duplicate tags and extra spaces.
 # Image Tools
 
 
-[⬆️](#index)
-
-
 ## Batch Resize Images
 [⬆️](#index) *(Resize all images using various methods and conditions)*
 
@@ -745,9 +736,6 @@ Fine-tune image appearance by adjusting various properties.
 # Other Tools
 
 
-[⬆️](#index)
-
-
 ## Batch Rename/Convert
 [⬆️](#index) *(Rename and convert images sequentially with padded zeros)*
 
@@ -817,9 +805,6 @@ View and navigate images using thumbnails.
 
 
 # Settings
-
-
-[⬆️](#index)
 
 
 ## Auto-Save
