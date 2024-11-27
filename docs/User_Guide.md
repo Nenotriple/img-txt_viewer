@@ -77,7 +77,7 @@ You can also find a copy of this guide in the [✨Wiki](https://github.com/Nenot
   - [Swap Image Text Side](#swap-image-text-side) - Swap the image and text sides.
   - [Image Display Quality](#image-display-quality) - Adjust image display quality.
   - [Loading Order](#loading-order) - Set the order for loading images and text files.
-  - Autocomplete Settings:
+  - **Autocomplete Settings**
     - [Dictionary](#dictionary) - Choose the autocomplete dictionary.
     - [Threshold](#threshold) - Set the autocomplete threshold.
     - [Quantity](#quantity) - Set the number of autocomplete suggestions.
