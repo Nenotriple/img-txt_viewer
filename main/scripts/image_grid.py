@@ -526,7 +526,7 @@ class ImageGrid:
                     return False
             elif current_filter == "Tags":
                 if os.path.exists(txt_path):
-                    with open(txt_path, 'r') as file:
+                    with open(txt_path, 'r', encoding='utf-8') as file:
                         tags = file.read()
                         if not check_tags(tags):
                             return False

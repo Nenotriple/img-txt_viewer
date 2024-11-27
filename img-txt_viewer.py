@@ -1883,7 +1883,7 @@ class ImgTxtViewer:
 
     def refresh_text_box(self):
         self.check_working_directory()
-        if not self.check_if_contains_images(self.image_dir.get()):
+        if not self.check_dir_for_img(self.image_dir.get()):
             return
         text_file = self.text_files[self.current_index]
         if text_file and os.path.isfile(text_file):
@@ -2469,7 +2469,7 @@ class ImgTxtViewer:
 
 
     def refresh_custom_dictionary(self):
-        with open(self.my_tags_csv, 'r') as file:
+        with open(self.my_tags_csv, 'r', encoding='utf-8') as file:
             content = self.remove_extra_newlines(file.read())
             tags = content.split('\n')
             self.text_controller.custom_dictionary_listbox.delete(0, 'end')
@@ -2541,7 +2541,7 @@ class ImgTxtViewer:
         return sort_key
 
 
-    def check_if_contains_images(self, directory):
+    def check_dir_for_img(self, directory):
         if any(fname.lower().endswith(('.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif')) for fname in os.listdir(directory)):
             self.filepath_contains_images_var = True
             return True
@@ -2566,7 +2566,7 @@ class ImgTxtViewer:
             if directory and directory != self.image_dir.get():
                 if hasattr(self, 'text_box'):
                     self.text_controller.revert_text_image_filter(clear=True, silent=True)
-                if self.check_if_contains_images(directory):
+                if self.check_dir_for_img(directory):
                     self.delete_text_backup()
                     self.image_dir.set(os.path.normpath(directory))
                     self.current_index = 0
@@ -2596,7 +2596,7 @@ class ImgTxtViewer:
             if hasattr(self, 'text_box'):
                 self.text_controller.revert_text_image_filter(clear=True, silent=True)
             directory = self.directory_entry.get()
-            if self.check_if_contains_images(directory):
+            if self.check_dir_for_img(directory):
                 self.image_dir.set(os.path.normpath(directory))
                 self.current_index = 0
                 if not silent:
@@ -2784,7 +2784,7 @@ class ImgTxtViewer:
                     created_count = 0
                     for file_path in self.text_files:
                         if not os.path.exists(file_path):
-                            with open(file_path, 'w') as file:
+                            with open(file_path, 'w', encoding='utf-8') as file:
                                 pass  # Create file
                             created_count += 1
                     messagebox.showinfo("Success", f"Created {created_count} blank text files!")
@@ -2803,7 +2803,7 @@ class ImgTxtViewer:
             if backup_file.endswith(".bak"):
                 original_file = os.path.join(os.path.dirname(backup_dir), os.path.splitext(backup_file)[0] + ".txt")
                 try:
-                    with open(os.path.join(backup_dir, backup_file), 'r') as file:
+                    with open(os.path.join(backup_dir, backup_file), 'r', encoding='utf-8') as file:
                         content = file.read()
                     if content == "!DELETEME!":
                         if os.path.exists(original_file):
@@ -2834,7 +2834,7 @@ class ImgTxtViewer:
             if os.path.exists(text_file):
                 shutil.copy2(text_file, new_backup)
             else:
-                with open(new_backup, 'w') as f:
+                with open(new_backup, 'w', encoding='utf-8') as f:
                     f.write("!DELETEME!")
 
 
@@ -2888,12 +2888,12 @@ class ImgTxtViewer:
                         if os.path.exists(file_list[index]):
                             trash_file = os.path.join(trash_dir, os.path.basename(file_list[index]))
                             try:
-                                os.rename(file_list[index], trash_file)
+                                shutil.move(file_list[index], trash_file)
                             except FileExistsError:
                                 if not trash_file.endswith("txt"):
                                     if messagebox.askokcancel("Warning", "The file already exists in the trash. Do you want to overwrite it?"):
                                         os.remove(trash_file)
-                                        os.rename(file_list[index], trash_file)
+                                        shutil.move(file_list[index], trash_file)
                                     else:
                                         return
                             deleted_pair.append((file_list, index, trash_file))

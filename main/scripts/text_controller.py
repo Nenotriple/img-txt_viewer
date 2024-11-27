@@ -955,7 +955,7 @@ class TextController:
     def create_custom_dictionary_widgets_tab8(self):
         # LOAD
         def load_tag_file():
-            with open(self.parent.my_tags_csv, 'r') as file:
+            with open(self.parent.my_tags_csv, 'r', encoding='utf-8') as file:
                 content = self.parent.remove_extra_newlines(file.read())
                 tags = content.split('\n')
                 for tag in tags:
@@ -965,7 +965,7 @@ class TextController:
         def save():
             tags = self.custom_dictionary_listbox.get(0, 'end')
             content = '\n'.join(tags) + '\n'
-            with open(self.parent.my_tags_csv, 'w') as file:
+            with open(self.parent.my_tags_csv, 'w', encoding='utf-8') as file:
                 file.write(content)
             self.root.after(100, self.parent.refresh_custom_dictionary)
         # ADD

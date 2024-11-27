@@ -85,7 +85,7 @@ class OnnxTagger:
         if (self.model_path != self.last_model_path or self.exclude_tags != self.last_exclude_tags):
             self.model_tags.clear()
             csv_path = os.path.join(os.path.dirname(self.model_path), "selected_tags.csv")
-            with open(csv_path, newline='') as file:
+            with open(csv_path, newline='', encoding='utf-8') as file:
                 csv_reader = csv.reader(file)
                 next(csv_reader)
                 for idx, row in enumerate(csv_reader):
