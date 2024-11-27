@@ -20,71 +20,71 @@ You can also find a copy of this guide in the [✨Wiki](https://github.com/Nenot
 # Index
 
 - ✂️ [**Shortcuts**](#shortcuts)
-  - [`ALT+LEFT/RIGHT`](#altleftright) - Quickly move between img-txt pairs.
-  - [`SHIFT+DEL`](#shiftdel) - Send the current pair to a local trash folder.
-  - [`ALT`](#alt) - Cycle through autocomplete suggestions.
-  - [`TAB`](#tab) - Insert the highlighted suggestion.
-  - [`CTRL+S`](#ctrls) - Save the current text file.
-  - [`CTRL+E`](#ctrle) - Jump to the next empty text file.
-  - [`CTRL+R`](#ctrlr) - Jump to a random img-txt pair.
-  - [`CTRL+F`](#ctrlf) - Highlight all duplicate words.
-  - [`CTRL+Z / CTRL+Y`](#ctrlz--ctrly) - Undo/Redo.
-  - [`CTRL+W`](#ctrlw) - Close the window.
-  - [`F1`](#f1-popup-zoom) - Toggle zoom popup.
-  - [`F2`](#f2) - Open the Image-Grid view.
-  - [`F4`](#f4) - Open the current image in your default editor.
-  - [`F5`](#f5) - Open Batch Tag Edit.
-  - [`Middle-click`](#middle-click) - Delete a tag.
+  - [ALT+LEFT/RIGHT](#altleftright) - Quickly move between img-txt pairs.
+  - [SHIFT+DEL](#shiftdel) - Send the current pair to a local trash folder.
+  - [ALT](#alt) - Cycle through autocomplete suggestions.
+  - [TAB](#tab) - Insert the highlighted suggestion.
+  - [CTRL+S](#ctrls) - Save the current text file.
+  - [CTRL+E](#ctrle) - Jump to the next empty text file.
+  - [CTRL+R](#ctrlr) - Jump to a random img-txt pair.
+  - [CTRL+F](#ctrlf) - Highlight all duplicate words.
+  - [CTRL+Z / CTRL+Y](#ctrlz--ctrly) - Undo/Redo.
+  - [CTRL+W](#ctrlw) - Close the window.
+  - [F1](#f1-popup-zoom) - Toggle zoom popup.
+  - [F2](#f2) - Open the Image-Grid view.
+  - [F4](#f4) - Open the current image in your default editor.
+  - [F5](#f5) - Open Batch Tag Edit.
+  - [Middle-click](#middle-click) - Delete a tag.
 - 📜 [**Text Tools**](#text-tools)
-  - [`Search and Replace`](#search-and-replace) - Find and replace text across all text files.
-  - [`Prefix`](#prefix) - Insert text at the start of all text files.
-  - [`Append`](#append) - Insert text at the end of all text files.
-  - [`AutoTag`](#autotag) - Automatically tag images using ONNX vision models.
-  - [`Filter`](#filter) - Filter pairs based on text, missing text files, and more.
-  - [`Highlight`](#highlight) - Always highlight specific text.
-  - [`Font`](#font) - Adjust the font size and line height.
-  - [`My Tags`](#my-tags) - Add your custom tags for autocomplete suggestions.
-  - [`Stats`](#stats) - Display various file stats.
-  - [`Batch Tag Edit`](#batch-tag-edit) - Edit and manage tags with a user-friendly interface.
-  - [`Create Wildcard From Captions`](#create-wildcard-from-captions) - Combine all captions into one text file.
-  - [`Cleanup Text`](#cleanup-text) - Fix typos across all text files.
+  - [Search and Replace](#search-and-replace) - Find and replace text across all text files.
+  - [Prefix](#prefix) - Insert text at the start of all text files.
+  - [Append](#append) - Insert text at the end of all text files.
+  - [AutoTag](#autotag) - Automatically tag images using ONNX vision models.
+  - [Filter](#filter) - Filter pairs based on text, missing text files, and more.
+  - [Highlight](#highlight) - Always highlight specific text.
+  - [Font](#font) - Adjust the font size and line height.
+  - [My Tags](#my-tags) - Add your custom tags for autocomplete suggestions.
+  - [Stats](#stats) - Display various file stats.
+  - [Batch Tag Edit](#batch-tag-edit) - Edit and manage tags with a user-friendly interface.
+  - [Create Wildcard From Captions](#create-wildcard-from-captions) - Combine all captions into one text file.
+  - [Cleanup Text](#cleanup-text) - Fix typos across all text files.
 - 📷 [**Image Tools**](#image-tools)
-  - [`Batch Resize Images`](#batch-resize-images) - Resize all images using various methods and conditions.
-  - [`Resize Image`](#resize-image) - Resize the current image by exact resolution or percentage.
-  - [`Batch Crop Images`](#batch-crop-images) - Crop all images to a specified resolution.
-  - [`Crop Image`](#crop-image) - Crop an image or GIF using various methods and tools.
-  - [`Upscale Image`](#upscale-image) - Upscale image(s) using models like R-ESRGAN.
-  - [`Find Duplicate Files`](#find-duplicate-files) - Identify and manage duplicate files.
-  - [`Expand`](#expand) - Expand images to square ratio for simple backgrounds.
-  - [`Edit Image Panel`](#edit-image-panel) - Adjust image properties like brightness, contrast, etc.
+  - [Batch Resize Images](#batch-resize-images) - Resize all images using various methods and conditions.
+  - [Resize Image](#resize-image) - Resize the current image by exact resolution or percentage.
+  - [Batch Crop Images](#batch-crop-images) - Crop all images to a specified resolution.
+  - [Crop Image](#crop-image) - Crop an image or GIF using various methods and tools.
+  - [Upscale Image](#upscale-image) - Upscale image(s) using models like R-ESRGAN.
+  - [Find Duplicate Files](#find-duplicate-files) - Identify and manage duplicate files.
+  - [Expand](#expand) - Expand images to square ratio for simple backgrounds.
+  - [Edit Image Panel](#edit-image-panel) - Adjust image properties like brightness, contrast, etc.
 - 📦 [**Other Tools**](#other-tools)
-  - [`Batch Rename/Convert`](#batch-renameconvert) - Rename and convert images sequentially with padded zeros.
-  - [`Image-Grid`](#image-grid) - Browse images in a grid layout for easy selection.
-  - [`Thumbnail Panel`](#thumbnail-panel) - Display thumbnails for quick navigation.
+  - [Batch Rename/Convert](#batch-renameconvert) - Rename and convert images sequentially with padded zeros.
+  - [Image-Grid](#image-grid) - Browse images in a grid layout for easy selection.
+  - [Thumbnail Panel](#thumbnail-panel) - Display thumbnails for quick navigation.
 - ⚙️ [**Settings**](#settings)
-  - [`Auto-Save`](#auto-save) - Save text automatically when switching pairs.
-  - [`Clean-Text`](#clean-text) - Automatically clean text files when saving.
-  - [`Auto-Delete Blank Files`](#auto-delete-blank-files) - Automatically delete blank text files.
-  - [`Colored Suggestions`](#colored-suggestions) - Enable colorized autocomplete suggestions.
-  - [`Highlight Selection`](#highlight-selection) - Highlight matching selected text.
-  - [`Big Save Button`](#big-save-button) - Enlarge the save button.
-  - [`List View`](#list-view) - Display the text box tags in a list view.
-  - [`Always On Top`](#always-on-top) - Keep the app window on top of other windows.
-  - [`Toggle Zoom`](#toggle-zoom) - Toggle the zoom popup.
-  - [`Toggle Thumbnail Panel`](#toggle-thumbnail-panel) - Toggle the thumbnail panel.
-  - [`Toggle Edit Panel`](#toggle-edit-panel) - Toggle the edit panel.
-  - [`Vertical View`](#vertical-view) - Switch between horizontal and vertical view.
-  - [`Swap Image Text Side`](#swap-image-text-side) - Swap the image and text sides.
-  - [`Image Display Quality`](#image-display-quality) - Adjust image display quality.
-  - [`Loading Order`](#loading-order) - Set the order for loading images and text files.
+  - [Auto-Save](#auto-save) - Save text automatically when switching pairs.
+  - [Clean-Text](#clean-text) - Automatically clean text files when saving.
+  - [Auto-Delete Blank Files](#auto-delete-blank-files) - Automatically delete blank text files.
+  - [Colored Suggestions](#colored-suggestions) - Enable colorized autocomplete suggestions.
+  - [Highlight Selection](#highlight-selection) - Highlight matching selected text.
+  - [Big Save Button](#big-save-button) - Enlarge the save button.
+  - [List View](#list-view) - Display the text box tags in a list view.
+  - [Always On Top](#always-on-top) - Keep the app window on top of other windows.
+  - [Toggle Zoom](#toggle-zoom) - Toggle the zoom popup.
+  - [Toggle Thumbnail Panel](#toggle-thumbnail-panel) - Toggle the thumbnail panel.
+  - [Toggle Edit Panel](#toggle-edit-panel) - Toggle the edit panel.
+  - [Vertical View](#vertical-view) - Switch between horizontal and vertical view.
+  - [Swap Image Text Side](#swap-image-text-side) - Swap the image and text sides.
+  - [Image Display Quality](#image-display-quality) - Adjust image display quality.
+  - [Loading Order](#loading-order) - Set the order for loading images and text files.
   - Autocomplete Settings:
-    - [`Dictionary`](#dictionary) - Choose the autocomplete dictionary.
-    - [`Threshold`](#threshold) - Set the autocomplete threshold.
-    - [`Quantity`](#quantity) - Set the number of autocomplete suggestions.
-    - [`Match Mode`](#match-mode) - Set the autocomplete match mode.
-  - [`Reset Settings`](#reset-settings) - Reset all settings to default.
-  - [`Open Settings File...`](#open-settings-file) - Open the settings file.
-  - [`Open MyTags File...`](#open-mytags-file) - Open the mytags file.
+    - [Dictionary](#dictionary) - Choose the autocomplete dictionary.
+    - [Threshold](#threshold) - Set the autocomplete threshold.
+    - [Quantity](#quantity) - Set the number of autocomplete suggestions.
+    - [Match Mode](#match-mode) - Set the autocomplete match mode.
+  - [Reset Settings](#reset-settings) - Reset all settings to default.
+  - [Open Settings File...](#open-settings-file) - Open the settings file.
+  - [Open MyTags File...](#open-mytags-file) - Open the mytags file.
 
 
 <!--###########################################################################-->
@@ -497,7 +497,7 @@ Clean text files to fix issues like duplicate tags and extra spaces.
 - **Access:**
   - Via the `Tools` > `Batch Operations` > `Cleanup Text...` menu.
 - **Tips:**
-  - Enable the [`Clean-Text`](#clean-text) setting to auto-clean when saving.
+  - Enable the [Clean-Text](#clean-text) setting to auto-clean when saving.
   - Regular cleaning maintains readability.
 - **Example:**
   - Before: `dog,, ,dog,solo,  ,happy  ,,`
@@ -833,7 +833,7 @@ Automatically clean up the text when saving, fixing issues like duplicate tags a
   - Fixes punctuation and spacing.
   - Trims leading/trailing commas and spaces.
   - Adds spaces after commas.
-- **See:** [`Cleanup Text`](#cleanup-text) for more information.
+- **See:** [Cleanup Text](#cleanup-text) for more information.
 
 
 ## Auto-Delete Blank Files
@@ -936,7 +936,7 @@ Enable this option to colorize autocomplete suggestions based on their category.
 - **Functionality:**
   - Toggles the zoom popup feature on or off.
   - Use `F1` to toggle the zoom popup.
-- **See:** [`F1 (Popup Zoom)`](#f1-popup-zoom) for more information.
+- **See:** [F1 (Popup Zoom)](#f1-popup-zoom) for more information.
 
 
 ## Toggle Thumbnail Panel
@@ -947,7 +947,7 @@ Enable this option to colorize autocomplete suggestions based on their category.
   - Via image `View` menu.
 - **Functionality:**
   - Toggles the thumbnail panel on or off.
-- **See:** [`Thumbnail Panel`](#thumbnail-panel) for more information.
+- **See:** [Thumbnail Panel](#thumbnail-panel) for more information.
 
 
 ## Toggle Edit Panel
