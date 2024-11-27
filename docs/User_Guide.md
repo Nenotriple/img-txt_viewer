@@ -19,7 +19,7 @@ You can also find a copy of this guide in the [✨Wiki](https://github.com/Nenot
 
 # Index
 
-- ✂️ [**Shortcuts**](#-shortcuts)
+- ✂️ [**Shortcuts**](#shortcuts)
   - [`ALT+LEFT/RIGHT`](#altleftright) - Quickly move between img-txt pairs.
   - [`SHIFT+DEL`](#shiftdel) - Send the current pair to a local trash folder.
   - [`ALT`](#alt) - Cycle through autocomplete suggestions.
@@ -35,7 +35,7 @@ You can also find a copy of this guide in the [✨Wiki](https://github.com/Nenot
   - [`F4`](#f4) - Open the current image in your default editor.
   - [`F5`](#f5) - Open Batch Tag Edit.
   - [`Middle-click`](#middle-click) - Delete a tag.
-- 📜 [**Text Tools**](#📜-text-tools)
+- 📜 [**Text Tools**](#text-tools)
   - [`Search and Replace`](#search-and-replace) - Find and replace text across all text files.
   - [`Prefix`](#prefix) - Insert text at the start of all text files.
   - [`Append`](#append) - Insert text at the end of all text files.
@@ -48,7 +48,7 @@ You can also find a copy of this guide in the [✨Wiki](https://github.com/Nenot
   - [`Batch Tag Edit`](#batch-tag-edit) - Edit and manage tags with a user-friendly interface.
   - [`Create Wildcard From Captions`](#create-wildcard-from-captions) - Combine all captions into one text file.
   - [`Cleanup Text`](#cleanup-text) - Fix typos across all text files.
-- 📷 [**Image Tools**](#📷-image-tools)
+- 📷 [**Image Tools**](#image-tools)
   - [`Batch Resize Images`](#batch-resize-images) - Resize all images using various methods and conditions.
   - [`Resize Image`](#resize-image) - Resize the current image by exact resolution or percentage.
   - [`Batch Crop Images`](#batch-crop-images) - Crop all images to a specified resolution.
@@ -57,11 +57,11 @@ You can also find a copy of this guide in the [✨Wiki](https://github.com/Nenot
   - [`Find Duplicate Files`](#find-duplicate-files) - Identify and manage duplicate files.
   - [`Expand`](#expand) - Expand images to square ratio for simple backgrounds.
   - [`Edit Image Panel`](#edit-image-panel) - Adjust image properties like brightness, contrast, etc.
-- 📦 [**Other Tools**](#📦-other-tools)
+- 📦 [**Other Tools**](#other-tools)
   - [`Batch Rename/Convert`](#batch-renameconvert) - Rename and convert images sequentially with padded zeros.
   - [`Image-Grid`](#image-grid) - Browse images in a grid layout for easy selection.
   - [`Thumbnail Panel`](#thumbnail-panel) - Display thumbnails for quick navigation.
-- ⚙️ [**Settings**](#⚙️-settings)
+- ⚙️ [**Settings**](#⚙settings)
   - [`Auto-Save`](#auto-save) - Save text automatically when switching pairs.
   - [`Clean-Text`](#clean-text) - Automatically clean text files when saving.
   - [`Auto-Delete Blank Files`](#auto-delete-blank-files) - Automatically delete blank text files.
@@ -92,7 +92,7 @@ You can also find a copy of this guide in the [✨Wiki](https://github.com/Nenot
 <!--###########################################################################-->
 
 
-# ✂️ Shortcuts
+# Shortcuts
 
 
 [⬆️](#index)
@@ -237,7 +237,7 @@ Hover over the tag you want to delete and press the middle mouse button to delet
 <!--###########################################################################-->
 
 
-# 📜 Text Tools
+# Text Tools
 
 
 [⬆️](#index)
@@ -520,7 +520,7 @@ Clean text files to fix issues like duplicate tags and extra spaces.
 <!--###########################################################################-->
 
 
-# 📷 Image Tools
+# Image Tools
 
 
 [⬆️](#index)
@@ -742,7 +742,7 @@ Fine-tune image appearance by adjusting various properties.
 <!--###########################################################################-->
 
 
-# 📦 Other Tools
+# Other Tools
 
 
 [⬆️](#index)
@@ -816,7 +816,7 @@ View and navigate images using thumbnails.
 <!--###########################################################################-->
 
 
-# ⚙️ Settings
+# Settings
 
 
 [⬆️](#index)
