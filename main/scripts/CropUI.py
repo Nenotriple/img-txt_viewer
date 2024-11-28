@@ -1067,6 +1067,7 @@ class CropInterface:
         self.menu = None
         self.image_path = None
         self.version = None
+        self.text_controller = None
 
         # Image Variables
         self.gif_frames = []
@@ -1106,6 +1107,7 @@ class CropInterface:
             self.image_path = path
         self.image_files = image_paths
         self.version = self.parent.app_version
+        self.text_controller = self.parent.text_controller
         # Window
         self.root.minsize(530, 370)
         self.root.title(f"{self.version} - img-txt Viewer - Crop Image")
@@ -1150,7 +1152,7 @@ class CropInterface:
         directory_frame.grid(row=0, column=3, padx=(self.padx, 0), sticky="ew")
         self.path_entry = ttk.Entry(directory_frame)
         self.path_entry.pack(side="left", fill="x", expand=True)
-        self.parent.bind_entry_functions(self.path_entry)
+        self.text_controller.bind_entry_functions(self.path_entry)
         browse_button = ttk.Button(directory_frame, text="Browse...", width=9, command=self.open_directory_dialog)
         browse_button.pack(side="left")
         open_button = ttk.Button(directory_frame, text="Open", width=9, command=lambda: self.parent.open_directory(self.path_entry.get()))
@@ -1228,7 +1230,7 @@ class CropInterface:
         self.image_index_spinbox = ttk.Spinbox(index_frame, from_=1, to=len(self.image_files), width=5, command=self.image_index_changed)
         self.image_index_spinbox.pack(side="left", fill="x", expand=True)
         self.image_index_spinbox.bind("<Return>", self.image_index_changed)
-        self.parent.bind_entry_functions(self.image_index_spinbox)
+        self.text_controller.bind_entry_functions(self.image_index_spinbox)
         ttk.Label(index_frame, text=f"of {len(self.image_files)}").pack(side="left")
         # Nav Buttons
         nav_button_frame = tk.Frame(self.control_panel)
@@ -1255,7 +1257,7 @@ class CropInterface:
         self.width_spinbox.set(0)
         self.width_spinbox.bind("<Return>", self.adjust_selection)
         self.width_spinbox.bind("<MouseWheel>", self.focus_widget_and_adjust_selection)
-        self.parent.bind_entry_functions(self.width_spinbox)
+        self.text_controller.bind_entry_functions(self.width_spinbox)
         # Height
         self.height_label = ttk.Label(size_frame, text="H (px):")
         self.height_label.grid(row=1, column=0, padx=self.padxl, pady=self.pady, sticky='w')
@@ -1265,7 +1267,7 @@ class CropInterface:
         self.height_spinbox.set(0)
         self.height_spinbox.bind("<Return>", self.adjust_selection)
         self.height_spinbox.bind("<MouseWheel>", self.focus_widget_and_adjust_selection)
-        self.parent.bind_entry_functions(self.height_spinbox)
+        self.text_controller.bind_entry_functions(self.height_spinbox)
 
 
     def create_position_widgets(self):
@@ -1281,7 +1283,7 @@ class CropInterface:
         self.pos_x_spinbox.set(0)
         self.pos_x_spinbox.bind("<Return>", self.adjust_selection)
         self.pos_x_spinbox.bind("<MouseWheel>", self.focus_widget_and_adjust_selection)
-        self.parent.bind_entry_functions(self.pos_x_spinbox)
+        self.text_controller.bind_entry_functions(self.pos_x_spinbox)
         # Y Position
         self.pos_y_label = ttk.Label(position_frame, text="Y (px):")
         self.pos_y_label.grid(row=1, column=0, padx=self.padxl, pady=self.pady, sticky='w')
@@ -1291,7 +1293,7 @@ class CropInterface:
         self.pos_y_spinbox.set(0)
         self.pos_y_spinbox.bind("<Return>", self.adjust_selection)
         self.pos_y_spinbox.bind("<MouseWheel>", self.focus_widget_and_adjust_selection)
-        self.parent.bind_entry_functions(self.pos_y_spinbox)
+        self.text_controller.bind_entry_functions(self.pos_y_spinbox)
 
 
     def create_selection_widgets(self):
@@ -1321,7 +1323,7 @@ class CropInterface:
         self.fixed_selection_entry.grid(row=1, column=2, padx=self.pady, pady=self.pady, sticky="ew")
         self.fixed_selection_entry_tooltip = ToolTip(self.fixed_selection_entry, "Enter a ratio 'W:H' or a decimal '1.0'", 200, 6, 12)
         self.fixed_selection_entry.bind("<KeyRelease>", lambda event: self.update_widget_values(resize=True))
-        self.parent.bind_entry_functions(self.fixed_selection_entry)
+        self.text_controller.bind_entry_functions(self.fixed_selection_entry)
         # Insert Button
         insert_button = ttk.Button(fixed_selection_frame, text="<", width=1, command=self.insert_selection_dimension)
         insert_button.grid(row=1, column=3, padx=self.pady, pady=self.pady, sticky="e")
@@ -1329,7 +1331,7 @@ class CropInterface:
         # Auto Entry
         self.auto_entry = ttk.Entry(fixed_selection_frame, textvariable=self.auto_entry_var, width=12, state="disabled")
         self.auto_entry.grid(row=3, column=0, columnspan=99, sticky="ew", padx=self.pady, pady=self.pady)
-        self.parent.bind_entry_functions(self.auto_entry)
+        self.text_controller.bind_entry_functions(self.auto_entry)
         ToolTip(self.auto_entry, "Enter aspect ratios separated by commas. As a ratio: 'W:H', or a decimal: '1.0'", 200, 6, 12)
 
 
