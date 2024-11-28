@@ -163,7 +163,7 @@ For more detailed information regarding the tools and features, please refer to 
 <br>
 
 
-# 🛠️ Install
+# 🛠 Install
 ### Portable Setup
 ![Static Badge](https://img.shields.io/badge/Windows-gray)
 
