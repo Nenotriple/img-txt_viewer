@@ -1,6 +1,6 @@
 <h1 align="center"><img src="https://github.com/Nenotriple/img-txt_viewer/assets/70049990/8342e197-25c7-4e78-a27d-38daa79b4330" alt="icon" width="50"> img-txt Viewer</h1>
 <p align="center">A Windows application for side-by-side image and text viewing, designed to streamline manual captioning or tagging.</p>
-<p align="center"><img src="https://github.com/user-attachments/assets/339a3e38-96f4-4ad3-8777-b3c29d870873" alt="cover"></p>
+<p align="center"><img src="https://github.com/user-attachments/assets/56bd9a8b-e74c-4b44-b147-31390e82671d" alt="cover"></p>
 
 
 <div align="center">
