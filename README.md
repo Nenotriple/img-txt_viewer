@@ -8,8 +8,9 @@
 <p align="center">+Tons of features to help you work faster!</p>
 
 <p align="center">
-  <img src="https://github.com/Nenotriple/img-txt_viewer/assets/70049990/d7d9c754-aae4-4add-882d-fef105cd0531" alt="cover">
+  <img src="https://github.com/user-attachments/assets/ac5b4a10-4e0a-40f2-9441-b4798f03641a" alt="cover">
 </p>
+
 
 - [📝Usage](#-usage)
 - [💡Tips and Features](#-tips-and-features)
