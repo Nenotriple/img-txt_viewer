@@ -1,6 +1,6 @@
 <h1 align="center"><img src="https://github.com/Nenotriple/img-txt_viewer/assets/70049990/8342e197-25c7-4e78-a27d-38daa79b4330" alt="icon" width="50"> img-txt Viewer</h1>
 <p align="center">A Windows application for side-by-side image and text viewing, designed to streamline manual captioning or tagging.</p>
-<p align="center"><img src="https://github.com/Nenotriple/img-txt_viewer/assets/70049990/d7d9c754-aae4-4add-882d-fef105cd0531" alt="cover"></p>
+<p align="center"><img src="https://github.com/user-attachments/assets/339a3e38-96f4-4ad3-8777-b3c29d870873" alt="cover"></p>
 
 
 <div align="center">
@@ -23,8 +23,8 @@
 - [💡 Tips and Features](#-tips-and-features)
 - [🛠️ Install](#-install)
 - [🔒 Privacy Policy](#-privacy-policy)
-- [📜 Version History](#-version-history)
-- [✨ User Guide](https://github.com/Nenotriple/img-txt_viewer/blob/v1.96_dev/docs/UserGuide.md)
+- [📜 Version History](https://github.com/Nenotriple/img-txt_viewer/blob/v1.96_dev/docs/Changelog.md)
+- [✨ User Guide](https://github.com/Nenotriple/img-txt_viewer/blob/v1.96_dev/docs/User_Guide.md)
 - [💾 Download](https://github.com/Nenotriple/img-txt_viewer/releases?q=executable&expanded=true)
 
 
@@ -163,7 +163,7 @@ For more detailed information regarding the tools and features, please refer to 
 <br>
 
 
-# 🛠️Install
+# 🛠️ Install
 ### Portable Setup
 ![Static Badge](https://img.shields.io/badge/Windows-gray)
 
@@ -237,12 +237,3 @@ python img-txt_viewer.py
 - The app operates entirely on your device, ensuring your data remains solely under your control.
 - **No data is collected, transmitted, or stored**, aside from a basic configuration file for app settings.
 - The app functions 100% offline and never connects to external servers. **No data is ever shared or sent elsewhere.**
-
-
-<br>
-
-
-# 📜 Version History
-
-
-Please see the [changelog](https://github.com/Nenotriple/img-txt_viewer/blob/v1.96_dev/docs/Changelog.md) for a detailed history of all changes made in each version.
