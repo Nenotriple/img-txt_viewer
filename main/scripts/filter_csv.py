@@ -143,6 +143,7 @@ blacklist = {
     "sleevejob": False,
     "sockjob": False,
     "hornjob": False,
+    "pubic": True,
 }
 
 
