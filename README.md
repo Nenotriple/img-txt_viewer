@@ -5,7 +5,7 @@
 
 <div align="center">
 
-  
+
 ![GitHub last commit](https://img.shields.io/github/last-commit/Nenotriple/img-txt_viewer)
 ![GitHub contributors](https://img.shields.io/github/contributors/Nenotriple/img-txt_viewer)
 ![GitHub repo size](https://img.shields.io/github/repo-size/Nenotriple/img-txt_viewer)
@@ -158,7 +158,11 @@ Example folder structures:
   - `Text cleanup`: (e.g., removing duplicate tags, trailing commas, extra spaces) happens automatically on save, and can be disabled from the options menu.
   - Text cleanup is optimized for CSV-format captions and can be disabled via the Clean-Text option in the menu.
 
-For more detailed information regarding the tools and features, please refer to the [UserGuide✨](https://github.com/Nenotriple/img-txt_viewer/blob/v1.96_dev/docs/UserGuide.md)found in the repo docs.
+
+# ✨ User Guide
+
+
+For more detailed information regarding the various tools and features, please refer to the [User Guide✨](https://github.com/Nenotriple/img-txt_viewer/blob/v1.96_dev/docs/UserGuide.md)found in the repo docs.
 
 
 <br>
