@@ -69,7 +69,7 @@ class OnnxTagger:
 
     def _load_model(self):
         if self.model_path != self.last_model_path:
-            self.model = InferenceSession(self.model_path, providers=['CPUExecutionProvider'])
+            self.model = InferenceSession(self.model_path, providers=['DmlExecutionProvider','CPUExecutionProvider'])
             self.model_input = self.model.get_inputs()[0]
             self.model_input_height = self.model_input.shape[1]
             self.tag_label = self.model.get_outputs()[0].name
