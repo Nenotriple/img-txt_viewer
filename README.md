@@ -24,8 +24,8 @@
 - [💡 Tips and Features](#-tips-and-features)
 - [🛠️ Install](#-install)
 - [🔒 Privacy Policy](#-privacy-policy)
-- [📜 Version History](https://github.com/Nenotriple/img-txt_viewer/blob/v1.96_dev/docs/Changelog.md)
-- [✨ User Guide](https://github.com/Nenotriple/img-txt_viewer/blob/v1.96_dev/docs/User_Guide.md)
+- [📜 Version History](https://github.com/Nenotriple/img-txt_viewer/blob/main/docs/Changelog.md)
+- [✨ User Guide](https://github.com/Nenotriple/img-txt_viewer/blob/main/docs/User_Guide.md)
 - [💾 Download](https://github.com/Nenotriple/img-txt_viewer/releases?q=executable&expanded=true)
 
 
@@ -162,7 +162,7 @@ Example folder structures:
 # ✨ User Guide
 
 
-For more detailed information regarding the various tools and features, please refer to the [User Guide✨](https://github.com/Nenotriple/img-txt_viewer/blob/v1.96_dev/docs/UserGuide.md)found in the repo docs.
+For more detailed information regarding the various tools and features, please refer to the [User Guide✨](https://github.com/Nenotriple/img-txt_viewer/blob/main/docs/User_Guide.md)found in the repo docs.
 
 
 <br>
