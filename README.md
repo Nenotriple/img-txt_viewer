@@ -162,7 +162,7 @@ Example folder structures:
 # ✨ User Guide
 
 
-For more detailed information regarding the various tools and features, please refer to the [User Guide✨](https://github.com/Nenotriple/img-txt_viewer/blob/main/docs/UserGuide.md)found in the repo docs.
+For more detailed information regarding the various tools and features, please refer to the [User Guide✨](https://github.com/Nenotriple/img-txt_viewer/blob/main/docs/User_Guide.md)found in the repo docs.
 
 
 <br>
