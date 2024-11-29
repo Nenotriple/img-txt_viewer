@@ -1,11 +1,8 @@
 """
 ########################################
-#                                      #
-#             Resize Image             #
-#                                      #
-#   Version : v1.02                    #
+#              ResizeTool              #
+#   Version : v1.03                    #
 #   Author  : github.com/Nenotriple    #
-#                                      #
 ########################################
 
 Description:
@@ -19,10 +16,20 @@ Resize an image by resolution or percentage.
 #region -  Imports
 
 
+# Standard Library
 import os
-import re
 from io import BytesIO
-from tkinter import ttk, Toplevel, messagebox, IntVar, StringVar, BooleanVar, Frame, Label, Button, Radiobutton, Entry, Checkbutton
+
+
+# Standard Library - GUI
+from tkinter import (
+    ttk, Toplevel, messagebox,
+    IntVar, StringVar, BooleanVar,
+    Frame, Label, Button
+)
+
+
+# Third-Party Libraries
 from PIL import Image, ImageSequence
 
 
@@ -50,6 +57,7 @@ class ResizeTool:
 
         self.img_txt_viewer = img_txt_viewer
         self.sort_key = self.img_txt_viewer.get_file_sort_key()
+        self.reverse_sort_direction_var = self.img_txt_viewer.reverse_load_order_var.get()
         self.ImgTxt_update_pair = update_pair
         self.ImgTxt_jump_to_image = jump_to_image
 
@@ -91,83 +99,76 @@ class ResizeTool:
 
         self.calculate_image_size()
 
+
 #endregion
 ################################################################################################################################################
 #region -  Interface Setup
 
 
     def create_interface(self):
-        self.frame_container = Frame(self.top)
-        self.frame_container.pack(expand=True, fill="both")
+        self.create_top_bar()
+        self.create_unit_widgets()
+        self.create_entry_widgets()
+        self.create_quality_widgets()
+        self.create_info_widgets()
+        self.create_primary_buttons()
 
 
-        title = Label(self.frame_container, cursor="size", text="Resize Image", font=("", 16))
+    def create_top_bar(self):
+        frame_container = Frame(self.top)
+        frame_container.pack(expand=True, fill="both")
+        # Title Bar
+        title = Label(frame_container, cursor="size", text="Resize Image", font=("", 16))
         title.pack(side="top", fill="x", padx=5, pady=5)
         title.bind("<ButtonPress-1>", self.start_drag)
         title.bind("<ButtonRelease-1>", self.stop_drag)
         title.bind("<B1-Motion>", self.dragging_window)
-
-
-        self.button_close = Button(self.frame_container, text="X", overrelief="groove", relief="flat", command=self.close_window)
-        self.button_close.place(anchor="nw", relx=0.92, height=40, width=40, x=-5, y=0)
-        self.bind_widget_highlight(self.button_close, color='#ffcac9')
-
-
-        separator = ttk.Separator(self.frame_container)
+        # Close Button
+        button_close = Button(frame_container, text="X", overrelief="groove", relief="flat", command=self.close_window)
+        button_close.place(anchor="nw", relx=0.92, height=40, width=40, x=-5, y=0)
+        self.bind_widget_highlight(button_close, color='#ffcac9')
+        separator = ttk.Separator(frame_container)
         separator.pack(side="top", fill="x")
 
 
-####### Option Buttons #########################################
-        self.frame_radio_buttons = Frame(self.top)
-        self.frame_radio_buttons.pack(side="top", fill="x", padx=10, pady=10)
+    def create_unit_widgets(self):
+        frame_radio_buttons = Frame(self.top)
+        frame_radio_buttons.pack(side="top", fill="x", padx=10, pady=10)
+        # Pixels
+        radiobutton_pixels = ttk.Radiobutton(frame_radio_buttons, variable=self.resize_condition, value="pixels", text="Pixels", width=10, command=self.toggle_resize_condition)
+        radiobutton_pixels.pack(anchor="center", side="left", expand=True, padx=5, pady=5)
+        # Percentage
+        radiobutton_percentage = ttk.Radiobutton(frame_radio_buttons, variable=self.resize_condition, value="percentage", text="Percentage", width=10, command=self.toggle_resize_condition)
+        radiobutton_percentage.pack(anchor="center", side="left", expand=True, padx=5, pady=5)
 
 
-        self.radiobutton_pixels = Radiobutton(self.frame_radio_buttons, variable=self.resize_condition, value="pixels", text="Pixels", width=10, overrelief="groove", command=self.toggle_resize_condition)
-        self.radiobutton_pixels.pack(anchor="center", side="left", expand=True, padx=5, pady=5)
-
-
-        self.radiobutton_percentage = Radiobutton(self.frame_radio_buttons, variable=self.resize_condition, value="percentage", text="Percentage", width=10, overrelief="groove", command=self.toggle_resize_condition)
-        self.radiobutton_percentage.pack(anchor="center", side="left", expand=True, padx=5, pady=5)
-
-
-####### Width and Height Entry ################################
-        self.frame_width_height = Frame(self.top)
-        self.frame_width_height.pack(side="top", fill="x", padx=10, pady=10)
-
-
-        self.frame_width = Frame(self.frame_width_height)
-        self.frame_width.pack(side="left", fill="x", padx=10, pady=10)
-
-
-        self.label_width = Label(self.frame_width, text="Width (px)")
+    def create_entry_widgets(self):
+        frame_width_height = Frame(self.top)
+        frame_width_height.pack(side="top", fill="x", padx=10, pady=10)
+        # Width
+        frame_width = Frame(frame_width_height)
+        frame_width.pack(side="left", fill="x", padx=10, pady=10)
+        self.label_width = Label(frame_width, text="Width (px)")
         self.label_width.pack(anchor="w", side="top", padx=5, pady=5)
-        self.entry_width = Entry(self.frame_width, textvariable=self.entry_width_var)
+        self.entry_width = ttk.Entry(frame_width, textvariable=self.entry_width_var)
         self.entry_width.pack(side="top", padx=5, pady=5)
         self.entry_width.bind("<ButtonRelease-1>", lambda event: self.on_key_release)
         self.entry_width.bind("<KeyRelease>", self.on_key_release)
         self.entry_width.bind("<Button-3>", lambda event: (self.reset_entry("width")))
         self.entry_width.bind('<Up>', lambda event: self.adjust_entry_value(event, self.entry_width_var, True))
         self.entry_width.bind('<Down>', lambda event: self.adjust_entry_value(event, self.entry_width_var, False))
-
-
-        self.frame_checkbutton = Frame(self.frame_width_height)
-        self.frame_checkbutton.pack(side="left", fill="both", padx=10, pady=10)
-
-
-        spacer = Label(self.frame_checkbutton, text="")
-        spacer.pack(side="top")
-
-        self.checkbutton_link_ratio = Checkbutton(self.frame_checkbutton, indicatoron=False, overrelief="groove", text="Locked", width=8, variable=self.link_aspect_var, command=self.on_link_button_toggle)
+        # Link Button
+        frame_checkbutton = Frame(frame_width_height)
+        frame_checkbutton.pack(side="left", fill="both", padx=10, pady=10)
+        Label(frame_checkbutton, text="").pack(side="top")
+        self.checkbutton_link_ratio = ttk.Checkbutton(frame_checkbutton, text="Locked", width=10, variable=self.link_aspect_var, command=self.on_link_button_toggle)
         self.checkbutton_link_ratio.pack(side="bottom", padx=5, pady=5)
-
-
-        self.frame_height = Frame(self.frame_width_height)
-        self.frame_height.pack(side="left", fill="x", padx=10, pady=10)
-
-
-        self.label_height = Label(self.frame_height, text="Height (px)")
+        # Height
+        frame_height = Frame(frame_width_height)
+        frame_height.pack(side="left", fill="x", padx=10, pady=10)
+        self.label_height = Label(frame_height, text="Height (px)")
         self.label_height.pack(anchor="w", side="top", padx=5, pady=5)
-        self.entry_height = Entry(self.frame_height, textvariable=self.entry_height_var)
+        self.entry_height = ttk.Entry(frame_height, textvariable=self.entry_height_var)
         self.entry_height.pack(side="top", padx=5, pady=5)
         self.entry_height.bind("<Button-1>", lambda event: self.on_key_release)
         self.entry_height.bind("<KeyRelease>", self.on_key_release)
@@ -176,110 +177,88 @@ class ResizeTool:
         self.entry_height.bind('<Down>', lambda event: self.adjust_entry_value(event, self.entry_height_var, False))
 
 
-####### Output Quality, File Type, and Method ##########################
-        self.frame_quality_type = Frame(self.top)
-        self.frame_quality_type.pack(side="top", fill="x", padx=10, pady=10)
-
-
-        self.frame_quality = Frame(self.frame_quality_type)
-        self.frame_quality.pack(side="left", expand=True, fill="x", padx=10, pady=10)
-
-
-        self.frame_quality_labels = Frame(self.frame_quality)
-        self.frame_quality_labels.pack(side="top", expand=True, fill="x", padx=10, pady=10)
-
-
-        self.label_quality1 = Label(self.frame_quality_labels, text="Quality:")
+    def create_quality_widgets(self):
+        frame_quality_type = Frame(self.top)
+        frame_quality_type.pack(side="top", fill="x", padx=10, pady=10)
+        # Quality
+        frame_quality = Frame(frame_quality_type)
+        frame_quality.pack(side="left", expand=True, fill="x", padx=10, pady=10)
+        frame_quality_labels = Frame(frame_quality)
+        frame_quality_labels.pack(side="top", expand=True, fill="x", padx=10, pady=10)
+        self.label_quality1 = Label(frame_quality_labels, text="Quality:")
         self.label_quality1.pack(side="left", pady=5)
-        self.label_quality = Label(self.frame_quality_labels, text="100% (High)", width=12, anchor="w")
+        self.label_quality = Label(frame_quality_labels, text="100% (High)", width=12, anchor="w")
         self.label_quality.pack(side="left", pady=5)
-        self.scale_quality = ttk.Scale(self.frame_quality, from_=10, to=100, value=100, variable=self.scale_quality_var, command=self.update_quality_label)
+        self.scale_quality = ttk.Scale(frame_quality, from_=10, to=100, value=100, variable=self.scale_quality_var, command=self.update_quality_label)
         self.scale_quality.pack(anchor="center", side="bottom", expand=True, fill="x", padx=5, pady=5)
         self.scale_quality.bind("<ButtonRelease-1>", self.calculate_image_size)
-
-
-        self.frame_filetype = Frame(self.frame_quality_type)
-        self.frame_filetype.pack(side="left", expand=True, fill="x", padx=10, pady=10)
-
-
-        self.label_filetype = Label(self.frame_filetype, text="File Type", width=10)
-        self.label_filetype.pack(side="top", padx=5, pady=5)
-        self.combobox_filetype = ttk.Combobox(self.frame_filetype, state="readonly", width=10, textvariable=self.combobox_filetype_var, values=["JPG", "PNG", "WEBP"])
+        # File Type
+        frame_filetype = Frame(frame_quality_type)
+        frame_filetype.pack(side="left", expand=True, fill="x", padx=10, pady=10)
+        label_filetype = Label(frame_filetype, text="File Type", width=10)
+        label_filetype.pack(side="top", padx=5, pady=5)
+        self.combobox_filetype = ttk.Combobox(frame_filetype, state="readonly", width=10, textvariable=self.combobox_filetype_var, values=["JPG", "PNG", "WEBP"])
         self.combobox_filetype.pack(anchor="center", side="bottom", expand=True, padx=5, pady=5)
         self.combobox_filetype.bind("<<ComboboxSelected>>", self.update_new_filetype)
+        # Filter
+        frame_filter = Frame(frame_quality_type)
+        frame_filter.pack(side="left", expand=True, fill="x", padx=10, pady=10)
+        label_filter = Label(frame_filter, text="Method", width=10)
+        label_filter.pack(side="top", padx=5, pady=5)
+        combobox_filter = ttk.Combobox(frame_filter, state="readonly", width=10, textvariable=self.combobox_filter_var, values=["Lanczos", "Nearest", "Bicubic", "Hamming", "Bilinear", "Box"])
+        combobox_filter.pack(anchor="center", side="bottom", expand=True, padx=5, pady=5)
 
 
-        self.frame_filter = Frame(self.frame_quality_type)
-        self.frame_filter.pack(side="left", expand=True, fill="x", padx=10, pady=10)
-
-
-        self.label_filter = Label(self.frame_filter, text="Method", width=10)
-        self.label_filter.pack(side="top", padx=5, pady=5)
-        self.combobox_filter = ttk.Combobox(self.frame_filter, state="readonly", width=10, textvariable=self.combobox_filter_var, values=["Lanczos", "Nearest", "Bicubic", "Hamming", "Bilinear", "Box"])
-        self.combobox_filter.pack(anchor="center", side="bottom", expand=True, padx=5, pady=5)
-
-
-####### Info ##################################################
-        self.frame_info = Frame(self.top)
-        self.frame_info.pack(side="top", expand=True, fill="x", padx=10, pady=10)
-
-
-        separator = ttk.Separator(self.frame_info)
-        separator.pack(side="top", fill="x")
-
-
-        self.frame_labels = Frame(self.frame_info)
-        self.frame_labels.pack(side="left", expand=True, fill="x", padx=10, pady=10)
-
-
-        label_current = Label(self.frame_labels, text="Current:")
+    def create_info_widgets(self):
+        frame_info = Frame(self.top)
+        frame_info.pack(side="top", expand=True, fill="x", padx=10, pady=10)
+        ttk.Separator(frame_info).pack(side="top", fill="x")
+        frame_labels = Frame(frame_info)
+        frame_labels.pack(side="left", expand=True, fill="x", padx=10, pady=10)
+        # Current
+        label_current = Label(frame_labels, text="Current:")
         label_current.pack(anchor="w", side="top", padx=5, pady=5)
-        label_new = Label(self.frame_labels, text="New:")
+        # New
+        label_new = Label(frame_labels, text="New:")
         label_new.pack(anchor="w", side="top", padx=5, pady=5)
-
-
-        self.frame_dimensions = Frame(self.frame_info)
-        self.frame_dimensions.pack(side="left", expand=True, fill="x", padx=10, pady=10)
-
-
-        self.label_current_dimensions = Label(self.frame_dimensions, text="0 x 0", width=20)
+        # Dimensions
+        frame_dimensions = Frame(frame_info)
+        frame_dimensions.pack(side="left", expand=True, fill="x", padx=10, pady=10)
+        # Current Dimensions
+        self.label_current_dimensions = Label(frame_dimensions, text="0 x 0", width=20)
         self.label_current_dimensions.pack(anchor="w", side="top", padx=5, pady=5)
-        self.label_new_dimensions = Label(self.frame_dimensions, text=f"{self.original_image_width} x {self.original_image_height}", width=20)
+        # New Dimensions
+        self.label_new_dimensions = Label(frame_dimensions, text=f"{self.original_image_width} x {self.original_image_height}", width=20)
         self.label_new_dimensions.pack(anchor="w", side="top", padx=5, pady=5)
-
-
-        self.frame_size = Frame(self.frame_info)
-        self.frame_size.pack(side="left", expand=True, fill="x", padx=10, pady=10)
-
-
-        self.label_current_size = Label(self.frame_size, text="00.0 KB", width=9)
+        # Filesize
+        frame_size = Frame(frame_info)
+        frame_size.pack(side="left", expand=True, fill="x", padx=10, pady=10)
+        # Current Filesize
+        self.label_current_size = Label(frame_size, text="00.0 KB", width=9)
         self.label_current_size.pack(anchor="w", side="top", padx=5, pady=5)
-        self.label_new_size = Label(self.frame_size, text="00.0 KB", width=9)
+        # New Filesize
+        self.label_new_size = Label(frame_size, text="00.0 KB", width=9)
         self.label_new_size.pack(anchor="w", side="top", padx=5, pady=5)
-
-
-        self.frame_filetype = Frame(self.frame_info)
-        self.frame_filetype.pack(side="left", expand=True, fill="x", padx=10, pady=10)
-
-
-        self.label_current_filetype = Label(self.frame_filetype, text="---", width=4)
+        # Filetype
+        frame_filetype = Frame(frame_info)
+        frame_filetype.pack(side="left", expand=True, fill="x", padx=10, pady=10)
+        # Current Filetype
+        self.label_current_filetype = Label(frame_filetype, text="---", width=4)
         self.label_current_filetype.pack(anchor="w", side="top", padx=5, pady=5)
-        self.label_new_filetype = Label(self.frame_filetype, text="JPG", width=4)
+        # New Filetype
+        self.label_new_filetype = Label(frame_filetype, text="JPG", width=4)
         self.label_new_filetype.pack(anchor="w", side="top", padx=5, pady=5)
 
 
-
-####### Primary Buttons #######################################
-        self.frame_primary_buttons = Frame(self.top)
-        self.frame_primary_buttons.pack(side="top", fill="x")
-
-
-        self.button_save = Button(self.frame_primary_buttons, overrelief="groove", text="Resize", command=self.save_image)
-        self.button_save.pack(side="left", expand=True, fill="x", padx=5, pady=5)
-
-
-        self.button_cancel = Button(self.frame_primary_buttons, overrelief="groove", text="Cancel", command=self.close_window)
-        self.button_cancel.pack(side="left", expand=True, fill="x", padx=5, pady=5)
+    def create_primary_buttons(self):
+        frame_primary_buttons = Frame(self.top)
+        frame_primary_buttons.pack(side="top", fill="x")
+        # Save
+        button_save = ttk.Button(frame_primary_buttons, text="Resize", command=self.save_image)
+        button_save.pack(side="left", expand=True, fill="x", padx=5, pady=5)
+        # Cancel
+        button_cancel = ttk.Button(frame_primary_buttons, text="Cancel", command=self.close_window)
+        button_cancel.pack(side="left", expand=True, fill="x", padx=5, pady=5)
 
 
 #endregion
@@ -443,7 +422,7 @@ class ResizeTool:
 
     def get_image_index(self, directory, filename):
         filename = os.path.basename(filename)
-        image_files = sorted((file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)), key=self.sort_key)
+        image_files = sorted((file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)), key=self.sort_key, reverse=self.reverse_sort_direction_var)
         return image_files.index(filename) if filename in image_files else -1
 
 
@@ -554,9 +533,7 @@ class ResizeTool:
 
 #endregion
 ################################################################################################################################################
-#region - File Managment
-
-
+#region - File Management
 
 
     def calculate_image_size(self, event=None):
@@ -631,7 +608,6 @@ class ResizeTool:
             messagebox.showerror("Error", "An error occurred while saving the image.")
 
 
-
 #endregion
 ################################################################################################################################################
 #region - Changelog
@@ -640,10 +616,10 @@ class ResizeTool:
 '''
 
 
-v1.02 changes:
+v1.03 changes:
 
   - New:
-    - Added more supported filetypes.
+    -
 
 
 <br>
@@ -654,7 +630,7 @@ v1.02 changes:
 
 
   - Other:
-    - Update index logic to support new loading order options.
+    - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
 
 
 '''

@@ -1,0 +1,36 @@
+# Virtual Environment
+venv/
+
+
+# Visual Studio Code workspace settings
+/.vscode
+
+
+# pycache
+__pycache__/
+
+
+# Dictionary Pre-Cache
+main/dict/cache/
+
+
+# PyInstaller
+dist/
+build/
+*.spec
+
+
+# App Settings file
+settings.cfg
+
+
+# MyTags file
+my_tags.csv
+
+
+# ONNX Models
+onnx_models/*
+!onnx_models/ONNX vision models go here
+
+# Misc
+docs/Workpad.md
