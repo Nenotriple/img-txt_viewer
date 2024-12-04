@@ -3,7 +3,7 @@
 Notes, code reference, ideas, etc.
 
 
-<!--####################################################################################################-->
+<!--###########################################################################-->
 
 
 ## Window Size on Resize
@@ -17,7 +17,7 @@ root.bind("<Configure>", lambda event: print(f"Window size (W,H): {event.width},
 Example Output: `Window size (W,H): 800,600`
 
 
-<!--####################################################################################################-->
+<!--###########################################################################-->
 
 
 ## Widget Size on Resize
@@ -31,7 +31,7 @@ widget.bind("<Configure>", lambda event: print(f"Widget size (W,H): {event.width
 Example Output: `Widget size (W,H): 200,150`
 
 
-<!--####################################################################################################-->
+<!--###########################################################################-->
 
 
 ## Caller Function Name
@@ -52,7 +52,7 @@ def function_b():
 Example Output: `Called by function: function_a`
 
 
-<!--####################################################################################################-->
+<!--###########################################################################-->
 
 
 ## Timing a Function
@@ -73,7 +73,8 @@ def my_function():
 
 Example Output: `Elapsed time: 0.50 seconds`
 
-<!--####################################################################################################-->
+
+<!--###########################################################################-->
 
 
 
@@ -83,6 +84,7 @@ Example Output: `Elapsed time: 0.50 seconds`
 - Organize the various alt-UIs into a tabbed tkinter Notebook widget.
 
 
+<!-- Tools / Features --#########################################################################-->
 ## New Tool - Group img-txt Pairs
 Create an interface to view one image at a time and easily select a folder to send the image to. The interface consists of:
 - **Image and Text Pair (left)**:
@@ -113,6 +115,7 @@ Consolidate similar tags based on the following rules: `If a tag is a substring 
 - When a tag is selected and the user presses one of the following keys `(`, `[`, `{`, `"`, `'`, the tag is wrapped in the corresponding brackets.
 
 
+<!-- Notebook Tabs --############################################################################-->
 ## Filter Tab
 - Add a listbox to display all filtered img-txt pairs.
 - Allow the user to select item(s) from the listbox and:
@@ -130,3 +133,26 @@ Consolidate similar tags based on the following rules: `If a tag is a substring 
 ## Thumbnail Panel
 - It's currently not possible to navigate backwards from the first image, or forwards from the last image by clicking the thumbnails.
   - Show a button at the start and end to go to the first and last image.
+
+
+## AutoTag Tab
+- Add a "Presets" button to quickly save and load tagging presets.
+
+
+## Filter Tab
+- Add more filtering options like:
+  - `Resolution`, `Aspect ratio`, `File size`, `File name`:
+    - Is equal to `=`
+    - Is not equal to `!=`
+    - Is greater than `>`
+    - Is less than `<`
+    - Similar to `*`
+  - `File type`:
+    - Is equal to `=`
+    - Is not equal to `!=`
+  - `Tags`:
+    - Contains `a,b`
+    - Does not contain `!`
+    - Starts with `a,b`
+    - Ends with `a,b`
+    - Similar to `*`
