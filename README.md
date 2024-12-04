@@ -99,6 +99,8 @@ Example folder structures:
 
 # 💡 Tips and Features
 
+For detailed information on the tools and features, see the [User Guide✨](https://github.com/Nenotriple/img-txt_viewer/blob/main/docs/User_Guide.md) in the repo docs.
+
 - **Shortcuts:**
   - `ALT + LEFT/RIGHT`: Quickly move between img-txt pairs.
   - `SHIFT + DEL`: Move the current pair to a local trash folder.
@@ -157,12 +159,6 @@ Example folder structures:
   - `Auto-Save` Save text when switching between img-txt pairs, changing the active directory, or closing the app.
   - `Text cleanup`: (e.g., removing duplicate tags, trailing commas, extra spaces) happens automatically on save, and can be disabled from the options menu.
   - Text cleanup is optimized for CSV-format captions and can be disabled via the Clean-Text option in the menu.
-
-
-# ✨ User Guide
-
-
-For more detailed information regarding the various tools and features, please refer to the [User Guide✨](https://github.com/Nenotriple/img-txt_viewer/blob/main/docs/User_Guide.md)found in the repo docs.
 
 
 <br>
