@@ -44,7 +44,7 @@ from tkinter import (
 # Third-Party Libraries
 import numpy
 from TkToolTip.TkToolTip import TkToolTip as ToolTip
-from PIL import Image, ImageTk, ImageSequence, ImageOps, UnidentifiedImageError
+from PIL import Image, ImageTk, ImageSequence, UnidentifiedImageError
 
 
 # Custom Libraries
@@ -52,6 +52,7 @@ from main.scripts import (
     about_img_txt_viewer,
     calculate_file_stats,
     batch_resize_images,
+    custom_scrolledtext,
     batch_crop_images,
     settings_manager,
     batch_tag_edit,
@@ -666,7 +667,7 @@ class ImgTxtViewer:
             self.text_frame = Frame(self.master_control_frame)
             self.text_pane.add(self.text_frame, stretch="always")
             self.text_pane.paneconfigure(self.text_frame, minsize=80)
-            self.text_box = scrolledtext.ScrolledText(self.text_frame, wrap="word", undo=True, maxundo=200, inactiveselectbackground="#0078d7")
+            self.text_box = custom_scrolledtext.CustomScrolledText(self.text_frame, wrap="word", undo=True, maxundo=200, inactiveselectbackground="#0078d7")
             self.text_box.pack(side="top", expand="yes", fill="both")
             self.text_box.tag_configure("highlight", background="#5da9be", foreground="white")
             self.text_box.config(font=(self.font_var.get(), self.font_size_var.get()))
@@ -2132,7 +2133,7 @@ class ImgTxtViewer:
             if self.current_index < len(self.text_files):
                 text_file = self.text_files[self.current_index]
                 try:
-                    with open(text_file, 'r', encoding="utf-8") as file:
+                    with open(text_file, "r", encoding="utf-8") as file:
                         file_content = file.read()
                 except FileNotFoundError:
                     file_content = ""
