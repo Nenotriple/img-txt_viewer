@@ -1,7 +1,7 @@
 """
 ########################################
 #            IMG-TXT VIEWER            #
-#   Version : v1.96                    #
+#   Version : v1.97                    #
 #   Author  : github.com/Nenotriple    #
 ########################################
 
@@ -44,7 +44,7 @@ from tkinter import (
 # Third-Party Libraries
 import numpy
 from TkToolTip.TkToolTip import TkToolTip as ToolTip
-from PIL import Image, ImageTk, ImageSequence, ImageOps, UnidentifiedImageError
+from PIL import Image, ImageTk, ImageSequence, UnidentifiedImageError
 
 
 # Custom Libraries
@@ -52,6 +52,7 @@ from main.scripts import (
     about_img_txt_viewer,
     calculate_file_stats,
     batch_resize_images,
+    custom_scrolledtext,
     batch_crop_images,
     settings_manager,
     batch_tag_edit,
@@ -66,6 +67,7 @@ from main.scripts import (
 from main.scripts.Autocomplete import SuggestionHandler
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
 from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
+from main.scripts.ThumbnailPanel import ThumbnailPanel
 
 
 #endregion
@@ -75,7 +77,7 @@ from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
 
 class ImgTxtViewer:
     def __init__(self, root):
-        self.app_version = "v1.96"
+        self.app_version = "v1.97"
         self.root = root
         self.application_path = self.get_app_path()
         self.set_appid()
@@ -136,7 +138,6 @@ class ImgTxtViewer:
         self.image_files = []
         self.deleted_pairs = []
         self.new_text_files = []
-        self.thumbnail_cache = {}
         self.image_info_cache = {}
 
         # Misc variables
@@ -313,7 +314,7 @@ class ImgTxtViewer:
         self.options_subMenu.add_separator()
         self.options_subMenu.add_checkbutton(label="Always On Top", underline=0, variable=self.always_on_top_var, command=self.set_always_on_top)
         self.options_subMenu.add_checkbutton(label="Toggle Zoom", accelerator="F1", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
-        self.options_subMenu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.update_thumbnail_panel)
+        self.options_subMenu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.debounce_update_thumbnail_panel)
         self.options_subMenu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
         self.options_subMenu.add_checkbutton(label="Vertical View", underline=0, variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
         self.options_subMenu.add_checkbutton(label="Swap img-txt Sides", underline=0, variable=self.panes_swap_ew_var, command=self.swap_pane_sides)
@@ -479,13 +480,14 @@ class ImgTxtViewer:
         # Image stats
         self.stats_frame = Frame(self.master_image_frame)
         self.stats_frame.grid(row=0, column=0, sticky="ew")
+
         # View Menu
         self.view_menubutton = ttk.Menubutton(self.stats_frame, text="View", state="disable")
         self.view_menubutton.grid(row=0, column=0)
         self.view_menu = Menu(self.view_menubutton, tearoff=0)
         self.view_menubutton.config(menu=self.view_menu)
         self.view_menu.add_checkbutton(label="Toggle Zoom", accelerator="F1", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
-        self.view_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.update_thumbnail_panel)
+        self.view_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.debounce_update_thumbnail_panel)
         self.view_menu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
         self.view_menu.add_checkbutton(label="Vertical View", underline=0, variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
         self.view_menu.add_checkbutton(label="Swap img-txt Sides", underline=0, variable=self.panes_swap_ew_var, command=self.swap_pane_sides)
@@ -512,10 +514,8 @@ class ImgTxtViewer:
         self.image_preview_tooltip = ToolTip.create(self.primary_display_image, "Right-Click for more\nMiddle-click to open in file explorer\nDouble-Click to open in your system image viewer\nALT+Left/Right or Mouse-Wheel to move between pairs", 1000, 6, 12)
 
         # Thumbnail Panel
-        self.set_custom_ttk_button_highlight_style()
-        self.thumbnail_panel = Frame(self.master_image_frame)
+        self.thumbnail_panel = ThumbnailPanel(master=self.master_image_frame, parent=self)
         self.thumbnail_panel.grid(row=3, column=0, sticky="ew")
-        self.thumbnail_panel.bind("<MouseWheel>", self.mouse_scroll)
 
         # Edit Image Panel
         self.edit_image_panel = Frame(self.master_image_frame, relief="ridge", bd=1)
@@ -668,7 +668,7 @@ class ImgTxtViewer:
             self.text_frame = Frame(self.master_control_frame)
             self.text_pane.add(self.text_frame, stretch="always")
             self.text_pane.paneconfigure(self.text_frame, minsize=80)
-            self.text_box = scrolledtext.ScrolledText(self.text_frame, wrap="word", undo=True, maxundo=200, inactiveselectbackground="#0078d7")
+            self.text_box = custom_scrolledtext.CustomScrolledText(self.text_frame, wrap="word", undo=True, maxundo=200, inactiveselectbackground="#0078d7")
             self.text_box.pack(side="top", expand="yes", fill="both")
             self.text_box.tag_configure("highlight", background="#5da9be", foreground="white")
             self.text_box.config(font=(self.font_var.get(), self.font_size_var.get()))
@@ -850,7 +850,7 @@ class ImgTxtViewer:
         self.image_context_menu.add_separator()
         # Misc
         self.image_context_menu.add_checkbutton(label="Toggle Zoom", accelerator="F1", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
-        self.image_context_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.update_thumbnail_panel)
+        self.image_context_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.debounce_update_thumbnail_panel)
         self.image_context_menu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
         self.image_context_menu.add_checkbutton(label="Vertical View", underline=0, variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
         self.image_context_menu.add_checkbutton(label="Swap img-txt Sides", underline=0, variable=self.panes_swap_ew_var, command=self.swap_pane_sides)
@@ -1215,6 +1215,17 @@ class ImgTxtViewer:
         self.primary_paned_window.paneconfigure(self.master_control_frame, minsize=200, stretch="always")
 
 
+# --------------------------------------
+# Thumbnail Panel
+# --------------------------------------
+    def debounce_update_thumbnail_panel(self, event=None):
+        if not hasattr(self, 'thumbnail_panel'):
+            return
+        if self.update_thumbnail_job_id is not None:
+            self.root.after_cancel(self.update_thumbnail_job_id)
+        self.update_thumbnail_job_id = self.root.after(250, self.thumbnail_panel.update_panel)
+
+
 #endregion
 ################################################################################################################################################
 #region - Alt-UI Setup
@@ -1311,117 +1322,6 @@ class ImgTxtViewer:
         else:
             if item in menu_items:
                 menu.entryconfig(item, state=state)
-
-
-#endregion
-################################################################################################################################################
-#region - Thumbnail Panel
-
-
-    def debounce_update_thumbnail_panel(self, event):
-        if self.update_thumbnail_job_id is not None:
-            self.root.after_cancel(self.update_thumbnail_job_id)
-        self.update_thumbnail_job_id = self.root.after(250, self.update_thumbnail_panel)
-
-
-    def update_thumbnail_panel(self):
-        # Clear only if necessary
-        if len(self.thumbnail_panel.winfo_children()) != len(self.image_files):
-            for widget in self.thumbnail_panel.winfo_children():
-                widget.destroy()
-        if not self.thumbnails_visible.get() or not self.image_files:
-            self.thumbnail_panel.grid_remove()
-            return
-        self.thumbnail_panel.grid()
-        thumbnail_width = self.thumbnail_width.get()
-        panel_width = self.thumbnail_panel.winfo_width() or self.master_image_frame.winfo_width()
-        num_thumbnails = max(1, panel_width // (thumbnail_width + 10))
-        # Handle edge cases: Adjust start index to avoid wrapping
-        half_visible = num_thumbnails // 2
-        if self.current_index < half_visible:
-            # If near the start, display from the first image
-            start_index = 0
-        elif self.current_index >= len(self.image_files) - half_visible:
-            # If near the end, shift the view back to fit thumbnails
-            start_index = max(0, len(self.image_files) - num_thumbnails)
-        else:
-            # Otherwise, center the current index
-            start_index = self.current_index - half_visible
-        # Ensure the correct number of thumbnails are displayed
-        total_thumbnails = min(len(self.image_files), num_thumbnails)
-        thumbnail_buttons = []
-        for thumbnail_index in range(total_thumbnails):
-            index = start_index + thumbnail_index
-            image_file = self.image_files[index]
-            # Use cached image info or load it if not present
-            if image_file not in self.image_info_cache:
-                self.image_info_cache[image_file] = self.get_image_info(image_file)
-            image_info = self.image_info_cache[image_file]
-            # Generate or retrieve cached thumbnail
-            cache_key = (image_file, thumbnail_width)
-            thumbnail_photo = self.thumbnail_cache.get(cache_key)
-            if not thumbnail_photo:
-                with Image.open(image_file) as img:
-                    img.thumbnail((thumbnail_width, thumbnail_width), self.quality_filter)
-                    if img.mode != "RGBA":
-                        img = img.convert("RGBA")
-                    padded_img = ImageOps.pad(img, (thumbnail_width, thumbnail_width), color=(0, 0, 0, 0))
-                    thumbnail_photo = ImageTk.PhotoImage(padded_img)
-                    self.thumbnail_cache[cache_key] = thumbnail_photo
-            # Create the thumbnail button
-            thumbnail_button = ttk.Button(self.thumbnail_panel, image=thumbnail_photo, cursor="hand2", command=lambda idx=index: self.jump_to_image(idx))
-            thumbnail_button.image = thumbnail_photo
-            # Highlight the current index
-            if index == self.current_index:
-                thumbnail_button.config(style="Highlighted.TButton")
-            # Bind events
-            thumbnail_button.bind("<Button-3>", self.create_thumb_context_menu(thumbnail_button, index))
-            thumbnail_button.bind("<MouseWheel>", self.mouse_scroll)
-            ToolTip.create(thumbnail_button, f"#{index + 1} | {image_info['filename']} | {image_info['resolution']} | {image_info['size']} | {image_info['color_mode']}", delay=100, pady=-25, origin='widget')
-            # Add to the list of thumbnail buttons
-            thumbnail_buttons.append(thumbnail_button)
-        # Display the thumbnails
-        for thumbnail_index, button in enumerate(thumbnail_buttons):
-            button.grid(row=0, column=thumbnail_index)
-        self.thumbnail_panel.update_idletasks()
-
-
-    def create_thumb_context_menu(self, thumbnail_button, index):
-        def show_context_menu(event):
-            thumb_menu = Menu(thumbnail_button, tearoff=0)
-            # Open Image
-            thumb_menu.add_command(label="Open Image", command=lambda: self.open_image(index=index))
-            thumb_menu.add_command(label="Delete Pair", command=lambda: self.delete_pair(index=index))
-            thumb_menu.add_command(label="Edit Image", command=lambda: self.open_image_in_editor(index=index))
-            thumb_menu.add_separator()
-            # Toggle Thumbnail Panel
-            thumb_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.update_thumbnail_panel)
-            # Thumbnail Size
-            thumbnail_size_menu = Menu(thumb_menu, tearoff=0)
-            thumb_menu.add_cascade(label="Thumbnail Size", menu=thumbnail_size_menu)
-            thumbnail_sizes = {"Small": 25, "Medium": 50, "Large": 100}
-            for label, size in thumbnail_sizes.items():
-                thumbnail_size_menu.add_radiobutton(label=label, variable=self.thumbnail_width, value=size, command=self.update_thumbnail_panel)
-            thumb_menu.add_separator()
-            # Clear and Rebuild Cache
-            thumb_menu.add_command(label="Refresh Thumbnails", command=self.refresh_thumbnails)
-            thumb_menu.post(event.x_root, event.y_root)
-        return show_context_menu
-
-
-    def refresh_thumbnails(self):
-        self.thumbnail_cache.clear()
-        self.image_info_cache.clear()
-        self.refresh_file_lists()
-        self.update_thumbnail_panel()
-
-
-    def set_custom_ttk_button_highlight_style(self):
-        style = ttk.Style(self.root)
-        style.configure("Highlighted.TButton", background="#005dd7")
-        style.configure("Red.TButton", foreground="red")
-        style.configure("Blue.TButton", foreground="blue")
-        style.configure("Blue+.TButton", foreground="blue", background="#005dd7")
 
 
 #endregion
@@ -1721,7 +1621,7 @@ class ImgTxtViewer:
             self.autocomplete.clear_suggestions()
             self.highlight_custom_string()
             self.highlight_all_duplicates_var.set(False)
-            self.update_thumbnail_panel()
+            self.debounce_update_thumbnail_panel()
         else:
             self.primary_display_image.unbind("<Configure>")
 
@@ -1735,7 +1635,7 @@ class ImgTxtViewer:
     def refresh_image(self):
         if self.image_files:
             self.display_image()
-            self.update_thumbnail_panel()
+            self.debounce_update_thumbnail_panel()
 
 
     def debounce_refresh_image(self, event):
@@ -2235,7 +2135,7 @@ class ImgTxtViewer:
             if self.current_index < len(self.text_files):
                 text_file = self.text_files[self.current_index]
                 try:
-                    with open(text_file, 'r', encoding="utf-8") as file:
+                    with open(text_file, "r", encoding="utf-8") as file:
                         file_content = file.read()
                 except FileNotFoundError:
                     file_content = ""
@@ -2990,6 +2890,7 @@ class ImgTxtViewer:
         self.set_always_on_top(initial=True)
         self.root.attributes('-topmost', 0)
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.set_custom_ttk_button_highlight_style()
 
 
     def set_icon(self):
@@ -3009,6 +2910,14 @@ class ImgTxtViewer:
         elif __file__:
             return os.path.dirname(__file__)
         return ""
+
+
+    def set_custom_ttk_button_highlight_style(self):
+        style = ttk.Style(self.root)
+        style.configure("Highlighted.TButton", background="#005dd7")
+        style.configure("Red.TButton", foreground="red")
+        style.configure("Blue.TButton", foreground="blue")
+        style.configure("Blue+.TButton", foreground="blue", background="#005dd7")
 
 
 # --------------------------------------
