@@ -1214,6 +1214,7 @@ class ImgTxtViewer:
         self.primary_paned_window.paneconfigure(self.master_image_frame, minsize=200, stretch="always")
         self.primary_paned_window.paneconfigure(self.master_control_frame, minsize=200, stretch="always")
 
+
 # --------------------------------------
 # Thumbnail Panel
 # --------------------------------------
