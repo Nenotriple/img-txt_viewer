@@ -111,11 +111,6 @@ Consolidate similar tags based on the following rules: `If a tag is a substring 
     - Example 2: `["shirt", "black shirt", "t-shirt"]` → `shirt`
 
 
-## New Feature - Weighted Tags
-- Allow the user to quickly wrap tags in the following brackets: `()`, `[]`, `{}`, `""`, `''`
-- When a tag is selected and the user presses one of the following keys `(`, `[`, `{`, `"`, `'`, the tag is wrapped in the corresponding brackets.
-
-
 <!-- Notebook Tabs --############################################################################-->
 ## MyTags Tab
 - Show all tags in a list, with a count of how many times each tag is used.

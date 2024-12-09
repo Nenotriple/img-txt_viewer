@@ -1,7 +1,4 @@
-
-"""
-TextWrapper extends ScrolledText to add text wrapping functionality for brackets and quotes.
-"""
+"""TextWrapper extends ScrolledText to add text wrapping functionality for brackets and quotes."""
 
 import tkinter as tk
 from tkinter import scrolledtext
