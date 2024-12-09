@@ -268,36 +268,34 @@ class SuggestionHandler:
 
     def update_suggestions(self, event=None):
         """Refresh suggestions based on current input state."""
-        if event is None:
-            event = type('', (), {})()
-            event.keysym = ''
-            event.char = ''
+        # Initialize empty event if none provided
+        event = type('', (), {'keysym': '', 'char': ''})() if event is None else event
         cursor_position = self.parent.text_box.index("insert")
-        if self._cursor_inside_tag(cursor_position):
+        # Early returns for special cases
+        if self._cursor_inside_tag(cursor_position) or self._handle_suggestion_event(event):
             self.clear_suggestions()
             return
-        if self._handle_suggestion_event(event):
-            return
         text = self.parent.text_box.get("1.0", "insert")
-        self.clear_suggestions()
+        # Get current word based on mode
         if self.parent.last_word_match_var.get():
-            words = text.split()
-            current_word = words[-1] if words else ''
+            current_word = (text.split() or [''])[-1]
         else:
-            if self.parent.list_mode_var.get():
-                elements = [element.strip() for element in text.split('\n')]
-            else:
-                elements = [element.strip() for element in text.split(',')]
-            current_word = elements[-1]
-        current_word = current_word.strip()
-        if current_word and (len(self.selected_csv_files) >= 1 or self.parent.use_mytags_var.get()):
-            suggestions = self.autocomplete.get_suggestion(current_word)
-            suggestions.sort(key=lambda x: self.autocomplete.get_score(x[0], current_word), reverse=True)
-            self.suggestions = [(suggestion[0].replace("_", " ") if suggestion[0] not in self.autocomplete.tags_with_underscore else suggestion[0], suggestion[1]) for suggestion in suggestions]
-            if self.suggestions:
-                self._highlight_suggestions()
-            else:
-                self.clear_suggestions()
+            separator = '\n' if self.parent.list_mode_var.get() else ','
+            current_word = (text.split(separator) or [''])[-1].strip()
+        # Check if suggestions should be shown
+        if not current_word or (len(self.selected_csv_files) < 1 and not self.parent.use_mytags_var.get()):
+            self.clear_suggestions()
+            return
+        # Get and process suggestions
+        suggestions = self.autocomplete.get_suggestion(current_word)
+        if not suggestions:
+            self.clear_suggestions()
+            return
+        # Transform suggestions for display
+        self.suggestions = [(suggestion[0] if suggestion[0] in self.autocomplete.tags_with_underscore else suggestion[0].replace("_", " "), suggestion[1]) for suggestion in sorted(suggestions, key=lambda x: self.autocomplete.get_score(x[0], current_word), reverse=True)]
+        # Show or clear suggestions
+        if self.suggestions:
+            self._highlight_suggestions()
         else:
             self.clear_suggestions()
 
