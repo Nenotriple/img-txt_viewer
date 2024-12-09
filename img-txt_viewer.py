@@ -1,7 +1,7 @@
 """
 ########################################
 #            IMG-TXT VIEWER            #
-#   Version : v1.96                    #
+#   Version : v1.97                    #
 #   Author  : github.com/Nenotriple    #
 ########################################
 
@@ -77,7 +77,7 @@ from main.scripts.ThumbnailPanel import ThumbnailPanel
 
 class ImgTxtViewer:
     def __init__(self, root):
-        self.app_version = "v1.96"
+        self.app_version = "v1.97"
         self.root = root
         self.application_path = self.get_app_path()
         self.set_appid()
@@ -480,6 +480,7 @@ class ImgTxtViewer:
         # Image stats
         self.stats_frame = Frame(self.master_image_frame)
         self.stats_frame.grid(row=0, column=0, sticky="ew")
+
         # View Menu
         self.view_menubutton = ttk.Menubutton(self.stats_frame, text="View", state="disable")
         self.view_menubutton.grid(row=0, column=0)
@@ -1221,7 +1222,7 @@ class ImgTxtViewer:
             return
         if self.update_thumbnail_job_id is not None:
             self.root.after_cancel(self.update_thumbnail_job_id)
-        self.update_thumbnail_job_id = self.root.after(250, self.thumbnail_panel.update_panel())
+        self.update_thumbnail_job_id = self.root.after(250, self.thumbnail_panel.update_panel)
 
 
 #endregion
