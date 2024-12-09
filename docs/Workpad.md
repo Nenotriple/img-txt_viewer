@@ -86,7 +86,8 @@ Example Output: `Elapsed time: 0.50 seconds`
 
 <!-- Tools / Features --#########################################################################-->
 ## New Tool - Group img-txt Pairs
-Create an interface to view one image at a time and easily select a folder to send the image to. The interface consists of:
+Create an interface to view one image at a time and easily select a folder to send the image to.
+The interface consists of:
 - **Image and Text Pair (left)**:
   - The image is displayed with the text below it.
   - The text is un-editable and shown in a small widget.
@@ -116,23 +117,10 @@ Consolidate similar tags based on the following rules: `If a tag is a substring 
 
 
 <!-- Notebook Tabs --############################################################################-->
-## Filter Tab
-- Add a listbox to display all filtered img-txt pairs.
-- Allow the user to select item(s) from the listbox and:
-  - Prefix, Append, or Replace tags.
-  - Move to another folder.
-  - Delete img-txt pairs.
-
-
 ## MyTags Tab
 - Show all tags in a list, with a count of how many times each tag is used.
 - Allow the user to quickly insert tags from "ALL" into "MyTags".
 - Allow the user to quickly insert tags from "All" into the text box.
-
-
-## Thumbnail Panel
-- It's currently not possible to navigate backwards from the first image, or forwards from the last image by clicking the thumbnails.
-  - Show a button at the start and end to go to the first and last image.
 
 
 ## AutoTag Tab
@@ -140,6 +128,11 @@ Consolidate similar tags based on the following rules: `If a tag is a substring 
 
 
 ## Filter Tab
+- Add a listbox to display all filtered img-txt pairs.
+- Allow the user to select item(s) from the listbox and:
+  - Prefix, Append, or Replace tags.
+  - Move to another folder.
+  - Delete img-txt pairs.
 - Add more filtering options like:
   - `Resolution`, `Aspect ratio`, `File size`, `File name`:
     - Is equal to `=`
