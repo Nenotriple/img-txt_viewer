@@ -926,9 +926,9 @@ class TextController:
                 self.parent.text_box.config(font=(font, size))
                 self.font_size_label.config(text=f"Size: {size}")
         def reset_to_defaults():
-            self.parent.font_var.set(self.default_font)
-            self.size_scale.set(self.default_font_size)
-            set_font_and_size(self.default_font, self.default_font_size)
+            self.parent.font_var.set(self.parent.default_font)
+            self.size_scale.set(self.parent.default_font_size)
+            set_font_and_size(self.parent.default_font, self.parent.default_font_size)
         font_label = Label(self.parent.tab7, width=8, text="Font:")
         font_label.pack(side="left", anchor="n", pady=4)
         ToolTip.create(font_label, "Recommended Fonts: Courier New, Ariel, Consolas, Segoe UI", 200, 6, 12)
