@@ -729,12 +729,14 @@ class ImgTxtViewer:
             'Filter': 60,
             'Highlight': 60,
             'Font': 60,
-            'MyTags': 240,
-            'Stats': 240
+            'MyTags': 340,
+            'Stats': 340
         }
         selected_tab = event.widget.tab("current", "text")
         tab_height = 60 if self.initialize_text_pane else tab_heights.get(selected_tab, 60)
         self.initialize_text_pane = False
+        if selected_tab == "MyTags":
+            self.text_controller.refresh_all_tags_listbox(tags=self.stat_calculator.sorted_captions)
         self.text_pane.paneconfigure(self.text_widget_frame, height=tab_height)
 
 
@@ -806,7 +808,7 @@ class ImgTxtViewer:
                 text_context_menu.add_separator()
                 text_context_menu.add_command(label="Open Text Directory...", command=self.open_text_directory)
                 text_context_menu.add_command(label="Open Text File...", command=self.open_textfile)
-                text_context_menu.add_command(label="Add Selected Text to MyTags", state=select_state, command=lambda: self.add_to_custom_dictionary(origin="text_box"))
+                text_context_menu.add_command(label="Add to MyTags", state=select_state, command=lambda: self.add_to_custom_dictionary(origin="text_box"))
                 text_context_menu.add_separator()
                 text_context_menu.add_command(label="Highlight all Duplicates", accelerator="Ctrl+F", command=self.highlight_all_duplicates)
                 text_context_menu.add_command(label="Next Empty Text File", accelerator="Ctrl+E", command=self.index_goto_next_empty)
