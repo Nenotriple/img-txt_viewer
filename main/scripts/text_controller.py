@@ -46,6 +46,11 @@ class TextController:
         self.auto_exclude_tags_var = BooleanVar(value=False)
         self.filter_is_active = False
 
+        # MyTags
+        self.show_all_tags_var = BooleanVar(value=True)
+        self.hide_mytags_controls_var = BooleanVar(value=False)
+        self.hide_alltags_controls_var = BooleanVar(value=False)
+
 
 #endregion
 ################################################################################################################################################
@@ -953,7 +958,6 @@ class TextController:
 
 
     def create_custom_dictionary_widgets_tab8(self):
-        self.show_all_tags_var = BooleanVar(value=False)
         # LOAD
         def load_tag_file():
             with open(self.parent.my_tags_csv, 'r', encoding='utf-8') as file:
@@ -1022,7 +1026,7 @@ class TextController:
                     listbox.selection_set(new_index)
         # CONTEXT MENU
         def show_context_menu(event):
-            listbox = self.custom_dictionary_listbox
+            listbox = event.widget
             index = listbox.nearest(event.y)
             if not listbox.curselection():
                 listbox.selection_clear(0, 'end')
@@ -1030,29 +1034,63 @@ class TextController:
             elif index not in listbox.curselection():
                 listbox.selection_clear(0, 'end')
                 listbox.selection_set(index)
+            # ALL
+            def select_all():
+                listbox.selection_set(0, 'end')
+            # INVERT
+            def invert_selection():
+                current = set(listbox.curselection())
+                all_indices = set(range(listbox.size()))
+                inverted = all_indices - current
+                listbox.selection_clear(0, 'end')
+                for i in inverted:
+                    listbox.selection_set(i)
+            # MENU
             if listbox.curselection():
                 menu = Menu(listbox, tearoff=0)
-                menu.add_command(label="Prefix", command=lambda: insert_tag(listbox, 'start'))
-                menu.add_command(label="Append", command=lambda: insert_tag(listbox, 'end'))
+                if listbox == self.custom_dictionary_listbox:
+                    menu.add_command(label="Prefix", command=lambda: insert_tag(listbox, 'start'))
+                    menu.add_command(label="Append", command=lambda: insert_tag(listbox, 'end'))
+                    menu.add_separator()
+                    menu.add_command(label="Edit", command=edit_tag)
+                    menu.add_command(label="Remove", command=remove_tag)
+                    menu.add_separator()
+                    menu.add_command(label="Move Up", command=lambda: move(listbox, 'up'))
+                    menu.add_command(label="Move Down", command=lambda: move(listbox, 'down'))
+                else:
+                    menu.add_command(label="Prefix", command=lambda: insert_tag(listbox, 'start'))
+                    menu.add_command(label="Append", command=lambda: insert_tag(listbox, 'end'))
+                    menu.add_separator()
+                    menu.add_command(label="Refresh", command=self.refresh_all_tags_listbox)
                 menu.add_separator()
-                menu.add_command(label="Edit", command=edit_tag)
-                menu.add_command(label="Remove", command=remove_tag)
-                menu.add_separator()
-                menu.add_command(label="Move Up", command=lambda: move(listbox, 'up'))
-                menu.add_command(label="Move Down", command=lambda: move(listbox, 'down'))
+                menu.add_command(label="Selection: All", command=select_all)
+                menu.add_command(label="Selection: Invert", command=invert_selection)
                 menu.tk_popup(event.x_root, event.y_root)
         # INTERFACE
         self.parent.create_custom_dictionary(refresh=False)
         tab_frame = Frame(self.parent.tab8)
         tab_frame.pack(side='top', fill='both', expand=True)
-        # Configure tab_frame to expand vertically
-        tab_frame.grid_rowconfigure(1, weight=1)  # Row 1 contains text_frame
+        tab_frame.grid_rowconfigure(1, weight=1)
         tab_frame.grid_columnconfigure(0, weight=1)
         # Top Row - Row 0
         top_frame = Frame(tab_frame)
-        top_frame.grid(row=0, column=0, sticky='ew', pady=4)
+        top_frame.grid(row=0, column=0, sticky='ew')
         help_button = ttk.Button(top_frame, text="?", takefocus=False, width=2, command=self.show_my_tags_help)
         help_button.pack(side='left')
+        options_menu = ttk.Menubutton(top_frame, text="Options", takefocus=False)
+        options_menu.pack(side='left')
+        options_menu.menu = Menu(options_menu, tearoff=0)
+        options_menu["menu"] = options_menu.menu
+        options_menu.menu.add_checkbutton(label="Use: MyTags", variable=self.parent.use_mytags_var, command=self.parent.refresh_custom_dictionary)
+        options_menu.menu.add_checkbutton(label="Show: All Tags", variable=self.show_all_tags_var, command=self.toggle_all_tags_listbox)
+        options_menu.menu.add_separator()
+        options_menu.menu.add_command(label="Refresh: My Tags", command=load_tag_file)
+        options_menu.menu.add_command(label="Refresh: All Tags", command=self.refresh_all_tags_listbox)
+        options_menu.menu.add_separator()
+        options_menu.menu.add_checkbutton(label="Hide: My Tags - Controls", variable=self.hide_mytags_controls_var, command=self.toggle_mytags_controls)
+        options_menu.menu.add_checkbutton(label="Hide: All Tags - Controls", variable=self.hide_alltags_controls_var, command=self.toggle_alltags_controls)
+        options_menu.menu.add_separator()
+        options_menu.menu.add_command(label="Open MyTags File...", command=lambda: self.parent.open_textfile(self.parent.my_tags_csv))
         # entry_frame
         entry_frame = Frame(top_frame)
         entry_frame.pack(side='left', fill='x', expand=True, pady=4)
@@ -1065,65 +1103,71 @@ class TextController:
         save_button.pack(side='right')
         # Middle Row - Row 1
         self.text_frame = Frame(tab_frame)
-        self.text_frame.grid(row=1, column=0, sticky='nsew')  # Changed from pack to grid
+        self.text_frame.grid(row=1, column=0, sticky='nsew')
         # Configure text_frame weights
-        self.text_frame.grid_columnconfigure(0, weight=1)  # custom dictionary listbox
-        self.text_frame.grid_columnconfigure(1, weight=0)  # buttons
-        self.text_frame.grid_columnconfigure(2, weight=0)  # all tags listbox
-        self.text_frame.grid_rowconfigure(0, weight=1)     # Added row weight
+        self.text_frame.grid_columnconfigure(0, weight=1)
+        self.text_frame.grid_columnconfigure(2, weight=1)
+        self.text_frame.grid_rowconfigure(0, weight=1)
         # My Tags section
         my_tags_frame = Frame(self.text_frame)
         my_tags_frame.grid(row=0, column=0, sticky='nsew')
         header_frame = Frame(my_tags_frame)
         header_frame.grid(row=0, column=0, sticky='ew', padx=2, pady=(2,0))
-        my_tags_label = ttk.Label(header_frame, text="My Tags")
+        my_tags_label = ttk.Label(header_frame, text="My Tags:")
         my_tags_label.pack(side='left', padx=(0,5))
-        use_mytags_checkbutton = ttk.Checkbutton(header_frame, text="Enable", variable=self.parent.use_mytags_var, takefocus=False, command=self.parent.refresh_custom_dictionary)
-        use_mytags_checkbutton.pack(side='left')
         self.custom_dictionary_listbox = Listbox(my_tags_frame, selectmode='extended')
         self.custom_dictionary_listbox.grid(row=1, column=0, sticky='nsew')
         my_tags_frame.grid_rowconfigure(1, weight=1)
         my_tags_frame.grid_columnconfigure(0, weight=1)
         self.custom_dictionary_listbox.bind("<Button-3>", show_context_menu)
+        # Buttons
+        self.my_tags_button_frame = Frame(my_tags_frame)
+        self.my_tags_button_frame.grid(row=2, column=0, sticky='ew', pady=(2,0))
+        self.my_tags_button_frame.grid_columnconfigure(0, weight=1)
+        self.my_tags_button_frame.grid_columnconfigure(1, weight=1)
+        prefix_button = ttk.Button(self.my_tags_button_frame, text="Prefix", command=lambda: insert_tag(self.custom_dictionary_listbox, 'start'))
+        prefix_button.grid(row=0, column=0, sticky='ew', padx=2)
+        append_button = ttk.Button(self.my_tags_button_frame, text="Append", command=lambda: insert_tag(self.custom_dictionary_listbox, 'end'))
+        append_button.grid(row=0, column=1, sticky='ew', padx=2)
+        edit_button = ttk.Button(self.my_tags_button_frame, text="Edit", command=edit_tag)
+        edit_button.grid(row=2, column=0, sticky='ew', padx=2)
+        remove_button = ttk.Button(self.my_tags_button_frame, text="Remove", command=remove_tag)
+        remove_button.grid(row=2, column=1, sticky='ew', padx=2)
+        move_up_button = ttk.Button(self.my_tags_button_frame, text="Move Up", command=lambda: move(self.custom_dictionary_listbox, 'up'))
+        move_up_button.grid(row=4, column=0, sticky='ew', padx=2)
+        move_down_button = ttk.Button(self.my_tags_button_frame, text="Move Down", command=lambda: move(self.custom_dictionary_listbox, 'down'))
+        move_down_button.grid(row=4, column=1, sticky='ew', padx=2)
         # All Tags section
         self.all_tags_frame = Frame(self.text_frame)
         self.all_tags_frame.grid(row=0, column=2, sticky='nsew')
-        all_tags_label = ttk.Label(self.all_tags_frame, text="All Tags")
-        all_tags_label.grid(row=0, column=0, sticky='w', padx=2, pady=(2,0))
-        refresh_all_tags_button = ttk.Button(self.all_tags_frame, text="Refresh")
-        refresh_all_tags_button.grid(row=0, column=1, sticky='e', padx=2, pady=(2,0))
-        all_tags_listbox = Listbox(self.all_tags_frame, selectmode='extended')
-        all_tags_listbox.grid(row=1, column=0, columnspan=2, sticky='nsew')
         self.all_tags_frame.grid_rowconfigure(1, weight=1)
         self.all_tags_frame.grid_columnconfigure(0, weight=1)
-        self.all_tags_frame.grid_remove()
-        # Sidebar Buttons
-        listbox_button_frame = Frame(self.text_frame)
-        listbox_button_frame.grid(row=0, column=1, sticky='ns', padx=5)
-        # Configure equal column weights
-        listbox_button_frame.grid_columnconfigure(0, weight=1)
-        listbox_button_frame.grid_columnconfigure(1, weight=1)
-        prefix_button = ttk.Button(listbox_button_frame, text="Prefix", command=lambda: insert_tag('start'))
+        all_tags_label = ttk.Label(self.all_tags_frame, text="All Tags")
+        all_tags_label.grid(row=0, column=0, sticky='w', padx=2, pady=(2,0))
+        self.all_tags_listbox = Listbox(self.all_tags_frame, selectmode='extended')
+        self.all_tags_listbox.grid(row=1, column=0, columnspan=2, sticky='nsew')
+        self.all_tags_listbox.bind("<Button-3>", show_context_menu)
+        # Buttons
+        self.all_tags_button_frame = Frame(self.all_tags_frame)
+        self.all_tags_button_frame.grid(row=2, column=0, sticky='ew', pady=(2,0))
+        self.all_tags_button_frame.grid_columnconfigure(0, weight=1)
+        self.all_tags_button_frame.grid_columnconfigure(1, weight=1)
+        prefix_button = ttk.Button(self.all_tags_button_frame, text="Prefix", command=lambda: insert_tag(self.all_tags_listbox, 'start'))
         prefix_button.grid(row=0, column=0, sticky='ew', padx=2)
-        append_button = ttk.Button(listbox_button_frame, text="Append", command=lambda: insert_tag('end'))
+        append_button = ttk.Button(self.all_tags_button_frame, text="Append", command=lambda: insert_tag(self.all_tags_listbox, 'end'))
         append_button.grid(row=0, column=1, sticky='ew', padx=2)
-        ttk.Separator(listbox_button_frame, orient='horizontal').grid(row=1, column=0, columnspan=2, sticky='ew', pady=4)
-        edit_button = ttk.Button(listbox_button_frame, text="Edit", command=edit_tag)
-        edit_button.grid(row=2, column=0, sticky='ew', padx=2)
-        remove_button = ttk.Button(listbox_button_frame, text="Remove", command=remove_tag)
-        remove_button.grid(row=2, column=1, sticky='ew', padx=2)
-        ttk.Separator(listbox_button_frame, orient='horizontal').grid(row=3, column=0, columnspan=2, sticky='ew', pady=4)
-        move_up_button = ttk.Button(listbox_button_frame, text="Move Up", command=lambda: move('up'))
-        move_up_button.grid(row=4, column=0, sticky='ew', padx=2)
-        move_down_button = ttk.Button(listbox_button_frame, text="Move Down", command=lambda: move('down'))
-        move_down_button.grid(row=4, column=1, sticky='ew', padx=2)
-        ttk.Separator(listbox_button_frame, orient='horizontal').grid(row=5, column=0, columnspan=2, sticky='ew', pady=4)
-        show_all_tags_checkbutton = ttk.Checkbutton(listbox_button_frame, text="Show All Tags", variable=self.show_all_tags_var, command=self.toggle_all_tags_listbox, takefocus=False)
-        show_all_tags_checkbutton.grid(row=6, column=0)
-        # Initially hide the all_tags_frame
-        self.all_tags_frame.grid_remove()
         load_tag_file()
         self.parent.refresh_custom_dictionary()
+
+
+    def refresh_all_tags_listbox(self, tags=None):
+        listbox = self.all_tags_listbox
+        if not tags:
+            self.parent.stat_calculator.calculate_file_stats()
+            tags = self.parent.stat_calculator.sorted_captions
+        listbox.delete(0, 'end')
+        for tag, count in tags:
+            listbox.insert('end', tag)
 
 
     def toggle_all_tags_listbox(self):
@@ -1137,20 +1181,34 @@ class TextController:
             self.text_frame.grid_columnconfigure(2, weight=0)
 
 
+    def toggle_mytags_controls(self):
+        if self.hide_mytags_controls_var.get():
+            self.my_tags_button_frame.grid_remove()
+        else:
+            self.my_tags_button_frame.grid(row=2, column=0, sticky='ew', pady=(2,0))
+
+
+    def toggle_alltags_controls(self):
+        if self.hide_alltags_controls_var.get():
+            self.all_tags_button_frame.grid_remove()
+        else:
+            self.all_tags_button_frame.grid(row=2, column=0, sticky='ew', pady=(2,0))
+
+
     def show_my_tags_help(self):
-        messagebox.showinfo("MyTags Help",
-            "MyTags provides a customizable list of frequently used tags that can be quickly inserted into your captions.\n\n"
+        messagebox.showinfo("Help",
+            "MyTags provides a customizable list for frequently used tags that can be quickly inserted into captions.\n\n"
             "Features:\n"
-            "• Add/Edit/Remove tags from your custom dictionary\n"
-            "• Right-click menu for quick actions\n"
-            "• View all unique tags from your text files\n\n"
+            "• Add, Remove, and Edit tags from your custom dictionary\n"
+            "• View all unique tags from your text files\n"
+            "• Right-click menu for quick actions\n\n"
             "Usage:\n"
             "1. Add Tags:\n"
             "   - Type a tag in the entry field and click 'Add' or press Enter\n"
-            "   - Insert selected text from the text box context menu\n"
-            "   - Insert tags via the 'All Tags' listbox\n\n"
+            "   - Right-click text and select 'Add to MyTags'\n"
+            "   - Via the 'All Tags' listbox controls\n\n"
             "2. Insert Tags:\n"
-            "   - Select one or more tags from the list\n"
+            "   - Select one or more tags from a list\n"
             "   - Click 'Prefix' to add at the start of text\n"
             "   - Click 'Append' to add at the end of text\n"
             "   - Use right-click menu for more options\n\n"
@@ -1163,7 +1221,12 @@ class TextController:
             "     - The tag list MUST be saved to register any changes\n\n"
             "4. Options:\n"
             "   - 'Use MyTags' - Enable/disable autocomplete suggestions using 'MyTags'\n"
-            "   - 'Show All Tags' - Display all unique captions from all text files\n\n"
+            "   - 'Show All Tags' - Display all unique captions from all text files\n"
+            "   - 'Refresh: My Tags' - Reload tags from 'my_tags.csv'\n"
+            "   - 'Refresh: All Tags' - Reload tags from text files\n"
+            "   - 'Hide: My Tags - Controls' - Toggle All Tags control buttons\n"
+            "   - 'Hide: All Tags - Controls' - Toggle My Tags control buttons\n"
+            "   - 'Open Mytags file...' - Open the 'my_tags.csv' file in your default text editor\n\n"
             "Note: Tags are stored in 'my_tags.csv' in the program directory"
         )
 
