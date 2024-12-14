@@ -255,15 +255,18 @@ class SuggestionHandler:
                 self._insert_selected_suggestion(selected_suggestion.strip())
             self.clear_suggestions()
         elif keysym in ("Alt_L", "Alt_R"):
-            if self.suggestions and not self.is_alt_arrow_pressed:
-                self.selected_suggestion_index = (self.selected_suggestion_index - 1) % len(self.suggestions) if keysym == "Alt_R" else (self.selected_suggestion_index + 1) % len(self.suggestions)
+            if self.suggestions:
+                if keysym == "Alt_R":
+                    self.selected_suggestion_index = (self.selected_suggestion_index - 1) % len(self.suggestions)
+                else:
+                    self.selected_suggestion_index = (self.selected_suggestion_index + 1) % len(self.suggestions)
                 self._highlight_suggestions()
-            self.is_alt_arrow_pressed = False
+            return False  # Do not clear suggestions
         elif keysym in ("Up", "Down", "Left", "Right") or event.char == ",":
             self.clear_suggestions()
+            return True
         else:
             return False
-        return True
 
 
     def update_suggestions(self, event=None):
@@ -272,7 +275,10 @@ class SuggestionHandler:
         event = type('', (), {'keysym': '', 'char': ''})() if event is None else event
         cursor_position = self.parent.text_box.index("insert")
         # Early returns for special cases
-        if self._cursor_inside_tag(cursor_position) or self._handle_suggestion_event(event):
+        if self._cursor_inside_tag(cursor_position):
+            self.clear_suggestions()
+            return
+        if self._handle_suggestion_event(event):
             self.clear_suggestions()
             return
         text = self.parent.text_box.get("1.0", "insert")

@@ -145,7 +145,6 @@ class ImgTxtViewer:
         self.panes_swap_ew_var = BooleanVar(value=False)
         self.panes_swap_ns_var = BooleanVar(value=False)
         self.text_modified_var = False
-        self.is_alt_arrow_pressed = False
         self.filepath_contains_images_var = False
         self.toggle_zoom_var = None
         self.undo_state = StringVar(value="disabled")
@@ -1687,7 +1686,6 @@ class ImgTxtViewer:
     def update_pair(self, direction=None, save=True, step=1, silent=False):
         if self.image_dir.get() == "Choose Directory..." or len(self.image_files) == 0:
             return
-        self.is_alt_arrow_pressed = True
         self.check_image_dir()
         if not self.text_modified_var:
             self.root.title(self.title)
