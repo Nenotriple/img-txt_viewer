@@ -82,19 +82,19 @@ Example Output: `Elapsed time: 0.50 seconds`
 
 ## General:
 - Organize the various alt-UIs into a tabbed tkinter Notebook widget.
-
+- File list selector.
 
 <!-- Tools / Features --#########################################################################-->
 ## New Tool - Group img-txt Pairs
 Create an interface to view one image at a time and easily select a folder to send the image to.
 The interface consists of:
-- **Image and Text Pair (left)**:
+- Image and Text Pair (left):
   - The image is displayed with the text below it.
   - The text is un-editable and shown in a small widget.
-- **Treeview Display (right)**:
+- Treeview Display (right):
   - Displays the image name, text, and folder name.
   - Shows the pairs and their respective folders.
-- **User-Defined Folder Buttons (bottom)**:
+- User-Defined Folder Buttons (bottom):
   - An Entry widget to input the folder name and an "Add" button to create a new folder button.
   - Right-click on a folder button to rename or delete it.
 Both the image and text pair (if present) are moved to the selected folder. Before starting, define at least two folders. The working directory (where the pairs are initially stored) can be used as the first folder.
@@ -103,10 +103,10 @@ Both the image and text pair (if present) are moved to the selected folder. Befo
 ## New Tool - Consolidate Similar Tags
 Consolidate similar tags based on the following rules: `If a tag is a substring of another, combine them`
 - Two modes are supported:
-  - **Descriptive**: Combine into the longest possible tag.
+  - Descriptive: Combine into the longest possible tag.
     - Example 1: `["hair", "long hair", "black hair"]` → `long black hair`
     - Example 2: `["shirt", "black shirt", "t-shirt"]` → `black t-shirt`
-  - **Concise**: Combine into the shortest possible tag.
+  - Concise: Combine into the shortest possible tag.
     - Example 1: `["hair", "long hair", "black hair"]` → `hair`
     - Example 2: `["shirt", "black shirt", "t-shirt"]` → `shirt`
 
@@ -114,8 +114,8 @@ Consolidate similar tags based on the following rules: `If a tag is a substring 
 <!-- Notebook Tabs --############################################################################-->
 ## MyTags Tab
 - Show all tags in a list, with a count of how many times each tag is used.
-- Allow the user to quickly insert tags from "ALL" into "MyTags".
-- Allow the user to quickly insert tags from "All" into the text box.
+- Allow the user to quickly insert tags from "AllTags" into "MyTags".
+- Allow the user to quickly insert tags from "AllTags" into the text box.
 
 
 ## AutoTag Tab
