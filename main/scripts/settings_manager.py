@@ -1,4 +1,9 @@
-"""This module contains the SettingsManager class, which is responsible for saving and loading user settings."""
+"""
+
+Manages saving and loading user settings, overwriting defaults with user preferences.
+Default settings should be set in both the main application and the SettingsManager.
+
+"""
 
 
 #endregion
