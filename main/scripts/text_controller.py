@@ -1227,7 +1227,8 @@ class TextController:
             "   - 'Hide: My Tags - Controls' - Toggle All Tags control buttons\n"
             "   - 'Hide: All Tags - Controls' - Toggle My Tags control buttons\n"
             "   - 'Open Mytags file...' - Open the 'my_tags.csv' file in your default text editor\n\n"
-            "Note: Tags are stored in 'my_tags.csv' in the program directory"
+            "Note: Tags are stored in 'my_tags.csv' in the program directory\n"
+            "If you're looking to edit/delete 'All Tags', you can do so via the 'Batch Tag Edit' Tool"
         )
 
 
