@@ -263,7 +263,6 @@ class SuggestionHandler:
                 self._highlight_suggestions()
             return False  # Do not clear suggestions
         elif keysym in ("Up", "Down", "Left", "Right") or event.char == ",":
-            self.clear_suggestions()
             return True
         else:
             return False
