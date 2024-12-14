@@ -1,7 +1,9 @@
 """TextWrapper extends ScrolledText to add text wrapping functionality for brackets and quotes."""
 
+
 import tkinter as tk
 from tkinter import scrolledtext
+
 
 class CustomScrolledText(scrolledtext.ScrolledText):
     def __init__(self, master=None, **kwargs):
@@ -13,7 +15,7 @@ class CustomScrolledText(scrolledtext.ScrolledText):
         """Bind necessary events to widget."""
         keys_to_bind = ["(", "[", "{", '"', "'"]
         for key in keys_to_bind:
-            self.bind(f"<Key-{key}>", self.on_key_press)
+            self.bind(f"<Key-{key}>", self.on_key_press, add="+")
 
 
     def on_key_press(self, event):
