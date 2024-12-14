@@ -1024,6 +1024,16 @@ class TextController:
                     listbox.delete(index)
                     listbox.insert(new_index, tag)
                     listbox.selection_set(new_index)
+        # ADD TO MYTAGS
+        def add_to_mytags():
+            selected_indices = self.all_tags_listbox.curselection()
+            if not selected_indices:
+                return
+            existing_tags = set(self.custom_dictionary_listbox.get(0, 'end'))
+            for index in selected_indices:
+                tag = self.all_tags_listbox.get(index)
+                if tag not in existing_tags:
+                    self.custom_dictionary_listbox.insert('end', tag)
         # CONTEXT MENU
         def show_context_menu(event):
             listbox = event.widget
@@ -1060,6 +1070,8 @@ class TextController:
                 else:
                     menu.add_command(label="Prefix", command=lambda: insert_tag(listbox, 'start'))
                     menu.add_command(label="Append", command=lambda: insert_tag(listbox, 'end'))
+                    menu.add_separator()
+                    menu.add_command(label="Add to MyTags", command=add_to_mytags)
                     menu.add_separator()
                     menu.add_command(label="Refresh", command=self.refresh_all_tags_listbox)
                 menu.add_separator()
@@ -1120,6 +1132,7 @@ class TextController:
         my_tags_frame.grid_rowconfigure(1, weight=1)
         my_tags_frame.grid_columnconfigure(0, weight=1)
         self.custom_dictionary_listbox.bind("<Button-3>", show_context_menu)
+        self.custom_dictionary_listbox.bind("<Double-Button-1>", lambda event: insert_tag(self.custom_dictionary_listbox, 'end'))
         # Buttons
         self.my_tags_button_frame = Frame(my_tags_frame)
         self.my_tags_button_frame.grid(row=2, column=0, sticky='ew', pady=(2,0))
@@ -1147,15 +1160,20 @@ class TextController:
         self.all_tags_listbox = Listbox(self.all_tags_frame, selectmode='extended')
         self.all_tags_listbox.grid(row=1, column=0, columnspan=2, sticky='nsew')
         self.all_tags_listbox.bind("<Button-3>", show_context_menu)
+        self.all_tags_listbox.bind("<Double-Button-1>", lambda event: insert_tag(self.all_tags_listbox, 'end'))
         # Buttons
         self.all_tags_button_frame = Frame(self.all_tags_frame)
         self.all_tags_button_frame.grid(row=2, column=0, sticky='ew', pady=(2,0))
         self.all_tags_button_frame.grid_columnconfigure(0, weight=1)
-        self.all_tags_button_frame.grid_columnconfigure(1, weight=1)
+        self.all_tags_button_frame.grid_columnconfigure(1, weight=0)
+        self.all_tags_button_frame.grid_columnconfigure(2, weight=1)
         prefix_button = ttk.Button(self.all_tags_button_frame, text="Prefix", command=lambda: insert_tag(self.all_tags_listbox, 'start'))
         prefix_button.grid(row=0, column=0, sticky='ew', padx=2)
+        add_button = ttk.Button(self.all_tags_button_frame, text="<", command=add_to_mytags, width=2)
+        add_button.grid(row=0, column=1)
+        ToolTip.create(add_button, "Add selected tags to 'My Tags'", 200, 6, 12)
         append_button = ttk.Button(self.all_tags_button_frame, text="Append", command=lambda: insert_tag(self.all_tags_listbox, 'end'))
-        append_button.grid(row=0, column=1, sticky='ew', padx=2)
+        append_button.grid(row=0, column=2, sticky='ew', padx=2)
         load_tag_file()
         self.parent.refresh_custom_dictionary()
 
@@ -1197,38 +1215,24 @@ class TextController:
 
     def show_my_tags_help(self):
         messagebox.showinfo("Help",
-            "MyTags provides a customizable list for frequently used tags that can be quickly inserted into captions.\n\n"
+            "MyTags:\n"
+            "A list of custom tags/keywords that will be used for autocomplete suggestions or for quick insertion into the text box.\n\n"
+            "Basic Operations:\n"
+            "• Add tags: Type + Enter, right-click text, or use All Tags list\n"
+            "• Insert tags: Select and use Prefix/Append buttons or right-click menu\n"
+            "• Double-click any tag to instantly insert it (append)\n\n"
+            "Tag Management:\n"
+            "• Edit/Remove selected tags\n"
+            "• Reorder with Move Up/Down (affects autocomplete priority)\n"
+            "• Save changes to file (required to apply changes)\n\n"
             "Features:\n"
-            "• Add, Remove, and Edit tags from your custom dictionary\n"
-            "• View all unique tags from your text files\n"
-            "• Right-click menu for quick actions\n\n"
-            "Usage:\n"
-            "1. Add Tags:\n"
-            "   - Type a tag in the entry field and click 'Add' or press Enter\n"
-            "   - Right-click text and select 'Add to MyTags'\n"
-            "   - Via the 'All Tags' listbox controls\n\n"
-            "2. Insert Tags:\n"
-            "   - Select one or more tags from a list\n"
-            "   - Click 'Prefix' to add at the start of text\n"
-            "   - Click 'Append' to add at the end of text\n"
-            "   - Use right-click menu for more options\n\n"
-            "3. Manage Tags:\n"
-            "   - 'Edit' - Modify selected tag\n"
-            "   - 'Remove' - Delete selected tags\n"
-            "   - 'Move Up/Down' - Reorder tags\n"
-            "     - Tag order dictates autocomplete priority\n"
-            "   - 'Save Tags' - Save changes to file\n"
-            "     - The tag list MUST be saved to register any changes\n\n"
-            "4. Options:\n"
-            "   - 'Use MyTags' - Enable/disable autocomplete suggestions using 'MyTags'\n"
-            "   - 'Show All Tags' - Display all unique captions from all text files\n"
-            "   - 'Refresh: My Tags' - Reload tags from 'my_tags.csv'\n"
-            "   - 'Refresh: All Tags' - Reload tags from text files\n"
-            "   - 'Hide: My Tags - Controls' - Toggle All Tags control buttons\n"
-            "   - 'Hide: All Tags - Controls' - Toggle My Tags control buttons\n"
-            "   - 'Open Mytags file...' - Open the 'my_tags.csv' file in your default text editor\n\n"
-            "Note: Tags are stored in 'my_tags.csv' in the program directory\n"
-            "If you're looking to edit/delete 'All Tags', you can do so via the 'Batch Tag Edit' Tool"
+            "• Use MyTags: Toggle autocomplete suggestions\n"
+            "• Show All Tags: View tags from all text files\n"
+            "• Refresh: Update My Tags or All Tags lists\n"
+            "• Hide Controls: Toggle visibility of control buttons\n"
+            "• Open my_tags.csv: Edit tags directly in text editor\n\n"
+            "Note: Tags are stored in 'my_tags.csv'\n"
+            "Use 'Batch Tag Edit' tool to modify All Tags"
         )
 
 
