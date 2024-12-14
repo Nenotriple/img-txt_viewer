@@ -1880,7 +1880,7 @@ class CropInterface:
         self.parent.show_primary_paned_window()
         self.parent.refresh_text_box()
         self.parent.refresh_file_lists()
-        self.parent.update_thumbnail_panel()
+        self.parent.debounce_update_thumbnail_panel()
 
 
 #endregion
