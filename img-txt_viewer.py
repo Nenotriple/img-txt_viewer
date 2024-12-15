@@ -1531,16 +1531,19 @@ class ImgTxtViewer:
 
     def load_image_file(self, image_file, text_file):
         try:
-            with Image.open(image_file) as img:
-                self.original_image_size = img.size
-                max_size = (self.quality_max_size, self.quality_max_size)
-                img.thumbnail(max_size, self.quality_filter)
-                if img.format == 'GIF':
-                    self.gif_frames = [frame.copy() for frame in ImageSequence.Iterator(img)]
-                    self.frame_durations = [frame.info['duration'] for frame in ImageSequence.Iterator(img)]
-                else:
-                    self.gif_frames = [img.copy()]
-                    self.frame_durations = [None]
+            if not self.is_image_grid_visible_var.get():
+                with Image.open(image_file) as img:
+                    self.original_image_size = img.size
+                    max_size = (self.quality_max_size, self.quality_max_size)
+                    img.thumbnail(max_size, self.quality_filter)
+                    if img.format == 'GIF':
+                        self.gif_frames = [frame.copy() for frame in ImageSequence.Iterator(img)]
+                        self.frame_durations = [frame.info['duration'] for frame in ImageSequence.Iterator(img)]
+                    else:
+                        self.gif_frames = [img.copy()]
+                        self.frame_durations = [None]
+            else:
+                img = None
         except (FileNotFoundError, UnidentifiedImageError):
             self.update_image_file_count()
             self.image_files.remove(image_file)
@@ -1555,6 +1558,8 @@ class ImgTxtViewer:
             self.image_file = self.image_files[self.current_index]
             text_file = self.text_files[self.current_index] if self.current_index < len(self.text_files) else None
             image = self.load_image_file(self.image_file, text_file)
+            if image is None:
+                return text_file, None, None, None
             resize_event = Event()
             resize_event.height = self.primary_display_image.winfo_height()
             resize_event.width = self.primary_display_image.winfo_width()
@@ -1635,13 +1640,14 @@ class ImgTxtViewer:
         if self.image_files:
             text_file, image, max_img_width, max_img_height = self.display_image()
             self.load_text_file(text_file)
-            self.primary_display_image.config(width=max_img_width, height=max_img_height)
-            self.original_image = image
-            self.current_image = self.original_image.copy()
-            self.current_max_img_height = max_img_height
-            self.current_max_img_width = max_img_width
-            self.primary_display_image.unbind("<Configure>")
-            self.primary_display_image.bind("<Configure>", self.resize_and_scale_image_event)
+            if not self.is_image_grid_visible_var.get():
+                self.primary_display_image.config(width=max_img_width, height=max_img_height)
+                self.original_image = image
+                self.current_image = self.original_image.copy()
+                self.current_max_img_height = max_img_height
+                self.current_max_img_width = max_img_width
+                self.primary_display_image.unbind("<Configure>")
+                self.primary_display_image.bind("<Configure>", self.resize_and_scale_image_event)
             self.toggle_list_mode()
             self.autocomplete.clear_suggestions()
             self.highlight_custom_string()
@@ -1653,9 +1659,10 @@ class ImgTxtViewer:
 
 
     def resize_and_scale_image_event(self, event):
-        display_width = event.width if event.width else self.primary_display_image.winfo_width()
-        display_height = event.height if event.height else self.primary_display_image.winfo_height()
-        self.resize_and_scale_image(self.current_image, display_width, display_height, None, Image.NEAREST)
+        if not self.is_image_grid_visible_var.get():
+            display_width = event.width if event.width else self.primary_display_image.winfo_width()
+            display_height = event.height if event.height else self.primary_display_image.winfo_height()
+            self.resize_and_scale_image(self.current_image, display_width, display_height, None, Image.NEAREST)
 
 
     def refresh_image(self):
@@ -1676,10 +1683,11 @@ class ImgTxtViewer:
             current_size = (event.width, event.height)
             if current_size != self.previous_window_size:
                 self.previous_window_size = current_size
-                self.debounce_refresh_image(event)
+                if not self.is_image_grid_visible_var.get():
+                    self.debounce_refresh_image(event)
 
 
-    def update_imageinfo(self, percent_scale):
+    def update_imageinfo(self, percent_scale=100):
         if self.image_files:
             self.image_file = self.image_files[self.current_index]
             if self.image_file not in self.image_info_cache:
@@ -2110,6 +2118,7 @@ class ImgTxtViewer:
             self.image_grid.initialize()
             self.image_grid.grid()
         else:
+            self.refresh_image()
             self.image_grid.grid_remove()
             self.master_image_inner_frame.grid()
 
