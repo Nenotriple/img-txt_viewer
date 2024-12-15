@@ -1349,6 +1349,23 @@ class ImgTxtViewer:
                 menu.entryconfig(item, state=state)
 
 
+# --------------------------------------
+# ImgTxtViewer states
+# --------------------------------------
+    def toggle_image_grid(self, event=None):
+        if event is not None:
+            self.is_image_grid_visible_var.set(not self.is_image_grid_visible_var.get())
+        if self.master_image_inner_frame.winfo_viewable():
+            self.master_image_inner_frame.grid_remove()
+            self.image_grid.initialize()
+            self.image_grid.grid()
+            self.root.after(250, self.image_grid.reload_grid)
+        else:
+            self.refresh_image()
+            self.image_grid.grid_remove()
+            self.master_image_inner_frame.grid()
+
+
 #endregion
 ################################################################################################################################################
 #region - TextBox Highlights
@@ -1585,7 +1602,7 @@ class ImgTxtViewer:
 
     def display_animated_gif(self):
         if self.animation_job_id is not None:
-            root.after_cancel(self.animation_job_id)
+            self.root.after_cancel(self.animation_job_id)
             self.animation_job_id = None
         if self.frame_iterator is not None:
             try:
@@ -1605,7 +1622,7 @@ class ImgTxtViewer:
                 self.primary_display_image.config(image=self.current_gif_frame_image)
                 self.primary_display_image.image = self.current_gif_frame_image
                 delay = self.frame_durations[self.current_frame_index] if self.frame_durations[self.current_frame_index] else 100
-                self.animation_job_id = root.after(delay, self.display_animated_gif)
+                self.animation_job_id = self.root.after(delay, self.display_animated_gif)
                 self.current_frame_index = (self.current_frame_index + 1) % len(self.gif_frames)
             except StopIteration:
                 self.frame_iterator = iter(self.gif_frames)
@@ -1674,8 +1691,11 @@ class ImgTxtViewer:
     def debounce_refresh_image(self, event):
         if hasattr(self, 'text_box'):
             if self.is_resizing_job_id:
-                root.after_cancel(self.is_resizing_job_id)
-            self.is_resizing_job_id = root.after(250, self.refresh_image)
+                self.root.after_cancel(self.is_resizing_job_id)
+            if not self.is_image_grid_visible_var.get():
+                self.is_resizing_job_id = self.root.after(250, self.refresh_image)
+            else:
+                self.is_resizing_job_id = self.root.after(250, self.image_grid.reload_grid)
 
 
     def handle_window_configure(self, event):  # Window resize
@@ -1683,8 +1703,7 @@ class ImgTxtViewer:
             current_size = (event.width, event.height)
             if current_size != self.previous_window_size:
                 self.previous_window_size = current_size
-                if not self.is_image_grid_visible_var.get():
-                    self.debounce_refresh_image(event)
+                self.debounce_refresh_image(event)
 
 
     def update_imageinfo(self, percent_scale=100):
@@ -2110,19 +2129,6 @@ class ImgTxtViewer:
         self.update_pair("next")
 
 
-    def toggle_image_grid(self, event=None):
-        if event is not None:
-            self.is_image_grid_visible_var.set(not self.is_image_grid_visible_var.get())
-        if self.master_image_inner_frame.winfo_viewable():
-            self.master_image_inner_frame.grid_remove()
-            self.image_grid.initialize()
-            self.image_grid.grid()
-        else:
-            self.refresh_image()
-            self.image_grid.grid_remove()
-            self.master_image_inner_frame.grid()
-
-
     def open_image_in_editor(self, event=None, index=None):
         try:
             if self.image_files:
@@ -2196,7 +2202,7 @@ class ImgTxtViewer:
     def set_always_on_top(self, initial=False):
         if initial:
             self.always_on_top_var = BooleanVar(value=False)
-        root.attributes('-topmost', self.always_on_top_var.get())
+        self.root.attributes('-topmost', self.always_on_top_var.get())
 
 
     def toggle_list_menu(self):
