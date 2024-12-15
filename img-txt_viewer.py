@@ -2133,8 +2133,9 @@ class ImgTxtViewer:
         try:
             if self.image_files:
                 app_path = self.external_image_editor_path
-                if not os.path.isfile(app_path):
-                    raise FileNotFoundError(f"The specified image editor was not found:\n\n{app_path}")
+                if app_path != "mspaint":
+                    if not os.path.isfile(app_path):
+                        raise FileNotFoundError(f"The specified image editor was not found:\n\n{app_path}")
                 image_index = index if index is not None else self.current_index
                 image_path = self.image_files[image_index]
                 subprocess.Popen([app_path, image_path])
