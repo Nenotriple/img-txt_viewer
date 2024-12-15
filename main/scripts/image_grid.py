@@ -1,15 +1,14 @@
 """
 ########################################
 #              Image-Grid              #
-#   Version : v1.04                    #
+#   Version : v1.05                    #
 #   Author  : github.com/Nenotriple    #
 ########################################
 
 Description:
 -------------
-Display a grid of images, clicking an image returns the index as defined in 'natural_sort'.
+A Tkinter widget that displays a grid of images. Clicking an image returns the index as defined in 'natural_sort'.
 Images without a text pair have a red flag placed over them.
-
 """
 
 
@@ -24,9 +23,9 @@ import configparser
 
 # Standard Library - GUI
 from tkinter import (
-    ttk, Toplevel, messagebox,
+    ttk,
     IntVar, StringVar, BooleanVar,
-    Frame, Label, Button, Menu, Scrollbar, Canvas,
+    Frame, Label, Menu, Scrollbar, Canvas,
 )
 
 
@@ -40,31 +39,28 @@ from PIL import Image, ImageTk, ImageDraw, ImageFont
 #region - CLASS: ImageGrid
 
 
-class ImageGrid:
+class ImageGrid(ttk.Frame):
     image_cache = {1: {}, 2: {}, 3: {}}  # Cache for each thumbnail size
     image_size_cache = {}  # Cache to store image sizes
     text_file_cache = {}  # Cache to store text file pairs
 
 
-    def __init__(self, master, img_txt_viewer, window_x, window_y, jump_to_image):
-        # Window configuration
-        self.create_window(master, window_x, window_y)
-
+    def __init__(self, master, parent):
+        super().__init__(master)
         # Initialize ImgTxtViewer variables and methods
-        self.img_txt_viewer = img_txt_viewer
-        self.sort_key = self.img_txt_viewer.get_file_sort_key()
-        self.reverse_sort_direction_var = self.img_txt_viewer.reverse_load_order_var.get()
-        self.working_folder = self.img_txt_viewer.image_dir.get()
-
-        # Setup configparser and settings file
-        self.config = configparser.ConfigParser()
-        self.settings_file = "settings.cfg"
-
-        # Image navigation function
-        self.ImgTxt_jump_to_image = jump_to_image
-
+        self.parent = parent
+        self.is_initialized = False
         # Supported file types
         self.supported_filetypes = (".png", ".webp", ".jpg", ".jpeg", ".jpg_large", ".jfif", ".tif", ".tiff", ".bmp", ".gif")
+
+
+    def initialize(self):
+        '''Initialize the ImageGrid widget. This must be called before using the widget.'''
+        if self.is_initialized:
+            return
+        # Parent variables
+        self.reverse_sort_direction_var = self.parent.reverse_load_order_var.get()
+        self.working_folder = self.parent.image_dir.get()
 
         # Image grid configuration
         self.max_width = 80  # Thumbnail width
@@ -88,15 +84,10 @@ class ImageGrid:
         # Default thumbnail size. Range=(1,2,3). Set to 3 if total_images is less than 25.
         self.image_size = IntVar(value=3) if self.num_total_images < 25 else IntVar(value=2)
 
-        # Toggle window auto-close when selecting an image
-        self.auto_close = BooleanVar()
-
-        # Read and set settings
-        self.read_settings()
-
         # Interface creation
         self.create_interface()
         self.load_images()
+        self.is_initialized = True
 
 
 #endregion
@@ -105,32 +96,13 @@ class ImageGrid:
 
 
     def create_interface(self):
-        self.create_top_handle()
         self.create_canvas()
         self.create_control_row()
         self.create_filtering_row()
 
 
-    def create_top_handle(self):
-        self.frame_top_Handle = Frame(self.top)
-        self.frame_top_Handle.pack(fill="both")
-        # Title bar
-        title = Label(self.frame_top_Handle, cursor="size", text="Image-Grid", font=("", 16))
-        title.pack(side="top", fill="x", padx=5, pady=5)
-        title.bind("<ButtonPress-1>", self.start_drag)
-        title.bind("<ButtonRelease-1>", self.stop_drag)
-        title.bind("<B1-Motion>", self.dragging_window)
-        # Close button
-        self.button_close = Button(self.frame_top_Handle, text="X", overrelief="groove", relief="flat", command=self.close_window)
-        self.button_close.place(anchor="nw", relx=0.945, height=40, width=40)
-        self.bind_widget_highlight(self.button_close, color='#ffcac9')
-        ToolTip.create(self.button_close, "Close", 500, 6, 12)
-        separator = ttk.Separator(self.frame_top_Handle)
-        separator.pack(side="top", fill="x")
-
-
     def create_canvas(self):
-        self.frame_main = Frame(self.top)
+        self.frame_main = Frame(self)
         self.frame_main.pack(fill="both", expand=True)
         self.scrollbar = Scrollbar(self.frame_main)
         self.scrollbar.pack(side="right", fill="y")
@@ -171,10 +143,6 @@ class ImageGrid:
         self.label_image_info = Label(self.frame_bottom, width=14)
         self.label_image_info.pack(side="right", padx=5)
         ToolTip.create(self.label_image_info, "Filtered Images : Loaded Images, Total Images", 500, 6, 12)
-        # Auto-Close
-        self.checkbutton_auto_close = ttk.Checkbutton(self.frame_bottom, text="Auto-Close", variable=self.auto_close)
-        self.checkbutton_auto_close.pack(side="right", padx=5)
-        ToolTip.create(self.checkbutton_auto_close, "Uncheck this to keep the window open after selecting an image", 500, 6, 12)
 
 
     def create_filtering_row(self):
@@ -284,7 +252,7 @@ class ImageGrid:
 
     def update_image_cache(self):
         image_size_key = self.image_size.get()
-        filtered_sorted_files = list(filter(self.filter_images, sorted(self.image_file_list, key=self.sort_key, reverse=self.reverse_sort_direction_var)))
+        filtered_sorted_files = list(filter(self.filter_images, sorted(self.image_file_list, key=self.parent.get_file_sort_key(), reverse=self.reverse_sort_direction_var)))
         current_text_file_sizes = {
             os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt': os.path.getsize(os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt') if os.path.exists(os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt') else 0
             for filename in filtered_sorted_files}
@@ -358,7 +326,7 @@ class ImageGrid:
     def load_image_set(self):
         images = []
         image_size_key = self.image_size.get()
-        filtered_sorted_files = list(filter(self.filter_images, sorted(self.image_file_list, key=self.sort_key, reverse=self.reverse_sort_direction_var)))
+        filtered_sorted_files = list(filter(self.filter_images, sorted(self.image_file_list, key=self.parent.get_file_sort_key(), reverse=self.reverse_sort_direction_var)))
         current_text_file_sizes = {
             os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt': os.path.getsize(os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt') if os.path.exists(os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt') else 0
             for filename in filtered_sorted_files}
@@ -538,7 +506,7 @@ class ImageGrid:
 
 
     def update_filtered_images(self):
-        self.filtered_images = sum(1 for _ in filter(self.filter_images, sorted(self.image_file_list, key=self.sort_key, reverse=self.reverse_sort_direction_var)))
+        self.filtered_images = sum(1 for _ in filter(self.filter_images, sorted(self.image_file_list, key=self.parent.get_file_sort_key(), reverse=self.reverse_sort_direction_var)))
 
 
     def get_image_and_text_paths(self, filename):
@@ -584,7 +552,7 @@ class ImageGrid:
 
     def get_image_index(self, directory, filename):
         filename = os.path.basename(filename)
-        image_files = sorted((file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)), key=self.sort_key, reverse=self.reverse_sort_direction_var)
+        image_files = sorted((file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)), key=self.parent.get_file_sort_key(), reverse=self.reverse_sort_direction_var)
         return image_files.index(filename) if filename in image_files else -1
 
 
@@ -608,9 +576,7 @@ class ImageGrid:
 
     def on_mouse_click(self, path):
         index = self.get_image_index(self.working_folder, path)
-        self.ImgTxt_jump_to_image(index)
-        if self.auto_close.get():
-            self.close_window()
+        self.parent.jump_to_image(index)
 
 
     def on_mousewheel(self, event):
@@ -704,61 +670,6 @@ class ImageGrid:
 
 #endregion
 ################################################################################################################################################
-#region -  Window drag
-
-
-    def start_drag(self, event):
-        self.start_x = event.x
-        self.start_y = event.y
-
-
-    def stop_drag(self, event):
-        self.start_x = None
-        self.start_y = None
-
-
-    def dragging_window(self, event):
-        dx = event.x - self.start_x
-        dy = event.y - self.start_y
-        x = self.top.winfo_x() + dx
-        y = self.top.winfo_y() + dy
-        self.top.geometry(f"+{x}+{y}")
-
-
-#endregion
-################################################################################################################################################
-#region -  Save / Read Settings
-
-
-    def save_settings(self):
-        try:
-            # Read existing settings
-            if os.path.exists(self.settings_file):
-                self.config.read(self.settings_file)
-            # Auto-Close
-            if not self.config.has_section("Other"):
-                self.config.add_section("Other")
-            self.config.set("Other", "auto_close", str(self.auto_close.get()))
-            # Write updated settings back to file
-            with open(self.settings_file, "w", encoding="utf-8") as f:
-                self.config.write(f)
-        except (PermissionError, IOError) as e:
-            messagebox.showerror("Error", f"Error: An error occurred while saving the user settings.\n\n{e}")
-
-
-    def read_settings(self):
-         try:
-             # Read existing settings
-             if os.path.exists(self.settings_file):
-                 self.config.read(self.settings_file)
-                 # Auto-Close
-                 self.auto_close.set(value=self.config.getboolean("Other", "auto_close", fallback=False))
-         except Exception as e:
-             messagebox.showerror("Error", f"Error: An unexpected error occurred.\n\n{e}")
-
-
-#endregion
-################################################################################################################################################
 #region -  Widget highlighting
 
 
@@ -782,53 +693,34 @@ class ImageGrid:
 
 #endregion
 ################################################################################################################################################
-#region - Framework
-
-
-    def create_window(self, master, window_x, window_y):
-        self.transparent_top = Toplevel(master)
-        self.transparent_top.attributes('-alpha', 0.0)
-        self.transparent_top.iconify()
-        self.transparent_top.title("Image-Grid")
-        self.transparent_top.bind("<FocusIn>", lambda event: self.top.focus_force())
-        self.top = Toplevel(master, borderwidth=2, relief="groove")
-        self.top.overrideredirect(True)
-        window_size = "750x600"
-        window_position = f"+{window_x}+{window_y}"
-        self.top.geometry(f"{window_size}{window_position}")
-        self.top.minsize(750, 300)
-        self.top.maxsize(750, 6000)
-        self.top.focus_force()
-        self.top.bind("<Escape>", lambda event: self.close_window(event))
-        self.top.bind('<F2>', lambda event: self.close_window(event))
-        self.top.protocol('WM_DELETE_WINDOW', self.close_window)
-
-
-    def close_window(self, event=None):
-        self.save_settings()
-        self.transparent_top.destroy()
-        self.top.destroy()
-
-
-#endregion
-################################################################################################################################################
 #region - Changelog
 
 
 '''
 
-v1.04 changes:
+
+v1.05 changes:
+
 
   - New:
-    -
+    - Refactored ImageGrid to act similar to a regular Tkinter widget.
+    - Removed window management code.
+    - Modified initialization to accept standard widget parameters.
+
+
 <br>
+
 
   - Fixed:
     -
+
+
 <br>
 
+
   - Other changes:
-     - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
+     -
+
 
 '''
 
@@ -840,11 +732,14 @@ v1.04 changes:
 
 '''
 
+
 - Todo
   -
 
+
 - Tofix
   -
+
 
 '''
 

@@ -180,6 +180,9 @@ class ImgTxtViewer:
         ]   # Blue     Pink       Green      Brown      Purple
 
 
+        self.is_image_grid_visible_var = BooleanVar(value=False)
+
+
 # --------------------------------------
 # Settings
 # --------------------------------------
@@ -260,8 +263,8 @@ class ImgTxtViewer:
         self.root.bind("<Alt-Left>", lambda event: self.prev_pair(event))
         self.root.bind('<Shift-Delete>', lambda event: self.delete_pair())
         self.root.bind('<Configure>', self.handle_window_configure)
-        self.root.bind('<F1>', lambda event: self.toggle_zoom_popup(event))
-        self.root.bind('<F2>', lambda event: self.open_image_grid(event))
+        self.root.bind('<F1>', lambda event: self.toggle_image_grid(event))
+        self.root.bind('<F2>', lambda event: self.toggle_zoom_popup(event))
         self.root.bind('<F4>', lambda event: self.open_image_in_editor(event))
         self.root.bind('<F5>', lambda event: self.show_batch_tag_edit(event))
         self.root.bind('<Control-w>', lambda event: self.on_closing(event))
@@ -437,7 +440,6 @@ class ImgTxtViewer:
         self.toolsMenu.add_command(label="Edit Image...", state="disable", underline=6, accelerator="F4", command=self.open_image_in_editor)
         self.toolsMenu.add_separator()
         self.toolsMenu.add_command(label="Next Empty Text File", state="disable", accelerator="Ctrl+E", command=self.index_goto_next_empty)
-        self.toolsMenu.add_command(label="Open Image-Grid...", state="disable", accelerator="F2", underline=11, command=self.open_image_grid)
 
 
 #endregion
@@ -460,12 +462,19 @@ class ImgTxtViewer:
         self.primary_paned_window.grid(row=0, column=0, sticky="nsew")
         self.primary_paned_window.bind("<B1-Motion>", self.disable_button)
 
-        # master_image_frame : is exclusively used for the displayed image, thumbnails, image info.
+        # master_image_frame : is exclusively used for the master_image_inner_frame and image_grid.
         self.master_image_frame = Frame(self.root)
-        self.master_image_frame.bind('<Configure>', lambda event: self.debounce_update_thumbnail_panel(event))
-        self.master_image_frame.grid_rowconfigure(1, weight=1)
+        self.master_image_frame.grid_rowconfigure(0, weight=0)  # stats frame row
+        self.master_image_frame.grid_rowconfigure(1, weight=1)  # image frame row
         self.master_image_frame.grid_columnconfigure(0, weight=1)
         self.primary_paned_window.add(self.master_image_frame, stretch="always")
+        self.master_image_inner_frame = Frame(self.master_image_frame)
+        self.master_image_inner_frame.grid(row=1, column=0, sticky="nsew")
+        self.master_image_inner_frame.grid_columnconfigure(0, weight=1)
+        self.master_image_inner_frame.grid_rowconfigure(1, weight=1)
+        self.image_grid = image_grid.ImageGrid(self.master_image_frame, self)
+        self.image_grid.grid(row=1, column=0, sticky="nsew")
+        self.image_grid.grid_remove()
 
         # master_control_frame : serves as a container for all primary UI frames, with the exception of the master_image_frame.
         self.master_control_frame = Frame(self.root)
@@ -478,14 +487,16 @@ class ImgTxtViewer:
     def create_primary_widgets(self):
         # Image stats
         self.stats_frame = Frame(self.master_image_frame)
-        self.stats_frame.grid(row=0, column=0, sticky="ew")
+        self.stats_frame.grid(row=0, column=0, sticky="new")
+        self.stats_frame.grid_columnconfigure(1, weight=1)
 
         # View Menu
         self.view_menubutton = ttk.Menubutton(self.stats_frame, text="View", state="disable")
         self.view_menubutton.grid(row=0, column=0)
         self.view_menu = Menu(self.view_menubutton, tearoff=0)
         self.view_menubutton.config(menu=self.view_menu)
-        self.view_menu.add_checkbutton(label="Toggle Zoom", accelerator="F1", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
+        self.view_menu.add_checkbutton(label="Toggle Image-Grid View", accelerator="F1", variable=self.is_image_grid_visible_var, command=self.toggle_image_grid)
+        self.view_menu.add_checkbutton(label="Toggle Zoom", accelerator="F2", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
         self.view_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.debounce_update_thumbnail_panel)
         self.view_menu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
         self.view_menu.add_checkbutton(label="Vertical View", underline=0, variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
@@ -494,12 +505,13 @@ class ImgTxtViewer:
         self.view_menu.add_cascade(label="Image Display Quality", menu=image_quality_menu)
         for value in ["High", "Normal", "Low"]:
             image_quality_menu.add_radiobutton(label=value, variable=self.image_quality_var, value=value, command=self.set_image_quality)
+
         # Image Stats
         self.label_image_stats = Label(self.stats_frame, text="...")
         self.label_image_stats.grid(row=0, column=1, sticky="ew")
 
         # Primary Image
-        self.primary_display_image = Label(self.master_image_frame, cursor="hand2")
+        self.primary_display_image = Label(self.master_image_inner_frame, cursor="hand2")
         self.primary_display_image.grid(row=1, column=0, sticky="nsew")
         self.primary_display_image.bind("<Double-1>", lambda event: self.open_image(index=self.current_index, event=event))
         self.primary_display_image.bind('<Button-2>', self.open_image_directory)
@@ -513,11 +525,11 @@ class ImgTxtViewer:
         self.image_preview_tooltip = ToolTip.create(self.primary_display_image, "Right-Click for more\nMiddle-click to open in file explorer\nDouble-Click to open in your system image viewer\nALT+Left/Right or Mouse-Wheel to move between pairs", 1000, 6, 12)
 
         # Thumbnail Panel
-        self.thumbnail_panel = ThumbnailPanel(master=self.master_image_frame, parent=self)
+        self.thumbnail_panel = ThumbnailPanel(master=self.master_image_inner_frame, parent=self)
         self.thumbnail_panel.grid(row=3, column=0, sticky="ew")
 
         # Edit Image Panel
-        self.edit_image_panel = Frame(self.master_image_frame, relief="ridge", bd=1)
+        self.edit_image_panel = Frame(self.master_image_inner_frame, relief="ridge", bd=1)
         self.edit_image_panel.grid(row=2, column=0, sticky="ew")
         self.edit_image_panel.grid_remove()
 
@@ -828,7 +840,7 @@ class ImgTxtViewer:
         # Open
         self.image_context_menu.add_command(label="Open Current Directory...", command=self.open_image_directory)
         self.image_context_menu.add_command(label="Open Current Image...", command=self.open_image)
-        self.image_context_menu.add_command(label="Open Image-Grid...", accelerator="F2", command=self.open_image_grid)
+        self.image_context_menu.add_command(label="Toggle Image-Grid View", accelerator="F1", command=self.toggle_image_grid)
         self.image_context_menu.add_command(label="Edit Image...", accelerator="F4", command=self.open_image_in_editor)
         self.image_context_menu.add_command(label="AutoTag", command=self.text_controller.interrogate_image_tags)
         self.image_context_menu.add_separator()
@@ -1116,7 +1128,6 @@ class ImgTxtViewer:
             "Open Current Image...",
             "Edit Image...",
             "Next Empty Text File",
-            "Open Image-Grid...",
         ]
         options_commands = [
             "Options",
@@ -2091,14 +2102,16 @@ class ImgTxtViewer:
         self.update_pair("next")
 
 
-    def open_image_grid(self, event=None):
-        if not self.image_files:
-            return
-        main_window_width = root.winfo_width()
-        main_window_height = root.winfo_height()
-        window_x = root.winfo_x() + -330 + main_window_width // 2
-        window_y = root.winfo_y() - 300 + main_window_height // 2
-        image_grid.ImageGrid(self.root, self, window_x, window_y, self.jump_to_image)
+    def toggle_image_grid(self, event=None):
+        if event is not None:
+            self.is_image_grid_visible_var.set(not self.is_image_grid_visible_var.get())
+        if self.master_image_inner_frame.winfo_viewable():
+            self.master_image_inner_frame.grid_remove()
+            self.image_grid.initialize()
+            self.image_grid.grid()
+        else:
+            self.image_grid.grid_remove()
+            self.master_image_inner_frame.grid()
 
 
     def open_image_in_editor(self, event=None, index=None):
