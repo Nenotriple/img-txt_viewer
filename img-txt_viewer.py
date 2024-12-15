@@ -495,7 +495,7 @@ class ImgTxtViewer:
         self.view_menubutton.grid(row=0, column=0)
         self.view_menu = Menu(self.view_menubutton, tearoff=0)
         self.view_menubutton.config(menu=self.view_menu)
-        self.view_menu.add_checkbutton(label="Toggle Image-Grid View", accelerator="F1", variable=self.is_image_grid_visible_var, command=self.toggle_image_grid)
+        self.view_menu.add_checkbutton(label="Toggle Image-Grid", accelerator="F1", variable=self.is_image_grid_visible_var, command=self.toggle_image_grid)
         self.view_menu.add_checkbutton(label="Toggle Zoom", accelerator="F2", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
         self.view_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.debounce_update_thumbnail_panel)
         self.view_menu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
@@ -840,7 +840,6 @@ class ImgTxtViewer:
         # Open
         self.image_context_menu.add_command(label="Open Current Directory...", command=self.open_image_directory)
         self.image_context_menu.add_command(label="Open Current Image...", command=self.open_image)
-        self.image_context_menu.add_command(label="Toggle Image-Grid View", accelerator="F1", command=self.toggle_image_grid)
         self.image_context_menu.add_command(label="Edit Image...", accelerator="F4", command=self.open_image_in_editor)
         self.image_context_menu.add_command(label="AutoTag", command=self.text_controller.interrogate_image_tags)
         self.image_context_menu.add_separator()
@@ -862,6 +861,7 @@ class ImgTxtViewer:
         self.image_context_menu.add_command(label="Flip", command=self.flip_current_image)
         self.image_context_menu.add_separator()
         # Misc
+        self.image_context_menu.add_checkbutton(label="Toggle Image-Grid", accelerator="F1", variable=self.is_image_grid_visible_var, command=self.toggle_image_grid)
         self.image_context_menu.add_checkbutton(label="Toggle Zoom", accelerator="F1", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
         self.image_context_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.debounce_update_thumbnail_panel)
         self.image_context_menu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
