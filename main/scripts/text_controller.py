@@ -329,16 +329,13 @@ class TextController:
 
         # Listbox Frame
         listbox_frame = Frame(paned_window)
-        paned_window.add(listbox_frame)
-
+        paned_window.add(listbox_frame, stretch="never")
+        paned_window.paneconfig(listbox_frame, width=200, minsize=40)
         listbox_y_scrollbar = Scrollbar(listbox_frame, orient="vertical")
-        listbox_x_scrollbar = Scrollbar(listbox_frame, orient="horizontal")
-        self.auto_tag_listbox = Listbox(listbox_frame, width=20, selectmode="extended", exportselection=False, yscrollcommand=listbox_y_scrollbar.set, xscrollcommand=listbox_x_scrollbar.set)
+        self.auto_tag_listbox = Listbox(listbox_frame, width=20, selectmode="extended", exportselection=False, yscrollcommand=listbox_y_scrollbar.set)
         self.auto_tag_listbox.bind('<<ListboxSelect>>', lambda event: self.update_auto_tag_stats_label())
         self.auto_tag_listbox.bind("<Button-3>", lambda event: listbox_context_menu.tk_popup(event.x_root, event.y_root))
         listbox_y_scrollbar.config(command=self.auto_tag_listbox.yview)
-        listbox_x_scrollbar.config(command=self.auto_tag_listbox.xview)
-        listbox_x_scrollbar.pack(side='bottom', fill='x')
         self.auto_tag_listbox.pack(side='left', fill='both', expand=True)
         listbox_y_scrollbar.pack(side='left', fill='y')
         # Listbox - Context Menu
@@ -354,7 +351,8 @@ class TextController:
         listbox_context_menu.add_command(label="Selection: Add to MyTags", command=lambda: self.parent.add_to_custom_dictionary(origin="auto_tag"))
         # Control Frame
         control_frame = Frame(paned_window)
-        paned_window.add(control_frame)
+        paned_window.add(control_frame, stretch="always")
+        paned_window.paneconfig(control_frame, minsize=200)
         # Model Selection
         model_selection_frame = Frame(control_frame)
         model_selection_frame.pack(side='top', fill='x', padx=2, pady=2)
