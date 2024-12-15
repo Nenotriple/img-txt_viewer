@@ -577,6 +577,7 @@ class ImageGrid(ttk.Frame):
     def on_mouse_click(self, path):
         index = self.get_image_index(self.working_folder, path)
         self.parent.jump_to_image(index)
+        self.parent.update_imageinfo()
 
 
     def on_mousewheel(self, event):
