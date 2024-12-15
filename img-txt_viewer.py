@@ -1754,6 +1754,8 @@ class ImgTxtViewer:
                 self.show_pair()
             self.image_index_entry.delete(0, "end")
             self.image_index_entry.insert(0, f"{self.current_index + 1}")
+            if self.is_image_grid_visible_var.get():
+                self.image_grid.highlight_thumbnail(self.current_index)
 
 
     def next_pair(self, event=None, step=1):
@@ -1790,6 +1792,8 @@ class ImgTxtViewer:
                 pass
             self.image_index_entry.delete(0, "end")
             self.image_index_entry.insert(0, index + 1)
+            if self.is_image_grid_visible_var.get():
+                self.image_grid.highlight_thumbnail(self.current_index)
         except ValueError:
             self.image_index_entry.delete(0, "end")
             self.image_index_entry.insert(0, self.current_index + 1)

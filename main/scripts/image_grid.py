@@ -24,7 +24,7 @@ import os
 from tkinter import (
     ttk,
     IntVar, StringVar, BooleanVar,
-    Frame, Label, Menu, Scrollbar, Canvas,
+    Frame, Label, Menu, Scrollbar, Canvas, TclError
 )
 
 
@@ -51,6 +51,11 @@ class ImageGrid(ttk.Frame):
         self.is_initialized = False
         # Supported file types
         self.supported_filetypes = (".png", ".webp", ".jpg", ".jpeg", ".jpg_large", ".jfif", ".tif", ".tiff", ".bmp", ".gif")
+        # Used keeping track of thumbnail buttons
+        self.thumbnail_buttons = {}
+        # Used for highlighting the selected thumbnail
+        self.initial_selected_thumbnail = None
+        self.selected_thumbnail = None
 
 
     def initialize(self):
@@ -310,10 +315,15 @@ class ImageGrid(ttk.Frame):
     def populate_image_grid(self):
         for index, (image, filepath, image_index) in enumerate(self.images):
             row, col = divmod(index, self.cols)
-            thumbnail = ttk.Button(self.frame_image_grid, image=image, takefocus=False, command=lambda path=filepath: self.on_mouse_click(path))
+            button_style = "Highlighted.TButton" if index == self.parent.current_index else "TButton"
+            thumbnail = ttk.Button(self.frame_image_grid, image=image, takefocus=False, style=button_style)
+            thumbnail.configure(command=lambda idx=image_index: self.on_mouse_click(idx))
             thumbnail.image = image
             thumbnail.grid(row=row, column=col)
             thumbnail.bind("<MouseWheel>", self.on_mousewheel)
+            self.thumbnail_buttons[image_index] = thumbnail
+            if index == self.parent.current_index:
+                self.initial_selected_thumbnail = thumbnail
             filesize = os.path.getsize(filepath)
             filesize = f"{filesize / 1024:.2f} KB" if filesize < 1024 * 1024 else f"{filesize / 1024 / 1024:.2f} MB"
             with Image.open(filepath) as img:
@@ -579,8 +589,24 @@ class ImageGrid(ttk.Frame):
             ToolTip.create(load_more_button, "Load the next 150 images", 500, 6, 12)
 
 
-    def on_mouse_click(self, path):
-        index = self.get_image_index(self.working_folder, path)
+    def highlight_thumbnail(self, index):
+        button = self.thumbnail_buttons.get(index)
+        if not button:
+            return
+        try:
+            if self.initial_selected_thumbnail:
+                self.initial_selected_thumbnail.configure(style="TButton")
+                self.initial_selected_thumbnail = None
+            if self.selected_thumbnail:
+                self.selected_thumbnail.configure(style="TButton")
+        except TclError:
+            pass
+        self.selected_thumbnail = button
+        button.configure(style="Highlighted.TButton")
+
+
+    def on_mouse_click(self, index):
+        self.highlight_thumbnail(index)
         self.parent.jump_to_image(index)
         self.parent.update_imageinfo()
 
@@ -672,29 +698,6 @@ class ImageGrid(ttk.Frame):
 
     def get_image_files(self):
         return [name for name in self.all_file_list if os.path.isfile(os.path.join(self.working_folder, name)) and name.lower().endswith(self.supported_filetypes)]
-
-
-#endregion
-################################################################################################################################################
-#region -  Widget highlighting
-
-
-    def bind_widget_highlight(self, widget, add=False, color=None):
-        add = '+' if add else ''
-        if color:
-            widget.bind("<Enter>", lambda event: self.mouse_enter(event, color), add=add)
-        else:
-            widget.bind("<Enter>", self.mouse_enter, add=add)
-        widget.bind("<Leave>", self.mouse_leave, add=add)
-
-
-    def mouse_enter(self, event, color='#e5f3ff'):
-        if event.widget['state'] == 'normal':
-            event.widget['background'] = color
-
-
-    def mouse_leave(self, event):
-        event.widget['background'] = 'SystemButtonFace'
 
 
 #endregion
