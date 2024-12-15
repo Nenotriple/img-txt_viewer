@@ -322,9 +322,6 @@ class TextController:
         batch_interrogate_checkbutton = ttk.Checkbutton(top_frame, text="Batch", takefocus=False, variable=self.batch_interrogate_images_var)
         batch_interrogate_checkbutton.pack(side='right')
         ToolTip.create(batch_interrogate_checkbutton, "Interrogate all images\nAn Auto-Insert mode must be selected", 200, 6, 12)
-        # Main Frame
-        widget_frame = Frame(self.parent.tab4)
-        widget_frame.pack(fill='both', expand=True)
 
         # Main Paned Window
         paned_window = PanedWindow(self.parent.tab4, orient='horizontal', sashwidth=6, bg="#d0d0d0")
