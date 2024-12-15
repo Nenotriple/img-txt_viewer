@@ -15,7 +15,7 @@ import time
 from tkinter import (
     ttk, Toplevel, messagebox,
     StringVar, BooleanVar,
-    Frame, Menu, Scrollbar, scrolledtext,
+    Frame, Menu, Scrollbar, scrolledtext, PanedWindow,
     Label, Listbox,
     font, TclError
 )
@@ -325,9 +325,15 @@ class TextController:
         # Main Frame
         widget_frame = Frame(self.parent.tab4)
         widget_frame.pack(fill='both', expand=True)
+
+        # Main Paned Window
+        paned_window = PanedWindow(self.parent.tab4, orient='horizontal', sashwidth=6, bg="#d0d0d0")
+        paned_window.pack(fill='both', expand=True)
+
         # Listbox Frame
-        listbox_frame = Frame(widget_frame)
-        listbox_frame.pack(side='left', fill='both', expand=True)
+        listbox_frame = Frame(paned_window)
+        paned_window.add(listbox_frame)
+
         listbox_y_scrollbar = Scrollbar(listbox_frame, orient="vertical")
         listbox_x_scrollbar = Scrollbar(listbox_frame, orient="horizontal")
         self.auto_tag_listbox = Listbox(listbox_frame, width=20, selectmode="extended", exportselection=False, yscrollcommand=listbox_y_scrollbar.set, xscrollcommand=listbox_x_scrollbar.set)
@@ -350,8 +356,8 @@ class TextController:
         listbox_context_menu.add_command(label="Selection: Clear", command=clear_selection)
         listbox_context_menu.add_command(label="Selection: Add to MyTags", command=lambda: self.parent.add_to_custom_dictionary(origin="auto_tag"))
         # Control Frame
-        control_frame = Frame(widget_frame)
-        control_frame.pack(side='left', fill='both', expand=True)
+        control_frame = Frame(paned_window)
+        paned_window.add(control_frame)
         # Model Selection
         model_selection_frame = Frame(control_frame)
         model_selection_frame.pack(side='top', fill='x', padx=2, pady=2)
@@ -408,7 +414,7 @@ class TextController:
         excluded_tags_label = Label(excluded_entry_frame, text="Exclude:", width=9, anchor="w")
         excluded_tags_label.pack(side='left')
         ToolTip.create(excluded_tags_label, "Enter tags that will be excluded from interrogation\nSeparate tags with commas", 200, 6, 12)
-        self.excluded_tags_entry = ttk.Entry(excluded_entry_frame, width=25)
+        self.excluded_tags_entry = ttk.Entry(excluded_entry_frame, width=5)
         self.excluded_tags_entry.pack(side='left', fill='both', expand=True)
         self.bind_entry_functions(self.excluded_tags_entry)
         auto_exclude_tags_checkbutton = ttk.Checkbutton(excluded_entry_frame, text="Auto", takefocus=False, variable=self.auto_exclude_tags_var)
