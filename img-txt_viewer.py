@@ -583,8 +583,8 @@ class ImgTxtViewer:
         # Navigation Buttons
         nav_button_frame = Frame(self.master_control_frame)
         nav_button_frame.pack(fill="x", padx=2)
-        self.next_button = ttk.Button(nav_button_frame, text="Next--->", width=12, state="disabled", takefocus=False, command=lambda: self.update_pair("next"))
-        self.prev_button = ttk.Button(nav_button_frame, text="<---Previous", width=12, state="disabled", takefocus=False, command=lambda: self.update_pair("prev"))
+        self.next_button = ttk.Button(nav_button_frame, text="Next", width=12, state="disabled", takefocus=False, command=lambda: self.update_pair("next"))
+        self.prev_button = ttk.Button(nav_button_frame, text="Previous", width=12, state="disabled", takefocus=False, command=lambda: self.update_pair("prev"))
         self.next_button.pack(side="right", fill="x", expand=True)
         self.prev_button.pack(side="right", fill="x", expand=True)
         ToolTip.create(self.next_button, "Hotkey: ALT+R\nHold shift to advance by 5", 1000, 6, 12)
