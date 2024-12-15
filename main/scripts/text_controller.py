@@ -936,6 +936,7 @@ class TextController:
                 size = int(size)
                 self.parent.text_box.config(font=(font, size))
                 self.font_size_label.config(text=f"Size: {size}")
+                font_box_tooltip.config(text=f"{font}")
         def reset_to_defaults():
             self.parent.font_var.set(self.parent.default_font)
             self.size_scale.set(self.parent.default_font_size)
@@ -946,6 +947,7 @@ class TextController:
         font_box = ttk.Combobox(self.parent.tab7, textvariable=self.parent.font_var, width=4, takefocus=False, state="readonly", values=list(font.families()))
         font_box.set(self.parent.current_font_name)
         font_box.bind("<<ComboboxSelected>>", lambda event: set_font_and_size(self.parent.font_var.get(), self.size_scale.get()))
+        font_box_tooltip = ToolTip.create(font_box, f"{self.parent.current_font_name}", 200, 6, 12)
         font_box.pack(side="left", anchor="n", pady=4, fill="x", expand=True)
         self.font_size_label = Label(self.parent.tab7, text=f"Size: {self.parent.font_size_var.get()}", width=14)
         self.font_size_label.pack(side="left", anchor="n", pady=4)
