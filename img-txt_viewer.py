@@ -1238,6 +1238,8 @@ class ImgTxtViewer:
     def configure_pane(self):
         self.primary_paned_window.paneconfigure(self.master_image_frame, minsize=200, stretch="always")
         self.primary_paned_window.paneconfigure(self.master_control_frame, minsize=200, stretch="always")
+        if self.is_image_grid_visible_var.get():
+            self.image_grid.reload_grid()
 
 
 # --------------------------------------
