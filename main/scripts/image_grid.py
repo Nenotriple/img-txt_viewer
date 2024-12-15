@@ -18,7 +18,6 @@ Images without a text pair have a red flag placed over them.
 
 # Standard Library
 import os
-import configparser
 
 
 # Standard Library - GUI
@@ -65,9 +64,8 @@ class ImageGrid(ttk.Frame):
         # Image grid configuration
         self.max_width = 80  # Thumbnail width
         self.max_height = 80  # Thumbnail height
-        self.rows = 500  # Max rows
-        self.cols = 8  # Max columns
         self.images_per_load = 250  # Num of images to load per set
+        self.padding = 4  # Default padding between thumbnails
 
         # Image loading and filtering
         self.loaded_images = 0  # Num of images loaded to the UI
@@ -82,12 +80,22 @@ class ImageGrid(ttk.Frame):
         self.num_total_images = len(self.image_file_list)  # Number of images in the folder
 
         # Default thumbnail size. Range=(1,2,3). Set to 3 if total_images is less than 25.
-        self.image_size = IntVar(value=3) if self.num_total_images < 25 else IntVar(value=2)
+        self.image_size = IntVar(value=2) if self.num_total_images < 25 else IntVar(value=2)
 
         # Interface creation
         self.create_interface()
         self.load_images()
         self.is_initialized = True
+
+
+    def calculate_columns(self):
+        frame_width = self.frame_thumbnails.winfo_width()
+        if frame_width <= 1:
+            frame_width = self.frame_thumbnails.winfo_reqwidth()
+        available_width = frame_width - (2 * self.padding)
+        thumbnail_width_with_padding = self.max_width + (2 * self.padding)
+        cols = max(1, available_width // thumbnail_width_with_padding)
+        return int(cols)
 
 
 #endregion
@@ -127,10 +135,6 @@ class ImageGrid(ttk.Frame):
         self.slider_image_size.bind("<ButtonRelease-1>", lambda event: self.reload_grid())
         self.slider_image_size.pack(side="left")
         ToolTip.create(self.slider_image_size, "Adjust grid size", 500, 6, 12)
-        # Grip
-        self.grip_window_size = ttk.Sizegrip(self.frame_bottom)
-        self.grip_window_size.pack(side="right", padx=(5, 0))
-        ToolTip.create(self.grip_window_size, "Adjust window size", 500, 6, 12)
         # Refresh
         self.button_refresh = ttk.Button(self.frame_bottom, text="Refresh", command=self.reload_grid)
         self.button_refresh.pack(side="right", padx=5)
@@ -292,6 +296,7 @@ class ImageGrid(ttk.Frame):
             3: (170, 170, 4)
         }
         self.max_width, self.max_height, self.cols = size_settings.get(self.image_size.get(), (80, 80, 8))
+        self.cols = self.calculate_columns()
 
 
     def create_image_grid(self):
