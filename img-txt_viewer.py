@@ -750,7 +750,7 @@ class ImgTxtViewer:
         self.text_box.bind("<Button-2>", lambda event: (self.delete_tag_under_mouse(event), self.sync_title_with_content(event)))
         self.text_box.bind("<Button-3>", lambda event: (self.show_text_context_menu(event)))
         # Update the autocomplete suggestion label after every KeyRelease event.
-        self.text_box.bind("<KeyRelease>", lambda event: (self.autocomplete.update_suggestions(event), self.sync_title_with_content(event)))
+        self.text_box.bind("<KeyRelease>", lambda event: (self.autocomplete.update_suggestions(event), self.sync_title_with_content(event), self.get_text_summary()))
         # Insert a newline after inserting an autocomplete suggestion when list_mode is active.
         self.text_box.bind('<comma>', self.autocomplete.insert_newline_listmode)
         # Highlight duplicates when selecting text with keyboard or mouse.
@@ -945,6 +945,19 @@ class ImgTxtViewer:
         self.current_font_size = self.text_box.tk.call("font", "actual", self.current_font, "-size")
         self.default_font = self.current_font_name
         self.default_font_size = self.current_font_size
+
+
+    def get_text_summary(self):
+        try:
+            if hasattr(self, 'text_box'):
+                text_content = self.text_box.get("1.0", "end-1c")
+                char_count = len(text_content)
+                word_count = len([word for word in text_content.split() if word.strip()])
+                self.text_controller.info_label.config(text=f"Characters: {char_count}  |  Words: {word_count}")
+                return char_count, word_count
+            return 0, 0
+        except Exception:
+            return 0, 0
 
 
 #endregion
@@ -1623,6 +1636,7 @@ class ImgTxtViewer:
             self.highlight_custom_string()
             self.highlight_all_duplicates_var.set(False)
             self.debounce_update_thumbnail_panel()
+            self.get_text_summary()
         else:
             self.primary_display_image.unbind("<Configure>")
 
