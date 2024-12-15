@@ -1113,16 +1113,11 @@ class TextController:
         add_button.pack(side='left')
         save_button = ttk.Button(top_frame, text="Save Tags", takefocus=False, command=save)
         save_button.pack(side='right')
-        # Middle Row - Row 1
-        self.text_frame = Frame(tab_frame)
+        # Middle Row
+        self.text_frame = ttk.PanedWindow(tab_frame, orient='horizontal')
         self.text_frame.grid(row=1, column=0, sticky='nsew')
-        # Configure text_frame weights
-        self.text_frame.grid_columnconfigure(0, weight=1)
-        self.text_frame.grid_columnconfigure(2, weight=1)
-        self.text_frame.grid_rowconfigure(0, weight=1)
         # My Tags section
         my_tags_frame = Frame(self.text_frame)
-        my_tags_frame.grid(row=0, column=0, sticky='nsew')
         header_frame = Frame(my_tags_frame)
         header_frame.grid(row=0, column=0, sticky='ew', padx=2, pady=(2,0))
         my_tags_label = ttk.Label(header_frame, text="My Tags:")
@@ -1152,7 +1147,6 @@ class TextController:
         move_down_button.grid(row=4, column=1, sticky='ew', padx=2)
         # All Tags section
         self.all_tags_frame = Frame(self.text_frame)
-        self.all_tags_frame.grid(row=0, column=2, sticky='nsew')
         self.all_tags_frame.grid_rowconfigure(1, weight=1)
         self.all_tags_frame.grid_columnconfigure(0, weight=1)
         all_tags_label = ttk.Label(self.all_tags_frame, text="All Tags")
@@ -1161,6 +1155,9 @@ class TextController:
         self.all_tags_listbox.grid(row=1, column=0, columnspan=2, sticky='nsew')
         self.all_tags_listbox.bind("<Button-3>", show_context_menu)
         self.all_tags_listbox.bind("<Double-Button-1>", lambda event: insert_tag(self.all_tags_listbox, 'end'))
+        # Add frames to PanedWindow
+        self.text_frame.add(my_tags_frame, weight=1)
+        self.text_frame.add(self.all_tags_frame, weight=1)
         # Buttons
         self.all_tags_button_frame = Frame(self.all_tags_frame)
         self.all_tags_button_frame.grid(row=2, column=0, sticky='ew', pady=(2,0))
@@ -1191,12 +1188,9 @@ class TextController:
     def toggle_all_tags_listbox(self):
         if self.show_all_tags_var.get():
             self.all_tags_frame.grid(row=0, column=2, sticky='nsew')
-            self.text_frame.grid_columnconfigure(0, weight=1)
-            self.text_frame.grid_columnconfigure(2, weight=1)
+            self.text_frame.add(self.all_tags_frame, weight=1)
         else:
-            self.all_tags_frame.grid_remove()
-            self.text_frame.grid_columnconfigure(0, weight=1)
-            self.text_frame.grid_columnconfigure(2, weight=0)
+            self.text_frame.remove(self.all_tags_frame)
 
 
     def toggle_mytags_controls(self):
