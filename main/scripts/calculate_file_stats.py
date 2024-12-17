@@ -32,17 +32,28 @@ class CalculateFileStats:
         self.sorted_captions = []
 
 
-    def calculate_file_stats(self, manual_refresh=None):
-        """Calculate and display file statistics."""
+    def calculate_file_stats(self, manual_refresh=None, text_only=False, image_only=False):
+        """Calculate and display file statistics.
+
+        Args:
+            manual_refresh: If True, display a message box after refreshing
+            text_only: If True, only refresh text statistics
+            image_only: If True, only refresh image statistics
+        """
+        if text_only and image_only:
+            raise ValueError("Cannot set both text_only and image_only to True")
         self.initialize_counters()
         num_total_files, num_txt_files, num_img_files, formatted_total_files = self.filter_and_update_textfiles(initial_call=True)
-        # Process text and image files to calculate statistics
-        self.process_text_files()
-        if self.parent.process_image_stats_var.get():
+        # Process files based on flags
+        if not image_only:
+            self.process_text_files()
+        if (self.parent.process_image_stats_var.get() and not text_only) or image_only:
             self.process_image_files()
         # Format statistics into a text string
         stats_text = self.compile_file_statistics(formatted_total_files)
         self.update_tab8_textbox(stats_text, manual_refresh)
+        if self.sorted_captions:
+            self.parent.text_controller.refresh_all_tags_listbox(tags=self.sorted_captions)
 
 
     def initialize_counters(self):

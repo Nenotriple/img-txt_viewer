@@ -15,7 +15,7 @@ import time
 from tkinter import (
     ttk, Toplevel, messagebox,
     StringVar, BooleanVar,
-    Frame, Menu, Scrollbar, scrolledtext,
+    Frame, Menu, Scrollbar, scrolledtext, PanedWindow,
     Label, Listbox,
     font, TclError
 )
@@ -45,6 +45,11 @@ class TextController:
         self.batch_interrogate_images_var = BooleanVar(value=False)
         self.auto_exclude_tags_var = BooleanVar(value=False)
         self.filter_is_active = False
+
+        # MyTags
+        self.show_all_tags_var = BooleanVar(value=True)
+        self.hide_mytags_controls_var = BooleanVar(value=False)
+        self.hide_alltags_controls_var = BooleanVar(value=False)
 
 
 #endregion
@@ -317,20 +322,20 @@ class TextController:
         batch_interrogate_checkbutton = ttk.Checkbutton(top_frame, text="Batch", takefocus=False, variable=self.batch_interrogate_images_var)
         batch_interrogate_checkbutton.pack(side='right')
         ToolTip.create(batch_interrogate_checkbutton, "Interrogate all images\nAn Auto-Insert mode must be selected", 200, 6, 12)
-        # Main Frame
-        widget_frame = Frame(self.parent.tab4)
-        widget_frame.pack(fill='both', expand=True)
+
+        # Main Paned Window
+        paned_window = PanedWindow(self.parent.tab4, orient='horizontal', sashwidth=6, bg="#d0d0d0")
+        paned_window.pack(fill='both', expand=True)
+
         # Listbox Frame
-        listbox_frame = Frame(widget_frame)
-        listbox_frame.pack(side='left', fill='both', expand=True)
+        listbox_frame = Frame(paned_window)
+        paned_window.add(listbox_frame, stretch="never")
+        paned_window.paneconfig(listbox_frame, width=200, minsize=40)
         listbox_y_scrollbar = Scrollbar(listbox_frame, orient="vertical")
-        listbox_x_scrollbar = Scrollbar(listbox_frame, orient="horizontal")
-        self.auto_tag_listbox = Listbox(listbox_frame, width=20, selectmode="extended", exportselection=False, yscrollcommand=listbox_y_scrollbar.set, xscrollcommand=listbox_x_scrollbar.set)
+        self.auto_tag_listbox = Listbox(listbox_frame, width=20, selectmode="extended", exportselection=False, yscrollcommand=listbox_y_scrollbar.set)
         self.auto_tag_listbox.bind('<<ListboxSelect>>', lambda event: self.update_auto_tag_stats_label())
         self.auto_tag_listbox.bind("<Button-3>", lambda event: listbox_context_menu.tk_popup(event.x_root, event.y_root))
         listbox_y_scrollbar.config(command=self.auto_tag_listbox.yview)
-        listbox_x_scrollbar.config(command=self.auto_tag_listbox.xview)
-        listbox_x_scrollbar.pack(side='bottom', fill='x')
         self.auto_tag_listbox.pack(side='left', fill='both', expand=True)
         listbox_y_scrollbar.pack(side='left', fill='y')
         # Listbox - Context Menu
@@ -345,8 +350,9 @@ class TextController:
         listbox_context_menu.add_command(label="Selection: Clear", command=clear_selection)
         listbox_context_menu.add_command(label="Selection: Add to MyTags", command=lambda: self.parent.add_to_custom_dictionary(origin="auto_tag"))
         # Control Frame
-        control_frame = Frame(widget_frame)
-        control_frame.pack(side='left', fill='both', expand=True)
+        control_frame = Frame(paned_window)
+        paned_window.add(control_frame, stretch="always")
+        paned_window.paneconfig(control_frame, minsize=200)
         # Model Selection
         model_selection_frame = Frame(control_frame)
         model_selection_frame.pack(side='top', fill='x', padx=2, pady=2)
@@ -403,7 +409,7 @@ class TextController:
         excluded_tags_label = Label(excluded_entry_frame, text="Exclude:", width=9, anchor="w")
         excluded_tags_label.pack(side='left')
         ToolTip.create(excluded_tags_label, "Enter tags that will be excluded from interrogation\nSeparate tags with commas", 200, 6, 12)
-        self.excluded_tags_entry = ttk.Entry(excluded_entry_frame, width=25)
+        self.excluded_tags_entry = ttk.Entry(excluded_entry_frame, width=5)
         self.excluded_tags_entry.pack(side='left', fill='both', expand=True)
         self.bind_entry_functions(self.excluded_tags_entry)
         auto_exclude_tags_checkbutton = ttk.Checkbutton(excluded_entry_frame, text="Auto", takefocus=False, variable=self.auto_exclude_tags_var)
@@ -925,16 +931,18 @@ class TextController:
                 size = int(size)
                 self.parent.text_box.config(font=(font, size))
                 self.font_size_label.config(text=f"Size: {size}")
+                font_box_tooltip.config(text=f"{font}")
         def reset_to_defaults():
-            self.parent.font_var.set(self.default_font)
-            self.size_scale.set(self.default_font_size)
-            set_font_and_size(self.default_font, self.default_font_size)
+            self.parent.font_var.set(self.parent.default_font)
+            self.size_scale.set(self.parent.default_font_size)
+            set_font_and_size(self.parent.default_font, self.parent.default_font_size)
         font_label = Label(self.parent.tab7, width=8, text="Font:")
         font_label.pack(side="left", anchor="n", pady=4)
         ToolTip.create(font_label, "Recommended Fonts: Courier New, Ariel, Consolas, Segoe UI", 200, 6, 12)
         font_box = ttk.Combobox(self.parent.tab7, textvariable=self.parent.font_var, width=4, takefocus=False, state="readonly", values=list(font.families()))
         font_box.set(self.parent.current_font_name)
         font_box.bind("<<ComboboxSelected>>", lambda event: set_font_and_size(self.parent.font_var.get(), self.size_scale.get()))
+        font_box_tooltip = ToolTip.create(font_box, f"{self.parent.current_font_name}", 200, 6, 12)
         font_box.pack(side="left", anchor="n", pady=4, fill="x", expand=True)
         self.font_size_label = Label(self.parent.tab7, text=f"Size: {self.parent.font_size_var.get()}", width=14)
         self.font_size_label.pack(side="left", anchor="n", pady=4)
@@ -978,34 +986,39 @@ class TextController:
         def remove_tag():
             listbox = self.custom_dictionary_listbox
             selected_indices = listbox.curselection()
+            if not selected_indices:
+                return
             for index in reversed(selected_indices):
                 listbox.delete(index)
         # EDIT
         def edit_tag():
             listbox = self.custom_dictionary_listbox
             selected_indices = listbox.curselection()
-            if selected_indices:
-                index = selected_indices[0]
-                tag = listbox.get(index)
-                tag_entry.delete(0, 'end')
-                tag_entry.insert(0, tag)
-                listbox.delete(index)
+            if not selected_indices:
+                return
+            index = selected_indices[0]
+            tag = listbox.get(index)
+            tag_entry.delete(0, 'end')
+            tag_entry.insert(0, tag)
+            listbox.delete(index)
         # INSERT
-        def insert_tag(position='end'):
-            listbox = self.custom_dictionary_listbox
+        def insert_tag(listbox, position='start'):
             selected_indices = listbox.curselection()
+            if not selected_indices:
+                return
             for index in selected_indices:
                 tag = listbox.get(index)
                 current_text = self.parent.text_box.get('1.0', 'end-1c')
                 separator = ', ' if current_text else ''
                 if position == 'start':
                     self.parent.text_box.insert('1.0', f"{tag}{separator}")
-                else:  # position == 'end'
+                else:  # 'end'
                     self.parent.text_box.insert('end', f"{separator}{tag}")
         # MOVE
-        def move(direction):
-            listbox = self.custom_dictionary_listbox
+        def move(listbox, direction):
             selected_indices = listbox.curselection()
+            if not selected_indices:
+                return
             delta = -1 if direction == 'up' else 1
             for index in (selected_indices if direction == 'up' else reversed(selected_indices)):
                 new_index = index + delta
@@ -1014,9 +1027,19 @@ class TextController:
                     listbox.delete(index)
                     listbox.insert(new_index, tag)
                     listbox.selection_set(new_index)
+        # ADD TO MYTAGS
+        def add_to_mytags():
+            selected_indices = self.all_tags_listbox.curselection()
+            if not selected_indices:
+                return
+            existing_tags = set(self.custom_dictionary_listbox.get(0, 'end'))
+            for index in selected_indices:
+                tag = self.all_tags_listbox.get(index)
+                if tag not in existing_tags:
+                    self.custom_dictionary_listbox.insert('end', tag)
         # CONTEXT MENU
         def show_context_menu(event):
-            listbox = self.custom_dictionary_listbox
+            listbox = event.widget
             index = listbox.nearest(event.y)
             if not listbox.curselection():
                 listbox.selection_clear(0, 'end')
@@ -1024,63 +1047,190 @@ class TextController:
             elif index not in listbox.curselection():
                 listbox.selection_clear(0, 'end')
                 listbox.selection_set(index)
+            # ALL
+            def select_all():
+                listbox.selection_set(0, 'end')
+            # INVERT
+            def invert_selection():
+                current = set(listbox.curselection())
+                all_indices = set(range(listbox.size()))
+                inverted = all_indices - current
+                listbox.selection_clear(0, 'end')
+                for i in inverted:
+                    listbox.selection_set(i)
+            # MENU
             if listbox.curselection():
                 menu = Menu(listbox, tearoff=0)
-                menu.add_command(label="Prefix", command=lambda: insert_tag('start'))
-                menu.add_command(label="Append", command=lambda: insert_tag('end'))
+                if listbox == self.custom_dictionary_listbox:
+                    menu.add_command(label="Prefix", command=lambda: insert_tag(listbox, 'start'))
+                    menu.add_command(label="Append", command=lambda: insert_tag(listbox, 'end'))
+                    menu.add_separator()
+                    menu.add_command(label="Edit", command=edit_tag)
+                    menu.add_command(label="Remove", command=remove_tag)
+                    menu.add_separator()
+                    menu.add_command(label="Move Up", command=lambda: move(listbox, 'up'))
+                    menu.add_command(label="Move Down", command=lambda: move(listbox, 'down'))
+                else:
+                    menu.add_command(label="Prefix", command=lambda: insert_tag(listbox, 'start'))
+                    menu.add_command(label="Append", command=lambda: insert_tag(listbox, 'end'))
+                    menu.add_separator()
+                    menu.add_command(label="Add to MyTags", command=add_to_mytags)
+                    menu.add_separator()
+                    menu.add_command(label="Refresh", command=self.refresh_all_tags_listbox)
                 menu.add_separator()
-                menu.add_command(label="Edit", command=edit_tag)
-                menu.add_command(label="Remove", command=remove_tag)
-                menu.add_separator()
-                menu.add_command(label="Move Up", command=lambda: move('up'))
-                menu.add_command(label="Move Down", command=lambda: move('down'))
+                menu.add_command(label="Selection: All", command=select_all)
+                menu.add_command(label="Selection: Invert", command=invert_selection)
                 menu.tk_popup(event.x_root, event.y_root)
         # INTERFACE
         self.parent.create_custom_dictionary(refresh=False)
         tab_frame = Frame(self.parent.tab8)
         tab_frame.pack(side='top', fill='both', expand=True)
-        # Top Row
+        tab_frame.grid_rowconfigure(1, weight=1)
+        tab_frame.grid_columnconfigure(0, weight=1)
+        # Top Row - Row 0
         top_frame = Frame(tab_frame)
-        top_frame.pack(side='top', fill='x', pady=4)
-        info_label = Label(top_frame, text="Manage your custom tags:")
-        info_label.pack(side='left')
-        save_button = ttk.Button(top_frame, text="Save Tags", takefocus=False, command=save)
-        save_button.pack(side='right')
-        use_mytags_checkbutton = ttk.Checkbutton(top_frame, text="Use MyTags", variable=self.parent.use_mytags_var, takefocus=False, command=self.parent.refresh_custom_dictionary)
-        use_mytags_checkbutton.pack(side='right', fill='x')
-        # Middle Row
-        text_frame = Frame(tab_frame)
-        text_frame.pack(side='top', fill='both', expand=True)
-        self.custom_dictionary_listbox = Listbox(text_frame, selectmode='extended', height=1)
-        self.custom_dictionary_listbox.pack(side='left', fill='both', expand=True)
-        self.custom_dictionary_listbox.bind("<Button-3>", show_context_menu)
-        # Sidebar
-        listbox_button_frame = Frame(text_frame)
-        listbox_button_frame.pack(side='left', fill='both')
-        prefix_button = ttk.Button(listbox_button_frame, text="Prefix", command=lambda: insert_tag('start'))
-        prefix_button.grid(row=0, column=0)
-        append_button = ttk.Button(listbox_button_frame, text="Append", command=insert_tag)
-        append_button.grid(row=0, column=1)
-        ttk.Separator(listbox_button_frame, orient='horizontal').grid(row=1, column=0, columnspan=2, sticky='ew', pady=4)
-        edit_button = ttk.Button(listbox_button_frame, text="Edit", command=edit_tag)
-        edit_button.grid(row=2, column=0)
-        remove_button = ttk.Button(listbox_button_frame, text="Remove", command=remove_tag)
-        remove_button.grid(row=2, column=1)
-        ttk.Separator(listbox_button_frame, orient='horizontal').grid(row=3, column=0, columnspan=2, sticky='ew', pady=4)
-        move_up_button = ttk.Button(listbox_button_frame, text="Move Up", command=lambda: move('up'))
-        move_up_button.grid(row=4, column=0)
-        move_down_button = ttk.Button(listbox_button_frame, text="Move Down", command=lambda: move('down'))
-        move_down_button.grid(row=4, column=1)
-        # Bottom Row
-        entry_frame = Frame(tab_frame)
-        entry_frame.pack(side='top', fill='x', pady=4)
+        top_frame.grid(row=0, column=0, sticky='ew')
+        help_button = ttk.Button(top_frame, text="?", takefocus=False, width=2, command=self.show_my_tags_help)
+        help_button.pack(side='left')
+        options_menu = ttk.Menubutton(top_frame, text="Options", takefocus=False)
+        options_menu.pack(side='left')
+        options_menu.menu = Menu(options_menu, tearoff=0)
+        options_menu["menu"] = options_menu.menu
+        options_menu.menu.add_checkbutton(label="Use: MyTags", variable=self.parent.use_mytags_var, command=self.parent.refresh_custom_dictionary)
+        options_menu.menu.add_checkbutton(label="Show: All Tags", variable=self.show_all_tags_var, command=self.toggle_all_tags_listbox)
+        options_menu.menu.add_separator()
+        options_menu.menu.add_command(label="Refresh: My Tags", command=load_tag_file)
+        options_menu.menu.add_command(label="Refresh: All Tags", command=self.refresh_all_tags_listbox)
+        options_menu.menu.add_separator()
+        options_menu.menu.add_checkbutton(label="Hide: My Tags - Controls", variable=self.hide_mytags_controls_var, command=self.toggle_mytags_controls)
+        options_menu.menu.add_checkbutton(label="Hide: All Tags - Controls", variable=self.hide_alltags_controls_var, command=self.toggle_alltags_controls)
+        options_menu.menu.add_separator()
+        options_menu.menu.add_command(label="Open MyTags File...", command=lambda: self.parent.open_textfile(self.parent.my_tags_csv))
+        # entry_frame
+        entry_frame = Frame(top_frame)
+        entry_frame.pack(side='left', fill='x', expand=True, pady=4)
         tag_entry = ttk.Entry(entry_frame)
         tag_entry.pack(side='left', fill='x', expand=True)
         tag_entry.bind('<Return>', lambda event: add_tag())
         add_button = ttk.Button(entry_frame, text="Add", command=add_tag)
         add_button.pack(side='left')
+        save_button = ttk.Button(top_frame, text="Save Tags", takefocus=False, command=save)
+        save_button.pack(side='right')
+        # Middle Row
+        self.text_frame = ttk.PanedWindow(tab_frame, orient='horizontal')
+        self.text_frame.grid(row=1, column=0, sticky='nsew')
+        # My Tags section
+        my_tags_frame = Frame(self.text_frame)
+        header_frame = Frame(my_tags_frame)
+        header_frame.grid(row=0, column=0, sticky='ew', padx=2, pady=(2,0))
+        my_tags_label = ttk.Label(header_frame, text="My Tags:")
+        my_tags_label.pack(side='left', padx=(0,5))
+        self.custom_dictionary_listbox = Listbox(my_tags_frame, selectmode='extended')
+        self.custom_dictionary_listbox.grid(row=1, column=0, sticky='nsew')
+        my_tags_frame.grid_rowconfigure(1, weight=1)
+        my_tags_frame.grid_columnconfigure(0, weight=1)
+        self.custom_dictionary_listbox.bind("<Button-3>", show_context_menu)
+        self.custom_dictionary_listbox.bind("<Double-Button-1>", lambda event: insert_tag(self.custom_dictionary_listbox, 'end'))
+        # Buttons
+        self.my_tags_button_frame = Frame(my_tags_frame)
+        self.my_tags_button_frame.grid(row=2, column=0, sticky='ew', pady=(2,0))
+        self.my_tags_button_frame.grid_columnconfigure(0, weight=1)
+        self.my_tags_button_frame.grid_columnconfigure(1, weight=1)
+        prefix_button = ttk.Button(self.my_tags_button_frame, text="Prefix", command=lambda: insert_tag(self.custom_dictionary_listbox, 'start'))
+        prefix_button.grid(row=0, column=0, sticky='ew', padx=2)
+        append_button = ttk.Button(self.my_tags_button_frame, text="Append", command=lambda: insert_tag(self.custom_dictionary_listbox, 'end'))
+        append_button.grid(row=0, column=1, sticky='ew', padx=2)
+        edit_button = ttk.Button(self.my_tags_button_frame, text="Edit", command=edit_tag)
+        edit_button.grid(row=2, column=0, sticky='ew', padx=2)
+        remove_button = ttk.Button(self.my_tags_button_frame, text="Remove", command=remove_tag)
+        remove_button.grid(row=2, column=1, sticky='ew', padx=2)
+        move_up_button = ttk.Button(self.my_tags_button_frame, text="Move Up", command=lambda: move(self.custom_dictionary_listbox, 'up'))
+        move_up_button.grid(row=4, column=0, sticky='ew', padx=2)
+        move_down_button = ttk.Button(self.my_tags_button_frame, text="Move Down", command=lambda: move(self.custom_dictionary_listbox, 'down'))
+        move_down_button.grid(row=4, column=1, sticky='ew', padx=2)
+        # All Tags section
+        self.all_tags_frame = Frame(self.text_frame)
+        self.all_tags_frame.grid_rowconfigure(1, weight=1)
+        self.all_tags_frame.grid_columnconfigure(0, weight=1)
+        all_tags_label = ttk.Label(self.all_tags_frame, text="All Tags")
+        all_tags_label.grid(row=0, column=0, sticky='w', padx=2, pady=(2,0))
+        self.all_tags_listbox = Listbox(self.all_tags_frame, selectmode='extended')
+        self.all_tags_listbox.grid(row=1, column=0, columnspan=2, sticky='nsew')
+        self.all_tags_listbox.bind("<Button-3>", show_context_menu)
+        self.all_tags_listbox.bind("<Double-Button-1>", lambda event: insert_tag(self.all_tags_listbox, 'end'))
+        # Add frames to PanedWindow
+        self.text_frame.add(my_tags_frame, weight=1)
+        self.text_frame.add(self.all_tags_frame, weight=1)
+        # Buttons
+        self.all_tags_button_frame = Frame(self.all_tags_frame)
+        self.all_tags_button_frame.grid(row=2, column=0, sticky='ew', pady=(2,0))
+        self.all_tags_button_frame.grid_columnconfigure(0, weight=1)
+        self.all_tags_button_frame.grid_columnconfigure(1, weight=0)
+        self.all_tags_button_frame.grid_columnconfigure(2, weight=1)
+        prefix_button = ttk.Button(self.all_tags_button_frame, text="Prefix", command=lambda: insert_tag(self.all_tags_listbox, 'start'))
+        prefix_button.grid(row=0, column=0, sticky='ew', padx=2)
+        add_button = ttk.Button(self.all_tags_button_frame, text="<", command=add_to_mytags, width=2)
+        add_button.grid(row=0, column=1)
+        ToolTip.create(add_button, "Add selected tags to 'My Tags'", 200, 6, 12)
+        append_button = ttk.Button(self.all_tags_button_frame, text="Append", command=lambda: insert_tag(self.all_tags_listbox, 'end'))
+        append_button.grid(row=0, column=2, sticky='ew', padx=2)
         load_tag_file()
         self.parent.refresh_custom_dictionary()
+
+
+    def refresh_all_tags_listbox(self, tags=None):
+        listbox = self.all_tags_listbox
+        if not tags:
+            self.parent.stat_calculator.calculate_file_stats()
+            tags = self.parent.stat_calculator.sorted_captions
+        listbox.delete(0, 'end')
+        for tag, count in tags:
+            listbox.insert('end', tag)
+
+
+    def toggle_all_tags_listbox(self):
+        if self.show_all_tags_var.get():
+            self.all_tags_frame.grid(row=0, column=2, sticky='nsew')
+            self.text_frame.add(self.all_tags_frame, weight=1)
+        else:
+            self.text_frame.remove(self.all_tags_frame)
+
+
+    def toggle_mytags_controls(self):
+        if self.hide_mytags_controls_var.get():
+            self.my_tags_button_frame.grid_remove()
+        else:
+            self.my_tags_button_frame.grid(row=2, column=0, sticky='ew', pady=(2,0))
+
+
+    def toggle_alltags_controls(self):
+        if self.hide_alltags_controls_var.get():
+            self.all_tags_button_frame.grid_remove()
+        else:
+            self.all_tags_button_frame.grid(row=2, column=0, sticky='ew', pady=(2,0))
+
+
+    def show_my_tags_help(self):
+        messagebox.showinfo("Help",
+            "MyTags:\n"
+            "A list of custom tags/keywords that will be used for autocomplete suggestions or for quick insertion into the text box.\n\n"
+            "Basic Operations:\n"
+            "• Add tags: Type + Enter, right-click text, or use All Tags list\n"
+            "• Insert tags: Select and use Prefix/Append buttons or right-click menu\n"
+            "• Double-click any tag to instantly insert it (append)\n\n"
+            "Tag Management:\n"
+            "• Edit/Remove selected tags\n"
+            "• Reorder with Move Up/Down (affects autocomplete priority)\n"
+            "• Save changes to file (required to apply changes)\n\n"
+            "Features:\n"
+            "• Use MyTags: Toggle autocomplete suggestions\n"
+            "• Show All Tags: View tags from all text files\n"
+            "• Refresh: Update My Tags or All Tags lists\n"
+            "• Hide Controls: Toggle visibility of control buttons\n"
+            "• Open my_tags.csv: Edit tags directly in text editor\n\n"
+            "Note: Tags are stored in 'my_tags.csv'\n"
+            "Use 'Batch Tag Edit' tool to modify All Tags"
+        )
 
 
 #endregion
@@ -1093,8 +1243,8 @@ class TextController:
         tab_frame.pack(fill='both', expand=True)
         button_frame = Frame(tab_frame)
         button_frame.pack(side='top', fill='x', pady=4)
-        info_label = Label(button_frame, text="^^^Expand this frame^^^")
-        info_label.pack(side='left')
+        self.info_label = Label(button_frame, text="Characters: 0  |  Words: 0")
+        self.info_label.pack(side='left')
         refresh_button = ttk.Button(button_frame, width=10, text="Refresh", takefocus=False, command=lambda: self.parent.stat_calculator.calculate_file_stats(manual_refresh=True))
         refresh_button.pack(side='right')
         ToolTip.create(refresh_button, "Refresh the file stats", 200, 6, 12)

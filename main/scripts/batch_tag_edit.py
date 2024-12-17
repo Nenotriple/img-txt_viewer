@@ -232,11 +232,6 @@ class BatchTagEdit:
         self.edit_label.grid(row=0, column=0, padx=2)
         ToolTip.create(self.edit_label, "Select an option and enter text to apply to the selected tags", 250, 6, 12, justify="left")
 
-        self.edit_combobox = ttk.Combobox(self.edit_frame, values=["Replace", "Delete"], state="readonly", width=12)
-        self.edit_combobox.set("Replace")
-        self.edit_combobox.grid(row=0, column=1, padx=2, sticky="e")
-        self.edit_combobox.bind("<<ComboboxSelected>>", self.toggle_edit_entry_state)
-
         self.edit_entry = ttk.Entry(self.edit_frame, width=20)
         self.edit_entry.grid(row=0, column=2, padx=2, sticky="ew")
         self.edit_entry.bind("<Return>", self.apply_commands_to_listbox)
@@ -249,6 +244,10 @@ class BatchTagEdit:
         self.edit_reset_button = ttk.Button(self.edit_frame, text="Reset", width=6, command=self.clear_filter)
         self.edit_reset_button.grid(row=0, column=4, padx=2, sticky="e")
         ToolTip.create(self.edit_reset_button, "Clear any filters or pending changes", 250, 6, 12)
+
+        self.delete_button = ttk.Button(self.edit_frame, text="Delete", width=6, command=lambda: self.apply_commands_to_listbox(delete=True))
+        self.delete_button.grid(row=1, column=0, padx=2, sticky="e")
+        ToolTip.create(self.delete_button, "Delete the selected tags", 250, 6, 12)
 
 
     def setup_help_frame(self):
@@ -354,7 +353,7 @@ class BatchTagEdit:
             if current_text.startswith("DELETE :") or current_text.startswith("EDIT :"):
                 # Strip away "DELETE :" or "EDIT :" to get the original item
                 item = current_text.split(":", 1)[1].strip().split(">", 1)[0].strip()
-            if delete:  # If the delete, add delete command
+            if delete:  # If delete, add delete command
                 self.listbox.delete(i)
                 self.listbox.insert(i, f"DELETE : {item}")
                 self.listbox.itemconfig(i, {'fg': 'red'})
@@ -504,13 +503,6 @@ class BatchTagEdit:
                 return
         self.filter_entry.delete(0, "end")
         self.refresh_counts()
-
-
-    def toggle_edit_entry_state(self, event=None):
-        if self.edit_combobox.get() == "Delete":
-            self.edit_entry.config(state="disabled")
-        else:
-            self.edit_entry.config(state="normal")
 
 
     def toggle_info_message(self):

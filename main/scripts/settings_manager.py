@@ -1,4 +1,9 @@
-"""This module contains the SettingsManager class, which is responsible for saving and loading user settings."""
+"""
+
+Manages saving and loading user settings, overwriting defaults with user preferences.
+Default settings should be set in both the main application and the SettingsManager.
+
+"""
 
 
 #endregion
@@ -303,7 +308,7 @@ class SettingsManager:
         # Extra panels
         self.parent.thumbnails_visible.set(value=True)
         self.parent.thumbnail_width.set(value=50)
-        self.parent.update_thumbnail_panel()
+        self.parent.debounce_update_thumbnail_panel()
         self.parent.edit_panel_visible_var.set(value=False)
         self.parent.edit_panel.toggle_edit_panel()
         # Title
