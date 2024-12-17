@@ -3,9 +3,9 @@
 Notes, code reference, ideas, etc.
 
 
+
+
 <!--###########################################################################-->
-
-
 ## Window Size on Resize
 
 Prints Tkinter window dimensions on resize:
@@ -17,9 +17,9 @@ root.bind("<Configure>", lambda event: print(f"Window size (W,H): {event.width},
 Example Output: `Window size (W,H): 800,600`
 
 
+
+
 <!--###########################################################################-->
-
-
 ## Widget Size on Resize
 
 Prints Tkinter widget dimensions on resize:
@@ -31,9 +31,9 @@ widget.bind("<Configure>", lambda event: print(f"Widget size (W,H): {event.width
 Example Output: `Widget size (W,H): 200,150`
 
 
+
+
 <!--###########################################################################-->
-
-
 ## Caller Function Name
 
 Prints the name of the function that called the current function:
@@ -52,9 +52,9 @@ def function_b():
 Example Output: `Called by function: function_a`
 
 
+
+
 <!--###########################################################################-->
-
-
 ## Timing a Function
 
 Measures the execution time of a function.
@@ -74,15 +74,47 @@ def my_function():
 Example Output: `Elapsed time: 0.50 seconds`
 
 
+
+
 <!--###########################################################################-->
+## Tkinter error message with option to copy error to clipboard
+
+Present the user with an error message using `messagebox.askokcancel()`.
+
+Use `traceback.format_exc()` to get the full error message.
+
+If the user clicks `OK`, copy the error to the clipboard.
+
+```python
+import traceback
+from tkinter import messagebox
+
+def my_function():
+  # ...Some code...
+  except Exception as e:
+      error_message = traceback.format_exc()
+      if messagebox.askokcancel("Error", f"An error occurred:\n\n{error_message}\n\nPress OK to copy the error message to the clipboard."):
+          # Clear the clipboard
+          root.clipboard_clear()
+          # Copy to the clipboard
+          root.clipboard_append(error_message)
+          # Update the clipboard
+          root.update()
+```
+
+In this example, the full error message is displayed, but you could show the exception using `e` instead of `error_message` to display a more concise error message.
 
 
 
+<!--###########################################################################-->
 # ImgTxtViewer - Ideas
 
 ## General:
 - Organize the various alt-UIs into a tabbed tkinter Notebook widget.
 - File list selector.
+
+
+
 
 <!-- Tools / Features --#########################################################################-->
 ## New Tool - Group img-txt Pairs
@@ -109,6 +141,8 @@ Consolidate similar tags based on the following rules: `If a tag is a substring 
   - Concise: Combine into the shortest possible tag.
     - Example 1: `["hair", "long hair", "black hair"]` → `hair`
     - Example 2: `["shirt", "black shirt", "t-shirt"]` → `shirt`
+
+
 
 
 <!-- Notebook Tabs --############################################################################-->
