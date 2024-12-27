@@ -1626,28 +1626,47 @@ class CropInterface:
 
 
     def after_crop_option(self, cropped_img):
-        after_crop_option = self.after_crop_var.get()
-        if after_crop_option == "Save & Close":
-            save_path = self.generate_unique_filename(self.img_canvas.img_path)
-            cropped_img.save(save_path)
-            self.close_crop_ui()
-        elif after_crop_option == "Save & Next":
-            save_path = self.generate_unique_filename(self.img_canvas.img_path)
-            cropped_img.save(save_path)
-            self.show_next_image()
-        elif after_crop_option == "Save As...":
-            save_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG files", "*.png"), ("All files", "*.*")])
-            if save_path:
-                cropped_img.save(save_path)
-        elif after_crop_option == "Save":
-            save_path = self.generate_unique_filename(self.img_canvas.img_path)
-            cropped_img.save(save_path)
-        elif after_crop_option == "Overwrite":
-            confirm = messagebox.askyesno("Confirm Overwrite", "Are you sure you want to overwrite the original image?")
-            if confirm:
-                cropped_img.save(self.img_canvas.img_path)
-                self.img_canvas._display_image(self.img_canvas.img_path)
+        option = self.after_crop_var.get()
+        path = self.img_canvas.img_path
+        if option == "Save & Close":
+            if self.save_cropped_image(cropped_img, 'normal', path):
+                self.close_crop_ui()
+        elif option == "Save & Next":
+            if self.save_cropped_image(cropped_img, 'normal', path):
+                self.show_next_image()
+        elif option == "Save As...":
+            self.save_cropped_image(cropped_img, 'save_as')
+        elif option == "Save":
+            self.save_cropped_image(cropped_img, 'normal', path)
+        elif option == "Overwrite":
+            self.save_cropped_image(cropped_img, 'overwrite', path)
+
+
+    def save_cropped_image(self, cropped_img, save_mode, original_path=None):
+        try:
+            if save_mode == 'normal':
+                save_path = self.generate_unique_filename(original_path)
+            elif save_mode == 'save_as':
+                save_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG files", "*.png"), ("All files", "*.*")])
+                if not save_path:
+                    return False
+            elif save_mode == 'overwrite':
+                confirm = messagebox.askyesno("Confirm Overwrite", "Are you sure you want to overwrite the original image?")
+                if not confirm:
+                    return False
+                save_path = original_path
+            ext = os.path.splitext(save_path)[1].lower()
+            save_args = {}
+            if ext in ['.jpg', '.jpeg', '.webp']:
+                save_args['quality'] = 100
+            cropped_img.save(save_path, **save_args)
+            if save_mode == 'overwrite':
+                self.img_canvas._display_image(save_path)
                 self.crop_selection.clear_selection()
+            return True
+        except Exception as e:
+            messagebox.showerror("Save Error", f"Failed to save image: {str(e)}")
+            return False
 
 
     def generate_unique_filename(self, original_path):
