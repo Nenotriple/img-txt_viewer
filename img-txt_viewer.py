@@ -315,7 +315,7 @@ class ImgTxtViewer:
         self.options_subMenu.add_checkbutton(label="List View", underline=0, variable=self.list_mode_var, command=self.toggle_list_mode)
         self.options_subMenu.add_separator()
         self.options_subMenu.add_checkbutton(label="Always On Top", underline=0, variable=self.always_on_top_var, command=self.set_always_on_top)
-        self.options_subMenu.add_checkbutton(label="Toggle Zoom", accelerator="F1", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
+        self.options_subMenu.add_checkbutton(label="Toggle Zoom", accelerator="F2", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
         self.options_subMenu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.debounce_update_thumbnail_panel)
         self.options_subMenu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
         self.options_subMenu.add_checkbutton(label="Vertical View", underline=0, variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
@@ -862,7 +862,7 @@ class ImgTxtViewer:
         self.image_context_menu.add_separator()
         # Misc
         self.image_context_menu.add_checkbutton(label="Toggle Image-Grid", accelerator="F1", variable=self.is_image_grid_visible_var, command=self.toggle_image_grid)
-        self.image_context_menu.add_checkbutton(label="Toggle Zoom", accelerator="F1", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
+        self.image_context_menu.add_checkbutton(label="Toggle Zoom", accelerator="F2", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
         self.image_context_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.debounce_update_thumbnail_panel)
         self.image_context_menu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
         self.image_context_menu.add_checkbutton(label="Vertical View", underline=0, variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
@@ -1673,6 +1673,8 @@ class ImgTxtViewer:
             self.highlight_all_duplicates_var.set(False)
             self.debounce_update_thumbnail_panel()
             self.get_text_summary()
+            if self.is_image_grid_visible_var.get():
+                self.image_grid.highlight_thumbnail(self.current_index)
         else:
             self.primary_display_image.unbind("<Configure>")
 
@@ -1756,8 +1758,6 @@ class ImgTxtViewer:
                 self.show_pair()
             self.image_index_entry.delete(0, "end")
             self.image_index_entry.insert(0, f"{self.current_index + 1}")
-            if self.is_image_grid_visible_var.get():
-                self.image_grid.highlight_thumbnail(self.current_index)
 
 
     def next_pair(self, event=None, step=1):
@@ -1794,8 +1794,6 @@ class ImgTxtViewer:
                 pass
             self.image_index_entry.delete(0, "end")
             self.image_index_entry.insert(0, index + 1)
-            if self.is_image_grid_visible_var.get():
-                self.image_grid.highlight_thumbnail(self.current_index)
         except ValueError:
             self.image_index_entry.delete(0, "end")
             self.image_index_entry.insert(0, self.current_index + 1)
@@ -2849,12 +2847,7 @@ class ImgTxtViewer:
                             del file_list[index]
                     self.deleted_pairs.append(deleted_pair)
                     self.update_total_image_label()
-                    if index >= len(self.image_files):
-                        index = len(self.image_files) - 1
-                    if index >= 1:
-                        self.update_pair(direction="prev", save=False)
-                    else:
-                        self.show_pair()
+                    self.show_pair()
                     self.undo_state.set("normal")
                     self.individual_operations_menu.entryconfig("Undo Delete", state="normal")
                 else:
@@ -2873,12 +2866,7 @@ class ImgTxtViewer:
                             del file_list[index]
                     self.deleted_pairs = [pair for pair in self.deleted_pairs if pair != deleted_pair]
                     self.update_total_image_label()
-                    if index >= len(self.image_files):
-                        index = len(self.image_files) - 1
-                    if index >= 1:
-                        self.update_pair(direction="prev", save=False)
-                    else:
-                        self.show_pair()
+                    self.show_pair()
                 else:
                     pass
         except (PermissionError, IOError, TclError) as e:
