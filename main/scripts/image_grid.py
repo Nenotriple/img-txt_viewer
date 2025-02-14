@@ -582,9 +582,14 @@ class ImageGrid(ttk.Frame):
 
 
     def configure_scroll_region(self):
-        scroll_index = self.loaded_images / self.cols * 1.2
-        scrollregion_height = scroll_index * self.max_height
+        total_filtered_images = len(self.thumbnail_buttons)
+        total_rows = (total_filtered_images + self.cols - 1) // self.cols
+        cell_height = self.max_height + (2 * self.padding)
+        base_height = total_rows * cell_height
+        extra_height = cell_height if (self.loaded_images < self.num_total_images) else 0
+        scrollregion_height = base_height + extra_height
         self.canvas_thumbnails.config(scrollregion=(0, 0, 750, scrollregion_height))
+        self.canvas_thumbnails.yview_moveto(0)
 
 
     def add_load_more_button(self):
