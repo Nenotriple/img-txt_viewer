@@ -38,6 +38,7 @@ class OnnxTagger:
         self.last_model_path = None
         self.last_exclude_tags = None
         self.last_keep_underscore = None
+        self.last_csv_model_path = None
 
         # Tagging thresholds
         self.general_threshold = 0.35
@@ -82,7 +83,7 @@ class OnnxTagger:
 
 
     def _read_csv_tags(self):
-        if (self.model_path != self.last_model_path or self.exclude_tags != self.last_exclude_tags):
+        if (self.model_path != self.last_csv_model_path or self.exclude_tags != self.last_exclude_tags or self.keep_underscore.get() != self.last_keep_underscore):
             self.model_tags.clear()
             csv_path = os.path.join(os.path.dirname(self.model_path), "selected_tags.csv")
             with open(csv_path, newline='', encoding='utf-8') as file:
@@ -98,6 +99,7 @@ class OnnxTagger:
             self.exclude_tags_set = set(tag.lower() for tag in self.exclude_tags)
             self.last_exclude_tags = self.exclude_tags.copy()
             self.last_keep_underscore = self.keep_underscore.get()
+            self.last_csv_model_path = self.model_path
 
 
     def _process_tags(self, image):
