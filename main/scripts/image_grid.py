@@ -55,6 +55,7 @@ class ImageGrid(ttk.Frame):
         self.thumbnail_buttons = {}
         # Used for highlighting the selected thumbnail
         self.initial_selected_thumbnail = None
+        self.prev_selected_thumbnail = None
         self.selected_thumbnail = None
 
 
@@ -71,6 +72,8 @@ class ImageGrid(ttk.Frame):
         self.max_height = 80  # Thumbnail height
         self.images_per_load = 250  # Num of images to load per set
         self.padding = 4  # Default padding between thumbnails
+        self.rows = 0  # Num of rows in the grid
+        self.columns = 0  # Num of columns in the grid
 
         # Image loading and filtering
         self.loaded_images = 0  # Num of images loaded to the UI
@@ -91,16 +94,6 @@ class ImageGrid(ttk.Frame):
         self.create_interface()
         self.load_images()
         self.is_initialized = True
-
-
-    def calculate_columns(self):
-        frame_width = self.frame_thumbnails.winfo_width()
-        if frame_width <= 1:
-            frame_width = self.frame_thumbnails.winfo_reqwidth()
-        available_width = frame_width - (2 * self.padding)
-        thumbnail_width_with_padding = self.max_width + (2 * self.padding)
-        cols = max(1, available_width // thumbnail_width_with_padding)
-        return int(cols)
 
 
 #endregion
@@ -251,6 +244,7 @@ class ImageGrid(ttk.Frame):
         self.set_size_settings()
         self.update_image_info_label()
         self.update_cache_and_grid()
+        self.highlight_thumbnail(self.parent.current_index)
 
 
     def update_cache_and_grid(self):
@@ -292,6 +286,17 @@ class ImageGrid(ttk.Frame):
     def clear_frame(self, frame):
         for widget in frame.winfo_children():
             widget.destroy()
+
+
+    def calculate_columns(self):
+        frame_width = self.frame_thumbnails.winfo_width()
+        if frame_width <= 1:
+            frame_width = self.frame_thumbnails.winfo_reqwidth()
+        available_width = frame_width - (2 * self.padding)
+        thumbnail_width_with_padding = self.max_width + (2 * self.padding)
+        columns = max(1, available_width // thumbnail_width_with_padding)
+        self.columns = columns
+        return int(columns)
 
 
     def set_size_settings(self):
@@ -365,7 +370,7 @@ class ImageGrid(ttk.Frame):
             img.thumbnail((self.max_width, self.max_height))
             position = ((self.max_width - img.width) // 2, (self.max_height - img.height) // 2)
             new_img.paste(img, position)
-        if not os.path.exists(txt_path) or os.path.getsize(txt_path) == 0:
+        if txt_path is None or not os.path.exists(txt_path) or os.path.getsize(txt_path) == 0:
             flag_position = (self.max_width - self.image_flag.width, self.max_height - self.image_flag.height)
             new_img.paste(self.image_flag, flag_position, mask=self.image_flag)
         self.image_cache[self.image_size.get()][img_path] = new_img
@@ -584,29 +589,79 @@ class ImageGrid(ttk.Frame):
 
     def add_load_more_button(self):
         if self.pair_filter_var.get() == "All" and self.loaded_images < self.num_total_images:
-            load_more_button = ttk.Button(self.frame_image_grid, text="Load More...", command=self.load_images)
-            load_more_button.grid(row=self.rows, column=0, columnspan=self.cols, sticky="ew", pady=5)
-            ToolTip.create(load_more_button, "Load the next 150 images", 500, 6, 12)
+            total_items = len(self.thumbnail_buttons)
+            final_row = (total_items - 1) // self.columns
+            self.load_more_button = ttk.Button(self.frame_image_grid, text="Load More", command=self.load_images)
+            self.load_more_button.grid(row=final_row + 1, column=0, columnspan=self.columns, pady=10, sticky='ew')
+            ToolTip.create(self.load_more_button, "Load the next 150 images", 500, 6, 12)
 
 
     def highlight_thumbnail(self, index):
+        if self.prev_selected_thumbnail:
+            self._reset_thumbnail(self.prev_selected_thumbnail)
         button = self.thumbnail_buttons.get(index)
         if not button:
             return
-        try:
-            if self.initial_selected_thumbnail:
-                self.initial_selected_thumbnail.configure(style="TButton")
-                self.initial_selected_thumbnail = None
-            if self.selected_thumbnail:
-                self.selected_thumbnail.configure(style="TButton")
-        except TclError:
-            pass
-        self.selected_thumbnail = button
-        button.configure(style="Highlighted.TButton")
+        img_path = None
+        for _, path, idx in self.images:
+            if idx == index:
+                img_path = path
+                break
+        if not img_path:
+            return
+        self.prev_selected_thumbnail = button
+        with Image.open(img_path) as img:
+            img.thumbnail((self.max_width, self.max_height))
+            highlighted_thumbnail = self.apply_highlight(img)
+            bordered_thumb = ImageTk.PhotoImage(highlighted_thumbnail)
+            button.configure(image=bordered_thumb, style="Highlighted.TButton")
+            button.image = bordered_thumb
+        self.ensure_thumbnail_visible(button)
+        self.parent.update_imageinfo()
+
+
+    def _reset_thumbnail(self, button):
+        if not button:
+            return
+        for index, btn in self.thumbnail_buttons.items():
+            if btn == button:
+                for img_tk, path, idx in self.images:
+                    if idx == index:
+                        button.configure(image=img_tk, style="TButton")
+                        button.image = img_tk
+                        return
+                break
+
+
+    def apply_highlight(self, img):
+        mask_color = (0, 93, 215, 96)
+        base = img.copy().convert("RGBA")
+        overlay = Image.new("RGBA", base.size, mask_color)
+        return Image.alpha_composite(base, overlay)
+
+
+    def reset_initial_thumbnail(self):
+        if self.initial_selected_thumbnail:
+            self.initial_selected_thumbnail.configure(style="TButton")
+            self.initial_selected_thumbnail = None
+
+
+    def ensure_thumbnail_visible(self, button):
+        if not button:
+            return
+        button_index = list(self.thumbnail_buttons.values()).index(button)
+        row, _ = divmod(button_index, self.cols)
+        cell_height = self.max_height + 2 * self.padding
+        button_y = row * cell_height
+        canvas_height = self.canvas_thumbnails.winfo_height()
+        total_height = self.frame_image_grid.winfo_height()
+        center_pos = (button_y + cell_height / 2) - (canvas_height / 2)
+        center_pos = max(0, min(center_pos, total_height - canvas_height))
+        target_scroll = center_pos / total_height
+        self.canvas_thumbnails.yview_moveto(target_scroll)
 
 
     def on_mouse_click(self, index):
-        self.highlight_thumbnail(index)
         self.parent.jump_to_image(index)
         self.parent.update_imageinfo()
 
@@ -712,6 +767,7 @@ v1.05 changes:
 
 
   - New:
+    - The currently selected thumbnail is now highlighted with a blue overlay and centered in the view.
     - Refactored ImageGrid to act similar to a regular Tkinter widget.
     - Removed window management code.
     - Modified initialization to accept standard widget parameters.
