@@ -344,11 +344,15 @@ class TextController:
         listbox_context_menu.add_command(label="Insert: Append", command=lambda: self.insert_listbox_selection(append=True))
         listbox_context_menu.add_command(label="Insert: Replace", command=lambda: self.insert_listbox_selection(replace=True))
         listbox_context_menu.add_separator()
-        listbox_context_menu.add_command(label="Selection: Copy", command=copy_selection)
-        listbox_context_menu.add_command(label="Selection: All", command=all_selection)
-        listbox_context_menu.add_command(label="Selection: Invert", command=invert_selection)
-        listbox_context_menu.add_command(label="Selection: Clear", command=clear_selection)
-        listbox_context_menu.add_command(label="Selection: Add to MyTags", command=lambda: self.parent.add_to_custom_dictionary(origin="auto_tag"))
+        listbox_context_menu.add_command(label="Copy Selected Tags", command=copy_selection)
+        listbox_context_menu.add_command(label="Select All", command=all_selection)
+        listbox_context_menu.add_command(label="Invert Selection", command=invert_selection)
+        listbox_context_menu.add_command(label="Clear Selection", command=clear_selection)
+        listbox_context_menu.add_separator()
+        listbox_context_menu.add_command(label="Add to MyTags", command=lambda: self.parent.add_to_custom_dictionary(origin="auto_tag"))
+        listbox_context_menu.add_separator()
+        listbox_context_menu.add_command(label="Add to Exclude", command=lambda: self.add_selected_tags_to_excluded_tags())
+        listbox_context_menu.add_command(label="Add to Keep", command=lambda: self.add_selected_tags_to_keep_tags())
         # Control Frame
         control_frame = Frame(paned_window)
         paned_window.add(control_frame, stretch="always")
@@ -579,9 +583,9 @@ class TextController:
         if not tag_dict:
             self.update_auto_tag_stats_label()
             return
-        max_length = max(len(f"{confidence:.2f}") for confidence, _ in tag_dict.values())
+        max_length = max(len(f"{float(confidence):.2f}") for confidence, _ in tag_dict.values())
         for tag, (confidence, category) in tag_dict.items():
-            padded_score = f"{confidence:.2f}".ljust(max_length, '0')
+            padded_score = f"{float(confidence):.2f}".ljust(max_length, '0')
             self.auto_tag_listbox.insert("end", f" {padded_score}: {tag}")
             if category == "character":
                 self.auto_tag_listbox.itemconfig("end", {'fg': '#148632'})
@@ -727,6 +731,44 @@ class TextController:
         new_text = new_text.strip(', ')
         with open(text_file_path, 'w', encoding='utf-8') as f:
             f.write(new_text)
+
+
+    def add_selected_tags_to_excluded_tags(self):
+        selected_items, extracted_tags = self.get_auto_tag_selection()
+        if not extracted_tags:
+            return
+        # Strip escape characters from extracted tags
+        extracted_tags = [tag.replace('\\', '') for tag in extracted_tags]
+
+        current_excluded = self.excluded_tags_entry.get().strip()
+        excluded_list = [tag.strip() for tag in current_excluded.split(',') if tag.strip()] if current_excluded else []
+        # Strip escape characters from existing excluded tags
+        excluded_list = [tag.replace('\\', '') for tag in excluded_list]
+
+        for tag in extracted_tags:
+            if tag not in excluded_list:
+                excluded_list.append(tag)
+        self.excluded_tags_entry.delete(0, 'end')
+        self.excluded_tags_entry.insert(0, ', '.join(excluded_list))
+
+
+    def add_selected_tags_to_keep_tags(self):
+        selected_items, extracted_tags = self.get_auto_tag_selection()
+        if not extracted_tags:
+            return
+        # Strip escape characters from extracted tags
+        extracted_tags = [tag.replace('\\', '') for tag in extracted_tags]
+
+        current_keep = self.keep_tags_entry.get().strip()
+        keep_list = [tag.strip() for tag in current_keep.split(',') if tag.strip()] if current_keep else []
+        # Strip escape characters from existing keep tags
+        keep_list = [tag.replace('\\', '') for tag in keep_list]
+
+        for tag in extracted_tags:
+            if tag not in keep_list:
+                keep_list.append(tag)
+        self.keep_tags_entry.delete(0, 'end')
+        self.keep_tags_entry.insert(0, ', '.join(keep_list))
 
 
 #endregion
