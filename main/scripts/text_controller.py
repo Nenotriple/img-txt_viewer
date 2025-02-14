@@ -739,12 +739,10 @@ class TextController:
             return
         # Strip escape characters from extracted tags
         extracted_tags = [tag.replace('\\', '') for tag in extracted_tags]
-
         current_excluded = self.excluded_tags_entry.get().strip()
         excluded_list = [tag.strip() for tag in current_excluded.split(',') if tag.strip()] if current_excluded else []
         # Strip escape characters from existing excluded tags
         excluded_list = [tag.replace('\\', '') for tag in excluded_list]
-
         for tag in extracted_tags:
             if tag not in excluded_list:
                 excluded_list.append(tag)
@@ -758,12 +756,10 @@ class TextController:
             return
         # Strip escape characters from extracted tags
         extracted_tags = [tag.replace('\\', '') for tag in extracted_tags]
-
         current_keep = self.keep_tags_entry.get().strip()
         keep_list = [tag.strip() for tag in current_keep.split(',') if tag.strip()] if current_keep else []
         # Strip escape characters from existing keep tags
         keep_list = [tag.replace('\\', '') for tag in keep_list]
-
         for tag in extracted_tags:
             if tag not in keep_list:
                 keep_list.append(tag)
