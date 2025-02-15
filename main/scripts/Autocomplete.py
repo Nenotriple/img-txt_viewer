@@ -382,6 +382,7 @@ class SuggestionHandler:
         if self.parent.list_mode_var.get() and remaining_text:
             self.insert_newline_listmode(called_from_insert=True)
             self.parent.text_box.mark_set("insert", "insert + 1 lines")
+        self.parent.append_comma_to_text()
 
 
     def insert_newline_listmode(self, event=None, called_from_insert=False):

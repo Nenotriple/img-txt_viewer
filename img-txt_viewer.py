@@ -196,6 +196,7 @@ class ImgTxtViewer:
         self.external_image_editor_path = "mspaint"
         self.always_on_top_var = BooleanVar(value=False)
         self.big_save_button_var = BooleanVar(value=True)
+        self.auto_insert_comma_var = BooleanVar(value=True)
 
         # Font Settings
         self.font_var = StringVar(value="Courier New")
@@ -311,6 +312,7 @@ class ImgTxtViewer:
         self.options_subMenu.add_checkbutton(label="Auto-Delete Blank Files", underline=0, variable=self.auto_delete_blank_files_var)
         self.options_subMenu.add_checkbutton(label="Colored Suggestions", underline=1, variable=self.colored_suggestion_var, command=self.autocomplete.update_autocomplete_dictionary)
         self.options_subMenu.add_checkbutton(label="Highlight Selection", underline=0, variable=self.highlight_selection_var)
+        self.options_subMenu.add_checkbutton(label="Add Comma After Tag", underline=0, variable=self.auto_insert_comma_var, command=self.append_comma_to_text)
         self.options_subMenu.add_checkbutton(label="Big Save Button", underline=0, variable=self.big_save_button_var, command=self.toggle_save_button_height)
         self.options_subMenu.add_checkbutton(label="List View", underline=0, variable=self.list_mode_var, command=self.toggle_list_mode)
         self.options_subMenu.add_separator()
@@ -1667,9 +1669,10 @@ class ImgTxtViewer:
                 self.current_max_img_width = max_img_width
                 self.primary_display_image.unbind("<Configure>")
                 self.primary_display_image.bind("<Configure>", self.resize_and_scale_image_event)
-            self.toggle_list_mode()
             self.autocomplete.clear_suggestions()
+            self.toggle_list_mode()
             self.highlight_custom_string()
+            self.append_comma_to_text()
             self.highlight_all_duplicates_var.set(False)
             self.debounce_update_thumbnail_panel()
             self.get_text_summary()
@@ -1869,6 +1872,16 @@ class ImgTxtViewer:
                 self.text_box.delete("1.0", "end")
                 self.text_box.insert("1.0", self.cleanup_text(formatted_contents))
         self.text_box.config(undo=True)
+
+
+    def append_comma_to_text(self):
+        text = self.text_box.get("1.0", "end-1c")
+        if self.auto_insert_comma_var.get():
+            if text and not text.endswith(", ") and not self.list_mode_var.get():
+                self.text_box.insert("end", ", ")
+        else:
+            if text.endswith(", "):
+                self.text_box.delete("end-3c", "end-1c")
 
 
 #endregion
