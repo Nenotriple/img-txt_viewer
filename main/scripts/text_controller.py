@@ -870,6 +870,8 @@ class TextController:
         self.revert_filter_button.config(style="Red.TButton")
         self.revert_filter_button_tooltip.config(text="Filter is active\n\nClear any filtering applied")
         self.parent.update_total_image_label()
+        if self.parent.is_image_grid_visible_var.get():
+            self.parent.image_grid.reload_grid()
 
 
 
@@ -889,6 +891,9 @@ class TextController:
         self.revert_filter_button.config(style="")
         self.revert_filter_button_tooltip.config(text="Filter is inactive\n\nClear any filtering applied")
         self.parent.filter_empty_files_var.set(False)
+        self.parent.update_total_image_label()
+        if self.parent.is_image_grid_visible_var.get():
+            self.parent.image_grid.reload_grid()
         if self.parent.filter_empty_files_var.get():
             self.toggle_filter_widgets(state=True)
         else:
