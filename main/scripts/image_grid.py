@@ -23,8 +23,8 @@ import os
 # Standard Library - GUI
 from tkinter import (
     ttk,
-    IntVar, StringVar, BooleanVar,
-    Frame, Label, Menu, Scrollbar, Canvas, TclError
+    IntVar,
+    Frame, Label, Scrollbar, Canvas
 )
 
 
@@ -75,18 +75,12 @@ class ImageGrid(ttk.Frame):
         self.rows = 0  # Num of rows in the grid
         self.columns = 0  # Num of columns in the grid
 
-        # Image loading and filtering
+        # Image loading
         self.loaded_images = 0  # Num of images loaded to the UI
-        self.filtered_images = 0  # Num of images displayed after filtering
-
         # Image flag
         self.image_flag = self.create_image_flag()
-
-        # Image files in the folder
-        self.all_file_list = self.get_all_files()
-        self.image_file_list = self.get_image_files()
-        self.num_total_images = len(self.image_file_list)  # Number of images in the folder
-
+        # Get number of total images from parent
+        self.num_total_images = len(self.parent.image_files)
         # Default thumbnail size. Range=(1,2,3). Set to 3 if total_images is less than 25.
         self.image_size = IntVar(value=2) if self.num_total_images < 25 else IntVar(value=2)
 
@@ -104,7 +98,6 @@ class ImageGrid(ttk.Frame):
     def create_interface(self):
         self.create_canvas()
         self.create_control_row()
-        self.create_filtering_row()
 
 
     def create_canvas(self):
@@ -136,7 +129,7 @@ class ImageGrid(ttk.Frame):
         # Refresh
         self.button_refresh = ttk.Button(self.frame_bottom, text="Refresh", command=self.reload_grid)
         self.button_refresh.pack(side="right", padx=5)
-        ToolTip.create(self.button_refresh, "Refresh the image grid. Useful when you've added or removed images, or altered the text pairs.", 500, 6, 12)
+        ToolTip.create(self.button_refresh, "Refresh the image grid", 500, 6, 12)
         # Load All
         self.button_load_all = ttk.Button(self.frame_bottom, text="Load All", command=lambda: self.load_images(all_images=True))
         self.button_load_all.pack(side="right", padx=5)
@@ -144,94 +137,7 @@ class ImageGrid(ttk.Frame):
         # Image Info
         self.label_image_info = Label(self.frame_bottom, width=14)
         self.label_image_info.pack(side="right", padx=5)
-        ToolTip.create(self.label_image_info, "Filtered Images : Loaded Images, Total Images", 500, 6, 12)
-
-
-    def create_filtering_row(self):
-        self.button_toggle_frame = ttk.Button(self.frame_bottom, text="Filtering", command=self.toggle_filterframe_visibility)
-        self.button_toggle_frame.pack(side="left", padx=5)
-        ToolTip.create(self.button_toggle_frame, "Show or hide the filtering options", 500, 6, 12)
-        # Filtering frame
-        self.frame_filtering = Frame(self.frame_thumbnails)
-        self.filterframe_visible = False
-        # Separator
-        hori_separator = ttk.Separator(self.frame_filtering)
-        hori_separator.pack(side="top", fill="x")
-        vert_separator = ttk.Separator(self.frame_filtering, orient="vertical")
-        vert_separator.pack(side="left", fill="y")
-        # Filter Radiobuttons - All, Paired, Unpaired
-        self.pair_filter_var = StringVar(value="All")
-        # All
-        self.radiobutton_all = ttk.Radiobutton(self.frame_filtering, text="All", variable=self.pair_filter_var, value="All", command=self.reload_grid)
-        self.radiobutton_all.pack(side="left", padx=1)
-        ToolTip.create(self.radiobutton_all, "Display all LOADED images", 500, 6, 12)
-        # Paired
-        self.radiobutton_paired = ttk.Radiobutton(self.frame_filtering, text="Paired", variable=self.pair_filter_var, value="Paired", command=self.reload_grid)
-        self.radiobutton_paired.pack(side="left", padx=1)
-        ToolTip.create(self.radiobutton_paired, "Display images with text pairs", 500, 6, 12)
-        # Unpaired
-        self.radiobutton_unpaired = ttk.Radiobutton(self.frame_filtering, text="Unpaired", variable=self.pair_filter_var, value="Unpaired", command=self.reload_grid)
-        self.radiobutton_unpaired.pack(side="left", padx=1)
-        ToolTip.create(self.radiobutton_unpaired, "Display images without text pairs", 500, 6, 12)
-        # Separator
-        vert_separator = ttk.Separator(self.frame_filtering, orient="vertical")
-        vert_separator.pack(side="left", fill="y")
-        # Extra Filtering Toggle
-        self.enable_extra_filter_var = BooleanVar(value=0)
-        self.checkbutton_enable_extra_filter = ttk.Checkbutton(self.frame_filtering, variable=self.enable_extra_filter_var, command=self.toggle_filter_widgets)
-        self.checkbutton_enable_extra_filter.pack(side="left")
-        # Extra Filtering Options
-        self.filter_options = ["Resolution", "Aspect Ratio", "Filesize", "Filename", "Filetype", "Tags"]
-        self.filter_var = StringVar(value=self.filter_options[0])
-        self.combobox_filter = ttk.Combobox(self.frame_filtering, textvariable=self.filter_var, values=self.filter_options, width=12, state="disabled")
-        self.combobox_filter.pack(side="left", padx=5)
-        self.combobox_filter.bind('<<ComboboxSelected>>', lambda event: self.handle_filter_options())
-        ToolTip.create(self.combobox_filter, "Filter images by the selected option", 500, 6, 12)
-        # Filtering Operator
-        self.operator_var = StringVar(value="=")
-        self.operator_options = ["=", "<", ">", "*"]
-        self.menu_button_operator = ttk.Menubutton(self.frame_filtering, textvariable=self.operator_var, state="disabled")
-        self.menu_button_operator.menu = Menu(self.menu_button_operator, tearoff=0)
-        self.menu_button_operator["menu"] = self.menu_button_operator.menu
-        self.menu_button_operator.config(width=2)
-        for option in self.operator_options:
-            self.menu_button_operator.menu.add_radiobutton(label=option, variable=self.operator_var, value=option, command=self.reload_grid)
-        self.menu_button_operator.pack(side="left", padx=5)
-        ToolTip.create(self.menu_button_operator, "Select a filter operator", 500, 6, 12)
-        # Filtering Entry
-        self.filter_entry = ttk.Entry(self.frame_filtering, state="disabled", width=15)
-        self.filter_entry.pack(side="left", padx=5, fill="x", expand=True)
-        self.filter_entry.bind("<KeyRelease>", lambda event: self.reload_grid())
-        self.filter_entry_tooltiptext_resolution = "Enter an appropriate filter value for: Resolution\n\nEnter a full resolution like 100x100 (WxH), or enter a single value like 100w, 100h"
-        self.filter_entry_tooltiptext_aspectratio = "Enter an appropriate filter value for: Aspect Ratio\n\nEnter as a single number decimal like 1.0, 1.78, or as a ratio like 1:1, 16:9"
-        self.filter_entry_tooltiptext_filesize = "Enter an appropriate filter value for: Filesize\n\nEnter a value in MB like 1, 2, 3, 0.5, 0.25, etc."
-        self.filter_entry_tooltiptext_filename = "Enter an appropriate filter value for: Filename\n\nEnter a filename. Do not enter the file extension. Not case sensitive."
-        self.filter_entry_tooltiptext_filetype = "Enter an appropriate filter value for: Filetype\n\nEnter a file extension. Not case sensitive."
-        self.filter_entry_tooltiptext_tags = "Enter an appropriate filter value for: Tags\n\nEnter a tag or string of text."
-        self.filter_entry_tooltip = ToolTip.create(self.filter_entry, self.filter_entry_tooltiptext_resolution, 500, 6, 12)
-        #Label
-        self.label_filtertext = Label(self.frame_filtering, state="disabled", text="WxH", width=3)
-        self.label_filtertext.pack(side="left", padx=5)
-        # Extra Filtering Combobox
-        self.filter_extra_options = {
-            "Resolution": ["256x256", "640x360", "512x512", "800x600", "768x768", "1024x768", "1280x720", "1360x768", "1024x1024", "1400x900", "1600x900", "1920x1080", "1536x1536", "2560x1440", "2048x2048", "2560x2560", "3840x2160", "3072x3072", "3582x3582", "4096x4096"],
-            "Aspect Ratio": ["1:3", "1:2", "9:16", "2:3", "5:7", "3:4", "4:5", "1:1", "5:4", "4:3", "3:2", "16:10", "16:9", "1.85:1", "21:9", "2.35:1"],
-            "Filesize": ["0.5", "1", "2", "5", "10", "15", "20"],
-            "Filename": [],
-            "Filetype": ["PNG", "WEBP", "JPG", "JPEG", "JPG_LARGE", "JFIF", "TIF", "TIFF", "BMP", "GIF"],
-            "Tags": []
-        }
-        self.filter_extra_var = StringVar(value=self.filter_extra_options["Resolution"][0])
-        self.combobox_filterinput = ttk.Combobox(self.frame_filtering, textvariable=self.filter_extra_var, values=self.filter_extra_options["Resolution"], state="disabled")
-        self.combobox_filterinput.pack(side="left", padx=5)
-        self.combobox_filterinput.bind("<<ComboboxSelected>>", self.update_filter_entry)
-
-
-    def update_filter_entry(self, event):
-        selected_value = self.combobox_filterinput.get()
-        self.filter_entry.delete(0, "end")
-        self.filter_entry.insert(0, selected_value)
-        self.reload_grid()
+        ToolTip.create(self.label_image_info, "Loaded Images / Total Images", 500, 6, 12)
 
 
 #endregion
@@ -248,14 +154,13 @@ class ImageGrid(ttk.Frame):
 
 
     def update_cache_and_grid(self):
-        self.update_filtered_images()
         self.update_image_cache()
         self.create_image_grid()
 
 
     def update_image_cache(self):
         image_size_key = self.image_size.get()
-        filtered_sorted_files = list(filter(self.filter_images, sorted(self.image_file_list, key=self.parent.get_file_sort_key(), reverse=self.reverse_sort_direction_var)))
+        filtered_sorted_files = sorted(self.parent.image_files, key=self.parent.get_file_sort_key(), reverse=self.reverse_sort_direction_var)
         current_text_file_sizes = {
             os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt': os.path.getsize(os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt') if os.path.exists(os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt') else 0
             for filename in filtered_sorted_files}
@@ -269,17 +174,7 @@ class ImageGrid(ttk.Frame):
 
 
     def update_image_info_label(self):
-        self.update_filtered_images()
-        self.update_shown_images()
-        self.update_button_state()
-
-
-    def update_shown_images(self):
-        shown_images = min(self.filtered_images, self.loaded_images)
-        self.label_image_info.config(text=f"{shown_images} : {self.loaded_images}, of {self.num_total_images}")
-
-
-    def update_button_state(self):
+        self.label_image_info.config(text=f"{self.loaded_images} / {self.num_total_images}")
         self.button_load_all.config(state="disabled" if self.loaded_images == self.num_total_images else "normal")
 
 
@@ -346,14 +241,16 @@ class ImageGrid(ttk.Frame):
     def load_image_set(self):
         images = []
         image_size_key = self.image_size.get()
-        filtered_sorted_files = list(filter(self.filter_images, sorted(self.image_file_list, key=self.parent.get_file_sort_key(), reverse=self.reverse_sort_direction_var)))
+        image_files = self.parent.image_files
+        text_files = self.parent.text_files
         current_text_file_sizes = {
-            os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt': os.path.getsize(os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt') if os.path.exists(os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt') else 0
-            for filename in filtered_sorted_files}
-        for image_index, filename in enumerate(filtered_sorted_files):
+            text_file: os.path.getsize(text_file) if os.path.exists(text_file) else 0
+            for text_file in text_files
+        }
+        for image_index, img_path in enumerate(image_files):
             if len(images) >= self.loaded_images:
                 break
-            img_path, txt_path = self.get_image_and_text_paths(filename)
+            txt_path = text_files[image_index]
             current_text_file_size = current_text_file_sizes[txt_path]
             cached_text_file_size = self.text_file_cache.get(txt_path, -1)
             if img_path not in self.image_cache[image_size_key] or current_text_file_size != cached_text_file_size:
@@ -375,158 +272,6 @@ class ImageGrid(ttk.Frame):
             new_img.paste(self.image_flag, flag_position, mask=self.image_flag)
         self.image_cache[self.image_size.get()][img_path] = new_img
         return new_img
-
-
-    def filter_images(self, filename):
-        if not filename.lower().endswith(self.supported_filetypes):
-            return False
-        txt_path = os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt'
-        file_size = os.path.getsize(txt_path) if os.path.exists(txt_path) else 0
-        filter_dict = {"All": True, "Paired": file_size != 0, "Unpaired": file_size == 0}
-        if not filter_dict.get(self.pair_filter_var.get(), False):
-            return False
-        if not self.enable_extra_filter_var.get():
-            return True
-        current_filter = self.filter_var.get()
-        operator = self.operator_var.get()
-        filter_value = self.filter_entry.get().strip()
-        if not filter_value:
-            return True
-
-        def check_resolution(img_width, img_height):
-            lower_limit = 0.90
-            higher_limit = 1.10
-            try:
-                if 'x' in filter_value:
-                    width, height = map(int, filter_value.split('x'))
-                    checks = {
-                        '=': (img_width == width and img_height == height),
-                        '<': (img_width < width and img_height < height),
-                        '>': (img_width > width and img_height > height),
-                        '*': (lower_limit * width <= img_width <= higher_limit * width and lower_limit * height <= img_height <= higher_limit * height)
-                    }
-                elif 'w' in filter_value:
-                    width = int(filter_value.rstrip('w'))
-                    checks = {
-                        '=': (img_width == width),
-                        '<': (img_width < width),
-                        '>': (img_width > width),
-                        '*': (lower_limit * width <= img_width <= higher_limit * width)
-                    }
-                elif 'h' in filter_value:
-                    height = int(filter_value.rstrip('h'))
-                    checks = {
-                        '=': (img_height == height),
-                        '<': (img_height < height),
-                        '>': (img_height > height),
-                        '*': (lower_limit * height <= img_height <= higher_limit * height)
-                    }
-                else:
-                    width = int(filter_value)
-                    checks = {
-                        '=': (img_width == width),
-                        '<': (img_width < width),
-                        '>': (img_width > width),
-                        '*': (lower_limit * width <= img_width <= higher_limit * width)
-                    }
-                return checks.get(operator, False)
-            except ValueError:
-                return False
-
-        def check_aspect_ratio(img_width, img_height):
-            try:
-                if ':' in filter_value:
-                    num, denom = map(int, filter_value.split(':'))
-                    target_aspect_ratio = num / denom
-                else:
-                    target_aspect_ratio = float(filter_value)
-
-                aspect_ratio = img_width / img_height
-                checks = {
-                    '=': abs(aspect_ratio - target_aspect_ratio) < 0.01,
-                    '<': aspect_ratio < target_aspect_ratio,
-                    '>': aspect_ratio > target_aspect_ratio,
-                    '*': 0.90 * target_aspect_ratio <= aspect_ratio <= 1.10 * target_aspect_ratio
-                }
-                return checks.get(operator, False)
-            except ValueError:
-                return False
-
-        def check_filesize(actual_size, target_size):
-            lower_limit = target_size * 0.75
-            upper_limit = target_size * 1.25
-            tolerance = 0.01
-            if operator == "=":
-                return lower_limit * (1 - tolerance) <= actual_size <= upper_limit * (1 + tolerance)
-            elif operator == "<":
-                return actual_size < target_size
-            elif operator == ">":
-                return actual_size > target_size
-            elif operator == "*":
-                return lower_limit <= actual_size <= upper_limit
-
-        def check_filename(base_filename):
-            filter_value_lower = filter_value.lower()
-            if operator == "=":
-                return base_filename.startswith(filter_value_lower)
-            elif operator == "<":
-                return len(base_filename) < len(filter_value_lower)
-            elif operator == ">":
-                return len(base_filename) > len(filter_value_lower)
-            elif operator == "*":
-                return any(filter_value_lower in sub for sub in base_filename.split('_'))
-
-        def check_filetype(filetype):
-            return filename.lower().endswith(filetype)
-
-        def check_tags(tags):
-            if operator == "=":
-                return filter_value == tags
-            elif operator == "<":
-                return len(tags) < len(filter_value)
-            elif operator == ">":
-                return len(tags) > len(filter_value)
-            elif operator == "*":
-                return filter_value in tags
-
-        try:
-            if current_filter == "Resolution" or current_filter == "Aspect Ratio":
-                if filename not in self.image_size_cache:
-                    with Image.open(os.path.join(self.working_folder, filename)) as img:
-                        self.image_size_cache[filename] = img.size
-                img_width, img_height = self.image_size_cache[filename]
-
-                if current_filter == "Resolution" and not check_resolution(img_width, img_height):
-                    return False
-                if current_filter == "Aspect Ratio" and not check_aspect_ratio(img_width, img_height):
-                    return False
-            elif current_filter == "Filesize":
-                target_size = float(filter_value) * 1024 * 1024
-                actual_size = os.path.getsize(os.path.join(self.working_folder, filename))
-                if not check_filesize(actual_size, target_size):
-                    return False
-            elif current_filter == "Filename":
-                base_filename = os.path.splitext(filename)[0].lower()
-                if not check_filename(base_filename):
-                    return False
-            elif current_filter == "Filetype":
-                if not check_filetype(filter_value.strip(".").lower()):
-                    return False
-            elif current_filter == "Tags":
-                if os.path.exists(txt_path):
-                    with open(txt_path, 'r', encoding='utf-8') as file:
-                        tags = file.read()
-                        if not check_tags(tags):
-                            return False
-                else:
-                    return False
-        except Exception:
-            return False
-        return True
-
-
-    def update_filtered_images(self):
-        self.filtered_images = sum(1 for _ in filter(self.filter_images, sorted(self.image_file_list, key=self.parent.get_file_sort_key(), reverse=self.reverse_sort_direction_var)))
 
 
     def get_image_and_text_paths(self, filename):
@@ -572,8 +317,10 @@ class ImageGrid(ttk.Frame):
 
     def get_image_index(self, directory, filename):
         filename = os.path.basename(filename)
-        image_files = sorted((file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)), key=self.parent.get_file_sort_key(), reverse=self.reverse_sort_direction_var)
-        return image_files.index(filename) if filename in image_files else -1
+        try:
+            return self.parent.image_files.index(os.path.join(directory, filename))
+        except ValueError:
+            return -1
 
 
 #endregion
@@ -593,7 +340,7 @@ class ImageGrid(ttk.Frame):
 
 
     def add_load_more_button(self):
-        if self.pair_filter_var.get() == "All" and self.loaded_images < self.num_total_images:
+        if self.loaded_images < self.num_total_images:
             total_items = len(self.thumbnail_buttons)
             final_row = (total_items - 1) // self.columns
             self.load_more_button = ttk.Button(self.frame_image_grid, text="Load More", command=self.load_images)
@@ -676,88 +423,10 @@ class ImageGrid(ttk.Frame):
             self.canvas_thumbnails.yview_scroll(int(-1*(event.delta/120)), "units")
 
 
-    def handle_filter_options(self):
-        filter = self.filter_var.get()
-        menu = self.menu_button_operator.menu
-        label = self.label_filtertext
-        equal_index = self.operator_options.index("=")
-        new_options = self.filter_extra_options.get(filter, [])
-        self.combobox_filterinput.config(values=new_options)
-        if new_options:
-            self.filter_extra_var.set(new_options[0])
-            self.combobox_filterinput.config(state="readonly")
-        else:
-            self.filter_extra_var.set('')
-            self.combobox_filterinput.config(state="disabled")
-        if filter == "Resolution":
-            label.config(text="WxH")
-            menu.entryconfig(equal_index, state="normal")
-            self.filter_entry_tooltip.config(text=self.filter_entry_tooltiptext_resolution)
-        elif filter == "Aspect Ratio":
-            label.config(text="1:1")
-            menu.entryconfig(equal_index, state="normal")
-            self.filter_entry_tooltip.config(text=self.filter_entry_tooltiptext_aspectratio)
-        elif filter == "Filesize":
-            label.config(text="MB")
-            menu.entryconfig(equal_index, state="normal")
-            self.filter_entry_tooltip.config(text=self.filter_entry_tooltiptext_filesize)
-        elif filter == "Filename":
-            menu.entryconfig(equal_index, state="normal")
-            label.config(text="")
-            self.filter_entry_tooltip.config(text=self.filter_entry_tooltiptext_filename)
-        elif filter == "Filetype":
-            menu.entryconfig(equal_index, state="normal")
-            label.config(text="")
-            self.filter_entry_tooltip.config(text=self.filter_entry_tooltiptext_filetype)
-        elif filter == "Tags":
-            self.operator_var.set("*")
-            menu.entryconfig(equal_index, state="disabled")
-            label.config(text="")
-            self.filter_entry_tooltip.config(text=self.filter_entry_tooltiptext_tags)
-        else:
-            label.config(text="")
-            menu.entryconfig(equal_index, state="normal")
-
-
-    def toggle_filter_widgets(self):
-        state = "normal" if self.enable_extra_filter_var.get() else "disabled"
-        combostate = "readonly" if state == "normal" else "disabled"
-        self.combobox_filter.config(state=combostate)
-        self.combobox_filterinput.config(state=combostate)
-        self.menu_button_operator.config(state=state)
-        self.filter_entry.config(state=state)
-        self.label_filtertext.config(state=state)
-        self.reload_grid()
-
-
-    def toggle_filterframe_visibility(self):
-        if self.filterframe_visible:
-            self.frame_filtering.pack_forget()
-        else:
-            self.frame_filtering.pack(side="bottom", fill="x", padx=5, pady=(0, 5))
-        self.filterframe_visible = not self.filterframe_visible
-
-
     def round_scale_input(self, event=None):
         value = float(self.slider_image_size.get())
         if int(value) != value:
             self.slider_image_size.set(round(value))
-
-
-#endregion
-################################################################################################################################################
-#region -  Misc
-
-
-    def get_all_files(self):
-        try:
-            return os.listdir(self.working_folder)
-        except (FileNotFoundError, NotADirectoryError):
-            return
-
-
-    def get_image_files(self):
-        return [name for name in self.all_file_list if os.path.isfile(os.path.join(self.working_folder, name)) and name.lower().endswith(self.supported_filetypes)]
 
 
 #endregion
@@ -776,6 +445,8 @@ v1.05 changes:
     - Refactored ImageGrid to act similar to a regular Tkinter widget.
     - Removed window management code.
     - Modified initialization to accept standard widget parameters.
+    - Removed all filtering-related code to simplify the image grid widget.
+    - Unified the ImageGrid and parent ImgTxtViewer file index variables.
 
 
 <br>
