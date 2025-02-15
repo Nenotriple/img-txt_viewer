@@ -179,7 +179,7 @@ class ImgTxtViewer:
             "#7895b2", "#ff8787", "#90a17d", "#f8c4b4", "#af7ab3"
         ]   # Blue     Pink       Green      Brown      Purple
 
-
+        # Image Grid
         self.is_image_grid_visible_var = BooleanVar(value=False)
 
 
