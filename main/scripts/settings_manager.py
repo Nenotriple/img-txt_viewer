@@ -117,6 +117,7 @@ class SettingsManager:
         self.config.set("Other", "auto_save", str(self.parent.auto_save_var.get()))
         self.config.set("Other", "cleaning_text", str(self.parent.cleaning_text_var.get()))
         self.config.set("Other", "big_save_button", str(self.parent.big_save_button_var.get()))
+        self.config.set("Other", "auto_insert_comma", str(self.parent.auto_insert_comma_var.get()))
         self.config.set("Other", "highlighting_duplicates", str(self.parent.highlight_selection_var.get()))
         self.config.set("Other", "truncate_stat_captions", str(self.parent.truncate_stat_captions_var.get()))
         self.config.set("Other", "process_image_stats", str(self.parent.process_image_stats_var.get()))
@@ -205,6 +206,7 @@ class SettingsManager:
         self.parent.auto_save_var.set(value=self.config.getboolean("Other", "auto_save", fallback=False))
         self.parent.cleaning_text_var.set(value=self.config.getboolean("Other", "cleaning_text", fallback=True))
         self.parent.big_save_button_var.set(value=self.config.getboolean("Other", "big_save_button", fallback=True))
+        self.parent.auto_insert_comma_var.set(value=self.config.getboolean("Other", "auto_insert_comma", fallback=True))
         self.parent.highlight_selection_var.set(value=self.config.getboolean("Other", "highlighting_duplicates", fallback=True))
         self.parent.truncate_stat_captions_var.set(value=self.config.getboolean("Other", "truncate_stat_captions", fallback=True))
         self.parent.process_image_stats_var.set(value=self.config.getboolean("Other", "process_image_stats", fallback=False))
@@ -281,6 +283,7 @@ class SettingsManager:
         self.parent.image_quality_var.set(value="Normal")
         self.parent.set_image_quality()
         self.parent.big_save_button_var.set(value=True)
+        self.parent.auto_insert_comma_var.set(value=True)
         # Window
         self.parent.always_on_top_var.set(value=False)
         self.parent.set_always_on_top()
