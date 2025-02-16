@@ -501,9 +501,11 @@ class ImgTxtViewer:
         self.view_menu.add_checkbutton(label="Toggle Zoom", accelerator="F2", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
         self.view_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.debounce_update_thumbnail_panel)
         self.view_menu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
+        self.view_menu.add_separator()
         self.view_menu.add_checkbutton(label="Vertical View", underline=0, variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
         self.view_menu.add_checkbutton(label="Swap img-txt Sides", underline=0, variable=self.panes_swap_ew_var, command=self.swap_pane_sides)
         image_quality_menu = Menu(self.optionsMenu, tearoff=0)
+        self.view_menu.add_separator()
         self.view_menu.add_cascade(label="Image Display Quality", menu=image_quality_menu)
         for value in ["High", "Normal", "Low"]:
             image_quality_menu.add_radiobutton(label=value, variable=self.image_quality_var, value=value, command=self.set_image_quality)
@@ -511,6 +513,7 @@ class ImgTxtViewer:
         # Image Stats
         self.label_image_stats = Label(self.stats_frame, text="...")
         self.label_image_stats.grid(row=0, column=1, sticky="ew")
+        self.label_image_stats_tooltip = ToolTip.create(self.label_image_stats, "...", 250, 6, 12)
 
         # Primary Image
         self.primary_display_image = Label(self.master_image_inner_frame, cursor="hand2")
@@ -1719,7 +1722,7 @@ class ImgTxtViewer:
                 self.image_info_cache[self.image_file] = self.get_image_info(self.image_file)
             image_info = self.image_info_cache[self.image_file]
             self.label_image_stats.config(text=f"  |  {image_info['filename']}  |  {image_info['resolution']}  |  {percent_scale}%  |  {image_info['size']}  |  {image_info['color_mode']}", anchor="w")
-
+            self.label_image_stats_tooltip.config(text=f"Filename: {image_info['filename']}\nResolution: {image_info['resolution']}\nSize: {image_info['size']}\nColor Mode: {image_info['color_mode']}")
 
     def get_image_info(self, image_file):
         try:
