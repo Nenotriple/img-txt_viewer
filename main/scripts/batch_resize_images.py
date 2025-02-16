@@ -108,7 +108,6 @@ class BatchResizeImages:
     def __init__(self):
         self.parent = None
         self.root = None
-        self.menu = None
         self.working_dir = None
         self.version = None
 
@@ -123,16 +122,11 @@ class BatchResizeImages:
 #region -  Interface
 
 
-    def setup_window(self, parent, root, menu, path=None):
+    def setup_window(self, parent, root, path=None):
         self.parent = parent
         self.root = root
-        self.menu = menu
         self.working_dir = path
         self.version = self.parent.app_version
-
-        self.root.minsize(750, 280) # Width x Height
-        self.root.title(f"{self.version} - img-txt Viewer - Batch Resize Images")
-        self.menu.entryconfig("Batch Resize Images...", command=self.close_batch_resize_images)
         self.setup_ui()
 
 
@@ -146,19 +140,22 @@ class BatchResizeImages:
 
 
     def setup_primary_frame(self):
-        self.parent.hide_primary_paned_window()
-        self.batch_resize_images_frame = tk.Frame(self.root)
-        self.batch_resize_images_frame.grid(row=0, column=0, sticky="nsew", padx=40)
+        # Configure the tab to expand properly
+        self.parent.batch_resize_images_tab.grid_rowconfigure(0, weight=1)
+        self.parent.batch_resize_images_tab.grid_columnconfigure(0, weight=1)
+
+        # Create and configure the main frame
+        self.batch_resize_images_frame = tk.Frame(self.parent.batch_resize_images_tab)
+        self.batch_resize_images_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+
+        # Configure the main frame's grid
         self.batch_resize_images_frame.grid_rowconfigure(1, weight=1)
-        self.batch_resize_images_frame.grid_columnconfigure(1, weight=1)
+        self.batch_resize_images_frame.grid_columnconfigure(0, weight=1)
 
 
     def setup_top_row(self):
         self.top_frame = tk.Frame(self.batch_resize_images_frame)
         self.top_frame.pack(fill="x", padx=2, pady=2)
-
-        self.close_button = ttk.Button(self.top_frame, text="<---Close", width=15, command=self.close_batch_resize_images)
-        self.close_button.pack(side="left", fill="x", padx=2, pady=2)
 
         self.info_label = tk.Label(self.top_frame, anchor="w", text="Select a directory...")
         self.info_label.pack(side="left", fill="x", padx=2, pady=2)
@@ -469,14 +466,6 @@ class BatchResizeImages:
         self.resize_mode_var.trace_add('write', self.update_entries)
         if self.working_dir:
             self.update_message_text(filecount=True)
-
-
-    def close_batch_resize_images(self, event=None):
-        self.root.minsize(545, 200) # Width x Height
-        self.parent.sync_title_with_content()
-        self.batch_resize_images_frame.grid_remove()
-        self.menu.entryconfig("Batch Resize Images...", command=self.parent.show_batch_resize_images)
-        self.parent.show_primary_paned_window()
 
 
 #endregion
