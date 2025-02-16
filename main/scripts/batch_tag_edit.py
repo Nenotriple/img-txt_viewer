@@ -51,7 +51,6 @@ class BatchTagEdit:
         self.parent = None
         self.root = None
         self.text_files = None
-        self.menu = None
         self.batch_tag_edit_frame = None
         self.version = None
         # Local Variables
@@ -68,20 +67,15 @@ class BatchTagEdit:
 #region - Setup - UI
 
 
-    def setup_window(self, parent, root, menu, text_files=None):
+    def setup_window(self, parent, root, text_files=None):
         self.parent = parent
         self.root = root
         self.text_files = text_files
-        self.menu = menu
         self.batch_tag_edit_frame = None
         self.version = self.parent.app_version
 
-        self.root.minsize(750, 250) # Width x Height
-        self.root.title(f"{self.version} - img-txt Viewer - Batch Tag Edit")
         tag_dict = self.analyze_tags()
         self.tag_counts, self.total_unique_tags = self.count_file_tags(tag_dict)
-        self.root.bind('<F5>', self.close_batch_tag_edit)
-        self.menu.entryconfig("Batch Tag Edit...", command=self.close_batch_tag_edit)
         self.original_tags = []
         self.create_ui()
         self.sort_tags(self.tag_counts.items(), "Frequency", False)
@@ -96,11 +90,9 @@ class BatchTagEdit:
 
 
     def setup_primary_frame(self):
-        self.parent.hide_primary_paned_window()
-        self.batch_tag_edit_frame = Frame(self.root)
-        self.batch_tag_edit_frame.grid(row=0, column=0, sticky="nsew")
-        self.batch_tag_edit_frame.grid_rowconfigure(1, weight=1)
+        self.batch_tag_edit_frame = self.parent.batch_tag_edit_tab
         self.batch_tag_edit_frame.grid_columnconfigure(1, weight=1)
+        self.batch_tag_edit_frame.grid_rowconfigure(1, weight=1)
 
 
     def setup_top_frame(self):
@@ -108,7 +100,6 @@ class BatchTagEdit:
         self.top_frame.grid(row=0, column=0, columnspan=99, padx=10, pady=(10, 0), sticky="nsew")
         self.top_frame.grid_columnconfigure(3, weight=1)
 
-        ttk.Button(self.top_frame, text="<---Close", width=15, command=self.close_batch_tag_edit).grid(row=0, column=0, sticky="w")
         self.button_save_changes = ttk.Button(self.top_frame, text="Save Changes", width=15, state="disabled", command=self.apply_tag_edits)
         self.button_save_changes.grid(row=0, column=1, padx=10, sticky="w")
 
@@ -561,16 +552,6 @@ class BatchTagEdit:
             self.filter_tags(self.filter_combobox.get(), self.filter_entry.get())
         elif action == "filter":
             self.filter_tags(self.filter_combobox.get(), self.filter_entry.get())
-
-
-    def close_batch_tag_edit(self, event=None):
-        self.root.minsize(545, 200) # Width x Height
-        self.parent.sync_title_with_content()
-        self.batch_tag_edit_frame.grid_remove()
-        self.root.bind('<F5>', self.parent.show_batch_tag_edit)
-        self.menu.entryconfig("Batch Tag Edit...", command=self.parent.show_batch_tag_edit)
-        self.parent.show_primary_paned_window()
-        self.parent.refresh_text_box()
 
 
 #endregion
