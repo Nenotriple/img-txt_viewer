@@ -1292,8 +1292,7 @@ class ImgTxtViewer:
         root = self.root
         menu = self.individual_operations_menu
         path = self.image_dir.get()
-        image_paths = self.image_files
-        self.crop_ui.setup_window(parent, root, menu, path, image_paths)
+        self.crop_ui.setup_window(parent, root, menu, path)
         self.toggle_alt_ui_menus("CropUI")
 
 
