@@ -1941,7 +1941,7 @@ class ImgTxtViewer:
     def collate_captions(self):
         if not self.check_if_directory():
             return
-        initial_filename = os.path.basename(os.path.normpath(self.image_dir.get())) + ".txt"
+        initial_filename = os.path.basename(os.path.normpath(self.image_dir.get())) + "_wildcard" + ".txt"
         output_file = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text files", "*.txt")], title="Save Combined Captions As", initialfile=initial_filename, initialdir=self.image_dir.get())
         if not output_file:
             return
@@ -1950,7 +1950,9 @@ class ImgTxtViewer:
                 for text_file in self.text_files:
                     if os.path.isfile(text_file):
                         with open(text_file, "r", encoding="utf-8") as infile:
-                            outfile.write(infile.read().strip() + "\n")
+                            content = infile.read().strip()
+                            if content:
+                                outfile.write(content + "\n")
         except Exception as e:
             messagebox.showerror("Error: collate_captions()", f"An error occurred while collating captions:\n\n{e}")
             return
