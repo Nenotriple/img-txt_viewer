@@ -175,12 +175,12 @@ class SettingsManager:
 
 
     def _read_directory_settings(self):
-        last_img_directory = self.config.get("Path", "last_img_directory", fallback=None)
-        if not last_img_directory or not os.path.exists(last_img_directory) or not messagebox.askyesno("Confirmation", "Reload last directory?"):
-            return
         self.external_image_editor_path = self.config.get("Path", "external_image_editor_path", fallback="mspaint")
         self.parent.load_order_var.set(value=self.config.get("Path", "load_order", fallback="Name (default)"))
         self.parent.reverse_load_order_var.set(value=self.config.getboolean("Path", "reverse_load_order", fallback=False))
+        last_img_directory = self.config.get("Path", "last_img_directory", fallback=None)
+        if not last_img_directory or not os.path.exists(last_img_directory) or not messagebox.askyesno("Confirmation", "Reload last directory?"):
+            return
         self.parent.image_dir.set(last_img_directory)
         self.parent.set_working_directory(silent=True)
         self.parent.set_text_file_path(str(self.config.get("Path", "last_txt_directory", fallback=last_img_directory)), silent=True)
