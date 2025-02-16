@@ -67,6 +67,7 @@ You can also find a copy of this guide in the [✨Wiki](https://github.com/Nenot
   - [Auto-Delete Blank Files](#auto-delete-blank-files) - Automatically delete blank text files.
   - [Colored Suggestions](#colored-suggestions) - Enable colorized autocomplete suggestions.
   - [Highlight Selection](#highlight-selection) - Highlight matching selected text.
+  - [Add Comma After Tag](#add-comma-after-tag) - Insert a comma at the end of the text/after inserting a tag.
   - [Big Save Button](#big-save-button) - Enlarge the save button.
   - [List View](#list-view) - Display the text box tags in a list view.
   - [Always On Top](#always-on-top) - Keep the app window on top of other windows.
@@ -894,6 +895,19 @@ Enable this option to colorize autocomplete suggestions based on their category.
   - Via `Options` > `Highlight Selection`.
 - **Functionality:**
   - When enabled, selecting text in the text box will automatically highlight all other instances of the selected text.
+
+
+## Add Comma After Tag
+[⬆️](#index) *(Append ", " to the end of the text box and inserted suggestions)*
+
+- **Access:**
+  - Via `Options` > `Add Comma After Tag`.
+- **Functionality:**
+  - Automatically appends a comma and space `", "` to the last tag in the text box.
+  - Automatically appends a comma and space `", "` after inserting a suggestion into the text box.
+  - The comma is not added if the text box is empty.
+  - The comma will be saved to the text file if "Clean-Text" is disabled!
+  - Useful for quickly adding multiple tags.
 
 
 ## Big Save Button
