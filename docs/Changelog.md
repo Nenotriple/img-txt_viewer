@@ -40,6 +40,49 @@
 - [v1.0](#⬆v10)
 
 
+
+<!--###########################################################################-->
+
+
+## v1.97
+- [⬆️](#index)
+
+<details>
+  <summary>Release Notes for v1.97</summary>
+
+
+**New:**
+- **Wrap selected text in brackets**:
+  - Select text in the primary text box, press a *LEFT / OPENING* bracket key `(`, `[`, `{`, `"`, `'`
+  - Useful for weighted captions, example: `((sometext))`
+- You can now see a list of all tags from the `MyTags` tab, allowing you to insert these tags into MyTags or the text box.
+- Added commands to `AutoTags` context menu:
+  - `Add to Exclude` - Quickly add the selected tag(s) to the Exclude entry.
+  - `Add to Keep` - Quickly add the selected tag(s) to the Keep entry.
+- The `Stats` tab now shows the current character and word count.
+- The `Image Grid` is now built into the primary interface.
+- New option `Add Comma After Tag` [#51](https://github.com/Nenotriple/img-txt_viewer/issues/51)
+  - When enabled (default), a comma and space ", " will be inserted at the end of the text box and after inserting a suggestion.
+
+
+**Fixed:**
+- Fixed errors when:
+  - Typing in the primary text box when no dictionary is selected.
+  - Resetting the font tab.
+  - Closing the Crop image interface.
+  - Attempting to open an image using the default editor `MS Paint`.
+- Fixed an issue where the incorrect tag-list would be loaded when swapping AutoTag models.
+
+
+**Other Changes:**
+- It's now possible to *loop around* while clicking inside the Thumbnail panel for navigation.
+- You can now resize the AutoTag tag list.
+
+
+</details>
+<br>
+
+
 <!--###########################################################################-->
 
 ## v1.96
@@ -166,7 +209,6 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
 </details>
 <br>
-
 
 
 <!--###########################################################################-->
