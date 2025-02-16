@@ -267,7 +267,6 @@ class ImgTxtViewer:
         self.root.bind('<F1>', lambda event: self.toggle_image_grid(event))
         self.root.bind('<F2>', lambda event: self.toggle_zoom_popup(event))
         self.root.bind('<F4>', lambda event: self.open_image_in_editor(event))
-        self.root.bind('<F5>', lambda event: self.show_batch_tag_edit(event))
         self.root.bind('<Control-w>', lambda event: self.on_closing(event))
 
         # Display window size on resize:
@@ -450,22 +449,35 @@ class ImgTxtViewer:
 
 
     def create_primary_ui(self):
-        self.setup_primary_frames()
-        self.create_primary_widgets()
+        # Create Notebook as the main container for UI widgets
+        self.main_notebook = ttk.Notebook(self.root)
+        self.main_notebook.pack(expand=True, fill="both")
+        # Create Notebook Tabs
+        self.primary_tab = Frame(self.main_notebook)
+        self.batch_tag_edit_tab = Frame(self.main_notebook)
+        self.batch_resize_images_tab = Frame(self.main_notebook)
+        self.find_dupe_file_tab = Frame(self.main_notebook)
+        self.crop_ui_tab = Frame(self.main_notebook)
+        self.main_notebook.add(self.primary_tab, text="Tagger")
+        self.main_notebook.add(self.batch_tag_edit_tab, text="Tag-Editor")
+        self.main_notebook.add(self.batch_resize_images_tab, text="Batch Resize")
+        self.main_notebook.add(self.find_dupe_file_tab, text="Find Dupes")
+        self.main_notebook.add(self.crop_ui_tab, text="Crop")
+        # Build the primary UI within the 'Primary' tab
+        self.setup_primary_frames(self.primary_tab)
+        self.create_primary_widgets(self.primary_tab)
 
 
-    def setup_primary_frames(self):
-        # Configure the grid weights for the master window frame
-        self.root.grid_rowconfigure(0, weight=1)
-        self.root.grid_columnconfigure(0, weight=1)
-
-        # primary_paned_window : is used to contain the ImgTxtViewer UI.
-        self.primary_paned_window = PanedWindow(self.root, orient="horizontal", sashwidth=6, bg="#d0d0d0", bd=0)
+    def setup_primary_frames(self, container):
+        # Configure the grid weights for the container tab
+        container.grid_rowconfigure(0, weight=1)
+        container.grid_columnconfigure(0, weight=1)
+        # primary_paned_window is used to contain the ImgTxtViewer UI.
+        self.primary_paned_window = PanedWindow(container, orient="horizontal", sashwidth=6, bg="#d0d0d0", bd=0)
         self.primary_paned_window.grid(row=0, column=0, sticky="nsew")
         self.primary_paned_window.bind("<B1-Motion>", self.disable_button)
-
-        # master_image_frame : is exclusively used for the master_image_inner_frame and image_grid.
-        self.master_image_frame = Frame(self.root)
+        # master_image_frame: exclusively used for the master_image_inner_frame and image_grid.
+        self.master_image_frame = Frame(container)
         self.master_image_frame.grid_rowconfigure(0, weight=0)  # stats frame row
         self.master_image_frame.grid_rowconfigure(1, weight=1)  # image frame row
         self.master_image_frame.grid_columnconfigure(0, weight=1)
@@ -477,21 +489,19 @@ class ImgTxtViewer:
         self.image_grid = image_grid.ImageGrid(self.master_image_frame, self)
         self.image_grid.grid(row=1, column=0, sticky="nsew")
         self.image_grid.grid_remove()
-
-        # master_control_frame : serves as a container for all primary UI frames, with the exception of the master_image_frame.
-        self.master_control_frame = Frame(self.root)
+        # master_control_frame serves as a container for all primary UI frames (except the master image frame)
+        self.master_control_frame = Frame(container)
         self.primary_paned_window.add(self.master_control_frame, stretch="always")
         self.primary_paned_window.paneconfigure(self.master_control_frame, minsize=300)
         self.primary_paned_window.update()
         self.primary_paned_window.sash_place(0, 0, 0)
 
 
-    def create_primary_widgets(self):
+    def create_primary_widgets(self, container):
         # Image stats
         self.stats_frame = Frame(self.master_image_frame)
         self.stats_frame.grid(row=0, column=0, sticky="new")
         self.stats_frame.grid_columnconfigure(1, weight=1)
-
         # View Menu
         self.view_menubutton = ttk.Menubutton(self.stats_frame, text="View", state="disable")
         self.view_menubutton.grid(row=0, column=0)
@@ -509,12 +519,10 @@ class ImgTxtViewer:
         self.view_menu.add_cascade(label="Image Display Quality", menu=image_quality_menu)
         for value in ["High", "Normal", "Low"]:
             image_quality_menu.add_radiobutton(label=value, variable=self.image_quality_var, value=value, command=self.set_image_quality)
-
         # Image Stats
         self.label_image_stats = Label(self.stats_frame, text="...")
         self.label_image_stats.grid(row=0, column=1, sticky="ew")
         self.label_image_stats_tooltip = ToolTip.create(self.label_image_stats, "...", 250, 6, 12)
-
         # Primary Image
         self.primary_display_image = Label(self.master_image_inner_frame, cursor="hand2")
         self.primary_display_image.grid(row=1, column=0, sticky="nsew")
@@ -528,16 +536,13 @@ class ImgTxtViewer:
         self.popup_zoom = PopUpZoom(self.primary_display_image)
         self.toggle_zoom_var = BooleanVar(value=self.popup_zoom.zoom_enabled.get())
         self.image_preview_tooltip = ToolTip.create(self.primary_display_image, "Right-Click for more\nMiddle-click to open in file explorer\nDouble-Click to open in your system image viewer\nALT+Left/Right or Mouse-Wheel to move between pairs", 1000, 6, 12)
-
         # Thumbnail Panel
         self.thumbnail_panel = ThumbnailPanel(master=self.master_image_inner_frame, parent=self)
         self.thumbnail_panel.grid(row=3, column=0, sticky="ew")
-
         # Edit Image Panel
         self.edit_image_panel = Frame(self.master_image_inner_frame, relief="ridge", bd=1)
         self.edit_image_panel.grid(row=2, column=0, sticky="ew")
         self.edit_image_panel.grid_remove()
-
         # Directory Selection
         directory_frame = Frame(self.master_control_frame)
         directory_frame.pack(side="top", fill="x", padx=(0,2))
@@ -569,7 +574,6 @@ class ImgTxtViewer:
         self.browse_button.bind("<Button-3>", self.open_browse_context_menu)
         self.open_button = ttk.Button(directory_frame, text="Open", width=8, takefocus=False, command=lambda: self.open_directory(self.directory_entry.get()))
         self.open_button.pack(side="left", pady=2)
-
         # Image Index
         self.index_frame = Frame(self.master_control_frame, relief="raised")
         self.index_frame.pack(side="top", fill="x", padx=2)
@@ -588,7 +592,6 @@ class ImgTxtViewer:
         self.index_context_menu.add_command(label="Next Empty", accelerator="Ctrl+E", command=self.index_goto_next_empty)
         self.total_images_label = Label(self.index_frame, text=f"of {len(self.image_files)}", state="disabled")
         self.total_images_label.pack(side="left")
-
         # Save Button
         self.save_button = ttk.Button(self.index_frame, text="Save", state="disabled", style="Blue.TButton", padding=(5, 5), takefocus=False, command=self.save_text_file)
         self.save_button.pack(side="left", pady=2, fill="x", expand=True)
@@ -596,7 +599,6 @@ class ImgTxtViewer:
         self.auto_save_checkbutton = ttk.Checkbutton(self.index_frame, width=10, text="Auto-save", state="disabled", variable=self.auto_save_var, takefocus=False, command=self.sync_title_with_content)
         self.auto_save_checkbutton.pack(side="left")
         ToolTip.create(self.auto_save_checkbutton, "Automatically save the current text file when:\nNavigating img-txt pairs, changing active directory, or closing the app", 1000, 6, 12)
-
         # Navigation Buttons
         nav_button_frame = Frame(self.master_control_frame)
         nav_button_frame.pack(fill="x", padx=2)
@@ -606,11 +608,9 @@ class ImgTxtViewer:
         self.prev_button.pack(side="right", fill="x", expand=True)
         ToolTip.create(self.next_button, "Hotkey: ALT+R\nHold shift to advance by 5", 1000, 6, 12)
         ToolTip.create(self.prev_button, "Hotkey: ALT+L\nHold shift to advance by 5", 1000, 6, 12)
-
         # Suggestion text
         self.suggestion_frame = Frame(self.master_control_frame, bg='#f0f0f0')
         self.suggestion_frame.pack(side="top", fill="x", pady=2)
-        # Suggestion Text
         self.suggestion_textbox = Text(self.suggestion_frame, height=1, width=1, borderwidth=0, highlightthickness=0, bg='#f0f0f0', state="disabled", cursor="arrow")
         self.suggestion_textbox.pack(side="left", fill="x", expand=True)
         self.suggestion_textbox.bind("<Button-1>", self.disable_button)
@@ -648,7 +648,6 @@ class ImgTxtViewer:
         # Suggestion Options
         self.suggestion_menubutton = ttk.Button(self.suggestion_frame, text="☰", takefocus=False, width=2, command=lambda: self.show_suggestion_context_menu(button=True))
         self.suggestion_menubutton.pack(side="right", padx=2)
-
         # Startup info text
         self.info_text = scrolledtext.ScrolledText(self.master_control_frame)
         self.info_text.pack(expand=True, fill="both")
@@ -1266,50 +1265,29 @@ class ImgTxtViewer:
     def show_batch_tag_edit(self, event=None):
         parent = self
         root = self.root
-        menu = self.batch_operations_menu
         text_files = self.text_files
-        self.batch_tag_edit.setup_window(parent, root, menu, text_files)
-        self.toggle_alt_ui_menus("BatchTagEdit")
+        self.batch_tag_edit.setup_window(parent, root, text_files)
 
 
     def show_batch_resize_images(self, event=None):
         parent = self
         root = self.root
-        menu = self.batch_operations_menu
         path = self.image_dir.get()
-        self.batch_resize_images.setup_window(parent, root, menu, path)
-        self.toggle_alt_ui_menus("BatchResizeImages")
+        self.batch_resize_images.setup_window(parent, root, path)
 
 
     def show_find_dupe_file(self, event=None):
         parent = self
         root = self.root
-        menu = self.batch_operations_menu
         path = self.image_dir.get()
-        self.find_dupe_file.setup_window(parent, root, menu, path)
-        self.toggle_alt_ui_menus("FindDupeFile")
+        self.find_dupe_file.setup_window(parent, root, path)
 
 
     def show_crop_ui(self):
         parent = self
         root = self.root
-        menu = self.individual_operations_menu
         path = self.image_dir.get()
-        self.crop_ui.setup_window(parent, root, menu, path)
-        self.toggle_alt_ui_menus("CropUI")
-
-
-# --------------------------------------
-# Handle Primary Paned Window (ImgTxtViewer)
-# --------------------------------------
-    def show_primary_paned_window(self, event=None):
-        self.primary_paned_window.grid()
-        self.toggle_alt_ui_menus("ImgTxtViewer")
-        self.show_pair()
-
-
-    def hide_primary_paned_window(self, event=None):
-        self.primary_paned_window.grid_remove()
+        self.crop_ui.setup_window(parent, root, path)
 
 
 # --------------------------------------
