@@ -2572,6 +2572,7 @@ class ImgTxtViewer:
                 else:
                     self.load_pairs(silent=True)
                     self.set_text_file_path(directory, silent=True)
+                self.jump_to_image(0)
         except FileNotFoundError:
             messagebox.showwarning("Invalid Directory", f"The system cannot find the path specified:\n\n{self.directory_entry.get()}")
 
