@@ -2373,7 +2373,11 @@ class ImgTxtViewer:
 
 
     def _save_file(self):
+        if not self.text_files or self.current_index >= len(self.text_files):
+            return False
         text_file = self.text_files[self.current_index]
+        if not text_file:
+            return False
         text = self.text_box.get("1.0", "end-1c")
         if os.path.exists(text_file):
             with open(text_file, "r", encoding="utf-8") as file:
@@ -2391,8 +2395,11 @@ class ImgTxtViewer:
             text = self.cleanup_text(text)
         if self.list_mode_var.get():
             text = ', '.join(text.split('\n'))
-        with open(text_file, "w+", encoding="utf-8") as file:
-            file.write(text)
+        try:
+            with open(text_file, "w+", encoding="utf-8") as file:
+                file.write(text)
+        except (IOError, PermissionError):
+            return False
         return True
 
 
@@ -2859,8 +2866,7 @@ class ImgTxtViewer:
                             deleted_pair.append((file_list, index, trash_file))
                             del file_list[index]
                     self.deleted_pairs.append(deleted_pair)
-                    self.update_total_image_label()
-                    self.show_pair()
+                    self._nav_after_delete(index)
                     self.undo_state.set("normal")
                     self.individual_operations_menu.entryconfig("Undo Delete", state="normal")
                 else:
@@ -2878,12 +2884,20 @@ class ImgTxtViewer:
                             deleted_pair.append((file_list, index, None))
                             del file_list[index]
                     self.deleted_pairs = [pair for pair in self.deleted_pairs if pair != deleted_pair]
-                    self.update_total_image_label()
-                    self.show_pair()
+                    self._nav_after_delete(index)
                 else:
                     pass
         except (PermissionError, IOError, TclError) as e:
             messagebox.showerror("Error: delete_pair()", f"An error occurred while deleting the img-txt pair.\n\n{e}")
+
+
+    def _nav_after_delete(self, index):
+        self.update_total_image_label()
+        if index >= len(self.image_files):
+            self.current_index = max(0, len(self.image_files) - 1)
+            self.jump_to_image(self.current_index)
+        else:
+            self.show_pair()
 
 
     def undo_delete_pair(self):
