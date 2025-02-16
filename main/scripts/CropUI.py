@@ -1071,7 +1071,6 @@ class CropInterface:
 
         # Image Variables
         self.gif_frames = []
-        self.image_files = []
         self.image_info_cache = {}
         self.selection_aspect = 0
         self.current_index = 0
@@ -1099,13 +1098,13 @@ class CropInterface:
 # --------------------------------------
 # UI
 # --------------------------------------
-    def setup_window(self, parent, root, menu, path=None, image_paths=None):
+    def setup_window(self, parent, root, menu, path=None):
         self.parent = parent
         self.root = root
         self.menu = menu
         if os.path.exists(path):
             self.image_path = path
-        self.image_files = image_paths
+        self.image_files = self.parent.image_files
         self.version = self.parent.app_version
         self.text_controller = self.parent.text_controller
         # Window
@@ -1153,8 +1152,6 @@ class CropInterface:
         self.path_entry = ttk.Entry(directory_frame)
         self.path_entry.pack(side="left", fill="x", expand=True)
         self.text_controller.bind_entry_functions(self.path_entry)
-        browse_button = ttk.Button(directory_frame, text="Browse...", width=9, command=self.open_directory_dialog)
-        browse_button.pack(side="left")
         open_button = ttk.Button(directory_frame, text="Open", width=9, command=lambda: self.parent.open_directory(self.path_entry.get()))
         open_button.pack(side="left")
         # Help
@@ -1564,19 +1561,6 @@ class CropInterface:
 # --------------------------------------
 # Main
 # --------------------------------------
-    def open_directory_dialog(self):
-        dir_path = filedialog.askdirectory()
-        if (dir_path and os.path.exists(dir_path)):
-            self.image_files = [os.path.join(dir_path, f) for f in os.listdir(dir_path) if f.lower().endswith((".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif"))]
-            self.current_index = 0
-            if self.image_files:
-                self.display_image(self.image_files[self.current_index])
-                self.path_entry.delete(0, "end")
-                self.path_entry.insert(0, dir_path)
-            else:
-                messagebox.showerror("Error", "No image files found in the selected directory.")
-
-
     def display_image(self, img_path):
         self.img_canvas._display_image(img_path)
         self.crop_selection.clear_selection()
@@ -1588,6 +1572,8 @@ class CropInterface:
         self.height_spinbox.config(to=self.img_canvas.original_img_height)
         self.image_index_spinbox.config(from_=1, to=len(self.image_files))
         self.image_index_spinbox.set(self.current_index + 1)
+        self.path_entry.delete(0, "end")
+        self.path_entry.insert(0, img_path)
         if self.image_file.lower().endswith('.gif'):
             self.extract_gif_frames()
             self.extract_gif_button.config(state="normal")
