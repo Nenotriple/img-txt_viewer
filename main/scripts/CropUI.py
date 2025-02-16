@@ -1121,7 +1121,6 @@ class CropInterface:
             self.path_entry.insert(0, path)
             self.current_index = self.parent.current_index
             self.display_image(self.image_files[self.current_index])
-        #self.root.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == self.root else None, add="+")
 
 
     def create_main_frame(self):
@@ -1656,8 +1655,7 @@ class CropInterface:
 
 
     def generate_unique_filename(self, original_path):
-        _, filename = os.path.split(original_path)
-        directory = self.path_entry.get()
+        directory, filename = os.path.split(original_path)
         name, ext = os.path.splitext(filename)
         counter = 1
         while True:
