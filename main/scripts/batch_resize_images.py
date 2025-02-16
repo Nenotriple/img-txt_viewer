@@ -143,11 +143,9 @@ class BatchResizeImages:
         # Configure the tab to expand properly
         self.parent.batch_resize_images_tab.grid_rowconfigure(0, weight=1)
         self.parent.batch_resize_images_tab.grid_columnconfigure(0, weight=1)
-
         # Create and configure the main frame
         self.batch_resize_images_frame = tk.Frame(self.parent.batch_resize_images_tab)
         self.batch_resize_images_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
-
         # Configure the main frame's grid
         self.batch_resize_images_frame.grid_rowconfigure(1, weight=1)
         self.batch_resize_images_frame.grid_columnconfigure(0, weight=1)
