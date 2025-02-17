@@ -685,8 +685,13 @@ class FindDupeFile:
 #region -  Misc
 
 
-    def select_folder(self):
-        new_folder_path = filedialog.askdirectory()
+    def select_folder(self, path=None):
+        if self.process_stopped.get() == False:
+            return
+        if path is None:
+            new_folder_path = filedialog.askdirectory()
+        else:
+            new_folder_path = path
         if new_folder_path:
             self.tray_label_duplicates.config(text="Duplicates: 00000")
             self.tray_label_total_files.config(text="Files Checked: 000000")
