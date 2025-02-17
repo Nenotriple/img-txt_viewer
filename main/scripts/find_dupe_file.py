@@ -78,20 +78,15 @@ class FindDupeFile:
 #region -  Interface
 
 
-    def setup_window(self, parent, root, menu, path=None):
+    def setup_window(self, parent, root, path=None):
         self.parent = parent
         self.root = root
-        self.menu = menu
         self.working_dir = path
         self.version = self.parent.app_version
-        self.root.minsize(750, 250) # Width x Height
-        self.root.title(f"{self.version} - img-txt Viewer - Find Duplicate Files")
-        self.menu.entryconfig("Find Duplicate Files...", command=self.close_find_dupe_files)
         self.setup_ui()
         if path:
             self.folder_entry.insert(0, path)
         self.all_widgets = [
-            self.close_button,
             self.file_menu_button,
             self.options_menu_button,
             self.folder_entry,
@@ -120,9 +115,10 @@ class FindDupeFile:
 
 
     def setup_primary_frame(self):
-        self.parent.hide_primary_paned_window()
-        self.find_dupe_files_frame = ttk.Frame(self.root)
-        self.find_dupe_files_frame.grid(row=0, column=0, sticky="nsew", padx=40, pady=(0,20))
+        self.parent.find_dupe_file_tab.columnconfigure(0, weight=1)
+        self.parent.find_dupe_file_tab.rowconfigure(0, weight=1)
+        self.find_dupe_files_frame = ttk.Frame(self.parent.find_dupe_file_tab)
+        self.find_dupe_files_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
         self.find_dupe_files_frame.grid_rowconfigure(1, weight=1)
         self.find_dupe_files_frame.grid_columnconfigure(1, weight=1)
 
@@ -133,9 +129,6 @@ class FindDupeFile:
     def setup_top_row(self):
         self.top_frame = ttk.Frame(self.find_dupe_files_frame)
         self.top_frame.pack(fill="x", padx=2, pady=2)
-        # Close Button
-        self.close_button = ttk.Button(self.top_frame, text="<---Close", width=15, command=self.close_find_dupe_files)
-        self.close_button.pack(side="left", fill="x", padx=2, pady=2)
         self.create_menubar()
         # Help Button
         self.help_button = ttk.Button(self.top_frame, text="?", width=2)
@@ -745,17 +738,8 @@ class FindDupeFile:
 
     def close_find_dupe_files(self):
         self.is_closing = True
-        self.stop_process()
         self.status_check()
-        self.root.after(1000, self._close_find_dupe_files)
-
-
-    def _close_find_dupe_files(self):
-        self.root.minsize(545, 200) # Width x Height
-        self.parent.sync_title_with_content()
-        self.find_dupe_files_frame.grid_remove()
-        self.menu.entryconfig("Find Duplicate Files...", command=self.parent.show_find_dupe_file)
-        self.parent.show_primary_paned_window()
+        self.stop_process()
 
 
 #endregion
