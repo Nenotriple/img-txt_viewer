@@ -1323,6 +1323,8 @@ class ImgTxtViewer:
             self.find_dupe_file.setup_window(parent, root, path)
         if show:
             self.main_notebook.select(self.find_dupe_file_tab)
+            if self.find_dupe_file.working_dir != self.image_dir.get():
+                self.find_dupe_file.select_folder(self.image_dir.get())
 
 
     def create_crop_ui(self, show=False):
