@@ -47,7 +47,6 @@ class FindDupeFile:
         # Inherited Variables
         self.parent = None
         self.root = None
-        self.menu = None
         self.working_dir = None
         self.version = None
 
@@ -671,16 +670,12 @@ class FindDupeFile:
         widgets_to_disable = self.all_widgets
         for widgets in widgets_to_disable:
             widgets.config(state="disabled")
-        #for menu_item in ["File", "Options"]:
-        #    self.menubar.entryconfig(menu_item, state="disabled")
 
 
     def enable_all(self):
         widgets_to_disable = self.all_widgets
         for widgets in widgets_to_disable:
             widgets.config(state="normal")
-        #for menu_item in ["File", "Options"]:
-        #    self.menubar.entryconfig(menu_item, state="normal")
 
 
     def toggle_widgets(self, *args):
