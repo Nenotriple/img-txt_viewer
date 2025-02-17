@@ -111,6 +111,7 @@ class BatchResizeImages:
         self.working_dir = None
         self.version = None
 
+        self.resize_thread = None
         self.about_window = None
         self.files_processed = 0
 
@@ -301,7 +302,7 @@ class BatchResizeImages:
         self.frame_buttons.pack(fill="x")
 
         # Resize Button
-        self.button_resize = ttk.Button(self.frame_buttons, text="Resize!", command=self._resize)
+        self.button_resize = ttk.Button(self.frame_buttons, text="Resize!", command=self.start_resize_process)
         self.button_resize.pack(side="left", fill="x", expand=True, padx=2, pady=2)
 
         # Cancel Button
@@ -424,6 +425,8 @@ class BatchResizeImages:
 
 
     def select_folder(self, path=None):
+        if self.is_resizing():
+            return
         try:
             if path:
                 new_folder_path = path
@@ -648,12 +651,12 @@ class BatchResizeImages:
 # --------------------------------------
 # Primary Resize process
 # --------------------------------------
-    def _resize(self):
-        thread = threading.Thread(target=self.resize_thread)
-        thread.start()
+    def start_resize_process(self):
+        self.resize_thread = threading.Thread(target=self._resize_thread)
+        self.resize_thread.start()
 
 
-    def resize_thread(self):
+    def _resize_thread(self):
         self.percent_complete.set(0)
         self.stop = False
         self.files_processed = 0
@@ -706,6 +709,10 @@ class BatchResizeImages:
             finally:
                 self.button_resize.config(state="normal")
                 self.toggle_widgets(state="normal")
+
+
+    def is_resizing(self):
+        return self._resize_thread is not None and self._resize_thread.is_alive()
 
 
     def save_image(self, img, output_folder_path, filename, total_images):
