@@ -402,13 +402,13 @@ class ImgTxtViewer:
         self.batch_operations_menu = Menu(self.toolsMenu, tearoff=0)
         self.toolsMenu.add_cascade(label="Batch Operations", underline=0, state="disable", menu=self.batch_operations_menu)
         self.batch_operations_menu.add_command(label="Batch Rename And/Or Convert...", underline=3, command=self.rename_and_convert_pairs)
-        self.batch_operations_menu.add_command(label="Batch Resize Images...", underline=10, command=self.show_batch_resize_images)
+        self.batch_operations_menu.add_command(label="Batch Resize Images...", underline=10, command=self.create_batch_resize_images)
         self.batch_operations_menu.add_command(label="Batch Crop Images...", underline=8, command=self.batch_crop_images)
-        self.batch_operations_menu.add_command(label="Batch Tag Edit...", underline=0, accelerator="F5", command=self.show_batch_tag_edit)
+        self.batch_operations_menu.add_command(label="Batch Tag Edit...", underline=0, accelerator="F5", command=self.create_batch_tag_edit)
         self.batch_operations_menu.add_command(label="Batch Upscale...", underline=0, command=lambda: self.upscale_image(batch=True))
         self.batch_operations_menu.add_separator()
         self.batch_operations_menu.add_command(label="Zip Dataset...", underline=0, command=self.archive_dataset)
-        self.batch_operations_menu.add_command(label="Find Duplicate Files...", underline=0, command=self.show_find_dupe_file)
+        self.batch_operations_menu.add_command(label="Find Duplicate Files...", underline=0, command=self.create_find_dupe_file)
         self.batch_operations_menu.add_command(label="Cleanup All Text Files...", underline=1, command=self.cleanup_all_text_files)
         self.batch_operations_menu.add_command(label="Create Blank Text Pairs...", underline=0, command=self.create_blank_text_files)
         self.batch_operations_menu.add_command(label="Create Wildcard From Captions...", underline=0, command=self.collate_captions)
@@ -421,7 +421,7 @@ class ImgTxtViewer:
         self.toolsMenu.add_cascade(label="Edit Current pair", underline=0, state="disable", menu=self.individual_operations_menu)
         self.individual_operations_menu.add_command(label="Rename Pair", underline=0, command=self.manually_rename_single_pair)
         self.individual_operations_menu.add_command(label="Upscale...", underline=0, command=lambda: self.upscale_image(batch=False))
-        self.individual_operations_menu.add_command(label="Crop...", underline=0, command=self.show_crop_ui)
+        self.individual_operations_menu.add_command(label="Crop...", underline=0, command=self.create_crop_ui)
         self.individual_operations_menu.add_command(label="Resize...", underline=0, command=self.resize_image)
         self.individual_operations_menu.add_command(label="Expand", underline=1, command=self.expand_image)
         self.individual_operations_menu.add_command(label="Rotate", underline=1, command=self.rotate_current_image)
@@ -449,9 +449,17 @@ class ImgTxtViewer:
 
 
     def create_primary_ui(self):
-        # Create Notebook as the main container for UI widgets
+        # The main container for UI widgets and Alt-UI tabs
+        self.create_main_notebook()
+        # Build the primary UI within the 'Primary' tab
+        self.setup_primary_frames(self.primary_tab)
+        self.create_primary_widgets(self.primary_tab)
+
+
+    def create_main_notebook(self):
         self.main_notebook = ttk.Notebook(self.root)
         self.main_notebook.pack(expand=True, fill="both")
+        self.main_notebook.bind("<<NotebookTabChanged>>", self.on_altui_tab_change)
         # Create Notebook Tabs
         self.primary_tab = Frame(self.main_notebook)
         self.batch_tag_edit_tab = Frame(self.main_notebook)
@@ -463,9 +471,31 @@ class ImgTxtViewer:
         self.main_notebook.add(self.batch_resize_images_tab, text="Batch Resize")
         self.main_notebook.add(self.find_dupe_file_tab, text="Find Dupes")
         self.main_notebook.add(self.crop_ui_tab, text="Crop")
-        # Build the primary UI within the 'Primary' tab
-        self.setup_primary_frames(self.primary_tab)
-        self.create_primary_widgets(self.primary_tab)
+
+
+    def on_altui_tab_change(self, event):
+        selected_tab_index = self.main_notebook.index(self.main_notebook.select())
+        tab_name = self.main_notebook.tab(selected_tab_index, "text")
+        self.current_ui_state = {"tab": tab_name, "index": selected_tab_index}
+        tab_states = {
+            "Tagger": "ImgTxtViewer",
+            "Tag-Editor": "BatchTagEdit",
+            "Batch Resize": "BatchResize",
+            "Find Dupes": "FindDupeFile",
+            "Crop": "CropUI"
+        }
+        self.ui_state = tab_states.get(tab_name)
+        if self.ui_state == "ImgTxtViewer":
+            pass
+        elif self.ui_state == "BatchTagEdit":
+            self.create_batch_tag_edit(show=True)
+        elif self.ui_state == "BatchResize":
+            self.create_batch_resize_images(show=True)
+        elif self.ui_state == "FindDupeFile":
+            self.create_find_dupe_file(show=True)
+        elif self.ui_state == "CropUI":
+            self.create_crop_ui(show=True)
+
 
 
     def setup_primary_frames(self, container):
@@ -856,7 +886,7 @@ class ImgTxtViewer:
         self.image_context_menu.add_command(label="Rename Pair", command=self.manually_rename_single_pair)
         self.image_context_menu.add_command(label="Upscale...", command=lambda: self.upscale_image(batch=False))
         self.image_context_menu.add_command(label="Resize...", command=self.resize_image)
-        self.image_context_menu.add_command(label="Crop...", command=self.show_crop_ui)
+        self.image_context_menu.add_command(label="Crop...", command=self.create_crop_ui)
         if not self.image_file.lower().endswith('.gif'):
             self.image_context_menu.add_command(label="Expand", command=self.expand_image)
         else:
@@ -1262,32 +1292,44 @@ class ImgTxtViewer:
 #region - Alt-UI Setup
 
 
-    def show_batch_tag_edit(self, event=None):
+    def create_batch_tag_edit(self, show=True):
         parent = self
         root = self.root
         text_files = self.text_files
-        self.batch_tag_edit.setup_window(parent, root, text_files)
+        if self.batch_tag_edit.parent is None:
+            self.batch_tag_edit.setup_window(parent, root, text_files)
+        if show:
+            self.main_notebook.select(self.batch_tag_edit_tab)
 
 
-    def show_batch_resize_images(self, event=None):
+    def create_batch_resize_images(self, show=False):
         parent = self
         root = self.root
         path = self.image_dir.get()
-        self.batch_resize_images.setup_window(parent, root, path)
+        if self.batch_resize_images.parent is None:
+            self.batch_resize_images.setup_window(parent, root, path)
+        if show:
+            self.main_notebook.select(self.batch_resize_images_tab)
 
 
-    def show_find_dupe_file(self, event=None):
+    def create_find_dupe_file(self, show=False):
         parent = self
         root = self.root
         path = self.image_dir.get()
-        self.find_dupe_file.setup_window(parent, root, path)
+        if self.find_dupe_file.parent is None:
+            self.find_dupe_file.setup_window(parent, root, path)
+        if show:
+            self.main_notebook.select(self.find_dupe_file_tab)
 
 
-    def show_crop_ui(self):
+    def create_crop_ui(self, show=False):
         parent = self
         root = self.root
-        path = self.image_dir.get()
-        self.crop_ui.setup_window(parent, root, path)
+        if self.crop_ui.parent is None:
+            self.crop_ui.setup_window(parent, root)
+        if show:
+            self.main_notebook.select(self.crop_ui_tab)
+            self.crop_ui.get_image_path_and_index()
 
 
 # --------------------------------------
