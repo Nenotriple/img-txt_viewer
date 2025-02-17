@@ -1044,14 +1044,17 @@ class ImageCanvas(tk.Canvas):
 
 
     def refresh_image(self):
-        if not self.img_path:
+        if not self.img_path or not all(self.new_size):
             return
-        self.img_resized = self.original_img.resize(self.new_size, Image.LANCZOS)
-        self.img_thumbnail = ImageTk.PhotoImage(self.img_resized)
-        self.delete("all")
-        self.create_image(self.x_off, self.y_off, anchor="nw", image=self.img_thumbnail)
-        if hasattr(self, 'crop_selection'):
-            self.crop_selection.redraw_rect()
+        try:
+            self.img_resized = self.original_img.resize(self.new_size, Image.LANCZOS)
+            self.img_thumbnail = ImageTk.PhotoImage(self.img_resized)
+            self.delete("all")
+            self.create_image(self.x_off, self.y_off, anchor="nw", image=self.img_thumbnail)
+            if hasattr(self, 'crop_selection'):
+                self.crop_selection.redraw_rect()
+        except ValueError:
+            pass
 
 
 #endregion
@@ -1064,7 +1067,6 @@ class CropInterface:
         # Primary variables
         self.parent = None
         self.root = None
-        self.menu = None
         self.image_path = None
         self.version = None
         self.text_controller = None
@@ -1098,19 +1100,15 @@ class CropInterface:
 # --------------------------------------
 # UI
 # --------------------------------------
-    def setup_window(self, parent, root, menu, path=None):
+    def setup_window(self, parent, root, path=None):
         self.parent = parent
         self.root = root
-        self.menu = menu
         if os.path.exists(path):
             self.image_path = path
         self.image_files = self.parent.image_files
         self.version = self.parent.app_version
         self.text_controller = self.parent.text_controller
         # Window
-        self.root.minsize(530, 370)
-        self.root.title(f"{self.version} - img-txt Viewer - Crop Image")
-        self.menu.entryconfig("Crop...", command=self.close_crop_ui)
         self.create_main_frame()
         self.setup_top_frame()
         self.create_image_ui()
@@ -1124,24 +1122,21 @@ class CropInterface:
 
 
     def create_main_frame(self):
-        self.parent.hide_primary_paned_window()
-        self.crop_ui_frame = tk.Frame(self.root)
+        self.parent.crop_ui_tab.columnconfigure(0, weight=1)
+        self.parent.crop_ui_tab.rowconfigure(0, weight=1)
+        self.crop_ui_frame = tk.Frame(self.parent.crop_ui_tab)
         self.crop_ui_frame.grid(row=0, column=0, sticky="nsew")
         self.crop_ui_frame.grid_rowconfigure(0, weight=0)
         self.crop_ui_frame.grid_rowconfigure(1, weight=0)
         self.crop_ui_frame.grid_rowconfigure(2, weight=1)
         self.crop_ui_frame.grid_columnconfigure(0, weight=1)
         self.crop_ui_frame.grid_columnconfigure(1, weight=0)
-        self.root.grid_rowconfigure(0, weight=1)
-        self.root.grid_columnconfigure(0, weight=1)
 
 
     def setup_top_frame(self):
         top_frame = tk.Frame(self.crop_ui_frame)
         top_frame.grid(row=0, column=0, columnspan=99, padx=self.padx, pady=(5,0), sticky="nsew")
         top_frame.grid_columnconfigure(3, weight=1)
-        # Close
-        ttk.Button(top_frame, text="<---Close", width=15, command=self.close_crop_ui).grid(row=0, column=0, sticky="w")
         # Crop Info
         self.crop_info_label = ttk.Label(top_frame, text="Crop to: 0x0 (0:0)", anchor="w")
         self.crop_info_label.grid(row=0, column=2, padx=self.padx, sticky="ew")
@@ -1876,11 +1871,6 @@ class CropInterface:
 # Close CropUI
 # --------------------------------------
     def close_crop_ui(self, event=None):
-        self.root.minsize(545, 200) # Width x Height
-        self.parent.sync_title_with_content()
-        self.crop_ui_frame.grid_remove()
-        self.menu.entryconfig("Crop...", command=self.parent.show_crop_ui)
-        self.parent.show_primary_paned_window()
         self.parent.refresh_text_box()
         self.parent.refresh_file_lists()
         self.parent.debounce_update_thumbnail_panel()
