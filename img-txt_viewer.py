@@ -111,6 +111,7 @@ class ImgTxtViewer:
 
         # Setup UI state
         self.ui_state = "ImgTxtViewer"
+        self.current_ui_state = {"tab": "Tagger", "index": 0}
 
         # Window drag variables
         self.drag_x = None
@@ -1310,6 +1311,8 @@ class ImgTxtViewer:
             self.batch_resize_images.setup_window(parent, root, path)
         if show:
             self.main_notebook.select(self.batch_resize_images_tab)
+            if self.batch_resize_images.working_dir != self.image_dir.get():
+                self.batch_resize_images.select_folder(self.image_dir.get())
 
 
     def create_find_dupe_file(self, show=False):
