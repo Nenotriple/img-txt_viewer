@@ -97,7 +97,7 @@ class BatchTagEdit:
 
     def setup_top_frame(self):
         self.top_frame = Frame(self.batch_tag_edit_frame)
-        self.top_frame.grid(row=0, column=0, columnspan=99, padx=10, pady=(10, 0), sticky="nsew")
+        self.top_frame.grid(row=0, column=0, columnspan=99, sticky="nsew")
         self.top_frame.grid_columnconfigure(3, weight=1)
 
         self.button_save_changes = ttk.Button(self.top_frame, text="Save Changes", width=15, state="disabled", command=self.apply_tag_edits)
