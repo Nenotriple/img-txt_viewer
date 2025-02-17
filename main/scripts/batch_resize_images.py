@@ -145,7 +145,7 @@ class BatchResizeImages:
         self.parent.batch_resize_images_tab.grid_columnconfigure(0, weight=1)
         # Create and configure the main frame
         self.batch_resize_images_frame = tk.Frame(self.parent.batch_resize_images_tab)
-        self.batch_resize_images_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        self.batch_resize_images_frame.grid(row=0, column=0, sticky="nsew")
         # Configure the main frame's grid
         self.batch_resize_images_frame.grid_rowconfigure(1, weight=1)
         self.batch_resize_images_frame.grid_columnconfigure(0, weight=1)
@@ -156,28 +156,28 @@ class BatchResizeImages:
         self.top_frame.pack(fill="x", padx=2, pady=2)
 
         self.info_label = tk.Label(self.top_frame, anchor="w", text="Select a directory...")
-        self.info_label.pack(side="left", fill="x", padx=2, pady=2)
+        self.info_label.pack(side="left", fill="x", padx=2)
 
         self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.toggle_about_window)
-        self.help_button.pack(side="right", fill="x", padx=2, pady=2)
+        self.help_button.pack(side="right", fill="x", padx=2)
         ToolTip.create(self.help_button, "Show/Hide Help", 50, 6, 12)
 
 
     def create_directory_row(self):
-        self.frame_top_row = tk.Frame(self.batch_resize_images_frame)
-        self.frame_top_row.pack(fill="both", padx=2, pady=(5, 0))
+        self.frame_top_row = tk.Frame(self.top_frame)
+        self.frame_top_row.pack(fill="both", padx=2)
 
         self.entry_directory = ttk.Entry(self.frame_top_row)
         self.entry_directory.insert(0, os.path.normpath(self.working_dir) if self.working_dir else "...")
-        self.entry_directory.pack(side="left", fill="x", expand=True, padx=2, pady=2)
+        self.entry_directory.pack(side="left", fill="x", expand=True, padx=2)
         self.entry_directory.bind("<Return>", lambda event: self.select_folder(self.entry_directory.get()))
         self.entry_directory.bind("<Button-1>", lambda event: self.entry_directory.delete(0, "end") if self.entry_directory.get() == "..." else None)
 
         self.select_button = ttk.Button(self.frame_top_row, width=8, text="Browse...", command=self.select_folder)
-        self.select_button.pack(side="left", padx=2, pady=2)
+        self.select_button.pack(side="left", padx=2)
 
         self.open_button = ttk.Button(self.frame_top_row, width=8, text="Open", command=self.open_folder)
-        self.open_button.pack(side="left", padx=2, pady=2)
+        self.open_button.pack(side="left", padx=2)
 
 
     def create_control_row(self):
@@ -321,7 +321,6 @@ class BatchResizeImages:
 
     def toggle_widgets(self, state):
             if state == "disabled":
-                self.close_button.config(state=state)
                 self.help_button.config(state=state)
                 self.select_button.config(state=state)
                 #self.open_button.config(state=state)
@@ -337,7 +336,6 @@ class BatchResizeImages:
                 self.save_png_info_checkbutton.config(state=state)
                 self.button_resize.config(state=state)
             else:
-                self.close_button.config(state=state)
                 self.help_button.config(state=state)
                 self.select_button.config(state=state)
                 #self.open_button.config(state=state)
