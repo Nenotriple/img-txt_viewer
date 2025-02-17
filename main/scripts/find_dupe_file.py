@@ -177,6 +177,23 @@ class FindDupeFile:
         self.duplication_handling_menu.add_radiobutton(label="Both", variable=self.dupe_handling_mode, value="Both")
 
 
+    def create_folder_selection(self):
+        # Frame - Folder Frame
+        self.folder_frame = ttk.Frame(self.top_frame)
+        self.folder_frame.pack(fill="both", expand=True)
+        # Entry - Folder Entry
+        self.folder_entry = ttk.Entry(self.folder_frame)
+        self.folder_entry.pack(side="left", fill="x", expand=True)
+        # Button - Browse
+        self.browse_button = ttk.Button(self.folder_frame, text="Browse...", command=self.select_folder)
+        ToolTip.create(self.browse_button, "Select a folder to analyze for duplicate files.", delay=150, padx=6, pady=6)
+        self.browse_button.pack(side="left")
+        # Button - Open
+        self.open_button = ttk.Button(self.folder_frame, text="Open", command=self.open_folder)
+        ToolTip.create(self.open_button, "Open path from folder entry.", delay=150, padx=6, pady=6)
+        self.open_button.pack(side="left")
+
+
 # --------------------------------------
 # General Widgets
 # --------------------------------------
@@ -194,23 +211,6 @@ class FindDupeFile:
         # Frame - Widget Frame
         self.widget_frame = ttk.Frame(self.find_dupe_files_frame)
         self.widget_frame.pack(side="top", fill="both", padx=4, pady=4)
-
-
-    def create_folder_selection(self):
-        # Frame - Folder Frame
-        self.folder_frame = ttk.Frame(self.widget_frame)
-        self.folder_frame.pack(fill="both", expand=True)
-        # Entry - Folder Entry
-        self.folder_entry = ttk.Entry(self.folder_frame)
-        self.folder_entry.pack(side="left", fill="x", expand=True)
-        # Button - Browse
-        self.browse_button = ttk.Button(self.folder_frame, text="Browse...", command=self.select_folder)
-        ToolTip.create(self.browse_button, "Select a folder to analyze for duplicate files.", delay=150, padx=6, pady=6)
-        self.browse_button.pack(side="left")
-        # Button - Open
-        self.open_button = ttk.Button(self.folder_frame, text="Open", command=self.open_folder)
-        ToolTip.create(self.open_button, "Open path from folder entry.", delay=150, padx=6, pady=6)
-        self.open_button.pack(side="left")
 
 
     def create_duplicate_handling_mode(self):
