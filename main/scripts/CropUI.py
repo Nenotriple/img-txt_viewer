@@ -1067,7 +1067,6 @@ class CropInterface:
         # Primary variables
         self.parent = None
         self.root = None
-        self.image_path = None
         self.version = None
         self.text_controller = None
 
@@ -1100,11 +1099,9 @@ class CropInterface:
 # --------------------------------------
 # UI
 # --------------------------------------
-    def setup_window(self, parent, root, path=None):
+    def setup_window(self, parent, root):
         self.parent = parent
         self.root = root
-        if os.path.exists(path):
-            self.image_path = path
         self.image_files = self.parent.image_files
         self.version = self.parent.app_version
         self.text_controller = self.parent.text_controller
@@ -1115,10 +1112,7 @@ class CropInterface:
         self.create_control_panel()
         self.crop_selection = CropSelection(self, self.img_canvas)
         self.img_canvas.crop_selection = self.crop_selection
-        if path:
-            self.path_entry.insert(0, path)
-            self.current_index = self.parent.current_index
-            self.display_image(self.image_files[self.current_index])
+        self.get_image_path_and_index()
 
 
     def create_main_frame(self):
@@ -1540,6 +1534,12 @@ class CropInterface:
                 self.display_image(self.image_files[self.current_index])
         except ValueError:
             pass
+
+
+    def get_image_path_and_index(self):
+        self.path_entry.insert(0, self.parent.image_dir)
+        self.current_index = self.parent.current_index
+        self.display_image(self.image_files[self.current_index])
 
 
     def show_help(self):
