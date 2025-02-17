@@ -91,7 +91,6 @@ class FindDupeFile:
             self.folder_entry,
             self.browse_button,
             #self.open_button,
-            self.clear_button,
             self.radio_single,
             self.radio_both,
             self.undo_button,
@@ -212,10 +211,6 @@ class FindDupeFile:
         self.open_button = ttk.Button(self.folder_frame, text="Open", command=self.open_folder)
         ToolTip.create(self.open_button, "Open path from folder entry.", delay=150, padx=6, pady=6)
         self.open_button.pack(side="left")
-        # Button - Clear
-        self.clear_button = ttk.Button(self.folder_frame, text="X", width=2, command=lambda: self.folder_entry.delete(0, 'end'))
-        ToolTip.create(self.clear_button, "Clear folder entry.", delay=150, padx=6, pady=6)
-        self.clear_button.pack(side="left")
 
 
     def create_duplicate_handling_mode(self):
