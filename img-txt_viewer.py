@@ -1334,49 +1334,6 @@ class ImgTxtViewer:
 
 
 # --------------------------------------
-# Handle UI State
-# --------------------------------------
-    def toggle_alt_ui_menus(self, state):
-        self.ui_state = state
-        if state == "ImgTxtViewer":
-            self.toggle_batch_ops_menu_items(all=True, state="normal")
-            self.toggle_indiv_ops_menu_items(all=True, state="normal")
-        else:
-            self.toggle_batch_ops_menu_items(all=True, state="disabled")
-            self.toggle_indiv_ops_menu_items(all=True, state="disabled")
-            if state == "BatchTagEdit":
-                self.toggle_batch_ops_menu_items(item="Batch Tag Edit...", state="normal")
-            elif state == "BatchResizeImages":
-                self.toggle_batch_ops_menu_items(item="Batch Resize Images...", state="normal")
-            elif state == "FindDupeFile":
-                self.toggle_batch_ops_menu_items(item="Find Duplicate Files...", state="normal")
-            elif state == "CropUI":
-                self.toggle_indiv_ops_menu_items(item="Crop...", state="normal")
-
-
-    def toggle_batch_ops_menu_items(self, all=False, item=None, state="disabled", event=None):
-        menu = self.batch_operations_menu
-        menu_items = ["Batch Resize Images...", "Batch Tag Edit...", "Find Duplicate Files..."]
-        if all:
-            for item in menu_items:
-                menu.entryconfig(item, state=state)
-        else:
-            if item in menu_items:
-                menu.entryconfig(item, state=state)
-
-
-    def toggle_indiv_ops_menu_items(self, all=False, item=None, state="disabled", event=None):
-        menu = self.individual_operations_menu
-        menu_items = ["Rename Pair", "Upscale...", "Crop...", "Resize...", "Expand", "Rotate", "Flip", "Duplicate img-txt Pair", "Delete img-txt Pair", "Undo Delete"]
-        if all:
-            for item in menu_items:
-                menu.entryconfig(item, state=state)
-        else:
-            if item in menu_items:
-                menu.entryconfig(item, state=state)
-
-
-# --------------------------------------
 # ImgTxtViewer states
 # --------------------------------------
     def toggle_image_grid(self, event=None):
