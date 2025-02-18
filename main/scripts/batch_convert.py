@@ -36,7 +36,7 @@ class BatchConvert:
         self.root = root
         self.working_dir = self.parent.image_dir.get()
         self.setup_ui()
-        self.select_folder(self.working_dir)
+        self.set_working_directory(self.working_dir)
 
 
 #endregion
@@ -73,10 +73,10 @@ class BatchConvert:
         self.entry_directory = ttk.Entry(self.top_frame)
         self.entry_directory.insert(0, os.path.normpath(self.working_dir) if self.working_dir else "...")
         self.entry_directory.pack(side="left", fill="x", expand=True, padx=2)
-        self.entry_directory.bind("<Return>", lambda event: self.select_folder(self.entry_directory.get()))
+        self.entry_directory.bind("<Return>", lambda event: self.set_working_directory(self.entry_directory.get()))
         self.entry_directory.bind("<Button-1>", lambda event: self.entry_directory.delete(0, "end") if self.entry_directory.get() == "..." else None)
 
-        self.select_button = ttk.Button(self.top_frame, width=8, text="Browse...", command=self.select_folder)
+        self.select_button = ttk.Button(self.top_frame, width=8, text="Browse...", command=self.set_working_directory)
         self.select_button.pack(side="left", padx=2)
 
         self.open_button = ttk.Button(self.top_frame, width=8, text="Open", command=self.open_folder)
@@ -109,14 +109,17 @@ class BatchConvert:
             self.info_label.config(text=text)
 
 
-    def select_folder(self, path=None):
+    def set_working_directory(self, path=None):
         if path is None:
             path = filedialog.askdirectory(initialdir=self.working_dir)
+            if not os.path.isdir(path):
+                return
+            self.working_dir = path
         else:
             self.working_dir = path
-            self.entry_directory.delete(0, "end")
-            self.entry_directory.insert(0, os.path.normpath(self.working_dir))
-            self.update_info_label(filecount=True)
+        self.entry_directory.delete(0, "end")
+        self.entry_directory.insert(0, os.path.normpath(self.working_dir))
+        self.update_info_label(filecount=True)
 
 
     def open_folder(self):
