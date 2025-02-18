@@ -460,19 +460,21 @@ class ImgTxtViewer:
         # Create Notebook Tabs
         self.primary_tab = Frame(self.main_notebook)
         self.batch_tag_edit_tab = Frame(self.main_notebook)
-        self.batch_resize_images_tab = Frame(self.main_notebook)
-        self.find_dupe_file_tab = Frame(self.main_notebook)
         self.crop_ui_tab = Frame(self.main_notebook)
+        self.batch_upscale_tab = Frame(self.main_notebook)
+        self.batch_resize_images_tab = Frame(self.main_notebook)
         self.batch_rename_tab = Frame(self.main_notebook)
         self.batch_convert_tab = Frame(self.main_notebook)
+        self.find_dupe_file_tab = Frame(self.main_notebook)
         # Add Tabs to Notebook
         self.main_notebook.add(self.primary_tab, text="Tagger")
         self.main_notebook.add(self.batch_tag_edit_tab, text="Tag-Editor")
-        self.main_notebook.add(self.batch_resize_images_tab, text="Batch Resize")
-        self.main_notebook.add(self.find_dupe_file_tab, text="Find Duplicates")
         self.main_notebook.add(self.crop_ui_tab, text="Crop")
+        self.main_notebook.add(self.batch_upscale_tab, text="Batch Upscale")
+        self.main_notebook.add(self.batch_resize_images_tab, text="Batch Resize")
         self.main_notebook.add(self.batch_rename_tab, text="Batch Rename")
         self.main_notebook.add(self.batch_convert_tab, text="Batch Convert")
+        self.main_notebook.add(self.find_dupe_file_tab, text="Find Duplicates")
 
 
     def on_altui_tab_change(self, event):
@@ -482,21 +484,30 @@ class ImgTxtViewer:
         tab_states = {
             "Tagger": "ImgTxtViewer",
             "Tag-Editor": "BatchTagEdit",
+            "Crop": "CropUI",
+            "Batch Upscale": "BatchUpscale",
             "Batch Resize": "BatchResize",
+            "Batch Rename": "BatchRename",
+            "Batch Convert": "BatchConvert",
             "Find Duplicates": "FindDupeFile",
-            "Crop": "CropUI"
         }
         self.ui_state = tab_states.get(tab_name)
         if self.ui_state == "ImgTxtViewer":
             pass
         elif self.ui_state == "BatchTagEdit":
-            self.create_batch_tag_edit(show=True)
-        elif self.ui_state == "BatchResize":
-            self.create_batch_resize_images(show=True)
-        elif self.ui_state == "FindDupeFile":
-            self.create_find_dupe_file(show=True)
+            self.create_batch_tag_edit_ui(show=True)
         elif self.ui_state == "CropUI":
             self.create_crop_ui(show=True)
+        elif self.ui_state == "BatchUpscale":
+            self.create_batch_upscale_ui(show=True)
+        elif self.ui_state == "BatchResize":
+            self.create_batch_resize_images_ui(show=True)
+        elif self.ui_state == "BatchRename":
+            self.create_batch_rename_ui(show=True)
+        elif self.ui_state == "BatchConvert":
+            self.create_batch_convert_ui(show=True)
+        elif self.ui_state == "FindDupeFile":
+            self.create_find_dupe_file_ui(show=True)
         self.update_menu_state()
 
 
@@ -507,8 +518,6 @@ class ImgTxtViewer:
         else:
             self.main_menu_bar.entryconfig("Options", state="normal")
             self.main_menu_bar.entryconfig("Tools", state="normal")
-
-
 
 
     def setup_primary_frames(self, container):
@@ -1305,7 +1314,7 @@ class ImgTxtViewer:
 #region - Alt-UI Setup
 
 
-    def create_batch_tag_edit(self, show=False):
+    def create_batch_tag_edit_ui(self, show=False):
         parent = self
         root = self.root
         if self.batch_tag_edit.parent is None:
@@ -1316,7 +1325,21 @@ class ImgTxtViewer:
                 self.batch_tag_edit.select_folder(self.image_dir.get())
 
 
-    def create_batch_resize_images(self, show=False):
+    def create_crop_ui(self, show=False):
+        parent = self
+        root = self.root
+        if self.crop_ui.parent is None:
+            self.crop_ui.setup_window(parent, root)
+        if show:
+            self.main_notebook.select(self.crop_ui_tab)
+            self.crop_ui.get_image_path_and_index()
+
+
+    def create_batch_upscale_ui(self, show=False):
+        pass
+
+
+    def create_batch_resize_images_ui(self, show=False):
         parent = self
         root = self.root
         path = self.image_dir.get()
@@ -1328,7 +1351,15 @@ class ImgTxtViewer:
                 self.batch_resize_images.select_folder(self.image_dir.get())
 
 
-    def create_find_dupe_file(self, show=False):
+    def create_batch_rename_ui(self, show=False):
+        pass
+
+
+    def create_batch_convert_ui(self, show=False):
+        pass
+
+
+    def create_find_dupe_file_ui(self, show=False):
         parent = self
         root = self.root
         path = self.image_dir.get()
@@ -1338,16 +1369,6 @@ class ImgTxtViewer:
             self.main_notebook.select(self.find_dupe_file_tab)
             if self.find_dupe_file.working_dir != self.image_dir.get():
                 self.find_dupe_file.select_folder(self.image_dir.get())
-
-
-    def create_crop_ui(self, show=False):
-        parent = self
-        root = self.root
-        if self.crop_ui.parent is None:
-            self.crop_ui.setup_window(parent, root)
-        if show:
-            self.main_notebook.select(self.crop_ui_tab)
-            self.crop_ui.get_image_path_and_index()
 
 
 # --------------------------------------
