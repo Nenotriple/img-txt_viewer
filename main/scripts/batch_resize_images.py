@@ -712,7 +712,7 @@ class BatchResizeImages:
 
 
     def is_resizing(self):
-        return self._resize_thread is not None and self._resize_thread.is_alive()
+        return self.resize_thread is not None and self.resize_thread.is_alive()
 
 
     def save_image(self, img, output_folder_path, filename, total_images):
