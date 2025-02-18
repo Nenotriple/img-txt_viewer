@@ -1216,7 +1216,8 @@ class CropInterface:
         self.image_index_spinbox.pack(side="left", fill="x", expand=True)
         self.image_index_spinbox.bind("<Return>", self.image_index_changed)
         self.text_controller.bind_entry_functions(self.image_index_spinbox)
-        ttk.Label(index_frame, text=f"of {len(self.image_files)}").pack(side="left")
+        self.image_index_label = ttk.Label(index_frame, text=f"of {len(self.image_files)}")
+        self.image_index_label.pack(side="left")
         # Nav Buttons
         nav_button_frame = tk.Frame(self.control_panel)
         nav_button_frame.pack(pady=self.pady, padx=self.padx, fill="x")
@@ -1538,6 +1539,8 @@ class CropInterface:
 
     def get_image_path_and_index(self):
         self.path_entry.insert(0, self.parent.image_dir)
+        self.image_files = self.parent.image_files
+        self.image_index_label.config(text=f"of {len(self.image_files)}")
         self.current_index = self.parent.current_index
         self.display_image(self.image_files[self.current_index])
 
