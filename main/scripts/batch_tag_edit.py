@@ -99,23 +99,23 @@ class BatchTagEdit:
 
     def setup_top_frame(self):
         self.top_frame = Frame(self.batch_tag_edit_frame)
-        self.top_frame.grid(row=0, column=0, columnspan=99, sticky="nsew")
+        self.top_frame.grid(row=0, column=0, columnspan=99, sticky="nsew", pady=2)
         self.top_frame.grid_columnconfigure(3, weight=1)
 
         self.button_save_changes = ttk.Button(self.top_frame, text="Save Changes", width=15, state="disabled", command=self.apply_tag_edits)
-        self.button_save_changes.grid(row=0, column=1, padx=10, sticky="w")
+        self.button_save_changes.grid(row=0, column=1, padx=2, sticky="w")
 
         self.info_label = Label(self.top_frame, anchor="w", text=f"Total: {self.total_unique_tags}  | Visible: {self.visible_tags}  |  Selected: {self.selected_tags}  |  Pending Delete: {self.pending_delete}  |  Pending Edit: {self.pending_edit}")
-        self.info_label.grid(row=0, column=2, padx=10, sticky="ew")
+        self.info_label.grid(row=0, column=2, padx=2, sticky="ew")
 
         self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.toggle_info_message)
-        self.help_button.grid(row=0, column=3, padx=2, pady=2, sticky="e")
+        self.help_button.grid(row=0, column=3, padx=2, sticky="e")
         ToolTip.create(self.help_button, "Show/Hide Help", 50, 6, 12)
 
 
     def setup_listbox_frame(self):
         self.listbox_frame = Frame(self.batch_tag_edit_frame)
-        self.listbox_frame.grid(row=1, column=0, padx=(10, 0), pady=10, sticky="nsew")
+        self.listbox_frame.grid(row=1, column=0, padx=2, sticky="nsew")
 
         self.listbox = Listbox(self.listbox_frame, width=50, selectmode="extended", relief="groove", exportselection=False)
         self.listbox.grid(row=0, column=0, sticky="nsew")
@@ -161,7 +161,7 @@ class BatchTagEdit:
 
     def setup_option_frame(self):
         self.option_frame = Frame(self.batch_tag_edit_frame, borderwidth=1, relief="groove")
-        self.option_frame.grid(row=1, column=1, padx=(0, 10), pady=10, sticky="nsew")
+        self.option_frame.grid(row=1, column=1, padx=2, sticky="nsew")
         self.option_frame.grid_columnconfigure(0, weight=1)
         self.setup_sort_frame()
         self.setup_filter_frame()
@@ -171,7 +171,7 @@ class BatchTagEdit:
 
     def setup_sort_frame(self):
         self.sort_frame = Frame(self.option_frame)
-        self.sort_frame.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
+        self.sort_frame.grid(row=0, column=0, padx=2, pady=10, sticky="ew")
 
         self.sort_label = Label(self.sort_frame, text="Sort by:", width=6)
         self.sort_label.grid(row=0, column=0, padx=2)
@@ -189,7 +189,7 @@ class BatchTagEdit:
 
     def setup_filter_frame(self):
         self.filter_frame = Frame(self.option_frame)
-        self.filter_frame.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
+        self.filter_frame.grid(row=1, column=0, padx=2, pady=10, sticky="ew")
         self.filter_frame.grid_columnconfigure(2, weight=1)
 
         self.filter_label = Label(self.filter_frame, text="Filter :", width=6)
@@ -218,7 +218,7 @@ class BatchTagEdit:
 
     def setup_edit_frame(self):
         self.edit_frame = Frame(self.option_frame)
-        self.edit_frame.grid(row=2, column=0, padx=10, pady=10, sticky="ew")
+        self.edit_frame.grid(row=2, column=0, padx=2, pady=10, sticky="ew")
         self.edit_frame.grid_columnconfigure(2, weight=1)
 
         self.edit_label = Label(self.edit_frame, text="Edit :", width=6)
