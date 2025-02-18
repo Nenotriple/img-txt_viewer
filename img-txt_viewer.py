@@ -466,7 +466,7 @@ class ImgTxtViewer:
         self.main_notebook.add(self.primary_tab, text="Tagger")
         self.main_notebook.add(self.batch_tag_edit_tab, text="Tag-Editor")
         self.main_notebook.add(self.batch_resize_images_tab, text="Batch Resize")
-        self.main_notebook.add(self.find_dupe_file_tab, text="Find Dupes")
+        self.main_notebook.add(self.find_dupe_file_tab, text="Find Duplicates")
         self.main_notebook.add(self.crop_ui_tab, text="Crop")
 
 
@@ -478,7 +478,7 @@ class ImgTxtViewer:
             "Tagger": "ImgTxtViewer",
             "Tag-Editor": "BatchTagEdit",
             "Batch Resize": "BatchResize",
-            "Find Dupes": "FindDupeFile",
+            "Find Duplicates": "FindDupeFile",
             "Crop": "CropUI"
         }
         self.ui_state = tab_states.get(tab_name)
@@ -1289,14 +1289,15 @@ class ImgTxtViewer:
 #region - Alt-UI Setup
 
 
-    def create_batch_tag_edit(self, show=True):
+    def create_batch_tag_edit(self, show=False):
         parent = self
         root = self.root
-        text_files = self.text_files
         if self.batch_tag_edit.parent is None:
-            self.batch_tag_edit.setup_window(parent, root, text_files)
+            self.batch_tag_edit.setup_window(parent, root)
         if show:
             self.main_notebook.select(self.batch_tag_edit_tab)
+            if self.batch_tag_edit.working_dir != self.image_dir.get():
+                self.batch_tag_edit.select_folder(self.image_dir.get())
 
 
     def create_batch_resize_images(self, show=False):
