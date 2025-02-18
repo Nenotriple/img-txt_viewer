@@ -51,6 +51,7 @@ class BatchTagEdit:
         self.parent = None
         self.root = None
         self.text_files = None
+        self.working_dir = None
         self.batch_tag_edit_frame = None
         self.version = None
         # Local Variables
@@ -67,10 +68,11 @@ class BatchTagEdit:
 #region - Setup - UI
 
 
-    def setup_window(self, parent, root, text_files=None):
+    def setup_window(self, parent, root):
         self.parent = parent
         self.root = root
-        self.text_files = text_files
+        self.text_files = self.parent.text_files
+        self.working_dir = self.parent.image_dir.get()
         self.batch_tag_edit_frame = None
         self.version = self.parent.app_version
 
@@ -279,7 +281,7 @@ class BatchTagEdit:
 
 
     def analyze_tags(self):
-        tag_dict = TagEditor.analyze_tags(self.text_files)
+        tag_dict = TagEditor.analyze_tags(self.parent.text_files)
         return tag_dict
 
 
@@ -391,7 +393,7 @@ class BatchTagEdit:
                 new_tag = new_tag.strip()
                 edit_tags[original_tag] = new_tag
         if delete_tags:
-            TagEditor.edit_tags(self.text_files, delete_tags, delete=True)
+            TagEditor.edit_tags(self.parent.text_files, delete_tags, delete=True)
         if edit_tags:
             for original_tag, new_tag in edit_tags.items():
                 TagEditor.edit_tags(self.text_files, [original_tag], edit=new_tag)
@@ -552,6 +554,39 @@ class BatchTagEdit:
             self.filter_tags(self.filter_combobox.get(), self.filter_entry.get())
         elif action == "filter":
             self.filter_tags(self.filter_combobox.get(), self.filter_entry.get())
+
+
+    def select_folder(self, working_dir=None):
+        """
+        Updates the working directory and refreshes the UI with new tag data.
+        Args:
+            working_dir (str): Path to the new working directory
+        """
+        # Update working directory
+        if working_dir:
+            self.working_dir = working_dir
+        else:
+            self.working_dir = self.parent.image_dir.get()
+        # Reset UI state variables
+        self.tag_counts = 0
+        self.total_unique_tags = 0
+        self.visible_tags = 0
+        self.selected_tags = 0
+        self.pending_delete = 0
+        self.pending_edit = 0
+        self.original_tags = []
+        # Clear UI elements
+        self.listbox.delete(0, "end")
+        self.filter_entry.delete(0, "end")
+        self.edit_entry.delete(0, "end")
+        # Reset sort options
+        self.sort_options_combobox.set("Frequency")
+        self.reverse_sort_var.set(False)
+        # Analyze new tags and update UI
+        tag_dict = self.analyze_tags()
+        self.tag_counts, self.total_unique_tags = self.count_file_tags(tag_dict)
+        self.sort_tags(self.tag_counts.items(), "Frequency", False)
+        self.toggle_filter_and_sort_widgets()
 
 
 #endregion
