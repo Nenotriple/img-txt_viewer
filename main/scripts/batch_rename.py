@@ -55,15 +55,15 @@ class BatchRename:
         self.parent.batch_rename_tab.grid_rowconfigure(0, weight=1)
         self.parent.batch_rename_tab.grid_columnconfigure(0, weight=1)
         # Create and configure the main frame
-        self.batch_resize_images_frame = tk.Frame(self.parent.batch_rename_tab)
-        self.batch_resize_images_frame.grid(row=0, column=0, sticky="nsew")
+        self.batch_rename_frame = tk.Frame(self.parent.batch_rename_tab)
+        self.batch_rename_frame.grid(row=0, column=0, sticky="nsew")
         # Configure the main frame's grid
-        self.batch_resize_images_frame.grid_rowconfigure(1, weight=1)
-        self.batch_resize_images_frame.grid_columnconfigure(0, weight=1)
+        self.batch_rename_frame.grid_rowconfigure(1, weight=1)
+        self.batch_rename_frame.grid_columnconfigure(0, weight=1)
 
 
     def create_directory_row(self):
-        self.top_frame = tk.Frame(self.batch_resize_images_frame)
+        self.top_frame = tk.Frame(self.batch_rename_frame)
         self.top_frame.pack(fill="x", padx=2, pady=2)
 
         self.info_label = tk.Label(self.top_frame, anchor="w", text="Select a directory...")
@@ -83,12 +83,12 @@ class BatchRename:
 
 
     def create_control_row(self):
-        self.frame_control_row = tk.Frame(self.batch_resize_images_frame, borderwidth=2)
+        self.frame_control_row = tk.Frame(self.batch_rename_frame, borderwidth=2)
         self.frame_control_row.pack(side="top", fill="x", padx=2, pady=2)
 
 
     def create_bottom_row(self):
-        self.frame_bottom_row = tk.Frame(self.batch_resize_images_frame)
+        self.frame_bottom_row = tk.Frame(self.batch_rename_frame)
         self.frame_bottom_row.pack(side="bottom", fill="both", expand=True)
 
 
