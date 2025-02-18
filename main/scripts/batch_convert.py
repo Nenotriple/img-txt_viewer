@@ -9,7 +9,7 @@ import os
 
 # Standard Library - GUI
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, filedialog
 
 
 # Third-Party Libraries
@@ -31,10 +31,10 @@ class BatchConvert:
         self.supported_filetypes = (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff")
 
 
-    def setup_window(self, parent, root, path=None):
+    def setup_window(self, parent, root):
         self.parent = parent
         self.root = root
-        self.working_dir = path
+        self.working_dir = self.parent.image_dir.get()
         self.setup_ui()
 
 
@@ -106,8 +106,18 @@ class BatchConvert:
 
 
     def select_folder(self, path=None):
-        pass
+        if path is None:
+            path = filedialog.askdirectory(initialdir=self.working_dir)
+        if path:
+            self.working_dir = path
+            self.entry_directory.delete(0, "end")
+            self.entry_directory.insert(0, os.path.normpath(self.working_dir))
+            self.update_info_label()
 
 
     def open_folder(self):
-        pass
+        path = self.working_dir
+        try:
+            os.startfile(path)
+        except Exception as e:
+            print(f"Error opening folder: {e}")
