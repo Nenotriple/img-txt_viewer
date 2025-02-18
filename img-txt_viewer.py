@@ -59,6 +59,7 @@ from main.scripts import (
     find_dupe_file,
     text_controller,
     batch_convert,
+    batch_upscale,
     upscale_image,
     batch_rename,
     resize_image,
@@ -105,6 +106,7 @@ class ImgTxtViewer:
         self.batch_resize_images = batch_resize_images.BatchResizeImages()
         self.batch_rename = batch_rename.BatchRename()
         self.batch_convert = batch_convert.BatchConvert()
+        self.batch_upscale = batch_upscale.BatchUpscale()
         self.edit_panel = edit_panel.EditPanel(self, self.root)
         self.batch_tag_edit = batch_tag_edit.BatchTagEdit()
         self.find_dupe_file = find_dupe_file.FindDupeFile()
@@ -1340,7 +1342,14 @@ class ImgTxtViewer:
 
 
     def create_batch_upscale_ui(self, show=False):
-        pass
+        parent = self
+        root = self.root
+        if self.batch_upscale.parent is None:
+            self.batch_upscale.setup_window(parent, root)
+        if show:
+            self.main_notebook.select(self.batch_upscale_tab)
+            if self.batch_upscale.working_dir != self.image_dir.get():
+                self.batch_upscale.select_folder(self.image_dir.get())
 
 
     def create_batch_resize_images_ui(self, show=False):
@@ -1358,9 +1367,8 @@ class ImgTxtViewer:
     def create_batch_rename_ui(self, show=False):
         parent = self
         root = self.root
-        path = self.image_dir.get()
         if self.batch_rename.parent is None:
-            self.batch_rename.setup_window(parent, root, path)
+            self.batch_rename.setup_window(parent, root)
         if show:
             self.main_notebook.select(self.batch_rename_tab)
             if self.batch_rename.working_dir != self.image_dir.get():
@@ -1370,9 +1378,8 @@ class ImgTxtViewer:
     def create_batch_convert_ui(self, show=False):
         parent = self
         root = self.root
-        path = self.image_dir.get()
         if self.batch_convert.parent is None:
-            self.batch_convert.setup_window(parent, root, path)
+            self.batch_convert.setup_window(parent, root)
         if show:
             self.main_notebook.select(self.batch_convert_tab)
             if self.batch_convert.working_dir != self.image_dir.get():
