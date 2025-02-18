@@ -9,7 +9,7 @@ import os
 
 # Standard Library - GUI
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, messagebox
 
 
 # Third-Party Libraries
@@ -36,6 +36,7 @@ class BatchUpscale:
         self.root = root
         self.working_dir = self.parent.image_dir.get()
         self.setup_ui()
+        self.select_folder(self.working_dir)
 
 
 #endregion
@@ -81,6 +82,9 @@ class BatchUpscale:
         self.open_button = ttk.Button(self.top_frame, width=8, text="Open", command=self.open_folder)
         self.open_button.pack(side="left", padx=2)
 
+        self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.show_help)
+        self.help_button.pack(side="right", fill="x", padx=2)
+
 
     def create_control_row(self):
         self.frame_control_row = tk.Frame(self.batch_upscale_frame, borderwidth=2)
@@ -108,11 +112,11 @@ class BatchUpscale:
     def select_folder(self, path=None):
         if path is None:
             path = filedialog.askdirectory(initialdir=self.working_dir)
-        if path:
+        else:
             self.working_dir = path
             self.entry_directory.delete(0, "end")
             self.entry_directory.insert(0, os.path.normpath(self.working_dir))
-            self.update_info_label()
+            self.update_info_label(filecount=True)
 
 
     def open_folder(self):
@@ -121,3 +125,16 @@ class BatchUpscale:
             os.startfile(path)
         except Exception as e:
             print(f"Error opening folder: {e}")
+
+
+    def show_help(self):
+        help_text = (
+            "Batch Upscale\n\n"
+            "This tool allows you to upscale multiple images at once.\n\n"
+            "1. Select a directory containing images you wish to upscale.\n"
+            "2. Specify upscaling options in the settings.\n"
+            "3. Click the 'Upscale Images' button to apply the changes.\n\n"
+            "Options:\n"
+            "- Select the scaling factor for the upscaling process.\n"
+        )
+        messagebox.showinfo("Help", help_text)
