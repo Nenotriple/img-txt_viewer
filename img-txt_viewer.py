@@ -1320,82 +1320,46 @@ class ImgTxtViewer:
 #region - Alt-UI Setup
 
 
-    def create_batch_tag_edit_ui(self, show=False):
+    def create_ui_tab(self, ui_component, ui_tab, extra_args=None, show=False):
         parent = self
         root = self.root
-        if self.batch_tag_edit.parent is None:
-            self.batch_tag_edit.setup_window(parent, root)
+        if ui_component.parent is None:
+            if extra_args is not None:
+                ui_component.setup_window(parent, root, *extra_args)
+            else:
+                ui_component.setup_window(parent, root)
         if show:
-            self.main_notebook.select(self.batch_tag_edit_tab)
-            if self.batch_tag_edit.working_dir != self.image_dir.get():
-                self.batch_tag_edit.select_folder(self.image_dir.get())
+            self.main_notebook.select(ui_tab)
+            if hasattr(ui_component, 'working_dir') and ui_component.working_dir != self.image_dir.get():
+                ui_component.select_folder(self.image_dir.get())
+
+
+    def create_batch_tag_edit_ui(self, show=False):
+        self.create_ui_tab(self.batch_tag_edit, self.batch_tag_edit_tab, show=show)
 
 
     def create_crop_ui(self, show=False):
-        parent = self
-        root = self.root
-        if self.crop_ui.parent is None:
-            self.crop_ui.setup_window(parent, root)
-        if show:
-            self.main_notebook.select(self.crop_ui_tab)
-            self.crop_ui.get_image_path_and_index()
+        self.create_ui_tab(self.crop_ui, self.crop_ui_tab, show=show)
 
 
     def create_batch_upscale_ui(self, show=False):
-        parent = self
-        root = self.root
-        if self.batch_upscale.parent is None:
-            self.batch_upscale.setup_window(parent, root)
-        if show:
-            self.main_notebook.select(self.batch_upscale_tab)
-            if self.batch_upscale.working_dir != self.image_dir.get():
-                self.batch_upscale.select_folder(self.image_dir.get())
+        self.create_ui_tab(self.batch_upscale, self.batch_upscale_tab, show=show)
 
 
     def create_batch_resize_images_ui(self, show=False):
-        parent = self
-        root = self.root
-        path = self.image_dir.get()
-        if self.batch_resize_images.parent is None:
-            self.batch_resize_images.setup_window(parent, root, path)
-        if show:
-            self.main_notebook.select(self.batch_resize_images_tab)
-            if self.batch_resize_images.working_dir != self.image_dir.get():
-                self.batch_resize_images.select_folder(self.image_dir.get())
+        self.create_ui_tab(self.batch_resize_images, self.batch_resize_images_tab, extra_args=(self.image_dir.get(),), show=show)
 
 
     def create_batch_rename_ui(self, show=False):
-        parent = self
-        root = self.root
-        if self.batch_rename.parent is None:
-            self.batch_rename.setup_window(parent, root)
-        if show:
-            self.main_notebook.select(self.batch_rename_tab)
-            if self.batch_rename.working_dir != self.image_dir.get():
-                self.batch_rename.select_folder(self.image_dir.get())
+        self.create_ui_tab(self.batch_rename, self.batch_rename_tab, show=show)
 
 
     def create_batch_convert_ui(self, show=False):
-        parent = self
-        root = self.root
-        if self.batch_convert.parent is None:
-            self.batch_convert.setup_window(parent, root)
-        if show:
-            self.main_notebook.select(self.batch_convert_tab)
-            if self.batch_convert.working_dir != self.image_dir.get():
-                self.batch_convert.select_folder(self.image_dir.get())
+        self.create_ui_tab(self.batch_convert, self.batch_convert_tab, show=show)
 
 
     def create_find_dupe_file_ui(self, show=False):
-        parent = self
-        root = self.root
-        path = self.image_dir.get()
-        if self.find_dupe_file.parent is None:
-            self.find_dupe_file.setup_window(parent, root, path)
-        if show:
-            self.main_notebook.select(self.find_dupe_file_tab)
-            if self.find_dupe_file.working_dir != self.image_dir.get():
-                self.find_dupe_file.select_folder(self.image_dir.get())
+        self.create_ui_tab(self.find_dupe_file, self.find_dupe_file_tab, show=show)
 
 
 # --------------------------------------
