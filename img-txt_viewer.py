@@ -289,16 +289,16 @@ class ImgTxtViewer:
 # --------------------------------------
     def initialize_menu(self):
         # Main
-        menubar = Menu(self.root)
-        self.root.config(menu=menubar)
+        self.main_menu_bar = Menu(self.root)
+        self.root.config(menu=self.main_menu_bar)
         # Options
-        self.optionsMenu = Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Options", underline=0, menu=self.optionsMenu)
+        self.optionsMenu = Menu(self.main_menu_bar, tearoff=0)
+        self.main_menu_bar.add_cascade(label="Options", underline=0, menu=self.optionsMenu)
         # Tools
-        self.toolsMenu = Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Tools", underline=0, menu=self.toolsMenu)
+        self.toolsMenu = Menu(self.main_menu_bar, tearoff=0)
+        self.main_menu_bar.add_cascade(label="Tools", underline=0, menu=self.toolsMenu)
         # About
-        menubar.add_command(label="About", underline=0, command=self.toggle_about_window)
+        self.main_menu_bar.add_command(label="About", underline=0, command=self.toggle_about_window)
 
 
 # --------------------------------------
@@ -463,11 +463,16 @@ class ImgTxtViewer:
         self.batch_resize_images_tab = Frame(self.main_notebook)
         self.find_dupe_file_tab = Frame(self.main_notebook)
         self.crop_ui_tab = Frame(self.main_notebook)
+        self.batch_rename_tab = Frame(self.main_notebook)
+        self.batch_convert_tab = Frame(self.main_notebook)
+        # Add Tabs to Notebook
         self.main_notebook.add(self.primary_tab, text="Tagger")
         self.main_notebook.add(self.batch_tag_edit_tab, text="Tag-Editor")
         self.main_notebook.add(self.batch_resize_images_tab, text="Batch Resize")
         self.main_notebook.add(self.find_dupe_file_tab, text="Find Duplicates")
         self.main_notebook.add(self.crop_ui_tab, text="Crop")
+        self.main_notebook.add(self.batch_rename_tab, text="Batch Rename")
+        self.main_notebook.add(self.batch_convert_tab, text="Batch Convert")
 
 
     def on_altui_tab_change(self, event):
@@ -492,6 +497,17 @@ class ImgTxtViewer:
             self.create_find_dupe_file(show=True)
         elif self.ui_state == "CropUI":
             self.create_crop_ui(show=True)
+        self.update_menu_state()
+
+
+    def update_menu_state(self):
+        if not self.ui_state == "ImgTxtViewer":
+            self.main_menu_bar.entryconfig("Options", state="disable")
+            self.main_menu_bar.entryconfig("Tools", state="disable")
+        else:
+            self.main_menu_bar.entryconfig("Options", state="normal")
+            self.main_menu_bar.entryconfig("Tools", state="normal")
+
 
 
 
