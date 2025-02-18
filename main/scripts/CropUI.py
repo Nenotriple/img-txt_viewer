@@ -1129,11 +1129,11 @@ class CropInterface:
 
     def setup_top_frame(self):
         top_frame = tk.Frame(self.crop_ui_frame)
-        top_frame.grid(row=0, column=0, columnspan=99, padx=self.padx, pady=(5,0), sticky="nsew")
+        top_frame.grid(row=0, column=0, columnspan=99, sticky="nsew")
         top_frame.grid_columnconfigure(3, weight=1)
         # Crop Info
-        self.crop_info_label = ttk.Label(top_frame, text="Crop to: 0x0 (0:0)", anchor="w")
-        self.crop_info_label.grid(row=0, column=2, padx=self.padx, sticky="ew")
+        self.crop_info_label = ttk.Label(top_frame, text="Crop to: 0x0 (0:0)", anchor="w", width=25)
+        self.crop_info_label.grid(row=0, column=2, sticky="ew")
         # Directory
         directory_frame = tk.Frame(top_frame)
         directory_frame.grid(row=0, column=3, padx=(self.padx, 0), sticky="ew")
@@ -1184,7 +1184,7 @@ class CropInterface:
 
     def create_control_panel(self):
         self.control_panel = tk.Frame(self.crop_ui_frame, relief="sunken", borderwidth=1)
-        self.control_panel.grid(row=1, column=1, sticky="nsew", rowspan=2, padx=self.padx, pady=self.pady)
+        self.control_panel.grid(row=1, column=1, sticky="nsew", rowspan=2, pady=self.pady)
         self.create_nav_and_crop_widgets()
         self.spinbox_frame = tk.Frame(self.control_panel)
         self.spinbox_frame.pack(pady=self.pady, padx=self.padx, fill="x")
