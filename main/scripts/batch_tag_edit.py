@@ -556,7 +556,7 @@ class BatchTagEdit:
             self.filter_tags(self.filter_combobox.get(), self.filter_entry.get())
 
 
-    def select_folder(self, working_dir=None):
+    def set_working_directory(self, working_dir=None):
         """
         Updates the working directory and refreshes the UI with new tag data.
         Args:
