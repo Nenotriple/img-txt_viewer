@@ -171,10 +171,10 @@ class BatchResizeImages:
         self.entry_directory = ttk.Entry(self.frame_top_row)
         self.entry_directory.insert(0, os.path.normpath(self.working_dir) if self.working_dir else "...")
         self.entry_directory.pack(side="left", fill="x", expand=True, padx=2)
-        self.entry_directory.bind("<Return>", lambda event: self.select_folder(self.entry_directory.get()))
+        self.entry_directory.bind("<Return>", lambda event: self.set_working_directory(self.entry_directory.get()))
         self.entry_directory.bind("<Button-1>", lambda event: self.entry_directory.delete(0, "end") if self.entry_directory.get() == "..." else None)
 
-        self.select_button = ttk.Button(self.frame_top_row, width=8, text="Browse...", command=self.select_folder)
+        self.select_button = ttk.Button(self.frame_top_row, width=8, text="Browse...", command=self.set_working_directory)
         self.select_button.pack(side="left", padx=2)
 
         self.open_button = ttk.Button(self.frame_top_row, width=8, text="Open", command=self.open_folder)
@@ -424,7 +424,7 @@ class BatchResizeImages:
 #region -  Misc
 
 
-    def select_folder(self, path=None):
+    def set_working_directory(self, path=None):
         if self.is_resizing():
             return
         try:
