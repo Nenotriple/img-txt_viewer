@@ -1331,7 +1331,7 @@ class ImgTxtViewer:
         if show:
             self.main_notebook.select(ui_tab)
             if hasattr(ui_component, 'working_dir') and ui_component.working_dir != self.image_dir.get():
-                ui_component.select_folder(self.image_dir.get())
+                ui_component.set_working_directory(self.image_dir.get())
 
 
     def create_batch_tag_edit_ui(self, show=False):
