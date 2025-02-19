@@ -11,11 +11,6 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog, BooleanVar, StringVar
 
 
-# Third-Party Libraries
-from TkToolTip.TkToolTip import TkToolTip as ToolTip
-
-
-
 #endregion
 ################################################################################################################################################
 #region - CLS BatchRename
@@ -26,13 +21,13 @@ class BatchRename:
         self.parent = None
         self.root = None
         self.working_dir = None
-
+        # Variables
         self.supported_filetypes = (".txt", ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".gif")
         self.sort_column = "Name"
         self.sort_reverse = False
         self.selected_items = set()
         self.last_preview_count = 0
-
+        # Settings
         self.respect_img_txt_pairs_var = BooleanVar(value=True)
         self.handle_duplicates_var = StringVar(value="Rename")
         self.show_warning_var = BooleanVar(value=True)
@@ -57,7 +52,6 @@ class BatchRename:
         self.create_directory_row()
         self.create_control_row()
         self.create_bottom_row()
-        self.file_treeview.bind('<<TreeviewSelect>>', self.on_selection_change)
 
 
     def setup_primary_frame(self):
@@ -90,7 +84,7 @@ class BatchRename:
         # Open
         self.open_button = ttk.Button(self.top_frame, width=8, text="Open", command=self.open_folder)
         self.open_button.pack(side="left", padx=2)
-
+        # Help
         self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.show_help)
         self.help_button.pack(side="right", fill="x", padx=2)
 
@@ -122,6 +116,11 @@ class BatchRename:
         # Configure grid weights
         self.frame_control_row.grid_columnconfigure(0, weight=1)
         self.frame_control_row.grid_rowconfigure(0, weight=1)
+        self.file_treeview.bind('<<TreeviewSelect>>', self.on_selection_change)
+        self.file_treeview.bind("<Control-a>", lambda event: self.file_treeview.selection_set(self.file_treeview.get_children()))
+        self.file_treeview.bind("<Control-d>", lambda event: self.file_treeview.selection_remove(self.file_treeview.selection()))
+        self.file_treeview.bind("<Control-i>", lambda event: self.file_treeview.selection_toggle(self.file_treeview.get_children()))
+        self.file_treeview.bind("<F5>", lambda event: self.update_file_tree_view())
 
 
     def create_bottom_row(self):
@@ -148,11 +147,11 @@ class BatchRename:
         self.actions_menu.pack(side="left", fill="x", padx=2, pady=2)
         self.actions_menu.menu = tk.Menu(self.actions_menu, tearoff=0)
         self.actions_menu["menu"] = self.actions_menu.menu
-        self.actions_menu.menu.add_command(label="Select All", command=lambda: self.file_treeview.selection_set(self.file_treeview.get_children()))
-        self.actions_menu.menu.add_command(label="Deselect All", command=lambda: self.file_treeview.selection_remove(self.file_treeview.selection()))
-        self.actions_menu.menu.add_command(label="Invert Selection", command=lambda: self.file_treeview.selection_toggle(self.file_treeview.get_children()))
+        self.actions_menu.menu.add_command(label="Select All", accelerator="Ctrl+A", command=lambda: self.file_treeview.selection_set(self.file_treeview.get_children()))
+        self.actions_menu.menu.add_command(label="Deselect All", accelerator="Ctrl+D", command=lambda: self.file_treeview.selection_remove(self.file_treeview.selection()))
+        self.actions_menu.menu.add_command(label="Invert Selection", accelerator="Ctrl+I", command=lambda: self.file_treeview.selection_toggle(self.file_treeview.get_children()))
         self.actions_menu.menu.add_separator()
-        self.actions_menu.menu.add_command(label="Refresh Files", command=self.update_file_tree_view)
+        self.actions_menu.menu.add_command(label="Refresh Files", accelerator="F5", command=self.update_file_tree_view)
         # Presets
         self.presets_menu = ttk.Menubutton(self.frame_bottom_row, text="Presets")
         self.presets_menu.pack(side="left", fill="x", padx=2, pady=2)
@@ -437,18 +436,23 @@ class BatchRename:
 
     def show_help(self):
         help_text = (
-            "Batch Rename Tool\n"
-            "\n"
-            "1. Select a folder containing images and text files.\n"
-            "2. Use sorting and selection tools to select which files to rename.\n"
+            "Hotkeys:\n"
+            "• Ctrl+Click: Select/Deselect\n"
+            "• Ctrl+A: Select All\n"
+            "• Ctrl+D: Deselect All\n"
+            "• Ctrl+I: Invert Selection\n"
+            "• F5: Refresh\n\n"
+            "1. Select a folder.\n"
+            "2. Select some files to be renamed.\n"
             "3. Options:\n"
             "   • Handle Duplicates (rename, move, overwrite, skip)\n"
             "   • Respect image-text pairs for matching files\n"
             "4. Presets:\n"
             "   • Numbering: sequential numbering\n"
-            "   • Auto-Date: use modified date\n"
-            "\n"
-            "Click 'Rename Files' when ready."
+            "   • Auto-Date: use modified date\n\n"
+            "Click 'Rename Files' when ready.\n"
+            "Note: There is no undo for this operation.\n\n"
+            "Supported Filetypes:\ntxt, jpg, jpeg, png, webp, bmp, tif, tiff, gif"
         )
         messagebox.showinfo("Help", help_text)
 
