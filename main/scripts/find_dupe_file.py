@@ -139,7 +139,7 @@ class FindDupeFile:
         self.file_menu_button = ttk.Menubutton(self.top_frame, text="File")
         self.file_menu = Menu(self.file_menu_button, tearoff=0)
         self.file_menu_button.config(menu=self.file_menu)
-        self.file_menu.add_command(label="Select Folder...", command=self.select_folder)
+        self.file_menu.add_command(label="Select Folder...", command=self.set_working_directory)
         self.file_menu.add_command(label="Open Folder...", command=self.open_folder)
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Restore Moved Duplicates", command=self.undo_file_move)
@@ -185,7 +185,7 @@ class FindDupeFile:
         self.folder_entry = ttk.Entry(self.folder_frame)
         self.folder_entry.pack(side="left", fill="x", expand=True)
         # Button - Browse
-        self.browse_button = ttk.Button(self.folder_frame, text="Browse...", command=self.select_folder)
+        self.browse_button = ttk.Button(self.folder_frame, text="Browse...", command=self.set_working_directory)
         ToolTip.create(self.browse_button, "Select a folder to analyze for duplicate files.", delay=150, padx=2)
         self.browse_button.pack(side="left")
         # Button - Open
@@ -685,7 +685,7 @@ class FindDupeFile:
 #region -  Misc
 
 
-    def select_folder(self, path=None):
+    def set_working_directory(self, path=None):
         if self.process_stopped.get() == False:
             return
         if path is None:
