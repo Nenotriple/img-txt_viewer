@@ -1069,6 +1069,7 @@ class CropInterface:
         self.root = None
         self.version = None
         self.text_controller = None
+        self.working_dir = None
 
         # Image Variables
         self.gif_frames = []
@@ -1112,7 +1113,7 @@ class CropInterface:
         self.create_control_panel()
         self.crop_selection = CropSelection(self, self.img_canvas)
         self.img_canvas.crop_selection = self.crop_selection
-        self.get_image_path_and_index()
+        self.set_working_directory
 
 
     def create_main_frame(self):
@@ -1137,10 +1138,10 @@ class CropInterface:
         # Directory
         directory_frame = tk.Frame(top_frame)
         directory_frame.grid(row=0, column=3, padx=(self.padx, 0), sticky="ew")
-        self.path_entry = ttk.Entry(directory_frame)
-        self.path_entry.pack(side="left", fill="x", expand=True)
-        self.text_controller.bind_entry_functions(self.path_entry)
-        open_button = ttk.Button(directory_frame, text="Open", width=9, command=lambda: self.parent.open_directory(self.path_entry.get()))
+        self.entry_directory = ttk.Entry(directory_frame)
+        self.entry_directory.pack(side="left", fill="x", expand=True)
+        self.text_controller.bind_entry_functions(self.entry_directory)
+        open_button = ttk.Button(directory_frame, text="Open", width=9, command=lambda: self.parent.open_directory(self.entry_directory.get()))
         open_button.pack(side="left")
         # Help
         help_button = ttk.Button(top_frame, text="?", width=2, command=self.show_help)
@@ -1537,8 +1538,15 @@ class CropInterface:
             pass
 
 
-    def get_image_path_and_index(self):
-        self.path_entry.insert(0, self.parent.image_dir)
+    def set_working_directory(self, path=None):
+        if path is None:
+            path = filedialog.askdirectory(initialdir=self.working_dir)
+            if not os.path.isdir(path):
+                return
+            self.working_dir = path
+        else:
+            self.working_dir = path
+        self.entry_directory.insert(0, self.parent.image_dir)
         self.image_files = self.parent.image_files
         self.image_index_label.config(text=f"of {len(self.image_files)}")
         self.current_index = self.parent.current_index
@@ -1569,8 +1577,8 @@ class CropInterface:
         self.height_spinbox.config(to=self.img_canvas.original_img_height)
         self.image_index_spinbox.config(from_=1, to=len(self.image_files))
         self.image_index_spinbox.set(self.current_index + 1)
-        self.path_entry.delete(0, "end")
-        self.path_entry.insert(0, img_path)
+        self.entry_directory.delete(0, "end")
+        self.entry_directory.insert(0, img_path)
         if self.image_file.lower().endswith('.gif'):
             self.extract_gif_frames()
             self.extract_gif_button.config(state="normal")
