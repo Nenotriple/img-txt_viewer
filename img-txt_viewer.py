@@ -58,7 +58,6 @@ from main.scripts import (
     batch_tag_edit,
     find_dupe_file,
     text_controller,
-    batch_convert,
     batch_upscale,
     upscale_image,
     batch_rename,
@@ -105,7 +104,6 @@ class ImgTxtViewer:
         self.stat_calculator = calculate_file_stats.CalculateFileStats(self, self.root)
         self.batch_resize_images = batch_resize_images.BatchResizeImages()
         self.batch_rename = batch_rename.BatchRename()
-        self.batch_convert = batch_convert.BatchConvert()
         self.batch_upscale = batch_upscale.BatchUpscale()
         self.edit_panel = edit_panel.EditPanel(self, self.root)
         self.batch_tag_edit = batch_tag_edit.BatchTagEdit()
@@ -470,7 +468,6 @@ class ImgTxtViewer:
         self.batch_upscale_tab = Frame(self.main_notebook)
         self.batch_resize_images_tab = Frame(self.main_notebook)
         self.batch_rename_tab = Frame(self.main_notebook)
-        self.batch_convert_tab = Frame(self.main_notebook)
         self.find_dupe_file_tab = Frame(self.main_notebook)
         # Add Tabs to Notebook
         self.main_notebook.add(self.primary_tab, text="Tagger")
@@ -479,7 +476,6 @@ class ImgTxtViewer:
         self.main_notebook.add(self.batch_upscale_tab, text="Batch Upscale")
         self.main_notebook.add(self.batch_resize_images_tab, text="Batch Resize")
         self.main_notebook.add(self.batch_rename_tab, text="Batch Rename")
-        self.main_notebook.add(self.batch_convert_tab, text="Batch Convert")
         self.main_notebook.add(self.find_dupe_file_tab, text="Find Duplicates")
 
 
@@ -494,7 +490,6 @@ class ImgTxtViewer:
             "Batch Upscale": "BatchUpscale",
             "Batch Resize": "BatchResize",
             "Batch Rename": "BatchRename",
-            "Batch Convert": "BatchConvert",
             "Find Duplicates": "FindDupeFile",
         }
         self.ui_state = tab_states.get(tab_name)
@@ -510,8 +505,6 @@ class ImgTxtViewer:
             self.create_batch_resize_images_ui(show=True)
         elif self.ui_state == "BatchRename":
             self.create_batch_rename_ui(show=True)
-        elif self.ui_state == "BatchConvert":
-            self.create_batch_convert_ui(show=True)
         elif self.ui_state == "FindDupeFile":
             self.create_find_dupe_file_ui(show=True)
         self.update_menu_state()
@@ -1352,10 +1345,6 @@ class ImgTxtViewer:
 
     def create_batch_rename_ui(self, show=False):
         self.create_ui_tab(self.batch_rename, self.batch_rename_tab, show=show)
-
-
-    def create_batch_convert_ui(self, show=False):
-        self.create_ui_tab(self.batch_convert, self.batch_convert_tab, show=show)
 
 
     def create_find_dupe_file_ui(self, show=False):
