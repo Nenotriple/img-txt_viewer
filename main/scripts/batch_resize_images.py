@@ -119,7 +119,6 @@ class BatchResizeImages:
     def setup_ui(self):
         self.setup_primary_frame()
         self.setup_top_row()
-        self.create_directory_row()
         self.create_control_row()
         self.create_bottom_row()
 
@@ -142,19 +141,18 @@ class BatchResizeImages:
     def setup_top_row(self):
         self.top_frame = tk.Frame(self.batch_resize_images_frame)
         self.top_frame.pack(fill="x", padx=2, pady=2)
-
-        self.info_label = tk.Label(self.top_frame, anchor="w", text="Select a directory...")
-        self.info_label.pack(side="left", fill="x", padx=2)
-
+        # Directory
+        self.create_directory_row()
+        # Help
         self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.toggle_about_window)
-        self.help_button.pack(side="right", fill="x", padx=2)
+        self.help_button.pack(side="left", fill="x", padx=2)
         ToolTip.create(self.help_button, "Show/Hide Help", 50, 6, 12)
 
 
     def create_directory_row(self):
         self.frame_top_row = tk.Frame(self.top_frame)
-        self.frame_top_row.pack(fill="both", padx=2)
-        # Entry
+        self.frame_top_row.pack(side="left", fill="both", expand=True, padx=2)
+        # Directory Entry
         self.entry_directory = ttk.Entry(self.frame_top_row)
         self.entry_directory.insert(0, os.path.normpath(self.working_dir) if self.working_dir else "...")
         self.entry_directory.pack(side="left", fill="x", expand=True, padx=2)
@@ -169,7 +167,7 @@ class BatchResizeImages:
         # Filetree
         self.file_tree_frame = ttk.Frame(self.batch_resize_images_frame)
         self.file_tree_frame.pack(side="top", fill="both", expand=True, padx=2, pady=2)
-        self.file_tree = ttk.Treeview(self.file_tree_frame, columns=("Name","Dimensions","New Dimensions","Type","New Type"), show="headings", height=10)
+        self.file_tree = ttk.Treeview(self.file_tree_frame, columns=("Name","Dimensions","New Dimensions","Type","New Type"), show="headings", height=1)
         self.file_tree.heading("Name", text="Name")
         self.file_tree.heading("Dimensions", text="Dimensions")
         self.file_tree.heading("New Dimensions", text="New Dimensions")
@@ -293,10 +291,22 @@ class BatchResizeImages:
         # Cancel Button
         self.button_cancel = ttk.Button(self.frame_buttons, width=8, state="disabled", text="Cancel", command=lambda: setattr(self, 'stop', True))
         self.button_cancel.pack(side="left", fill="x", padx=2, pady=2)
+        # Info Frame
+        self.info_frame = tk.Frame(self.frame_bottom_row)
+        self.info_frame.pack(fill="x")
+        # Info Label
+        self.info_label_total = tk.Label(self.info_frame, anchor="w", text="Total: 0", relief="groove", width=15)
+        self.info_label_total.pack(side="left", fill="both", padx=2)
+        self.info_label_processed = tk.Label(self.info_frame, anchor="w", text="Processed: 0", relief="groove", width=15)
+        self.info_label_processed.pack(side="left", fill="both", padx=2)
+        self.info_label_elapsed = tk.Label(self.info_frame, anchor="w", text="Elapsed: ..", relief="groove", width=15)
+        self.info_label_elapsed.pack(side="left", fill="both", padx=2)
+        self.info_label_eta = tk.Label(self.info_frame, anchor="w", text="ETA: ...", relief="groove", width=15)
+        self.info_label_eta.pack(side="left", fill="both", padx=2)
         # Progress Bar
         self.percent_complete = tk.StringVar()
-        self.percent_bar = ttk.Progressbar(self.frame_bottom_row, value=0)
-        self.percent_bar.pack(fill="x", padx=2, pady=2)
+        self.percent_bar = ttk.Progressbar(self.info_frame, value=0, length=100, variable=self.percent_complete)
+        self.percent_bar.pack(side="left", fill="both", expand=True, padx=2)
 
 
 #endregion
@@ -407,12 +417,16 @@ class BatchResizeImages:
             self.height_label.config(text="Height:")
 
 
-    def update_message_text(self, filecount=None, text=None):
+    def update_message_text(self, filecount=None, processed=None, elapsed=None, eta=None):
         if filecount:
             count = sum(1 for file in os.listdir(self.working_dir) if file.endswith(self.supported_filetypes))
-            self.info_label.config(text=f"{count} {'Image' if count == 1 else 'Images'} Found")
-        if text:
-            self.info_label.config(text=text)
+            self.info_label_total.config(text=f"Total: {count}")
+        if processed:
+            self.info_label_processed.config(text=f"Processed: {processed}")
+        if elapsed:
+            self.info_label_elapsed.config(text=f"Elapsed: {elapsed}")
+        if eta:
+            self.info_label_eta.config(text=f"ETA: {eta}")
 
 
     def toggle_convert_only_mode(self):
@@ -458,14 +472,18 @@ class BatchResizeImages:
                 self.populate_file_tree()
                 self.update_file_tree_info()
         except FileNotFoundError:
-            self.update_message_text(text="The system cannot find the path specified.")
+            messagebox.showinfo("Error", "The system cannot find the path specified.")
+        except Exception as e:
+            messagebox.showinfo("Error", str(e))
 
 
     def open_folder(self):
         try:
             os.startfile(self.working_dir)
         except FileNotFoundError:
-            self.update_message_text(text="The system cannot find the path specified.")
+            messagebox.showinfo("Error", "The system cannot find the path specified.")
+        except Exception as e:
+            messagebox.showinfo("Error", str(e))
 
 
     def get_output_folder_path(self):
@@ -512,8 +530,6 @@ class BatchResizeImages:
             img_size = (w, h)
             if self.convert_only_var.get():
                 file_values[2] = orig_dim
-            elif width is None or height is None:
-                file_values[2] = "-"
             else:
                 new_size = self.simulate_new_size(img_size, resize_mode, width, height)
                 if new_size:
@@ -803,17 +819,14 @@ class BatchResizeImages:
                             eta = (elapsed_time / (image_index + 1)) * (total_images - (image_index + 1))
                             elapsed_time_str = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
                             eta_str = time.strftime('%H:%M:%S', time.gmtime(eta))
-                            self.update_message_text(text=f"Processed: {self.files_processed} of {total_images} images | Elapsed Time: {elapsed_time_str} | ETA: {eta_str}")
-                            if self.files_processed >= total_images:
-                                self.files_processed = 0
-                                self.update_message_text(text=f"Done processing: {total_images} images | Elapsed Time: {elapsed_time_str}")
+                            self.update_message_text(processed=self.files_processed, elapsed=elapsed_time_str, eta=eta_str)
                         except Exception as e:
                             print(f"Error processing file {filename}: {str(e)}")
                     if not self.stop:
                         messagebox.showinfo("Done!", "Resizing finished." if not self.convert_only_var.get() else "Conversion finished.")
                         self.root.focus_force()
             except Exception as e:
-                print(f"Error in resize function: {str(e)}")
+                messagebox.showerror("ERROR - _resize_thread()", str(e))
             finally:
                 self.button_resize.config(state="normal")
                 self.toggle_widgets(state="normal")
@@ -832,7 +845,6 @@ class BatchResizeImages:
             filetype = original_extension[1:]
         filename_with_new_extension = f"{base_filename}.{filetype}"
         counter = 1
-        self.files_processed += 1
         if not self.overwrite_files_var.get():
             while os.path.exists(os.path.join(output_folder_path, filename_with_new_extension)):
                 filename_with_new_extension = f"{base_filename}_{counter}.{filetype}"
