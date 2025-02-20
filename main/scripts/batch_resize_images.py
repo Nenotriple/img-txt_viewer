@@ -146,7 +146,7 @@ class BatchResizeImages:
         # Help
         self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.toggle_about_window)
         self.help_button.pack(side="left", fill="x", padx=2)
-        ToolTip.create(self.help_button, "Show/Hide Help", 50, 6, 12)
+        ToolTip.create(self.help_button, "Show/Hide Help", delay=50, padx=6, pady=12)
 
 
     def create_directory_row(self):
@@ -266,18 +266,22 @@ class BatchResizeImages:
         self.use_output_folder_var = tk.BooleanVar(value=True)
         self.use_output_folder_checkbutton = ttk.Checkbutton(self.frame_checkbuttons, text="Use Output Folder", variable=self.use_output_folder_var)
         self.use_output_folder_checkbutton.grid(row=0, column=0, sticky="w", padx=2, pady=2)
+        ToolTip.create(self.use_output_folder_checkbutton, "A new folder will be created in the selected directory called 'Resize Output' where images will be saved.", delay=250, padx=6, pady=12, wraplength=200)
         # Overwrite files
         self.overwrite_files_var = tk.BooleanVar(value=False)
         self.overwrite_files_checkbutton = ttk.Checkbutton(self.frame_checkbuttons, text="Overwrite Output", variable=self.overwrite_files_var)
         self.overwrite_files_checkbutton.grid(row=0, column=1, sticky="w", padx=2, pady=2)
+        ToolTip.create(self.overwrite_files_checkbutton, "If enabled: Conflicting files will be overwritten.\nIf Disabled: Conflicting files will have '_#' appended to the filename.", delay=250, padx=6, pady=12, wraplength=200)
         # Save Chunk Info
         self.save_png_info_var = tk.BooleanVar(value=False)
         self.save_png_info_checkbutton = ttk.Checkbutton(self.frame_checkbuttons, text="Save PNG Info", variable=self.save_png_info_var)
         self.save_png_info_checkbutton.grid(row=1, column=0, sticky="w", padx=2, pady=2)
+        ToolTip.create(self.save_png_info_checkbutton, "Auto-save PNG chunk info or create a text file on conversion.", delay=250, padx=6, pady=12, wraplength=200)
         # Convert Only
         self.convert_only_var = tk.BooleanVar(value=False)
         self.convert_only_checkbutton = ttk.Checkbutton(self.frame_checkbuttons, text="Convert Only", variable=self.convert_only_var, command=self.toggle_convert_only_mode)
         self.convert_only_checkbutton.grid(row=1, column=1, sticky="w", padx=2, pady=2)
+        ToolTip.create(self.convert_only_checkbutton, "Ignore resize options and convert the images only.", delay=250, padx=6, pady=12, wraplength=200)
 
 
     def create_bottom_row(self):
