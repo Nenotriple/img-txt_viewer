@@ -445,6 +445,8 @@ class BatchResizeImages:
             self.width_entry.config(state=state)
             self.height_entry.config(state=state)
             self.update_file_tree_info()
+            self.update_quality_widgets()
+            self.update_entries()
             self.button_resize.config(text="Resize!")
 
 
@@ -519,22 +521,32 @@ class BatchResizeImages:
 
 
     def update_file_tree_info(self, event=None):
-        resize_mode, width, height = self.get_entry_values(silent=True) or (None, None, None)
+        resize_mode = self.resize_mode_var.get()
+        width_str = self.width_entry.get().strip()
+        height_str = self.height_entry.get().strip()
+        try:
+            width = int(width_str) if width_str else None
+        except ValueError:
+            width = None
+        try:
+            height = int(height_str) if height_str else None
+        except ValueError:
+            height = None
         filetype_choice = self.filetype_var.get() if self.filetype_var.get() != "AUTO" else ""
         for child in self.file_tree.get_children():
             file_values = list(self.file_tree.item(child, "values"))
             orig_dim = file_values[1]
             if orig_dim == "-":
                 continue
-            w, h = [int(i) for i in orig_dim.split("x")]
-            img_size = (w, h)
+            w_orig, h_orig = [int(i) for i in orig_dim.split("x")]
+            img_size = (w_orig, h_orig)
             if self.convert_only_var.get():
                 file_values[2] = orig_dim
             else:
                 new_size = self.simulate_new_size(img_size, resize_mode, width, height)
                 if new_size:
-                    w2, h2 = new_size
-                    file_values[2] = f"{w2}x{h2}"
+                    new_w, new_h = new_size
+                    file_values[2] = f"{new_w}x{new_h}"
             new_type = filetype_choice.upper() if filetype_choice else file_values[3]
             file_values[4] = new_type
             self.file_tree.item(child, values=file_values)
@@ -542,33 +554,52 @@ class BatchResizeImages:
 
     def simulate_new_size(self, original_size, mode, w, h):
         try:
-            new_size = None
             if mode == "Resolution":
-                new_size = (w, h)
+                new_w = w if w is not None else "-"
+                new_h = h if h is not None else "-"
+                new_size = (new_w, new_h)
             elif mode == "Percentage":
-                ratio = w / 100
-                new_size = (int(original_size[0] * ratio), int(original_size[1] * ratio))
+                if w is None:
+                    new_size = ("-", "-")
+                else:
+                    ratio = w / 100.0
+                    new_size = (int(original_size[0] * ratio), int(original_size[1] * ratio))
             elif mode == "Width":
-                ratio = w / float(original_size[0])
-                new_size = (w, int(original_size[1] * ratio))
+                if w is None:
+                    new_size = ("-", "-")
+                else:
+                    ratio = w / float(original_size[0])
+                    new_size = (w, int(original_size[1] * ratio))
             elif mode == "Height":
-                ratio = h / float(original_size[1])
-                new_size = (int(original_size[0] * ratio), h)
+                if h is None:
+                    new_size = ("-", "-")
+                else:
+                    ratio = h / float(original_size[1])
+                    new_size = (int(original_size[0] * ratio), h)
             elif mode == "Shorter Side":
-                if original_size[0] < original_size[1]:
-                    ratio = w / float(original_size[0])
-                    new_size = (w, int(original_size[1] * ratio))
+                if w is None:
+                    new_size = ("-", "-")
                 else:
-                    ratio = w / float(original_size[1])
-                    new_size = (int(original_size[0] * ratio), w)
+                    if original_size[0] < original_size[1]:
+                        ratio = w / float(original_size[0])
+                        new_size = (w, int(original_size[1] * ratio))
+                    else:
+                        ratio = w / float(original_size[1])
+                        new_size = (int(original_size[0] * ratio), w)
             elif mode == "Longer Side":
-                if original_size[0] > original_size[1]:
-                    ratio = w / float(original_size[0])
-                    new_size = (w, int(original_size[1] * ratio))
+                if w is None:
+                    new_size = ("-", "-")
                 else:
-                    ratio = w / float(original_size[1])
-                    new_size = (int(original_size[0] * ratio), w)
-            if new_size and not self.should_resize(original_size, new_size):
+                    if original_size[0] > original_size[1]:
+                        ratio = w / float(original_size[0])
+                        new_size = (w, int(original_size[1] * ratio))
+                    else:
+                        ratio = w / float(original_size[1])
+                        new_size = (int(original_size[0] * ratio), w)
+            else:
+                new_size = ("-", "-")
+            if (isinstance(new_size[0], int) and isinstance(new_size[1], int) and
+                not self.should_resize(original_size, new_size)):
                 return original_size
             return new_size
         except Exception:
