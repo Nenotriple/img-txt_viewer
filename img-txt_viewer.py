@@ -1694,6 +1694,8 @@ class ImgTxtViewer:
 
 
     def debounce_refresh_image(self, event):
+        if self.ui_state != "ImgTxtViewer":
+            return
         if hasattr(self, 'text_box'):
             if self.is_resizing_job_id:
                 self.root.after_cancel(self.is_resizing_job_id)
