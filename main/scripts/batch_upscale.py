@@ -66,22 +66,22 @@ class BatchUpscale:
     def create_directory_row(self):
         self.top_frame = tk.Frame(self.batch_upscale_frame)
         self.top_frame.pack(fill="x", padx=2, pady=2)
-
+        # Info
         self.info_label = tk.Label(self.top_frame, anchor="w", text="Select a directory...")
         self.info_label.pack(side="left", fill="x", padx=2)
-
+        # Directory
         self.entry_directory = ttk.Entry(self.top_frame)
         self.entry_directory.insert(0, os.path.normpath(self.working_dir) if self.working_dir else "...")
         self.entry_directory.pack(side="left", fill="x", expand=True, padx=2)
         self.entry_directory.bind("<Return>", lambda event: self.set_working_directory(self.entry_directory.get()))
         self.entry_directory.bind("<Button-1>", lambda event: self.entry_directory.delete(0, "end") if self.entry_directory.get() == "..." else None)
-
-        self.select_button = ttk.Button(self.top_frame, width=8, text="Browse...", command=self.set_working_directory)
-        self.select_button.pack(side="left", padx=2)
-
+        # Browse
+        self.browse_button = ttk.Button(self.top_frame, width=8, text="Browse...", command=self.set_working_directory)
+        self.browse_button.pack(side="left", padx=2)
+        # Open
         self.open_button = ttk.Button(self.top_frame, width=8, text="Open", command=self.open_folder)
         self.open_button.pack(side="left", padx=2)
-
+        # Help
         self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.show_help)
         self.help_button.pack(side="right", fill="x", padx=2)
 
@@ -127,7 +127,7 @@ class BatchUpscale:
         try:
             os.startfile(path)
         except Exception as e:
-            print(f"Error opening folder: {e}")
+            messagebox.showerror("Open Folder Error", f"Failed to open folder: {e}")
 
 
     def show_help(self):
