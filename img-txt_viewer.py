@@ -407,7 +407,6 @@ class ImgTxtViewer:
         self.batch_operations_menu = Menu(self.toolsMenu, tearoff=0)
         self.toolsMenu.add_cascade(label="Batch Operations", underline=0, state="disable", menu=self.batch_operations_menu)
         self.batch_operations_menu.add_command(label="Batch Crop Images...", underline=8, command=self.batch_crop_images)
-        self.batch_operations_menu.add_command(label="Batch Upscale...", underline=0, command=lambda: self.upscale_image(batch=True))
         self.batch_operations_menu.add_separator()
         self.batch_operations_menu.add_command(label="Zip Dataset...", underline=0, command=self.archive_dataset)
         self.batch_operations_menu.add_command(label="Cleanup All Text Files...", underline=1, command=self.cleanup_all_text_files)
