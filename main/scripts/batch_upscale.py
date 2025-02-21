@@ -1,4 +1,3 @@
-
 ################################################################################################################################################
 #region -  Imports
 
@@ -45,39 +44,56 @@ class BatchUpscale:
         self.extra_models_path = None
 
         # Batch Mode
-        self.batch_mode_var = True
         self.batch_thread_var = False
-        self.batch_input_path_var = tk.StringVar(value="")
-        self.batch_output_path_var = tk.StringVar(value="")
+        self.batch_mode_var = tk.BooleanVar(value=True)
+        self.input_path_var = tk.StringVar(value="")
+        self.output_path_var = tk.StringVar(value="")
 
         # Other Variables
-        self.total_gif_frames = 0
-        self.current_gif_frame = 0
         self.total_images = 0
-        self.original_image_width = 0
-        self.original_image_height = 0
+        self.auto_output_var = tk.BooleanVar(value=True)
 
 
     def setup_window(self, parent, root):
         self.parent = parent
         self.root = root
         self.working_dir = self.parent.image_dir.get()
+
         self.working_img_path = self.parent.image_files[self.parent.current_index]
 
         self.executable_path = os.path.join(self.parent.application_path, "main/resrgan/realesrgan-ncnn-vulkan.exe")
         self.extra_models_path = os.path.join(self.parent.application_path, "ncnn_models".lower())
         self.ncnn_models = self.find_additional_models()
 
-        if self.batch_mode_var:
-            self.batch_input_path_var.set(self.working_dir)
-            self.batch_output_path_var.set(value=os.path.join(self.batch_input_path_var.get(), "Upscale_Output"))
+        self.input_path_var.set(self.working_dir)
+        self.output_path_var.set(value=os.path.join(self.input_path_var.get(), "Upscale_Output"))
         self.total_images = len([file for file in os.listdir(self.working_dir) if file.lower().endswith(self.supported_filetypes)])
 
-        self.get_image_info()
         self.setup_ui()
-        self.set_working_directory(self.working_dir)
-        self.create_interface()
-        self.update_size_info_label()
+        self.populate_file_tree()
+
+
+    def populate_file_tree(self):
+        self.file_tree.delete(*self.file_tree.get_children())
+        scaling_factor = float(self.upscale_factor_value.get())
+        input_path = self.input_path_var.get()
+        if not os.path.isdir(input_path):
+            input_path = os.path.dirname(input_path)
+        for file in os.listdir(input_path):
+            if file.lower().endswith(self.supported_filetypes):
+                filepath = os.path.join(input_path, file)
+                try:
+                    with Image.open(filepath) as img:
+                        width, height = img.size
+                        dimensions = f"{width}x{height}"
+                        new_width = int(width * scaling_factor)
+                        new_height = int(height * scaling_factor)
+                        new_dimensions = f"{new_width}x{new_height}"
+                except Exception:
+                    dimensions = "0x0"
+                    new_dimensions = "0x0"
+                ext = os.path.splitext(file)[1]
+                self.file_tree.insert("", "end", values=(file, dimensions, new_dimensions, ext))
 
 
 #endregion
@@ -87,9 +103,10 @@ class BatchUpscale:
 
     def setup_ui(self):
         self.setup_primary_frame()
-        self.create_directory_row()
-        self.create_control_row()
         self.create_bottom_row()
+        self.create_path_selection_widgets()
+        self.create_file_tree()
+        self.create_upscale_settings_widgets()
 
 
     def setup_primary_frame(self):
@@ -104,34 +121,6 @@ class BatchUpscale:
         self.batch_upscale_frame.grid_columnconfigure(0, weight=1)
 
 
-    def create_directory_row(self):
-        self.top_frame = tk.Frame(self.batch_upscale_frame)
-        self.top_frame.pack(fill="x", padx=2, pady=2)
-        # Info
-        self.info_label = tk.Label(self.top_frame, anchor="w", text="Select a directory...")
-        #self.info_label.pack(side="left", fill="x", padx=2)
-        # Directory
-        self.entry_directory = ttk.Entry(self.top_frame)
-        self.entry_directory.insert(0, os.path.normpath(self.working_dir) if self.working_dir else "...")
-        #self.entry_directory.pack(side="left", fill="x", expand=True, padx=2)
-        self.entry_directory.bind("<Return>", lambda event: self.set_working_directory(self.entry_directory.get()))
-        self.entry_directory.bind("<Button-1>", lambda event: self.entry_directory.delete(0, "end") if self.entry_directory.get() == "..." else None)
-        # Browse
-        self.browse_button = ttk.Button(self.top_frame, width=8, text="Browse...", command=self.set_working_directory)
-        #self.browse_button.pack(side="left", padx=2)
-        # Open
-        self.open_button = ttk.Button(self.top_frame, width=8, text="Open", command=self.open_folder)
-        #self.open_button.pack(side="left", padx=2)
-        # Help
-        self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.show_help)
-        #self.help_button.pack(side="right", fill="x", padx=2)
-
-
-    def create_control_row(self):
-        self.frame_control_row = tk.Frame(self.batch_upscale_frame, borderwidth=2)
-        self.frame_control_row.pack(side="top", fill="x", padx=2, pady=2)
-
-
     def create_bottom_row(self):
         self.frame_bottom_row = tk.Frame(self.batch_upscale_frame)
         self.frame_bottom_row.pack(side="bottom", fill="both")
@@ -143,9 +132,142 @@ class BatchUpscale:
         # Cancel Button
         self.button_cancel = ttk.Button(button_fame, text="Cancel", command=self.close_tab)
         self.button_cancel.pack(side="left", fill="x")
+        # Info Row
+        info_row = tk.Frame(self.frame_bottom_row)
+        info_row.pack(side="top", fill="x")
+        # Info Labels
+        self.create_info_widgets(info_row)
         # Progress Bar
-        self.progress_bar = ttk.Progressbar(self.frame_bottom_row, maximum=100)
-        self.progress_bar.pack(side="top", fill="x")
+        self.progress_bar = ttk.Progressbar(info_row, maximum=100)
+        self.progress_bar.pack(side="left", fill="both", expand=True)
+
+
+    def create_info_widgets(self, frame):
+        self.info_frame = tk.Frame(frame)
+        self.info_frame.pack(side="left", fill="both")
+        self.info_frame.grid_rowconfigure(0, weight=1)
+        # Total Count
+        self.label_total_count = tk.Label(self.info_frame, text=f"Total: {self.total_images}", relief="groove", width=15, anchor="w")
+        self.label_total_count.grid(row=0, column=0, padx=2)
+        # Processed
+        self.label_upscaled_count = tk.Label(self.info_frame, text=f"Processed: 0", relief="groove", width=15, anchor="w")
+        self.label_upscaled_count.grid(row=0, column=5, padx=2)
+        # Elapsed
+        self.label_timer = tk.Label(self.info_frame, text="Elapsed: 00:00:00", relief="groove", width=15, anchor="w")
+        self.label_timer.grid(row=0, column=10, padx=2)
+        # ETA
+        self.label_timer_eta = tk.Label(self.info_frame, text="ETA: 00:00:00", relief="groove", width=15, anchor="w")
+        self.label_timer_eta.grid(row=0, column=15, padx=2)
+        # Misc
+        self.new_size_label = tk.Label(self.info_frame, text="New Size: 0x0", relief="groove", width=21, anchor="w")
+
+
+    def create_path_selection_widgets(self):
+        path_selection_frame = ttk.Labelframe(self.batch_upscale_frame, text="Path Selection")
+        path_selection_frame.pack(side="top", fill="x")
+
+        # Input Path
+        input_frame = tk.Frame(path_selection_frame)
+        input_frame.pack(side="top", fill="x")
+        # Label
+        tk.Label(input_frame, text="Input:", width=10).pack(side="left")
+        # Entry
+        self.entry_input_path = ttk.Entry(input_frame, textvariable=self.input_path_var)
+        self.entry_input_path.pack(side="left", fill="x", expand=True)
+        # Batch Mode
+        self.batch_mode_checkbox = ttk.Checkbutton(input_frame, text="Batch Mode", variable=self.batch_mode_var, width=12, takefocus=False, command=self.toggle_batch_mode)
+        self.batch_mode_checkbox.pack(side="left", fill="x")
+        ToolTip.create(self.batch_mode_checkbox, "Enable or disable batch processing", delay=250, padx=6, pady=12)
+        # Browse
+        self.browse_input_button = ttk.Button(input_frame, text="Browse...", command=lambda: self.set_upscale_paths(path="input"))
+        self.browse_input_button.pack(side="left", fill="x")
+        # Open
+        ttk.Button(input_frame, text="Open", command=lambda: self.open_directory(self.input_path_var.get())).pack(side="left", fill="x")
+
+        # Output Path
+        batch_output_frame = tk.Frame(path_selection_frame)
+        batch_output_frame.pack(side="top", fill="x")
+        # Label
+        tk.Label(batch_output_frame, text="Output:", width=10).pack(side="left")
+        # Entry
+        self.entry_output_path = ttk.Entry(batch_output_frame, textvariable=self.output_path_var)
+        self.entry_output_path.pack(side="left", fill="x", expand=True)
+        # Auto
+        self.auto_output_checkbox = ttk.Checkbutton(batch_output_frame, text="Auto", variable=self.auto_output_var, width=12, takefocus=False, command=self.toggle_batch_mode)
+        self.auto_output_checkbox.pack(side="left", fill="x")
+        ToolTip.create(self.auto_output_checkbox, "Automatically set a unique output path relative to the input path", delay=250, padx=6, pady=12)
+        # Browse
+        self.browse_output_button = ttk.Button(batch_output_frame, text="Browse...", command=lambda: self.set_upscale_paths(path="output"))
+        self.browse_output_button.pack(side="left", fill="x")
+        # Open
+        ttk.Button(batch_output_frame, text="Open", command=lambda: self.open_directory(self.output_path_var.get())).pack(side="left", fill="x")
+
+
+    def create_file_tree(self):
+        tree_frame = tk.Frame(self.batch_upscale_frame)
+        tree_frame.pack(side="top", fill="both", expand=True)
+        self.file_tree = ttk.Treeview(tree_frame, columns=("Name", "Dimensions", "New Dimensions", "Type"), show="headings", selectmode="browse", height=1)
+        self.file_tree.heading("Name", text="Name")
+        self.file_tree.heading("Dimensions", text="Dimensions")
+        self.file_tree.heading("New Dimensions", text="New Dimensions")
+        self.file_tree.heading("Type", text="Type")
+        self.file_tree.column("Name", stretch=True)
+        self.file_tree.column("Dimensions", width=180, stretch=False)
+        self.file_tree.column("New Dimensions", width=180, stretch=False)
+        self.file_tree.column("Type", width=100, stretch=False)
+        self.file_tree.pack(side="left", fill="both", expand=True)
+        v_scrollbar = ttk.Scrollbar(tree_frame, orient="vertical", command=self.file_tree.yview)
+        v_scrollbar.pack(side="right", fill="y")
+        self.file_tree.configure(yscrollcommand=v_scrollbar.set)
+        self.file_tree.bind("<<TreeviewSelect>>", self.handle_file_tree_selection)
+
+
+    def create_upscale_settings_widgets(self):
+        settings_frame = ttk.Labelframe(self.batch_upscale_frame, text="Settings")
+        settings_frame.pack(side="bottom", fill="x")
+
+        # Upscale Model
+        frame_model = tk.Frame(settings_frame)
+        frame_model.pack(side="top", fill="both", pady=(0, 5))
+        # Label
+        self.label_upscale_model = tk.Label(frame_model, text="Upscale Model:", width=20)
+        self.label_upscale_model.pack(side="left")
+        ToolTip.create(self.label_upscale_model, "Select the RESRGAN upscale model", delay=250, padx=6, pady=12)
+        # Combobox
+        self.combobox_upscale_model = ttk.Combobox(frame_model, width=25, state="readonly", values=self.ncnn_models)
+        self.combobox_upscale_model.pack(side="top", fill="x")
+        self.combobox_upscale_model.set("realesr-animevideov3-x4")
+
+        # Upscale Factor
+        frame_size = tk.Frame(settings_frame)
+        frame_size.pack(side="top", fill="both")
+        # Label
+        label_size = tk.Label(frame_size, text="Upscale Factor:", width=20)
+        label_size.pack(side="left")
+        ToolTip.create(label_size, "Determines the final size of the image.\n\nImages are first upscaled by 4x and then resized according to the selected upscale factor.\n\nThe final resolution is calculated as: (4 * original size) / upscale factor.", delay=250, padx=6, pady=12)
+        # Slider
+        self.upscale_factor_value = tk.DoubleVar(value=2.00)
+        self.slider_upscale_factor = ttk.Scale(frame_size, from_=0.25, to=8.00, orient="horizontal", variable=self.upscale_factor_value, command=self.update_upscale_factor_label)
+        self.slider_upscale_factor.pack(side="left", fill="x", expand=True)
+        # Label
+        self.label_upscale_factor_value = tk.Label(frame_size, textvariable=self.upscale_factor_value, width=5)
+        self.label_upscale_factor_value.pack(side="left", anchor="w")
+
+        # Upscale Strength
+        frame_strength = tk.Frame(settings_frame)
+        frame_strength.pack(side="top", fill="both")
+        # Label
+        self.label_upscale_strength = tk.Label(frame_strength, text="Upscale Strength:", width=20)
+        self.label_upscale_strength.pack(side="left")
+        ToolTip.create(self.label_upscale_strength, "Adjust the upscale strength to determine the final blending value of the output image.\n\n0% = Only original image, 100% = Only upscaled image.", delay=250, padx=6, pady=12)
+        # Slider
+        self.upscale_strength_value = tk.IntVar(value=100)
+        self.slider_upscale_strength = ttk.Scale(frame_strength, from_=0, to=100, orient="horizontal", variable=self.upscale_strength_value, command=self.update_strength_label)
+        self.slider_upscale_strength.pack(side="left", fill="x", expand=True)
+        self.slider_upscale_strength.set(100)
+        # Label
+        self.label_upscale_strength_percent = tk.Label(frame_strength, width=5, text="100%")
+        self.label_upscale_strength_percent.pack(anchor="w", side="left")
 
 
 #endregion
@@ -153,25 +275,166 @@ class BatchUpscale:
 #region -  UI Functions
 
 
-    def update_info_label(self, filecount=None, text=None):
-        if filecount:
-            count = sum(1 for file in os.listdir(self.working_dir) if file.endswith(self.supported_filetypes))
-            self.info_label.config(text=f"{count} {'Image' if count == 1 else 'Images'} Found")
-        if text:
-            self.info_label.config(text=text)
+    def toggle_batch_mode(self):
+        input_path = self.input_path_var.get()
+        output_path = self.output_path_var.get()
+        if self.batch_mode_var:
+            if not os.path.isdir(input_path):
+                self.input_path_var.set(os.path.dirname(input_path))
+            if not os.path.isdir(output_path):
+                self.output_path_var.set(os.path.dirname(output_path))
+        self.handle_file_tree_selection(None)
+        self.update_new_dimensions_in_file_tree()
+
+
+    def get_selection_details(self):
+        selection = self.file_tree.selection()
+        if selection:
+            item = selection[0]
+            values = self.file_tree.item(item, "values")
+            if values:
+                filename = values[0]
+                directory = self.working_dir
+                name, extension = os.path.splitext(filename)
+                filepath = os.path.join(directory, filename)
+                return item, directory, filename, extension, filepath
+        return None, None, None, None, None
+
+
+    def verify_selected_file(self, filepath):
+        if filepath is None or not os.path.exists(filepath):
+            self.populate_file_tree()
+            return False
+        else:
+            return True
+
+
+    def handle_file_tree_selection(self, event):
+        if self.batch_thread_var:
+            return
+        item, directory, filename, extension, filepath = self.get_selection_details()
+        if not self.verify_selected_file(filepath):
+            return
+        if self.batch_mode_var.get():
+            if self.auto_output_var.get():
+                self.output_path_var.set(os.path.join(directory, "Upscale_Output"))
+            return
+        if filename:
+            self.working_img_path = os.path.join(directory, filename)
+            norm_path = os.path.normpath(self.working_img_path)
+            self.input_path_var.set(norm_path)
+            base = os.path.splitext(filename)[0]
+            self.output_path_var.set(os.path.join(directory, f"{base}_up{extension}") if self.auto_output_var.get() else norm_path)
+        self.update_new_dimensions_in_file_tree()
+
+
+    def update_new_dimensions_in_file_tree(self):
+        scaling_factor = float(self.upscale_factor_value.get())
+        all_items = self.file_tree.get_children()
+        selected_items = self.file_tree.selection() if not self.batch_mode_var.get() else all_items
+        for item in all_items:
+            values = self.file_tree.item(item, "values")
+            if len(values) < 3:
+                continue
+            dimensions = values[1]
+            if item in selected_items:
+                try:
+                    width_str, height_str = dimensions.split("x")
+                    width = int(width_str)
+                    height = int(height_str)
+                    new_width = int(width * scaling_factor)
+                    new_height = int(height * scaling_factor)
+                    new_dimensions = f"{new_width}x{new_height}"
+                except Exception:
+                    new_dimensions = "-x-"
+            else:
+                new_dimensions = "-x-"
+            new_values = (values[0], dimensions, new_dimensions, values[3])
+            self.file_tree.item(item, values=new_values)
+
+
+    def set_upscale_paths(self, path=None):
+        if path is None:
+            return
+        if path == "input":
+            if self.batch_mode_var.get():
+                result = filedialog.askdirectory(initialdir=self.input_path_var.get())
+                if not result:
+                    return
+                self.input_path_var.set(os.path.normpath(result))
+            else:
+                result = filedialog.askopenfilename(initialdir=self.input_path_var.get())
+                if not result:
+                    return
+                self.input_path_var.set(os.path.normpath(result))
+                self.working_img_path = self.input_path_var.get()
+            self.populate_file_tree()
+            self.clear_process_labels()
+        elif path == "output":
+            if self.batch_mode_var.get():
+                result = filedialog.askdirectory(initialdir=self.output_path_var.get())
+                if not result:
+                    return
+                self.output_path_var.set(os.path.normpath(result))
+            else:
+                result = filedialog.asksaveasfilename(initialdir=self.output_path_var.get())
+                if not result:
+                    return
+                self.output_path_var.set(os.path.normpath(result))
+        if self.auto_output_var.get():
+            if self.batch_mode_var.get():
+                self.output_path_var.set(os.path.join(self.input_path_var.get(), "Upscale_Output"))
+            else:
+                directory, filename = os.path.split(self.input_path_var.get())
+                filename, extension = os.path.splitext(filename)
+                self.output_path_var.set(os.path.join(directory, f"{filename}_up{extension}"))
+        self.set_working_directory()
+        self.entry_input_path.xview_moveto(1)
+        self.entry_output_path.xview_moveto(1)
+
+
+    def update_strength_label(self, event=None):
+        try:
+            value = int(self.upscale_strength_value.get())
+            self.label_upscale_strength_percent.config(text=f"{value}%")
+        except Exception:
+            pass
+
+
+    def update_upscale_factor_label(self, event):
+        try:
+            value = round(float(self.upscale_factor_value.get()) * 4) / 4
+            self.upscale_factor_value.set(value)
+            self.label_upscale_factor_value.config(text=f"{value:.2f}x")
+            self.update_new_dimensions_in_file_tree()
+        except Exception:
+            pass
+
+
+    def clear_process_labels(self):
+        self.label_upscaled_count.config(text="Processed: 0")
+        self.label_timer.config(text="Elapsed: 00:00:00")
+        self.label_timer_eta.config(text="ETA: 00:00:00")
+        self.progress_bar.config(value=0)
 
 
     def set_working_directory(self, path=None):
-        if path is None:
-            path = filedialog.askdirectory(initialdir=self.working_dir)
-            if not os.path.isdir(path):
-                return
+        if self.batch_thread_var:
+            return
+        if path:
             self.working_dir = path
         else:
-            self.working_dir = path
-        self.entry_directory.delete(0, "end")
-        self.entry_directory.insert(0, os.path.normpath(self.working_dir))
-        self.update_info_label(filecount=True)
+            if not os.path.isdir(self.input_path_var.get()):
+                self.working_dir = os.path.dirname(self.input_path_var.get())
+            else:
+                self.working_dir = self.input_path_var.get()
+        self.working_img_path = self.parent.image_files[self.parent.current_index]
+        self.input_path_var.set(self.working_dir)
+        self.output_path_var.set(value=os.path.join(self.input_path_var.get(), "Upscale_Output"))
+        self.total_images = len([file for file in os.listdir(self.working_dir) if file.lower().endswith(self.supported_filetypes)])
+        self.label_total_count.config(text=f"Total: {self.total_images}")
+        self.populate_file_tree()
+        self.clear_process_labels()
 
 
     def open_folder(self):
@@ -195,166 +458,13 @@ class BatchUpscale:
         messagebox.showinfo("Help", help_text)
 
 
-
-
-
-
-
-#endregion
-################################################################################################################################################
-#region -  Setup Interface
-
-
-    def create_interface(self):
-        self.create_upscale_model_selection_widgets()
-        self.create_info_widgets()
-        self.create_upscale_settings_widgets()
-
-
-    def create_upscale_model_selection_widgets(self):
-        self.batch_path_selection_frame = ttk.Labelframe(self.batch_upscale_frame, text="Batch Paths")
-        self.batch_path_selection_frame.pack(side="top", fill="x")
-
-        # Input Path
-        batch_input_frame = tk.Frame(self.batch_path_selection_frame)
-        batch_input_frame.pack(side="top", fill="x")
-
-        tk.Label(batch_input_frame, text="Input:", width=10).pack(side="left")
-
-        self.entry_batch_input_path = ttk.Entry(batch_input_frame, textvariable=self.batch_input_path_var)
-        self.entry_batch_input_path.pack(side="left", fill="x", expand=True)
-        self.input_tooltip = ToolTip.create(self.entry_batch_input_path, self.batch_input_path_var.get(), delay=250, padx=6, pady=12)
-
-        self.button_browse_batch_input = ttk.Button(batch_input_frame, text="Browse...")
-        self.button_browse_batch_input.pack(side="left", fill="x")
-
-        self.button_open_batch_input = ttk.Button(batch_input_frame, text="Open", command=lambda: self.open_directory(self.batch_input_path_var.get()))
-        self.button_open_batch_input.pack(side="left", fill="x")
-
-        # Output Path
-        batch_output_frame = tk.Frame(self.batch_path_selection_frame)
-        batch_output_frame.pack(side="top", fill="x")
-
-        tk.Label(batch_output_frame, text="Output:", width=10).pack(side="left")
-
-        self.entry_batch_output_path = ttk.Entry(batch_output_frame, textvariable=self.batch_output_path_var)
-        self.entry_batch_output_path.pack(side="left", fill="x", expand=True)
-        self.output_tooltip = ToolTip.create(self.entry_batch_output_path, self.batch_output_path_var.get(), delay=250, padx=6, pady=12)
-
-        self.browse_batch_output_button = ttk.Button(batch_output_frame, text="Browse...")
-        self.browse_batch_output_button.pack(side="left", fill="x")
-
-        self.open_batch_output_button = ttk.Button(batch_output_frame, text="Open", command=lambda: self.open_directory(self.batch_output_path_var.get()))
-        self.open_batch_output_button.pack(side="left", fill="x")
-
-
-
-    def create_upscale_settings_widgets(self):
-        settings_frame = ttk.Labelframe(self.batch_upscale_frame, text="Settings")
-        settings_frame.pack(side="bottom", fill="x")
-        # Upscale Model
-        frame_model = tk.Frame(settings_frame)
-        frame_model.pack(side="top", fill="both", pady=(0, 5))
-
-        self.label_upscale_model = tk.Label(frame_model, text="Upscale Model:", width=20)
-        self.label_upscale_model.pack(side="left")
-        ToolTip.create(self.label_upscale_model, "Select the RESRGAN upscale model", delay=250, padx=6, pady=12)
-
-        self.combobox_upscale_model = ttk.Combobox(frame_model, width=25, state="readonly", values=self.ncnn_models)
-        self.combobox_upscale_model.pack(side="top", fill="x")
-        self.combobox_upscale_model.set("realesr-animevideov3-x4")
-
-        # Upscale Factor
-        frame_size = tk.Frame(settings_frame)
-        frame_size.pack(side="top", fill="both")
-
-        label_size = tk.Label(frame_size, text="Upscale Factor:", width=20)
-        label_size.pack(side="left")
-        ToolTip.create(label_size, "Determines the final size of the image.\n\nImages are first upscaled by 4x and then resized according to the selected upscale factor.\n\nThe final resolution is calculated as: (4 * original size) / upscale factor.", delay=250, padx=6, pady=12)
-
-        self.upscale_factor_value = tk.DoubleVar(value=2.00)
-        self.slider_upscale_factor = ttk.Scale(frame_size, from_=0.25, to=8.00, orient="horizontal", variable=self.upscale_factor_value, command=self.update_upscale_factor_label)
-        self.slider_upscale_factor.pack(side="left", fill="x", expand=True)
-
-        self.label_upscale_factor_value = tk.Label(frame_size, textvariable=self.upscale_factor_value, width=5)
-        self.label_upscale_factor_value.pack(side="left", anchor="w")
-
-        # Upscale Strength
-        frame_strength = tk.Frame(settings_frame)
-        frame_strength.pack(side="top", fill="both")
-
-        self.label_upscale_strength = tk.Label(frame_strength, text="Upscale Strength:", width=20)
-        self.label_upscale_strength.pack(side="left")
-        ToolTip.create(self.label_upscale_strength, "Adjust the upscale strength to determine the final blending value of the output image.\n\n0% = Only original image, 100% = Only upscaled image.", delay=250, padx=6, pady=12)
-
-        self.upscale_strength_value = tk.IntVar(value=100)
-        self.slider_upscale_strength = ttk.Scale(frame_strength, from_=0, to=100, orient="horizontal", variable=self.upscale_strength_value, command=self.update_strength_label)
-        self.slider_upscale_strength.pack(side="left", fill="x", expand=True)
-        self.slider_upscale_strength.set(100)
-
-        self.label_upscale_strength_percent = tk.Label(frame_strength, width=5, text="100%")
-        self.label_upscale_strength_percent.pack(anchor="w", side="left")
-
-
-    def create_info_widgets(self):
-        if self.batch_mode_var:
-            self.frame_info = ttk.Labelframe(self.batch_upscale_frame, text="Image Info")
-            self.frame_info.pack(side="bottom", fill="both")
-            # Output info
-            self.frame_labels = tk.Frame(self.frame_info)
-            self.frame_labels.pack(side="left", expand=True, fill="x")
-            tk.Label(self.frame_labels, text="Upscaled:").pack(anchor="w", side="top")
-            # Timer
-            self.label_timer = tk.Label(self.frame_labels, text="Timer: 00:00:00")
-            self.label_timer.pack(anchor="w", side="top")
-            # Output info
-            self.frame_dimensions = tk.Frame(self.frame_info)
-            self.frame_dimensions.pack(side="left", expand=True, fill="x")
-            # Number of images
-            self.label_number_of_images = tk.Label(self.frame_dimensions, text=f"0 of {self.total_images}", width=20)
-            self.label_number_of_images.pack(anchor="w", side="top")
-            # ETA
-            self.label_timer_eta = tk.Label(self.frame_dimensions, text="ETA: 00:00:00", width=20)
-            self.label_timer_eta.pack(anchor="w", side="top")
-        else:
-            self.frame_info = ttk.Labelframe(self.batch_upscale_frame, text="Image Info")
-            self.frame_info.pack(side="bottom", fill="both")
-            # Output info
-            self.frame_labels = tk.Frame(self.frame_info)
-            self.frame_labels.pack(side="left", expand=True, fill="x")
-            # Current Size
-            label_current = tk.Label(self.frame_labels, text="Current Size:")
-            label_current.pack(anchor="w", side="top")
-            # New Size
-            label_new = tk.Label(self.frame_labels, text="New Size:")
-            label_new.pack(anchor="w", side="top")
-            # GIF Frames
-            if self.working_img_path.lower().endswith(".gif"):
-                label_frames = tk.Label(self.frame_labels, text="Frames:")
-                label_frames.pack(anchor="w", side="top")
-            # Output info
-            self.frame_dimensions = tk.Frame(self.frame_info)
-            self.frame_dimensions.pack(side="left", expand=True, fill="x")
-            # Current Size
-            self.label_current_dimensions = tk.Label(self.frame_dimensions, text=f"{self.original_image_width} x {self.original_image_height}", width=20)
-            self.label_current_dimensions.pack(anchor="w", side="top")
-            # New Size
-            self.label_new_dimensions = tk.Label(self.frame_dimensions, text="0 x 0", width=20)
-            self.label_new_dimensions.pack(anchor="w", side="top")
-            ToolTip.create(self.label_new_dimensions, " The final size of the image after upscaling ", delay=250, padx=6, pady=12)
-            # GIF Frames
-            if self.working_img_path.lower().endswith(".gif"):
-                self.label_framecount = tk.Label(self.frame_dimensions, text=f"{self.current_gif_frame} of {self.total_gif_frames}", width=20)
-                self.label_framecount.pack(anchor="w", side="top")
-
-
 #endregion
 ################################################################################################################################################
 #region -  Primary Functions
 
 
     def determine_image_type(self, event=None):
-        if self.batch_mode_var:
+        if self.batch_mode_var.get():
             self.batch_upscale()
         else:
             directory, filename = os.path.split(self.working_img_path)
@@ -366,6 +476,7 @@ class BatchUpscale:
             else:
                 self.upscale_image()
             self.set_widget_state(state="normal")
+            self.populate_file_tree()
 
 
     def batch_upscale(self):
@@ -379,9 +490,19 @@ class BatchUpscale:
         messagebox.showinfo("Batch Upscaled Canceled", f"Batch Upscaling canceled early.\n\n{count} of {self.total_images} images upscaled.")
 
 
+    def select_batch_upscale_item(self, filename):
+        # highlight the specified filename in the file_tree, adding it to the selection
+        for item in self.file_tree.get_children():
+            values = self.file_tree.item(item, "values")
+            if values and values[0] == filename:
+                self.file_tree.selection_add(item)
+                self.file_tree.see(item)
+                break
+
+
     def _batch_upscale(self):
-        input_path = self.batch_input_path_var.get()
-        output_path = self.batch_output_path_var.get()
+        input_path = self.input_path_var.get()
+        output_path = self.output_path_var.get()
         count = 0
         start_time = time.time()
         try:
@@ -396,6 +517,7 @@ class BatchUpscale:
                 file_path = os.path.join(input_path, filename)
                 if os.path.isfile(file_path) and filename.lower().endswith(self.supported_filetypes):
                     self.working_img_path = file_path
+                    self.select_batch_upscale_item(filename)
                     if filename.lower().endswith('.gif'):
                         if not self.batch_thread_var:
                             self.batch_upscale_cancel_message(count)
@@ -416,7 +538,7 @@ class BatchUpscale:
                     if not self.batch_thread_var:
                         self.batch_upscale_cancel_message(count)
                         break
-                    self.label_timer.config(text=f"Timer: {time.strftime('%H:%M:%S', time.gmtime(elapsed_time))}")
+                    self.label_timer.config(text=f"Elapsed: {time.strftime('%H:%M:%S', time.gmtime(elapsed_time))}")
                     if not self.batch_thread_var:
                         self.batch_upscale_cancel_message(count)
                         break
@@ -424,12 +546,15 @@ class BatchUpscale:
                     if not self.batch_thread_var:
                         self.batch_upscale_cancel_message(count)
                         break
-                    self.label_number_of_images.config(text=f"{count} of {self.total_images}")
+                    self.label_upscaled_count.config(text=f"Processed: {count}")
             self.update_progress(100)
             if self.batch_thread_var:
                 messagebox.showinfo("Success", f"Successfully upscaled {count} images!")
         except Exception as e:
             messagebox.showerror("Error: _batch_upscale()", f"An error occurred during batch upscaling.\n\n{e}")
+        finally:
+            self.set_widget_state(state="normal")
+            self.batch_thread_var = False
 
 
     def _upscale_gif(self, gif_path, batch_mode=None, output_path=None):
@@ -468,9 +593,6 @@ class BatchUpscale:
                         upscaled_frame = upscaled_frame.convert("RGBA")
                         upscaled_frames.append((upscaled_frame, duration))
                 self.update_progress((i+1)/total_frames*90)
-                if not batch_mode:
-                    padded_frame_number = str(i+1).zfill(len(str(total_frames)))
-                    self.label_framecount.config(text=f"{padded_frame_number} of {total_frames}")
             directory, filename = os.path.split(gif_path)
             filename, extension = os.path.splitext(filename)
             upscaled_gif_path = os.path.join(output_path if batch_mode else directory, f"{filename}_upscaled{extension}")
@@ -572,51 +694,6 @@ class BatchUpscale:
 
 #endregion
 ################################################################################################################################################
-#region -  Image Info / label
-
-
-    def get_image_info(self):
-        try:
-            with Image.open(self.working_img_path) as image:
-                self.original_image_width, self.original_image_height = image.size
-                if self.working_img_path.lower().endswith(".gif"):
-                    frames = [frame for frame in ImageSequence.Iterator(image)]
-                    self.total_gif_frames = len(frames)
-                    self.current_gif_frame = format(1, f'0{len(str(self.total_gif_frames))}d')
-                else:
-                    self.total_gif_frames = 0
-                    self.current_gif_frame = 0
-        except Exception as e:
-            messagebox.showerror("Error: get_image_info()", f"Unexpected error while opening image.\n\n{e}")
-            self.close_tab()
-
-
-    def update_size_info_label(self, event=None):
-        if not self.batch_mode_var:
-            selected_scaling_factor = float(self.upscale_factor_value.get())
-            new_width = self.original_image_width * selected_scaling_factor
-            new_height = self.original_image_height * selected_scaling_factor
-            self.label_new_dimensions.config(text=f"{int(new_width)} x {int(new_height)}")
-            return new_width, new_height
-
-
-    def update_strength_label(self, event=None):
-        try:
-            value = int(self.upscale_strength_value.get())
-            self.label_upscale_strength_percent.config(text=f"{value}%")
-        except Exception:
-            pass
-
-
-    def update_upscale_factor_label(self, event):
-        value = round(float(self.upscale_factor_value.get()) * 4) / 4
-        self.upscale_factor_value.set(value)
-        self.label_upscale_factor_value.config(text=f"{value:.2f}x")
-        self.update_size_info_label()
-
-
-#endregion
-################################################################################################################################################
 #region -  Misc
 
 
@@ -627,7 +704,7 @@ class BatchUpscale:
             "slider_upscale_strength",
             "button_upscale",
         ]
-        if self.batch_mode_var:
+        if self.batch_mode_var.get():
             widget_names.extend([
                 "entry_batch_input_path",
                 "button_browse_batch_input",
@@ -680,18 +757,23 @@ class BatchUpscale:
             return
 
 
-    def choose_directory(self, entry_path_var, tooltip):
-        directory = os.path.normpath(filedialog.askdirectory())
-        if directory:
-            entry_path_var.set(directory)
-            tooltip.config(text=directory)
-
-
     def open_directory(self, directory):
-        try:
-            if os.path.isdir(directory):
-                os.startfile(directory)
-        except Exception: return
+        # If directory is a file, use its parent folder.
+        if os.path.exists(directory) and os.path.isfile(directory):
+            directory = os.path.dirname(directory)
+        # If directory doesn't exist or isn't a folder, traverse up to find an existing folder.
+        current_dir = directory
+        while current_dir and not os.path.isdir(current_dir):
+            parent_dir = os.path.dirname(current_dir)
+            if parent_dir == current_dir:
+                break
+            current_dir = parent_dir
+        # Open the valid directory if found.
+        if os.path.isdir(current_dir):
+            try:
+                os.startfile(current_dir)
+            except Exception:
+                pass
 
 
     def close_tab(self, index=None, event=None):
