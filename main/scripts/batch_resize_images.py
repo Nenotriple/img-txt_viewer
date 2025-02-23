@@ -936,10 +936,11 @@ class BatchResizeImages:
 
 
     def open_help_window(self):
+        filetypes = ", ".join(self.supported_filetypes).replace(".", "")
         help_text = {
             "Batch Resize Help":        "",
 
-            "Supported Filetypes:":     "jpg, jpeg, png, webp, bmp, tif, tiff\n",
+            "Supported Filetypes:":     f"{filetypes}\n",
 
             "Resize to Resolution:":    "Resize to a specific width and height ignoring aspect ratio.\n\n(The following 'Resize to' options preserve aspect ratio)",
             "Resize to Percentage:":    "Resize the image by a percent scale.",
