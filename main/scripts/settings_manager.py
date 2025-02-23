@@ -154,6 +154,7 @@ class SettingsManager:
                 self._read_config_settings()
                 if hasattr(self.parent, 'text_box'):
                     self.parent.show_pair()
+                    self.parent.debounce_refresh_image()
             else:
                 self.prompt_first_time_setup()
         except Exception as e:
