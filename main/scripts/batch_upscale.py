@@ -19,7 +19,8 @@ from tkinter import ttk, filedialog, messagebox
 from PIL import Image, ImageSequence
 from TkToolTip.TkToolTip import TkToolTip as ToolTip
 
-# Local
+
+# Custom Libraries
 from main.scripts.help_window import HelpWindow
 
 
@@ -225,9 +226,9 @@ class BatchUpscale:
         frame_size = tk.Frame(settings_frame)
         frame_size.pack(side="top", fill="both")
         # Label
-        label_size = tk.Label(frame_size, text="Upscale Factor:", width=20)
-        label_size.pack(side="left")
-        ToolTip.create(label_size, "Determines the final size of the image.\n\nImages are first upscaled by 4x and then resized according to the selected upscale factor.\n\nThe final resolution is calculated as: (4 * original size) / upscale factor.", delay=250, padx=6, pady=12)
+        label_upscale_factor = tk.Label(frame_size, text="Upscale Factor:", width=20)
+        label_upscale_factor.pack(side="left")
+        ToolTip.create(label_upscale_factor, "Determines the final size of the image.\n\nImages are first upscaled by 4x and then resized according to the selected upscale factor.\n\nThe final resolution is calculated as: (4 * original size) / upscale factor.", delay=250, padx=6, pady=12)
         # Slider
         self.upscale_factor_value = tk.DoubleVar(value=2.00)
         self.slider_upscale_factor = ttk.Scale(frame_size, from_=0.25, to=8.00, orient="horizontal", variable=self.upscale_factor_value, command=self.update_upscale_factor_label)
@@ -346,7 +347,7 @@ class BatchUpscale:
         for item in self.file_tree.get_children():
             values = self.file_tree.item(item, "values")
             if values and values[0] == filename:
-                self.file_tree.selection_add(item)
+                self.file_tree.selection_set(item)
                 self.file_tree.see(item)
                 break
 
@@ -357,23 +358,23 @@ class BatchUpscale:
 
 
     def set_widget_state(self, state):
-        widget_names = [
-            "combobox_upscale_model",
-            "entry_size",
-            "slider_upscale_strength",
-            "button_upscale",
+        widget_list = [
+            # Upscale
+            self.button_upscale,
+            # Input
+            self.entry_input_path,
+            self.batch_mode_checkbox,
+            self.browse_input_button,
+            # Output
+            self.entry_output_path,
+            self.auto_output_checkbox,
+            self.browse_output_button,
+            #Settings
+            self.combobox_upscale_model,
+            self.slider_upscale_factor,
+            self.slider_upscale_strength,
         ]
-        if self.batch_mode_var.get():
-            widget_names.extend([
-                "entry_batch_input_path",
-                "button_browse_batch_input",
-                "entry_batch_output_path",
-                "browse_batch_output_button",
-                "button_upscale",
-            ])
-        for widget_name in widget_names:
-            widget = getattr(self, widget_name, None)
-            if widget is not None:
+        for widget in widget_list:
                 widget.config(state=state)
 
 
