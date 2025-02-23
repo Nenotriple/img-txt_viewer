@@ -273,9 +273,6 @@ class ImgTxtViewer:
         self.root.bind('<F4>', lambda event: self.open_image_in_editor(event))
         self.root.bind('<Control-w>', lambda event: self.on_closing(event))
 
-        # Display window size on resize:
-        #self.root.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == self.root else None, add="+")
-
 
 #endregion
 ################################################################################################################################################
@@ -475,46 +472,6 @@ class ImgTxtViewer:
         self.main_notebook.add(self.batch_resize_images_tab, text="Batch Resize")
         self.main_notebook.add(self.batch_rename_tab, text="Batch Rename")
         self.main_notebook.add(self.find_dupe_file_tab, text="Find Duplicates")
-
-
-    def on_altui_tab_change(self, event):
-        selected_tab_index = self.main_notebook.index(self.main_notebook.select())
-        tab_name = self.main_notebook.tab(selected_tab_index, "text")
-        self.current_ui_state = {"tab": tab_name, "index": selected_tab_index}
-        tab_states = {
-            "Tagger": "ImgTxtViewer",
-            "Tag-Editor": "BatchTagEdit",
-            "Crop": "CropUI",
-            "Batch Upscale": "BatchUpscale",
-            "Batch Resize": "BatchResize",
-            "Batch Rename": "BatchRename",
-            "Find Duplicates": "FindDupeFile",
-        }
-        self.ui_state = tab_states.get(tab_name)
-        if self.ui_state == "ImgTxtViewer":
-            self.debounce_refresh_image()
-        elif self.ui_state == "BatchTagEdit":
-            self.create_batch_tag_edit_ui(show=True)
-        elif self.ui_state == "CropUI":
-            self.create_crop_ui(show=True)
-        elif self.ui_state == "BatchUpscale":
-            self.create_batch_upscale_ui(show=True)
-        elif self.ui_state == "BatchResize":
-            self.create_batch_resize_images_ui(show=True)
-        elif self.ui_state == "BatchRename":
-            self.create_batch_rename_ui(show=True)
-        elif self.ui_state == "FindDupeFile":
-            self.create_find_dupe_file_ui(show=True)
-        self.update_menu_state()
-
-
-    def update_menu_state(self):
-        if not self.ui_state == "ImgTxtViewer":
-            self.main_menu_bar.entryconfig("Options", state="disable")
-            self.main_menu_bar.entryconfig("Tools", state="disable")
-        else:
-            self.main_menu_bar.entryconfig("Options", state="normal")
-            self.main_menu_bar.entryconfig("Tools", state="normal")
 
 
     def setup_primary_frames(self, container):
@@ -1309,6 +1266,76 @@ class ImgTxtViewer:
 #endregion
 ################################################################################################################################################
 #region - Alt-UI Setup
+
+
+    def on_altui_tab_change(self, event):
+        selected_tab_index = self.main_notebook.index(self.main_notebook.select())
+        tab_name = self.main_notebook.tab(selected_tab_index, "text")
+        self.current_ui_state = {"tab": tab_name, "index": selected_tab_index}
+        tab_states = {
+            "Tagger": "ImgTxtViewer",
+            "Tag-Editor": "BatchTagEdit",
+            "Crop": "CropUI",
+            "Batch Upscale": "BatchUpscale",
+            "Batch Resize": "BatchResize",
+            "Batch Rename": "BatchRename",
+            "Find Duplicates": "FindDupeFile",
+        }
+        self.ui_state = tab_states.get(tab_name)
+        if self.ui_state == "ImgTxtViewer":
+            self.debounce_refresh_image()
+        elif self.ui_state == "BatchTagEdit":
+            self.create_batch_tag_edit_ui(show=True)
+        elif self.ui_state == "CropUI":
+            self.create_crop_ui(show=True)
+        elif self.ui_state == "BatchUpscale":
+            self.create_batch_upscale_ui(show=True)
+        elif self.ui_state == "BatchResize":
+            self.create_batch_resize_images_ui(show=True)
+        elif self.ui_state == "BatchRename":
+            self.create_batch_rename_ui(show=True)
+        elif self.ui_state == "FindDupeFile":
+            self.create_find_dupe_file_ui(show=True)
+        self.update_menu_state()
+        self.update_ui_binds()
+
+
+    def update_menu_state(self):
+        if not self.ui_state == "ImgTxtViewer":
+            self.main_menu_bar.entryconfig("Options", state="disable")
+            self.main_menu_bar.entryconfig("Tools", state="disable")
+        else:
+            self.main_menu_bar.entryconfig("Options", state="normal")
+            self.main_menu_bar.entryconfig("Tools", state="normal")
+
+
+    def update_ui_binds(self):
+        bindings = [
+            "<Control-f>",
+            "<Control-s>",
+            "<Alt-Right>",
+            "<Alt-Left>",
+            "<Shift-Delete>",
+            "<Configure>",
+            "<F1>",
+            "<F2>",
+            "<F4>",
+        ]
+        if self.ui_state == "ImgTxtViewer":
+            self.root.bind("<Control-f>", lambda event: self.toggle_highlight_all_duplicates())
+            self.root.bind("<Control-s>", lambda event: self.save_text_file(highlight=True))
+            self.root.bind("<Alt-Right>", lambda event: self.next_pair(event))
+            self.root.bind("<Alt-Left>", lambda event: self.prev_pair(event))
+            self.root.bind('<Shift-Delete>', lambda event: self.delete_pair())
+            self.root.bind('<Configure>', self.handle_window_configure)
+            self.root.bind('<F1>', lambda event: self.toggle_image_grid(event))
+            self.root.bind('<F2>', lambda event: self.toggle_zoom_popup(event))
+            self.root.bind('<F4>', lambda event: self.open_image_in_editor(event))
+        else:
+            for binding in bindings:
+                self.root.unbind(binding)
+
+
 
 
     def create_ui_tab(self, ui_component, ui_tab, extra_args=None, show=False):
