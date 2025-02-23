@@ -37,7 +37,7 @@ from TkToolTip.TkToolTip import TkToolTip as ToolTip
 
 
 # Custom Libraries
-from main.scripts import TagEditor
+from main.scripts import TagEditor, help_window
 
 
 #endregion
@@ -53,7 +53,7 @@ class BatchTagEdit:
         self.text_files = None
         self.working_dir = None
         self.batch_tag_edit_frame = None
-        self.version = None
+        self.help_window = None
         # Local Variables
         self.tag_counts = 0
         self.total_unique_tags = 0
@@ -74,7 +74,7 @@ class BatchTagEdit:
         self.text_files = self.parent.text_files
         self.working_dir = self.parent.image_dir.get()
         self.batch_tag_edit_frame = None
-        self.version = self.parent.app_version
+        self.help_window = help_window.HelpWindow(self.root)
 
         tag_dict = self.analyze_tags()
         self.tag_counts, self.total_unique_tags = self.count_file_tags(tag_dict)
@@ -108,7 +108,7 @@ class BatchTagEdit:
         self.info_label = Label(self.top_frame, anchor="w", text=f"Total: {self.total_unique_tags}  | Visible: {self.visible_tags}  |  Selected: {self.selected_tags}  |  Pending Delete: {self.pending_delete}  |  Pending Edit: {self.pending_edit}")
         self.info_label.grid(row=0, column=2, padx=2, sticky="ew")
 
-        self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.toggle_info_message)
+        self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.open_help_window)
         self.help_button.grid(row=0, column=3, padx=2, sticky="e")
         ToolTip.create(self.help_button, "Show/Hide Help", 50, 6, 12)
 
@@ -166,7 +166,6 @@ class BatchTagEdit:
         self.setup_sort_frame()
         self.setup_filter_frame()
         self.setup_edit_frame()
-        self.setup_help_frame()
 
 
     def setup_sort_frame(self):
@@ -241,38 +240,6 @@ class BatchTagEdit:
         self.delete_button = ttk.Button(self.edit_frame, text="Delete", width=6, command=lambda: self.apply_commands_to_listbox(delete=True))
         self.delete_button.grid(row=1, column=0, padx=2, sticky="e")
         ToolTip.create(self.delete_button, "Delete the selected tags", 250, 6, 12)
-
-
-    def setup_help_frame(self):
-        self.help_frame = Frame(self.option_frame)
-        self.help_frame.grid(row=3, column=0, padx=(20,10), pady=10, sticky="nw")
-        self.help_message = Label(self.help_frame, justify="left", text=
-            "Help:\n"
-            "Press F5 to open and close Batch Tag Edit.\n"
-            "The number next to the tag indicates its frequency in the dataset.\n"
-            "This tool is not perfect; it may not work as expected with certain combinations of characters, text or their formatting.\n"
-            "   - It works best with CSV-like text files. Both commas and periods are treated as caption delimiters.\n"
-            "   - You should always make backups of your text files before saving any changes.\n\n"
-            "Instructions:\n"
-            "1) Use the filter or sort options to refine the tag list.\n"
-            "   - You can input multiple filter values separated by commas.\n"
-            "2) Select the tags you want to modify from the listbox.\n"
-            "3) Choose an edit option:\n"
-            "   - Replace: Enter the new text to replace the selected tags.\n"
-            "   - Delete: If the entry is empty, or the Delete option is selected, the selected tags will be deleted.\n"
-            "4) Click *Edit > Apply* to see the changes in the listbox. This does not apply the changes to the text files.\n"
-            "5) Click *Save Changes* to apply the modifications to the text files. This action cannot be undone, so make sure to backup your files.\n"
-            "6) Use the *Reset* buttons to clear any pending changes or filters.\n"
-            "7) Use the buttons below the listbox to:\n"
-            "   - Select All: Select all tags in the listbox.\n"
-            "   - Invert Selection: Invert the current selection of tags.\n"
-            "   - Clear Selection: Clear the current selection of tags.\n"
-            "   - Revert Sel: Revert the selected tags to their original state.\n"
-            "   - Revert All: Revert all tags to their original state. (Reset)\n"
-            "8) Click the *Close* button to exit the Batch Tag Edit without saving and pending changes.\n"
-        )
-        self.help_message.grid(row=1, column=0, padx=2, pady=2, sticky="nw")
-        self.help_frame.grid_remove()
 
 
 #endregion
@@ -498,20 +465,13 @@ class BatchTagEdit:
         self.refresh_counts()
 
 
-    def toggle_info_message(self):
-        if self.help_frame.winfo_viewable():
-            self.help_frame.grid_remove()
-        else:
-            self.help_frame.grid()
-
-
     def show_listbox_context_menu(self, event):
         listbox = event.widget
         if not listbox.curselection():
             return
         context_menu = Menu(self.root, tearoff=0)
         context_menu.add_command(label="Delete", command=lambda: self.apply_commands_to_listbox(delete=True))
-        context_menu.add_command(label="Replace...", command=self.context_menu_edit_tag)
+        context_menu.add_command(label="Edit...", command=self.context_menu_edit_tag)
         context_menu.add_command(label="Copy", command=self.copy_listbox_selection)
         context_menu.add_separator()
         context_menu.add_command(label="Select All", command=lambda: self.listbox_selection("all"))
@@ -590,3 +550,35 @@ class BatchTagEdit:
 
 
 #endregion
+################################################################################################################################################
+#region -  Help
+
+
+    def open_help_window(self):
+        help_text = {
+            "Batch Tag Edit Help": "",
+
+            "Technical Note:": (
+                "- This tool is designed to work with CSV-like text files. Both commas and periods are treated as caption delimiters.\n"
+                "- It may not work as expected with certain combinations of characters, text or their formatting.\n"
+                "- You should always make backups of your text files before saving any changes.\n"
+            ),
+
+            "Instructions:": (
+                "1) Use the filter or sort options to refine the File and Tag Lists.\n"
+                "   - You can input multiple filter values separated by commas.\n"
+                "2) Select the tags you want to modify from the Tag-List.\n"
+                "3) Choose an edit option:\n"
+                "   - **Edit**: Enter the new text to replace the selected tags.\n"
+                "   - **Delete**: The selected tags will be deleted.\n"
+                "4) Pending changes will be displayed in the Tag-List.\n"
+                "5) Click *'Save Changes'* to apply any pending changes to the text files. This action cannot be undone, so make sure to backup your files.\n"
+            ),
+
+            "Tips:": (
+                "- *Adjust* the working directory in the *'Tagger'* tab to work with different sets of text files.\n"
+                "- Use the context menu in the listbox to quickly copy, delete, or edit tags.\n"
+                "- Use the *'Revert'* options to undo pending changes made to the selected tags, or use the *'Reset'* buttons to reset any changes or filters."
+            ),
+        }
+        self.help_window.open_window(geometry="700x700", help_text=help_text)
