@@ -1,3 +1,24 @@
+"""
+Quick Info:
+
+"help_text" can be a dictionary, list, or string.
+  - If "help_text" is a dictionary, it's expected to contain header-content pairs.
+  - If "help_text" is not a dictionary and "text_format" is "rich", it's treated as plain text.
+
+
+"rich" text formatting:
+  - Headers (keys) are displayed larger and bold.
+  - Content (values) are displayed as normal text.
+  - Wrap content in double asterisks (**) for bold text.
+  - Wrap content in single asterisks (*) for italic text.
+
+General Use:
+  - Create a HelpWindow instance, passing the Tkinter 'Tk.()' object (root).
+  - Call "open_window" with the desired title, geometry, help text, and format.
+  - Call "close_window" to hide the window.
+"""
+
+
 #region - Imports
 
 
