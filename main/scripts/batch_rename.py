@@ -10,6 +10,9 @@ import time
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog, BooleanVar, StringVar
 
+# Local
+from main.scripts.help_window import HelpWindow
+
 
 #endregion
 ################################################################################################################################################
@@ -21,6 +24,7 @@ class BatchRename:
         self.parent = None
         self.root = None
         self.working_dir = None
+        self.help_window = None
         # Variables
         self.supported_filetypes = (".txt", ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".gif")
         self.sort_column = "Name"
@@ -38,6 +42,7 @@ class BatchRename:
         self.parent = parent
         self.root = root
         self.working_dir = self.parent.image_dir.get()
+        self.help_window = HelpWindow(self.root)
         self.setup_ui()
         self.set_working_directory(self.working_dir)
 
@@ -85,7 +90,7 @@ class BatchRename:
         self.open_button = ttk.Button(self.top_frame, width=8, text="Open", command=self.open_folder)
         self.open_button.pack(side="left", padx=2)
         # Help
-        self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.show_help)
+        self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.open_help_window)
         self.help_button.pack(side="right", fill="x", padx=2)
 
 
@@ -434,27 +439,42 @@ class BatchRename:
             messagebox.showerror("Open Folder Error", f"Failed to open folder: {e}")
 
 
-    def show_help(self):
-        help_text = (
-            "Hotkeys:\n"
-            "• Ctrl+Click: Select/Deselect\n"
-            "• Ctrl+A: Select All\n"
-            "• Ctrl+D: Deselect All\n"
-            "• Ctrl+I: Invert Selection\n"
-            "• F5: Refresh\n\n"
-            "1. Select a folder.\n"
-            "2. Select some files to be renamed.\n"
-            "3. Options:\n"
-            "   • Handle Duplicates (rename, move, overwrite, skip)\n"
-            "   • Respect image-text pairs for matching files\n"
-            "4. Presets:\n"
-            "   • Numbering: sequential numbering\n"
-            "   • Auto-Date: use modified date\n\n"
-            "Click 'Rename Files' when ready.\n"
-            "Note: There is no undo for this operation.\n\n"
-            "Supported Filetypes:\ntxt, jpg, jpeg, png, webp, bmp, tif, tiff, gif"
-        )
-        messagebox.showinfo("Help", help_text)
+#endregion
+################################################################################################################################################
+#region -  Help
+
+
+    def open_help_window(self):
+        filetypes = ", ".join(self.supported_filetypes).replace(".", "")
+        help_text = {
+            "Batch Rename Help": "",
+            "Supported Filetypes:": f"{filetypes}\n",
+            "Instructions:": (
+                "1. Select a folder containing files to rename.\n"
+                "2. Select files to rename by clicking on them.\n"
+                "   • Use Ctrl+Shift and click to for multi-select.\n"
+                "3. Adjust options as needed:\n"
+                "   • Handle Duplicates: Rename, Move to Folder, Overwrite, Skip\n"
+                "   • Respect Img-Txt Pairs: keep img-txt pairs matched when renaming\n"
+                "4. Choose a preset for renaming:\n"
+                "   • Numbering: Sequential numbering\n"
+                "   • Auto-Date: Use modified date and numbering\n"
+                "5. Click 'Rename Files' to apply changes.\n"
+                "6. Confirm the operation if prompted.\n"
+            ),
+            "Note:": (
+                "• There is no undo for this operation!\n"
+                "• Use caution when renaming files.\n\n"
+            ),
+            "Hotkeys:": (
+                "• Ctrl+Click: Select/Deselect\n"
+                "• Ctrl+A: Select All\n"
+                "• Ctrl+D: Deselect All\n"
+                "• Ctrl+I: Invert Selection\n"
+                "• F5: Refresh\n\n"
+            ),
+        }
+        self.help_window.open_window(geometry="450x700", help_text=help_text)
 
 
 #endregion
