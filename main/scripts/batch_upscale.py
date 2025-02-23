@@ -831,4 +831,4 @@ class BatchUpscale:
                 "  4. Use the 'Cancel' button to stop batch processing at any time.\n\n"
             ),
         }
-        self.help_window.open_window(geometry="450x700", help_text=help_text)
+        self.help_window.open_window(geometry="550x700", help_text=help_text)
