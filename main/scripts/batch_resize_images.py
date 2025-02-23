@@ -11,7 +11,7 @@ import subprocess
 
 # Standard Library - GUI
 import tkinter as tk
-from tkinter import ttk, Toplevel, filedialog, messagebox, scrolledtext
+from tkinter import ttk, filedialog, messagebox
 
 
 # Third-Party Libraries
@@ -19,68 +19,8 @@ from PIL import Image, PngImagePlugin
 from TkToolTip.TkToolTip import TkToolTip as ToolTip
 
 
-#endregion
-################################################################################################################################################
-#region - CLASS: AboutWindow
-
-
-class AboutWindow(Toplevel):
-    info_dict = {
-        "Info": "",
-
-        "Supported Filetypes:":     "jpg, jpeg, png, webp, bmp, tif, tiff\n",
-
-        "Resize to Resolution:":    "Resize to a specific width and height ignoring aspect ratio.\n\n(The following 'Resize to' options preserve aspect ratio)",
-        "Resize to Percentage:":    "Resize the image by a percent scale.",
-        "Resize to Width:":         "Target the image width and resize it.",
-        "Resize to Height:":        "Target the image height and resize it.",
-        "Resize to Shorter side:":  "Resize the shorter side of the image.",
-        "Resize to Longer side:":   "Resize the longer side of the image.\n",
-
-        "Quality:":                 "Used to control the output quality of JPG and WEBP images. A higher value results in a higher quality output. (Ignored for PNG)\n",
-
-        "Upscale and Downscale:":   "Resize the image to the new dimensions regardless of whether they're larger or smaller than the original dimensions.",
-        "Upscale Only:":            "Resize the image if the new dimensions are larger than the original dimensions.",
-        "Downscale Only:":          "Resize the image if the new dimensions are smaller than the original dimensions.\n",
-
-        "Filetype:":                "Select 'AUTO' to output with the same filetype as the input image. Alternatively, choose a specific filetype to force all images to be saved with the chosen type.\n",
-
-        "Use Output Folder:":       "When enabled, a new folder will be created in the image directory called 'Resize Output' where images will be saved.",
-        "Overwrite Files:":         "When disabled, conflicting files will have '_#' append to the filename. If enabled, files with the same basename will be overwritten.",
-        "Save PNG Info:":           "When enabled, this option will automatically save any PNG chunk info to the resized output if saving as PNG. If converting from PNG to another type, then a text file will be created containing the PNG info.",
-        "Convert Only:":            "When enabled, the app will convert images to the selected filetype without resizing them. Resize settings will be ignored."
-    }
-
-
-    def __init__(self, master=None):
-        super().__init__(master=master)
-        self.title("Batch Resize Images - About")
-        self.geometry("400x675")
-        self.minsize(320, 100)
-        self.create_info_text()
-        self.create_other_widgets()
-
-
-    def create_info_text(self):
-        self.info_text = scrolledtext.ScrolledText(self)
-        self.info_text.pack(expand=True, fill='both')
-        for first_header, (header, section) in enumerate(AboutWindow.info_dict.items()):
-            if first_header == 0:
-                self.info_text.insert("end", header + "\n", "first_header")
-            else:
-                self.info_text.insert("end", header + "\n", "header")
-            self.info_text.insert("end", section + "\n", "section")
-        self.info_text.tag_config("first_header", font=("Segoe UI Semibold", 18), justify='center')
-        self.info_text.tag_config("header", font=("Segoe UI", 9, "bold"))
-        self.info_text.tag_config("section", font=("Segoe UI", 9))
-        self.info_text.config(state='disabled', wrap="word", height=1)
-
-
-    def create_other_widgets(self):
-        frame = tk.Frame(self)
-        frame.pack(fill="x")
-        self.made_by_label = tk.Label(frame, text=f"Created by: github.com/Nenotriple", font=("Segoe UI", 10))
-        self.made_by_label.pack(side="left", expand=True, pady=10)
+# Local
+from main.scripts.help_window import HelpWindow
 
 
 #endregion
@@ -93,12 +33,10 @@ class BatchResizeImages:
         self.parent = None
         self.root = None
         self.working_dir = None
-        self.version = None
+        self.help_window = None
 
         self.resize_thread = None
-        self.about_window = None
         self.files_processed = 0
-
         self.supported_filetypes = (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff")
 
 
@@ -111,7 +49,7 @@ class BatchResizeImages:
         self.parent = parent
         self.root = root
         self.working_dir = path
-        self.version = self.parent.app_version
+        self.help_window = HelpWindow(self.root)
         self.setup_ui()
         self.set_working_directory(path)
 
@@ -144,7 +82,7 @@ class BatchResizeImages:
         # Directory
         self.create_directory_row()
         # Help
-        self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.toggle_about_window)
+        self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.open_help_window)
         self.help_button.pack(side="left", fill="x", padx=2)
         ToolTip.create(self.help_button, "Show/Hide Help", delay=50, padx=6, pady=12)
 
@@ -994,26 +932,34 @@ class BatchResizeImages:
 
 #endregion
 ################################################################################################################################################
-#region -  Handle About Window
+#region -  Help
 
 
-    def toggle_about_window(self):
-        if self.about_window is not None:
-            self.close_about_window()
-        else:
-            self.open_about_window()
+    def open_help_window(self):
+        help_text = {
+            "Batch Resize Help":        "",
 
+            "Supported Filetypes:":     "jpg, jpeg, png, webp, bmp, tif, tiff\n",
 
-    def open_about_window(self):
-        self.about_window = AboutWindow(self.root)
-        self.about_window.protocol("WM_DELETE_WINDOW", self.close_about_window)
-        main_window_width = self.root.winfo_width()
-        main_window_x = self.root.winfo_x() - 200 + main_window_width // 2
-        main_window_y = self.root.winfo_y() + 30
-        self.about_window.geometry("+{}+{}".format(main_window_x, main_window_y))
+            "Resize to Resolution:":    "Resize to a specific width and height ignoring aspect ratio.\n\n(The following 'Resize to' options preserve aspect ratio)",
+            "Resize to Percentage:":    "Resize the image by a percent scale.",
+            "Resize to Width:":         "Target the image width and resize it.",
+            "Resize to Height:":        "Target the image height and resize it.",
+            "Resize to Shorter side:":  "Resize the shorter side of the image.",
+            "Resize to Longer side:":   "Resize the longer side of the image.\n",
 
+            "Quality:":                 "Used to control the output quality of JPG and WEBP images. A higher value results in a higher quality output. (Ignored for PNG)\n",
 
-    def close_about_window(self):
-        self.about_window.destroy()
-        self.about_window = None
+            "Upscale and Downscale:":   "Resize the image to the new dimensions regardless of whether they're larger or smaller than the original dimensions.",
+            "Upscale Only:":            "Resize the image if the new dimensions are larger than the original dimensions.",
+            "Downscale Only:":          "Resize the image if the new dimensions are smaller than the original dimensions.\n",
+
+            "Filetype:":                "Select 'AUTO' to output with the same filetype as the input image. Alternatively, choose a specific filetype to force all images to be saved with the chosen type.\n",
+
+            "Use Output Folder:":       "When enabled, a new folder will be created in the image directory called 'Resize Output' where images will be saved.",
+            "Overwrite Files:":         "When disabled, conflicting files will have '_#' append to the filename. If enabled, files with the same basename will be overwritten.",
+            "Save PNG Info:":           "When enabled, this option will automatically save any PNG chunk info to the resized output if saving as PNG. If converting from PNG to another type, then a text file will be created containing the PNG info.",
+            "Convert Only:":            "When enabled, the app will convert images to the selected filetype without resizing them. Resize settings will be ignored."
+        }
+        self.help_window.open_window(geometry="450x700", help_text=help_text)
 
