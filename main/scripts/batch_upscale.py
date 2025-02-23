@@ -19,6 +19,9 @@ from tkinter import ttk, filedialog, messagebox
 from PIL import Image, ImageSequence
 from TkToolTip.TkToolTip import TkToolTip as ToolTip
 
+# Local
+from main.scripts.help_window import HelpWindow
+
 
 #endregion
 ################################################################################################################################################
@@ -30,6 +33,7 @@ class BatchUpscale:
         self.parent = None
         self.root = None
         self.working_dir = None
+        self.help_window = None
 
         # Other Filepaths
         self.executable_path = None
@@ -58,42 +62,18 @@ class BatchUpscale:
         self.parent = parent
         self.root = root
         self.working_dir = self.parent.image_dir.get()
+        self.help_window = HelpWindow(self.root)
 
         self.working_img_path = self.parent.image_files[self.parent.current_index]
-
         self.executable_path = os.path.join(self.parent.application_path, "main/resrgan/realesrgan-ncnn-vulkan.exe")
         self.extra_models_path = os.path.join(self.parent.application_path, "ncnn_models".lower())
         self.ncnn_models = self.find_additional_models()
-
         self.input_path_var.set(self.working_dir)
         self.output_path_var.set(value=os.path.join(self.input_path_var.get(), "Upscale_Output"))
         self.total_images = len([file for file in os.listdir(self.working_dir) if file.lower().endswith(self.supported_filetypes)])
 
         self.setup_ui()
         self.populate_file_tree()
-
-
-    def populate_file_tree(self):
-        self.file_tree.delete(*self.file_tree.get_children())
-        scaling_factor = float(self.upscale_factor_value.get())
-        input_path = self.input_path_var.get()
-        if not os.path.isdir(input_path):
-            input_path = os.path.dirname(input_path)
-        for file in os.listdir(input_path):
-            if file.lower().endswith(self.supported_filetypes):
-                filepath = os.path.join(input_path, file)
-                try:
-                    with Image.open(filepath) as img:
-                        width, height = img.size
-                        dimensions = f"{width}x{height}"
-                        new_width = int(width * scaling_factor)
-                        new_height = int(height * scaling_factor)
-                        new_dimensions = f"{new_width}x{new_height}"
-                except Exception:
-                    dimensions = "0x0"
-                    new_dimensions = "0x0"
-                ext = os.path.splitext(file)[1]
-                self.file_tree.insert("", "end", values=(file, dimensions, new_dimensions, ext))
 
 
 #endregion
@@ -126,24 +106,27 @@ class BatchUpscale:
         self.frame_bottom_row.pack(side="bottom", fill="both")
         button_fame = tk.Frame(self.frame_bottom_row)
         button_fame.pack(side="top", fill="x")
-        # Upscale Button
+        # Upscale
         self.button_upscale = ttk.Button(button_fame, text="Upscale", command=self.determine_image_type)
         self.button_upscale.pack(side="left", fill="x", expand=True)
-        # Cancel Button
+        # Cancel
         self.button_cancel = ttk.Button(button_fame, text="Cancel", command=self.close_tab)
         self.button_cancel.pack(side="left", fill="x")
+        # Help
+        self.button_help = ttk.Button(button_fame, text="?", width=2, command=self.open_help_window)
+        self.button_help.pack(side="left", fill="x")
         # Info Row
-        info_row = tk.Frame(self.frame_bottom_row)
-        info_row.pack(side="top", fill="x")
+        self.info_row = tk.Frame(self.frame_bottom_row)
+        self.info_row.pack(side="top", fill="x")
         # Info Labels
-        self.create_info_widgets(info_row)
-        # Progress Bar
-        self.progress_bar = ttk.Progressbar(info_row, maximum=100)
-        self.progress_bar.pack(side="left", fill="both", expand=True)
+        self.create_info_widgets()
+        # Progressbar
+        self.progressbar = ttk.Progressbar(self.info_row, maximum=100)
+        self.progressbar.pack(side="left", fill="both", expand=True)
 
 
-    def create_info_widgets(self, frame):
-        self.info_frame = tk.Frame(frame)
+    def create_info_widgets(self):
+        self.info_frame = tk.Frame(self.info_row)
         self.info_frame.pack(side="left", fill="both")
         self.info_frame.grid_rowconfigure(0, weight=1)
         # Total Count
@@ -193,7 +176,7 @@ class BatchUpscale:
         self.entry_output_path = ttk.Entry(batch_output_frame, textvariable=self.output_path_var)
         self.entry_output_path.pack(side="left", fill="x", expand=True)
         # Auto
-        self.auto_output_checkbox = ttk.Checkbutton(batch_output_frame, text="Auto", variable=self.auto_output_var, width=12, takefocus=False, command=self.toggle_batch_mode)
+        self.auto_output_checkbox = ttk.Checkbutton(batch_output_frame, text="Auto Name", variable=self.auto_output_var, width=12, takefocus=False, command=self.toggle_batch_mode)
         self.auto_output_checkbox.pack(side="left", fill="x")
         ToolTip.create(self.auto_output_checkbox, "Automatically set a unique output path relative to the input path", delay=250, padx=6, pady=12)
         # Browse
@@ -272,19 +255,30 @@ class BatchUpscale:
 
 #endregion
 ################################################################################################################################################
-#region -  UI Functions
+#region -  Treeview Logic
 
 
-    def toggle_batch_mode(self):
+    def populate_file_tree(self):
+        self.file_tree.delete(*self.file_tree.get_children())
+        scaling_factor = float(self.upscale_factor_value.get())
         input_path = self.input_path_var.get()
-        output_path = self.output_path_var.get()
-        if self.batch_mode_var:
-            if not os.path.isdir(input_path):
-                self.input_path_var.set(os.path.dirname(input_path))
-            if not os.path.isdir(output_path):
-                self.output_path_var.set(os.path.dirname(output_path))
-        self.handle_file_tree_selection(None)
-        self.update_new_dimensions_in_file_tree()
+        if not os.path.isdir(input_path):
+            input_path = os.path.dirname(input_path)
+        for file in os.listdir(input_path):
+            if file.lower().endswith(self.supported_filetypes):
+                filepath = os.path.join(input_path, file)
+                try:
+                    with Image.open(filepath) as img:
+                        width, height = img.size
+                        dimensions = f"{width}x{height}"
+                        new_width = int(width * scaling_factor)
+                        new_height = int(height * scaling_factor)
+                        new_dimensions = f"{new_width}x{new_height}"
+                except Exception:
+                    dimensions = "0x0"
+                    new_dimensions = "0x0"
+                ext = os.path.splitext(file)[1]
+                self.file_tree.insert("", "end", values=(file, dimensions, new_dimensions, ext))
 
 
     def get_selection_details(self):
@@ -301,15 +295,7 @@ class BatchUpscale:
         return None, None, None, None, None
 
 
-    def verify_selected_file(self, filepath):
-        if filepath is None or not os.path.exists(filepath):
-            self.populate_file_tree()
-            return False
-        else:
-            return True
-
-
-    def handle_file_tree_selection(self, event):
+    def handle_file_tree_selection(self, event=None):
         if self.batch_thread_var:
             return
         item, directory, filename, extension, filepath = self.get_selection_details()
@@ -324,7 +310,10 @@ class BatchUpscale:
             norm_path = os.path.normpath(self.working_img_path)
             self.input_path_var.set(norm_path)
             base = os.path.splitext(filename)[0]
-            self.output_path_var.set(os.path.join(directory, f"{base}_up{extension}") if self.auto_output_var.get() else norm_path)
+            if self.auto_output_var.get():
+                self.output_path_var.set(os.path.join(directory, f"{base}_up{extension}"))
+            else:
+                self.output_path_var.set(norm_path)
         self.update_new_dimensions_in_file_tree()
 
 
@@ -351,6 +340,53 @@ class BatchUpscale:
                 new_dimensions = "-x-"
             new_values = (values[0], dimensions, new_dimensions, values[3])
             self.file_tree.item(item, values=new_values)
+
+
+    def highlight_upscale_item(self, filename):
+        for item in self.file_tree.get_children():
+            values = self.file_tree.item(item, "values")
+            if values and values[0] == filename:
+                self.file_tree.selection_add(item)
+                self.file_tree.see(item)
+                break
+
+
+#endregion
+################################################################################################################################################
+#region -  UI Functions
+
+
+    def set_widget_state(self, state):
+        widget_names = [
+            "combobox_upscale_model",
+            "entry_size",
+            "slider_upscale_strength",
+            "button_upscale",
+        ]
+        if self.batch_mode_var.get():
+            widget_names.extend([
+                "entry_batch_input_path",
+                "button_browse_batch_input",
+                "entry_batch_output_path",
+                "browse_batch_output_button",
+                "button_upscale",
+            ])
+        for widget_name in widget_names:
+            widget = getattr(self, widget_name, None)
+            if widget is not None:
+                widget.config(state=state)
+
+
+    def toggle_batch_mode(self):
+        input_path = self.input_path_var.get()
+        output_path = self.output_path_var.get()
+        if self.batch_mode_var:
+            if not os.path.isdir(input_path):
+                self.input_path_var.set(os.path.dirname(input_path))
+            if not os.path.isdir(output_path):
+                self.output_path_var.set(os.path.dirname(output_path))
+        self.handle_file_tree_selection()
+        self.update_new_dimensions_in_file_tree()
 
 
     def set_upscale_paths(self, path=None):
@@ -388,7 +424,9 @@ class BatchUpscale:
                 directory, filename = os.path.split(self.input_path_var.get())
                 filename, extension = os.path.splitext(filename)
                 self.output_path_var.set(os.path.join(directory, f"{filename}_up{extension}"))
-        self.set_working_directory()
+        if not self.batch_mode_var.get():
+            self.highlight_upscale_item(os.path.basename(self.working_img_path))
+        self.determine_working_directory()
         self.entry_input_path.xview_moveto(1)
         self.entry_output_path.xview_moveto(1)
 
@@ -411,51 +449,23 @@ class BatchUpscale:
             pass
 
 
+    def update_progress(self, progress):
+        if not self.batch_upscale_frame.winfo_exists():
+            return
+        self.progressbar.config(value=progress)
+        self.frame_bottom_row.update_idletasks()
+
+
     def clear_process_labels(self):
         self.label_upscaled_count.config(text="Processed: 0")
         self.label_timer.config(text="Elapsed: 00:00:00")
         self.label_timer_eta.config(text="ETA: 00:00:00")
-        self.progress_bar.config(value=0)
+        self.progressbar.config(value=0)
 
 
-    def set_working_directory(self, path=None):
-        if self.batch_thread_var:
-            return
-        if path:
-            self.working_dir = path
-        else:
-            if not os.path.isdir(self.input_path_var.get()):
-                self.working_dir = os.path.dirname(self.input_path_var.get())
-            else:
-                self.working_dir = self.input_path_var.get()
-        self.working_img_path = self.parent.image_files[self.parent.current_index]
-        self.input_path_var.set(self.working_dir)
-        self.output_path_var.set(value=os.path.join(self.input_path_var.get(), "Upscale_Output"))
+    def update_image_count(self):
         self.total_images = len([file for file in os.listdir(self.working_dir) if file.lower().endswith(self.supported_filetypes)])
         self.label_total_count.config(text=f"Total: {self.total_images}")
-        self.populate_file_tree()
-        self.clear_process_labels()
-
-
-    def open_folder(self):
-        path = self.working_dir
-        try:
-            os.startfile(path)
-        except Exception as e:
-            print(f"Error opening folder: {e}")
-
-
-    def show_help(self):
-        help_text = (
-            "Batch Upscale\n\n"
-            "This tool allows you to upscale multiple images at once.\n\n"
-            "1. Select a directory containing images you wish to upscale.\n"
-            "2. Specify upscaling options in the settings.\n"
-            "3. Click the 'Upscale Images' button to apply the changes.\n\n"
-            "Options:\n"
-            "- Select the scaling factor for the upscaling process.\n"
-        )
-        messagebox.showinfo("Help", help_text)
 
 
 #endregion
@@ -474,7 +484,7 @@ class BatchUpscale:
             if extension.lower() == '.gif':
                 self._upscale_gif(gif_path)
             else:
-                self.upscale_image()
+                self._upscale_image()
             self.set_widget_state(state="normal")
             self.populate_file_tree()
 
@@ -488,16 +498,6 @@ class BatchUpscale:
 
     def batch_upscale_cancel_message(self, count):
         messagebox.showinfo("Batch Upscaled Canceled", f"Batch Upscaling canceled early.\n\n{count} of {self.total_images} images upscaled.")
-
-
-    def select_batch_upscale_item(self, filename):
-        # highlight the specified filename in the file_tree, adding it to the selection
-        for item in self.file_tree.get_children():
-            values = self.file_tree.item(item, "values")
-            if values and values[0] == filename:
-                self.file_tree.selection_add(item)
-                self.file_tree.see(item)
-                break
 
 
     def _batch_upscale(self):
@@ -517,7 +517,7 @@ class BatchUpscale:
                 file_path = os.path.join(input_path, filename)
                 if os.path.isfile(file_path) and filename.lower().endswith(self.supported_filetypes):
                     self.working_img_path = file_path
-                    self.select_batch_upscale_item(filename)
+                    self.highlight_upscale_item(filename)
                     if filename.lower().endswith('.gif'):
                         if not self.batch_thread_var:
                             self.batch_upscale_cancel_message(count)
@@ -527,7 +527,7 @@ class BatchUpscale:
                         if not self.batch_thread_var:
                             self.batch_upscale_cancel_message(count)
                             break
-                        self.upscale_image(batch_mode=True, output_path=output_path)
+                        self._upscale_image(batch_mode=True, output_path=output_path)
                     count += 1
                     elapsed_time = time.time() - start_time
                     avg_time_per_image = elapsed_time / count
@@ -557,30 +557,49 @@ class BatchUpscale:
             self.batch_thread_var = False
 
 
+    def _build_output_path(self, input_filepath, batch_mode, suffix="", ext_override=None):
+        directory, filename = os.path.split(input_filepath)
+        name, ext = os.path.splitext(filename)
+        if ext_override is not None:
+            ext = ext_override
+        if batch_mode:
+            output_dir = self.output_path_var.get()
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+            return os.path.join(output_dir, f"{name}{suffix}{ext}")
+        else:
+            return self.output_path_var.get()
+
+
+    def _build_upscale_command(self, input_path, output_path):
+        model = str(self.combobox_upscale_model.get())
+        upscale_command = [
+            self.executable_path,
+            "-i", input_path,
+            "-o", output_path,
+            "-n", model,
+            "-s", "4",
+            "-f", "jpg"
+        ]
+        if model not in self.ncnn_models:
+            upscale_command.extend(["-m", self.extra_models_path])
+        return upscale_command
+
+
     def _upscale_gif(self, gif_path, batch_mode=None, output_path=None):
         try:
             with Image.open(gif_path) as gif:
                 frames = [(frame.copy().convert("RGBA"), frame.info['duration']) for frame in ImageSequence.Iterator(gif)]
-            temp_dir = os.path.join(os.path.dirname(gif_path), "temp_upscale_img")
+            temp_dir = os.path.join(os.path.dirname(gif_path), "temp_upscale_dir")
             os.makedirs(temp_dir, exist_ok=True)
             upscaled_frames = []
             total_frames = len(frames)
-            model = str(self.combobox_upscale_model.get())
             for i, (frame, duration) in enumerate(frames):
                 temp_frame_path = os.path.join(temp_dir, f"frame_{i}.png")
                 frame.save(temp_frame_path)
-                upscaled_frame_path = os.path.join(temp_dir, f"frame_{i}_upscaled.png")
+                upscaled_frame_path = os.path.join(temp_dir, f"frame_{i}_up.png")
                 self.batch_upscale_frame.update()
-                upscale_command = [
-                    self.executable_path,
-                    "-i", temp_frame_path,
-                    "-o", upscaled_frame_path,
-                    "-n", model,
-                    "-s", "4",
-                    "-f", "jpg"
-                ]
-                if model not in self.ncnn_models:
-                    upscale_command.extend(["-m", self.extra_models_path])
+                upscale_command = self._build_upscale_command(temp_frame_path, upscaled_frame_path)
                 upscale_process = subprocess.Popen(upscale_command, creationflags=subprocess.CREATE_NO_WINDOW)
                 upscale_process.wait()
                 self.batch_upscale_frame.update()
@@ -592,16 +611,15 @@ class BatchUpscale:
                     with Image.open(upscaled_frame_path) as upscaled_frame:
                         upscaled_frame = upscaled_frame.convert("RGBA")
                         upscaled_frames.append((upscaled_frame, duration))
-                self.update_progress((i+1)/total_frames*90)
-            directory, filename = os.path.split(gif_path)
-            filename, extension = os.path.splitext(filename)
-            upscaled_gif_path = os.path.join(output_path if batch_mode else directory, f"{filename}_upscaled{extension}")
+                self.update_progress((i + 1) / total_frames * 90)
+            upscaled_gif_path = self._build_output_path(gif_path, batch_mode, suffix="_up")
             upscaled_frames[0][0].save(upscaled_gif_path, save_all=True, append_images=[frame for frame, _ in upscaled_frames[1:]], loop=0, duration=[duration for _, duration in upscaled_frames])
             shutil.rmtree(temp_dir)
             self.update_progress(99)
             if not batch_mode:
                 time.sleep(0.1)
-                self.close_tab(self.get_image_index(directory, f"{filename}_upscaled{extension}"))
+                index = self.get_image_index(os.path.dirname(gif_path), f"{os.path.splitext(os.path.basename(gif_path))[0]}_up{os.path.splitext(gif_path)[1]}")
+                self.close_tab(index)
                 result = messagebox.askyesno("Upscale Successful", f"Output path:\n{upscaled_gif_path}\n\nOpen image?")
                 if result:
                     os.startfile(upscaled_gif_path)
@@ -613,25 +631,16 @@ class BatchUpscale:
             self.close_tab()
 
 
-    def upscale_image(self, batch_mode=False, output_path=None):
+    def _upscale_image(self, batch_mode=False, output_path=None):
         try:
             self.update_progress(25)
             directory, filename = os.path.split(self.working_img_path)
-            filename, extension = os.path.splitext(filename)
+            name, extension = os.path.splitext(filename)
             if extension.lower() == '.webp':
-                extension = self.convert_webp_to_jpg(directory, filename)
-            output_image_path = os.path.join(output_path if batch_mode else directory, f"{filename}{extension}" if batch_mode else f"{filename}_up{extension}")
+                extension = self.convert_webp_to_jpg(directory, name)
+            output_image_path = self._build_output_path(self.working_img_path, batch_mode, ext_override=extension)
             model = str(self.combobox_upscale_model.get())
-            upscale_command = [
-                self.executable_path,
-                "-i", self.working_img_path,
-                "-o", output_image_path,
-                "-n", model,
-                "-s", "4",
-                "-f", "jpg"
-            ]
-            if model not in self.ncnn_models:
-                upscale_command.extend(["-m", self.extra_models_path])
+            upscale_command = self._build_upscale_command(self.working_img_path, output_image_path)
             upscale_process = subprocess.Popen(upscale_command, creationflags=subprocess.CREATE_NO_WINDOW)
             self.update_progress(40)
             upscale_process.wait()
@@ -650,7 +659,7 @@ class BatchUpscale:
                 if result:
                     os.startfile(output_image_path)
         except Exception as e:
-            messagebox.showerror("Error: upscale_image()", f"An error occurred.\n\n{e}")
+            messagebox.showerror("Error: _upscale_image()", f"An error occurred.\n\n{e}")
             self.close_tab()
 
 
@@ -697,25 +706,26 @@ class BatchUpscale:
 #region -  Misc
 
 
-    def set_widget_state(self, state):
-        widget_names = [
-            "combobox_upscale_model",
-            "entry_size",
-            "slider_upscale_strength",
-            "button_upscale",
-        ]
-        if self.batch_mode_var.get():
-            widget_names.extend([
-                "entry_batch_input_path",
-                "button_browse_batch_input",
-                "entry_batch_output_path",
-                "browse_batch_output_button",
-                "button_upscale",
-            ])
-        for widget_name in widget_names:
-            widget = getattr(self, widget_name, None)
-            if widget is not None:
-                widget.config(state=state)
+    def set_working_directory(self, path=None):
+        if self.batch_thread_var:
+            return
+        if path:
+            self.working_dir = path
+        else:
+            self.determine_working_directory()
+        self.working_img_path = self.parent.image_files[self.parent.current_index]
+        self.input_path_var.set(self.working_dir)
+        self.output_path_var.set(value=os.path.join(self.input_path_var.get(), "Upscale_Output"))
+        self.update_image_count()
+        self.populate_file_tree()
+        self.clear_process_labels()
+
+
+    def determine_working_directory(self):
+        if not os.path.isdir(self.input_path_var.get()):
+            self.working_dir = os.path.dirname(self.input_path_var.get())
+        else:
+            self.working_dir = self.input_path_var.get()
 
 
     def find_additional_models(self):
@@ -741,16 +751,9 @@ class BatchUpscale:
             return extension
 
 
-    def update_progress(self, progress):
-        if not self.batch_upscale_frame.winfo_exists():
-            return
-        self.progress_bar.config(value=progress)
-        self.frame_bottom_row.update_idletasks()
-
-
     def delete_temp_dir(self):
         try:
-            temp_dir = os.path.join(os.path.dirname(self.working_img_path), "temp_upscale_img")
+            temp_dir = os.path.join(os.path.dirname(self.working_img_path), "temp_upscale_dir")
             if os.path.exists(temp_dir):
                 shutil.rmtree(temp_dir)
         except (PermissionError, FileNotFoundError):
@@ -758,17 +761,14 @@ class BatchUpscale:
 
 
     def open_directory(self, directory):
-        # If directory is a file, use its parent folder.
         if os.path.exists(directory) and os.path.isfile(directory):
             directory = os.path.dirname(directory)
-        # If directory doesn't exist or isn't a folder, traverse up to find an existing folder.
         current_dir = directory
         while current_dir and not os.path.isdir(current_dir):
             parent_dir = os.path.dirname(current_dir)
             if parent_dir == current_dir:
                 break
             current_dir = parent_dir
-        # Open the valid directory if found.
         if os.path.isdir(current_dir):
             try:
                 os.startfile(current_dir)
@@ -780,6 +780,47 @@ class BatchUpscale:
         self.batch_thread_var = False
         self.delete_temp_dir()
         self.set_widget_state(state="normal")
-        if index:
-            self.parent.update_pair()
-            self.parent.jump_to_image(index)
+        #if index:
+        #    self.parent.update_pair()
+        #    self.parent.jump_to_image(index)
+
+
+    def verify_selected_file(self, filepath):
+        if filepath is None or not os.path.exists(filepath):
+            self.populate_file_tree()
+            return False
+        else:
+            return True
+
+
+#endregion
+################################################################################################################################################
+#region -  Help
+
+
+    def open_help_window(self):
+        filetypes = ", ".join(self.supported_filetypes).replace(".", "")
+        help_text = {
+            "Batch Upscale Help": "",
+
+            "Supported Filetypes:": f"{filetypes}\n",
+            "Upscale Models:":      "realesr-animevideov3-x4\nRealESRGAN_General_x4_v3\nrealesrgan-x4plus\nrealesrgan-x4plus-anime\nAnimeSharp-4x\nUltraSharp-4x\n",
+            "Additional Models:":   "Any additional 'ESRGAN x4' models found in the 'ncnn_models' directory will be added to the list of available upscale models.\n",
+            "Upscale Strength:":    "Adjusts the blend between the original and upscaled images (0% yields the original, 100% applies the full upscaling effect).\n",
+            "Batch Processing:":    "Process all eligible images in a directory\n",
+            "Auto Output Naming:":  "When enabled, output filenames and directories are generated automatically relative to the input path.\n",
+            "Additional Note:":     "The tool always performs an initial 4x upscaling before applying your selected resizing factor.\nAdjusting the upscale factor does not affect the quality or performance of the upscale process.\n",
+
+            "Usage Instructions:": (
+                "Single Mode:\n"
+                "  1. Select an image file via the 'Browse...' button, or by selecting it from the file list.\n"
+                "  2. Adjust settings (Upscale Model, Upscale Factor, Upscale Strength) as desired.\n"
+                "  3. Click 'Upscale' to process the image.\n\n"
+                "Batch Mode:\n"
+                "  1. Ensure 'Batch Mode' is enabled.\n"
+                "  2. Select an input directory via the 'Browse...' button containing the images you wish to upscale.\n"
+                "  3. Click 'Upscale' to begin processing all supported images.\n"
+                "  4. Use the 'Cancel' button to stop batch processing at any time.\n\n"
+            ),
+        }
+        self.help_window.open_window(geometry="450x700", help_text=help_text)
