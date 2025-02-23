@@ -112,7 +112,7 @@ class BatchUpscale:
         self.button_upscale = ttk.Button(button_fame, text="Upscale", command=self.determine_image_type)
         self.button_upscale.pack(side="left", fill="x", expand=True)
         # Cancel
-        self.button_cancel = ttk.Button(button_fame, text="Cancel", command=self.close_tab)
+        self.button_cancel = ttk.Button(button_fame, text="Cancel", command=self.process_end)
         self.button_cancel.pack(side="left", fill="x")
         # Help
         self.button_help = ttk.Button(button_fame, text="?", width=2, command=self.open_help_window)
@@ -626,8 +626,7 @@ class BatchUpscale:
             self.update_progress(99)
             if not batch_mode:
                 time.sleep(0.1)
-                index = self.get_image_index(os.path.dirname(gif_path), f"{os.path.splitext(os.path.basename(gif_path))[0]}_up{os.path.splitext(gif_path)[1]}")
-                self.close_tab(index)
+                self.process_end()
                 result = messagebox.askyesno("Upscale Successful", f"Output path:\n{upscaled_gif_path}\n\nOpen image?")
                 if result:
                     os.startfile(upscaled_gif_path)
@@ -636,7 +635,7 @@ class BatchUpscale:
             return
         except Exception as e:
             messagebox.showerror("Error: _upscale_gif()", f"An error occurred.\n\n{e}")
-            self.close_tab()
+            self.process_end()
 
 
     def _upscale_image(self, batch_mode=False, output_path=None):
@@ -661,14 +660,13 @@ class BatchUpscale:
             self.update_progress(99)
             if not batch_mode:
                 time.sleep(0.1)
-                index = self.get_image_index(directory, output_image_path)
-                self.close_tab(index)
+                self.process_end()
                 result = messagebox.askyesno("Upscale Successful", f"Output path:\n{output_image_path}\n\nOpen image?")
                 if result:
                     os.startfile(output_image_path)
         except Exception as e:
             messagebox.showerror("Error: _upscale_image()", f"An error occurred.\n\n{e}")
-            self.close_tab()
+            self.process_end()
 
 
     def blend_images(self, original_image_path, upscaled_image_path, extension):
@@ -789,13 +787,10 @@ class BatchUpscale:
                 pass
 
 
-    def close_tab(self, index=None, event=None):
+    def process_end(self, event=None):
         self.batch_thread_var = False
         self.delete_temp_dir()
         self.set_widget_state(state="normal")
-        #if index:
-        #    self.parent.update_pair()
-        #    self.parent.jump_to_image(index)
 
 
     def verify_selected_file(self, filepath):
