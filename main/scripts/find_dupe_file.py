@@ -1,21 +1,4 @@
-"""
-########################################
-#           Find Dupe files            #
-#   Version : v1.02                    #
-#   Author  : github.com/Nenotriple    #
-########################################
-
-Description:
--------------
-Scan a folder for duplicate images and/or all files by comparing their MD5 or SHA-256 hash.
-
-"""
-
-
-#endregion
-################################################################################################################################################
 #region -  Imports
-
 
 
 # Standard Library
@@ -35,6 +18,7 @@ from tkinter import (
 
 # Custom Libraries
 from TkToolTip.TkToolTip import TkToolTip as ToolTip
+from main.scripts.help_window import HelpWindow
 
 
 #endregion
@@ -48,7 +32,7 @@ class FindDupeFile:
         self.parent = None
         self.root = None
         self.working_dir = None
-        self.version = None
+        self.help_window = None
 
         # Local Variables
         self.is_closing = False
@@ -58,7 +42,14 @@ class FindDupeFile:
         self.max_scan_size = 2048 # in MB
         self.scanned_files = None
         self.startup = True
-
+        self.supported_filetypes = [
+            ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif",
+            ".jpeg_large", ".tiff", ".tif", ".ico", ".svg", ".eps",
+            ".raw", ".pdf", ".psd", ".xcf", ".kra", ".cdr",
+            ".heic", ".heif", ".avif", ".apng", ".jp2", ".j2k",
+            ".jpf", ".jpx", ".jpm", ".mj2", ".dds", ".exr",
+            ".hdr", ".icns", ".ai", ".indd"
+        ]
         # Handle process state
         self.process_stopped = BooleanVar(value=True)
         self.process_stopped.trace_add('write', self.toggle_widgets)
@@ -81,7 +72,7 @@ class FindDupeFile:
         self.parent = parent
         self.root = root
         self.working_dir = path
-        self.version = self.parent.app_version
+        self.help_window = HelpWindow(self.root)
         self.setup_ui()
         if path:
             self.folder_entry.insert(0, path)
@@ -129,7 +120,7 @@ class FindDupeFile:
         self.top_frame.pack(fill="x", padx=2)
         self.create_menubar()
         # Help Button
-        self.help_button = ttk.Button(self.top_frame, text="?", width=2)
+        self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.open_help_window)
         self.help_button.pack(side="right", fill="x", padx=2)
         ToolTip.create(self.help_button, "Show/Hide Help", 50, 6, 12)
 
@@ -422,16 +413,8 @@ class FindDupeFile:
 
 
     def is_image(self, file_path):
-        image_file_extensions = [
-            ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif",
-            ".jpeg_large", ".tiff", ".tif", ".ico", ".svg", ".eps",
-            ".raw", ".pdf", ".psd", ".xcf", ".kra", ".cdr",
-            ".heic", ".heif", ".avif", ".apng", ".jp2", ".j2k",
-            ".jpf", ".jpx", ".jpm", ".mj2", ".dds", ".exr",
-            ".hdr", ".icns", ".ai", ".indd"
-        ]
         _, file_extension = os.path.splitext(file_path)
-        return file_extension.lower() in image_file_extensions
+        return file_extension.lower() in self.supported_filetypes
 
 
     def get_file_hash(self, file_path):
@@ -738,29 +721,78 @@ class FindDupeFile:
 
 
 #endregion
+################################################################################################################################################
+#region -  Help
 
-'''
 
-v1.02 changes:
+    def open_help_window(self):
+        filetypes = ", ".join(self.supported_filetypes).replace(".", "")
+        help_text = {
+            "Find Duplicate Files Help": "",
 
-- New:
-  - New Feature: Added "Move Captions" option.
-    - Moves text files with the same name as images when duplicates are found.
-    - Only works in "Images" scanning mode.
+            "Supported Filetypes:": f"{filetypes}\n",
 
-<br>
+            "Processing Modes:": (
+                "**MD5 - Fast:**\n"
+                "  Quick file comparison but slightly less accurate *(Recommended)*\n"
+                "**SHA-256 - Slow:**\n"
+                "  More thorough comparison but takes longer to process\n\n"
+            ),
 
-- Fixed:
-  -
+            "Duplicate Handling:": (
+                "**Single Mode:**\n"
+                "  Moves only the duplicate files, leaving one copy in the original location\n"
+                "**Both Mode:**\n"
+                "  Moves all duplicate files to the duplicates folder and groups them together\n\n"
+            ),
 
-<br>
+            "Scanning Options:": (
+                "**Images:**\n"
+                "  Only scans supported image file types\n"
+                "  Enables the 'Move Captions' option for handling associated text files\n"
+                "**All Files:**\n"
+                "  Scans all files regardless of type\n"
+                "**Recursive:**\n"
+                "  Includes subfolders in the scan *(only compares files within the same folder)*\n"
+                "**Move Captions:**\n"
+                "  Moves associated .txt files when moving duplicate images\n\n"
+            ),
 
-- Other changes:
-  - Refactored to be a built-in tool.
+            "File Menu Features:": (
+                "**Select Folder:** Choose a directory to scan\n"
+                "**Open Folder:** Open the current directory in File Explorer\n"
+                "**Restore Moved Duplicates:** Return files to their original locations\n"
+                "**Move All Duplicates Upfront:** Consolidate duplicates to the root folder\n"
+                "**Delete All Duplicates:** Permanently remove duplicate files\n\n"
+            ),
 
-<br>
+            "Options Menu Features:": (
+                "**Process Mode:** Choose between MD5 *(fast)* or SHA-256 *(thorough)* comparison\n"
+                "**Max Scan Size:** Set maximum file size limit for scanning *(in MB)*\n"
+                "**Filetypes to Scan:** Customize which file extensions to check\n"
+                "**Recursive Scanning:** Enable/disable subfolder scanning\n"
+                "**Scanning Mode:** Choose between Images-only or All Files\n"
+                "**Duplication Handling:** Select Single or Both mode\n\n"
+            ),
 
-- To fix:
-  -
+            "Usage Instructions:": (
+                "**Basic Usage:**\n"
+                "  1. Select a folder using the Browse button or File menu\n"
+                "  2. Choose your scanning options *(Images/All Files, Single/Both mode)*\n"
+                "  3. Enable Recursive if you want to scan subfolders\n"
+                "  4. Click 'Find Duplicates' to begin scanning\n\n"
+                "**Managing Results:**\n"
+                "  • Duplicates are moved to a *'_Duplicate__Files'* folder\n"
+                "  • Use the Undo button to restore moved files\n"
+                "  • The status bar shows progress and duplicate count\n\n"
+            ),
 
-'''
+            "Important Notes:": (
+                "• The tool uses file hash comparison for accurate duplicate detection\n"
+                "• Large files may take longer to process, especially in SHA-256 mode\n"
+                "• Recursive mode only compares files within their respective folders\n"
+                "• The original file structure is preserved when restoring files\n"
+                "• Actions like deletion and upfront moves cannot be undone\n\n"
+            )
+        }
+        self.help_window.open_window(geometry="550x700", help_text=help_text)
