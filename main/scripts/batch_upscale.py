@@ -75,6 +75,7 @@ class BatchUpscale:
 
         self.setup_ui()
         self.populate_file_tree()
+        self.highlight_parent_image()
 
 
 #endregion
@@ -350,6 +351,12 @@ class BatchUpscale:
                 self.file_tree.selection_set(item)
                 self.file_tree.see(item)
                 break
+
+
+    def highlight_parent_image(self):
+        if not self.batch_mode_var.get():
+            parent_img_path = self.parent.image_files[self.parent.current_index]
+            self.highlight_upscale_item(os.path.basename(parent_img_path))
 
 
 #endregion
@@ -707,9 +714,13 @@ class BatchUpscale:
 #region -  Misc
 
 
-    def set_working_directory(self, path=None):
+    def set_working_directory(self, path=None, batch=None):
         if self.batch_thread_var:
             return
+        if batch:
+            self.batch_mode_var.set(True)
+        else:
+            self.batch_mode_var.set(False)
         if path:
             self.working_dir = path
         else:
@@ -720,6 +731,7 @@ class BatchUpscale:
         self.update_image_count()
         self.populate_file_tree()
         self.clear_process_labels()
+        self.highlight_parent_image()
 
 
     def determine_working_directory(self):
