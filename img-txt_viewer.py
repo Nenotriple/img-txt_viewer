@@ -59,7 +59,6 @@ from main.scripts import (
     find_dupe_file,
     text_controller,
     batch_upscale,
-    upscale_image,
     batch_rename,
     resize_image,
     image_grid,
@@ -420,7 +419,7 @@ class ImgTxtViewer:
         self.individual_operations_menu = Menu(self.toolsMenu, tearoff=0)
         self.toolsMenu.add_cascade(label="Edit Current pair", underline=0, state="disable", menu=self.individual_operations_menu)
         self.individual_operations_menu.add_command(label="Rename Pair", underline=0, command=self.manually_rename_single_pair)
-        self.individual_operations_menu.add_command(label="Upscale...", underline=0, command=lambda: self.upscale_image(batch=False))
+        self.individual_operations_menu.add_command(label="Upscale...", underline=0, command=lambda: self.create_batch_upscale_ui(show=True, quick_swap=True))
         self.individual_operations_menu.add_command(label="Crop...", underline=0, command=self.create_crop_ui)
         self.individual_operations_menu.add_command(label="Resize...", underline=0, command=self.resize_image)
         self.individual_operations_menu.add_command(label="Expand", underline=1, command=self.expand_image)
@@ -904,7 +903,7 @@ class ImgTxtViewer:
         self.image_context_menu.add_separator()
         # Edit
         self.image_context_menu.add_command(label="Rename Pair", command=self.manually_rename_single_pair)
-        self.image_context_menu.add_command(label="Upscale...", command=lambda: self.upscale_image(batch=False))
+        self.image_context_menu.add_command(label="Upscale...", command=lambda: self.create_batch_upscale_ui(show=True, quick_swap=True))
         self.image_context_menu.add_command(label="Resize...", command=self.resize_image)
         self.image_context_menu.add_command(label="Crop...", command=self.create_crop_ui)
         if not self.image_file.lower().endswith('.gif'):
@@ -1334,8 +1333,10 @@ class ImgTxtViewer:
         self.create_ui_tab(self.crop_ui, self.crop_ui_tab, show=show)
 
 
-    def create_batch_upscale_ui(self, show=False):
+    def create_batch_upscale_ui(self, show=False, quick_swap=False):
         self.create_ui_tab(self.batch_upscale, self.batch_upscale_tab, show=show)
+        if quick_swap:
+            self.batch_upscale.set_working_directory(self.image_dir.get(), batch=False)
 
 
     def create_batch_resize_images_ui(self, show=False):
@@ -2108,21 +2109,6 @@ class ImgTxtViewer:
         window_y = root.winfo_y() - 200 + main_window_height // 2
         filepath = self.image_files[self.current_index]
         resize_image.ResizeTool(self.root, self, filepath, window_x, window_y, self.update_pair, self.jump_to_image)
-
-
-    def upscale_image(self, batch):
-        main_window_width = root.winfo_width()
-        main_window_height = root.winfo_height()
-        if batch:
-            x_offset = -225
-            y_offset = 300
-        else:
-            x_offset = -135
-            y_offset = 200
-        window_x = root.winfo_x() + x_offset + main_window_width // 2
-        window_y = root.winfo_y() - y_offset + main_window_height // 2
-        filepath = self.image_files[self.current_index]
-        upscale_image.Upscale(self, self.root, filepath, batch, window_x, window_y)
 
 
     def batch_crop_images(self):
