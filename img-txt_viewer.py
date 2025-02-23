@@ -492,7 +492,7 @@ class ImgTxtViewer:
         }
         self.ui_state = tab_states.get(tab_name)
         if self.ui_state == "ImgTxtViewer":
-            pass
+            self.debounce_refresh_image()
         elif self.ui_state == "BatchTagEdit":
             self.create_batch_tag_edit_ui(show=True)
         elif self.ui_state == "CropUI":
@@ -1693,7 +1693,7 @@ class ImgTxtViewer:
             self.debounce_update_thumbnail_panel()
 
 
-    def debounce_refresh_image(self, event):
+    def debounce_refresh_image(self, event=None):
         if self.ui_state != "ImgTxtViewer":
             return
         if hasattr(self, 'text_box'):
