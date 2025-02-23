@@ -40,8 +40,8 @@ class HelpWindow(tk.Toplevel):
             help_text (Union[str, Dict[str, str], List[str]], optional): Content to display.
                 Can be a dictionary ("rich"), plain text, or a list. ("simple")
             text_format (str, optional): Format for displaying text. Options are:
-                - "rich": Uses styled formatting for headers (default)
-                - "simple": Displays plain text without formatting
+                - "rich": Uses styled formatting for headers and allows bold/italic text (default).
+                - "simple": Displays plain text without formatting.
         """
         self._update_window(title, geometry)
         self._update_help_text(help_text, text_format)
@@ -98,8 +98,10 @@ class HelpWindow(tk.Toplevel):
         self.textbox.pack(expand=True, fill='both')
         self.textbox.tag_config("#header",   font=("", 18, "bold"), justify='center')
         self.textbox.tag_config("##header",  font=("", 12, "bold"))
-        self.textbox.tag_config("###header", font=("", 10, "bold"))
+        self.textbox.tag_config("bold",      font=("", 10, "bold"))
+        self.textbox.tag_config("italic",    font=("", 10, "italic"))
         self.textbox.tag_config("content",   font=("", 10))
+
 
 
     def _create_footer_label(self):
@@ -154,7 +156,7 @@ class HelpWindow(tk.Toplevel):
 
     def _insert_rich_text(self, help_text):
         """
-        Insert the provided help text using styled headers.
+        Insert the provided help text using styled headers and formatting.
 
         :param help_text: Expects a dict of header-content pairs for rich formatting.
         """
@@ -162,11 +164,50 @@ class HelpWindow(tk.Toplevel):
             for idx, (header, content) in enumerate(help_text.items()):
                 tag = "#header" if idx == 0 else "##header"
                 self.textbox.insert("end", header + "\n", tag)
+
                 for line in content.splitlines():
                     if not line.strip():
                         continue
-                    line_tag = "###header" if line.strip().endswith(':') else "content"
-                    self.textbox.insert("end", line + "\n", line_tag)
+                    formatted_parts = self._process_text_formatting(line)
+                    for tag, text in formatted_parts:
+                        self.textbox.insert("end", text, tag)
+                    self.textbox.insert("end", "\n")
                 self.textbox.insert("end", "\n")
         except AttributeError:
             self._insert_simple_text(help_text)
+
+
+    def _process_text_formatting(self, text):
+        """Process text for bold and italic formatting marked with asterisks."""
+        result = []
+        current_pos = 0
+        while current_pos < len(text):
+            # Look for ** or * markers
+            double_start = text.find('**', current_pos)
+            single_start = text.find('*', current_pos)
+            # No more formatting found
+            if double_start == -1 and single_start == -1:
+                result.append(('content', text[current_pos:]))
+                break
+            # Handle double asterisks
+            if double_start != -1 and (single_start == -1 or double_start <= single_start):
+                if current_pos < double_start:
+                    result.append(('content', text[current_pos:double_start]))
+                double_end = text.find('**', double_start + 2)
+                if double_end != -1:
+                    result.append(('bold', text[double_start + 2:double_end]))
+                    current_pos = double_end + 2
+                    continue
+            # Handle single asterisk
+            if single_start != -1:
+                if current_pos < single_start:
+                    result.append(('content', text[current_pos:single_start]))
+                next_single = text.find('*', single_start + 1)
+                if next_single != -1:
+                    result.append(('italic', text[single_start + 1:next_single]))
+                    current_pos = next_single + 1
+                    continue
+            # No closing marker found, treat as normal text
+            result.append(('content', text[current_pos:]))
+            break
+        return result
