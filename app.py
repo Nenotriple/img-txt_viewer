@@ -472,6 +472,8 @@ class ImgTxtViewer:
         self.main_notebook.add(self.batch_resize_images_tab, text="Batch Resize")
         self.main_notebook.add(self.batch_rename_tab, text="Batch Rename")
         self.main_notebook.add(self.find_dupe_file_tab, text="Find Duplicates")
+        # Disable all but the primary tab
+        self.toggle_main_notebook_state("disable")
 
 
     def setup_primary_frames(self, container: 'Frame'):
@@ -1268,7 +1270,27 @@ class ImgTxtViewer:
 #region - Alt-UI Setup
 
 
+    def toggle_main_notebook_state(self, state):
+        tabs = [
+            self.batch_tag_edit_tab,
+            self.crop_ui_tab,
+            self.batch_upscale_tab,
+            self.batch_resize_images_tab,
+            self.batch_rename_tab,
+            self.find_dupe_file_tab,
+        ]
+        if state == "normal":
+            for tab in tabs:
+                self.main_notebook.tab(tab, state="normal")
+        else:
+            for tab in tabs:
+                self.main_notebook.tab(tab, state="disabled")
+
+
     def on_altui_tab_change(self, event):
+        if self.image_dir.get() == "Choose Directory..." or len(self.image_files) == 0:
+            self.main_notebook.select(self.primary_tab)
+            return
         selected_tab_index = self.main_notebook.index(self.main_notebook.select())
         tab_name = self.main_notebook.tab(selected_tab_index, "text")
         self.current_ui_state = {"tab": tab_name, "index": selected_tab_index}
@@ -1334,8 +1356,6 @@ class ImgTxtViewer:
         else:
             for binding in bindings:
                 self.root.unbind(binding)
-
-
 
 
     def create_ui_tab(self, ui_component, ui_tab, extra_args=None, show=False):
@@ -2565,6 +2585,7 @@ class ImgTxtViewer:
                     self.current_index = 0
                     self.load_pairs()
                     self.set_text_file_path(directory)
+                    self.toggle_main_notebook_state("normal")
             if original_auto_save_var is not None:
                 self.auto_save_var.set(original_auto_save_var)
         except Exception as e:
@@ -2599,6 +2620,7 @@ class ImgTxtViewer:
                     self.load_pairs(silent=True)
                     self.set_text_file_path(directory, silent=True)
                 self.jump_to_image(0)
+                self.toggle_main_notebook_state("normal")
         except FileNotFoundError:
             messagebox.showwarning("Invalid Directory", f"The system cannot find the path specified:\n\n{self.directory_entry.get()}")
 
