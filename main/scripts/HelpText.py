@@ -1,17 +1,98 @@
 #endregion
+#region - Crop UI
+
+
+CROP_UI_HELP = {
+"Crop Help":
+    "This tool is tied to the 'Tagger' tab; the working directory is shared between both tools.\n",
+
+"Supported Filetypes:": ".png, .jpg, .jpeg, .webp, .gif\n",
+
+"Basic Usage:":
+    "1. Select an image using the navigation controls.\n"
+    "2. Click and drag on the image to create a selection.\n"
+    "3. Adjust the selection using handles or input fields.\n"
+    "4. Click 'Crop Selection' to apply the crop.\n"
+    "5. Choose how to save the cropped image.\n",
+
+"Selection Controls:":
+    "• Click and drag to create a selection.\n"
+    "• Double-click for a centered selection in the same aspect ratio as the displayed image.\n"
+    "• Click outside the selection to clear it.\n"
+    "• Use corner and edge handles to resize the selection.\n"
+    "• Click inside selection and drag to move it.\n"
+    "• Use mouse wheel to resize. (Shift+wheel for width, Ctrl+wheel for height, Ctrl+Shift+wheel for both)\n",
+
+"Size & Position:":
+    "• W (px): Width of selection in pixels.\n"
+    "• H (px): Height of selection in pixels.\n"
+    "• X (px): Horizontal position from top-left.\n"
+    "• Y (px): Vertical position from top-left.\n"
+    "• All values can be entered manually or adjusted via spinbox controls.\n",
+
+"Fixed Selection:":
+    "• Aspect Ratio: Maintain a specific width-to-height ratio. (e.g., 16:9, 1:1, 3:2)\n"
+    "• Width: Lock the width and freely adjust height.\n"
+    "• Height: Lock the height and freely adjust width.\n"
+    "• Size: Lock both width and height to specific dimensions.\n"
+    "• Auto: Automatically select the best aspect ratio from predefined options.\n"
+    "• '<' button: Insert current selection dimensions into the field.\n",
+
+"Guidelines:":
+    "• No Guides: No guidelines displayed.\n"
+    "• Center Lines: Display horizontal and vertical center lines.\n"
+    "• Rule of Thirds: Display 3x3 grid lines.\n"
+    "• Diagonal Lines: Display diagonal lines from corners.\n",
+
+"Options:":
+    "• Expand Center: Selection expands equally from center point.\n"
+    "• Highlight: Toggle darkened overlay outside selection.\n",
+
+"Transform Tools:":
+    "• Rotate: Rotate image 90° clockwise.\n"
+    "• Flip X: Mirror the image horizontally.\n"
+    "• Flip Y: Mirror the image vertically.\n",
+
+"GIF Handling:":
+    "• For GIF files, frames are displayed as thumbnails.\n"
+    "• Click on a thumbnail to select that frame for editing.\n"
+    "• Use timeline slider to navigate through frames.\n"
+    "• Extract GIF: Save all frames as individual PNG files.\n",
+
+"After Crop:":
+    "• Save and Close: Apply the crop and close the tab.\n"
+    "• Save and Next: Apply the crop and load the next image.\n"
+    "• Save as...: Choose a save location and filename for the cropped image.\n"
+    "• Save: Apply the crop and save in the same location with a unique filename.\n",
+}
+
+
+#endregion
 #region - Batch Upscale
 
 
 BATCH_UPSCALE_HELP = {
 "Batch Upscale Help": "",
 
-"Supported Filetypes:": "\n",
-"Upscale Models:":      "realesr-animevideov3-x4\nRealESRGAN_General_x4_v3\nrealesrgan-x4plus\nrealesrgan-x4plus-anime\nAnimeSharp-4x\nUltraSharp-4x\n",
-"Additional Models:":   "Any additional 'ESRGAN x4' models found in the 'ncnn_models' directory will be added to the list of available upscale models.\n",
-"Upscale Strength:":    "Adjusts the blend between the original and upscaled images (0% yields the original, 100% applies the full upscaling effect).\n",
-"Batch Processing:":    "Process all eligible images in a directory\n",
-"Auto Output Naming:":  "When enabled, output filenames and directories are generated automatically relative to the input path.\n",
-"Additional Note:":     "The tool always performs an initial 4x upscaling before applying your selected resizing factor.\nAdjusting the upscale factor does not affect the quality or performance of the upscale process.\n",
+"Supported Filetypes:": ".png, .webp, .jpg, .jpeg, .jpg_large, .jfif, .tif, .tiff, .bmp, .gif\n",
+
+"Upscale Models:":
+    "realesr-animevideov3-x4\nRealESRGAN_General_x4_v3\nrealesrgan-x4plus\nrealesrgan-x4plus-anime\nAnimeSharp-4x\nUltraSharp-4x\n",
+
+"Additional Models:":
+    "Any additional 'ESRGAN x4' models found in the 'ncnn_models' directory will be added to the list of available upscale models.\n",
+
+"Upscale Strength:":
+    "Adjusts the blend between the original and upscaled images (0% yields the original, 100% applies the full upscaling effect).\n",
+
+"Batch Processing:":
+    "Process all eligible images in a directory\n",
+
+"Auto Output Naming:":
+    "When enabled, output filenames and directories are generated automatically relative to the input path.\n",
+
+"Additional Note:":
+    "The tool always performs an initial 4x upscaling before applying your selected resizing factor.\nAdjusting the upscale factor does not affect the quality or performance of the upscale process.\n",
 
 "Usage Instructions:":
     "Single Mode:\n"
@@ -22,7 +103,7 @@ BATCH_UPSCALE_HELP = {
     "  1. Ensure 'Batch Mode' is enabled.\n"
     "  2. Select an input directory via the 'Browse...' button containing the images you wish to upscale.\n"
     "  3. Click 'Upscale' to begin processing all supported images.\n"
-    "  4. Use the 'Cancel' button to stop batch processing at any time.\n\n",
+    "  4. Use the 'Cancel' button to stop batch processing at any time.",
 }
 
 
@@ -67,14 +148,19 @@ BATCH_RESIZE_IMAGES_HELP = {
 
 "Resize to Resolution:":
     "Resize to a specific width and height ignoring aspect ratio.\n\n(The following 'Resize to' options preserve aspect ratio)",
+
 "Resize to Percentage:":
     "Resize the image by a percent scale.",
+
 "Resize to Width:":
     "Target the image width and resize it.",
+
 "Resize to Height:":
     "Target the image height and resize it.",
+
 "Resize to Shorter side:":
     "Resize the shorter side of the image.",
+
 "Resize to Longer side:":
     "Resize the longer side of the image.\n",
 
@@ -83,8 +169,10 @@ BATCH_RESIZE_IMAGES_HELP = {
 
 "Upscale and Downscale:":
     "Resize the image to the new dimensions regardless of whether they're larger or smaller than the original dimensions.",
+
 "Upscale Only:":
     "Resize the image if the new dimensions are larger than the original dimensions.",
+
 "Downscale Only:":
     "Resize the image if the new dimensions are smaller than the original dimensions.\n",
 
@@ -93,10 +181,13 @@ BATCH_RESIZE_IMAGES_HELP = {
 
 "Use Output Folder:":
     "When enabled, a new folder will be created in the image directory called 'Resize Output' where images will be saved.",
+
 "Overwrite Files:":
     "When disabled, conflicting files will have '_#' append to the filename. If enabled, files with the same basename will be overwritten.",
+
 "Save PNG Info:":
     "When enabled, this option will automatically save any PNG chunk info to the resized output if saving as PNG. If converting from PNG to another type, then a text file will be created containing the PNG info.",
+
 "Convert Only:":
     "When enabled, the app will convert images to the selected filetype without resizing them. Resize settings will be ignored.",
 }
