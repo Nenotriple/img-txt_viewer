@@ -23,6 +23,12 @@ from main.scripts import HelpText
 from main.scripts.help_window import HelpWindow
 
 
+# Type Hinting
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app import ImgTxtViewer as Main
+
+
 #endregion
 ################################################################################################################################################
 #region - CLASS: ResizeImages
@@ -30,8 +36,8 @@ from main.scripts.help_window import HelpWindow
 
 class BatchResizeImages:
     def __init__(self):
-        self.parent = None
-        self.root = None
+        self.parent: 'Main' = None
+        self.root: 'tk.Tk' = None
         self.working_dir = None
         self.help_window = None
 

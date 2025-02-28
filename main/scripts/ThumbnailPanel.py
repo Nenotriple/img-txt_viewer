@@ -2,11 +2,10 @@
 
 
 # Standard Library
-from dataclasses import dataclass
-from typing import List, Dict, Callable, Any
+from typing import Dict
 
 # Standard Library - GUI
-from tkinter import ttk, Frame, Menu, BooleanVar, IntVar
+from tkinter import ttk, Frame, Menu
 
 # Third-Party Libraries
 from PIL import Image, ImageTk, ImageOps
@@ -14,35 +13,10 @@ from PIL import Image, ImageTk, ImageOps
 # Custom Libraries
 from TkToolTip.TkToolTip import TkToolTip as ToolTip
 
-
-#endregion
-################################################################################################################################################
-#region CLS: ParentData
-
-
-
-@dataclass
-class ParentData:
-    """
-    Interface for the parent application that ThumbnailPanel expects.
-    These attributes and methods must be implemented by the parent.
-    """
-    # Attributes
-    thumbnails_visible: BooleanVar  # Visibility state of the thumbnail panel
-    thumbnail_width: IntVar  # Width of thumbnail images; Related to thumbnail cache: "Small": 25, "Medium": 50, "Large": 100
-    current_index: int  # Index of the currently displayed image
-    image_files: List[str]  # List of image file paths
-    quality_filter: Any  # PIL filter type; e.g. Image.NEAREST
-    master_image_frame: Frame  # The main image display frame
-
-    # Methods
-    mouse_scroll: Callable # ~ Navigation
-    refresh_file_lists: Callable # ~ Refresh
-    get_image_info: Callable # ~ Info
-    jump_to_image: Callable # ~ Navigation
-    open_image: Callable # ~ File
-    delete_pair: Callable # ~ File
-    open_image_in_editor: Callable # ~ File
+# Type Hinting
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app import ImgTxtViewer as Main
 
 
 #endregion
@@ -59,7 +33,7 @@ class ThumbnailPanel(Frame):
     context menu interactions.
     """
 
-    def __init__(self, master, parent: ParentData):
+    def __init__(self, master: 'Frame', parent: 'Main'):
         """
         Initialize the ThumbnailPanel.
 

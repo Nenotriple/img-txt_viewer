@@ -6,7 +6,7 @@ import os
 
 
 # Standard Library - GUI
-from tkinter import ttk, messagebox, Frame, Label, BooleanVar, TclError
+from tkinter import ttk, Tk, messagebox, Frame, Label, BooleanVar, TclError
 
 
 # Third-Party Libraries
@@ -15,6 +15,11 @@ from TkToolTip.TkToolTip import TkToolTip as ToolTip
 from PIL import Image, ImageTk, ImageOps, ImageEnhance, ImageFilter
 
 
+# Type Hinting
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app import ImgTxtViewer as Main
+
 
 #endregion
 ################################################################################################################################################
@@ -22,7 +27,7 @@ from PIL import Image, ImageTk, ImageOps, ImageEnhance, ImageFilter
 
 
 class EditPanel:
-    def __init__(self, parent, root):
+    def __init__(self, parent: 'Main', root: 'Tk'):
         self.parent = parent
         self.root = root
 
@@ -31,6 +36,7 @@ class EditPanel:
         self.edit_last_slider_dict = {}
         self.edit_is_reverted_var = False
         self.edit_cumulative_var = BooleanVar(value=False)
+
 
 #endregion
 ################################################################################################################################################
@@ -202,7 +208,7 @@ class EditPanel:
         set_widget_state(self.parent.edit_image_panel, state)
 
 
-    def validate_spinbox_value(self, spinbox, min_value=0, max_value=1, integer=True, float=False):
+    def validate_spinbox_value(self, spinbox: 'ttk.Spinbox', min_value=0, max_value=1, integer=True, float=False):
         if integer and float:
             raise ValueError("validate_spinbox_value() - 'integer' and 'float' cannot be True at the same time!")
         try:

@@ -2,7 +2,7 @@
 
 
 # Standard Library - GUI
-from tkinter import Toplevel, BooleanVar, Canvas
+from tkinter import Label, Toplevel, BooleanVar, Canvas
 
 
 # Third-Party Libraries
@@ -15,7 +15,7 @@ from PIL import Image, ImageTk, ImageDraw
 
 
 class PopUpZoom:
-    def __init__(self, widget):
+    def __init__(self, widget: 'Label'):
         # Initialize the PopUpZoom class
         self.widget = widget
         self.zoom_factor = 1.75

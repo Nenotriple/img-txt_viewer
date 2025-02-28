@@ -9,7 +9,7 @@ import time
 
 # Standard Library - GUI
 from tkinter import (
-    ttk, Toplevel, messagebox,
+    ttk, Tk, Toplevel, messagebox,
     StringVar, BooleanVar,
     Frame, Menu, Scrollbar, scrolledtext, PanedWindow,
     Label, Listbox,
@@ -25,13 +25,19 @@ from TkToolTip.TkToolTip import TkToolTip as ToolTip
 from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
 
 
+# Type Hinting
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app import ImgTxtViewer as Main
+
+
 #endregion
 ################################################################################################################################################
 #region CLS TextController
 
 
 class TextController:
-    def __init__(self, parent, root):
+    def __init__(self, parent: 'Main', root: 'Tk'):
         self.parent = parent
         self.root = root
 
@@ -1041,7 +1047,7 @@ class TextController:
             tag_entry.insert(0, tag)
             listbox.delete(index)
         # INSERT
-        def insert_tag(listbox, position='start'):
+        def insert_tag(listbox: 'Listbox', position='start'):
             selected_indices = listbox.curselection()
             if not selected_indices:
                 return
@@ -1054,7 +1060,7 @@ class TextController:
                 else:  # 'end'
                     self.parent.text_box.insert('end', f"{separator}{tag}")
         # MOVE
-        def move(listbox, direction):
+        def move(listbox: 'Listbox', direction):
             selected_indices = listbox.curselection()
             if not selected_indices:
                 return
@@ -1078,7 +1084,7 @@ class TextController:
                     self.custom_dictionary_listbox.insert('end', tag)
         # CONTEXT MENU
         def show_context_menu(event):
-            listbox = event.widget
+            listbox: 'Listbox' = event.widget
             index = listbox.nearest(event.y)
             if not listbox.curselection():
                 listbox.selection_clear(0, 'end')
@@ -1303,14 +1309,14 @@ class TextController:
 #region Misc
 
 
-    def bind_entry_functions(self, widget):
+    def bind_entry_functions(self, widget: 'ttk.Entry'):
         widget.bind("<Double-1>", self.custom_select_word_for_entry)
         widget.bind("<Triple-1>", self.select_all_in_entry)
         widget.bind("<Button-3>", self.show_entry_context_menu)
 
 
     def custom_select_word_for_entry(self, event):
-        widget = event.widget
+        widget: 'ttk.Entry' = event.widget
         separators = " ,.-|()[]<>\\/\"'{}:;!@#$%^&*+=~`?"
         click_index = widget.index(f"@{event.x}")
         entry_text = widget.get()
@@ -1331,13 +1337,13 @@ class TextController:
 
 
     def select_all_in_entry(self, event):
-        widget = event.widget
+        widget: 'ttk.Entry' = event.widget
         widget.selection_range(0, 'end')
         return "break"
 
 
     def show_entry_context_menu(self, event):
-        widget = event.widget
+        widget: 'ttk.Entry' = event.widget
         if isinstance(widget, ttk.Entry):
             context_menu = Menu(self.root, tearoff=0)
             try:

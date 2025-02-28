@@ -18,6 +18,12 @@ from TkToolTip.TkToolTip import TkToolTip as ToolTip
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 
 
+# Type Hinting
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app import ImgTxtViewer as Main
+
+
 #endregion
 ################################################################################################################################################
 #region - CLASS: ImageGrid
@@ -29,7 +35,7 @@ class ImageGrid(ttk.Frame):
     text_file_cache = {}  # Cache to store text file pairs
 
 
-    def __init__(self, master, parent):
+    def __init__(self, master: 'Frame', parent: 'Main'):
         super().__init__(master)
         # Initialize ImgTxtViewer variables and methods
         self.parent = parent

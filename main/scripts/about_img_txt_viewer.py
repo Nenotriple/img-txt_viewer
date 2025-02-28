@@ -20,11 +20,17 @@ from TkToolTip.TkToolTip import TkToolTip as ToolTip
 from main.scripts import PyTrominos
 
 
+# Type Hinting
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app import ImgTxtViewer as Main
+
+
 # --------------------------------------
 # Class - AboutWindow
 # --------------------------------------
 class AboutWindow:
-    def __init__(self, parent, root, icon):
+    def __init__(self, parent: 'Main', root: 'tk.Tk', icon):
         self.parent = parent
         self.root = root
         self.icon_img = icon

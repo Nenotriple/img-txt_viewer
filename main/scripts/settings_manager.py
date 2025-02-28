@@ -15,7 +15,13 @@ import configparser
 
 
 # Standard Library - GUI
-from tkinter import ttk, Toplevel, messagebox, StringVar, BooleanVar, Frame, Label
+from tkinter import ttk, Tk, Toplevel, messagebox, StringVar, BooleanVar, Frame, Label
+
+
+# Type Hinting
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app import ImgTxtViewer as Main
 
 
 #endregion
@@ -24,7 +30,7 @@ from tkinter import ttk, Toplevel, messagebox, StringVar, BooleanVar, Frame, Lab
 
 
 class SettingsManager:
-    def __init__(self, parent, root):
+    def __init__(self, parent: 'Main', root: 'Tk'):
         self.parent = parent
         self.root = root
         self.version = self.parent.app_version

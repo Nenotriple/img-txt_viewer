@@ -7,7 +7,7 @@ from collections import Counter
 
 # Standard Library - GUI
 from tkinter import (
-    ttk, messagebox, simpledialog,
+    ttk, Tk, messagebox, simpledialog,
     BooleanVar,
     Frame, Menu,
     Label, Listbox, Scrollbar,
@@ -24,6 +24,12 @@ from main.scripts import HelpText
 from main.scripts import TagEditor, help_window
 
 
+# Type Hinting
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app import ImgTxtViewer as Main
+
+
 #endregion
 ################################################################################################################################################
 #region - CLASS: BatchTagEdit
@@ -32,8 +38,8 @@ from main.scripts import TagEditor, help_window
 class BatchTagEdit:
     def __init__(self):
         # Inherited Variables
-        self.parent = None
-        self.root = None
+        self.parent: 'Main' = None
+        self.root: 'Tk' = None
         self.text_files = None
         self.working_dir = None
         self.batch_tag_edit_frame = None

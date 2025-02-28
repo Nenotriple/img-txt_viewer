@@ -10,7 +10,7 @@ import threading
 
 # Standard Library - GUI
 from tkinter import (
-    ttk, messagebox, simpledialog, filedialog,
+    ttk, Tk, messagebox, simpledialog, filedialog,
     StringVar, BooleanVar,
     Menu, Text,
 )
@@ -22,6 +22,12 @@ from main.scripts.help_window import HelpWindow
 import main.scripts.HelpText as HelpText
 
 
+# Type Hinting
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app import ImgTxtViewer as Main
+
+
 #endregion
 ################################################################################################################################################
 #region -  Duplicate Image Finder - Main class setup
@@ -30,8 +36,8 @@ import main.scripts.HelpText as HelpText
 class FindDupeFile:
     def __init__(self):
         # Inherited Variables
-        self.parent = None
-        self.root = None
+        self.parent: 'Main' = None
+        self.root: 'Tk' = None
         self.working_dir = None
         self.help_window = None
 
