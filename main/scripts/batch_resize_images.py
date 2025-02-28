@@ -810,7 +810,7 @@ class BatchResizeImages:
                             eta_str = time.strftime('%H:%M:%S', time.gmtime(eta))
                             self.update_message_text(processed=self.files_processed, elapsed=elapsed_time_str, eta=eta_str)
                         except Exception as e:
-                            print(f"Error processing file {filename}: {str(e)}")
+                            messagebox.showerror("ERROR - _resize_thread()", str(e))
                     if not self.stop:
                         messagebox.showinfo("Done!", "Resizing finished." if not self.convert_only_var.get() else "Conversion finished.")
                         self.root.focus_force()
@@ -915,7 +915,6 @@ class BatchResizeImages:
     def read_webp_metadata(self, src_image_path):
         process = subprocess.run(["exiftool.exe", '-UserComment', '-b', src_image_path], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
         user_comment = process.stdout.strip()
-        print(user_comment)
         return user_comment
 
 
