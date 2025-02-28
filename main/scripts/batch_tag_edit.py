@@ -20,8 +20,7 @@ from TkToolTip.TkToolTip import TkToolTip as ToolTip
 
 
 # Custom Libraries
-from main.scripts import HelpText
-from main.scripts import TagEditor, help_window
+from main.scripts import TagEditor, help_window, HelpText
 
 
 # Type Hinting
@@ -92,16 +91,16 @@ class BatchTagEdit:
         # Frame
         top_frame = Frame(self.batch_tag_edit_frame)
         top_frame.grid(row=0, column=0, columnspan=99, sticky="nsew", pady=2)
-        top_frame.grid_columnconfigure(3, weight=1)
-        # Button
-        self.button_save_changes = ttk.Button(top_frame, text="Save Changes", width=15, state="disabled", command=self.apply_tag_edits)
-        self.button_save_changes.grid(row=0, column=1, padx=2, sticky="w")
+        top_frame.grid_columnconfigure(0, weight=1)
         # Label
         self.info_label = Label(top_frame, anchor="w", text=f"Total: {self.total_unique_tags}  | Visible: {self.visible_tags}  |  Selected: {self.selected_tags}  |  Pending Delete: {self.pending_delete}  |  Pending Edit: {self.pending_edit}")
-        self.info_label.grid(row=0, column=2, padx=2, sticky="ew")
+        self.info_label.grid(row=0, column=0, padx=1, sticky="ew")
+        # Button
+        self.button_save = ttk.Button(top_frame, text="Save Changes", width=15, state="disabled", command=self.apply_tag_edits)
+        self.button_save.grid(row=0, column=1, padx=2)
         # Button
         help_button = ttk.Button(top_frame, text="?", width=2, command=self.open_help_window)
-        help_button.grid(row=0, column=3, padx=2, sticky="e")
+        help_button.grid(row=0, column=2, padx=2)
         ToolTip.create(help_button, "Show/Hide Help", 50, 6, 12)
 
 
@@ -386,6 +385,7 @@ class BatchTagEdit:
             for original_tag, new_tag in edit_tags.items():
                 TagEditor.edit_tags(self.text_files, [original_tag], edit=new_tag)
         self.clear_filter(warn=False)
+        self.parent.refresh_text_box()
 
 
 # --------------------------------------
@@ -420,9 +420,9 @@ class BatchTagEdit:
         selected_tags_str = str(self.selected_tags).zfill(padding_width)
         self.info_label.config(text=f"Total: {self.total_unique_tags}  | Visible: {visible_tags_str}  |  Selected: {selected_tags_str}  |  Pending Delete: {pending_delete_str}  |  Pending Edit: {pending_edit_str}")
         if self.pending_delete > 0 or self.pending_edit > 0:
-            self.button_save_changes.config(state="normal")
+            self.button_save.config(state="normal")
         else:
-            self.button_save_changes.config(state="disabled")
+            self.button_save.config(state="disabled")
         self.toggle_filter_and_sort_widgets()
 
 
