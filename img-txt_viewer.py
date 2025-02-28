@@ -474,7 +474,7 @@ class ImgTxtViewer:
         self.main_notebook.add(self.find_dupe_file_tab, text="Find Duplicates")
 
 
-    def setup_primary_frames(self, container):
+    def setup_primary_frames(self, container: 'Frame'):
         # Configure the grid weights for the container tab
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
@@ -927,7 +927,7 @@ class ImgTxtViewer:
     # --------------------------------------
     # Misc UI logic
     # --------------------------------------
-    def custom_select_word_for_text(self, event, text_widget):
+    def custom_select_word_for_text(self, event, text_widget: 'Text'):
         widget = text_widget
         separators = " ,.-|()[]<>\\/\"'{}:;!@#$%^&*+=~`?"
         click_index = widget.index(f"@{event.x},{event.y}")
@@ -951,7 +951,7 @@ class ImgTxtViewer:
         return "break"
 
 
-    def custom_select_line_for_text(self, event, text_widget):
+    def custom_select_line_for_text(self, event, text_widget: 'Text'):
         widget = text_widget
         click_index = widget.index(f"@{event.x},{event.y}")
         line, _ = map(int, click_index.split("."))
