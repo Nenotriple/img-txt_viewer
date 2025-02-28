@@ -1617,7 +1617,7 @@ class CropInterface:
         path = self.img_canvas.img_path
         if option == "Save & Close":
             if self.save_cropped_image(cropped_img, 'normal', path):
-                self.close_crop_ui()
+                self.close_crop_ui(path=path)
         elif option == "Save & Next":
             if self.save_cropped_image(cropped_img, 'normal', path):
                 self.show_next_image()
@@ -1877,10 +1877,14 @@ class CropInterface:
 # --------------------------------------
 # Close CropUI
 # --------------------------------------
-    def close_crop_ui(self, event=None):
+    def close_crop_ui(self, path=None, event=None):
         self.parent.refresh_text_box()
         self.parent.refresh_file_lists()
         self.parent.debounce_update_thumbnail_panel()
+        if path:
+            index = (self.parent.get_image_index_by_filename(path) + 1)
+            self.parent.jump_to_image(index)
+        self.parent.main_notebook.select(self.parent.primary_tab)
 
 
 #endregion
