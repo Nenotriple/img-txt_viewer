@@ -417,7 +417,7 @@ class ImgTxtViewer:
         self.toolsMenu.add_cascade(label="Edit Current pair", underline=0, state="disable", menu=self.individual_operations_menu)
         self.individual_operations_menu.add_command(label="Rename Pair", underline=0, command=self.manually_rename_single_pair)
         self.individual_operations_menu.add_command(label="Upscale...", underline=0, command=lambda: self.create_batch_upscale_ui(show=True, quick_swap=True))
-        self.individual_operations_menu.add_command(label="Crop...", underline=0, command=self.create_crop_ui)
+        self.individual_operations_menu.add_command(label="Crop...", underline=0, command=lambda: self.create_crop_ui(show=True))
         self.individual_operations_menu.add_command(label="Resize...", underline=0, command=self.resize_image)
         self.individual_operations_menu.add_command(label="Expand", underline=1, command=self.expand_image)
         self.individual_operations_menu.add_command(label="Rotate", underline=1, command=self.rotate_current_image)
@@ -862,7 +862,7 @@ class ImgTxtViewer:
         self.image_context_menu.add_command(label="Rename Pair", command=self.manually_rename_single_pair)
         self.image_context_menu.add_command(label="Upscale...", command=lambda: self.create_batch_upscale_ui(show=True, quick_swap=True))
         self.image_context_menu.add_command(label="Resize...", command=self.resize_image)
-        self.image_context_menu.add_command(label="Crop...", command=self.create_crop_ui)
+        self.image_context_menu.add_command(label="Crop...", command=lambda: self.create_crop_ui(show=True))
         if not self.image_file.lower().endswith('.gif'):
             self.image_context_menu.add_command(label="Expand", command=self.expand_image)
         else:
@@ -1860,6 +1860,18 @@ class ImgTxtViewer:
             self.update_pair('next', step=step)
         else:
             self.update_pair('prev', step=step)
+
+
+    def get_image_index_by_filename(self, filename):
+        search_name = os.path.basename(filename) if os.path.sep in filename else filename
+        for i, img_path in enumerate(self.image_files):
+            if os.path.basename(img_path) == search_name:
+                return i
+        if os.path.sep in filename and search_name != filename:
+            for i, img_path in enumerate(self.image_files):
+                if os.path.basename(img_path) == search_name:
+                    return i
+        return -1
 
 
 #endregion
