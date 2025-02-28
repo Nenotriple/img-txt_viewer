@@ -15,6 +15,10 @@ from PIL import Image, ImageTk, ImageSequence
 from TkToolTip.TkToolTip import TkToolTip as ToolTip
 
 
+# Local
+from main.scripts import HelpText
+from main.scripts.help_window import HelpWindow
+
 # Type Hinting
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -1097,6 +1101,7 @@ class CropInterface:
         self.image_files = self.parent.image_files
         self.version = self.parent.app_version
         self.text_controller = self.parent.text_controller
+        self.help_window = HelpWindow(self.root)
         # Window
         self.create_main_frame()
         self.setup_top_frame()
@@ -1135,7 +1140,7 @@ class CropInterface:
         open_button = ttk.Button(directory_frame, text="Open", width=9, command=lambda: self.parent.open_directory(self.entry_directory.get()))
         open_button.pack(side="left")
         # Help
-        help_button = ttk.Button(top_frame, text="?", width=2, command=self.show_help)
+        help_button = ttk.Button(top_frame, text="?", width=2, command=self.open_help_window)
         help_button.grid(row=0, column=4, padx=2, sticky="e")
         ToolTip.create(help_button, "Show/Hide Help", 50, 6, 12)
 
@@ -1544,9 +1549,9 @@ class CropInterface:
         self.display_image(self.image_files[self.current_index])
 
 
-    def show_help(self):
-        help_message = ("Not Implemented!")
-        messagebox.showinfo("CropUI Help", help_message)
+    def open_help_window(self):
+        help_text = HelpText.CROP_UI_HELP
+        self.help_window.open_window(geometry="500x700", help_text=help_text)
 
 
     def toggle_overlay(self):
