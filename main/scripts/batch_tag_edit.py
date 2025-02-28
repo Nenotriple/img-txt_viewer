@@ -82,154 +82,185 @@ class BatchTagEdit:
 
 
     def setup_primary_frame(self):
+        # Primary Frame
         self.batch_tag_edit_frame = self.parent.batch_tag_edit_tab
         self.batch_tag_edit_frame.grid_columnconfigure(1, weight=1)
         self.batch_tag_edit_frame.grid_rowconfigure(1, weight=1)
 
 
     def setup_top_frame(self):
-        self.top_frame = Frame(self.batch_tag_edit_frame)
-        self.top_frame.grid(row=0, column=0, columnspan=99, sticky="nsew", pady=2)
-        self.top_frame.grid_columnconfigure(3, weight=1)
-
-        self.button_save_changes = ttk.Button(self.top_frame, text="Save Changes", width=15, state="disabled", command=self.apply_tag_edits)
+        # Frame
+        top_frame = Frame(self.batch_tag_edit_frame)
+        top_frame.grid(row=0, column=0, columnspan=99, sticky="nsew", pady=2)
+        top_frame.grid_columnconfigure(3, weight=1)
+        # Button
+        self.button_save_changes = ttk.Button(top_frame, text="Save Changes", width=15, state="disabled", command=self.apply_tag_edits)
         self.button_save_changes.grid(row=0, column=1, padx=2, sticky="w")
-
-        self.info_label = Label(self.top_frame, anchor="w", text=f"Total: {self.total_unique_tags}  | Visible: {self.visible_tags}  |  Selected: {self.selected_tags}  |  Pending Delete: {self.pending_delete}  |  Pending Edit: {self.pending_edit}")
+        # Label
+        self.info_label = Label(top_frame, anchor="w", text=f"Total: {self.total_unique_tags}  | Visible: {self.visible_tags}  |  Selected: {self.selected_tags}  |  Pending Delete: {self.pending_delete}  |  Pending Edit: {self.pending_edit}")
         self.info_label.grid(row=0, column=2, padx=2, sticky="ew")
-
-        self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.open_help_window)
-        self.help_button.grid(row=0, column=3, padx=2, sticky="e")
-        ToolTip.create(self.help_button, "Show/Hide Help", 50, 6, 12)
+        # Button
+        help_button = ttk.Button(top_frame, text="?", width=2, command=self.open_help_window)
+        help_button.grid(row=0, column=3, padx=2, sticky="e")
+        ToolTip.create(help_button, "Show/Hide Help", 50, 6, 12)
 
 
     def setup_listbox_frame(self):
-        self.listbox_frame = Frame(self.batch_tag_edit_frame)
-        self.listbox_frame.grid(row=1, column=0, padx=2, sticky="nsew")
-
-        self.listbox = Listbox(self.listbox_frame, width=50, selectmode="extended", relief="groove", exportselection=False)
+        # Frame
+        listbox_frame = Frame(self.batch_tag_edit_frame)
+        listbox_frame.grid(row=1, column=0, padx=2, sticky="nsew")
+        # Listbox
+        self.listbox = Listbox(listbox_frame, width=50, selectmode="extended", relief="groove", exportselection=False)
         self.listbox.grid(row=0, column=0, sticky="nsew")
         self.listbox.bind("<Control-c>", self.copy_listbox_selection)
         self.listbox.bind("<Button-3>", self.show_listbox_context_menu)
         self.listbox.bind("<<ListboxSelect>>", self.count_listbox_tags)
-        self.listbox_frame.grid_rowconfigure(0, weight=1)
-
-        self.vertical_scrollbar = Scrollbar(self.listbox_frame, orient="vertical", command=self.listbox.yview)
+        listbox_frame.grid_rowconfigure(0, weight=1)
+        # Scrollbars
+        self.vertical_scrollbar = Scrollbar(listbox_frame, orient="vertical", command=self.listbox.yview)
         self.vertical_scrollbar.grid(row=0, column=1, sticky="ns")
-        self.horizontal_scrollbar = Scrollbar(self.listbox_frame, orient="horizontal", command=self.listbox.xview)
+        self.horizontal_scrollbar = Scrollbar(listbox_frame, orient="horizontal", command=self.listbox.xview)
         self.horizontal_scrollbar.grid(row=1, column=0, sticky="ew")
         self.listbox.config(yscrollcommand=self.vertical_scrollbar.set, xscrollcommand=self.horizontal_scrollbar.set)
-        self.setup_listbox_sub_frame(self.listbox_frame)
+        self.setup_listbox_sub_frame(listbox_frame)
 
 
     def setup_listbox_sub_frame(self, listbox_frame):
+        # Frame
         self.listbox_sub_frame = Frame(listbox_frame)
         self.listbox_sub_frame.grid(row=2, column=0, sticky="ew")
         self.listbox_sub_frame.grid_columnconfigure(0, weight=1)
         self.listbox_sub_frame.grid_columnconfigure(1, weight=1)
         self.listbox_sub_frame.grid_columnconfigure(2, weight=1)
-
+        # Select All
         self.button_all = ttk.Button(self.listbox_sub_frame, text="All", width=8, command=lambda: self.listbox_selection("all"))
         self.button_all.grid(row=0, column=0, padx=2, pady=2, sticky="ew")
         ToolTip.create(self.button_all, "Select all tags in the listbox", 150, 6, 12)
+        # Invert Selection
         self.button_invert = ttk.Button(self.listbox_sub_frame, text="Invert", width=8, command=lambda: self.listbox_selection("invert"))
         self.button_invert.grid(row=0, column=1, padx=2, pady=2, sticky="ew")
         ToolTip.create(self.button_invert, "Invert the current selection of tags", 150, 6, 12)
+        # Clear Selection
         self.button_clear = ttk.Button(self.listbox_sub_frame, text="Clear", width=8, command=lambda: self.listbox_selection("clear"))
         self.button_clear.grid(row=0, column=2, padx=2, pady=2, sticky="ew")
         ToolTip.create(self.button_clear, "Clear the current selection of tags", 150, 6, 12)
+        # Revert Selection
         self.button_revert_sel = ttk.Button(self.listbox_sub_frame, text="Revert Sel", width=8, command=self.revert_listbox_changes)
         self.button_revert_sel.grid(row=1, column=0, padx=2, pady=2, sticky="ew")
         ToolTip.create(self.button_revert_sel, "Revert the selected tags to their original state", 150, 6, 12)
+        # Revert All
         self.button_revert_all = ttk.Button(self.listbox_sub_frame, text="Revert All", width=8, command=self.clear_filter)
         self.button_revert_all.grid(row=1, column=1, padx=2, pady=2, sticky="ew")
         ToolTip.create(self.button_revert_all, "Revert all tags to their original state. (Reset)", 150, 6, 12)
+        # Copy
         self.button_copy = ttk.Button(self.listbox_sub_frame, text="Copy", width=8, command=self.copy_listbox_selection)
         self.button_copy.grid(row=1, column=2, padx=2, pady=2, sticky="ew")
         ToolTip.create(self.button_copy, "Copy the selected tags to the clipboard", 150, 6, 12)
 
 
     def setup_option_frame(self):
+        # Frame
         self.option_frame = Frame(self.batch_tag_edit_frame, borderwidth=1, relief="groove")
         self.option_frame.grid(row=1, column=1, padx=2, sticky="nsew")
         self.option_frame.grid_columnconfigure(0, weight=1)
+        # Frame
+        self.sort_filter_frame = ttk.Labelframe(self.option_frame, text="Sort & Filter")
+        self.sort_filter_frame.grid(row=0, column=0, padx=2, pady=10, sticky="ew")
         self.setup_sort_frame()
         self.setup_filter_frame()
         self.setup_edit_frame()
 
 
     def setup_sort_frame(self):
-        self.sort_frame = Frame(self.option_frame)
+        # Frame
+        self.sort_frame = Frame(self.sort_filter_frame)
         self.sort_frame.grid(row=0, column=0, padx=2, pady=10, sticky="ew")
-
-        self.sort_label = Label(self.sort_frame, text="Sort by:", width=6)
+        # Label
+        self.sort_label = Label(self.sort_frame, text="Sort by:", width=8)
         self.sort_label.grid(row=0, column=0, padx=2)
         ToolTip.create(self.sort_label, "Sort the visible tags", 250, 6, 12)
-
+        # Combobox
         self.sort_options_combobox = ttk.Combobox(self.sort_frame, values=["Frequency", "Name", "Length"], state="readonly", width=12)
         self.sort_options_combobox.set("Frequency")
         self.sort_options_combobox.grid(row=0, column=1, padx=2, sticky="e")
         self.sort_options_combobox.bind("<<ComboboxSelected>>", lambda event: self.warn_before_action(action="sort"))
-
+        # Checkbutton
         self.reverse_sort_var = BooleanVar()
         self.reverse_sort_checkbutton = ttk.Checkbutton(self.sort_frame, text="Reverse Order", variable=self.reverse_sort_var, command=lambda: self.warn_before_action(action="sort"))
         self.reverse_sort_checkbutton.grid(row=0, column=2, padx=2, sticky="e")
 
 
     def setup_filter_frame(self):
-        self.filter_frame = Frame(self.option_frame)
-        self.filter_frame.grid(row=1, column=0, padx=2, pady=10, sticky="ew")
-        self.filter_frame.grid_columnconfigure(2, weight=1)
-
-        self.filter_label = Label(self.filter_frame, text="Filter :", width=6)
+        # Frame
+        filter_frame = Frame(self.sort_filter_frame)
+        filter_frame.grid(row=1, column=0, padx=2, pady=10, sticky="ew")
+        filter_frame.grid_columnconfigure(2, weight=1)
+        self.sort_filter_frame.grid_columnconfigure(0, weight=1)
+        # Label
+        self.filter_label = Label(filter_frame, text="Filter :", width=8)
         self.filter_label.grid(row=0, column=0, padx=2)
         ToolTip.create(self.filter_label, "All options except <, and >, support multiple values separated by commas.\n\nTag : Filter tags by the input text\n!Tag : Filter tags that do not contain the input text\n== : Filter tags equal to the given value\n!= : Filter tags not equal to the given value\n< : Filter tags less than the given value\n> : Filter tags greater than the given value", 250, 6, 12)
-
-        self.filter_combobox = ttk.Combobox(self.filter_frame, values=["Tag", "!Tag", "==", "!=", "<", ">"], state="readonly", width=12)
+        # Combobox
+        self.filter_combobox = ttk.Combobox(filter_frame, values=["Tag", "!Tag", "==", "!=", "<", ">"], state="readonly")
         self.filter_combobox.set("Tag")
         self.filter_combobox.grid(row=0, column=1, padx=2, sticky="e")
         self.filter_combobox.bind("<<ComboboxSelected>>", lambda event: self.warn_before_action(action="filter"))
-
-        self.filter_entry = ttk.Entry(self.filter_frame, width=20)
+        # Entry
+        self.filter_entry = ttk.Entry(filter_frame)
         self.filter_entry.grid(row=0, column=2, padx=2, sticky="ew")
         self.filter_entry.bind("<KeyRelease>", lambda event: self.warn_before_action(action="filter"))
         self.filter_entry.bind("<Button-3>", self.show_entry_context_menu)
-
-        self.filter_apply_button = ttk.Button(self.filter_frame, text="Apply", width=6, command=lambda: self.warn_before_action(action="filter"))
+        # Button
+        self.filter_apply_button = ttk.Button(filter_frame, text="Apply", command=lambda: self.warn_before_action(action="filter"))
         self.filter_apply_button.grid(row=0, column=3, padx=2, sticky="e")
-
-        self.filter_clear_button = ttk.Button(self.filter_frame, text="Reset", width=6, command=self.clear_filter)
-        self.filter_clear_button.grid(row=0, column=4, padx=2, sticky="e")
-        ToolTip.create(self.filter_clear_button, "Clear any filters or pending changes", 250, 6, 12)
-
-        ttk.Separator(self.filter_frame, orient="horizontal").grid(row=1, column=0, columnspan=5, sticky="ew", pady=(20,0))
+        # Button
+        filter_clear_button = ttk.Button(filter_frame, text="Reset", command=self.clear_filter)
+        filter_clear_button.grid(row=0, column=4, padx=2, sticky="e")
+        ToolTip.create(filter_clear_button, "Clear any filters or pending changes", 250, 6, 12)
 
 
     def setup_edit_frame(self):
-        self.edit_frame = Frame(self.option_frame)
-        self.edit_frame.grid(row=2, column=0, padx=2, pady=10, sticky="ew")
-        self.edit_frame.grid_columnconfigure(2, weight=1)
+        # Frame
+        edit_frame = ttk.Labelframe(self.option_frame, text="Edit & Delete")
+        edit_frame.grid(row=2, column=0, padx=2, pady=10, sticky="ew")
+        edit_frame.columnconfigure(0, weight=1)
 
-        self.edit_label = Label(self.edit_frame, text="Edit :", width=6)
-        self.edit_label.grid(row=0, column=0, padx=2)
-        ToolTip.create(self.edit_label, "Select an option and enter text to apply to the selected tags", 250, 6, 12, justify="left")
-
-        self.edit_entry = ttk.Entry(self.edit_frame, width=20)
-        self.edit_entry.grid(row=0, column=2, padx=2, sticky="ew")
+        # Edit frame
+        edit_row_frame = ttk.Frame(edit_frame)
+        edit_row_frame.grid(row=0, column=0, sticky="ew", padx=2, pady=5)
+        edit_row_frame.columnconfigure(1, weight=1)
+        # Label
+        edit_label = ttk.Label(edit_row_frame, text="Edit:", width=10)
+        edit_label.grid(row=0, column=0, sticky="w", padx=2, pady=5)
+        ToolTip.create(edit_label, "Select an option and enter text to apply to the selected tags", 250, 6, 12, justify="left")
+        # Entry
+        self.edit_entry = ttk.Entry(edit_row_frame)
+        self.edit_entry.grid(row=0, column=1, sticky="ew", padx=2, pady=5)
         self.edit_entry.bind("<Return>", self.apply_commands_to_listbox)
         self.edit_entry.bind("<Button-3>", self.show_entry_context_menu)
+        # Button
+        edit_apply_button = ttk.Button(edit_row_frame, text="Apply", command=self.apply_commands_to_listbox)
+        edit_apply_button.grid(row=0, column=2, sticky="e", padx=2, pady=5)
+        ToolTip.create(edit_apply_button, "Apply the selected changes to the listbox. This does not apply the changes to the text files!", 250, 6, 12)
+        # Button
+        edit_reset_button = ttk.Button(edit_row_frame, text="Reset", command=self.clear_filter)
+        edit_reset_button.grid(row=0, column=3, sticky="e", padx=2, pady=5)
+        ToolTip.create(edit_reset_button, "Clear any filters or pending changes", 250, 6, 12)
 
-        self.edit_apply_button = ttk.Button(self.edit_frame, text="Apply", width=6, command=self.apply_commands_to_listbox)
-        self.edit_apply_button.grid(row=0, column=3, padx=2, sticky="e")
-        ToolTip.create(self.edit_apply_button, "Apply the selected changes to the listbox. This does not apply the changes to the text files!", 250, 6, 12)
-
-        self.edit_reset_button = ttk.Button(self.edit_frame, text="Reset", width=6, command=self.clear_filter)
-        self.edit_reset_button.grid(row=0, column=4, padx=2, sticky="e")
-        ToolTip.create(self.edit_reset_button, "Clear any filters or pending changes", 250, 6, 12)
-
-        self.delete_button = ttk.Button(self.edit_frame, text="Delete", width=6, command=lambda: self.apply_commands_to_listbox(delete=True))
-        self.delete_button.grid(row=1, column=0, padx=2, sticky="e")
-        ToolTip.create(self.delete_button, "Delete the selected tags", 250, 6, 12)
+        # Delete frame
+        delete_row = ttk.Frame(edit_frame)
+        delete_row.grid(row=2, column=0, sticky="ew", padx=2, pady=5)
+        delete_row.columnconfigure(1, weight=1)
+        # label
+        delete_label = ttk.Label(delete_row, text="Delete Tags:")
+        delete_label.grid(row=0, column=0, sticky="ew", padx=2, pady=5)
+        # Label
+        self.delete_center_label = ttk.Label(delete_row, text="Select tags and click delete", anchor="center")
+        self.delete_center_label.grid(row=0, column=1, columnspan=2, sticky="ew", padx=2, pady=5)
+        # Button
+        delete_button = ttk.Button(delete_row, text="Delete", command=lambda: self.apply_commands_to_listbox(delete=True))
+        delete_button.grid(row=0, column=3, sticky="e", padx=2, pady=5)
+        ToolTip.create(delete_button, "Delete the selected tags", 250, 6, 12)
 
 
 #endregion
