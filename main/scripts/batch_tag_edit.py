@@ -107,7 +107,7 @@ class BatchTagEdit:
 
     def setup_listbox_frame(self):
         # Frame
-        listbox_frame = Frame(self.batch_tag_edit_frame)
+        listbox_frame = ttk.Labelframe(self.batch_tag_edit_frame, text="Tags")
         listbox_frame.grid(row=1, column=0, padx=2, sticky="nsew")
         # Listbox
         self.listbox = Listbox(listbox_frame, width=50, selectmode="extended", relief="groove", exportselection=False)
@@ -160,7 +160,7 @@ class BatchTagEdit:
 
     def setup_option_frame(self):
         # Frame
-        self.option_frame = Frame(self.batch_tag_edit_frame, borderwidth=1, relief="groove")
+        self.option_frame = ttk.Labelframe(self.batch_tag_edit_frame, text="Options")
         self.option_frame.grid(row=1, column=1, padx=2, sticky="nsew")
         self.option_frame.grid_columnconfigure(0, weight=1)
         # Frame
@@ -201,7 +201,7 @@ class BatchTagEdit:
         self.filter_label.grid(row=0, column=0, padx=2)
         ToolTip.create(self.filter_label, "All options except <, and >, support multiple values separated by commas.\n\nTag : Filter tags by the input text\n!Tag : Filter tags that do not contain the input text\n== : Filter tags equal to the given value\n!= : Filter tags not equal to the given value\n< : Filter tags less than the given value\n> : Filter tags greater than the given value", 250, 6, 12)
         # Combobox
-        self.filter_combobox = ttk.Combobox(filter_frame, values=["Tag", "!Tag", "==", "!=", "<", ">"], state="readonly")
+        self.filter_combobox = ttk.Combobox(filter_frame, values=["Tag", "!Tag", "==", "!=", "<", ">"], state="readonly", width=12)
         self.filter_combobox.set("Tag")
         self.filter_combobox.grid(row=0, column=1, padx=2, sticky="e")
         self.filter_combobox.bind("<<ComboboxSelected>>", lambda event: self.warn_before_action(action="filter"))
