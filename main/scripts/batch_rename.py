@@ -1,4 +1,3 @@
-################################################################################################################################################
 #region -  Imports
 
 
@@ -11,6 +10,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog, BooleanVar, StringVar
 
 # Local
+from main.scripts import HelpText
 from main.scripts.help_window import HelpWindow
 
 
@@ -439,42 +439,6 @@ class BatchRename:
             messagebox.showerror("Open Folder Error", f"Failed to open folder: {e}")
 
 
-#endregion
-################################################################################################################################################
-#region -  Help
-
-
     def open_help_window(self):
-        filetypes = ", ".join(self.supported_filetypes).replace(".", "")
-        help_text = {
-            "Batch Rename Help": "",
-            "Supported Filetypes:": f"{filetypes}\n",
-            "Instructions:": (
-                "1. Select a folder containing files to rename.\n"
-                "2. Select files to rename by clicking on them.\n"
-                "   • Use Ctrl+Shift and click to for multi-select.\n"
-                "3. Adjust options as needed:\n"
-                "   • Handle Duplicates: Rename, Move to Folder, Overwrite, Skip\n"
-                "   • Respect Img-Txt Pairs: keep img-txt pairs matched when renaming\n"
-                "4. Choose a preset for renaming:\n"
-                "   • Numbering: Sequential numbering\n"
-                "   • Auto-Date: Use modified date and numbering\n"
-                "5. Click 'Rename Files' to apply changes.\n"
-                "6. Confirm the operation if prompted.\n"
-            ),
-            "Note:": (
-                "• There is no undo for this operation!\n"
-                "• Use caution when renaming files.\n\n"
-            ),
-            "Hotkeys:": (
-                "• Ctrl+Click: Select/Deselect\n"
-                "• Ctrl+A: Select All\n"
-                "• Ctrl+D: Deselect All\n"
-                "• Ctrl+I: Invert Selection\n"
-                "• F5: Refresh\n\n"
-            ),
-        }
+        help_text = HelpText.BATCH_RENAME_HELP
         self.help_window.open_window(geometry="450x700", help_text=help_text)
-
-
-#endregion

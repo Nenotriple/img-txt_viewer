@@ -1,13 +1,10 @@
 """
 
 Manages saving and loading user settings, overwriting defaults with user preferences.
-Default settings should be set in both the main application and the SettingsManager.
+Default settings should be set in both the main application (parent) and the SettingsManager.
 
 """
 
-
-#endregion
-################################################################################################################################################
 #region Imports
 
 

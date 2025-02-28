@@ -1,7 +1,3 @@
-"""This script contains the EditPanel class, which is used to create the edit panel widgets and functions for the main application."""
-
-
-################################################################################################################################################
 #region - Imports
 
 

@@ -1,18 +1,3 @@
-"""
-########################################
-#           Batch Crop Images          #
-#   Version : v1.02                    #
-#   Author  : github.com/Nenotriple    #
-########################################
-
-Description:
--------------
-Crop a folder of images by resizing (ensuring they are larger than the target) then cropping to the target resolution.
-
-"""
-
-
-################################################################################################################################################
 #region - Imports
 
 
@@ -258,52 +243,3 @@ class BatchCrop:
     def close_window(self, event=None):
         self.top.destroy()
 
-
-#endregion
-################################################################################################################################################
-#region - Changelog
-
-
-'''
-
-
-v1.02 changes:
-
-
-  - New:
-    -
-
-<br>
-
-
-  - Fixed:
-    -
-
-<br>
-
-
-  - Other changes:
-    - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
-
-'''
-
-
-#endregion
-################################################################################################################################################
-#region - Todo
-
-
-'''
-
-
-- Todo
-  -
-
-
-- Tofix
-  -
-
-
-'''
-
-#endregion

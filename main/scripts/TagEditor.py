@@ -1,20 +1,3 @@
-"""
-########################################
-#              TagEditor               #
-#   Version : v1.00                    #
-#   Author  : github.com/Nenotriple    #
-########################################
-
-Description:
--------------
-Analyze and edit tags in text files.
-
-Tags are expected to be in a pseudo-CSV format.
-
-"""
-
-
-################################################################################################################################################
 #region - Imports
 
 

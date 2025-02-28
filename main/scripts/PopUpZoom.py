@@ -1,18 +1,3 @@
-"""
-########################################
-#               PopUpZoom              #
-#   Version : v1.02                    #
-#   Author  : github.com/Nenotriple    #
-########################################
-
-Description:
--------------
-Create a small popup window beside the mouse that displays a zoomed view of the image underneath.
-
-"""
-
-
-################################################################################################################################################
 #region Imports
 
 
@@ -242,19 +227,3 @@ class PopUpZoom:
 
 
 #endregion
-
-
-'''
-
-v1.02 changes:
-
-  - New:
-    - `Rounded Corners` The popup now supports rounded corners. (Default: 30px)
-
-  - Fixed:
-    -
-
-  - Other changes:
-    -
-
-'''

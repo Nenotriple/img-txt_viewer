@@ -1,4 +1,3 @@
-################################################################################################################################################
 #region -  Imports
 
 
@@ -20,6 +19,7 @@ from TkToolTip.TkToolTip import TkToolTip as ToolTip
 
 
 # Local
+from main.scripts import HelpText
 from main.scripts.help_window import HelpWindow
 
 
@@ -443,6 +443,11 @@ class BatchResizeImages:
         else:
             output_folder_path = self.working_dir
         return output_folder_path
+
+
+    def open_help_window(self):
+        help_text = HelpText.BATCH_RESIZE_IMAGES_HELP
+        self.help_window.open_window(geometry="450x700", help_text=help_text)
 
 
 #endregion
@@ -928,39 +933,3 @@ class BatchResizeImages:
                 "\n\nDownload the Windows executable from exiftool.org and place in the same folder as batch_resize_images.exe, restart the program and try again."
                 "\n\nThe resize operation will now stop."
             )
-
-
-#endregion
-################################################################################################################################################
-#region -  Help
-
-
-    def open_help_window(self):
-        filetypes = ", ".join(self.supported_filetypes).replace(".", "")
-        help_text = {
-            "Batch Resize Help":        "",
-
-            "Supported Filetypes:":     f"{filetypes}\n",
-
-            "Resize to Resolution:":    "Resize to a specific width and height ignoring aspect ratio.\n\n(The following 'Resize to' options preserve aspect ratio)",
-            "Resize to Percentage:":    "Resize the image by a percent scale.",
-            "Resize to Width:":         "Target the image width and resize it.",
-            "Resize to Height:":        "Target the image height and resize it.",
-            "Resize to Shorter side:":  "Resize the shorter side of the image.",
-            "Resize to Longer side:":   "Resize the longer side of the image.\n",
-
-            "Quality:":                 "Used to control the output quality of JPG and WEBP images. A higher value results in a higher quality output. (Ignored for PNG)\n",
-
-            "Upscale and Downscale:":   "Resize the image to the new dimensions regardless of whether they're larger or smaller than the original dimensions.",
-            "Upscale Only:":            "Resize the image if the new dimensions are larger than the original dimensions.",
-            "Downscale Only:":          "Resize the image if the new dimensions are smaller than the original dimensions.\n",
-
-            "Filetype:":                "Select 'AUTO' to output with the same filetype as the input image. Alternatively, choose a specific filetype to force all images to be saved with the chosen type.\n",
-
-            "Use Output Folder:":       "When enabled, a new folder will be created in the image directory called 'Resize Output' where images will be saved.",
-            "Overwrite Files:":         "When disabled, conflicting files will have '_#' append to the filename. If enabled, files with the same basename will be overwritten.",
-            "Save PNG Info:":           "When enabled, this option will automatically save any PNG chunk info to the resized output if saving as PNG. If converting from PNG to another type, then a text file will be created containing the PNG info.",
-            "Convert Only:":            "When enabled, the app will convert images to the selected filetype without resizing them. Resize settings will be ignored."
-        }
-        self.help_window.open_window(geometry="450x700", help_text=help_text)
-

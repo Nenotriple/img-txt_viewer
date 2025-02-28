@@ -1,7 +1,3 @@
-"""This module contains the OnnxTagger class, which is responsible for loading an ONNX vision model and tagging images."""
-
-
-################################################################################################################################################
 #region Imports
 
 

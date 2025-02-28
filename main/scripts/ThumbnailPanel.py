@@ -1,12 +1,3 @@
-"""
-This module contains the ThumbnailPanel class for displaying image thumbnails in a horizontal scrollable view.
-
-It's fairly reliant on the parent application's Attributes and methods, and is designed to be used as a child widget.
-
-"""
-
-
-################################################################################################################################################
 #region - Imports
 
 

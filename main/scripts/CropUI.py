@@ -1,18 +1,3 @@
-"""
-########################################
-#                CropUI                #
-#   Version : v1.00                    #
-#   Author  : github.com/Nenotriple    #
-########################################
-
-Description:
--------------
-Create a UI that allows the user to open an image file and crop a selection from the image.
-
-"""
-
-#endregion
-#########################################################################################################
 #region - Imports
 
 

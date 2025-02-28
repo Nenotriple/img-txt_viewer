@@ -1,8 +1,3 @@
-"""PyTrominos - A falling block puzzle game written in Python using Tkinter."""
-
-
-#endregion
-################################################################################################################################################
 #region Imports
 
 

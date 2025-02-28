@@ -1,7 +1,3 @@
-"""Module to handle text manipulation functions and widget creation for the ImgTxtViewer UI."""
-
-
-################################################################################################################################################
 #region - Imports
 
 

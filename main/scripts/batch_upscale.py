@@ -20,6 +20,7 @@ from TkToolTip.TkToolTip import TkToolTip as ToolTip
 
 
 # Custom Libraries
+from main.scripts import HelpText
 from main.scripts.help_window import HelpWindow
 
 
@@ -475,6 +476,11 @@ class BatchUpscale:
         self.label_total_count.config(text=f"Total: {self.total_images}")
 
 
+    def open_help_window(self):
+        help_text = HelpText.BATCH_UPSCALE_HELP
+        self.help_window.open_window(geometry="550x700", help_text=help_text)
+
+
 #endregion
 ################################################################################################################################################
 #region -  Primary Functions
@@ -798,36 +804,3 @@ class BatchUpscale:
             return False
         else:
             return True
-
-
-#endregion
-################################################################################################################################################
-#region -  Help
-
-
-    def open_help_window(self):
-        filetypes = ", ".join(self.supported_filetypes).replace(".", "")
-        help_text = {
-            "Batch Upscale Help": "",
-
-            "Supported Filetypes:": f"{filetypes}\n",
-            "Upscale Models:":      "realesr-animevideov3-x4\nRealESRGAN_General_x4_v3\nrealesrgan-x4plus\nrealesrgan-x4plus-anime\nAnimeSharp-4x\nUltraSharp-4x\n",
-            "Additional Models:":   "Any additional 'ESRGAN x4' models found in the 'ncnn_models' directory will be added to the list of available upscale models.\n",
-            "Upscale Strength:":    "Adjusts the blend between the original and upscaled images (0% yields the original, 100% applies the full upscaling effect).\n",
-            "Batch Processing:":    "Process all eligible images in a directory\n",
-            "Auto Output Naming:":  "When enabled, output filenames and directories are generated automatically relative to the input path.\n",
-            "Additional Note:":     "The tool always performs an initial 4x upscaling before applying your selected resizing factor.\nAdjusting the upscale factor does not affect the quality or performance of the upscale process.\n",
-
-            "Usage Instructions:": (
-                "Single Mode:\n"
-                "  1. Select an image file via the 'Browse...' button, or by selecting it from the file list.\n"
-                "  2. Adjust settings (Upscale Model, Upscale Factor, Upscale Strength) as desired.\n"
-                "  3. Click 'Upscale' to process the image.\n\n"
-                "Batch Mode:\n"
-                "  1. Ensure 'Batch Mode' is enabled.\n"
-                "  2. Select an input directory via the 'Browse...' button containing the images you wish to upscale.\n"
-                "  3. Click 'Upscale' to begin processing all supported images.\n"
-                "  4. Use the 'Cancel' button to stop batch processing at any time.\n\n"
-            ),
-        }
-        self.help_window.open_window(geometry="550x700", help_text=help_text)

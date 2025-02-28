@@ -1,18 +1,3 @@
-"""
-########################################
-#              ResizeTool              #
-#   Version : v1.03                    #
-#   Author  : github.com/Nenotriple    #
-########################################
-
-Description:
--------------
-Resize an image by resolution or percentage.
-
-"""
-
-
-################################################################################################################################################
 #region -  Imports
 
 
@@ -606,49 +591,3 @@ class ResizeTool:
             messagebox.showerror("Error", "Invalid values. Please enter valid digits.")
         except (PermissionError, IOError):
             messagebox.showerror("Error", "An error occurred while saving the image.")
-
-
-#endregion
-################################################################################################################################################
-#region - Changelog
-
-
-'''
-
-
-v1.03 changes:
-
-  - New:
-    -
-
-
-<br>
-
-
-  - Fixed:
-    -
-
-
-  - Other:
-    - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
-
-
-'''
-
-
-#endregion
-################################################################################################################################################
-#region - Todo
-
-
-'''
-
-- Todo
-  -
-
-- Tofix
-  -
-
-'''
-
-#endregion

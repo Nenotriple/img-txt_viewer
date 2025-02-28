@@ -1,20 +1,3 @@
-"""
-########################################
-#             BatchTagEdit             #
-#   Version : v1.01                    #
-#   Author  : github.com/Nenotriple    #
-########################################
-
-Description:
--------------
-Quickly edit/delete tags from all files in a folder
-
-More info here: https://github.com/Nenotriple/img-txt_viewer
-
-"""
-
-
-################################################################################################################################################
 #region - Imports
 
 
@@ -37,6 +20,7 @@ from TkToolTip.TkToolTip import TkToolTip as ToolTip
 
 
 # Custom Libraries
+from main.scripts import HelpText
 from main.scripts import TagEditor, help_window
 
 
@@ -549,36 +533,6 @@ class BatchTagEdit:
         self.toggle_filter_and_sort_widgets()
 
 
-#endregion
-################################################################################################################################################
-#region -  Help
-
-
     def open_help_window(self):
-        help_text = {
-            "Batch Tag Edit Help": "",
-
-            "Technical Note:": (
-                "- This tool is designed to work with CSV-like text files. Both commas and periods are treated as caption delimiters.\n"
-                "- It may not work as expected with certain combinations of characters, text or their formatting.\n"
-                "- You should always make backups of your text files before saving any changes.\n"
-            ),
-
-            "Instructions:": (
-                "1) Use the filter or sort options to refine the File and Tag Lists.\n"
-                "   - You can input multiple filter values separated by commas.\n"
-                "2) Select the tags you want to modify from the Tag-List.\n"
-                "3) Choose an edit option:\n"
-                "   - **Edit**: Enter the new text to replace the selected tags.\n"
-                "   - **Delete**: The selected tags will be deleted.\n"
-                "4) Pending changes will be displayed in the Tag-List.\n"
-                "5) Click *'Save Changes'* to apply any pending changes to the text files. This action cannot be undone, so make sure to backup your files.\n"
-            ),
-
-            "Tips:": (
-                "- *Adjust* the working directory in the *'Tagger'* tab to work with different sets of text files.\n"
-                "- Use the context menu in the listbox to quickly copy, delete, or edit tags.\n"
-                "- Use the *'Revert'* options to undo pending changes made to the selected tags, or use the *'Reset'* buttons to reset any changes or filters."
-            ),
-        }
+        help_text = HelpText.BATCH_TAG_EDIT_HELP
         self.help_window.open_window(geometry="700x700", help_text=help_text)

@@ -19,6 +19,7 @@ from tkinter import (
 # Custom Libraries
 from TkToolTip.TkToolTip import TkToolTip as ToolTip
 from main.scripts.help_window import HelpWindow
+import main.scripts.HelpText as HelpText
 
 
 #endregion
@@ -709,6 +710,10 @@ class FindDupeFile:
         self.tray_label_duplicates.config(text=f"Duplicates: {self.total_duplicates:05d}")
 
 
+    def open_help_window(self):
+        self.help_window.open_window(geometry="550x700", help_text=HelpText.FIND_DUPLICATE_FILE_HELP)
+
+
 #endregion
 ################################################################################################################################################
 #region -  Framework
@@ -718,81 +723,3 @@ class FindDupeFile:
         self.is_closing = True
         self.status_check()
         self.stop_process()
-
-
-#endregion
-################################################################################################################################################
-#region -  Help
-
-
-    def open_help_window(self):
-        filetypes = ", ".join(self.supported_filetypes).replace(".", "")
-        help_text = {
-            "Find Duplicate Files Help": "",
-
-            "Supported Filetypes:": f"{filetypes}\n",
-
-            "Processing Modes:": (
-                "**MD5 - Fast:**\n"
-                "  Quick file comparison but slightly less accurate *(Recommended)*\n"
-                "**SHA-256 - Slow:**\n"
-                "  More thorough comparison but takes longer to process\n\n"
-            ),
-
-            "Duplicate Handling:": (
-                "**Single Mode:**\n"
-                "  Moves only the duplicate files, leaving one copy in the original location\n"
-                "**Both Mode:**\n"
-                "  Moves all duplicate files to the duplicates folder and groups them together\n\n"
-            ),
-
-            "Scanning Options:": (
-                "**Images:**\n"
-                "  Only scans supported image file types\n"
-                "  Enables the 'Move Captions' option for handling associated text files\n"
-                "**All Files:**\n"
-                "  Scans all files regardless of type\n"
-                "**Recursive:**\n"
-                "  Includes subfolders in the scan *(only compares files within the same folder)*\n"
-                "**Move Captions:**\n"
-                "  Moves associated .txt files when moving duplicate images\n\n"
-            ),
-
-            "File Menu Features:": (
-                "**Select Folder:** Choose a directory to scan\n"
-                "**Open Folder:** Open the current directory in File Explorer\n"
-                "**Restore Moved Duplicates:** Return files to their original locations\n"
-                "**Move All Duplicates Upfront:** Consolidate duplicates to the root folder\n"
-                "**Delete All Duplicates:** Permanently remove duplicate files\n\n"
-            ),
-
-            "Options Menu Features:": (
-                "**Process Mode:** Choose between MD5 *(fast)* or SHA-256 *(thorough)* comparison\n"
-                "**Max Scan Size:** Set maximum file size limit for scanning *(in MB)*\n"
-                "**Filetypes to Scan:** Customize which file extensions to check\n"
-                "**Recursive Scanning:** Enable/disable subfolder scanning\n"
-                "**Scanning Mode:** Choose between Images-only or All Files\n"
-                "**Duplication Handling:** Select Single or Both mode\n\n"
-            ),
-
-            "Usage Instructions:": (
-                "**Basic Usage:**\n"
-                "  1. Select a folder using the Browse button or File menu\n"
-                "  2. Choose your scanning options *(Images/All Files, Single/Both mode)*\n"
-                "  3. Enable Recursive if you want to scan subfolders\n"
-                "  4. Click 'Find Duplicates' to begin scanning\n\n"
-                "**Managing Results:**\n"
-                "  • Duplicates are moved to a *'_Duplicate__Files'* folder\n"
-                "  • Use the Undo button to restore moved files\n"
-                "  • The status bar shows progress and duplicate count\n\n"
-            ),
-
-            "Important Notes:": (
-                "• The tool uses file hash comparison for accurate duplicate detection\n"
-                "• Large files may take longer to process, especially in SHA-256 mode\n"
-                "• Recursive mode only compares files within their respective folders\n"
-                "• The original file structure is preserved when restoring files\n"
-                "• Actions like deletion and upfront moves cannot be undone\n\n"
-            )
-        }
-        self.help_window.open_window(geometry="550x700", help_text=help_text)
