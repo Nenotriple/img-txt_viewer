@@ -77,7 +77,7 @@ from main.scripts.ThumbnailPanel import ThumbnailPanel
 
 
 class ImgTxtViewer:
-    def __init__(self, root):
+    def __init__(self, root: 'Tk'):
         self.app_version = "v1.97"
         self.root = root
         self.application_path = self.get_app_path()
@@ -805,7 +805,7 @@ class ImgTxtViewer:
     def show_text_context_menu(self, event):
         if hasattr(self, 'text_box'):
             self.text_box.focus_set()
-        widget_in_focus = root.focus_get()
+        widget_in_focus = self.root.focus_get()
         text_context_menu = Menu(root, tearoff=0)
         if widget_in_focus in [self.info_text, getattr(self, 'text_box', None)]:
             widget_in_focus.focus_set()
@@ -2130,19 +2130,19 @@ class ImgTxtViewer:
 
 
     def resize_image(self):
-        main_window_width = root.winfo_width()
-        main_window_height = root.winfo_height()
-        window_x = root.winfo_x() + -200 + main_window_width // 2
-        window_y = root.winfo_y() - 200 + main_window_height // 2
+        main_window_width = self.root.winfo_width()
+        main_window_height = self.root.winfo_height()
+        window_x = self.root.winfo_x() + -200 + main_window_width // 2
+        window_y = self.root.winfo_y() - 200 + main_window_height // 2
         filepath = self.image_files[self.current_index]
         resize_image.ResizeTool(self.root, self, filepath, window_x, window_y, self.update_pair, self.jump_to_image)
 
 
     def batch_crop_images(self):
-        main_window_width = root.winfo_width()
-        main_window_height = root.winfo_height()
-        window_x = root.winfo_x() + -155 + main_window_width // 2
-        window_y = root.winfo_y() - 100 + main_window_height // 2
+        main_window_width = self.root.winfo_width()
+        main_window_height = self.root.winfo_height()
+        window_x = self.root.winfo_x() + -155 + main_window_width // 2
+        window_y = self.root.winfo_y() - 100 + main_window_height // 2
         filepath = str(self.image_dir.get())
         batch_crop_images.BatchCrop(self.root, filepath, window_x, window_y)
 
@@ -2432,15 +2432,15 @@ class ImgTxtViewer:
 
     def check_saved_and_quit(self):
         if not self.root.title().endswith(" ⚪"):
-            root.destroy()
+            self.root.destroy()
         elif self.auto_save_var.get():
             self.cleanup_all_text_files(show_confirmation=False)
             self.save_text_file()
-            root.destroy()
+            self.root.destroy()
         else:
             try:
                 if messagebox.askyesno("Quit", "Quit without saving?"):
-                    root.destroy()
+                    self.root.destroy()
             except Exception: pass
 
 
@@ -2844,7 +2844,7 @@ class ImgTxtViewer:
                     if messagebox.askyesno("Trash Folder Found", f"A local Trash folder was found in the image directory.\n\n{num_files} - file(s) found\n\nWould you like to delete this folder?"):
                         self.check_working_directory()
                         shutil.rmtree(trash_dir)
-            root.destroy()
+            self.root.destroy()
         except (PermissionError, IOError, TclError) as e:
             messagebox.showerror("Error: delete_trash_folder()", f"An error occurred while deleting the trash folder.\n\n{e}")
 
@@ -2959,9 +2959,9 @@ class ImgTxtViewer:
         self.root.minsize(545, 200) # Width x Height
         window_width = 1110
         window_height = 660
-        position_right = root.winfo_screenwidth()//2 - window_width//2
-        position_top = root.winfo_screenheight()//2 - window_height//2
-        root.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
+        position_right = self.root.winfo_screenwidth()//2 - window_width//2
+        position_top = self.root.winfo_screenheight()//2 - window_height//2
+        self.root.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
         self.additional_window_setup()
 
 
