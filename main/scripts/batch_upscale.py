@@ -642,7 +642,8 @@ class BatchUpscale:
                 if result:
                     os.startfile(upscaled_gif_path)
         except (PermissionError, FileNotFoundError, tk.TclError) as e:
-            print(f"Error: {e}")
+            messagebox.showerror("Error: _upscale_gif()", f"An error occurred.\n\n{e}")
+            self.process_end()
             return
         except Exception as e:
             messagebox.showerror("Error: _upscale_gif()", f"An error occurred.\n\n{e}")
