@@ -391,6 +391,7 @@ class ImgTxtViewer:
 # --------------------------------------
         # Settings Menu
         self.optionsMenu.add_separator()
+        self.optionsMenu.add_command(label="Refresh Files", underline=0, command=self.refresh_files)
         self.optionsMenu.add_command(label="Reset Settings", underline=1, state="disable", command=self.settings_manager.reset_settings)
         self.optionsMenu.add_command(label="Open Settings File...", underline=1, command=lambda: self.open_textfile(self.app_settings_cfg))
         self.optionsMenu.add_command(label="Open MyTags File...", underline=1, command=lambda: self.open_textfile(self.my_tags_csv))
@@ -2606,13 +2607,13 @@ class ImgTxtViewer:
         return initialdir
 
 
-    def set_working_directory(self, silent=False, event=None):
+    def set_working_directory(self, path=None, silent=False, event=None):
         try:
             if self.auto_save_var.get():
                 self.save_text_file()
             if hasattr(self, 'text_box'):
                 self.text_controller.revert_text_image_filter(clear=True, silent=True)
-            directory = self.directory_entry.get()
+            directory = path if path is not None else self.directory_entry.get()
             if self.check_dir_for_img(directory):
                 self.image_dir.set(os.path.normpath(directory))
                 self.current_index = 0
@@ -2625,7 +2626,15 @@ class ImgTxtViewer:
                 self.jump_to_image(0)
                 self.toggle_main_notebook_state("normal")
         except FileNotFoundError:
-            messagebox.showwarning("Invalid Directory", f"The system cannot find the path specified:\n\n{self.directory_entry.get()}")
+            messagebox.showwarning("Invalid Directory", f"The system cannot find the path specified:\n\n{directory}")
+
+
+    def refresh_files(self):
+        path = os.path.dirname(self.image_files[self.current_index])
+        index = self.current_index
+        self.set_working_directory(path=path)
+        self.jump_to_image(index)
+        messagebox.showinfo("Refresh", f"Files have been refreshed from:\n\n{path}")
 
 
     def open_directory(self, directory):

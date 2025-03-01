@@ -117,6 +117,9 @@ class BatchUpscale:
         # Upscale
         self.button_upscale = ttk.Button(button_fame, text="Upscale", command=self.determine_image_type)
         self.button_upscale.pack(side="left", fill="x", expand=True)
+        # Refresh
+        self.button_refresh = ttk.Button(button_fame, text="Refresh", command=self.refresh_files)
+        self.button_refresh.pack(side="left", fill="x")
         # Cancel
         self.button_cancel = ttk.Button(button_fame, text="Cancel", command=self.process_end)
         self.button_cancel.pack(side="left", fill="x")
@@ -742,6 +745,11 @@ class BatchUpscale:
         self.populate_file_tree()
         self.clear_process_labels()
         self.highlight_parent_image()
+
+
+    def refresh_files(self):
+        path = self.working_dir
+        self.set_working_directory(path=path)
 
 
     def determine_working_directory(self):

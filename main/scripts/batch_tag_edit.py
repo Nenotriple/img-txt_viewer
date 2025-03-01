@@ -99,8 +99,11 @@ class BatchTagEdit:
         self.button_save = ttk.Button(top_frame, text="Save Changes", width=15, state="disabled", command=self.apply_tag_edits)
         self.button_save.grid(row=0, column=1, padx=2)
         # Button
+        refresh_button = ttk.Button(top_frame, text="Refresh", width=8, command=self.clear_filter)
+        refresh_button.grid(row=0, column=2, padx=2)
+        # Button
         help_button = ttk.Button(top_frame, text="?", width=2, command=self.open_help_window)
-        help_button.grid(row=0, column=2, padx=2)
+        help_button.grid(row=0, column=3, padx=2)
         ToolTip.create(help_button, "Show/Hide Help", 50, 6, 12)
 
 

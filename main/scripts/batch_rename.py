@@ -94,6 +94,9 @@ class BatchRename:
         # Open
         self.open_button = ttk.Button(self.top_frame, width=8, text="Open", command=self.open_folder)
         self.open_button.pack(side="left", padx=2)
+        # Refresh
+        self.refresh_button = ttk.Button(self.top_frame, width=8, text="Refresh", command=self.refresh_files)
+        self.refresh_button.pack(side="left", padx=2)
         # Help
         self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.open_help_window)
         self.help_button.pack(side="right", fill="x", padx=2)
@@ -423,6 +426,11 @@ class BatchRename:
         self.entry_directory.insert(0, os.path.normpath(self.working_dir))
         self.update_info_label(filecount=True)
         self.update_file_tree_view()
+
+
+    def refresh_files(self):
+        path = self.working_dir
+        self.set_working_directory(path=path)
 
 
     def update_info_label(self, filecount=None, text=None):

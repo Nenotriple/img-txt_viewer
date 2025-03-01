@@ -108,6 +108,9 @@ class BatchResizeImages:
         # Open
         self.open_button = ttk.Button(self.frame_top_row, width=8, text="Open", command=self.open_folder)
         self.open_button.pack(side="left", padx=2)
+        # Refresh
+        self.refresh_button = ttk.Button(self.frame_top_row, width=8, text="Refresh", command=self.refresh_files)
+        self.refresh_button.pack(side="left", padx=2)
         # Filetree
         self.file_tree_frame = ttk.Frame(self.batch_resize_images_frame)
         self.file_tree_frame.pack(side="top", fill="both", expand=True, padx=2, pady=2)
@@ -439,6 +442,11 @@ class BatchResizeImages:
             messagebox.showinfo("Error", "The system cannot find the path specified.")
         except Exception as e:
             messagebox.showinfo("Error", str(e))
+
+
+    def refresh_files(self):
+        path = self.working_dir
+        self.set_working_directory(path=path)
 
 
     def get_output_folder_path(self):
