@@ -417,7 +417,7 @@ class ImgTxtViewer:
         self.toolsMenu.add_cascade(label="Edit Current pair", underline=0, state="disable", menu=self.individual_operations_menu)
         self.individual_operations_menu.add_command(label="Rename Pair", underline=0, command=self.manually_rename_single_pair)
         self.individual_operations_menu.add_command(label="Upscale...", underline=0, command=lambda: self.create_batch_upscale_ui(show=True, quick_swap=True))
-        self.individual_operations_menu.add_command(label="Crop...", underline=0, command=lambda: self.create_crop_ui(show=True))
+        self.individual_operations_menu.add_command(label="Crop...", underline=0, command=lambda: self.create_crop_ui(show=True, refresh=True))
         self.individual_operations_menu.add_command(label="Resize...", underline=0, command=self.resize_image)
         self.individual_operations_menu.add_command(label="Expand", underline=1, command=self.expand_image)
         self.individual_operations_menu.add_command(label="Rotate", underline=1, command=self.rotate_current_image)
@@ -864,7 +864,7 @@ class ImgTxtViewer:
         self.image_context_menu.add_command(label="Rename Pair", command=self.manually_rename_single_pair)
         self.image_context_menu.add_command(label="Upscale...", command=lambda: self.create_batch_upscale_ui(show=True, quick_swap=True))
         self.image_context_menu.add_command(label="Resize...", command=self.resize_image)
-        self.image_context_menu.add_command(label="Crop...", command=lambda: self.create_crop_ui(show=True))
+        self.image_context_menu.add_command(label="Crop...", command=lambda: self.create_crop_ui(show=True, refresh=True))
         if not self.image_file.lower().endswith('.gif'):
             self.image_context_menu.add_command(label="Expand", command=self.expand_image)
         else:
@@ -1358,7 +1358,7 @@ class ImgTxtViewer:
                 self.root.unbind(binding)
 
 
-    def create_ui_tab(self, ui_component, ui_tab, extra_args=None, show=False):
+    def create_ui_tab(self, ui_component, ui_tab, extra_args=None, show=False, refresh=False):
         parent = self
         root = self.root
         if ui_component.parent is None:
@@ -1370,14 +1370,17 @@ class ImgTxtViewer:
             self.main_notebook.select(ui_tab)
             if hasattr(ui_component, 'working_dir') and ui_component.working_dir != self.image_dir.get():
                 ui_component.set_working_directory(self.image_dir.get())
+                return
+            if refresh:
+                ui_component.refresh_tab()
 
 
     def create_batch_tag_edit_ui(self, show=False):
         self.create_ui_tab(self.batch_tag_edit, self.batch_tag_edit_tab, show=show)
 
 
-    def create_crop_ui(self, show=False):
-        self.create_ui_tab(self.crop_ui, self.crop_ui_tab, show=show)
+    def create_crop_ui(self, show=False, refresh=False):
+        self.create_ui_tab(self.crop_ui, self.crop_ui_tab, show=show, refresh=refresh)
 
 
     def create_batch_upscale_ui(self, show=False, quick_swap=False):
