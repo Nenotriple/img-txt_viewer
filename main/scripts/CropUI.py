@@ -1139,6 +1139,8 @@ class CropInterface:
         self.text_controller.bind_entry_functions(self.entry_directory)
         open_button = ttk.Button(directory_frame, text="Open", width=9, command=lambda: self.parent.open_directory(self.entry_directory.get()))
         open_button.pack(side="left")
+        refresh_button = ttk.Button(directory_frame, text="Refresh", width=9, command=self.refresh_files)
+        refresh_button.pack(side="left")
         # Help
         help_button = ttk.Button(top_frame, text="?", width=2, command=self.open_help_window)
         help_button.grid(row=0, column=4, padx=2, sticky="e")
@@ -1524,9 +1526,10 @@ class CropInterface:
         self.fixed_selection_entry.config(state="disabled")
 
 
-    def image_index_changed(self, event=None):
+    def image_index_changed(self, event=None, index=None):
         try:
-            index = int(self.image_index_spinbox.get()) - 1
+            if not index:
+                index = int(self.image_index_spinbox.get()) - 1
             if 0 <= index < len(self.image_files):
                 self.current_index = index
                 self.display_image(self.image_files[self.current_index])
@@ -1562,6 +1565,34 @@ class CropInterface:
 # --------------------------------------
 # Main
 # --------------------------------------
+    def refresh_tab(self):
+        self.refresh_files()
+        self.image_index_changed(index=self.parent.current_index)
+
+
+    def refresh_files(self):
+        current_path = self.entry_directory.get()
+        if not os.path.exists(current_path):
+            current_path = os.path.dirname(current_path)
+        if os.path.isfile(current_path):
+            current_path = os.path.dirname(current_path)
+
+        if os.path.isdir(current_path):
+            self.working_dir = current_path
+            self.parent.refresh_file_lists()
+            self.image_files = self.parent.image_files
+            self.image_index_label.config(text=f"of {len(self.image_files)}")
+            self.image_index_spinbox.config(from_=1, to=len(self.image_files))
+            if self.current_index >= len(self.image_files):
+                self.current_index = 0
+            if self.image_files:
+                self.display_image(self.image_files[self.current_index])
+            else:
+                self.img_canvas.delete("all")
+                self.crop_selection.clear_selection()
+                self.img_stats_label.config(text="No images found in directory")
+
+
     def display_image(self, img_path):
         self.img_canvas._display_image(img_path)
         self.crop_selection.clear_selection()
