@@ -1,13 +1,10 @@
 """
 
 Manages saving and loading user settings, overwriting defaults with user preferences.
-Default settings should be set in both the main application and the SettingsManager.
+Default settings should be set in both the main application (parent) and the SettingsManager.
 
 """
 
-
-#endregion
-################################################################################################################################################
 #region Imports
 
 
@@ -18,7 +15,13 @@ import configparser
 
 
 # Standard Library - GUI
-from tkinter import ttk, Toplevel, messagebox, StringVar, BooleanVar, Frame, Label
+from tkinter import ttk, Tk, Toplevel, messagebox, StringVar, BooleanVar, Frame, Label
+
+
+# Type Hinting
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app import ImgTxtViewer as Main
 
 
 #endregion
@@ -27,7 +30,7 @@ from tkinter import ttk, Toplevel, messagebox, StringVar, BooleanVar, Frame, Lab
 
 
 class SettingsManager:
-    def __init__(self, parent, root):
+    def __init__(self, parent: 'Main', root: 'Tk'):
         self.parent = parent
         self.root = root
         self.version = self.parent.app_version
@@ -154,6 +157,7 @@ class SettingsManager:
                 self._read_config_settings()
                 if hasattr(self.parent, 'text_box'):
                     self.parent.show_pair()
+                    self.parent.debounce_refresh_image()
             else:
                 self.prompt_first_time_setup()
         except Exception as e:

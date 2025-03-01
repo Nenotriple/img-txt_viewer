@@ -1,7 +1,3 @@
-"""This module contains the OnnxTagger class, which is responsible for loading an ONNX vision model and tagging images."""
-
-
-################################################################################################################################################
 #region Imports
 
 
@@ -18,6 +14,12 @@ from PIL import Image
 from onnxruntime import InferenceSession
 
 
+# Type Hinting
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app import ImgTxtViewer as Main
+
+
 #endregion
 ################################################################################################################################################
 #region CLS OnnxTagger
@@ -25,7 +27,7 @@ from onnxruntime import InferenceSession
 
 class OnnxTagger:
     """This module contains the OnnxTagger class, which is responsible for loading an ONNX vision model and tagging images."""
-    def __init__(self, parent):
+    def __init__(self, parent: 'Main'):
         # Parent class
         self.parent = parent
 

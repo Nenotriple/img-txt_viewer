@@ -1,6 +1,3 @@
-"""Module providing autocomplete functionality based on tag databases."""
-
-################################################################################################################################################
 #region - Imports
 
 
@@ -13,6 +10,12 @@ import pickle
 import itertools
 from collections import defaultdict
 from functools import partial
+
+
+# Type Hinting
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app import ImgTxtViewer as Main
 
 
 #endregion
@@ -236,7 +239,7 @@ class Autocomplete:
 
 class SuggestionHandler:
     """Manages suggestion display and interaction in the UI."""
-    def __init__(self, parent):
+    def __init__(self, parent: 'Main'):
         self.parent = parent
         self.autocomplete = Autocomplete
         self.suggestions = []

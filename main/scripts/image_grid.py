@@ -1,18 +1,3 @@
-"""
-########################################
-#              Image-Grid              #
-#   Version : v1.05                    #
-#   Author  : github.com/Nenotriple    #
-########################################
-
-Description:
--------------
-A Tkinter widget that displays a grid of images. Clicking an image returns the index as defined in 'natural_sort'.
-Images without a text pair have a red flag placed over them.
-"""
-
-
-################################################################################################################################################
 #region -  Imports
 
 
@@ -33,6 +18,12 @@ from TkToolTip.TkToolTip import TkToolTip as ToolTip
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 
 
+# Type Hinting
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app import ImgTxtViewer as Main
+
+
 #endregion
 ################################################################################################################################################
 #region - CLASS: ImageGrid
@@ -44,7 +35,7 @@ class ImageGrid(ttk.Frame):
     text_file_cache = {}  # Cache to store text file pairs
 
 
-    def __init__(self, master, parent):
+    def __init__(self, master: 'Frame', parent: 'Main'):
         super().__init__(master)
         # Initialize ImgTxtViewer variables and methods
         self.parent = parent
@@ -427,62 +418,3 @@ class ImageGrid(ttk.Frame):
         value = float(self.slider_image_size.get())
         if int(value) != value:
             self.slider_image_size.set(round(value))
-
-
-#endregion
-################################################################################################################################################
-#region - Changelog
-
-
-'''
-
-
-v1.05 changes:
-
-
-  - New:
-    - The currently selected thumbnail is now highlighted with a blue overlay and centered in the view.
-    - Refactored ImageGrid to act similar to a regular Tkinter widget.
-    - Removed window management code.
-    - Modified initialization to accept standard widget parameters.
-    - Removed all filtering-related code to simplify the image grid widget.
-    - Unified the ImageGrid and parent ImgTxtViewer file index variables.
-
-
-<br>
-
-
-  - Fixed:
-    -
-
-
-<br>
-
-
-  - Other changes:
-     -
-
-
-'''
-
-
-#endregion
-################################################################################################################################################
-#region - Todo
-
-
-'''
-
-
-- Todo
-  -
-
-
-- Tofix
-  -
-
-
-'''
-
-
-#endregion

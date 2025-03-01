@@ -1,8 +1,3 @@
-"""PyTrominos - A falling block puzzle game written in Python using Tkinter."""
-
-
-#endregion
-################################################################################################################################################
 #region Imports
 
 
@@ -12,7 +7,7 @@ from collections import deque
 
 
 # Standard Library - GUI
-from tkinter import ttk, Toplevel, messagebox, Frame, LabelFrame, Canvas, Label, TclError
+from tkinter import ttk, Tk, Toplevel, messagebox, Frame, LabelFrame, Canvas, Label, TclError
 
 
 #endregion
@@ -105,7 +100,7 @@ class Tromino:
 
 
 class PyTrominosGame:
-    def __init__(self, root, icon_path=None):
+    def __init__(self, root: 'Tk', icon_path=None):
         self.root = Toplevel(root)
         self.root.title("PyTrominos")
         self.root.resizable(False, False)

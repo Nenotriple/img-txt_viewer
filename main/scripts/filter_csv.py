@@ -1,4 +1,8 @@
-"""This script reads a CSV file and filters rows based on a blacklist of words."""
+"""
+This script reads a CSV file and filters rows based on a blacklist of NSFW words.
+
+This script is specifically to create a safer version of the Danbooru dataset.
+"""
 
 
 import csv

@@ -1,18 +1,3 @@
-"""
-########################################
-#                CropUI                #
-#   Version : v1.00                    #
-#   Author  : github.com/Nenotriple    #
-########################################
-
-Description:
--------------
-Create a UI that allows the user to open an image file and crop a selection from the image.
-
-"""
-
-#endregion
-#########################################################################################################
 #region - Imports
 
 
@@ -30,14 +15,24 @@ from PIL import Image, ImageTk, ImageSequence
 from TkToolTip.TkToolTip import TkToolTip as ToolTip
 
 
+# Local
+from main.scripts import HelpText
+from main.scripts.help_window import HelpWindow
+
+# Type Hinting
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app import ImgTxtViewer as Main
+
+
 #endregion
 #########################################################################################################
 #region CLS: CropSelection
 
 
 class CropSelection:
-    def __init__(self, parent, img_canvas):
-        self.parent = parent
+    def __init__(self, crop_ui: 'CropInterface', img_canvas: 'ImageCanvas'):
+        self.crop_ui = crop_ui
         self.img_canvas = img_canvas
 
         # Selection variables
@@ -94,13 +89,13 @@ class CropSelection:
                 self.clear_selection()
         if not (x_off <= event.x <= x_max and y_off <= event.y <= y_max):
             return
-        if not self.parent.fixed_sel_toggle_var.get():
+        if not self.crop_ui.fixed_sel_toggle_var.get():
             self._start_selection(event, x_off, y_off, x_max, y_max)
             return
-        mode = self.parent.fixed_sel_mode_var.get()
+        mode = self.crop_ui.fixed_sel_mode_var.get()
         try:
             if mode == "Size":
-                value = self.parent.fixed_sel_entry_var.get()
+                value = self.crop_ui.fixed_sel_entry_var.get()
                 if "x" in value:
                     value = value.split("x")
                 else:
@@ -114,22 +109,22 @@ class CropSelection:
                 x2 = x1 + width
                 y2 = y1 + height
             elif mode == "Width":
-                width = int(float(self.parent.fixed_sel_entry_var.get()) * self.img_canvas.img_scale_ratio)
+                width = int(float(self.crop_ui.fixed_sel_entry_var.get()) * self.img_canvas.img_scale_ratio)
                 width = min(width, x_max - x_off)
                 x1 = max(x_off, min(event.x - width / 2, x_max - width))
                 x2 = x1 + width
                 y1 = y2 = event.y
                 self.start_x, self.start_y = x1, y1
             elif mode == "Height":
-                height = int(float(self.parent.fixed_sel_entry_var.get()) * self.img_canvas.img_scale_ratio)
+                height = int(float(self.crop_ui.fixed_sel_entry_var.get()) * self.img_canvas.img_scale_ratio)
                 height = min(height, y_max - y_off)
                 y1 = max(y_off, min(event.y - height / 2, y_max - height))
                 y2 = y1 + height
                 x1 = x2 = event.x
                 self.start_x, self.start_y = x1, y1
             else:  # Aspect Ratio mode
-                if self.parent.auto_aspect_var.get():
-                    self.parent.determine_best_aspect_ratio()
+                if self.crop_ui.auto_aspect_var.get():
+                    self.crop_ui.determine_best_aspect_ratio()
                 self._start_selection(event, x_off, y_off, x_max, y_max)
                 return
             self.rect = self.img_canvas.create_rectangle(x1, y1, x2, y2, outline='white', tags='rect')
@@ -149,12 +144,12 @@ class CropSelection:
         y_max = y_off + self.img_canvas.new_size[1]
         if self.handles_manager._is_resizing():
             x1, y1, x2, y2 = self.handles_manager._resize(event)
-            self.parent.update_widget_values(resize=True)
+            self.crop_ui.update_widget_values(resize=True)
         elif self.moving_rectangle:
             x1, y1, x2, y2 = self._calculate_moving_rect(event, x_off, y_off, x_max, y_max)
         else:
             x1, y1, x2, y2 = self._calculate_selection_rect(event, x_off, y_off, x_max, y_max)
-            self.parent.update_widget_values(resize=True)
+            self.crop_ui.update_widget_values(resize=True)
         self.update_rect(x1, y1, x2, y2)
 
 
@@ -177,14 +172,14 @@ class CropSelection:
             self.update_overlay()
         self._calculate_image_selection_coords(x1, y1, x2, y2)
         self.handles_manager.show_handles()
-        self.parent.update_widget_values()
+        self.crop_ui.update_widget_values()
         self.handles_manager._hide_handles_based_on_mode()
 
 
     def _on_double_click(self, event):
         if self.rect:
             self.clear_selection()
-            self.parent.update_widget_values()
+            self.crop_ui.update_widget_values()
             return
         if not self.img_canvas.img_path:
             return
@@ -218,9 +213,9 @@ class CropSelection:
             return
         shift_pressed = event.state & 0x0001
         ctrl_pressed = event.state & 0x0004
-        mode = self.parent.fixed_sel_mode_var.get()
+        mode = self.crop_ui.fixed_sel_mode_var.get()
         step = 10 if delta > 0 else -10
-        if self.parent.fixed_sel_toggle_var.get():
+        if self.crop_ui.fixed_sel_toggle_var.get():
             if mode == "Aspect Ratio":
                 # Resize both width and height while maintaining aspect ratio
                 self._resize_selection_with_mousewheel(True, True, step, maintain_aspect_ratio=True)
@@ -247,7 +242,7 @@ class CropSelection:
 # --------------------------------------
     def _start_moving_rect(self, event, x1, y1, x2, y2):
         self.moving_rectangle = True
-        if self.parent.fixed_sel_toggle_var.get() and self.parent.fixed_sel_mode_var.get() == "Size":
+        if self.crop_ui.fixed_sel_toggle_var.get() and self.crop_ui.fixed_sel_mode_var.get() == "Size":
             self.move_offset_x = (x2 - x1) / 2
             self.move_offset_y = (y2 - y1) / 2
         else:
@@ -261,11 +256,11 @@ class CropSelection:
     def _start_selection(self, event, x_off, y_off, x_max, y_max):
         self.start_x = max(min(event.x, x_max), x_off)
         self.start_y = max(min(event.y, y_max), y_off)
-        if self.parent.expand_center_toggle_var.get():
+        if self.crop_ui.expand_center_toggle_var.get():
             self.center_x = self.start_x
             self.center_y = self.start_y
-        if self.parent.fixed_sel_toggle_var.get() and self.parent.fixed_sel_mode_var.get() in ["Aspect Ratio", "Width", "Height"]:
-            if self.parent.expand_center_toggle_var.get():
+        if self.crop_ui.fixed_sel_toggle_var.get() and self.crop_ui.fixed_sel_mode_var.get() in ["Aspect Ratio", "Width", "Height"]:
+            if self.crop_ui.expand_center_toggle_var.get():
                 self.center_x = (x_off + x_max) / 2
                 self.center_y = (y_off + y_max) / 2
                 self.start_x = self.center_x
@@ -285,7 +280,7 @@ class CropSelection:
         new_width = (x2 - x1) + (step if delta_width else 0)
         new_height = (y2 - y1) + (step if delta_height else 0)
         if maintain_aspect_ratio:
-            aspect_ratio_str = self.parent.fixed_sel_entry_var.get()
+            aspect_ratio_str = self.crop_ui.fixed_sel_entry_var.get()
             if ':' in aspect_ratio_str:
                 width_ratio, height_ratio = map(float, aspect_ratio_str.split(':'))
                 aspect_ratio = width_ratio / height_ratio
@@ -315,7 +310,7 @@ class CropSelection:
         y2_new = min(y_off + img_height, y2_new)
         self.update_rect(x1_new, y1_new, x2_new, y2_new)
         self.handles_manager.update_handles()
-        self.parent.update_widget_values(resize=True)
+        self.crop_ui.update_widget_values(resize=True)
 
 
 # --------------------------------------
@@ -370,7 +365,7 @@ class CropSelection:
     def _calculate_selection_rect(self, event, x_off, y_off, x_max, y_max):
         curX = max(min(event.x, x_max), x_off)
         curY = max(min(event.y, y_max), y_off)
-        if self.parent.expand_center_toggle_var.get():
+        if self.crop_ui.expand_center_toggle_var.get():
             if not hasattr(self, 'center_x') or not hasattr(self, 'center_y'):
                 self.center_x = (x_off + x_max) / 2
                 self.center_y = (y_off + y_max) / 2
@@ -381,7 +376,7 @@ class CropSelection:
         else:
             x1, y1 = self.start_x, self.start_y
             x2, y2 = curX, curY
-        if self.parent.fixed_sel_toggle_var.get():
+        if self.crop_ui.fixed_sel_toggle_var.get():
             x1, y1, x2, y2 = self._apply_fixed_selection(x1, y1, x2, y2, x_off, y_off, x_max, y_max)
         return x1, y1, x2, y2
 
@@ -398,7 +393,7 @@ class CropSelection:
         self._calculate_image_selection_coords(x1, y1, x2, y2)
         self.handles_manager.update_handles()
         self.update_overlay()
-        self.guidelines_manager.update_guidelines(self.parent.guidelines_combobox.get())
+        self.guidelines_manager.update_guidelines(self.crop_ui.guidelines_combobox.get())
 
 
     def update_overlay(self):
@@ -444,7 +439,7 @@ class CropSelection:
         self.move_offset_y = 0
         self.rect_width = 0
         self.rect_height = 0
-        self.parent.update_widget_values()
+        self.crop_ui.update_widget_values()
 
 
     def redraw_rect(self):
@@ -466,8 +461,8 @@ class CropSelection:
 # --------------------------------------
     def _apply_fixed_selection(self, x1, y1, x2, y2, x_off, y_off, x_max, y_max):
         scale = self.img_canvas.img_scale_ratio
-        mode = self.parent.fixed_sel_mode_var.get()
-        value = self.parent.fixed_sel_entry_var.get()
+        mode = self.crop_ui.fixed_sel_mode_var.get()
+        value = self.crop_ui.fixed_sel_entry_var.get()
         if mode == "Size":
             if "x" in value:
                 value = value.split("x")
@@ -509,7 +504,7 @@ class CropSelection:
                 return x1, y1, x2, y2
             if width == 0 or height == 0:
                 return x1, y1, x2, y2
-        if self.parent.expand_center_toggle_var.get() and self.parent.fixed_sel_toggle_var.get() and mode in ["Aspect Ratio", "Width", "Height"]:
+        if self.crop_ui.expand_center_toggle_var.get() and self.crop_ui.fixed_sel_toggle_var.get() and mode in ["Aspect Ratio", "Width", "Height"]:
             x1 = self.center_x - width / 2
             y1 = self.center_y - height / 2
             x2 = self.center_x + width / 2
@@ -531,7 +526,7 @@ class CropSelection:
             return x1, y1, x2, y2
         width = abs(x2 - x1)
         height = width / ratio if width != 0 else abs(y2 - y1) * ratio
-        if self.parent.expand_center_toggle_var.get():
+        if self.crop_ui.expand_center_toggle_var.get():
             max_width = min(2 * (self.center_x - x_off), 2 * (x_max - self.center_x))
             max_height = min(2 * (self.center_y - y_off), 2 * (y_max - self.center_y))
             if width > max_width:
@@ -593,7 +588,7 @@ class CropSelection:
             new_y += cy_off
             y2 = new_y + (y2 - y1)
             y1 = new_y
-        if self.parent.expand_center_toggle_var.get():
+        if self.crop_ui.expand_center_toggle_var.get():
             x1, y1, x2, y2 = self._calculate_center_expansion(x1, y1, x2, y2, width, height, c_size)
         else:
             if width is not None:
@@ -642,7 +637,7 @@ class CropSelection:
 
 
 class CropSelHandles:
-    def __init__(self, crop_selection, img_canvas):
+    def __init__(self, crop_selection: 'CropSelection', img_canvas: 'ImageCanvas'):
         self.crop_selection = crop_selection
         self.img_canvas = img_canvas
 
@@ -692,8 +687,8 @@ class CropSelHandles:
 
 
     def _hide_handles_based_on_mode(self):
-        if self.crop_selection.parent.fixed_sel_toggle_var.get():
-            mode = self.crop_selection.parent.fixed_sel_mode_var.get()
+        if self.crop_selection.crop_ui.fixed_sel_toggle_var.get():
+            mode = self.crop_selection.crop_ui.fixed_sel_mode_var.get()
             hide_handles_dict = {
                 "Aspect Ratio": ["n", "e", "s", "w"],
                 "Width": ["e", "w", "ne", "nw", "se", "sw"],
@@ -788,10 +783,10 @@ class CropSelHandles:
         x_off, y_off = self.img_canvas.x_off, self.img_canvas.y_off
         x_max = x_off + self.img_canvas.new_size[0]
         y_max = y_off + self.img_canvas.new_size[1]
-        expand_from_center = self.crop_selection.parent.expand_center_toggle_var.get()
+        expand_from_center = self.crop_selection.crop_ui.expand_center_toggle_var.get()
         handle = self.resizing_handle
         m_size = 10
-        if self.crop_selection.parent.fixed_sel_toggle_var.get() and self.crop_selection.parent.fixed_sel_mode_var.get() == "Aspect Ratio":
+        if self.crop_selection.crop_ui.fixed_sel_toggle_var.get() and self.crop_selection.crop_ui.fixed_sel_mode_var.get() == "Aspect Ratio":
             return self._resize_with_aspect_ratio(event, x1, y1, x2, y2, x_off, y_off, x_max, y_max, expand_from_center, m_size)
         if expand_from_center:
             cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
@@ -821,7 +816,7 @@ class CropSelHandles:
     def _resize_with_aspect_ratio(self, event, x1, y1, x2, y2, x_off, y_off, x_max, y_max, expand_from_center, m_size):
         handle = self.resizing_handle
         try:
-            value = self.crop_selection.parent.fixed_sel_entry_var.get()
+            value = self.crop_selection.crop_ui.fixed_sel_entry_var.get()
             if ':' in value:
                 width_ratio, height_ratio = map(float, value.split(':'))
                 target_ratio = width_ratio / height_ratio
@@ -885,7 +880,7 @@ class CropSelHandles:
 
 
 class CropSelGuidelines:
-    def __init__(self, crop_selection, img_canvas):
+    def __init__(self, crop_selection: 'CropSelection', img_canvas: 'ImageCanvas'):
         self.crop_selection = crop_selection
         self.img_canvas = img_canvas
         self.guidelines = []
@@ -980,7 +975,7 @@ class CropSelGuidelines:
 
 
 class ImageCanvas(tk.Canvas):
-    def __init__(self, parent, frame):
+    def __init__(self, parent: 'CropInterface', frame):
         super().__init__(frame, cursor="cross")
         self.parent = parent
         self.img_path = None
@@ -1044,14 +1039,17 @@ class ImageCanvas(tk.Canvas):
 
 
     def refresh_image(self):
-        if not self.img_path:
+        if not self.img_path or not all(self.new_size):
             return
-        self.img_resized = self.original_img.resize(self.new_size, Image.LANCZOS)
-        self.img_thumbnail = ImageTk.PhotoImage(self.img_resized)
-        self.delete("all")
-        self.create_image(self.x_off, self.y_off, anchor="nw", image=self.img_thumbnail)
-        if hasattr(self, 'crop_selection'):
-            self.crop_selection.redraw_rect()
+        try:
+            self.img_resized = self.original_img.resize(self.new_size, Image.LANCZOS)
+            self.img_thumbnail = ImageTk.PhotoImage(self.img_resized)
+            self.delete("all")
+            self.create_image(self.x_off, self.y_off, anchor="nw", image=self.img_thumbnail)
+            if hasattr(self, 'crop_selection'):
+                self.parent.crop_selection.redraw_rect()
+        except ValueError:
+            pass
 
 
 #endregion
@@ -1062,12 +1060,11 @@ class ImageCanvas(tk.Canvas):
 class CropInterface:
     def __init__(self):
         # Primary variables
-        self.parent = None
-        self.root = None
-        self.menu = None
-        self.image_path = None
+        self.parent: 'Main' = None
+        self.root: 'tk.Tk' = None
         self.version = None
         self.text_controller = None
+        self.working_dir = None
 
         # Image Variables
         self.gif_frames = []
@@ -1098,63 +1095,54 @@ class CropInterface:
 # --------------------------------------
 # UI
 # --------------------------------------
-    def setup_window(self, parent, root, menu, path=None):
+    def setup_window(self, parent, root):
         self.parent = parent
         self.root = root
-        self.menu = menu
-        if os.path.exists(path):
-            self.image_path = path
         self.image_files = self.parent.image_files
         self.version = self.parent.app_version
         self.text_controller = self.parent.text_controller
+        self.help_window = HelpWindow(self.root)
         # Window
-        self.root.minsize(530, 370)
-        self.root.title(f"{self.version} - img-txt Viewer - Crop Image")
-        self.menu.entryconfig("Crop...", command=self.close_crop_ui)
         self.create_main_frame()
         self.setup_top_frame()
         self.create_image_ui()
         self.create_control_panel()
         self.crop_selection = CropSelection(self, self.img_canvas)
         self.img_canvas.crop_selection = self.crop_selection
-        if path:
-            self.path_entry.insert(0, path)
-            self.current_index = self.parent.current_index
-            self.display_image(self.image_files[self.current_index])
+        self.set_working_directory
 
 
     def create_main_frame(self):
-        self.parent.hide_primary_paned_window()
-        self.crop_ui_frame = tk.Frame(self.root)
+        self.parent.crop_ui_tab.columnconfigure(0, weight=1)
+        self.parent.crop_ui_tab.rowconfigure(0, weight=1)
+        self.crop_ui_frame = tk.Frame(self.parent.crop_ui_tab)
         self.crop_ui_frame.grid(row=0, column=0, sticky="nsew")
         self.crop_ui_frame.grid_rowconfigure(0, weight=0)
         self.crop_ui_frame.grid_rowconfigure(1, weight=0)
         self.crop_ui_frame.grid_rowconfigure(2, weight=1)
         self.crop_ui_frame.grid_columnconfigure(0, weight=1)
         self.crop_ui_frame.grid_columnconfigure(1, weight=0)
-        self.root.grid_rowconfigure(0, weight=1)
-        self.root.grid_columnconfigure(0, weight=1)
 
 
     def setup_top_frame(self):
         top_frame = tk.Frame(self.crop_ui_frame)
-        top_frame.grid(row=0, column=0, columnspan=99, padx=self.padx, pady=(5,0), sticky="nsew")
+        top_frame.grid(row=0, column=0, columnspan=99, sticky="nsew")
         top_frame.grid_columnconfigure(3, weight=1)
-        # Close
-        ttk.Button(top_frame, text="<---Close", width=15, command=self.close_crop_ui).grid(row=0, column=0, sticky="w")
         # Crop Info
-        self.crop_info_label = ttk.Label(top_frame, text="Crop to: 0x0 (0:0)", anchor="w")
-        self.crop_info_label.grid(row=0, column=2, padx=self.padx, sticky="ew")
+        self.crop_info_label = ttk.Label(top_frame, text="Crop to: 0x0 (0:0)", anchor="w", width=25)
+        self.crop_info_label.grid(row=0, column=2, sticky="ew")
         # Directory
         directory_frame = tk.Frame(top_frame)
         directory_frame.grid(row=0, column=3, padx=(self.padx, 0), sticky="ew")
-        self.path_entry = ttk.Entry(directory_frame)
-        self.path_entry.pack(side="left", fill="x", expand=True)
-        self.text_controller.bind_entry_functions(self.path_entry)
-        open_button = ttk.Button(directory_frame, text="Open", width=9, command=lambda: self.parent.open_directory(self.path_entry.get()))
+        self.entry_directory = ttk.Entry(directory_frame)
+        self.entry_directory.pack(side="left", fill="x", expand=True)
+        self.text_controller.bind_entry_functions(self.entry_directory)
+        open_button = ttk.Button(directory_frame, text="Open", width=9, command=lambda: self.parent.open_directory(self.entry_directory.get()))
         open_button.pack(side="left")
+        refresh_button = ttk.Button(directory_frame, text="Refresh", width=9, command=self.refresh_files)
+        refresh_button.pack(side="left")
         # Help
-        help_button = ttk.Button(top_frame, text="?", width=2, command=self.show_help)
+        help_button = ttk.Button(top_frame, text="?", width=2, command=self.open_help_window)
         help_button.grid(row=0, column=4, padx=2, sticky="e")
         ToolTip.create(help_button, "Show/Hide Help", 50, 6, 12)
 
@@ -1195,7 +1183,7 @@ class CropInterface:
 
     def create_control_panel(self):
         self.control_panel = tk.Frame(self.crop_ui_frame, relief="sunken", borderwidth=1)
-        self.control_panel.grid(row=1, column=1, sticky="nsew", rowspan=2, padx=self.padx, pady=self.pady)
+        self.control_panel.grid(row=1, column=1, sticky="nsew", rowspan=2, pady=self.pady)
         self.create_nav_and_crop_widgets()
         self.spinbox_frame = tk.Frame(self.control_panel)
         self.spinbox_frame.pack(pady=self.pady, padx=self.padx, fill="x")
@@ -1227,7 +1215,8 @@ class CropInterface:
         self.image_index_spinbox.pack(side="left", fill="x", expand=True)
         self.image_index_spinbox.bind("<Return>", self.image_index_changed)
         self.text_controller.bind_entry_functions(self.image_index_spinbox)
-        ttk.Label(index_frame, text=f"of {len(self.image_files)}").pack(side="left")
+        self.image_index_label = ttk.Label(index_frame, text=f"of {len(self.image_files)}")
+        self.image_index_label.pack(side="left")
         # Nav Buttons
         nav_button_frame = tk.Frame(self.control_panel)
         nav_button_frame.pack(pady=self.pady, padx=self.padx, fill="x")
@@ -1537,9 +1526,10 @@ class CropInterface:
         self.fixed_selection_entry.config(state="disabled")
 
 
-    def image_index_changed(self, event=None):
+    def image_index_changed(self, event=None, index=None):
         try:
-            index = int(self.image_index_spinbox.get()) - 1
+            if not index:
+                index = int(self.image_index_spinbox.get()) - 1
             if 0 <= index < len(self.image_files):
                 self.current_index = index
                 self.display_image(self.image_files[self.current_index])
@@ -1547,9 +1537,24 @@ class CropInterface:
             pass
 
 
-    def show_help(self):
-        help_message = ("Not Implemented!")
-        messagebox.showinfo("CropUI Help", help_message)
+    def set_working_directory(self, path=None):
+        if path is None:
+            path = filedialog.askdirectory(initialdir=self.working_dir)
+            if not os.path.isdir(path):
+                return
+            self.working_dir = path
+        else:
+            self.working_dir = path
+        self.entry_directory.insert(0, self.parent.image_dir)
+        self.image_files = self.parent.image_files
+        self.image_index_label.config(text=f"of {len(self.image_files)}")
+        self.current_index = self.parent.current_index
+        self.display_image(self.image_files[self.current_index])
+
+
+    def open_help_window(self):
+        help_text = HelpText.CROP_UI_HELP
+        self.help_window.open_window(geometry="500x700", help_text=help_text)
 
 
     def toggle_overlay(self):
@@ -1560,6 +1565,34 @@ class CropInterface:
 # --------------------------------------
 # Main
 # --------------------------------------
+    def refresh_tab(self):
+        self.refresh_files()
+        self.image_index_changed(index=self.parent.current_index)
+
+
+    def refresh_files(self):
+        current_path = self.entry_directory.get()
+        if not os.path.exists(current_path):
+            current_path = os.path.dirname(current_path)
+        if os.path.isfile(current_path):
+            current_path = os.path.dirname(current_path)
+
+        if os.path.isdir(current_path):
+            self.working_dir = current_path
+            self.parent.refresh_file_lists()
+            self.image_files = self.parent.image_files
+            self.image_index_label.config(text=f"of {len(self.image_files)}")
+            self.image_index_spinbox.config(from_=1, to=len(self.image_files))
+            if self.current_index >= len(self.image_files):
+                self.current_index = 0
+            if self.image_files:
+                self.display_image(self.image_files[self.current_index])
+            else:
+                self.img_canvas.delete("all")
+                self.crop_selection.clear_selection()
+                self.img_stats_label.config(text="No images found in directory")
+
+
     def display_image(self, img_path):
         self.img_canvas._display_image(img_path)
         self.crop_selection.clear_selection()
@@ -1571,8 +1604,8 @@ class CropInterface:
         self.height_spinbox.config(to=self.img_canvas.original_img_height)
         self.image_index_spinbox.config(from_=1, to=len(self.image_files))
         self.image_index_spinbox.set(self.current_index + 1)
-        self.path_entry.delete(0, "end")
-        self.path_entry.insert(0, img_path)
+        self.entry_directory.delete(0, "end")
+        self.entry_directory.insert(0, img_path)
         if self.image_file.lower().endswith('.gif'):
             self.extract_gif_frames()
             self.extract_gif_button.config(state="normal")
@@ -1615,7 +1648,7 @@ class CropInterface:
         path = self.img_canvas.img_path
         if option == "Save & Close":
             if self.save_cropped_image(cropped_img, 'normal', path):
-                self.close_crop_ui()
+                self.close_crop_ui(path=path)
         elif option == "Save & Next":
             if self.save_cropped_image(cropped_img, 'normal', path):
                 self.show_next_image()
@@ -1875,15 +1908,14 @@ class CropInterface:
 # --------------------------------------
 # Close CropUI
 # --------------------------------------
-    def close_crop_ui(self, event=None):
-        self.root.minsize(545, 200) # Width x Height
-        self.parent.sync_title_with_content()
-        self.crop_ui_frame.grid_remove()
-        self.menu.entryconfig("Crop...", command=self.parent.show_crop_ui)
-        self.parent.show_primary_paned_window()
+    def close_crop_ui(self, path=None, event=None):
         self.parent.refresh_text_box()
         self.parent.refresh_file_lists()
         self.parent.debounce_update_thumbnail_panel()
+        if path:
+            index = (self.parent.get_image_index_by_filename(path) + 1)
+            self.parent.jump_to_image(index)
+        self.parent.main_notebook.select(self.parent.primary_tab)
 
 
 #endregion

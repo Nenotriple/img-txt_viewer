@@ -1,23 +1,8 @@
-"""
-########################################
-#               PopUpZoom              #
-#   Version : v1.02                    #
-#   Author  : github.com/Nenotriple    #
-########################################
-
-Description:
--------------
-Create a small popup window beside the mouse that displays a zoomed view of the image underneath.
-
-"""
-
-
-################################################################################################################################################
 #region Imports
 
 
 # Standard Library - GUI
-from tkinter import Toplevel, BooleanVar, Canvas
+from tkinter import Label, Toplevel, BooleanVar, Canvas
 
 
 # Third-Party Libraries
@@ -30,7 +15,7 @@ from PIL import Image, ImageTk, ImageDraw
 
 
 class PopUpZoom:
-    def __init__(self, widget):
+    def __init__(self, widget: 'Label'):
         # Initialize the PopUpZoom class
         self.widget = widget
         self.zoom_factor = 1.75
@@ -242,19 +227,3 @@ class PopUpZoom:
 
 
 #endregion
-
-
-'''
-
-v1.02 changes:
-
-  - New:
-    - `Rounded Corners` The popup now supports rounded corners. (Default: 30px)
-
-  - Fixed:
-    -
-
-  - Other changes:
-    -
-
-'''

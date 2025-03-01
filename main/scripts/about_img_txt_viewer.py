@@ -20,11 +20,17 @@ from TkToolTip.TkToolTip import TkToolTip as ToolTip
 from main.scripts import PyTrominos
 
 
+# Type Hinting
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app import ImgTxtViewer as Main
+
+
 # --------------------------------------
 # Class - AboutWindow
 # --------------------------------------
 class AboutWindow:
-    def __init__(self, parent, root, icon):
+    def __init__(self, parent: 'Main', root: 'tk.Tk', icon):
         self.parent = parent
         self.root = root
         self.icon_img = icon
@@ -162,13 +168,13 @@ class AboutWindow:
 
 
     def _create_game_button(self):
-        self.game_button = ttk.Button(self.bottom_row_frame, text=f"Play PyTrominos", command=self.open_game)
+        self.game_button = ttk.Button(self.bottom_row_frame, text=f"Play PyTrominos!", command=self.open_game)
         self.game_button.pack(side="left", fill="x", padx=10, ipadx=10)
         ToolTip.create(self.game_button, "Click this button to play PyTrominos", 10, 6, 12)
 
 
     def _create_made_by_label(self):
-        self.made_by_label = Label(self.bottom_row_frame, text=f"{self.parent.app_version} - img-txt_viewer - Created by: Nenotriple (2023-2024)", font=("Segoe UI", 10))
+        self.made_by_label = Label(self.bottom_row_frame, text=f"{self.parent.app_version} - img-txt_viewer - Created by: Nenotriple (2023-2025)", font=("Segoe UI", 10))
         self.made_by_label.pack(side="right", padx=10, pady=10)
         ToolTip.create(self.made_by_label, "🤍Thank you for using my app!🤍 (^‿^)", 10, 6, 12)
 

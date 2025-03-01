@@ -1,8 +1,3 @@
-"""Calculate file statistics for text and image files."""
-
-
-#endregion
-################################################################################################################################################
 #region Imports
 
 
@@ -13,10 +8,15 @@ import statistics
 from collections import Counter
 
 # Standard Library - GUI
-from tkinter import messagebox
+from tkinter import Tk, messagebox
 
 # Third-Party Libraries
 from PIL import Image
+
+# Type Hinting
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app import ImgTxtViewer as Main
 
 
 #endregion
@@ -25,7 +25,7 @@ from PIL import Image
 
 
 class CalculateFileStats:
-    def __init__(self, parent, root):
+    def __init__(self, parent: 'Main', root: 'Tk'):
         self.parent = parent
         self.root = root
         self.caption_counter = Counter()

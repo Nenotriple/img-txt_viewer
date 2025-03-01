@@ -1,18 +1,3 @@
-"""
-########################################
-#              ResizeTool              #
-#   Version : v1.03                    #
-#   Author  : github.com/Nenotriple    #
-########################################
-
-Description:
--------------
-Resize an image by resolution or percentage.
-
-"""
-
-
-################################################################################################################################################
 #region -  Imports
 
 
@@ -23,7 +8,7 @@ from io import BytesIO
 
 # Standard Library - GUI
 from tkinter import (
-    ttk, Toplevel, messagebox,
+    ttk, Tk, Toplevel, messagebox,
     IntVar, StringVar, BooleanVar,
     Frame, Label, Button
 )
@@ -33,14 +18,20 @@ from tkinter import (
 from PIL import Image, ImageSequence
 
 
+# Type Hinting
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app import ImgTxtViewer as Main
+
+
 #endregion
 ################################################################################################################################################
 #region - CLASS: ResizeTool
 
 
 class ResizeTool:
-    def __init__(self, master, img_txt_viewer, filepath, window_x, window_y, update_pair, jump_to_image):
-        self.top = Toplevel(master, borderwidth=2, relief="groove")
+    def __init__(self, root: 'Tk', parent: 'Main', filepath, window_x, window_y, update_pair, jump_to_image):
+        self.top = Toplevel(root, borderwidth=2, relief="groove")
         self.top.overrideredirect("true")
         self.top.geometry("+{}+{}".format(window_x, window_y))
         self.top.grab_set()
@@ -55,9 +46,9 @@ class ResizeTool:
         self.supported_filetypes = (".png", ".webp", ".jpg", ".jpeg", ".jpg_large", ".jfif", ".tif", ".tiff", ".bmp", ".gif")
 
 
-        self.img_txt_viewer = img_txt_viewer
-        self.sort_key = self.img_txt_viewer.get_file_sort_key()
-        self.reverse_sort_direction_var = self.img_txt_viewer.reverse_load_order_var.get()
+        self.parent = parent
+        self.sort_key = self.parent.get_file_sort_key()
+        self.reverse_sort_direction_var = self.parent.reverse_load_order_var.get()
         self.ImgTxt_update_pair = update_pair
         self.ImgTxt_jump_to_image = jump_to_image
 
@@ -606,49 +597,3 @@ class ResizeTool:
             messagebox.showerror("Error", "Invalid values. Please enter valid digits.")
         except (PermissionError, IOError):
             messagebox.showerror("Error", "An error occurred while saving the image.")
-
-
-#endregion
-################################################################################################################################################
-#region - Changelog
-
-
-'''
-
-
-v1.03 changes:
-
-  - New:
-    -
-
-
-<br>
-
-
-  - Fixed:
-    -
-
-
-  - Other:
-    - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
-
-
-'''
-
-
-#endregion
-################################################################################################################################################
-#region - Todo
-
-
-'''
-
-- Todo
-  -
-
-- Tofix
-  -
-
-'''
-
-#endregion
