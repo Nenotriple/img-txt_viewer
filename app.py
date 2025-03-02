@@ -69,6 +69,7 @@ from main.scripts.Autocomplete import SuggestionHandler
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
 from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
 from main.scripts.ThumbnailPanel import ThumbnailPanel
+from main.scripts.video_player_widget import VideoPlayerWidget
 
 
 #endregion
@@ -498,6 +499,9 @@ class ImgTxtViewer:
         self.image_grid = image_grid.ImageGrid(self.master_image_frame, self)
         self.image_grid.grid(row=1, column=0, sticky="nsew")
         self.image_grid.grid_remove()
+        self.video_player = VideoPlayerWidget(master=self.master_image_frame, show_controls=True)
+        self.video_player.grid(row=1, column=0, sticky="nsew")
+        self.video_player.grid_remove()
         # master_control_frame serves as a container for all primary UI frames (except the master image frame)
         self.master_control_frame = Frame(container)
         self.primary_paned_window.add(self.master_control_frame, stretch="always")
@@ -1579,7 +1583,7 @@ class ImgTxtViewer:
                 if self.check_odd_files(filename):
                     self.rename_odd_files(filename)
         for filename in files_in_dir:
-            if filename.lower().endswith((".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif")):
+            if filename.lower().endswith((".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif", ".mp4")):
                 image_file_path = os.path.join(self.image_dir.get(), filename)
                 self.image_files.append(image_file_path)
                 text_filename = os.path.splitext(filename)[0] + ".txt"
@@ -1627,6 +1631,19 @@ class ImgTxtViewer:
         try:
             self.image_file = self.image_files[self.current_index]
             text_file = self.text_files[self.current_index] if self.current_index < len(self.text_files) else None
+            file_extension = os.path.splitext(self.image_file)[1].lower()
+
+            if file_extension == '.mp4':
+                self.display_mp4_video()
+                return text_file, None, None, None
+            else:
+                if not self.master_image_inner_frame.winfo_viewable():
+                    self.master_image_inner_frame.grid()
+                    if self.video_player.playing:
+                        self.video_player.stop
+                    if self.video_player.winfo_viewable():
+                        self.video_player.grid_remove()
+
             image = self.load_image_file(self.image_file, text_file)
             if image is None:
                 return text_file, None, None, None
@@ -1634,7 +1651,7 @@ class ImgTxtViewer:
             resize_event.height = self.primary_display_image.winfo_height()
             resize_event.width = self.primary_display_image.winfo_width()
             resized_image, resized_width, resized_height = self.resize_and_scale_image(image, resize_event.width, resize_event.height, resize_event)
-            if image.format == 'GIF':
+            if file_extension == '.gif':
                 self.frame_iterator = iter(self.gif_frames)
                 self.current_frame_index = 0
                 self.display_animated_gif()
@@ -1651,6 +1668,15 @@ class ImgTxtViewer:
             return text_file, image, resize_event.width, resize_event.height
         except ValueError:
             self.check_image_dir()
+
+
+    def display_mp4_video(self):
+        self.master_image_inner_frame.grid_remove()
+        self.video_player.grid()
+        try:
+            self.video_player.load_video(file_path=self.image_file)
+        except Exception as e:
+            print(f"Error loading video: {e}")
 
 
     def display_animated_gif(self):
@@ -1710,7 +1736,7 @@ class ImgTxtViewer:
         if self.image_files:
             text_file, image, max_img_width, max_img_height = self.display_image()
             self.load_text_file(text_file)
-            if not self.is_image_grid_visible_var.get():
+            if not self.is_image_grid_visible_var.get() and image is not None:
                 self.primary_display_image.config(width=max_img_width, height=max_img_height)
                 self.original_image = image
                 self.current_image = self.original_image.copy()
@@ -1745,6 +1771,10 @@ class ImgTxtViewer:
 
 
     def debounce_refresh_image(self, event=None):
+        if not self.image_files:
+            return
+        if self.image_file.lower().endswith((".mp4")):
+            return
         if self.ui_state != "ImgTxtViewer":
             return
         if hasattr(self, 'text_box'):
@@ -1864,7 +1894,7 @@ class ImgTxtViewer:
 
 
     def update_image_file_count(self):
-        extensions = ['.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif']
+        extensions = ['.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif', '.mp4']
         self.image_files = [file for ext in extensions for file in glob.glob(f"{self.image_dir.get()}/*{ext}")]
         self.image_files.sort(key=self.get_file_sort_key(), reverse=self.reverse_load_order_var.get())
         self.text_files = [os.path.splitext(file)[0] + '.txt' for file in self.image_files]
@@ -2079,56 +2109,6 @@ class ImgTxtViewer:
                 self.jump_to_image(index_value)
         except Exception as e:
             messagebox.showerror("Error: expand_image()", f'Failed to process {filename}. Reason: {e}')
-
-
-    def rename_and_convert_pairs(self):
-        if not self.check_if_directory():
-            return
-        try:
-            convert_confirmation = messagebox.askyesnocancel("Confirm: Rename and Convert Files",
-                "Do you want to convert images as well?\n\n"
-                "Yes: Rename and convert all images and text files.\n"
-                "No: Only rename files.\n"
-                "Cancel: Cancel the operation."
-            )
-            if convert_confirmation is None:
-                return
-            self.check_working_directory()
-            target_dir = os.path.join(self.image_dir.get(), "Renamed Output")
-            os.makedirs(target_dir, exist_ok=True)
-            files = sorted(f for f in os.listdir(self.image_dir.get()) if f.endswith(tuple([".txt", ".jpg", ".jpeg", ".png", ".jfif", ".jpg_large", ".webp", ".bmp", ".gif"])))
-            base_names = {}
-            for filename in files:
-                base_name, extension = os.path.splitext(filename)
-                if base_name not in base_names:
-                    base_names[base_name] = str(len(base_names) + 1).zfill(5)
-                new_base_name = base_names[base_name]
-                if extension == ".txt":
-                    new_name = new_base_name + extension
-                else:
-                    if extension == ".gif" or convert_confirmation == False:
-                        new_name = new_base_name + extension
-                    else:
-                        new_name = new_base_name + ".jpg"
-                original_path = os.path.join(self.image_dir.get(), filename)
-                new_path = os.path.join(target_dir, new_name)
-                if convert_confirmation and extension in [".jpeg", ".png", ".jfif", ".jpg_large", ".webp", ".bmp"]:
-                    with Image.open(original_path) as img:
-                        if img.mode in ("RGBA", "P"):
-                            img = img.convert("RGB")
-                        img.save(new_path, "JPEG", quality=100)
-                else:
-                    shutil.copy(original_path, new_path)
-            set_path = messagebox.askyesno("Success", "Files renamed and converted successfully!\n\nDo you want to set the path to the output folder?")
-            if set_path:
-                self.image_dir.set(os.path.normpath(target_dir))
-                self.set_working_directory()
-        except FileNotFoundError:
-            messagebox.showerror("Error: rename_and_convert_pairs()", "The specified directory does not exist.")
-        except PermissionError:
-            messagebox.showerror("Error: rename_and_convert_pairs()", "You do not have the necessary permissions to perform this operation.")
-        except Exception as e:
-            messagebox.showerror("Error: rename_and_convert_pairs()", f"An unexpected error occurred: {str(e)}")
 
 
     def flip_current_image(self):
@@ -2559,7 +2539,7 @@ class ImgTxtViewer:
 
 
     def check_dir_for_img(self, directory):
-        if any(fname.lower().endswith(('.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif')) for fname in os.listdir(directory)):
+        if any(fname.lower().endswith(('.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif', '.mp4')) for fname in os.listdir(directory)):
             self.filepath_contains_images_var = True
             return True
         else:
