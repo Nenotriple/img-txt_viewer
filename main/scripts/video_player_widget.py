@@ -11,7 +11,7 @@ class VideoPlayerWidget(ttk.Frame):
         Initialize the video player widget
 
         Parameters:
-        - master: Parent widget
+        - master: Parent tk.Frame or tk.Tk instance
         - show_controls: Whether to show playback controls
         - kwargs: Additional arguments to pass to ttk.Frame
         """
@@ -35,7 +35,7 @@ class VideoPlayerWidget(ttk.Frame):
         """Create player controls"""
         # Single control row
         controls = ttk.Frame(self)
-        controls.pack(fill="x", side="bottom")
+        controls.pack(side="bottom", fill="x", padx=5)
         # Play/Pause button
         self.play_pause_btn = ttk.Button(controls, text="▶", command=self.toggle_play_pause, width=3)
         self.play_pause_btn.pack(side="left")
@@ -152,8 +152,10 @@ class VideoPlayerWidget(ttk.Frame):
         """Return the underlying TkinterVideo instance"""
         return self.vid_player
 
+
     def destroy_player(self):
         """Destroy the underlying TkinterVideo instance"""
         self.vid_player.destroy()
         self.vid_player = None
+        self.playing = False
         self.destroy()
