@@ -499,7 +499,7 @@ class ImgTxtViewer:
         self.image_grid = image_grid.ImageGrid(self.master_image_frame, self)
         self.image_grid.grid(row=1, column=0, sticky="nsew")
         self.image_grid.grid_remove()
-        self.video_player = VideoPlayerWidget(master=self.master_image_frame, show_controls=True)
+        self.video_player = VideoPlayerWidget(master=self.master_image_frame)
         self.video_player.grid(row=1, column=0, sticky="nsew")
         self.video_player.grid_remove()
         # master_control_frame serves as a container for all primary UI frames (except the master image frame)
@@ -1673,7 +1673,7 @@ class ImgTxtViewer:
     def display_mp4_video(self):
         self.master_image_inner_frame.grid_remove()
         self.video_player.destroy_player()
-        self.video_player = VideoPlayerWidget(master=self.master_image_frame, show_controls=True)
+        self.video_player = VideoPlayerWidget(master=self.master_image_frame)
         self.video_player.grid(row=1, column=0, sticky="nsew")
         try:
             self.video_player.load_video(file_path=self.image_file)
