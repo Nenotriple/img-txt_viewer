@@ -31,7 +31,7 @@ class BatchRename:
         self.working_dir = None
         self.help_window = None
         # Variables
-        self.supported_filetypes = (".txt", ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".gif")
+        self.supported_filetypes = (".txt", ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".gif", ".mp4")
         self.sort_column = "Name"
         self.sort_reverse = False
         self.selected_items = set()
