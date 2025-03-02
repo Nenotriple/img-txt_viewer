@@ -1,7 +1,9 @@
 import av
 import os
-from PIL import Image
 from typing import List, Dict, Optional, Tuple
+
+from PIL import Image
+
 
 def generate_video_thumbnails(
     file_paths: List[str],
