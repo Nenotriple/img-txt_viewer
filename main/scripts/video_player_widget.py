@@ -101,6 +101,9 @@ class VideoPlayerWidget(ttk.Frame):
         """Seek to a specific position in seconds"""
         self.vid_player.seek(int(position))
         self.progress_slider.set(position)
+        if not self.playing:
+            self.toggle_play_pause()
+            self.after(20, self.toggle_play_pause)
 
 
     def skip(self, seconds):
