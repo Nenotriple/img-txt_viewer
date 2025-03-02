@@ -501,9 +501,6 @@ class ImgTxtViewer:
         self.image_grid = image_grid.ImageGrid(self.master_image_frame, self)
         self.image_grid.grid(row=1, column=0, sticky="nsew")
         self.image_grid.grid_remove()
-        self.video_player = VideoPlayerWidget(master=self.master_image_frame)
-        self.video_player.grid(row=1, column=0, sticky="nsew")
-        self.video_player.grid_remove()
         # master_control_frame serves as a container for all primary UI frames (except the master image frame)
         self.master_control_frame = Frame(container)
         self.primary_paned_window.add(self.master_control_frame, stretch="always")
@@ -548,6 +545,10 @@ class ImgTxtViewer:
         self.primary_display_image.bind("<ButtonPress-1>", self.start_drag)
         self.primary_display_image.bind("<ButtonRelease-1>", self.stop_drag)
         self.primary_display_image.bind("<B1-Motion>", self.dragging_window)
+        # Video Player
+        self.video_player = VideoPlayerWidget(master=self.master_image_inner_frame)
+        self.video_player.grid(row=1, column=0, sticky="nsew")
+        self.video_player.grid_remove()
         self.popup_zoom = PopUpZoom(self.primary_display_image)
         self.toggle_zoom_var = BooleanVar(value=self.popup_zoom.zoom_enabled.get())
         self.image_preview_tooltip = ToolTip.create(self.primary_display_image, "Right-Click for more\nMiddle-click to open in file explorer\nDouble-Click to open in your system image viewer\nALT+Left/Right or Mouse-Wheel to move between pairs", 1000, 6, 12)
@@ -1412,17 +1413,16 @@ class ImgTxtViewer:
 # ImgTxtViewer states
 # --------------------------------------
     def toggle_image_grid(self, event=None):
-        if event is not None:
-            self.is_image_grid_visible_var.set(not self.is_image_grid_visible_var.get())
-        if self.master_image_inner_frame.winfo_viewable():
-            self.master_image_inner_frame.grid_remove()
-            self.image_grid.initialize()
-            self.image_grid.grid()
-            self.root.after(250, self.image_grid.reload_grid)
-        else:
+        if not self.is_image_grid_visible_var.get():
             self.refresh_image()
             self.image_grid.grid_remove()
             self.master_image_inner_frame.grid()
+        else:
+            if self.master_image_inner_frame.winfo_viewable():
+                self.master_image_inner_frame.grid_remove()
+                self.image_grid.initialize()
+                self.image_grid.grid()
+                self.root.after(250, self.image_grid.reload_grid)
 
 
 #endregion
@@ -1644,18 +1644,16 @@ class ImgTxtViewer:
             self.image_file = self.image_files[self.current_index]
             text_file = self.text_files[self.current_index] if self.current_index < len(self.text_files) else None
             file_extension = os.path.splitext(self.image_file)[1].lower()
-
             if self.is_ffmpeg_installed and file_extension == '.mp4':
                 self.display_mp4_video()
                 return text_file, None, None, None
             else:
-                if not self.master_image_inner_frame.winfo_viewable():
-                    self.master_image_inner_frame.grid()
+                if not self.primary_display_image.winfo_viewable():
+                    self.primary_display_image.grid()
                     if self.video_player.playing:
                         self.video_player.stop
                     if self.video_player.winfo_viewable():
                         self.video_player.grid_remove()
-
             image = self.load_image_file(self.image_file, text_file)
             if image is None:
                 return text_file, None, None, None
@@ -1683,9 +1681,11 @@ class ImgTxtViewer:
 
 
     def display_mp4_video(self):
-        self.master_image_inner_frame.grid_remove()
+        if self.is_image_grid_visible_var.get():
+            return
+        self.primary_display_image.grid_remove()
         self.video_player.destroy_player()
-        self.video_player = VideoPlayerWidget(master=self.master_image_frame, parent=self)
+        self.video_player = VideoPlayerWidget(master=self.master_image_inner_frame, parent=self)
         self.video_player.grid(row=1, column=0, sticky="nsew")
         try:
             self.video_player.load_video(file_path=self.image_file)
