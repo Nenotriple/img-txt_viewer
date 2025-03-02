@@ -4,9 +4,15 @@ from tkinter import ttk, filedialog
 from tkVideoPlayer import TkinterVideo
 
 
+# Type Hinting
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app import ImgTxtViewer as Main
+
+
 class VideoPlayerWidget(ttk.Frame):
     """A Tkinter widget for video playback using tkVideoPlayer"""
-    def __init__(self, master=None, show_controls=True, **kwargs):
+    def __init__(self, master=None, parent: 'Main'=None, show_controls=True, **kwargs):
         """
         Initialize the video player widget
 
@@ -29,6 +35,15 @@ class VideoPlayerWidget(ttk.Frame):
         # Create player controls if enabled
         if show_controls:
             self._create_controls()
+        # Bind events to parent if provided
+        if parent:
+            self.vid_player.bind("<Double-1>", lambda event: parent.open_image(index=parent.current_index, event=event))
+            self.vid_player.bind('<Button-2>', parent.open_image_directory)
+            self.vid_player.bind("<MouseWheel>", parent.mouse_scroll)
+            self.vid_player.bind("<Button-3>", parent.show_image_context_menu)
+            self.vid_player.bind("<ButtonPress-1>", parent.start_drag)
+            self.vid_player.bind("<ButtonRelease-1>", parent.stop_drag)
+            self.vid_player.bind("<B1-Motion>", parent.dragging_window)
 
 
     def _create_controls(self):
