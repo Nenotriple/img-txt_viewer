@@ -29,7 +29,6 @@ import shutil
 import ctypes
 import zipfile
 import subprocess
-from io import BytesIO
 
 
 # Standard Library - GUI
@@ -1810,23 +1809,23 @@ class ImgTxtViewer:
                 self.debounce_refresh_image(event)
 
 
-    def update_videoinfo(self):
+    def update_videoinfo(self, image_file=None):
         if not self.is_ffmpeg_installed or not self.image_files:
             return
-        if self.image_file.lower().endswith((".mp4")):
-            video_thumb_img: 'Image' = self.video_thumb_dict.get(self.image_file)
+        image_file = image_file if image_file else self.image_file
+        if image_file.lower().endswith((".mp4")):
+            video_thumb_img: 'Image' = self.video_thumb_dict.get(image_file)
             if video_thumb_img:
                 width, height = video_thumb_img.size
                 color_mode = video_thumb_img.mode
-                img_bytes = BytesIO()
-                video_thumb_img.save(img_bytes, format=video_thumb_img.format or "PNG")
-                file_size = img_bytes.tell()
+                file_size = os.path.getsize(image_file)
                 size_kb = file_size / 1024
                 size_str = f"{round(size_kb)} KB" if size_kb < 1024 else f"{round(size_kb / 1024, 2)} MB"
-                filename = os.path.basename(self.image_file)
+                filename = os.path.basename(image_file)
                 _filename = (filename[:40] + '(...)') if len(filename) > 45 else filename
                 self.label_image_stats.config(text=f"  |  {_filename}  |  {width} x {height}  |  {size_str}  |  {color_mode}", anchor="w")
                 self.label_image_stats_tooltip.config(text=f"Filename: {filename}\nResolution: {width} x {height}\nSize: {size_str}\nColor Mode: {color_mode}")
+                return {"filename": filename, "resolution": f"{width} x {height}", "size": size_str, "color_mode": color_mode}
 
 
     def update_imageinfo(self, percent_scale=100):
