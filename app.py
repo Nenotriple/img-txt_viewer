@@ -1814,18 +1814,31 @@ class ImgTxtViewer:
             return
         image_file = image_file if image_file else self.image_file
         if image_file.lower().endswith((".mp4")):
-            video_thumb_img: 'Image' = self.video_thumb_dict.get(image_file)
-            if video_thumb_img:
-                width, height = video_thumb_img.size
-                color_mode = video_thumb_img.mode
+            video_data = self.video_thumb_dict.get(image_file)
+            if video_data:
+                # Extract data from the dictionary properly
+                thumbnail_img = video_data['thumbnail']
+                original_width, original_height = video_data['resolution']
+                framerate = video_data['framerate']
+                # Build additional info for display
+                color_mode = thumbnail_img.mode
                 file_size = os.path.getsize(image_file)
                 size_kb = file_size / 1024
                 size_str = f"{round(size_kb)} KB" if size_kb < 1024 else f"{round(size_kb / 1024, 2)} MB"
                 filename = os.path.basename(image_file)
                 _filename = (filename[:40] + '(...)') if len(filename) > 45 else filename
-                self.label_image_stats.config(text=f"  |  {_filename}  |  {width} x {height}  |  {size_str}  |  {color_mode}", anchor="w")
-                self.label_image_stats_tooltip.config(text=f"Filename: {filename}\nResolution: {width} x {height}\nSize: {size_str}\nColor Mode: {color_mode}")
-                return {"filename": filename, "resolution": f"{width} x {height}", "size": size_str, "color_mode": color_mode}
+                # Format framerate info
+                framerate_str = f"{framerate:.2f} fps" if framerate else "Unknown fps"
+                # Update UI elements with video information
+                self.label_image_stats.config(text=f"  |  {_filename}  |  {original_width} x {original_height}  |  {size_str}  |  {framerate_str}  |  {color_mode}", anchor="w")
+                self.label_image_stats_tooltip.config(text=f"Filename: {filename}\nResolution: {original_width} x {original_height}\nFramerate: {framerate_str}\nSize: {size_str}\nColor Mode: {color_mode}")
+                return {
+                    "filename": filename,
+                    "resolution": f"{original_width} x {original_height}",
+                    "framerate": framerate_str,
+                    "size": size_str,
+                    "color_mode": color_mode
+                }
 
 
     def update_imageinfo(self, percent_scale=100):

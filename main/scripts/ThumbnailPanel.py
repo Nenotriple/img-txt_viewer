@@ -137,7 +137,7 @@ class ThumbnailPanel(Frame):
             if self._is_video_file(image_file):
                 # Get the thumbnail from video_thumb_dict if available
                 if hasattr(self.parent, 'video_thumb_dict') and image_file in self.parent.video_thumb_dict:
-                    img = self.parent.video_thumb_dict[image_file]
+                    img = self.parent.video_thumb_dict[image_file]['thumbnail']
                     img.thumbnail((thumbnail_width, thumbnail_width), self.parent.quality_filter)
                     img = img.convert("RGBA") if img.mode != "RGBA" else img
                     padded_img = ImageOps.pad(img, (thumbnail_width, thumbnail_width), color=(0, 0, 0, 0))

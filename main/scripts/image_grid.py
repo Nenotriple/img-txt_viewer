@@ -232,7 +232,6 @@ class ImageGrid(ttk.Frame):
                     width, height = img.size
                 resolution = f"({width} x {height})"
                 tooltip_text = f"#{image_index + 1}, {os.path.basename(filepath)}, {filesize}, {resolution}"
-
             ToolTip.create(thumbnail, tooltip_text, 200, 6, 12)
 
 
@@ -271,10 +270,11 @@ class ImageGrid(ttk.Frame):
         if self._is_video_file(img_path):
             # Check if we have a thumbnail in the video_thumb_dict
             if hasattr(self.parent, 'video_thumb_dict') and img_path in self.parent.video_thumb_dict:
-                img = self.parent.video_thumb_dict[img_path]
-                img.thumbnail((self.max_width, self.max_height))
-                position = ((self.max_width - img.width) // 2, (self.max_height - img.height) // 2)
-                new_img.paste(img, position)
+                # Access the thumbnail from the nested dictionary
+                thumb_data = self.parent.video_thumb_dict[img_path]['thumbnail']
+                thumb_data.thumbnail((self.max_width, self.max_height))
+                position = ((self.max_width - thumb_data.width) // 2, (self.max_height - thumb_data.height) // 2)
+                new_img.paste(thumb_data, position)
             else:
                 # Request thumbnail generation
                 self.parent.update_video_thumbnails()
@@ -306,10 +306,11 @@ class ImageGrid(ttk.Frame):
         # Handle video files
         if self._is_video_file(img_path):
             if hasattr(self.parent, 'video_thumb_dict') and img_path in self.parent.video_thumb_dict:
-                img = self.parent.video_thumb_dict[img_path]
-                img.thumbnail((self.max_width, self.max_height))
-                position = ((self.max_width - img.width) // 2, (self.max_height - img.height) // 2)
-                new_img.paste(img, position)
+                # Access the thumbnail from the nested dictionary
+                thumb_data = self.parent.video_thumb_dict[img_path]['thumbnail']
+                thumb_data.thumbnail((self.max_width, self.max_height))
+                position = ((self.max_width - thumb_data.width) // 2, (self.max_height - thumb_data.height) // 2)
+                new_img.paste(thumb_data, position)
         else:
             # Regular image handling
             with Image.open(img_path) as img:
@@ -396,7 +397,8 @@ class ImageGrid(ttk.Frame):
         # Handle video files differently
         if self._is_video_file(img_path):
             if hasattr(self.parent, 'video_thumb_dict') and img_path in self.parent.video_thumb_dict:
-                img = self.parent.video_thumb_dict[img_path].copy()
+                # Access the thumbnail from the nested dictionary
+                img = self.parent.video_thumb_dict[img_path]['thumbnail'].copy()
                 img.thumbnail((self.max_width, self.max_height))
                 highlighted_thumbnail = self.apply_highlight(img)
                 bordered_thumb = ImageTk.PhotoImage(highlighted_thumbnail)
