@@ -20,7 +20,7 @@ class VideoPlayerWidget(ttk.Frame):
         self.vid_player = TkinterVideo(keep_aspect=True, master=self)
         self.vid_player.pack(expand=True, fill="both")
         # Initialize repeat state
-        self.repeat = False
+        self.repeat = True
         self.playing = False
         # Bind video events
         self.vid_player.bind("<<Duration>>", self._update_duration)
