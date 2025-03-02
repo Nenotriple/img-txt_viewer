@@ -189,3 +189,14 @@ class VideoPlayerWidget(ttk.Frame):
         self.vid_player = None
         self.playing = False
         self.destroy()
+
+    def get_current_frame(self):
+        """
+        Get the current frame of the video as a PIL Image object.
+
+        Returns:
+            PIL.Image: The current frame or None if no frame is available
+        """
+        if self.vid_player and self.vid_player.path:
+            return self.vid_player.current_img()
+        return None
