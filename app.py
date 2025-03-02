@@ -1672,7 +1672,9 @@ class ImgTxtViewer:
 
     def display_mp4_video(self):
         self.master_image_inner_frame.grid_remove()
-        self.video_player.grid()
+        self.video_player.destroy_player()
+        self.video_player = VideoPlayerWidget(master=self.master_image_frame, show_controls=True)
+        self.video_player.grid(row=1, column=0, sticky="nsew")
         try:
             self.video_player.load_video(file_path=self.image_file)
         except Exception as e:
