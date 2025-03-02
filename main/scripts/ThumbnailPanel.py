@@ -135,7 +135,7 @@ class ThumbnailPanel(Frame):
                 self.thumbnail_cache[cache_key] = thumbnail_photo
                 return thumbnail_photo
         except Exception as e:
-            print(f"Error creating thumbnail for {image_file}: {e}")
+            #print(f"Error creating thumbnail for {image_file}: {e}")
             return None
 
 
