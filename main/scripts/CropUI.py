@@ -995,8 +995,11 @@ class ImageCanvas(tk.Canvas):
 
     def _display_image(self, img_path):
         self.img_path = img_path
-        with Image.open(img_path) as img:
-            self.original_img = img.copy()
+        if img_path.lower().endswith('.mp4'):
+            self.original_img = Image.new("RGB", (32, 32), "white")
+        else:
+            with Image.open(img_path) as img:
+                self.original_img = img.copy()
         self.original_img_width, self.original_img_height = self.original_img.size
         self.img_scale_ratio = 1.0
         self.new_size = (0, 0)
