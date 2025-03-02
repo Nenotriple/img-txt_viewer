@@ -29,6 +29,7 @@ import shutil
 import ctypes
 import zipfile
 import subprocess
+from io import BytesIO
 
 
 # Standard Library - GUI
@@ -70,6 +71,7 @@ from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
 from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
 from main.scripts.ThumbnailPanel import ThumbnailPanel
 from main.scripts.video_player_widget import VideoPlayerWidget
+import main.scripts.video_thumbnail_generator as vtg
 
 
 #endregion
@@ -1536,6 +1538,7 @@ class ImgTxtViewer:
         self.info_text.pack_forget()
         current_image_path = self.image_files[self.current_index] if self.image_files else None
         self.refresh_file_lists()
+        self.update_video_thumbnails()
         self.enable_menu_options()
         self.create_text_box()
         self.restore_previous_index(current_image_path)
@@ -1567,6 +1570,12 @@ class ImgTxtViewer:
             self.original_text_files = list(self.text_files)
         self.update_total_image_label()
         self.prev_num_files = len(files_in_dir)
+
+
+    def update_video_thumbnails(self):
+        if not self.is_ffmpeg_installed:
+            return
+        self.video_thumb_dict = vtg.generate_video_thumbnails(file_paths=self.image_files)
 
 
     def update_total_image_label(self):
@@ -1759,6 +1768,7 @@ class ImgTxtViewer:
             self.get_text_summary()
             if self.is_image_grid_visible_var.get():
                 self.image_grid.highlight_thumbnail(self.current_index)
+            self.update_videoinfo()
         else:
             self.primary_display_image.unbind("<Configure>")
 
@@ -1800,6 +1810,25 @@ class ImgTxtViewer:
                 self.debounce_refresh_image(event)
 
 
+    def update_videoinfo(self):
+        if not self.is_ffmpeg_installed or not self.image_files:
+            return
+        if self.image_file.lower().endswith((".mp4")):
+            video_thumb_img: 'Image' = self.video_thumb_dict.get(self.image_file)
+            if video_thumb_img:
+                width, height = video_thumb_img.size
+                color_mode = video_thumb_img.mode
+                img_bytes = BytesIO()
+                video_thumb_img.save(img_bytes, format=video_thumb_img.format or "PNG")
+                file_size = img_bytes.tell()
+                size_kb = file_size / 1024
+                size_str = f"{round(size_kb)} KB" if size_kb < 1024 else f"{round(size_kb / 1024, 2)} MB"
+                filename = os.path.basename(self.image_file)
+                _filename = (filename[:40] + '(...)') if len(filename) > 45 else filename
+                self.label_image_stats.config(text=f"  |  {_filename}  |  {width} x {height}  |  {size_str}  |  {color_mode}", anchor="w")
+                self.label_image_stats_tooltip.config(text=f"Filename: {filename}\nResolution: {width} x {height}\nSize: {size_str}\nColor Mode: {color_mode}")
+
+
     def update_imageinfo(self, percent_scale=100):
         if self.image_files:
             self.image_file = self.image_files[self.current_index]
@@ -1808,6 +1837,7 @@ class ImgTxtViewer:
             image_info = self.image_info_cache[self.image_file]
             self.label_image_stats.config(text=f"  |  {image_info['filename']}  |  {image_info['resolution']}  |  {percent_scale}%  |  {image_info['size']}  |  {image_info['color_mode']}", anchor="w")
             self.label_image_stats_tooltip.config(text=f"Filename: {image_info['filename']}\nResolution: {image_info['resolution']}\nSize: {image_info['size']}\nColor Mode: {image_info['color_mode']}")
+
 
     def get_image_info(self, image_file):
         try:
@@ -1820,7 +1850,7 @@ class ImgTxtViewer:
         size_kb = size / 1024
         size_str = f"{round(size_kb)} KB" if size_kb < 1024 else f"{round(size_kb / 1024, 2)} MB"
         filename = os.path.basename(image_file)
-        filename = (filename[:61] + '(...)') if len(filename) > 64 else filename
+        filename = (filename[:40] + '(...)') if len(filename) > 45 else filename
         return {"filename": filename, "resolution": f"{width} x {height}", "size": size_str, "color_mode": color_mode}
 
 
@@ -1903,6 +1933,7 @@ class ImgTxtViewer:
         extensions = ['.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif']
         if self.is_ffmpeg_installed:
             extensions.append('.mp4')
+            self.update_video_thumbnails()
         self.image_files = [file for ext in extensions for file in glob.glob(f"{self.image_dir.get()}/*{ext}")]
         self.image_files.sort(key=self.get_file_sort_key(), reverse=self.reverse_load_order_var.get())
         self.text_files = [os.path.splitext(file)[0] + '.txt' for file in self.image_files]
@@ -2550,6 +2581,7 @@ class ImgTxtViewer:
         extensions = ['.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif']
         if self.is_ffmpeg_installed:
             extensions.append('.mp4')
+            self.update_video_thumbnails()
         if any(fname.lower().endswith(tuple(extensions)) for fname in os.listdir(directory)):
             self.filepath_contains_images_var = True
             return True
@@ -2763,6 +2795,7 @@ class ImgTxtViewer:
                 self.text_files[self.current_index] = new_text_file
             messagebox.showinfo("Success", "The pair has been renamed successfully.")
             self.refresh_file_lists()
+            self.update_video_thumbnails()
             self.show_pair()
             new_index = self.image_files.index(new_image_file)
             self.jump_to_image(new_index)
