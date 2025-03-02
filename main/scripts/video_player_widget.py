@@ -25,6 +25,8 @@ class VideoPlayerWidget(ttk.Frame):
         # Initialize video player
         self.vid_player = TkinterVideo(keep_aspect=True, master=self)
         self.vid_player.pack(expand=True, fill="both")
+        # Create loading label (initially hidden)
+        self.loading_label = ttk.Label(self, text="Loading...", font=('', 14))
         # Initialize repeat state
         self.repeat = True
         self.playing = False
@@ -66,6 +68,17 @@ class VideoPlayerWidget(ttk.Frame):
         self.end_time.pack(side="left")
 
 
+    def show_loading_label(self):
+        """Display the loading label centered on the video player"""
+        self.loading_label.place(relx=0.5, rely=0.5, anchor='center')
+        self.update_idletasks()
+
+
+    def hide_loading_label(self):
+        """Hide the loading label"""
+        self.loading_label.place_forget()
+
+
     def load_video(self, file_path=None):
         """Load a video file"""
         if file_path is None:
@@ -75,13 +88,15 @@ class VideoPlayerWidget(ttk.Frame):
             self.play_pause_btn.config(text="▶")
             self.progress_slider.config(to=0, from_=0)
             self.progress_slider.set(0)
-            self.after(200, self.play)
+            self.show_loading_label()
+            self.after(425, self.play)
             return True
         return False
 
 
     def play(self):
         """Play the video"""
+        self.hide_loading_label()
         self.vid_player.play()
         self.play_pause_btn.config(text="◼")
         self.playing = True
