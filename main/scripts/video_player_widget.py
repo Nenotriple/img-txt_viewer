@@ -37,7 +37,7 @@ class VideoPlayerWidget(ttk.Frame):
         controls = ttk.Frame(self)
         controls.pack(fill="x", side="bottom")
         # Play/Pause button
-        self.play_pause_btn = ttk.Button(controls, text="▶", command=self.stop, width=3)
+        self.play_pause_btn = ttk.Button(controls, text="▶", command=self.toggle_play_pause, width=3)
         self.play_pause_btn.pack(side="left")
         # Start time label
         self.start_time = ttk.Label(controls, text="0:00:00")
@@ -148,3 +148,9 @@ class VideoPlayerWidget(ttk.Frame):
     def get_player(self):
         """Return the underlying TkinterVideo instance"""
         return self.vid_player
+
+    def destroy_player(self):
+        """Destroy the underlying TkinterVideo instance"""
+        self.vid_player.destroy()
+        self.vid_player = None
+        self.destroy()
