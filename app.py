@@ -69,6 +69,8 @@ from main.scripts.Autocomplete import SuggestionHandler
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
 from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
 from main.scripts.ThumbnailPanel import ThumbnailPanel
+from main.scripts.video_player_widget import VideoPlayerWidget
+import main.scripts.video_thumbnail_generator as vtg
 
 
 #endregion
@@ -154,6 +156,7 @@ class ImgTxtViewer:
         self.undo_state = StringVar(value="disabled")
         self.previous_window_size = (self.root.winfo_width(), self.root.winfo_height())
         self.initialize_text_pane = True
+        self.is_ffmpeg_installed = shutil.which("ffmpeg") is not None
 
         # 'after()' Job IDs
         self.is_resizing_job_id = None
@@ -542,6 +545,10 @@ class ImgTxtViewer:
         self.primary_display_image.bind("<ButtonPress-1>", self.start_drag)
         self.primary_display_image.bind("<ButtonRelease-1>", self.stop_drag)
         self.primary_display_image.bind("<B1-Motion>", self.dragging_window)
+        # Video Player
+        self.video_player = VideoPlayerWidget(master=self.master_image_inner_frame)
+        self.video_player.grid(row=1, column=0, sticky="nsew")
+        self.video_player.grid_remove()
         self.popup_zoom = PopUpZoom(self.primary_display_image)
         self.toggle_zoom_var = BooleanVar(value=self.popup_zoom.zoom_enabled.get())
         self.image_preview_tooltip = ToolTip.create(self.primary_display_image, "Right-Click for more\nMiddle-click to open in file explorer\nDouble-Click to open in your system image viewer\nALT+Left/Right or Mouse-Wheel to move between pairs", 1000, 6, 12)
@@ -1406,17 +1413,16 @@ class ImgTxtViewer:
 # ImgTxtViewer states
 # --------------------------------------
     def toggle_image_grid(self, event=None):
-        if event is not None:
-            self.is_image_grid_visible_var.set(not self.is_image_grid_visible_var.get())
-        if self.master_image_inner_frame.winfo_viewable():
-            self.master_image_inner_frame.grid_remove()
-            self.image_grid.initialize()
-            self.image_grid.grid()
-            self.root.after(250, self.image_grid.reload_grid)
-        else:
+        if not self.is_image_grid_visible_var.get():
             self.refresh_image()
             self.image_grid.grid_remove()
             self.master_image_inner_frame.grid()
+        else:
+            if self.master_image_inner_frame.winfo_viewable():
+                self.master_image_inner_frame.grid_remove()
+                self.image_grid.initialize()
+                self.image_grid.grid()
+                self.root.after(250, self.image_grid.reload_grid)
 
 
 #endregion
@@ -1531,6 +1537,7 @@ class ImgTxtViewer:
         self.info_text.pack_forget()
         current_image_path = self.image_files[self.current_index] if self.image_files else None
         self.refresh_file_lists()
+        self.update_video_thumbnails()
         self.enable_menu_options()
         self.create_text_box()
         self.restore_previous_index(current_image_path)
@@ -1564,6 +1571,12 @@ class ImgTxtViewer:
         self.prev_num_files = len(files_in_dir)
 
 
+    def update_video_thumbnails(self):
+        if not self.is_ffmpeg_installed:
+            return
+        self.video_thumb_dict = vtg.generate_video_thumbnails(file_paths=self.image_files)
+
+
     def update_total_image_label(self):
         if hasattr(self, 'total_images_label'):
             if not self.text_controller.filter_is_active:
@@ -1579,7 +1592,10 @@ class ImgTxtViewer:
                 if self.check_odd_files(filename):
                     self.rename_odd_files(filename)
         for filename in files_in_dir:
-            if filename.lower().endswith((".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif")):
+            extensions = [".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif"]
+            if self.is_ffmpeg_installed:
+                extensions.append(".mp4")
+            if filename.lower().endswith(tuple(extensions)):
                 image_file_path = os.path.join(self.image_dir.get(), filename)
                 self.image_files.append(image_file_path)
                 text_filename = os.path.splitext(filename)[0] + ".txt"
@@ -1627,6 +1643,21 @@ class ImgTxtViewer:
         try:
             self.image_file = self.image_files[self.current_index]
             text_file = self.text_files[self.current_index] if self.current_index < len(self.text_files) else None
+            file_extension = os.path.splitext(self.image_file)[1].lower()
+            if self.is_ffmpeg_installed and file_extension == '.mp4':
+                self.display_mp4_video()
+                if self.edit_panel_visible_var.get():
+                    self.edit_panel.toggle_edit_panel_widgets("disabled")
+                return text_file, None, None, None
+            else:
+                if not self.primary_display_image.winfo_viewable():
+                    self.primary_display_image.grid()
+                    if self.video_player.playing:
+                        self.video_player.stop
+                    if self.video_player.winfo_viewable():
+                        self.video_player.grid_remove()
+                if self.edit_panel_visible_var.get():
+                    self.edit_panel.toggle_edit_panel_widgets("normal")
             image = self.load_image_file(self.image_file, text_file)
             if image is None:
                 return text_file, None, None, None
@@ -1634,7 +1665,7 @@ class ImgTxtViewer:
             resize_event.height = self.primary_display_image.winfo_height()
             resize_event.width = self.primary_display_image.winfo_width()
             resized_image, resized_width, resized_height = self.resize_and_scale_image(image, resize_event.width, resize_event.height, resize_event)
-            if image.format == 'GIF':
+            if file_extension == '.gif':
                 self.frame_iterator = iter(self.gif_frames)
                 self.current_frame_index = 0
                 self.display_animated_gif()
@@ -1651,6 +1682,19 @@ class ImgTxtViewer:
             return text_file, image, resize_event.width, resize_event.height
         except ValueError:
             self.check_image_dir()
+
+
+    def display_mp4_video(self):
+        if self.is_image_grid_visible_var.get():
+            return
+        self.primary_display_image.grid_remove()
+        self.video_player.destroy_player()
+        self.video_player = VideoPlayerWidget(master=self.master_image_inner_frame, parent=self)
+        self.video_player.grid(row=1, column=0, sticky="nsew")
+        try:
+            self.video_player.load_video(file_path=self.image_file)
+        except Exception as e:
+            print(f"Error loading video: {e}")
 
 
     def display_animated_gif(self):
@@ -1710,7 +1754,7 @@ class ImgTxtViewer:
         if self.image_files:
             text_file, image, max_img_width, max_img_height = self.display_image()
             self.load_text_file(text_file)
-            if not self.is_image_grid_visible_var.get():
+            if not self.is_image_grid_visible_var.get() and image is not None:
                 self.primary_display_image.config(width=max_img_width, height=max_img_height)
                 self.original_image = image
                 self.current_image = self.original_image.copy()
@@ -1727,6 +1771,7 @@ class ImgTxtViewer:
             self.get_text_summary()
             if self.is_image_grid_visible_var.get():
                 self.image_grid.highlight_thumbnail(self.current_index)
+            self.update_videoinfo()
         else:
             self.primary_display_image.unbind("<Configure>")
 
@@ -1745,6 +1790,10 @@ class ImgTxtViewer:
 
 
     def debounce_refresh_image(self, event=None):
+        if not self.image_files:
+            return
+        if self.image_file.lower().endswith((".mp4")):
+            return
         if self.ui_state != "ImgTxtViewer":
             return
         if hasattr(self, 'text_box'):
@@ -1764,6 +1813,31 @@ class ImgTxtViewer:
                 self.debounce_refresh_image(event)
 
 
+    def update_videoinfo(self, image_file=None):
+        if not self.is_ffmpeg_installed or not self.image_files:
+            return
+        image_file = image_file if image_file else self.image_file
+        if image_file.lower().endswith((".mp4")):
+            video_data = self.video_thumb_dict.get(image_file)
+            if video_data:
+                original_width, original_height = video_data['resolution']
+                framerate = video_data['framerate']
+                file_size = os.path.getsize(image_file)
+                size_kb = file_size / 1024
+                size_str = f"{round(size_kb)} KB" if size_kb < 1024 else f"{round(size_kb / 1024, 2)} MB"
+                filename = os.path.basename(image_file)
+                _filename = (filename[:40] + '(...)') if len(filename) > 45 else filename
+                framerate_str = f"{framerate:.2f} fps" if framerate else "Unknown fps"
+                self.label_image_stats.config(text=f"  |  {_filename}  |  {original_width} x {original_height}  |  {size_str}  |  {framerate_str}", anchor="w")
+                self.label_image_stats_tooltip.config(text=f"Filename: {filename}\nResolution: {original_width} x {original_height}\nFramerate: {framerate_str}\nSize: {size_str}")
+                return {
+                    "filename": filename,
+                    "resolution": f"{original_width} x {original_height}",
+                    "framerate": framerate_str,
+                    "size": size_str,
+                }
+
+
     def update_imageinfo(self, percent_scale=100):
         if self.image_files:
             self.image_file = self.image_files[self.current_index]
@@ -1772,6 +1846,7 @@ class ImgTxtViewer:
             image_info = self.image_info_cache[self.image_file]
             self.label_image_stats.config(text=f"  |  {image_info['filename']}  |  {image_info['resolution']}  |  {percent_scale}%  |  {image_info['size']}  |  {image_info['color_mode']}", anchor="w")
             self.label_image_stats_tooltip.config(text=f"Filename: {image_info['filename']}\nResolution: {image_info['resolution']}\nSize: {image_info['size']}\nColor Mode: {image_info['color_mode']}")
+
 
     def get_image_info(self, image_file):
         try:
@@ -1784,7 +1859,7 @@ class ImgTxtViewer:
         size_kb = size / 1024
         size_str = f"{round(size_kb)} KB" if size_kb < 1024 else f"{round(size_kb / 1024, 2)} MB"
         filename = os.path.basename(image_file)
-        filename = (filename[:61] + '(...)') if len(filename) > 64 else filename
+        filename = (filename[:40] + '(...)') if len(filename) > 45 else filename
         return {"filename": filename, "resolution": f"{width} x {height}", "size": size_str, "color_mode": color_mode}
 
 
@@ -1865,6 +1940,9 @@ class ImgTxtViewer:
 
     def update_image_file_count(self):
         extensions = ['.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif']
+        if self.is_ffmpeg_installed:
+            extensions.append('.mp4')
+            self.update_video_thumbnails()
         self.image_files = [file for ext in extensions for file in glob.glob(f"{self.image_dir.get()}/*{ext}")]
         self.image_files.sort(key=self.get_file_sort_key(), reverse=self.reverse_load_order_var.get())
         self.text_files = [os.path.splitext(file)[0] + '.txt' for file in self.image_files]
@@ -2034,7 +2112,7 @@ class ImgTxtViewer:
         filename = self.image_files[self.current_index]
         base_filename, file_extension = os.path.splitext(filename)
         if file_extension.lower() not in supported_formats:
-            messagebox.showerror("Error: expand_image()", f"Unsupported filetype: {file_extension.upper()}")
+            messagebox.showerror("Unsupported Filetype", f"Expanding {file_extension.upper()} is not supported.")
             return
         new_filename = f"{base_filename}_ex{file_extension}"
         new_filepath = os.path.join(self.image_dir.get(), new_filename)
@@ -2081,57 +2159,10 @@ class ImgTxtViewer:
             messagebox.showerror("Error: expand_image()", f'Failed to process {filename}. Reason: {e}')
 
 
-    def rename_and_convert_pairs(self):
-        if not self.check_if_directory():
-            return
-        try:
-            convert_confirmation = messagebox.askyesnocancel("Confirm: Rename and Convert Files",
-                "Do you want to convert images as well?\n\n"
-                "Yes: Rename and convert all images and text files.\n"
-                "No: Only rename files.\n"
-                "Cancel: Cancel the operation."
-            )
-            if convert_confirmation is None:
-                return
-            self.check_working_directory()
-            target_dir = os.path.join(self.image_dir.get(), "Renamed Output")
-            os.makedirs(target_dir, exist_ok=True)
-            files = sorted(f for f in os.listdir(self.image_dir.get()) if f.endswith(tuple([".txt", ".jpg", ".jpeg", ".png", ".jfif", ".jpg_large", ".webp", ".bmp", ".gif"])))
-            base_names = {}
-            for filename in files:
-                base_name, extension = os.path.splitext(filename)
-                if base_name not in base_names:
-                    base_names[base_name] = str(len(base_names) + 1).zfill(5)
-                new_base_name = base_names[base_name]
-                if extension == ".txt":
-                    new_name = new_base_name + extension
-                else:
-                    if extension == ".gif" or convert_confirmation == False:
-                        new_name = new_base_name + extension
-                    else:
-                        new_name = new_base_name + ".jpg"
-                original_path = os.path.join(self.image_dir.get(), filename)
-                new_path = os.path.join(target_dir, new_name)
-                if convert_confirmation and extension in [".jpeg", ".png", ".jfif", ".jpg_large", ".webp", ".bmp"]:
-                    with Image.open(original_path) as img:
-                        if img.mode in ("RGBA", "P"):
-                            img = img.convert("RGB")
-                        img.save(new_path, "JPEG", quality=100)
-                else:
-                    shutil.copy(original_path, new_path)
-            set_path = messagebox.askyesno("Success", "Files renamed and converted successfully!\n\nDo you want to set the path to the output folder?")
-            if set_path:
-                self.image_dir.set(os.path.normpath(target_dir))
-                self.set_working_directory()
-        except FileNotFoundError:
-            messagebox.showerror("Error: rename_and_convert_pairs()", "The specified directory does not exist.")
-        except PermissionError:
-            messagebox.showerror("Error: rename_and_convert_pairs()", "You do not have the necessary permissions to perform this operation.")
-        except Exception as e:
-            messagebox.showerror("Error: rename_and_convert_pairs()", f"An unexpected error occurred: {str(e)}")
-
-
     def flip_current_image(self):
+        if self.image_file.lower().endswith('.mp4'):
+            messagebox.showerror("Unsupported Filetype", "Flipping MP4's is not supported.")
+            return
         filename = self.image_files[self.current_index]
         if filename.lower().endswith('.gif'):
             with Image.open(filename) as img:
@@ -2149,6 +2180,9 @@ class ImgTxtViewer:
 
 
     def rotate_current_image(self):
+        if self.image_file.lower().endswith('.mp4'):
+            messagebox.showerror("Unsupported Filetype", "Rotating MP4's is not supported.")
+            return
         filename = self.image_files[self.current_index]
         if filename.lower().endswith('.gif'):
             with Image.open(filename) as img:
@@ -2166,6 +2200,9 @@ class ImgTxtViewer:
 
 
     def resize_image(self):
+        if self.image_file.lower().endswith('.mp4'):
+            messagebox.showerror("Unsupported Filetype", "Resizing MP4's is not supported.")
+            return
         main_window_width = self.root.winfo_width()
         main_window_height = self.root.winfo_height()
         window_x = self.root.winfo_x() + -200 + main_window_width // 2
@@ -2197,6 +2234,9 @@ class ImgTxtViewer:
 
 
     def open_image_in_editor(self, event=None, index=None):
+        if self.image_file.lower().endswith('.mp4'):
+            messagebox.showerror("Unsupported Filetype", "MP4 not supported.\n\nSelect an image and try again.")
+            return
         try:
             if self.image_files:
                 app_path = self.external_image_editor_path
@@ -2559,7 +2599,11 @@ class ImgTxtViewer:
 
 
     def check_dir_for_img(self, directory):
-        if any(fname.lower().endswith(('.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif')) for fname in os.listdir(directory)):
+        extensions = ['.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif']
+        if self.is_ffmpeg_installed:
+            extensions.append('.mp4')
+            self.update_video_thumbnails()
+        if any(fname.lower().endswith(tuple(extensions)) for fname in os.listdir(directory)):
             self.filepath_contains_images_var = True
             return True
         else:
@@ -2718,21 +2762,22 @@ class ImgTxtViewer:
 
 
     def archive_dataset(self):
-        if not messagebox.askokcancel("Zip Dataset", "This will create an archive of the current folder. Only images and text files will be archived.\n\nPress OK to set the zip name and output path."):
+        if not messagebox.askokcancel("Zip Dataset", "This will create an archive of the current folder. Only images, videos, and text files will be archived.\n\nPress OK to set the zip name and output path."):
             return
         folder_path = self.image_dir.get()
         zip_filename = filedialog.asksaveasfilename(defaultextension=".zip", filetypes=[("Zip files", "*.zip")], title="Save As", initialdir=folder_path, initialfile="dataset.zip")
         if not zip_filename:
             return
-        allowed_extensions = [".txt", ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif", ".jfif", ".jpg_large"]
+        allowed_extensions = [".txt", ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif", ".jfif", ".jpg_large", ".mp4"]
         file_list = [os.path.join(folder_path, file) for file in os.listdir(folder_path) if any(file.lower().endswith(ext) for ext in allowed_extensions)]
         num_images = sum(1 for file in file_list if file.lower().endswith(('.jpg', '.jpeg', '.png', '.webp', '.bmp', '.gif', '.jfif', '.jpg_large')))
+        num_videos = sum(1 for file in file_list if file.lower().endswith('.mp4'))
         num_texts = sum(1 for file in file_list if file.lower().endswith('.txt'))
         with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_STORED) as zip_file:
             for file_path in file_list:
                 archive_name = os.path.relpath(file_path, folder_path)
                 zip_file.write(file_path, archive_name)
-        messagebox.showinfo("Success", f"The archive has been successfully zipped!\nNumber of image files: {num_images}\nNumber of text files: {num_texts}")
+        messagebox.showinfo("Success", f"The archive has been successfully zipped!\nNumber of image files: {num_images}\nNumber of video files: {num_videos}\nNumber of text files: {num_texts}")
 
 
     def manually_rename_single_pair(self):
@@ -2772,6 +2817,7 @@ class ImgTxtViewer:
                 self.text_files[self.current_index] = new_text_file
             messagebox.showinfo("Success", "The pair has been renamed successfully.")
             self.refresh_file_lists()
+            self.update_video_thumbnails()
             self.show_pair()
             new_index = self.image_files.index(new_image_file)
             self.jump_to_image(new_index)

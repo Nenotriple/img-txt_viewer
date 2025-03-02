@@ -10,7 +10,7 @@ from tkinter import BooleanVar, messagebox
 
 # Third-Party Libraries
 import numpy
-from PIL import Image
+from PIL import Image as PILImage
 from onnxruntime import InferenceSession
 
 
@@ -153,8 +153,8 @@ class OnnxTagger:
         avg_color = self._get_avg_color(image)
         ratio = float(self.model_input_height) / max(image.size)
         new_size = tuple([int(x * ratio) for x in image.size])
-        image = image.resize(new_size, Image.LANCZOS)
-        square = Image.new("RGB", (self.model_input_height, self.model_input_height), avg_color)
+        image = image.resize(new_size, PILImage.LANCZOS)
+        square = PILImage.new("RGB", (self.model_input_height, self.model_input_height), avg_color)
         square.paste(image, ((self.model_input_height - new_size[0]) // 2, (self.model_input_height - new_size[1]) // 2))
         np_image = numpy.array(square).astype(numpy.float32)
         np_image = np_image[:, :, ::-1]  # RGB -> BGR
@@ -191,7 +191,7 @@ class OnnxTagger:
         Tags an image using the specified ONNX Vision model.
 
         Parameters:
-            image_path (str): Path to the image file to be tagged.
+            image_path (str or PIL.Image.Image): Path to the image file to be tagged or a PIL Image object.
             model_path (str): Path to the ONNX model file.
             - Ensure that the model has a corresponding `selected_tags.csv` file in the same directory as the model_path.
 
@@ -203,10 +203,19 @@ class OnnxTagger:
         self.model_path = model_path
         try:
             self._load_model()
-            with Image.open(image_path) as image:
+            # Check if image_path is already a PIL Image object
+            if isinstance(image_path, PILImage.Image):
+                image = image_path
                 inferred_tags = self._process_tags(image)
+            else:
+                # Handle as a file path (string)
+                with PILImage.open(image_path) as image:
+                    inferred_tags = self._process_tags(image)
         except FileNotFoundError as e:
             messagebox.showerror("File Not Found", f"The file specified by {image_path} does not exist.\n\n{e}")
+            return
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred while processing the image: {e}")
             return
         tag_list, tag_dict = self._format_results(inferred_tags)
         return tag_list, tag_dict

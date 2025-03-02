@@ -3,6 +3,7 @@
 
 # Standard Library
 from typing import Dict
+import os
 
 # Standard Library - GUI
 from tkinter import ttk, Frame, Menu
@@ -121,12 +122,32 @@ class ThumbnailPanel(Frame):
         }
 
 
+    def _is_video_file(self, file_path: str) -> bool:
+        """Check if the file is a video file by extension."""
+        return file_path.lower().endswith('.mp4')
+
+
     def _create_thumbnail(self, image_file: str, thumbnail_width: int) -> ImageTk.PhotoImage:
-        """Create and cache a thumbnail for the given image file."""
+        """Create and cache a thumbnail for the given image or video file."""
         cache_key = (image_file, thumbnail_width)
         if cache_key in self.thumbnail_cache:
             return self.thumbnail_cache[cache_key]
         try:
+            # Check if it's a video file
+            if self._is_video_file(image_file):
+                # Get the thumbnail from video_thumb_dict if available
+                if hasattr(self.parent, 'video_thumb_dict') and image_file in self.parent.video_thumb_dict:
+                    img = self.parent.video_thumb_dict[image_file]['thumbnail']
+                    img.thumbnail((thumbnail_width, thumbnail_width), self.parent.quality_filter)
+                    img = img.convert("RGBA") if img.mode != "RGBA" else img
+                    padded_img = ImageOps.pad(img, (thumbnail_width, thumbnail_width), color=(0, 0, 0, 0))
+                    thumbnail_photo = ImageTk.PhotoImage(padded_img)
+                    self.thumbnail_cache[cache_key] = thumbnail_photo
+                    return thumbnail_photo
+                else:
+                    self.parent.update_video_thumbnails()
+                    return self._create_thumbnail(image_file, thumbnail_width)
+            # Regular image handling (or fallback for videos)
             with Image.open(image_file) as img:
                 img.thumbnail((thumbnail_width, thumbnail_width), self.parent.quality_filter)
                 img = img.convert("RGBA") if img.mode != "RGBA" else img
@@ -135,7 +156,7 @@ class ThumbnailPanel(Frame):
                 self.thumbnail_cache[cache_key] = thumbnail_photo
                 return thumbnail_photo
         except Exception as e:
-            print(f"Error creating thumbnail for {image_file}: {e}")
+            #print(f"Error creating thumbnail for {image_file}: {e}")
             return None
 
 
@@ -147,7 +168,11 @@ class ThumbnailPanel(Frame):
             image_file = self.parent.image_files[index]
             # Cache image info if needed
             if image_file not in self.image_info_cache:
-                self.image_info_cache[image_file] = self.parent.get_image_info(image_file)
+                # Use update_videoinfo for MP4 files, otherwise use get_image_info
+                if self._is_video_file(image_file):
+                    self.image_info_cache[image_file] = self.parent.update_videoinfo(image_file)
+                else:
+                    self.image_info_cache[image_file] = self.parent.get_image_info(image_file)
             # Create thumbnail
             thumbnail_photo = self._create_thumbnail(image_file, layout_info['thumbnail_width'])
             if not thumbnail_photo:
@@ -169,8 +194,9 @@ class ThumbnailPanel(Frame):
         button.bind("<Button-3>", self._create_context_menu(button, index))
         button.bind("<MouseWheel>", self.parent.mouse_scroll)
         # Add tooltip
-        image_info = self.image_info_cache[self.parent.image_files[index]]
-        tooltip_text = f"#{index + 1} | {image_info['filename']} | {image_info['resolution']} | {image_info['size']} | {image_info['color_mode']}"
+        image_file = self.parent.image_files[index]
+        image_info = self.image_info_cache[image_file]
+        tooltip_text = f"#{index + 1} | {image_info['filename']} | {image_info['resolution']} | {image_info['size']}"
         ToolTip.create(button, tooltip_text, delay=100, pady=-25, origin='widget')
         return button
 
