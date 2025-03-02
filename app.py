@@ -155,6 +155,7 @@ class ImgTxtViewer:
         self.undo_state = StringVar(value="disabled")
         self.previous_window_size = (self.root.winfo_width(), self.root.winfo_height())
         self.initialize_text_pane = True
+        self.is_ffmpeg_installed = shutil.which("ffmpeg") is not None
 
         # 'after()' Job IDs
         self.is_resizing_job_id = None
@@ -1583,7 +1584,10 @@ class ImgTxtViewer:
                 if self.check_odd_files(filename):
                     self.rename_odd_files(filename)
         for filename in files_in_dir:
-            if filename.lower().endswith((".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif", ".mp4")):
+            extensions = [".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif"]
+            if self.is_ffmpeg_installed:
+                extensions.append(".mp4")
+            if filename.lower().endswith(tuple(extensions)):
                 image_file_path = os.path.join(self.image_dir.get(), filename)
                 self.image_files.append(image_file_path)
                 text_filename = os.path.splitext(filename)[0] + ".txt"
@@ -1633,7 +1637,7 @@ class ImgTxtViewer:
             text_file = self.text_files[self.current_index] if self.current_index < len(self.text_files) else None
             file_extension = os.path.splitext(self.image_file)[1].lower()
 
-            if file_extension == '.mp4':
+            if self.is_ffmpeg_installed and file_extension == '.mp4':
                 self.display_mp4_video()
                 return text_file, None, None, None
             else:
@@ -1896,7 +1900,9 @@ class ImgTxtViewer:
 
 
     def update_image_file_count(self):
-        extensions = ['.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif', '.mp4']
+        extensions = ['.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif']
+        if self.is_ffmpeg_installed:
+            extensions.append('.mp4')
         self.image_files = [file for ext in extensions for file in glob.glob(f"{self.image_dir.get()}/*{ext}")]
         self.image_files.sort(key=self.get_file_sort_key(), reverse=self.reverse_load_order_var.get())
         self.text_files = [os.path.splitext(file)[0] + '.txt' for file in self.image_files]
@@ -2541,7 +2547,10 @@ class ImgTxtViewer:
 
 
     def check_dir_for_img(self, directory):
-        if any(fname.lower().endswith(('.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif', '.mp4')) for fname in os.listdir(directory)):
+        extensions = ['.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif']
+        if self.is_ffmpeg_installed:
+            extensions.append('.mp4')
+        if any(fname.lower().endswith(tuple(extensions)) for fname in os.listdir(directory)):
             self.filepath_contains_images_var = True
             return True
         else:
