@@ -564,6 +564,8 @@ class TextController:
             self.batch_interrogate_images()
             return
         image_path = self.parent.image_files[self.parent.current_index]
+        if image_path.lower().endswith('.mp4'):
+            image_path = self.parent.video_player.get_current_frame()
         selected_model_path = self.onnx_model_dict.get(self.auto_tag_model_combobox.get())
         if not selected_model_path or not os.path.exists(selected_model_path):
             confirm = messagebox.askyesno("Error", f"Model file not found: {selected_model_path}\n\nWould you like to view the Auto-Tag Help?")
