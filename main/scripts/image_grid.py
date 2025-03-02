@@ -41,13 +41,18 @@ class ImageGrid(ttk.Frame):
         self.parent = parent
         self.is_initialized = False
         # Supported file types
-        self.supported_filetypes = (".png", ".webp", ".jpg", ".jpeg", ".jpg_large", ".jfif", ".tif", ".tiff", ".bmp", ".gif")
+        self.supported_filetypes = (".png", ".webp", ".jpg", ".jpeg", ".jpg_large", ".jfif", ".tif", ".tiff", ".bmp", ".gif", ".mp4")
         # Used keeping track of thumbnail buttons
         self.thumbnail_buttons = {}
         # Used for highlighting the selected thumbnail
         self.initial_selected_thumbnail = None
         self.prev_selected_thumbnail = None
         self.selected_thumbnail = None
+
+
+    def _is_video_file(self, file_path: str) -> bool:
+        """Check if the file is a video file by extension."""
+        return file_path.lower().endswith('.mp4')
 
 
     def initialize(self):
@@ -215,12 +220,20 @@ class ImageGrid(ttk.Frame):
             self.thumbnail_buttons[image_index] = thumbnail
             if index == self.parent.current_index:
                 self.initial_selected_thumbnail = thumbnail
+            # Get file info (different approach for videos)
             filesize = os.path.getsize(filepath)
             filesize = f"{filesize / 1024:.2f} KB" if filesize < 1024 * 1024 else f"{filesize / 1024 / 1024:.2f} MB"
-            with Image.open(filepath) as img:
-                width, height = img.size
-            resolution = f"({width} x {height})"
-            ToolTip.create(thumbnail, f"#{image_index + 1}, {os.path.basename(filepath)}, {filesize}, {resolution}", 200, 6, 12)
+            if self._is_video_file(filepath):
+                video_info = self.parent.update_videoinfo(filepath)
+                resolution = f"({video_info['resolution']})" if 'resolution' in video_info else "(Video)"
+                tooltip_text = f"#{image_index + 1}, {os.path.basename(filepath)}, {filesize}, {resolution}"
+            else:
+                with Image.open(filepath) as img:
+                    width, height = img.size
+                resolution = f"({width} x {height})"
+                tooltip_text = f"#{image_index + 1}, {os.path.basename(filepath)}, {filesize}, {resolution}"
+
+            ToolTip.create(thumbnail, tooltip_text, 200, 6, 12)
 
 
     def load_images(self, all_images=False):
@@ -254,10 +267,28 @@ class ImageGrid(ttk.Frame):
 
     def create_new_image(self, img_path, txt_path):
         new_img = Image.new("RGBA", (self.max_width, self.max_height))
-        with Image.open(img_path) as img:
-            img.thumbnail((self.max_width, self.max_height))
-            position = ((self.max_width - img.width) // 2, (self.max_height - img.height) // 2)
-            new_img.paste(img, position)
+        # Handle video files
+        if self._is_video_file(img_path):
+            # Check if we have a thumbnail in the video_thumb_dict
+            if hasattr(self.parent, 'video_thumb_dict') and img_path in self.parent.video_thumb_dict:
+                img = self.parent.video_thumb_dict[img_path]
+                img.thumbnail((self.max_width, self.max_height))
+                position = ((self.max_width - img.width) // 2, (self.max_height - img.height) // 2)
+                new_img.paste(img, position)
+            else:
+                # Request thumbnail generation
+                self.parent.update_video_thumbnails()
+                # Create a temporary placeholder
+                draw = ImageDraw.Draw(new_img)
+                draw.rectangle([(0, 0), (self.max_width, self.max_height)], outline="gray", width=2)
+                font = ImageFont.truetype("arial", 12)
+                draw.text((self.max_width//2, self.max_height//2), "Video", fill="gray", font=font, anchor="mm")
+        else:
+            # Regular image handling
+            with Image.open(img_path) as img:
+                img.thumbnail((self.max_width, self.max_height))
+                position = ((self.max_width - img.width) // 2, (self.max_height - img.height) // 2)
+                new_img.paste(img, position)
         if txt_path is None or not os.path.exists(txt_path) or os.path.getsize(txt_path) == 0:
             flag_position = (self.max_width - self.image_flag.width, self.max_height - self.image_flag.height)
             new_img.paste(self.image_flag, flag_position, mask=self.image_flag)
@@ -272,10 +303,19 @@ class ImageGrid(ttk.Frame):
 
 
     def paste_image_flag(self, new_img, img_path, txt_path, current_text_file_size=None):
-        with Image.open(img_path) as img:
-            img.thumbnail((self.max_width, self.max_height))
-            position = ((self.max_width - img.width) // 2, (self.max_height - img.height) // 2)
-            new_img.paste(img, position)
+        # Handle video files
+        if self._is_video_file(img_path):
+            if hasattr(self.parent, 'video_thumb_dict') and img_path in self.parent.video_thumb_dict:
+                img = self.parent.video_thumb_dict[img_path]
+                img.thumbnail((self.max_width, self.max_height))
+                position = ((self.max_width - img.width) // 2, (self.max_height - img.height) // 2)
+                new_img.paste(img, position)
+        else:
+            # Regular image handling
+            with Image.open(img_path) as img:
+                img.thumbnail((self.max_width, self.max_height))
+                position = ((self.max_width - img.width) // 2, (self.max_height - img.height) // 2)
+                new_img.paste(img, position)
         if current_text_file_size is None:
             current_text_file_size = os.path.getsize(txt_path) if os.path.exists(txt_path) else 0
         if current_text_file_size == 0:
@@ -353,12 +393,22 @@ class ImageGrid(ttk.Frame):
         if not img_path:
             return
         self.prev_selected_thumbnail = button
-        with Image.open(img_path) as img:
-            img.thumbnail((self.max_width, self.max_height))
-            highlighted_thumbnail = self.apply_highlight(img)
-            bordered_thumb = ImageTk.PhotoImage(highlighted_thumbnail)
-            button.configure(image=bordered_thumb, style="Highlighted.TButton")
-            button.image = bordered_thumb
+        # Handle video files differently
+        if self._is_video_file(img_path):
+            if hasattr(self.parent, 'video_thumb_dict') and img_path in self.parent.video_thumb_dict:
+                img = self.parent.video_thumb_dict[img_path].copy()
+                img.thumbnail((self.max_width, self.max_height))
+                highlighted_thumbnail = self.apply_highlight(img)
+                bordered_thumb = ImageTk.PhotoImage(highlighted_thumbnail)
+                button.configure(image=bordered_thumb, style="Highlighted.TButton")
+                button.image = bordered_thumb
+        else:
+            with Image.open(img_path) as img:
+                img.thumbnail((self.max_width, self.max_height))
+                highlighted_thumbnail = self.apply_highlight(img)
+                bordered_thumb = ImageTk.PhotoImage(highlighted_thumbnail)
+                button.configure(image=bordered_thumb, style="Highlighted.TButton")
+                button.image = bordered_thumb
         self.ensure_thumbnail_visible(button)
         self.parent.update_imageinfo()
 
