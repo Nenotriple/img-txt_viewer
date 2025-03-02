@@ -196,7 +196,7 @@ class ThumbnailPanel(Frame):
         # Add tooltip
         image_file = self.parent.image_files[index]
         image_info = self.image_info_cache[image_file]
-        tooltip_text = f"#{index + 1} | {image_info['filename']} | {image_info['resolution']} | {image_info['size']} | {image_info['color_mode']}"
+        tooltip_text = f"#{index + 1} | {image_info['filename']} | {image_info['resolution']} | {image_info['size']}"
         ToolTip.create(button, tooltip_text, delay=100, pady=-25, origin='widget')
         return button
 
