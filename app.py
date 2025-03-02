@@ -1646,6 +1646,8 @@ class ImgTxtViewer:
             file_extension = os.path.splitext(self.image_file)[1].lower()
             if self.is_ffmpeg_installed and file_extension == '.mp4':
                 self.display_mp4_video()
+                if self.edit_panel_visible_var.get():
+                    self.edit_panel.toggle_edit_panel_widgets("disabled")
                 return text_file, None, None, None
             else:
                 if not self.primary_display_image.winfo_viewable():
@@ -1654,6 +1656,8 @@ class ImgTxtViewer:
                         self.video_player.stop
                     if self.video_player.winfo_viewable():
                         self.video_player.grid_remove()
+                if self.edit_panel_visible_var.get():
+                    self.edit_panel.toggle_edit_panel_widgets("normal")
             image = self.load_image_file(self.image_file, text_file)
             if image is None:
                 return text_file, None, None, None
@@ -2108,7 +2112,7 @@ class ImgTxtViewer:
         filename = self.image_files[self.current_index]
         base_filename, file_extension = os.path.splitext(filename)
         if file_extension.lower() not in supported_formats:
-            messagebox.showerror("Error: expand_image()", f"Unsupported filetype: {file_extension.upper()}")
+            messagebox.showerror("Unsupported Filetype", f"Expanding {file_extension.upper()} is not supported.")
             return
         new_filename = f"{base_filename}_ex{file_extension}"
         new_filepath = os.path.join(self.image_dir.get(), new_filename)
@@ -2156,6 +2160,9 @@ class ImgTxtViewer:
 
 
     def flip_current_image(self):
+        if self.image_file.lower().endswith('.mp4'):
+            messagebox.showerror("Unsupported Filetype", "Flipping MP4's is not supported.")
+            return
         filename = self.image_files[self.current_index]
         if filename.lower().endswith('.gif'):
             with Image.open(filename) as img:
@@ -2173,6 +2180,9 @@ class ImgTxtViewer:
 
 
     def rotate_current_image(self):
+        if self.image_file.lower().endswith('.mp4'):
+            messagebox.showerror("Unsupported Filetype", "Rotating MP4's is not supported.")
+            return
         filename = self.image_files[self.current_index]
         if filename.lower().endswith('.gif'):
             with Image.open(filename) as img:
@@ -2190,6 +2200,9 @@ class ImgTxtViewer:
 
 
     def resize_image(self):
+        if self.image_file.lower().endswith('.mp4'):
+            messagebox.showerror("Unsupported Filetype", "Resizing MP4's is not supported.")
+            return
         main_window_width = self.root.winfo_width()
         main_window_height = self.root.winfo_height()
         window_x = self.root.winfo_x() + -200 + main_window_width // 2
@@ -2221,6 +2234,9 @@ class ImgTxtViewer:
 
 
     def open_image_in_editor(self, event=None, index=None):
+        if self.image_file.lower().endswith('.mp4'):
+            messagebox.showerror("Unsupported Filetype", "MP4 not supported.\n\nSelect an image and try again.")
+            return
         try:
             if self.image_files:
                 app_path = self.external_image_editor_path
@@ -2746,21 +2762,22 @@ class ImgTxtViewer:
 
 
     def archive_dataset(self):
-        if not messagebox.askokcancel("Zip Dataset", "This will create an archive of the current folder. Only images and text files will be archived.\n\nPress OK to set the zip name and output path."):
+        if not messagebox.askokcancel("Zip Dataset", "This will create an archive of the current folder. Only images, videos, and text files will be archived.\n\nPress OK to set the zip name and output path."):
             return
         folder_path = self.image_dir.get()
         zip_filename = filedialog.asksaveasfilename(defaultextension=".zip", filetypes=[("Zip files", "*.zip")], title="Save As", initialdir=folder_path, initialfile="dataset.zip")
         if not zip_filename:
             return
-        allowed_extensions = [".txt", ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif", ".jfif", ".jpg_large"]
+        allowed_extensions = [".txt", ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif", ".jfif", ".jpg_large", ".mp4"]
         file_list = [os.path.join(folder_path, file) for file in os.listdir(folder_path) if any(file.lower().endswith(ext) for ext in allowed_extensions)]
         num_images = sum(1 for file in file_list if file.lower().endswith(('.jpg', '.jpeg', '.png', '.webp', '.bmp', '.gif', '.jfif', '.jpg_large')))
+        num_videos = sum(1 for file in file_list if file.lower().endswith('.mp4'))
         num_texts = sum(1 for file in file_list if file.lower().endswith('.txt'))
         with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_STORED) as zip_file:
             for file_path in file_list:
                 archive_name = os.path.relpath(file_path, folder_path)
                 zip_file.write(file_path, archive_name)
-        messagebox.showinfo("Success", f"The archive has been successfully zipped!\nNumber of image files: {num_images}\nNumber of text files: {num_texts}")
+        messagebox.showinfo("Success", f"The archive has been successfully zipped!\nNumber of image files: {num_images}\nNumber of video files: {num_videos}\nNumber of text files: {num_texts}")
 
 
     def manually_rename_single_pair(self):
