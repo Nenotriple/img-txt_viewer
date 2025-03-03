@@ -5,6 +5,83 @@ from typing import List, Dict, Optional, Tuple, Any
 from PIL import Image
 
 
+def _open_video_container(file_path: str) -> Optional[av.container.InputContainer]:
+    """
+    Helper function to open a video file and check if it exists.
+
+    Args:
+        file_path: Path to the video file
+
+    Returns:
+        Container object or None if file doesn't exist or on error
+    """
+    if not os.path.exists(file_path):
+        print(f"File not found: {file_path}")
+        return None
+
+    try:
+        return av.open(file_path)
+    except Exception as e:
+        print(f"Error opening {file_path}: {str(e)}")
+        return None
+
+
+def _get_video_stream(container: av.container.InputContainer) -> Optional[av.video.stream.VideoStream]:
+    """
+    Helper function to get the video stream from a container.
+
+    Args:
+        container: AV container object
+
+    Returns:
+        Video stream or None if no video stream exists
+    """
+    if not container.streams.video:
+        print(f"No video stream found in container")
+        return None
+    return container.streams.video[0]
+
+
+def _extract_frame(
+    container: av.container.InputContainer,
+    stream: av.video.stream.VideoStream,
+    timestamp_seconds: float,
+    thumbnail_size: Optional[Tuple[int, int]] = None
+) -> Optional[Image.Image]:
+    """
+    Helper function to extract a frame from a video at the specified timestamp.
+
+    Args:
+        container: AV container object
+        stream: Video stream object
+        timestamp_seconds: Time position in seconds to extract the frame from
+        thumbnail_size: Optional tuple (width, height) to resize the frame
+
+    Returns:
+        PIL Image object of the extracted frame or None if extraction fails
+    """
+    try:
+        # Seek to the target frame
+        container.seek(int(timestamp_seconds * 1000000), stream=stream)
+
+        # Get the frame
+        for frame in container.decode(stream):
+            # Convert the frame to a PIL Image
+            img = frame.to_image()
+
+            # Resize if needed
+            if thumbnail_size:
+                img = img.resize(thumbnail_size, Image.LANCZOS)
+
+            return img
+
+        print("Could not extract frame from video")
+        return None
+    except Exception as e:
+        print(f"Error extracting frame: {str(e)}")
+        return None
+
+
 def generate_video_thumbnails(
     file_paths: List[str],
     timestamp_seconds: float = 2.0,
@@ -30,39 +107,24 @@ def generate_video_thumbnails(
         if not file_path.lower().endswith('.mp4'):
             continue
         try:
-            if not os.path.exists(file_path):
-                print(f"File not found: {file_path}")
+            container = _open_video_container(file_path)
+            if not container:
                 continue
-            # Open the video file
-            container = av.open(file_path)
-            # Get video stream
-            if not container.streams.video:
-                print(f"No video stream found in: {file_path}")
+            stream = _get_video_stream(container)
+            if not stream:
+                container.close()
                 continue
-            stream = container.streams.video[0]
             # Extract resolution and framerate
             resolution = (stream.width, stream.height)
             framerate = float(stream.average_rate) if stream.average_rate else None
-            # Seek to the target frame
-            container.seek(int(timestamp_seconds * 1000000), stream=stream)
-            # Get the frame
-            frame_extracted = False
-            for frame in container.decode(stream):
-                # Convert the frame to a PIL Image
-                img = frame.to_image()
-                # Resize if needed
-                if thumbnail_size:
-                    img = img.resize(thumbnail_size, Image.LANCZOS)
-                # Store thumbnail along with resolution and framerate
+            # Extract frame
+            img = _extract_frame(container, stream, timestamp_seconds, thumbnail_size)
+            if img:
                 video_thumb_dict[file_path] = {
                     'thumbnail': img,
                     'resolution': resolution,
                     'framerate': framerate
                 }
-                frame_extracted = True
-                break  # Only need one frame
-            if not frame_extracted:
-                print(f"Could not extract frame from: {file_path}")
             container.close()
         except Exception as e:
             print(f"Error processing {file_path}: {str(e)}")
@@ -86,32 +148,16 @@ def get_video_frame(
         PIL Image object of the extracted frame or None if extraction fails
     """
     try:
-        if not os.path.exists(file_path):
-            print(f"File not found: {file_path}")
+        container = _open_video_container(file_path)
+        if not container:
             return None
-        # Open the video file
-        container = av.open(file_path)
-        # Get video stream
-        if not container.streams.video:
-            print(f"No video stream found in: {file_path}")
+        stream = _get_video_stream(container)
+        if not stream:
             container.close()
             return None
-        stream = container.streams.video[0]
-        # Seek to the target frame
-        container.seek(int(timestamp_seconds * 1000000), stream=stream)
-        # Get the frame
-        for frame in container.decode(stream):
-            # Convert the frame to a PIL Image
-            img = frame.to_image()
-            # Resize if needed
-            if thumbnail_size:
-                img = img.resize(thumbnail_size, Image.LANCZOS)
-            # Clean up and return the frame
-            container.close()
-            return img
-        print(f"Could not extract frame from: {file_path}")
+        img = _extract_frame(container, stream, timestamp_seconds, thumbnail_size)
         container.close()
-        return None
+        return img
     except Exception as e:
         print(f"Error processing {file_path}: {str(e)}")
         return None
