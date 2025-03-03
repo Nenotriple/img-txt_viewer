@@ -6,9 +6,10 @@ REM Set up a Python virtual environment and run a specified Python script.
 
 
 REM Variables
-set "PYTHON_SCRIPT=img-txt_viewer.py"
+set "PYTHON_SCRIPT=app.py"
 set "VENV_DIR=venv"
 set "SCRIPT_DIR=%~dp0"
+set "FAST_START=FALSE"
 
 
 REM Navigate to the script directory
@@ -18,6 +19,24 @@ cd /d "%SCRIPT_DIR%" || (
     exit /b 1
 )
 echo Set current directory... OK
+
+
+REM Skip setup if FAST_START is TRUE
+if "%FAST_START%"=="TRUE" (
+    call "%VENV_DIR%\Scripts\activate.bat" || (
+        echo Activating the virtual environment... FAIL
+        pause
+        exit /b 1
+    )
+    echo Virtual environment activated.
+    echo Launching: %PYTHON_SCRIPT%
+    echo.
+    python "%PYTHON_SCRIPT%" || (
+        echo Launching... FAIL
+    )
+    call cmd /k
+    exit /b 0
+)
 
 
 REM Check if Python is installed
@@ -76,6 +95,7 @@ if "%PYTHON_SCRIPT%"=="" (
     echo Auto-Launch: Skipping
 ) else (
     echo Launching: %PYTHON_SCRIPT%
+    echo.
     python "%PYTHON_SCRIPT%" || (
         echo Launching... FAIL
         pause
