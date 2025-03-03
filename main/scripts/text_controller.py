@@ -640,7 +640,7 @@ class TextController:
             self.stop_batch = True
             popup.destroy()
             messagebox.showinfo("Batch Interrogate", f"Batch interrogation stopped\n\n{index} out of {total_images} images were interrogated")
-
+        popup = None
         if self.auto_insert_mode_var.get() == "disable":
             messagebox.showinfo("Batch Interrogate", "Auto-Insert must be enabled to use Batch Interrogate")
             return
@@ -694,7 +694,7 @@ class TextController:
                     if video_frame:
                         tag_list, tag_dict = self.parent.onnx_tagger.tag_image(video_frame, model_path=selected_model_path)
                     else:
-                        print(f"Couldn't extract frame from video: {image_path}")
+                        tag_list, tag_dict = [], {}  # Video frame could not be extracted
                         continue
                 else:
                     tag_list, tag_dict = self.parent.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
