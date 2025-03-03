@@ -13,7 +13,6 @@ import numpy
 from PIL import Image as PILImage
 from onnxruntime import InferenceSession
 
-
 # Type Hinting
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
