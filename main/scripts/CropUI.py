@@ -893,7 +893,9 @@ class CropSelGuidelines:
             return
         self.mode = mode
         x1, y1, x2, y2 = self.img_canvas.coords(self.crop_selection.rect)
-        if self.mode == 'Center Lines':
+        if self.mode == "Crosshair":
+            self._draw_crosshair(x1, y1, x2, y2)
+        elif self.mode == 'Center Lines':
             self._draw_center_line_guidelines(x1, y1, x2, y2)
         elif self.mode == 'Rule of Thirds':
             self._draw_rule_of_thirds_guidelines(x1, y1, x2, y2)
@@ -945,6 +947,24 @@ class CropSelGuidelines:
             self.draw_guideline(x1, y1, x2, y2, offset)
 
 
+    def _draw_crosshair(self, x1, y1, x2, y2):
+        # Calculate center point
+        cx = (x1 + x2) / 2
+        cy = (y1 + y2) / 2
+        size = 4
+        # Draw crosshair lines
+        self.guidelines.extend([
+            # White crosshair
+            self.img_canvas.create_line(cx-size, cy, cx+size, cy, fill='white'),
+            self.img_canvas.create_line(cx, cy-size, cx, cy+size, fill='white'),
+            # Black outline
+            self.img_canvas.create_line(cx-size, cy-1, cx+size, cy-1, fill='black'),
+            self.img_canvas.create_line(cx-size, cy+1, cx+size, cy+1, fill='black'),
+            self.img_canvas.create_line(cx-1, cy-size, cx-1, cy+size, fill='black'),
+            self.img_canvas.create_line(cx+1, cy-size, cx+1, cy+size, fill='black')
+        ])
+
+
     def clear_guidelines(self):
         for line in self.guidelines:
             self.img_canvas.delete(line)
@@ -967,6 +987,7 @@ class CropSelGuidelines:
         x2_off = x2 + px * offset
         y2_off = y2 + py * offset
         return x1_off, y1_off, x2_off, y2_off
+
 
 
 #endregion
@@ -1085,7 +1106,7 @@ class CropInterface:
         self.overlay_var = tk.BooleanVar(value=True)
         self.after_crop_var = tk.StringVar(value="Save & Close")
         self.expand_center_toggle_var = tk.BooleanVar(value=False)
-        self.guidelines_var = tk.StringVar(value="No Guides")
+        self.guidelines_var = tk.StringVar(value="Crosshair")
 
         # Fixed Selection
         self.fixed_sel_toggle_var = tk.BooleanVar(value=False)
@@ -1339,7 +1360,7 @@ class CropInterface:
         overlay_checkbutton.grid(row=0, column=1, padx=self.padxl, pady=self.pady, sticky="e")
         ToolTip(overlay_checkbutton, "Toggle the overlay/highlight that darkens the background during selection", 200, 6, 12)
         # Guidelines
-        self.guidelines_combobox = ttk.Combobox(options_frame, values=["No Guides", "Center Lines", "Rule of Thirds", "Diagonal Lines"], textvariable=self.guidelines_var, state="readonly", width=16)
+        self.guidelines_combobox = ttk.Combobox(options_frame, values=["No Guides", "Crosshair", "Center Lines", "Rule of Thirds", "Diagonal Lines"], textvariable=self.guidelines_var, state="readonly", width=16)
         self.guidelines_combobox.grid(row=1, column=0, padx=self.pady, pady=self.pady, sticky="ew")
         self.guidelines_combobox.bind("<<ComboboxSelected>>", lambda event: self.crop_selection.guidelines_manager.update_guidelines(self.guidelines_var.get()))
 
