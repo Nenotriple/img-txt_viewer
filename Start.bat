@@ -10,6 +10,7 @@ set "PYTHON_SCRIPT=app.py"
 set "VENV_DIR=venv"
 set "SCRIPT_DIR=%~dp0"
 set "FAST_START=FALSE"
+set "AUTO_FAST_START=TRUE"
 
 
 REM Navigate to the script directory
@@ -19,6 +20,15 @@ cd /d "%SCRIPT_DIR%" || (
     exit /b 1
 )
 echo Set current directory... OK
+
+
+REM Check if settings.cfg exists and AUTO_FAST_START is enabled
+if "%AUTO_FAST_START%"=="TRUE" (
+    if exist "settings.cfg" (
+        set "FAST_START=TRUE"
+        echo settings.cfg found. Enabling FAST_START mode.
+    )
+)
 
 
 REM Skip setup if FAST_START is TRUE
