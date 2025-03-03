@@ -87,7 +87,7 @@ class CropSelection:
                 return
             else:
                 self.clear_selection()
-        if not (x_off <= event.x <= x_max and y_off <= event.y <= y_max):
+        if not (x_off <= event.x <= x_max and y_off <= event.x <= y_max):
             return
         if not self.crop_ui.fixed_sel_toggle_var.get():
             self._start_selection(event, x_off, y_off, x_max, y_max)
@@ -184,10 +184,54 @@ class CropSelection:
         if not self.img_canvas.img_path:
             return
         img_width, img_height = self.img_canvas.original_img_width, self.img_canvas.original_img_height
-        half_width, half_height = img_width // 2, img_height // 2
         center_x, center_y = img_width // 2, img_height // 2
-        x1, y1 = center_x - half_width // 2, center_y - half_height // 2
-        x2, y2 = center_x + half_width // 2, center_y + half_height // 2
+        # Handle fixed selection if enabled
+        if self.crop_ui.fixed_sel_toggle_var.get():
+            mode = self.crop_ui.fixed_sel_mode_var.get()
+            value = self.crop_ui.fixed_sel_entry_var.get()
+            if mode == "Aspect Ratio":
+                try:
+                    if ":" in value:
+                        width_ratio, height_ratio = map(float, value.split(":"))
+                        aspect_ratio = width_ratio / height_ratio
+                    else:
+                        aspect_ratio = float(value)
+                    if aspect_ratio >= 1:  # Wider than tall
+                        half_width = min(img_width // 2, int(img_height * aspect_ratio) // 2)
+                        half_height = int(half_width / aspect_ratio)
+                    else:  # Taller than wide
+                        half_height = min(img_height // 2, int(img_width / aspect_ratio) // 2)
+                        half_width = int(half_height * aspect_ratio)
+                except (ValueError, ZeroDivisionError):
+                    half_width, half_height = img_width // 4, img_height // 4
+            elif mode == "Width":
+                try:
+                    fixed_width = int(float(value))
+                    half_width = min(img_width, fixed_width) // 2
+                    half_height = img_height // 4
+                except ValueError:
+                    half_width, half_height = img_width // 4, img_height // 4
+            elif mode == "Height":
+                try:
+                    fixed_height = int(float(value))
+                    half_width = img_width // 4
+                    half_height = min(img_height, fixed_height) // 2
+                except ValueError:
+                    half_width, half_height = img_width // 4, img_height // 4
+            elif mode == "Size":
+                try:
+                    if "x" in value:
+                        width, height = map(int, value.split("x"))
+                    else:
+                        width, height = map(int, value.split(","))
+                    half_width = min(img_width, width) // 2
+                    half_height = min(img_height, height) // 2
+                except (ValueError, IndexError):
+                    half_width, half_height = img_width // 4, img_height // 4
+        else:
+            half_width, half_height = img_width // 4, img_height // 4
+        x1, y1 = center_x - half_width, center_y - half_height
+        x2, y2 = center_x + half_width, center_y + half_height
         scale = self.img_canvas.img_scale_ratio
         x1_scaled = self.img_canvas.x_off + int(x1 * scale)
         y1_scaled = self.img_canvas.y_off + int(y1 * scale)
@@ -202,6 +246,7 @@ class CropSelection:
         self.rect_height = y2_scaled - y1_scaled
         self.handles_manager.update_handles()
         self.update_overlay()
+        self.crop_ui.update_widget_values(resize=True)
 
 
     def _on_mousewheel(self, event):
