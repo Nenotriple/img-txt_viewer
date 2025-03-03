@@ -52,7 +52,11 @@
 
 
 **New:**
-- **Wrap selected text in brackets**:
+- Added a tabbed row that holds the various UI tools:
+  - Tagger *(the main tab)*, Tag-Editor *(Batch Tag Edit)*, Crop, Batch Upscale, Batch Rename, and Find Duplicates.
+- Added `mp4` video support. [#52](https://github.com/Nenotriple/img-txt_viewer/issues/52)
+  - *NOTE:* MP4 support requires [FFmpeg](https://www.ffmpeg.org/) is installed to your system PATH.
+- Wrap selected text in brackets:
   - Select text in the primary text box, press a *LEFT / OPENING* bracket key `(`, `[`, `{`, `"`, `'`
   - Useful for weighted captions, example: `((sometext))`
 - You can now see a list of all tags from the `MyTags` tab, allowing you to insert these tags into MyTags or the text box.
@@ -63,20 +67,39 @@
 - The `Image Grid` is now built into the primary interface.
 - New option `Add Comma After Tag` [#51](https://github.com/Nenotriple/img-txt_viewer/issues/51)
   - When enabled (default), a comma and space ", " will be inserted at the end of the text box and after inserting a suggestion.
-
+- Added a refresh option all tools.
+- Added or improved the help popup for all tools, usually a `?` button.
+- Tag-Editor:
+  - Small improvements to the UI.
+- Batch Upscale:
+  - Remodeled the UI making it easier to switch between batch and single mode.
+  - Added a file list for selecting single images and viewing old and new image dimensions.
+- Batch Resize:
+  - Added a file list that displays old and new image dimensions.
+  - Added `Convert Only` mode.
+- Batch Rename:
+  - Added a file list for selecting the files and viewing old and new names.
+  - Added duplicate handling options:
+    - Rename, Move, Overwrite, Skip.
+  - Added rename preset: Numbering and Auto-Date
 
 **Fixed:**
-- Fixed errors when:
-  - Typing in the primary text box when no dictionary is selected.
-  - Resetting the font tab.
-  - Closing the Crop image interface.
-  - Attempting to open an image using the default editor `MS Paint`.
+- Fixed error when typing in the primary text box when no dictionary is selected.
+- Fixed issue when resetting the font.
+- Fixed error closing the Crop image interface.
+- Fixed not being able to open an image using the default editor `MS Paint`.
+- Fixed error when deleting the last pair in the file list.
 - Fixed an issue where the incorrect tag-list would be loaded when swapping AutoTag models.
-
+- Creating a wildcard from the text files now skips blank text files.
 
 **Other Changes:**
+- The Menu Bar has been reorganized.
 - It's now possible to *loop around* while clicking inside the Thumbnail panel for navigation.
 - You can now resize the AutoTag tag list.
+- Added a tooltip to the image stats for better readability when text is cut off.
+
+---
+Thank you to @younyokel, and @MNeMoNiCuZ for your suggestions during this release!
 
 
 </details>
