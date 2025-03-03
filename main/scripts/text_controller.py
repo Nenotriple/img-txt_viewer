@@ -23,7 +23,7 @@ from TkToolTip.TkToolTip import TkToolTip as ToolTip
 
 # Custom Libraries
 from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
-
+import main.scripts.video_thumbnail_generator as vtg
 
 # Type Hinting
 from typing import TYPE_CHECKING
@@ -689,7 +689,15 @@ class TextController:
                     self.update_tag_options(current_tags=current_text)
                 else:
                     self.update_tag_options()
-                tag_list, tag_dict = self.parent.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
+                if image_path.lower().endswith('.mp4'):
+                    video_frame = vtg.get_video_frame(image_path, timestamp_seconds=2.0)
+                    if video_frame:
+                        tag_list, tag_dict = self.parent.onnx_tagger.tag_image(video_frame, model_path=selected_model_path)
+                    else:
+                        print(f"Couldn't extract frame from video: {image_path}")
+                        continue
+                else:
+                    tag_list, tag_dict = self.parent.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
                 tag_list = tag_list[:max_tags]
                 tag_dict = {k: v for k, v in list(tag_dict.items())[:max_tags]}
                 self.auto_insert_batch_tags(tag_list, text_file_path)
