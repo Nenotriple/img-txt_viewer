@@ -67,3 +67,51 @@ def generate_video_thumbnails(
         except Exception as e:
             print(f"Error processing {file_path}: {str(e)}")
     return video_thumb_dict
+
+
+def get_video_frame(
+    file_path: str,
+    timestamp_seconds: float = 2.0,
+    thumbnail_size: Optional[Tuple[int, int]] = None
+) -> Optional[Image.Image]:
+    """
+    Extract a single frame from a video file at the specified timestamp.
+
+    Args:
+        file_path: Path to the video file
+        timestamp_seconds: Time position in seconds to extract the frame from
+        thumbnail_size: Optional tuple (width, height) to resize the frame
+
+    Returns:
+        PIL Image object of the extracted frame or None if extraction fails
+    """
+    try:
+        if not os.path.exists(file_path):
+            print(f"File not found: {file_path}")
+            return None
+        # Open the video file
+        container = av.open(file_path)
+        # Get video stream
+        if not container.streams.video:
+            print(f"No video stream found in: {file_path}")
+            container.close()
+            return None
+        stream = container.streams.video[0]
+        # Seek to the target frame
+        container.seek(int(timestamp_seconds * 1000000), stream=stream)
+        # Get the frame
+        for frame in container.decode(stream):
+            # Convert the frame to a PIL Image
+            img = frame.to_image()
+            # Resize if needed
+            if thumbnail_size:
+                img = img.resize(thumbnail_size, Image.LANCZOS)
+            # Clean up and return the frame
+            container.close()
+            return img
+        print(f"Could not extract frame from: {file_path}")
+        container.close()
+        return None
+    except Exception as e:
+        print(f"Error processing {file_path}: {str(e)}")
+        return None
