@@ -283,164 +283,235 @@ class ImgTxtViewer:
 
     def create_menu_bar(self):
         self.initialize_menu()
-        self.create_options_menu()
+        self.create_file_menu()
+        self.create_edit_menu()
+        self.create_view_menu()
         self.create_tools_menu()
+        self.create_options_menu()
 
 
-# --------------------------------------
-# Initialize Menu Bar
-# --------------------------------------
     def initialize_menu(self):
         # Main
         self.main_menu_bar = Menu(self.root)
         self.root.config(menu=self.main_menu_bar)
-        # Options
-        self.optionsMenu = Menu(self.main_menu_bar, tearoff=0)
-        self.main_menu_bar.add_cascade(label="Options", underline=0, menu=self.optionsMenu)
+        # File
+        self.fileMenu = Menu(self.main_menu_bar, tearoff=0)
+        self.main_menu_bar.add_cascade(label="File", menu=self.fileMenu)
+        # Edit
+        self.editMenu = Menu(self.main_menu_bar, tearoff=0)
+        self.main_menu_bar.add_cascade(label="Edit", menu=self.editMenu)
+        # View
+        self.viewMenu = Menu(self.main_menu_bar, tearoff=0)
+        self.main_menu_bar.add_cascade(label="View", menu=self.viewMenu)
         # Tools
         self.toolsMenu = Menu(self.main_menu_bar, tearoff=0)
-        self.main_menu_bar.add_cascade(label="Tools", underline=0, menu=self.toolsMenu)
-        # About
-        self.main_menu_bar.add_command(label="About", underline=0, command=self.toggle_about_window)
-
-
-# --------------------------------------
-# Options
-# --------------------------------------
-    def create_options_menu(self):
+        self.main_menu_bar.add_cascade(label="Tools", menu=self.toolsMenu)
         # Options
-        self.options_subMenu = Menu(self.optionsMenu, tearoff=0)
-        self.optionsMenu.add_cascade(label="Options", underline=0, state="disable", menu=self.options_subMenu)
-        self.options_subMenu.add_checkbutton(label="Clean-Text", underline=0, variable=self.cleaning_text_var, command=self.toggle_list_menu)
-        self.options_subMenu.add_checkbutton(label="Auto-Delete Blank Files", underline=0, variable=self.auto_delete_blank_files_var)
-        self.options_subMenu.add_checkbutton(label="Colored Suggestions", underline=1, variable=self.colored_suggestion_var, command=self.autocomplete.update_autocomplete_dictionary)
-        self.options_subMenu.add_checkbutton(label="Highlight Selection", underline=0, variable=self.highlight_selection_var)
-        self.options_subMenu.add_checkbutton(label="Add Comma After Tag", underline=0, variable=self.auto_insert_comma_var, command=self.append_comma_to_text)
-        self.options_subMenu.add_checkbutton(label="Big Save Button", underline=0, variable=self.big_save_button_var, command=self.toggle_save_button_height)
-        self.options_subMenu.add_checkbutton(label="List View", underline=0, variable=self.list_mode_var, command=self.toggle_list_mode)
-        self.options_subMenu.add_separator()
-        self.options_subMenu.add_checkbutton(label="Always On Top", underline=0, variable=self.always_on_top_var, command=self.set_always_on_top)
-        self.options_subMenu.add_checkbutton(label="Toggle Zoom", accelerator="F2", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
-        self.options_subMenu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.debounce_update_thumbnail_panel)
-        self.options_subMenu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
-        self.options_subMenu.add_checkbutton(label="Vertical View", underline=0, variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
-        self.options_subMenu.add_checkbutton(label="Swap img-txt Sides", underline=0, variable=self.panes_swap_ew_var, command=self.swap_pane_sides)
-        self.options_subMenu.add_command(label="Set Default Image Editor", underline=0, command=self.set_external_image_editor_path)
+        self.optionsMenu = Menu(self.main_menu_bar, tearoff=0)
+        self.main_menu_bar.add_cascade(label="Options", menu=self.optionsMenu)
+        # About
+        self.main_menu_bar.add_command(label="About", command=self.toggle_about_window)
+
+
+    def create_file_menu(self):
+        # Directory Operations
+        self.fileMenu.add_command(label="Select Directory...", command=self.choose_working_directory)
+        self.fileMenu.add_command(label="Open Current Directory...", state="disable", command=self.open_image_directory)
+        self.fileMenu.add_command(label="Refresh Files", command=self.refresh_files)
+        self.fileMenu.add_separator()
+        # File Operations
+        self.fileMenu.add_command(label="Open Current Image...", state="disable", command=self.open_image)
+        self.fileMenu.add_command(label="Open Text File...", state="disable", command=self.open_textfile)
+        self.fileMenu.add_command(label="Edit Image...", state="disable", accelerator="F4", command=self.open_image_in_editor)
+        self.fileMenu.add_separator()
+        # Archive Operations
+        self.fileMenu.add_command(label="Zip Dataset...", state="disable", command=self.archive_dataset)
+        self.fileMenu.add_separator()
+        # Exit
+        self.fileMenu.add_command(label="Exit", accelerator="Ctrl+W", command=self.on_closing)
+
+
+    def create_edit_menu(self):
+        # Text Operations
+        self.editMenu.add_command(label="Save Text", state="disable", accelerator="Ctrl+S", command=self.save_text_file)
+        self.editMenu.add_command(label="Cleanup All Text Files...", state="disable", command=self.cleanup_all_text_files)
+        self.editMenu.add_command(label="Create Blank Text Pairs...", state="disable", command=self.create_blank_text_files)
+        self.editMenu.add_separator()
+        # File Operations
+        self.editMenu.add_command(label="Rename Pair", state="disable", command=self.manually_rename_single_pair)
+        self.editMenu.add_command(label="Duplicate Pair", state="disable", command=self.duplicate_pair)
+        self.editMenu.add_command(label="Delete Pair", state="disable", accelerator="Shift+Del", command=self.delete_pair)
+        self.editMenu.add_command(label="Undo Delete", state="disable", command=self.undo_delete_pair)
+        self.editMenu.add_separator()
+        # Navigation
+        self.editMenu.add_command(label="Next Empty Text File", state="disable", accelerator="Ctrl+E", command=self.index_goto_next_empty)
+        self.editMenu.add_command(label="Random File", state="disable", accelerator="Ctrl+R", command=self.index_goto_random)
+        self.editMenu.add_separator()
+        # Settings Files
+        self.editMenu.add_command(label="Open Settings File...", command=lambda: self.open_textfile(self.app_settings_cfg))
+        self.editMenu.add_command(label="Open MyTags File...", command=lambda: self.open_textfile(self.my_tags_csv))
+
+
+    def create_view_menu(self):
+        # Interface Options
+        self.viewMenu.add_checkbutton(label="Always On Top", variable=self.always_on_top_var, command=self.set_always_on_top)
+        self.viewMenu.add_checkbutton(label="Toggle Zoom", accelerator="F2", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
+        self.viewMenu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.debounce_update_thumbnail_panel)
+        self.viewMenu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
+        self.viewMenu.add_checkbutton(label="Toggle Image-Grid", accelerator="F1", variable=self.is_image_grid_visible_var, command=self.toggle_image_grid)
+        self.viewMenu.add_separator()
+        # Layout Options
+        self.viewMenu.add_checkbutton(label="Vertical View", variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
+        self.viewMenu.add_checkbutton(label="Swap img-txt Sides", variable=self.panes_swap_ew_var, command=self.swap_pane_sides)
+        self.viewMenu.add_checkbutton(label="Big Save Button", variable=self.big_save_button_var, command=self.toggle_save_button_height)
+        self.viewMenu.add_separator()
         # Image Display Quality Menu
-        image_quality_menu = Menu(self.options_subMenu, tearoff=0)
-        self.options_subMenu.add_cascade(label="Image Display Quality", underline=1, menu=image_quality_menu)
+        image_quality_menu = Menu(self.viewMenu, tearoff=0)
+        self.viewMenu.add_cascade(label="Image Display Quality", menu=image_quality_menu)
         for value in ["High", "Normal", "Low"]:
             image_quality_menu.add_radiobutton(label=value, variable=self.image_quality_var, value=value, command=self.set_image_quality)
 
 
-# --------------------------------------
-# Loading Order
-# --------------------------------------
+    def create_options_menu(self):
+        # Text Options
+        self.text_options_menu = Menu(self.optionsMenu, tearoff=0)
+        self.optionsMenu.add_cascade(label="Text Options", state="disable", menu=self.text_options_menu)
+        self.text_options_menu.add_checkbutton(label="Clean-Text", variable=self.cleaning_text_var, command=self.toggle_list_menu)
+        self.text_options_menu.add_checkbutton(label="Auto-Delete Blank Files", variable=self.auto_delete_blank_files_var)
+        self.text_options_menu.add_checkbutton(label="Highlight Selection", variable=self.highlight_selection_var)
+        self.text_options_menu.add_checkbutton(label="Add Comma After Tag", variable=self.auto_insert_comma_var, command=self.append_comma_to_text)
+        self.text_options_menu.add_checkbutton(label="List View", variable=self.list_mode_var, command=self.toggle_list_mode)
+        self.text_options_menu.add_checkbutton(label="Auto-save", variable=self.auto_save_var, command=self.sync_title_with_content)
         # Loading Order Menu
         load_order_menu = Menu(self.optionsMenu, tearoff=0)
-        self.optionsMenu.add_cascade(label="Loading Order", underline=6, state="disable", menu=load_order_menu)
-
+        self.optionsMenu.add_cascade(label="Loading Order", state="disable", menu=load_order_menu)
         # Loading Order Options
         order_options = ["Name (default)", "File size", "Date created", "Extension", "Last Access time", "Last write time"]
         for option in order_options:
             load_order_menu.add_radiobutton(label=option, variable=self.load_order_var, value=option, command=self.load_pairs)
-
         # Loading Order Direction
         load_order_menu.add_separator()
         load_order_menu.add_radiobutton(label="Ascending", variable=self.reverse_load_order_var, value=False, command=self.load_pairs)
         load_order_menu.add_radiobutton(label="Descending", variable=self.reverse_load_order_var, value=True, command=self.load_pairs)
-
-
-# --------------------------------------
-# Autocomplete
-# --------------------------------------
         # Autocomplete Settings Menu
         autocompleteSettingsMenu = Menu(self.optionsMenu, tearoff=0)
-        self.optionsMenu.add_cascade(label="Autocomplete", underline=11, state="disable", menu=autocompleteSettingsMenu)
-
+        self.optionsMenu.add_cascade(label="Autocomplete", state="disable", menu=autocompleteSettingsMenu)
         # Suggestion Dictionary Menu
         dictionaryMenu = Menu(autocompleteSettingsMenu, tearoff=0)
-        autocompleteSettingsMenu.add_cascade(label="Dictionary", underline=11, menu=dictionaryMenu)
-        dictionaryMenu.add_checkbutton(label="English Dictionary", underline=0, variable=self.csv_english_dictionary, command=self.autocomplete.update_autocomplete_dictionary)
-        dictionaryMenu.add_checkbutton(label="Danbooru", underline=0, variable=self.csv_danbooru, command=self.autocomplete.update_autocomplete_dictionary)
-        dictionaryMenu.add_checkbutton(label="Danbooru (Safe)", underline=0, variable=self.csv_danbooru_safe, command=self.autocomplete.update_autocomplete_dictionary)
-        dictionaryMenu.add_checkbutton(label="Derpibooru", underline=0, variable=self.csv_derpibooru, command=self.autocomplete.update_autocomplete_dictionary)
-        dictionaryMenu.add_checkbutton(label="e621", underline=0, variable=self.csv_e621, command=self.autocomplete.update_autocomplete_dictionary)
+        autocompleteSettingsMenu.add_cascade(label="Dictionary", menu=dictionaryMenu)
+        dictionaryMenu.add_checkbutton(label="English Dictionary", variable=self.csv_english_dictionary, command=self.autocomplete.update_autocomplete_dictionary)
+        dictionaryMenu.add_checkbutton(label="Danbooru", variable=self.csv_danbooru, command=self.autocomplete.update_autocomplete_dictionary)
+        dictionaryMenu.add_checkbutton(label="Danbooru (Safe)", variable=self.csv_danbooru_safe, command=self.autocomplete.update_autocomplete_dictionary)
+        dictionaryMenu.add_checkbutton(label="Derpibooru", variable=self.csv_derpibooru, command=self.autocomplete.update_autocomplete_dictionary)
+        dictionaryMenu.add_checkbutton(label="e621", variable=self.csv_e621, command=self.autocomplete.update_autocomplete_dictionary)
         dictionaryMenu.add_separator()
-        dictionaryMenu.add_command(label="Clear Selection", underline=0, command=self.autocomplete.clear_dictionary_csv_selection)
-
+        dictionaryMenu.add_command(label="Clear Selection", command=self.autocomplete.clear_dictionary_csv_selection)
         # Suggestion Threshold Menu
         suggestion_threshold_menu = Menu(autocompleteSettingsMenu, tearoff=0)
-        autocompleteSettingsMenu.add_cascade(label="Threshold", underline=11, menu=suggestion_threshold_menu)
+        autocompleteSettingsMenu.add_cascade(label="Threshold", menu=suggestion_threshold_menu)
         for level in ["Slow", "Normal", "Fast", "Faster"]:
             suggestion_threshold_menu.add_radiobutton(label=level, variable=self.suggestion_threshold_var, value=level, command=self.autocomplete.set_suggestion_threshold)
-
         # Suggestion Quantity Menu
         suggestion_quantity_menu = Menu(autocompleteSettingsMenu, tearoff=0)
-        autocompleteSettingsMenu.add_cascade(label="Quantity", underline=11, menu=suggestion_quantity_menu)
+        autocompleteSettingsMenu.add_cascade(label="Quantity", menu=suggestion_quantity_menu)
         for quantity in range(0, 10):
             suggestion_quantity_menu.add_radiobutton(label=str(quantity), variable=self.suggestion_quantity_var, value=quantity, command=lambda suggestion_quantity=quantity: self.autocomplete.set_suggestion_quantity(suggestion_quantity))
-
         # Match Mode Menu
         match_mode_menu = Menu(autocompleteSettingsMenu, tearoff=0)
         autocompleteSettingsMenu.add_cascade(label="Match Mode", menu=match_mode_menu)
         match_modes = {"Match Whole String": False, "Match Last Word": True}
         for mode, value in match_modes.items():
             match_mode_menu.add_radiobutton(label=mode, variable=self.last_word_match_var, value=value)
-
-
-# --------------------------------------
-# Open/Reset Settings
-# --------------------------------------
-        # Settings Menu
+        # Reset Settings
         self.optionsMenu.add_separator()
-        self.optionsMenu.add_command(label="Refresh Files", underline=0, command=self.refresh_files)
-        self.optionsMenu.add_command(label="Reset Settings", underline=1, state="disable", command=self.settings_manager.reset_settings)
-        self.optionsMenu.add_command(label="Open Settings File...", underline=1, command=lambda: self.open_textfile(self.app_settings_cfg))
-        self.optionsMenu.add_command(label="Open MyTags File...", underline=1, command=lambda: self.open_textfile(self.my_tags_csv))
+        self.optionsMenu.add_command(label="Reset Settings", state="disable", command=self.settings_manager.reset_settings)
 
 
-# --------------------------------------
-# Batch Operations
-# --------------------------------------
     def create_tools_menu(self):
+        # Batch Operations
         self.batch_operations_menu = Menu(self.toolsMenu, tearoff=0)
-        self.toolsMenu.add_cascade(label="Batch Operations", underline=0, state="disable", menu=self.batch_operations_menu)
-        self.batch_operations_menu.add_command(label="Batch Crop Images...", underline=8, command=self.batch_crop_images)
+        self.toolsMenu.add_cascade(label="Batch Operations", state="disable", menu=self.batch_operations_menu)
+        self.batch_operations_menu.add_command(label="Batch Crop Images...", command=self.batch_crop_images)
+        self.batch_operations_menu.add_command(label="Create Wildcard From Captions...", command=self.collate_captions)
         self.batch_operations_menu.add_separator()
-        self.batch_operations_menu.add_command(label="Zip Dataset...", underline=0, command=self.archive_dataset)
-        self.batch_operations_menu.add_command(label="Cleanup All Text Files...", underline=1, command=self.cleanup_all_text_files)
-        self.batch_operations_menu.add_command(label="Create Blank Text Pairs...", underline=0, command=self.create_blank_text_files)
-        self.batch_operations_menu.add_command(label="Create Wildcard From Captions...", underline=0, command=self.collate_captions)
-
-
-# --------------------------------------
-# Individual Operations
-# --------------------------------------
+        self.batch_operations_menu.add_command(label="Zip Dataset...", command=self.archive_dataset)
+        # Edit Current Pair
         self.individual_operations_menu = Menu(self.toolsMenu, tearoff=0)
-        self.toolsMenu.add_cascade(label="Edit Current pair", underline=0, state="disable", menu=self.individual_operations_menu)
-        self.individual_operations_menu.add_command(label="Rename Pair", underline=0, command=self.manually_rename_single_pair)
-        self.individual_operations_menu.add_command(label="Upscale...", underline=0, command=lambda: self.create_batch_upscale_ui(show=True, quick_swap=True))
-        self.individual_operations_menu.add_command(label="Crop...", underline=0, command=lambda: self.create_crop_ui(show=True, refresh=True))
-        self.individual_operations_menu.add_command(label="Resize...", underline=0, command=self.resize_image)
-        self.individual_operations_menu.add_command(label="Expand", underline=1, command=self.expand_image)
-        self.individual_operations_menu.add_command(label="Rotate", underline=1, command=self.rotate_current_image)
-        self.individual_operations_menu.add_command(label="Flip", underline=1, command=self.flip_current_image)
+        self.toolsMenu.add_cascade(label="Edit Current Pair", state="disable", menu=self.individual_operations_menu)
+        self.individual_operations_menu.add_command(label="Rename Pair", command=self.manually_rename_single_pair)
+        self.individual_operations_menu.add_command(label="Upscale...", command=lambda: self.create_batch_upscale_ui(show=True, quick_swap=True))
+        self.individual_operations_menu.add_command(label="Crop...", command=lambda: self.create_crop_ui(show=True, refresh=True))
+        self.individual_operations_menu.add_command(label="Resize...", command=self.resize_image)
+        self.individual_operations_menu.add_command(label="Expand", command=self.expand_image)
+        self.individual_operations_menu.add_command(label="Rotate", command=self.rotate_current_image)
+        self.individual_operations_menu.add_command(label="Flip", command=self.flip_current_image)
         self.individual_operations_menu.add_separator()
-        self.individual_operations_menu.add_command(label="Duplicate img-txt Pair", underline=2, command=self.duplicate_pair)
-        self.individual_operations_menu.add_command(label="Delete img-txt Pair", accelerator="Shift+Del", command=self.delete_pair)
-        self.individual_operations_menu.add_command(label="Undo Delete", underline=0, state="disable", command=self.undo_delete_pair)
+        self.individual_operations_menu.add_command(label="AutoTag", command=self.text_controller.interrogate_image_tags)
 
 
-# --------------------------------------
-# Misc
-# --------------------------------------
-        self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Open Current Directory...", state="disable", underline=13, command=self.open_image_directory)
-        self.toolsMenu.add_command(label="Open Current Image...", state="disable", underline=13, command=self.open_image)
-        self.toolsMenu.add_command(label="Edit Image...", state="disable", underline=6, accelerator="F4", command=self.open_image_in_editor)
-        self.toolsMenu.add_separator()
-        self.toolsMenu.add_command(label="Next Empty Text File", state="disable", accelerator="Ctrl+E", command=self.index_goto_next_empty)
+    def enable_menu_options(self):
+        tool_commands = [
+            "Batch Operations",
+            "Edit Current Pair"
+        ]
+        file_commands = [
+            "Open Current Directory...",
+            "Open Current Image...",
+            "Open Text File...",
+            "Edit Image...",
+            "Zip Dataset..."
+        ]
+        edit_commands = [
+            "Save Text",
+            "Cleanup All Text Files...",
+            "Create Blank Text Pairs...",
+            "Rename Pair",
+            "Duplicate Pair",
+            "Delete Pair",
+            #"Undo Delete",
+            "Next Empty Text File",
+            "Random File"
+        ]
+        options_commands = [
+            "Text Options",
+            "Loading Order",
+            "Autocomplete",
+            "Reset Settings"
+        ]
+        for t_command in tool_commands:
+            self.toolsMenu.entryconfig(t_command, state="normal")
+        for f_command in file_commands:
+            self.fileMenu.entryconfig(f_command, state="normal")
+        for e_command in edit_commands:
+            self.editMenu.entryconfig(e_command, state="normal")
+        for o_command in options_commands:
+            self.optionsMenu.entryconfig(o_command, state="normal")
+        self.viewMenu.entryconfig("Always On Top", state="normal")
+        self.viewMenu.entryconfig("Toggle Zoom", state="normal")
+        self.viewMenu.entryconfig("Toggle Thumbnail Panel", state="normal")
+        self.viewMenu.entryconfig("Toggle Edit Panel", state="normal")
+        self.viewMenu.entryconfig("Toggle Image-Grid", state="normal")
+        self.viewMenu.entryconfig("Vertical View", state="normal")
+        self.viewMenu.entryconfig("Swap img-txt Sides", state="normal")
+        self.viewMenu.entryconfig("Big Save Button", state="normal")
+        self.viewMenu.entryconfig("Image Display Quality", state="normal")
+        self.browse_context_menu.entryconfig("Set Text File Path...", state="normal")
+        self.browse_context_menu.entryconfig("Reset Text Path To Image Path", state="normal")
+        self.dir_context_menu.entryconfig("Set Text File Path...", state="normal")
+        self.dir_context_menu.entryconfig("Reset Text Path To Image Path", state="normal")
+        self.index_pair_label.configure(state="normal")
+        self.image_index_entry.configure(state="normal")
+        self.total_images_label.configure(state="normal")
+        self.save_button.configure(state="normal")
+        self.next_button.configure(state="normal")
+        self.prev_button.configure(state="normal")
+        self.auto_save_checkbutton.configure(state="normal")
+        self.view_menubutton.configure(state="normal")
+        # Bindings
+        self.suggestion_textbox.bind("<Button-3>", self.show_suggestion_context_menu)
+        self.image_index_entry.bind("<Button-3>", self.open_index_context_menu)
+        self.total_images_label.bind("<Button-3>", self.open_index_context_menu)
+        self.index_pair_label.bind("<Button-3>", self.open_index_context_menu)
 
 
 #endregion
@@ -524,9 +595,9 @@ class ImgTxtViewer:
         self.view_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.debounce_update_thumbnail_panel)
         self.view_menu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
         self.view_menu.add_separator()
-        self.view_menu.add_checkbutton(label="Vertical View", underline=0, variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
-        self.view_menu.add_checkbutton(label="Swap img-txt Sides", underline=0, variable=self.panes_swap_ew_var, command=self.swap_pane_sides)
-        image_quality_menu = Menu(self.optionsMenu, tearoff=0)
+        self.view_menu.add_checkbutton(label="Vertical View", variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
+        self.view_menu.add_checkbutton(label="Swap img-txt Sides", variable=self.panes_swap_ew_var, command=self.swap_pane_sides)
+        image_quality_menu = Menu(self.view_menu, tearoff=0)
         self.view_menu.add_separator()
         self.view_menu.add_cascade(label="Image Display Quality", menu=image_quality_menu)
         for value in ["High", "Normal", "Low"]:
@@ -885,8 +956,8 @@ class ImgTxtViewer:
         self.image_context_menu.add_checkbutton(label="Toggle Zoom", accelerator="F2", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
         self.image_context_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.debounce_update_thumbnail_panel)
         self.image_context_menu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
-        self.image_context_menu.add_checkbutton(label="Vertical View", underline=0, variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
-        self.image_context_menu.add_checkbutton(label="Swap img-txt Sides", underline=0, variable=self.panes_swap_ew_var, command=self.swap_pane_sides)
+        self.image_context_menu.add_checkbutton(label="Vertical View", variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
+        self.image_context_menu.add_checkbutton(label="Swap img-txt Sides", variable=self.panes_swap_ew_var, command=self.swap_pane_sides)
         # Image Display Quality
         image_quality_menu = Menu(self.optionsMenu, tearoff=0)
         self.image_context_menu.add_cascade(label="Image Display Quality", menu=image_quality_menu)
@@ -905,13 +976,13 @@ class ImgTxtViewer:
         # Selected Dictionary
         dictionary_menu = Menu(suggestion_context_menu, tearoff=0)
         suggestion_context_menu.add_cascade(label="Dictionary", menu=dictionary_menu)
-        dictionary_menu.add_checkbutton(label="English Dictionary", underline=0, variable=self.csv_english_dictionary, command=self.autocomplete.update_autocomplete_dictionary)
-        dictionary_menu.add_checkbutton(label="Danbooru", underline=0, variable=self.csv_danbooru, command=self.autocomplete.update_autocomplete_dictionary)
-        dictionary_menu.add_checkbutton(label="Danbooru (Safe)", underline=0, variable=self.csv_danbooru_safe, command=self.autocomplete.update_autocomplete_dictionary)
-        dictionary_menu.add_checkbutton(label="Derpibooru", underline=0, variable=self.csv_derpibooru, command=self.autocomplete.update_autocomplete_dictionary)
-        dictionary_menu.add_checkbutton(label="e621", underline=0, variable=self.csv_e621, command=self.autocomplete.update_autocomplete_dictionary)
+        dictionary_menu.add_checkbutton(label="English Dictionary", variable=self.csv_english_dictionary, command=self.autocomplete.update_autocomplete_dictionary)
+        dictionary_menu.add_checkbutton(label="Danbooru", variable=self.csv_danbooru, command=self.autocomplete.update_autocomplete_dictionary)
+        dictionary_menu.add_checkbutton(label="Danbooru (Safe)", variable=self.csv_danbooru_safe, command=self.autocomplete.update_autocomplete_dictionary)
+        dictionary_menu.add_checkbutton(label="Derpibooru", variable=self.csv_derpibooru, command=self.autocomplete.update_autocomplete_dictionary)
+        dictionary_menu.add_checkbutton(label="e621", variable=self.csv_e621, command=self.autocomplete.update_autocomplete_dictionary)
         dictionary_menu.add_separator()
-        dictionary_menu.add_command(label="Clear Selection", underline=0, command=self.autocomplete.clear_dictionary_csv_selection)
+        dictionary_menu.add_command(label="Clear Selection", command=self.autocomplete.clear_dictionary_csv_selection)
         # Suggestion Threshold
         suggestion_threshold_menu = Menu(suggestion_context_menu, tearoff=0)
         suggestion_context_menu.add_cascade(label="Threshold", menu=suggestion_threshold_menu)
@@ -943,7 +1014,7 @@ class ImgTxtViewer:
         click_index = widget.index(f"@{event.x},{event.y}")
         line, char_index = map(int, click_index.split("."))
         line_text = widget.get(f"{line}.0", f"{line}.end")
-        if char_index >= len(line_text):
+        if (char_index >= len(line_text)):
             return "break"
         if line_text[char_index] in separators:
             widget.tag_remove("sel", "1.0", "end")
@@ -1140,44 +1211,6 @@ class ImgTxtViewer:
 # --------------------------------------
 # Misc setup
 # --------------------------------------
-    def enable_menu_options(self):
-        tool_commands = [
-            "Batch Operations",
-            "Edit Current pair",
-            "Open Current Directory...",
-            "Open Current Image...",
-            "Edit Image...",
-            "Next Empty Text File",
-        ]
-        options_commands = [
-            "Options",
-            "Loading Order",
-            "Autocomplete",
-            "Reset Settings"
-        ]
-        for t_command in tool_commands:
-            self.toolsMenu.entryconfig(t_command, state="normal")
-        for o_command in options_commands:
-            self.optionsMenu.entryconfig(o_command, state="normal")
-        self.browse_context_menu.entryconfig("Set Text File Path...", state="normal")
-        self.browse_context_menu.entryconfig("Reset Text Path To Image Path", state="normal")
-        self.dir_context_menu.entryconfig("Set Text File Path...", state="normal")
-        self.dir_context_menu.entryconfig("Reset Text Path To Image Path", state="normal")
-        self.index_pair_label.configure(state="normal")
-        self.image_index_entry.configure(state="normal")
-        self.total_images_label.configure(state="normal")
-        self.save_button.configure(state="normal")
-        self.next_button.configure(state="normal")
-        self.prev_button.configure(state="normal")
-        self.auto_save_checkbutton.configure(state="normal")
-        self.view_menubutton.configure(state="normal")
-        # Bindings
-        self.suggestion_textbox.bind("<Button-3>", self.show_suggestion_context_menu)
-        self.image_index_entry.bind("<Button-3>", self.open_index_context_menu)
-        self.total_images_label.bind("<Button-3>", self.open_index_context_menu)
-        self.index_pair_label.bind("<Button-3>", self.open_index_context_menu)
-
-
     def toggle_save_button_height(self, event=None, reset=None):
         if reset:
             self.big_save_button_var.set(True)
@@ -1194,7 +1227,7 @@ class ImgTxtViewer:
         new_state = not self.popup_zoom.zoom_enabled.get()
         self.popup_zoom.zoom_enabled.set(new_state)
         self.toggle_zoom_var.set(new_state)
-        self.options_subMenu.entryconfig("Toggle Zoom", variable=self.toggle_zoom_var)
+        self.viewMenu.entryconfig("Toggle Zoom", variable=self.toggle_zoom_var)
         if hasattr(self, 'image_context_menu'):
             self.image_context_menu.entryconfig("Toggle Zoom", variable=self.toggle_zoom_var)
         state, text = ("disabled", "") if new_state else ("normal", "Double-Click to open in system image viewer \n\nMiddle click to open in file explorer\n\nALT+Left/Right or Mouse-Wheel to move between img-txt pairs")
@@ -1334,9 +1367,11 @@ class ImgTxtViewer:
         if not self.ui_state == "ImgTxtViewer":
             self.main_menu_bar.entryconfig("Options", state="disable")
             self.main_menu_bar.entryconfig("Tools", state="disable")
+            self.main_menu_bar.entryconfig("View", state="disable")
         else:
             self.main_menu_bar.entryconfig("Options", state="normal")
             self.main_menu_bar.entryconfig("Tools", state="normal")
+            self.main_menu_bar.entryconfig("View", state="normal")
 
 
     def update_ui_binds(self):
@@ -1595,7 +1630,7 @@ class ImgTxtViewer:
             extensions = [".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif"]
             if self.is_ffmpeg_installed:
                 extensions.append(".mp4")
-            if filename.lower().endswith(tuple(extensions)):
+            if str(filename).lower().endswith(tuple(extensions)):
                 image_file_path = os.path.join(self.image_dir.get(), filename)
                 self.image_files.append(image_file_path)
                 text_filename = os.path.splitext(filename)[0] + ".txt"
@@ -1830,12 +1865,7 @@ class ImgTxtViewer:
                 framerate_str = f"{framerate:.2f} fps" if framerate else "Unknown fps"
                 self.label_image_stats.config(text=f"  |  {_filename}  |  {original_width} x {original_height}  |  {size_str}  |  {framerate_str}", anchor="w")
                 self.label_image_stats_tooltip.config(text=f"Filename: {filename}\nResolution: {original_width} x {original_height}\nFramerate: {framerate_str}\nSize: {size_str}")
-                return {
-                    "filename": filename,
-                    "resolution": f"{original_width} x {original_height}",
-                    "framerate": framerate_str,
-                    "size": size_str,
-                }
+                return {"filename": filename, "resolution": f"{original_width} x {original_height}", "framerate": framerate_str, "size": size_str}
 
 
     def update_imageinfo(self, percent_scale=100):
@@ -2315,9 +2345,9 @@ class ImgTxtViewer:
 
     def toggle_list_menu(self):
         if self.cleaning_text_var.get():
-            self.options_subMenu.entryconfig("List View", state="normal")
+            self.text_options_menu.entryconfig("List View", state="normal")
         else:
-            self.options_subMenu.entryconfig("List View", state="disabled")
+            self.text_options_menu.entryconfig("List View", state="disabled")
             if self.list_mode_var.get():
                 self.toggle_list_mode(skip=True)
             if not self.root.title().endswith(" ⚪"):
@@ -2426,7 +2456,7 @@ class ImgTxtViewer:
         return text
 
 
-    def remove_duplicate_CSV_captions(self, text):
+    def remove_duplicate_CSV_captions(self, text: "str"):
         if self.list_mode_var.get():
             text = text.split('\n')
         else:
@@ -2563,7 +2593,7 @@ class ImgTxtViewer:
             messagebox.showerror("Error: add_to_custom_dictionary()", f"An error occurred while saving the selected to 'my_tags.csv'.\n\n{e}")
 
 
-    def remove_extra_newlines(self, text):
+    def remove_extra_newlines(self, text: "str"):
         lines = text.split('\n')
         cleaned_lines = [line for line in lines if line.strip() != '']
         result = '\n'.join(cleaned_lines)
@@ -2603,7 +2633,7 @@ class ImgTxtViewer:
         if self.is_ffmpeg_installed:
             extensions.append('.mp4')
             self.update_video_thumbnails()
-        if any(fname.lower().endswith(tuple(extensions)) for fname in os.listdir(directory)):
+        if any(str(fname).lower().endswith(tuple(extensions)) for fname in os.listdir(directory)):
             self.filepath_contains_images_var = True
             return True
         else:
@@ -2975,7 +3005,7 @@ class ImgTxtViewer:
                     self.deleted_pairs.append(deleted_pair)
                     self._nav_after_delete(index)
                     self.undo_state.set("normal")
-                    self.individual_operations_menu.entryconfig("Undo Delete", state="normal")
+                    self.editMenu.entryconfig("Undo Delete", state="normal")
                 else:
                     pass
             else:  # No, Recycle
@@ -3030,7 +3060,7 @@ class ImgTxtViewer:
             self.update_total_image_label()
             if not self.deleted_pairs:
                 self.undo_state.set("disabled")
-                self.individual_operations_menu.entryconfig("Undo Delete", state="disabled")
+                self.editMenu.entryconfig("Undo Delete", state="disabled")
         except (PermissionError, ValueError, IOError, TclError) as e:
             messagebox.showerror("Error: undo_delete_pair()", f"An error occurred while restoring the img-txt pair.\n\n{e}")
 
