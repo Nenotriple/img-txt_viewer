@@ -247,6 +247,7 @@ class CropSelection:
         self.handle_manager.update_handles()
         self.update_overlay()
         self.crop_ui.update_widget_values(resize=True)
+        self.guideline_manager.update_guidelines(self.crop_ui.guideline_combo.get())
 
 
     def _on_mousewheel(self, event):
@@ -996,18 +997,9 @@ class CropSelGuidelines:
         # Calculate center point
         cx = (x1 + x2) / 2
         cy = (y1 + y2) / 2
-        size = 4
-        # Draw crosshair lines
-        self.guidelines.extend([
-            # White crosshair
-            self.img_canvas.create_line(cx-size, cy, cx+size, cy, fill='white'),
-            self.img_canvas.create_line(cx, cy-size, cx, cy+size, fill='white'),
-            # Black outline
-            self.img_canvas.create_line(cx-size, cy-1, cx+size, cy-1, fill='black'),
-            self.img_canvas.create_line(cx-size, cy+1, cx+size, cy+1, fill='black'),
-            self.img_canvas.create_line(cx-1, cy-size, cx-1, cy+size, fill='black'),
-            self.img_canvas.create_line(cx+1, cy-size, cx+1, cy+size, fill='black')
-        ])
+        black_text = self.img_canvas.create_text(cx+1, cy+1, text="X", font=("", 5), fill="black")
+        white_text = self.img_canvas.create_text(cx, cy, text="X", font=("", 5), fill="white")
+        self.guidelines.extend([black_text, white_text])
 
 
     def clear_guidelines(self):
