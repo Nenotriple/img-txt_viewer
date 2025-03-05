@@ -378,10 +378,11 @@ class SuggestionHandler:
         remaining_text = self.parent.text_box.get("insert", "end").rstrip('\n')
         start_of_current_word = "1.0 + {} chars".format(len(text) - len(current_word))
         self.parent.text_box.delete(start_of_current_word, "insert")
-        if not remaining_text.startswith(('\n' if self.parent.list_mode_var.get() else ',')) and not self.parent.last_word_match_var.get():
-            self.parent.text_box.insert(start_of_current_word, selected_suggestion + ('\n' if self.parent.list_mode_var.get() else ','))
+        if self.parent.list_mode_var.get() and not remaining_text.startswith('\n') and not self.parent.last_word_match_var.get():
+            self.parent.text_box.insert(start_of_current_word, selected_suggestion + '\n')
         else:
             self.parent.text_box.insert(start_of_current_word, selected_suggestion)
+
         if self.parent.list_mode_var.get() and remaining_text:
             self.insert_newline_listmode(called_from_insert=True)
             self.parent.text_box.mark_set("insert", "insert + 1 lines")
