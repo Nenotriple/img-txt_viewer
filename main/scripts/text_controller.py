@@ -25,6 +25,7 @@ from TkToolTip.TkToolTip import TkToolTip as ToolTip
 from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
 import main.scripts.video_thumbnail_generator as vtg
 
+
 # Type Hinting
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -32,7 +33,6 @@ if TYPE_CHECKING:
 
 
 #endregion
-################################################################################################################################################
 #region CLS TextController
 
 
@@ -55,7 +55,6 @@ class TextController:
 
 
 #endregion
-################################################################################################################################################
 #region (1) S&R
 
 
@@ -141,7 +140,6 @@ class TextController:
 
 
 #endregion
-################################################################################################################################################
 #region (2) Prefix
 
 
@@ -209,7 +207,6 @@ class TextController:
 
 
 #endregion
-################################################################################################################################################
 #region (3) Append
 
 
@@ -275,7 +272,6 @@ class TextController:
 
 
 #endregion
-################################################################################################################################################
 #region (4) Auto-Tag
 
 
@@ -780,7 +776,6 @@ class TextController:
 
 
 #endregion
-################################################################################################################################################
 #region (5) Filter
 
 
@@ -935,7 +930,6 @@ class TextController:
 
 
 #endregion
-################################################################################################################################################
 #region (6) Highlight
 
 
@@ -976,7 +970,6 @@ class TextController:
 
 
 #endregion
-################################################################################################################################################
 #region (7) Font
 
 
@@ -1011,7 +1004,6 @@ class TextController:
 
 
 #endregion
-################################################################################################################################################
 #region (8) MyTags
 
 
@@ -1289,7 +1281,6 @@ class TextController:
 
 
 #endregion
-################################################################################################################################################
 #region (9) File Stats
 
 
@@ -1306,16 +1297,14 @@ class TextController:
         truncate_checkbutton = ttk.Checkbutton(button_frame, text="Truncate Captions", takefocus=False, variable=self.parent.truncate_stat_captions_var)
         truncate_checkbutton.pack(side='right')
         ToolTip.create(truncate_checkbutton, "Limit the displayed captions if they exceed either 8 words or 50 characters", 200, 6, 12)
-        process_images_checkbutton = ttk.Checkbutton(button_frame, text="Process Image Stats", takefocus=False, variable=self.parent.process_image_stats_var)
+        process_images_checkbutton = ttk.Checkbutton(button_frame, text="Image/Video Stats", takefocus=False, variable=self.parent.process_image_stats_var)
         process_images_checkbutton.pack(side='right')
-        ToolTip.create(process_images_checkbutton, "Enable/Disable image stat processing (Can be slow with many HD images)", 200, 6, 12)
+        ToolTip.create(process_images_checkbutton, "Enable/Disable image and video stat processing (Can be slow with many HD images or videos)", 200, 6, 12)
         self.tab8_stats_textbox = scrolledtext.ScrolledText(tab_frame, wrap="word", state="disabled")
         self.tab8_stats_textbox.pack(fill='both', expand=True)
 
 
-
 #endregion
-################################################################################################################################################
 #region Misc
 
 
@@ -1369,3 +1358,6 @@ class TextController:
             context_menu.add_command(label="Delete", command=lambda: widget.delete("sel.first", "sel.last"), state="normal" if has_selection else "disabled")
             context_menu.add_command(label="Clear", command=lambda: widget.delete(0, "end"), state="normal" if has_text else "disabled")
             context_menu.post(event.x_root, event.y_root)
+
+
+#endregion
