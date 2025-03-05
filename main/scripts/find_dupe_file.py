@@ -20,6 +20,7 @@ from tkinter import (
 from TkToolTip.TkToolTip import TkToolTip as ToolTip
 from main.scripts.help_window import HelpWindow
 import main.scripts.HelpText as HelpText
+import main.scripts.entry_helper as EntryHelper
 
 
 # Type Hinting
@@ -40,6 +41,7 @@ class FindDupeFile:
         self.root: 'Tk' = None
         self.working_dir = None
         self.help_window = None
+        self.entry_helper = EntryHelper
 
         # Local Variables
         self.is_closing = False
@@ -182,6 +184,7 @@ class FindDupeFile:
         # Entry - Folder Entry
         self.folder_entry = ttk.Entry(self.folder_frame)
         self.folder_entry.pack(side="left", fill="x", expand=True)
+        self.entry_helper.setup_entry_binds(self.folder_entry)
         # Button - Browse
         self.browse_button = ttk.Button(self.folder_frame, text="Browse...", command=self.set_working_directory)
         ToolTip.create(self.browse_button, "Select a folder to analyze for duplicate files.", delay=150, padx=2)

@@ -21,6 +21,7 @@ from TkToolTip.TkToolTip import TkToolTip as ToolTip
 
 # Custom Libraries
 from main.scripts import TagEditor, help_window, HelpText
+import main.scripts.entry_helper as entry_helper
 
 
 # Type Hinting
@@ -43,6 +44,7 @@ class BatchTagEdit:
         self.working_dir = None
         self.batch_tag_edit_frame = None
         self.help_window = None
+        self.entry_helper = entry_helper
         # Local Variables
         self.tag_counts = 0
         self.total_unique_tags = 0
@@ -211,7 +213,7 @@ class BatchTagEdit:
         self.filter_entry = ttk.Entry(filter_frame)
         self.filter_entry.grid(row=0, column=2, padx=2, sticky="ew")
         self.filter_entry.bind("<KeyRelease>", lambda event: self.warn_before_action(action="filter"))
-        self.filter_entry.bind("<Button-3>", self.show_entry_context_menu)
+        self.entry_helper.setup_entry_binds(self.filter_entry)
         # Button
         self.filter_apply_button = ttk.Button(filter_frame, text="Apply", command=lambda: self.warn_before_action(action="filter"))
         self.filter_apply_button.grid(row=0, column=3, padx=2, sticky="e")
@@ -239,7 +241,7 @@ class BatchTagEdit:
         self.edit_entry = ttk.Entry(edit_row_frame)
         self.edit_entry.grid(row=0, column=1, sticky="ew", padx=2, pady=5)
         self.edit_entry.bind("<Return>", self.apply_commands_to_listbox)
-        self.edit_entry.bind("<Button-3>", self.show_entry_context_menu)
+        self.entry_helper.setup_entry_binds(self.edit_entry)
         # Button
         edit_apply_button = ttk.Button(edit_row_frame, text="Apply", command=self.apply_commands_to_listbox)
         edit_apply_button.grid(row=0, column=2, sticky="e", padx=2, pady=5)
@@ -505,25 +507,6 @@ class BatchTagEdit:
         context_menu.add_command(label="Revert Selection", command=self.revert_listbox_changes)
         context_menu.add_command(label="Revert All", command=self.clear_filter)
         context_menu.post(event.x_root, event.y_root)
-
-
-    def show_entry_context_menu(self, event):
-        widget = event.widget
-        if isinstance(widget, ttk.Entry):
-            context_menu = Menu(self.root, tearoff=0)
-            try:
-                widget.selection_get()
-                has_selection = True
-            except TclError:
-                has_selection = False
-            has_text = bool(widget.get())
-            context_menu.add_command(label="Cut", command=lambda: widget.event_generate("<Control-x>"), state="normal" if has_selection else "disabled")
-            context_menu.add_command(label="Copy", command=lambda: widget.event_generate("<Control-c>"), state="normal" if has_selection else "disabled")
-            context_menu.add_command(label="Paste", command=lambda: widget.event_generate("<Control-v>"))
-            context_menu.add_separator()
-            context_menu.add_command(label="Delete", command=lambda: widget.delete("sel.first", "sel.last"), state="normal" if has_selection else "disabled")
-            context_menu.add_command(label="Clear", command=lambda: widget.delete(0, "end"), state="normal" if has_text else "disabled")
-            context_menu.post(event.x_root, event.y_root)
 
 
 # --------------------------------------

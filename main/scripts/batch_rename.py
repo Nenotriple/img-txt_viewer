@@ -12,6 +12,7 @@ from tkinter import ttk, messagebox, filedialog, BooleanVar, StringVar
 # Local
 from main.scripts import HelpText
 from main.scripts.help_window import HelpWindow
+import main.scripts.entry_helper as entry_helper
 
 # Type Hinting
 from typing import TYPE_CHECKING
@@ -30,6 +31,7 @@ class BatchRename:
         self.root: 'tk.Tk' = None
         self.working_dir = None
         self.help_window = None
+        self.entry_helper = entry_helper
         # Variables
         self.supported_filetypes = (".txt", ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".gif", ".mp4")
         self.sort_column = "Name"
@@ -88,6 +90,7 @@ class BatchRename:
         self.entry_directory.pack(side="left", fill="x", expand=True, padx=2)
         self.entry_directory.bind("<Return>", lambda event: self.set_working_directory(self.entry_directory.get()))
         self.entry_directory.bind("<Button-1>", lambda event: self.entry_directory.delete(0, "end") if self.entry_directory.get() == "..." else None)
+        self.entry_helper.setup_entry_binds(self.entry_directory)
         # Browse
         self.browse_button = ttk.Button(self.top_frame, width=8, text="Browse...", command=self.set_working_directory)
         self.browse_button.pack(side="left", padx=2)
