@@ -1026,11 +1026,6 @@ class ImgTxtViewer:
             return 0, 0
 
 
-#endregion
-####################################################################################################
-#region - Additional UI Setup
-
-
 # --------------------------------------
 # Browse button context menu
 # --------------------------------------
@@ -1067,6 +1062,11 @@ class ImgTxtViewer:
         else:
             self.text_path_indicator.config(bg="#f0f0f0")
             self.text_path_tooltip.config("Text Path: Same as image path", delay=10, padx=6, pady=12)
+
+
+#endregion
+####################################################################################################
+#region - Additional UI Setup
 
 
 # --------------------------------------
