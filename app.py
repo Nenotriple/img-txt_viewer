@@ -290,7 +290,6 @@ class ImgTxtViewer:
         self.initialize_menu()
         self.create_file_menu()
         self.create_edit_menu()
-        self.create_view_menu()
         self.create_tools_menu()
         self.create_options_menu()
 
@@ -305,9 +304,6 @@ class ImgTxtViewer:
         # Edit
         self.editMenu = Menu(self.main_menu_bar, tearoff=0)
         self.main_menu_bar.add_cascade(label="Edit", menu=self.editMenu)
-        # View
-        self.viewMenu = Menu(self.main_menu_bar, tearoff=0)
-        self.main_menu_bar.add_cascade(label="View", menu=self.viewMenu)
         # Tools
         self.toolsMenu = Menu(self.main_menu_bar, tearoff=0)
         self.main_menu_bar.add_cascade(label="Tools", menu=self.toolsMenu)
@@ -355,26 +351,6 @@ class ImgTxtViewer:
         # Settings Files
         self.editMenu.add_command(label="Open Settings File...", command=lambda: self.open_textfile(self.app_settings_cfg))
         self.editMenu.add_command(label="Open MyTags File...", command=lambda: self.open_textfile(self.my_tags_csv))
-
-
-    def create_view_menu(self):
-        # Interface Options
-        self.viewMenu.add_checkbutton(label="Always On Top", variable=self.always_on_top_var, command=self.set_always_on_top)
-        self.viewMenu.add_checkbutton(label="Toggle Zoom", accelerator="F2", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
-        self.viewMenu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.debounce_update_thumbnail_panel)
-        self.viewMenu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
-        self.viewMenu.add_checkbutton(label="Toggle Image-Grid", accelerator="F1", variable=self.is_image_grid_visible_var, command=self.toggle_image_grid)
-        self.viewMenu.add_separator()
-        # Layout Options
-        self.viewMenu.add_checkbutton(label="Vertical View", variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
-        self.viewMenu.add_checkbutton(label="Swap img-txt Sides", variable=self.panes_swap_ew_var, command=self.swap_pane_sides)
-        self.viewMenu.add_checkbutton(label="Big Save Button", variable=self.big_save_button_var, command=self.toggle_save_button_height)
-        self.viewMenu.add_separator()
-        # Image Display Quality Menu
-        image_quality_menu = Menu(self.viewMenu, tearoff=0)
-        self.viewMenu.add_cascade(label="Image Display Quality", menu=image_quality_menu)
-        for value in ["High", "Normal", "Low"]:
-            image_quality_menu.add_radiobutton(label=value, variable=self.image_quality_var, value=value, command=self.set_image_quality)
 
 
     def create_options_menu(self):
@@ -491,15 +467,6 @@ class ImgTxtViewer:
             self.editMenu.entryconfig(e_command, state="normal")
         for o_command in options_commands:
             self.optionsMenu.entryconfig(o_command, state="normal")
-        self.viewMenu.entryconfig("Always On Top", state="normal")
-        self.viewMenu.entryconfig("Toggle Zoom", state="normal")
-        self.viewMenu.entryconfig("Toggle Thumbnail Panel", state="normal")
-        self.viewMenu.entryconfig("Toggle Edit Panel", state="normal")
-        self.viewMenu.entryconfig("Toggle Image-Grid", state="normal")
-        self.viewMenu.entryconfig("Vertical View", state="normal")
-        self.viewMenu.entryconfig("Swap img-txt Sides", state="normal")
-        self.viewMenu.entryconfig("Big Save Button", state="normal")
-        self.viewMenu.entryconfig("Image Display Quality", state="normal")
         self.browse_context_menu.entryconfig("Set Text File Path...", state="normal")
         self.browse_context_menu.entryconfig("Reset Text Path To Image Path", state="normal")
         self.dir_context_menu.entryconfig("Set Text File Path...", state="normal")
@@ -601,8 +568,11 @@ class ImgTxtViewer:
         self.view_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.debounce_update_thumbnail_panel)
         self.view_menu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
         self.view_menu.add_separator()
-        self.view_menu.add_checkbutton(label="Vertical View", variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
-        self.view_menu.add_checkbutton(label="Swap img-txt Sides", variable=self.panes_swap_ew_var, command=self.swap_pane_sides)
+        self.view_menu.add_checkbutton(label="Always On Top", variable=self.always_on_top_var, command=self.set_always_on_top)
+        self.view_menu.add_checkbutton(label="Big Save Button", variable=self.big_save_button_var, command=self.toggle_save_button_height)
+        self.view_menu.add_separator()
+        self.view_menu.add_checkbutton(label="UI: Vertical View", variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
+        self.view_menu.add_checkbutton(label="UI: Swap img-txt Sides", variable=self.panes_swap_ew_var, command=self.swap_pane_sides)
         image_quality_menu = Menu(self.view_menu, tearoff=0)
         self.view_menu.add_separator()
         self.view_menu.add_cascade(label="Image Display Quality", menu=image_quality_menu)
@@ -1056,7 +1026,7 @@ class ImgTxtViewer:
 
 #endregion
 ####################################################################################################
-#region - Additional Interface Setup
+#region - Additional UI Setup
 
 
 # --------------------------------------
@@ -1218,7 +1188,6 @@ class ImgTxtViewer:
         new_state = not self.popup_zoom.zoom_enabled.get()
         self.popup_zoom.zoom_enabled.set(new_state)
         self.toggle_zoom_var.set(new_state)
-        self.viewMenu.entryconfig("Toggle Zoom", variable=self.toggle_zoom_var)
         if hasattr(self, 'image_context_menu'):
             self.image_context_menu.entryconfig("Toggle Zoom", variable=self.toggle_zoom_var)
         state, text = ("disabled", "") if new_state else ("normal", "Double-Click to open in system image viewer \n\nMiddle click to open in file explorer\n\nALT+Left/Right or Mouse-Wheel to move between img-txt pairs")
