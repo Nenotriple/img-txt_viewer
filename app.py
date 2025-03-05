@@ -1330,13 +1330,11 @@ class ImgTxtViewer:
             self.main_menu_bar.entryconfig("Edit", state="disable")
             self.main_menu_bar.entryconfig("Options", state="disable")
             self.main_menu_bar.entryconfig("Tools", state="disable")
-            self.main_menu_bar.entryconfig("View", state="disable")
         else:
             self.main_menu_bar.entryconfig("File", state="normal")
             self.main_menu_bar.entryconfig("Edit", state="normal")
             self.main_menu_bar.entryconfig("Options", state="normal")
             self.main_menu_bar.entryconfig("Tools", state="normal")
-            self.main_menu_bar.entryconfig("View", state="normal")
 
 
     def update_ui_binds(self):
