@@ -60,6 +60,7 @@ from main.scripts import (
     text_controller,
     batch_upscale,
     batch_rename,
+    entry_helper,
     resize_image,
     image_grid,
     edit_panel,
@@ -113,6 +114,7 @@ class ImgTxtViewer:
         self.onnx_tagger = OnnxTagger(self)
         self.autocomplete = SuggestionHandler(self)
         self.text_controller = text_controller.TextController(self, self.root)
+        self.entry_helper = entry_helper
 
         # Setup UI state
         self.ui_state = "ImgTxtViewer"
@@ -642,8 +644,8 @@ class ImgTxtViewer:
         self.directory_entry = ttk.Entry(directory_frame, textvariable=self.image_dir)
         self.directory_entry.pack(side="left", fill="both", expand=True, pady=2)
         self.directory_entry.bind('<Return>', self.set_working_directory)
-        self.directory_entry.bind("<Double-1>", lambda event: self.text_controller.custom_select_word_for_entry(event))
-        self.directory_entry.bind("<Triple-1>", lambda event: self.text_controller.select_all_in_entry(event))
+        self.directory_entry.bind("<Double-1>", lambda event: self.entry_helper.custom_select_word_for_entry(event))
+        self.directory_entry.bind("<Triple-1>", lambda event: self.entry_helper.select_all_in_entry(event))
         self.directory_entry.bind("<Button-3>", self.open_directory_context_menu)
         self.directory_entry.bind("<Button-1>", self.clear_directory_entry_on_click)
         self.dir_context_menu = Menu(self.directory_entry, tearoff=0)
@@ -1044,7 +1046,7 @@ class ImgTxtViewer:
                 text_content = self.text_box.get("1.0", "end-1c")
                 char_count = len(text_content)
                 word_count = len([word for word in text_content.split() if word.strip()])
-                self.text_controller.info_label.config(text=f"Characters: {char_count}  |  Words: {word_count}")
+                self.text_controller.stats_info_lbl.config(text=f"Characters: {char_count}  |  Words: {word_count}")
                 return char_count, word_count
             return 0, 0
         except Exception:
@@ -2575,7 +2577,7 @@ class ImgTxtViewer:
             if origin == "text_box":
                 selected_text = self.text_box.get("sel.first", "sel.last")
             elif origin == "auto_tag":
-                selected_text = self.text_controller.auto_tag_listbox.get("active")
+                selected_text = self.text_controller.autotag_listbox.get("active")
                 selected_text = selected_text.split(':', 1)[-1].strip()
             with open(self.my_tags_csv, 'a', newline='', encoding="utf-8") as f:
                 writer = csv.writer(f)

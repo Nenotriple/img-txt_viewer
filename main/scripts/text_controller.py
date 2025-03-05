@@ -24,6 +24,7 @@ from TkToolTip.TkToolTip import TkToolTip as ToolTip
 # Custom Libraries
 from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
 import main.scripts.video_thumbnail_generator as vtg
+import main.scripts.entry_helper as entry_helper
 
 
 # Type Hinting
@@ -40,6 +41,7 @@ class TextController:
     def __init__(self, parent: 'Main', root: 'Tk'):
         self.parent = parent
         self.root = root
+        self.entry_helper = entry_helper
 
         # AutoTag
         self.onnx_model_dict = {}
@@ -61,37 +63,37 @@ class TextController:
     def create_search_and_replace_widgets_tab1(self):
         tab_frame = Frame(self.parent.tab1)
         tab_frame.pack(side='top', fill='both')
-        button_frame = Frame(tab_frame)
-        button_frame.pack(side='top', fill='x')
-        search_label = Label(button_frame, width=8, text="Search:")
-        search_label.pack(side='left', anchor="n", pady=4)
-        ToolTip.create(search_label, "Enter the EXACT text you want to search for", 200, 6, 12)
-        self.search_entry = ttk.Entry(button_frame, textvariable=self.parent.search_string_var, width=4)
+        btn_frame = Frame(tab_frame)
+        btn_frame.pack(side='top', fill='x')
+        search_lbl = Label(btn_frame, width=8, text="Search:")
+        search_lbl.pack(side='left', anchor="n", pady=4)
+        ToolTip.create(search_lbl, "Enter the EXACT text you want to search for", 200, 6, 12)
+        self.search_entry = ttk.Entry(btn_frame, textvariable=self.parent.search_string_var, width=4)
         self.search_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
-        self.bind_entry_functions(self.search_entry)
-        replace_label = Label(button_frame, width=8, text="Replace:")
-        replace_label.pack(side='left', anchor="n", pady=4)
-        ToolTip.create(replace_label, "Enter the text you want to replace the searched text with\n\nLeave empty to replace with nothing (delete)", 200, 6, 12)
-        self.replace_entry = ttk.Entry(button_frame, textvariable=self.parent.replace_string_var, width=4)
+        self.entry_helper.setup_entry_binds(self.search_entry)
+        replace_lbl = Label(btn_frame, width=8, text="Replace:")
+        replace_lbl.pack(side='left', anchor="n", pady=4)
+        ToolTip.create(replace_lbl, "Enter the text you want to replace the searched text with\n\nLeave empty to replace with nothing (delete)", 200, 6, 12)
+        self.replace_entry = ttk.Entry(btn_frame, textvariable=self.parent.replace_string_var, width=4)
         self.replace_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
-        self.bind_entry_functions(self.replace_entry)
+        self.entry_helper.setup_entry_binds(self.replace_entry)
         self.replace_entry.bind('<Return>', lambda event: self.search_and_replace())
-        replace_button = ttk.Button(button_frame, text="Go!", width=5, command=self.search_and_replace)
-        replace_button.pack(side='left', anchor="n", pady=4)
-        ToolTip.create(replace_button, "Text files will be backup up", 200, 6, 12)
-        clear_button = ttk.Button(button_frame, text="Clear", width=5, command=self.clear_search_and_replace_tab)
-        clear_button.pack(side='left', anchor="n", pady=4)
-        undo_button = ttk.Button(button_frame, text="Undo", width=5, command=self.parent.restore_backup)
-        undo_button.pack(side='left', anchor="n", pady=4)
-        ToolTip.create(undo_button, "Revert last action", 200, 6, 12)
-        regex_search_replace_checkbutton = ttk.Checkbutton(button_frame, text="Regex", variable=self.parent.search_and_replace_regex_var)
-        regex_search_replace_checkbutton.pack(side='left', anchor="n", pady=4)
-        ToolTip.create(regex_search_replace_checkbutton, "Use Regular Expressions in 'Search'", 200, 6, 12)
+        replace_btn = ttk.Button(btn_frame, text="Go!", width=5, command=self.search_and_replace)
+        replace_btn.pack(side='left', anchor="n", pady=4)
+        ToolTip.create(replace_btn, "Text files will be backup up", 200, 6, 12)
+        clear_btn = ttk.Button(btn_frame, text="Clear", width=5, command=self.clear_search_and_replace_tab)
+        clear_btn.pack(side='left', anchor="n", pady=4)
+        undo_btn = ttk.Button(btn_frame, text="Undo", width=5, command=self.parent.restore_backup)
+        undo_btn.pack(side='left', anchor="n", pady=4)
+        ToolTip.create(undo_btn, "Revert last action", 200, 6, 12)
+        regex_chk = ttk.Checkbutton(btn_frame, text="Regex", variable=self.parent.search_and_replace_regex_var)
+        regex_chk.pack(side='left', anchor="n", pady=4)
+        ToolTip.create(regex_chk, "Use Regular Expressions in 'Search'", 200, 6, 12)
         text_frame = Frame(tab_frame, borderwidth=0)
         text_frame.pack(side='top', fill="both")
-        description_textbox = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
-        description_textbox.pack(side='bottom', fill='both')
-        description_textbox.insert("1.0",
+        info_text = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
+        info_text.pack(side='bottom', fill='both')
+        info_text.insert("1.0",
             "Use this tool to search for a string of text across all text files in the selected directory.\n\n"
             "If a match is found, it will be replaced exactly with the given text.\n\n"
             "Example:\n"
@@ -100,7 +102,7 @@ class TextController:
             "This will replace all instances of 'the big brown dog' with 'the big red dog'.\n\n"
             "If a filter is applied, only text files that match the filter will be affected."
         )
-        description_textbox.config(state="disabled", wrap="word")
+        info_text.config(state="disabled", wrap="word")
 
 
     def clear_search_and_replace_tab(self):
@@ -146,33 +148,33 @@ class TextController:
     def create_prefix_text_widgets_tab2(self):
         tab_frame = Frame(self.parent.tab2)
         tab_frame.pack(side='top', fill='both')
-        button_frame = Frame(tab_frame)
-        button_frame.pack(side='top', fill='x')
-        prefix_label = Label(button_frame, width=8, text="Prefix:")
-        prefix_label.pack(side='left', anchor="n", pady=4)
-        ToolTip.create(prefix_label, "Enter the text you want to insert at the START of all text files\n\nCommas will be inserted as needed", 200, 6, 12)
-        self.prefix_entry = ttk.Entry(button_frame, textvariable=self.parent.prefix_string_var)
+        btn_frame = Frame(tab_frame)
+        btn_frame.pack(side='top', fill='x')
+        prefix_lbl = Label(btn_frame, width=8, text="Prefix:")
+        prefix_lbl.pack(side='left', anchor="n", pady=4)
+        ToolTip.create(prefix_lbl, "Enter the text you want to insert at the START of all text files\n\nCommas will be inserted as needed", 200, 6, 12)
+        self.prefix_entry = ttk.Entry(btn_frame, textvariable=self.parent.prefix_string_var)
         self.prefix_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
-        self.bind_entry_functions(self.prefix_entry)
+        self.entry_helper.setup_entry_binds(self.prefix_entry)
         self.prefix_entry.bind('<Return>', lambda event: self.prefix_text_files())
-        prefix_button = ttk.Button(button_frame, text="Go!", width=5, command=self.prefix_text_files)
-        prefix_button.pack(side='left', anchor="n", pady=4)
-        ToolTip.create(prefix_button, "Text files will be backup up", 200, 6, 12)
-        clear_button = ttk.Button(button_frame, text="Clear", width=5, command=lambda: self.prefix_entry.delete(0, 'end'))
-        clear_button.pack(side='left', anchor="n", pady=4)
-        undo_button = ttk.Button(button_frame, text="Undo", width=5, command=self.parent.restore_backup)
-        undo_button.pack(side='left', anchor="n", pady=4)
-        ToolTip.create(undo_button, "Revert last action", 200, 6, 12)
+        prefix_btn = ttk.Button(btn_frame, text="Go!", width=5, command=self.prefix_text_files)
+        prefix_btn.pack(side='left', anchor="n", pady=4)
+        ToolTip.create(prefix_btn, "Text files will be backup up", 200, 6, 12)
+        clear_btn = ttk.Button(btn_frame, text="Clear", width=5, command=lambda: self.prefix_entry.delete(0, 'end'))
+        clear_btn.pack(side='left', anchor="n", pady=4)
+        undo_btn = ttk.Button(btn_frame, text="Undo", width=5, command=self.parent.restore_backup)
+        undo_btn.pack(side='left', anchor="n", pady=4)
+        ToolTip.create(undo_btn, "Revert last action", 200, 6, 12)
         text_frame = Frame(tab_frame, borderwidth=0)
         text_frame.pack(side='top', fill="both")
-        description_textbox = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
-        description_textbox.pack(side='bottom', fill='both')
-        description_textbox.insert("1.0",
+        info_text = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
+        info_text.pack(side='bottom', fill='both')
+        info_text.insert("1.0",
             "Use this tool to prefix all text files in the selected directory with the entered text.\n\n"
             "This means that the entered text will appear at the start of each text file.\n\n"
             "If a filter is applied, only text files that match the filter will be affected."
         )
-        description_textbox.config(state="disabled", wrap="word")
+        info_text.config(state="disabled", wrap="word")
 
 
     def prefix_text_files(self):
@@ -213,33 +215,33 @@ class TextController:
     def create_append_text_widgets_tab3(self):
         tab_frame = Frame(self.parent.tab3)
         tab_frame.pack(side='top', fill='both')
-        button_frame = Frame(tab_frame)
-        button_frame.pack(side='top', fill='x')
-        append_label = Label(button_frame, width=8, text="Append:")
-        append_label.pack(side='left', anchor="n", pady=4)
-        ToolTip.create(append_label, "Enter the text you want to insert at the END of all text files\n\nCommas will be inserted as needed", 200, 6, 12)
-        self.append_entry = ttk.Entry(button_frame, textvariable=self.parent.append_string_var)
+        btn_frame = Frame(tab_frame)
+        btn_frame.pack(side='top', fill='x')
+        append_lbl = Label(btn_frame, width=8, text="Append:")
+        append_lbl.pack(side='left', anchor="n", pady=4)
+        ToolTip.create(append_lbl, "Enter the text you want to insert at the END of all text files\n\nCommas will be inserted as needed", 200, 6, 12)
+        self.append_entry = ttk.Entry(btn_frame, textvariable=self.parent.append_string_var)
         self.append_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
-        self.bind_entry_functions(self.append_entry)
+        self.entry_helper.setup_entry_binds(self.append_entry)
         self.append_entry.bind('<Return>', lambda event: self.append_text_files())
-        append_button = ttk.Button(button_frame, text="Go!", width=5, command=self.append_text_files)
-        append_button.pack(side='left', anchor="n", pady=4)
-        ToolTip.create(append_button, "Text files will be backup up", 200, 6, 12)
-        clear_button = ttk.Button(button_frame, text="Clear", width=5, command=lambda: self.append_entry.delete(0, 'end'))
-        clear_button.pack(side='left', anchor="n", pady=4)
-        undo_button = ttk.Button(button_frame, text="Undo", width=5, command=self.parent.restore_backup)
-        undo_button.pack(side='left', anchor="n", pady=4)
-        ToolTip.create(undo_button, "Revert last action", 200, 6, 12)
+        append_btn = ttk.Button(btn_frame, text="Go!", width=5, command=self.append_text_files)
+        append_btn.pack(side='left', anchor="n", pady=4)
+        ToolTip.create(append_btn, "Text files will be backup up", 200, 6, 12)
+        clear_btn = ttk.Button(btn_frame, text="Clear", width=5, command=lambda: self.append_entry.delete(0, 'end'))
+        clear_btn.pack(side='left', anchor="n", pady=4)
+        undo_btn = ttk.Button(btn_frame, text="Undo", width=5, command=self.parent.restore_backup)
+        undo_btn.pack(side='left', anchor="n", pady=4)
+        ToolTip.create(undo_btn, "Revert last action", 200, 6, 12)
         text_frame = Frame(tab_frame, borderwidth=0)
         text_frame.pack(side='top', fill="both")
-        description_textbox = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
-        description_textbox.pack(side='bottom', fill='both')
-        description_textbox.insert("1.0",
+        info_text = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
+        info_text.pack(side='bottom', fill='both')
+        info_text.insert("1.0",
             "Use this tool to append all text files in the selected directory with the entered text.\n\n"
             "This means that the entered text will appear at the end of each text file.\n\n"
             "If a filter is applied, only text files that match the filter will be affected."
         )
-        description_textbox.config(state="disabled", wrap="word")
+        info_text.config(state="disabled", wrap="word")
 
 
     def append_text_files(self):
@@ -277,195 +279,195 @@ class TextController:
 
     def create_auto_tag_widgets_tab4(self):
         def invert_selection():
-            for i in range(self.auto_tag_listbox.size()):
-                if self.auto_tag_listbox.selection_includes(i):
-                    self.auto_tag_listbox.selection_clear(i)
+            for i in range(self.autotag_listbox.size()):
+                if self.autotag_listbox.selection_includes(i):
+                    self.autotag_listbox.selection_clear(i)
                 else:
-                    self.auto_tag_listbox.select_set(i)
+                    self.autotag_listbox.select_set(i)
             self.update_auto_tag_stats_label()
 
         def clear_selection():
-            self.auto_tag_listbox.selection_clear(0, 'end')
+            self.autotag_listbox.selection_clear(0, 'end')
             self.update_auto_tag_stats_label()
 
         def all_selection():
-            self.auto_tag_listbox.select_set(0, 'end')
+            self.autotag_listbox.select_set(0, 'end')
             self.update_auto_tag_stats_label()
 
         def copy_selection():
             _, extracted_tags = self.get_auto_tag_selection()
             if extracted_tags:
-                self.auto_tag_listbox.clipboard_clear()
-                self.auto_tag_listbox.clipboard_append(', '.join(extracted_tags))
+                self.autotag_listbox.clipboard_clear()
+                self.autotag_listbox.clipboard_append(', '.join(extracted_tags))
 
         # Top Frame for Buttons
         top_frame = Frame(self.parent.tab4)
         top_frame.pack(fill='x')
-        help_button = ttk.Button(top_frame, text="?", takefocus=False, width=2, command=self.show_auto_tag_help)
-        help_button.pack(side='left')
-        self.interrogation_stats_label = Label(top_frame, text="Total: 0  |  Selected: 0")
-        self.interrogation_stats_label.pack(side='left')
-        interrogate_button = ttk.Button(top_frame, text="Interrogate", takefocus=False, command=self.interrogate_image_tags)
-        interrogate_button.pack(side='right')
-        ToolTip.create(interrogate_button, "Interrogate the current image using the selected ONNX vision model.", 500, 6, 12)
-        auto_insert_menubutton = ttk.Menubutton(top_frame, text="Auto-Insert", takefocus=False)
-        auto_insert_menubutton.pack(side='right')
-        auto_insert_menu = Menu(auto_insert_menubutton, tearoff=0)
-        auto_insert_menu.add_radiobutton(label="Disable", variable=self.auto_insert_mode_var, value="disable")
-        auto_insert_menu.add_separator()
-        auto_insert_menu.add_radiobutton(label="Prefix", variable=self.auto_insert_mode_var, value="prefix")
-        auto_insert_menu.add_radiobutton(label="Append", variable=self.auto_insert_mode_var, value="append")
-        auto_insert_menu.add_radiobutton(label="Replace", variable=self.auto_insert_mode_var, value="replace")
-        auto_insert_menubutton.config(menu=auto_insert_menu)
-        batch_interrogate_checkbutton = ttk.Checkbutton(top_frame, text="Batch", takefocus=False, variable=self.batch_interrogate_images_var)
-        batch_interrogate_checkbutton.pack(side='right')
-        ToolTip.create(batch_interrogate_checkbutton, "Interrogate all images\nAn Auto-Insert mode must be selected", 200, 6, 12)
+        help_btn = ttk.Button(top_frame, text="?", takefocus=False, width=2, command=self.show_auto_tag_help)
+        help_btn.pack(side='left')
+        self.tag_list_stats_lbl = Label(top_frame, text="Total: 0  |  Selected: 0")
+        self.tag_list_stats_lbl.pack(side='left')
+        interrogate_btn = ttk.Button(top_frame, text="Interrogate", takefocus=False, command=self.interrogate_image_tags)
+        interrogate_btn.pack(side='right')
+        ToolTip.create(interrogate_btn, "Interrogate the current image using the selected ONNX vision model.", 500, 6, 12)
+        ins_menubutton = ttk.Menubutton(top_frame, text="Auto-Insert", takefocus=False)
+        ins_menubutton.pack(side='right')
+        ins_menu = Menu(ins_menubutton, tearoff=0)
+        ins_menu.add_radiobutton(label="Disable", variable=self.auto_insert_mode_var, value="disable")
+        ins_menu.add_separator()
+        ins_menu.add_radiobutton(label="Prefix", variable=self.auto_insert_mode_var, value="prefix")
+        ins_menu.add_radiobutton(label="Append", variable=self.auto_insert_mode_var, value="append")
+        ins_menu.add_radiobutton(label="Replace", variable=self.auto_insert_mode_var, value="replace")
+        ins_menubutton.config(menu=ins_menu)
+        batch_chk = ttk.Checkbutton(top_frame, text="Batch", takefocus=False, variable=self.batch_interrogate_images_var)
+        batch_chk.pack(side='right')
+        ToolTip.create(batch_chk, "Interrogate all images\nAn Auto-Insert mode must be selected", 200, 6, 12)
 
         # Main Paned Window
-        paned_window = PanedWindow(self.parent.tab4, orient='horizontal', sashwidth=6, bg="#d0d0d0")
-        paned_window.pack(fill='both', expand=True)
+        pane = PanedWindow(self.parent.tab4, orient='horizontal', sashwidth=6, bg="#d0d0d0")
+        pane.pack(fill='both', expand=True)
 
         # Listbox Frame
-        listbox_frame = Frame(paned_window)
-        paned_window.add(listbox_frame, stretch="never")
-        paned_window.paneconfig(listbox_frame, width=200, minsize=40)
-        listbox_y_scrollbar = Scrollbar(listbox_frame, orient="vertical")
-        self.auto_tag_listbox = Listbox(listbox_frame, width=20, selectmode="extended", exportselection=False, yscrollcommand=listbox_y_scrollbar.set)
-        self.auto_tag_listbox.bind('<<ListboxSelect>>', lambda event: self.update_auto_tag_stats_label())
-        self.auto_tag_listbox.bind("<Button-3>", lambda event: listbox_context_menu.tk_popup(event.x_root, event.y_root))
-        listbox_y_scrollbar.config(command=self.auto_tag_listbox.yview)
-        self.auto_tag_listbox.pack(side='left', fill='both', expand=True)
-        listbox_y_scrollbar.pack(side='left', fill='y')
+        listbox_frame = Frame(pane)
+        pane.add(listbox_frame, stretch="never")
+        pane.paneconfig(listbox_frame, width=200, minsize=40)
+        scrollbar = Scrollbar(listbox_frame, orient="vertical")
+        self.autotag_listbox = Listbox(listbox_frame, width=20, selectmode="extended", exportselection=False, yscrollcommand=scrollbar.set)
+        self.autotag_listbox.bind('<<ListboxSelect>>', lambda event: self.update_auto_tag_stats_label())
+        self.autotag_listbox.bind("<Button-3>", lambda event: contextmenu.tk_popup(event.x_root, event.y_root))
+        scrollbar.config(command=self.autotag_listbox.yview)
+        self.autotag_listbox.pack(side='left', fill='both', expand=True)
+        scrollbar.pack(side='left', fill='y')
         # Listbox - Context Menu
-        listbox_context_menu = Menu(self.auto_tag_listbox, tearoff=0)
-        listbox_context_menu.add_command(label="Insert: Prefix", command=lambda: self.insert_listbox_selection(prefix=True))
-        listbox_context_menu.add_command(label="Insert: Append", command=lambda: self.insert_listbox_selection(append=True))
-        listbox_context_menu.add_command(label="Insert: Replace", command=lambda: self.insert_listbox_selection(replace=True))
-        listbox_context_menu.add_separator()
-        listbox_context_menu.add_command(label="Copy Selected Tags", command=copy_selection)
-        listbox_context_menu.add_command(label="Select All", command=all_selection)
-        listbox_context_menu.add_command(label="Invert Selection", command=invert_selection)
-        listbox_context_menu.add_command(label="Clear Selection", command=clear_selection)
-        listbox_context_menu.add_separator()
-        listbox_context_menu.add_command(label="Add to MyTags", command=lambda: self.parent.add_to_custom_dictionary(origin="auto_tag"))
-        listbox_context_menu.add_separator()
-        listbox_context_menu.add_command(label="Add to Exclude", command=lambda: self.add_selected_tags_to_excluded_tags())
-        listbox_context_menu.add_command(label="Add to Keep", command=lambda: self.add_selected_tags_to_keep_tags())
+        contextmenu = Menu(self.autotag_listbox, tearoff=0)
+        contextmenu.add_command(label="Insert: Prefix", command=lambda: self.insert_listbox_selection(prefix=True))
+        contextmenu.add_command(label="Insert: Append", command=lambda: self.insert_listbox_selection(append=True))
+        contextmenu.add_command(label="Insert: Replace", command=lambda: self.insert_listbox_selection(replace=True))
+        contextmenu.add_separator()
+        contextmenu.add_command(label="Copy Selected Tags", command=copy_selection)
+        contextmenu.add_command(label="Select All", command=all_selection)
+        contextmenu.add_command(label="Invert Selection", command=invert_selection)
+        contextmenu.add_command(label="Clear Selection", command=clear_selection)
+        contextmenu.add_separator()
+        contextmenu.add_command(label="Add to MyTags", command=lambda: self.parent.add_to_custom_dictionary(origin="auto_tag"))
+        contextmenu.add_separator()
+        contextmenu.add_command(label="Add to Exclude", command=lambda: self.add_selected_tags_to_excluded_tags())
+        contextmenu.add_command(label="Add to Keep", command=lambda: self.add_selected_tags_to_keep_tags())
         # Control Frame
-        control_frame = Frame(paned_window)
-        paned_window.add(control_frame, stretch="always")
-        paned_window.paneconfig(control_frame, minsize=200)
+        control_frame = Frame(pane)
+        pane.add(control_frame, stretch="always")
+        pane.paneconfig(control_frame, minsize=200)
         # Model Selection
-        model_selection_frame = Frame(control_frame)
-        model_selection_frame.pack(side='top', fill='x', padx=2, pady=2)
-        model_selection_label = Label(model_selection_frame, text="Model:", width=16, anchor="w")
-        model_selection_label.pack(side='left')
-        ToolTip.create(model_selection_label, "Select the ONNX vision model to use for interrogation", 200, 6, 12)
+        model_frame = Frame(control_frame)
+        model_frame.pack(side='top', fill='x', padx=2, pady=2)
+        model_label = Label(model_frame, text="Model:", width=16, anchor="w")
+        model_label.pack(side='left')
+        ToolTip.create(model_label, "Select the ONNX vision model to use for interrogation", 200, 6, 12)
         self.get_onnx_model_list()
-        self.auto_tag_model_combobox = ttk.Combobox(model_selection_frame, width=25, takefocus=False, state="readonly", values=list(self.onnx_model_dict.keys()))
-        self.auto_tag_model_combobox.pack(side='right')
+        self.autotag_model_combo = ttk.Combobox(model_frame, width=25, takefocus=False, state="readonly", values=list(self.onnx_model_dict.keys()))
+        self.autotag_model_combo.pack(side='right')
         self.set_auto_tag_combo_box()
         # General Threshold
-        general_threshold_frame = Frame(control_frame)
-        general_threshold_frame.pack(side='top', fill='x', padx=2, pady=2)
-        general_threshold_label = Label(general_threshold_frame, text="General Threshold:", width=16, anchor="w")
-        general_threshold_label.pack(side='left')
-        ToolTip.create(general_threshold_label, "The minimum confidence threshold for general tags", 200, 6, 12)
-        self.auto_tag_general_threshold_spinbox = ttk.Spinbox(general_threshold_frame, takefocus=False, from_=0, to=1, increment=0.01, width=8)
-        self.auto_tag_general_threshold_spinbox.pack(side='right')
-        self.auto_tag_general_threshold_spinbox.set(self.parent.onnx_tagger.general_threshold)
+        gen_thr_frame = Frame(control_frame)
+        gen_thr_frame.pack(side='top', fill='x', padx=2, pady=2)
+        gen_thr_lbl = Label(gen_thr_frame, text="General Threshold:", width=16, anchor="w")
+        gen_thr_lbl.pack(side='left')
+        ToolTip.create(gen_thr_lbl, "The minimum confidence threshold for general tags", 200, 6, 12)
+        self.autotag_gen_threshold_spinbox = ttk.Spinbox(gen_thr_frame, takefocus=False, from_=0, to=1, increment=0.01, width=8)
+        self.autotag_gen_threshold_spinbox.pack(side='right')
+        self.autotag_gen_threshold_spinbox.set(self.parent.onnx_tagger.general_threshold)
         # Character Threshold
-        character_threshold_frame = Frame(control_frame)
-        character_threshold_frame.pack(side='top', fill='x', padx=2, pady=2)
-        character_threshold_label = Label(character_threshold_frame, text="Character Threshold:", width=16, anchor="w")
-        character_threshold_label.pack(side='left')
-        ToolTip.create(character_threshold_label, "The minimum confidence threshold for character tags", 200, 6, 12)
-        self.auto_tag_character_threshold_spinbox = ttk.Spinbox(character_threshold_frame, takefocus=False, from_=0, to=1, increment=0.01, width=8)
-        self.auto_tag_character_threshold_spinbox.pack(side='right')
-        self.auto_tag_character_threshold_spinbox.set(self.parent.onnx_tagger.character_threshold)
+        char_thr_frame = Frame(control_frame)
+        char_thr_frame.pack(side='top', fill='x', padx=2, pady=2)
+        char_thr_lbl = Label(char_thr_frame, text="Character Threshold:", width=16, anchor="w")
+        char_thr_lbl.pack(side='left')
+        ToolTip.create(char_thr_lbl, "The minimum confidence threshold for character tags", 200, 6, 12)
+        self.autotag_char_threshold_spinbox = ttk.Spinbox(char_thr_frame, takefocus=False, from_=0, to=1, increment=0.01, width=8)
+        self.autotag_char_threshold_spinbox.pack(side='right')
+        self.autotag_char_threshold_spinbox.set(self.parent.onnx_tagger.character_threshold)
         # Max Tags
         max_tags_frame = Frame(control_frame)
         max_tags_frame.pack(side='top', fill='x', padx=2, pady=2)
-        max_tags_label = Label(max_tags_frame, text="Max Tags:", width=16, anchor="w")
-        max_tags_label.pack(side='left')
-        ToolTip.create(max_tags_label, "The maximum number of tags that will be generated\nAdditional tags will be ignored", 200, 6, 12)
-        self.auto_tag_max_tags_spinbox = ttk.Spinbox(max_tags_frame, takefocus=False, from_=1, to=999, increment=1, width=8)
-        self.auto_tag_max_tags_spinbox.pack(side='right')
-        self.auto_tag_max_tags_spinbox.set(40)
+        max_tags_lbl = Label(max_tags_frame, text="Max Tags:", width=16, anchor="w")
+        max_tags_lbl.pack(side='left')
+        ToolTip.create(max_tags_lbl, "The maximum number of tags that will be generated\nAdditional tags will be ignored", 200, 6, 12)
+        self.autotag_max_tags_spinbox = ttk.Spinbox(max_tags_frame, takefocus=False, from_=1, to=999, increment=1, width=8)
+        self.autotag_max_tags_spinbox.pack(side='right')
+        self.autotag_max_tags_spinbox.set(40)
         # Checkbutton Frame
-        checkbutton_frame = Frame(control_frame)
-        checkbutton_frame.pack(side='top', fill='x', padx=2, pady=2)
+        chk_frame = Frame(control_frame)
+        chk_frame.pack(side='top', fill='x', padx=2, pady=2)
         # Keep (_)
-        self.auto_tag_keep_underscore_checkbutton = ttk.Checkbutton(checkbutton_frame, text="Keep: _", takefocus=False, variable=self.parent.onnx_tagger.keep_underscore)
-        self.auto_tag_keep_underscore_checkbutton.pack(side='left', anchor='w', padx=2, pady=2)
-        ToolTip.create(self.auto_tag_keep_underscore_checkbutton, "If enabled, Underscores will be kept in tags, otherwise they will be replaced with a space\n\nExample: Keep = simple_background, Replace = simple background", 200, 6, 12)
+        self.autotag_keep_underscore_chk = ttk.Checkbutton(chk_frame, text="Keep: _", takefocus=False, variable=self.parent.onnx_tagger.keep_underscore)
+        self.autotag_keep_underscore_chk.pack(side='left', anchor='w', padx=2, pady=2)
+        ToolTip.create(self.autotag_keep_underscore_chk, "If enabled, Underscores will be kept in tags, otherwise they will be replaced with a space\n\nExample: Keep = simple_background, Replace = simple background", 200, 6, 12)
         # Keep (\)
-        self.auto_tag_keep_escape_checkbutton = ttk.Checkbutton(checkbutton_frame, text="Keep: \\", takefocus=False, variable=self.parent.onnx_tagger.keep_escape_character)
-        self.auto_tag_keep_escape_checkbutton.pack(side='left', anchor='w', padx=2, pady=2)
-        ToolTip.create(self.auto_tag_keep_escape_checkbutton, "If enabled, the escape character will be kept in tags\n\nExample: Keep = \(cat\), Replace = (cat)", 200, 6, 12)
+        self.autotag_keep_escape_chk = ttk.Checkbutton(chk_frame, text="Keep: \\", takefocus=False, variable=self.parent.onnx_tagger.keep_escape_character)
+        self.autotag_keep_escape_chk.pack(side='left', anchor='w', padx=2, pady=2)
+        ToolTip.create(self.autotag_keep_escape_chk, "If enabled, the escape character will be kept in tags\n\nExample: Keep = \(cat\), Replace = (cat)", 200, 6, 12)
         # Entry Frame
         entry_frame = Frame(control_frame)
         entry_frame.pack(side='top', fill='x', padx=2, pady=2)
         excluded_entry_frame = Frame(entry_frame)
         excluded_entry_frame.pack(side='top', fill='x', padx=2, pady=2)
-        excluded_tags_label = Label(excluded_entry_frame, text="Exclude:", width=9, anchor="w")
-        excluded_tags_label.pack(side='left')
-        ToolTip.create(excluded_tags_label, "Enter tags that will be excluded from interrogation\nSeparate tags with commas", 200, 6, 12)
+        exclude_tags_lbl = Label(excluded_entry_frame, text="Exclude:", width=9, anchor="w")
+        exclude_tags_lbl.pack(side='left')
+        ToolTip.create(exclude_tags_lbl, "Enter tags that will be excluded from interrogation\nSeparate tags with commas", 200, 6, 12)
         self.excluded_tags_entry = ttk.Entry(excluded_entry_frame, width=5)
         self.excluded_tags_entry.pack(side='left', fill='both', expand=True)
-        self.bind_entry_functions(self.excluded_tags_entry)
-        auto_exclude_tags_checkbutton = ttk.Checkbutton(excluded_entry_frame, text="Auto", takefocus=False, variable=self.auto_exclude_tags_var)
-        auto_exclude_tags_checkbutton.pack(side='left', anchor='w', padx=2, pady=2)
-        self.auto_exclude_tags_tooltip = ToolTip.create(auto_exclude_tags_checkbutton, "Automatically exclude tags that are already in the text box", 200, 6, 12)
+        self.entry_helper.setup_entry_binds(self.excluded_tags_entry)
+        auto_exclude_tags_chk = ttk.Checkbutton(excluded_entry_frame, text="Auto", takefocus=False, variable=self.auto_exclude_tags_var)
+        auto_exclude_tags_chk.pack(side='left', anchor='w', padx=2, pady=2)
+        ToolTip.create(auto_exclude_tags_chk, "Automatically exclude tags that are already in the text box", 200, 6, 12)
         keep_entry_frame = Frame(entry_frame)
         keep_entry_frame.pack(side='top', fill='x', padx=2, pady=2)
-        keep_tags_label = Label(keep_entry_frame, text="Keep:", width=9, anchor="w")
-        keep_tags_label.pack(side='left')
-        ToolTip.create(keep_tags_label, "Enter tags that will always be included in interrogation\nSeparate tags with commas", 200, 6, 12)
+        keep_tags_lbl = Label(keep_entry_frame, text="Keep:", width=9, anchor="w")
+        keep_tags_lbl.pack(side='left')
+        ToolTip.create(keep_tags_lbl, "Enter tags that will always be included in interrogation\nSeparate tags with commas", 200, 6, 12)
         self.keep_tags_entry = ttk.Entry(keep_entry_frame, width=25)
         self.keep_tags_entry.pack(side='left', fill='both', expand=True)
-        self.bind_entry_functions(self.keep_tags_entry)
+        self.entry_helper.setup_entry_binds(self.keep_tags_entry)
         replace_entry_frame = Frame(entry_frame)
         replace_entry_frame.pack(side='top', fill='x', padx=2, pady=2)
-        replace_tags_label = Label(replace_entry_frame, text="Replace:", width=9, anchor="w")
-        replace_tags_label.pack(side='left')
-        ToolTip.create(replace_tags_label, "Enter tags that will be replaced during interrogation\nSeparate tags with commas, the index of the tag in the 'Replace' entry will be used to replace the tag in the 'With' entry", 200, 6, 12)
+        replace_tags_lbl = Label(replace_entry_frame, text="Replace:", width=9, anchor="w")
+        replace_tags_lbl.pack(side='left')
+        ToolTip.create(replace_tags_lbl, "Enter tags that will be replaced during interrogation\nSeparate tags with commas, the index of the tag in the 'Replace' entry will be used to replace the tag in the 'With' entry", 200, 6, 12)
         self.replace_tags_entry = ttk.Entry(replace_entry_frame, width=1)
         self.replace_tags_entry.pack(side='left', fill='both', expand=True)
-        self.bind_entry_functions(self.replace_tags_entry)
-        replace_with_tags_label = Label(replace_entry_frame, text="With:", anchor="w")
-        replace_with_tags_label.pack(side='left')
-        ToolTip.create(replace_with_tags_label, "Enter tags that will replace the tags entered in the 'Replace' entry\nSeparate tags with commas, ensure tags match the index of the tags in the 'Replace' entry", 200, 6, 12)
+        self.entry_helper.setup_entry_binds(self.replace_tags_entry)
+        replace_with_tags_lbl = Label(replace_entry_frame, text="With:", anchor="w")
+        replace_with_tags_lbl.pack(side='left')
+        ToolTip.create(replace_with_tags_lbl, "Enter tags that will replace the tags entered in the 'Replace' entry\nSeparate tags with commas, ensure tags match the index of the tags in the 'Replace' entry", 200, 6, 12)
         self.replace_with_tags_entry = ttk.Entry(replace_entry_frame, width=1)
         self.replace_with_tags_entry.pack(side='left', fill='both', expand=True)
-        self.bind_entry_functions(self.replace_with_tags_entry)
+        self.entry_helper.setup_entry_binds(self.replace_with_tags_entry)
         # Selection Button Frame
-        button_frame = ttk.LabelFrame(control_frame, text="Selection")
-        button_frame.pack(side="bottom", fill='both', padx=2)
-        button_frame.grid_columnconfigure(0, weight=1)
-        button_frame.grid_columnconfigure(1, weight=1)
-        button_frame.grid_columnconfigure(2, weight=1)
+        btn_frame = ttk.LabelFrame(control_frame, text="Selection")
+        btn_frame.pack(side="bottom", fill='both', padx=2)
+        btn_frame.grid_columnconfigure(0, weight=1)
+        btn_frame.grid_columnconfigure(1, weight=1)
+        btn_frame.grid_columnconfigure(2, weight=1)
         # Selection Buttons
-        insert_selection_prefix_button = ttk.Button(button_frame, text="Prefix", command=lambda: self.insert_listbox_selection(prefix=True))
-        insert_selection_prefix_button.grid(row=0, column=0, sticky='ew', pady=2)
-        insert_selection_prefix_button.bind("<Button-3>", lambda event: self.insert_listbox_selection(replace=True))
-        ToolTip.create(insert_selection_prefix_button, "Insert the selected tags at the START of the text box\nRight-click to replace the current tags", 500, 6, 12)
-        insert_selection_append_button = ttk.Button(button_frame, text="Append", command=lambda: self.insert_listbox_selection(append=True))
-        insert_selection_append_button.grid(row=0, column=1, sticky='ew', pady=2)
-        insert_selection_append_button.bind("<Button-3>", lambda event: self.insert_listbox_selection(replace=True))
-        ToolTip.create(insert_selection_append_button, "Insert the selected tags at the END of the text box\nRight-click to replace the current tags", 500, 6, 12)
-        copy_button = ttk.Button(button_frame, text="Copy", command=copy_selection)
-        copy_button.grid(row=0, column=2, sticky='ew', pady=2)
-        ToolTip.create(copy_button, "Copy the selected tags to the clipboard", 500, 6, 12)
-        all_button = ttk.Button(button_frame, text="All", command=all_selection)
-        all_button.grid(row=1, column=0, sticky='ew', pady=2)
-        ToolTip.create(all_button, "Select all tags", 500, 6, 12)
-        invert_button = ttk.Button(button_frame, text="Invert", command=invert_selection)
-        invert_button.grid(row=1, column=1, sticky='ew', pady=2)
-        ToolTip.create(invert_button, "Invert the current selection", 500, 6, 12)
-        clear_button = ttk.Button(button_frame, text="Clear", command=clear_selection)
-        clear_button.grid(row=1, column=2, sticky='ew', pady=2)
-        ToolTip.create(clear_button, "Clear the current selection", 500, 6, 12)
+        ins_sel_prefix_btn = ttk.Button(btn_frame, text="Prefix", command=lambda: self.insert_listbox_selection(prefix=True))
+        ins_sel_prefix_btn.grid(row=0, column=0, sticky='ew', pady=2)
+        ins_sel_prefix_btn.bind("<Button-3>", lambda event: self.insert_listbox_selection(replace=True))
+        ToolTip.create(ins_sel_prefix_btn, "Insert the selected tags at the START of the text box\nRight-click to replace the current tags", 500, 6, 12)
+        ins_sel_append_btn = ttk.Button(btn_frame, text="Append", command=lambda: self.insert_listbox_selection(append=True))
+        ins_sel_append_btn.grid(row=0, column=1, sticky='ew', pady=2)
+        ins_sel_append_btn.bind("<Button-3>", lambda event: self.insert_listbox_selection(replace=True))
+        ToolTip.create(ins_sel_append_btn, "Insert the selected tags at the END of the text box\nRight-click to replace the current tags", 500, 6, 12)
+        copy_btn = ttk.Button(btn_frame, text="Copy", command=copy_selection)
+        copy_btn.grid(row=0, column=2, sticky='ew', pady=2)
+        ToolTip.create(copy_btn, "Copy the selected tags to the clipboard", 500, 6, 12)
+        all_btn = ttk.Button(btn_frame, text="All", command=all_selection)
+        all_btn.grid(row=1, column=0, sticky='ew', pady=2)
+        ToolTip.create(all_btn, "Select all tags", 500, 6, 12)
+        invert_btn = ttk.Button(btn_frame, text="Invert", command=invert_selection)
+        invert_btn.grid(row=1, column=1, sticky='ew', pady=2)
+        ToolTip.create(invert_btn, "Invert the current selection", 500, 6, 12)
+        clear_btn = ttk.Button(btn_frame, text="Clear", command=clear_selection)
+        clear_btn.grid(row=1, column=2, sticky='ew', pady=2)
+        ToolTip.create(clear_btn, "Clear the current selection", 500, 6, 12)
 
 
     def show_auto_tag_help(self):
@@ -489,10 +491,10 @@ class TextController:
 
 
     def update_auto_tag_stats_label(self):
-        total_tags = self.auto_tag_listbox.size()
-        selected_tags = len(self.auto_tag_listbox.curselection())
+        total_tags = self.autotag_listbox.size()
+        selected_tags = len(self.autotag_listbox.curselection())
         selected_tags_padded = str(selected_tags).zfill(len(str(total_tags)))
-        self.interrogation_stats_label.config(text=f"Total: {total_tags}  |  Selected: {selected_tags_padded}")
+        self.tag_list_stats_lbl.config(text=f"Total: {total_tags}  |  Selected: {selected_tags_padded}")
 
 
     def insert_listbox_selection(self, prefix=False, append=False, replace=False):
@@ -514,7 +516,7 @@ class TextController:
 
 
     def get_auto_tag_selection(self):
-        selected_items = [self.auto_tag_listbox.get(i) for i in self.auto_tag_listbox.curselection()]
+        selected_items = [self.autotag_listbox.get(i) for i in self.autotag_listbox.curselection()]
         extracted_tags = [item.split(': ', 1)[-1] for item in selected_items]
         return selected_items, extracted_tags
 
@@ -549,9 +551,9 @@ class TextController:
             spinbox.set(default_value)
             return default_value
 
-        validate_spinbox_value(self.auto_tag_max_tags_spinbox, 40, 1, 999)
-        self.parent.onnx_tagger.general_threshold = validate_spinbox_value(self.auto_tag_general_threshold_spinbox, 0.35, 0, 1)
-        self.parent.onnx_tagger.character_threshold = validate_spinbox_value(self.auto_tag_character_threshold_spinbox, 0.85, 0, 1)
+        validate_spinbox_value(self.autotag_max_tags_spinbox, 40, 1, 999)
+        self.parent.onnx_tagger.general_threshold = validate_spinbox_value(self.autotag_gen_threshold_spinbox, 0.35, 0, 1)
+        self.parent.onnx_tagger.character_threshold = validate_spinbox_value(self.autotag_char_threshold_spinbox, 0.85, 0, 1)
 
 
     def interrogate_image_tags(self):
@@ -562,7 +564,7 @@ class TextController:
         image_path = self.parent.image_files[self.parent.current_index]
         if image_path.lower().endswith('.mp4'):
             image_path = self.parent.video_player.get_current_frame()
-        selected_model_path = self.onnx_model_dict.get(self.auto_tag_model_combobox.get())
+        selected_model_path = self.onnx_model_dict.get(self.autotag_model_combo.get())
         if not selected_model_path or not os.path.exists(selected_model_path):
             confirm = messagebox.askyesno("Error", f"Model file not found: {selected_model_path}\n\nWould you like to view the Auto-Tag Help?")
             if confirm:
@@ -571,7 +573,7 @@ class TextController:
         self.update_tag_thresholds()
         self.update_tag_options()
         tag_list, tag_dict = self.parent.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
-        max_tags = int(self.auto_tag_max_tags_spinbox.get())
+        max_tags = int(self.autotag_max_tags_spinbox.get())
         tag_list = tag_list[:max_tags]
         tag_dict = {k: v for k, v in list(tag_dict.items())[:max_tags]}
         self.populate_auto_tag_listbox(tag_dict)
@@ -579,18 +581,18 @@ class TextController:
 
 
     def populate_auto_tag_listbox(self, tag_dict):
-        self.auto_tag_listbox.delete(0, "end")
+        self.autotag_listbox.delete(0, "end")
         if not tag_dict:
             self.update_auto_tag_stats_label()
             return
         max_length = max(len(f"{float(confidence):.2f}") for confidence, _ in tag_dict.values())
         for tag, (confidence, category) in tag_dict.items():
             padded_score = f"{float(confidence):.2f}".ljust(max_length, '0')
-            self.auto_tag_listbox.insert("end", f" {padded_score}: {tag}")
+            self.autotag_listbox.insert("end", f" {padded_score}: {tag}")
             if category == "character":
-                self.auto_tag_listbox.itemconfig("end", {'fg': '#148632'})
+                self.autotag_listbox.itemconfig("end", {'fg': '#148632'})
             if category == "keep":
-                self.auto_tag_listbox.itemconfig("end", {'fg': '#c00004'})
+                self.autotag_listbox.itemconfig("end", {'fg': '#c00004'})
         self.update_auto_tag_stats_label()
 
 
@@ -628,7 +630,7 @@ class TextController:
         except Exception:
             first_model_key = None
         if first_model_key:
-            self.auto_tag_model_combobox.set(first_model_key)
+            self.autotag_model_combo.set(first_model_key)
 
 
     def batch_interrogate_images(self):
@@ -662,7 +664,7 @@ class TextController:
             popup.grab_set()
             self.root.update()
             popup.protocol("WM_DELETE_WINDOW", stop_batch_process)
-            selected_model_path = self.onnx_model_dict.get(self.auto_tag_model_combobox.get())
+            selected_model_path = self.onnx_model_dict.get(self.autotag_model_combo.get())
             if not selected_model_path or not os.path.exists(selected_model_path):
                 confirm = messagebox.askyesno("Error", f"Model file not found: {selected_model_path}\n\nWould you like to view the Auto-Tag Help?")
                 if confirm:
@@ -670,7 +672,7 @@ class TextController:
                 popup.destroy()
                 return
             self.update_tag_thresholds()
-            max_tags = int(self.auto_tag_max_tags_spinbox.get())
+            max_tags = int(self.autotag_max_tags_spinbox.get())
             total_images = len(self.parent.image_files)
             progress["maximum"] = total_images
             start_time = time.time()
@@ -782,32 +784,32 @@ class TextController:
     def create_filter_text_image_pairs_widgets_tab5(self):
         tab_frame = Frame(self.parent.tab5)
         tab_frame.pack(side='top', fill='both')
-        button_frame = Frame(tab_frame)
-        button_frame.pack(side='top', fill='x')
-        self.filter_label = Label(button_frame, width=8, text="Filter:")
-        self.filter_label.pack(side='left', anchor="n", pady=4)
-        ToolTip.create(self.filter_label, "Enter the EXACT text you want to filter by\nThis will filter all img-txt pairs based on the provided text, see below for more info", 200, 6, 12)
-        self.filter_entry = ttk.Entry(button_frame, width=11, textvariable=self.parent.filter_string_var)
+        btn_frame = Frame(tab_frame)
+        btn_frame.pack(side='top', fill='x')
+        self.filter_lbl = Label(btn_frame, width=8, text="Filter:")
+        self.filter_lbl.pack(side='left', anchor="n", pady=4)
+        ToolTip.create(self.filter_lbl, "Enter the EXACT text you want to filter by\nThis will filter all img-txt pairs based on the provided text, see below for more info", 200, 6, 12)
+        self.filter_entry = ttk.Entry(btn_frame, width=11, textvariable=self.parent.filter_string_var)
         self.filter_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
-        self.bind_entry_functions(self.filter_entry)
+        self.entry_helper.setup_entry_binds(self.filter_entry)
         self.filter_entry.bind('<Return>', lambda event: self.filter_text_image_pairs())
-        self.filter_button = ttk.Button(button_frame, text="Go!", width=5, command=self.filter_text_image_pairs)
-        self.filter_button.pack(side='left', anchor="n", pady=4)
-        ToolTip.create(self.filter_button, "Text files will be filtered based on the entered text", 200, 6, 12)
-        self.revert_filter_button = ttk.Button(button_frame, text="Clear", width=5, command=lambda: (self.revert_text_image_filter(clear=True)))
-        self.revert_filter_button.pack(side='left', anchor="n", pady=4)
-        self.revert_filter_button_tooltip = ToolTip.create(self.revert_filter_button, "Clear any filtering applied", 200, 6, 12)
-        self.regex_filter_checkbutton = ttk.Checkbutton(button_frame, text="Regex", variable=self.parent.filter_use_regex_var)
-        self.regex_filter_checkbutton.pack(side='left', anchor="n", pady=4)
-        ToolTip.create(self.regex_filter_checkbutton, "Use Regular Expressions for filtering", 200, 6, 12)
-        self.empty_files_checkbutton = ttk.Checkbutton(button_frame, text="Empty", variable=self.parent.filter_empty_files_var, command=self.toggle_empty_files_filter)
-        self.empty_files_checkbutton.pack(side='left', anchor="n", pady=4)
-        ToolTip.create(self.empty_files_checkbutton, "Check this to show only empty text files\n\nImages without a text pair are also considered as empty", 200, 6, 12)
+        self.filter_btn = ttk.Button(btn_frame, text="Go!", width=5, command=self.filter_text_image_pairs)
+        self.filter_btn.pack(side='left', anchor="n", pady=4)
+        ToolTip.create(self.filter_btn, "Text files will be filtered based on the entered text", 200, 6, 12)
+        self.revert_filter_btn = ttk.Button(btn_frame, text="Clear", width=5, command=lambda: (self.revert_text_image_filter(clear=True)))
+        self.revert_filter_btn.pack(side='left', anchor="n", pady=4)
+        self.revert_filter_button_tooltip = ToolTip.create(self.revert_filter_btn, "Clear any filtering applied", 200, 6, 12)
+        self.regex_filter_chk = ttk.Checkbutton(btn_frame, text="Regex", variable=self.parent.filter_use_regex_var)
+        self.regex_filter_chk.pack(side='left', anchor="n", pady=4)
+        ToolTip.create(self.regex_filter_chk, "Use Regular Expressions for filtering", 200, 6, 12)
+        self.empty_files_chk = ttk.Checkbutton(btn_frame, text="Empty", variable=self.parent.filter_empty_files_var, command=self.toggle_empty_files_filter)
+        self.empty_files_chk.pack(side='left', anchor="n", pady=4)
+        ToolTip.create(self.empty_files_chk, "Check this to show only empty text files\n\nImages without a text pair are also considered as empty", 200, 6, 12)
         text_frame = Frame(tab_frame, borderwidth=0)
         text_frame.pack(side='top', fill="both")
-        description_textbox = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
-        description_textbox.pack(side='bottom', fill='both')
-        description_textbox.insert("1.0",
+        info_text = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
+        info_text.pack(side='bottom', fill='both')
+        info_text.insert("1.0",
             "This tool will filter all img-txt pairs based on the provided text.\n\n"
             "Enter any string of text to display only img-txt pairs containing that text.\n"
             "Use ' + ' to include multiple strings when filtering.\n"
@@ -817,7 +819,7 @@ class TextController:
             "'!dog' (removes all pairs containing the text dog)\n"
             "'!dog + cat' (remove dog pairs, display cat pairs)"
         )
-        description_textbox.config(state="disabled", wrap="word")
+        info_text.config(state="disabled", wrap="word")
 
 
     def filter_text_image_pairs(self):  # Filter
@@ -874,7 +876,7 @@ class TextController:
         self.parent.current_index = 0
         self.parent.show_pair()
         messagebox.showinfo("Filter", f"Filter applied successfully.\n\n{len(self.parent.image_files)} images found.")
-        self.revert_filter_button.config(style="Red.TButton")
+        self.revert_filter_btn.config(style="Red.TButton")
         self.revert_filter_button_tooltip.config(text="Filter is active\n\nClear any filtering applied")
         self.parent.update_total_image_label()
         if self.parent.is_image_grid_visible_var.get():
@@ -895,7 +897,7 @@ class TextController:
         if not silent:
             messagebox.showinfo("Filter", "Filter has been cleared.")
         self.filter_is_active = False
-        self.revert_filter_button.config(style="")
+        self.revert_filter_btn.config(style="")
         self.revert_filter_button_tooltip.config(text="Filter is inactive\n\nClear any filtering applied")
         self.parent.filter_empty_files_var.set(False)
         self.parent.update_total_image_label()
@@ -922,10 +924,10 @@ class TextController:
 
     def toggle_filter_widgets(self, state): # Filter
             if state:
-                for widget in [self.filter_label, self.filter_entry, self.filter_button, self.regex_filter_checkbutton]:
+                for widget in [self.filter_lbl, self.filter_entry, self.filter_btn, self.regex_filter_chk]:
                     widget.config(state="disabled")
             else:
-                for widget in [self.filter_label, self.filter_entry, self.filter_button, self.regex_filter_checkbutton]:
+                for widget in [self.filter_lbl, self.filter_entry, self.filter_btn, self.regex_filter_chk]:
                     widget.config(state="normal")
 
 
@@ -936,32 +938,32 @@ class TextController:
     def create_custom_active_highlight_widgets_tab6(self):
         tab_frame = Frame(self.parent.tab6)
         tab_frame.pack(side='top', fill='both')
-        button_frame = Frame(tab_frame)
-        button_frame.pack(side='top', fill='x')
-        highlight_label = Label(button_frame, width=8, text="Highlight:")
-        highlight_label.pack(side='left', anchor="n", pady=4)
-        ToolTip.create(highlight_label, "Enter the text you want to highlight\nUse ' + ' to highlight multiple strings of text\n\nExample: dog + cat", 200, 6, 12)
-        self.highlight_entry = ttk.Entry(button_frame, textvariable=self.parent.custom_highlight_string_var)
+        btn_frame = Frame(tab_frame)
+        btn_frame.pack(side='top', fill='x')
+        highlight_lbl = Label(btn_frame, width=8, text="Highlight:")
+        highlight_lbl.pack(side='left', anchor="n", pady=4)
+        ToolTip.create(highlight_lbl, "Enter the text you want to highlight\nUse ' + ' to highlight multiple strings of text\n\nExample: dog + cat", 200, 6, 12)
+        self.highlight_entry = ttk.Entry(btn_frame, textvariable=self.parent.custom_highlight_string_var)
         self.highlight_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
-        self.bind_entry_functions(self.highlight_entry)
+        self.entry_helper.setup_entry_binds(self.highlight_entry)
         self.highlight_entry.bind('<KeyRelease>', lambda event: self.parent.highlight_custom_string())
-        highlight_button = ttk.Button(button_frame, text="Go!", width=5, command=self.parent.highlight_custom_string)
-        highlight_button.pack(side='left', anchor="n", pady=4)
-        clear_button = ttk.Button(button_frame, text="Clear", width=5, command=self.clear_highlight_tab)
-        clear_button.pack(side='left', anchor="n", pady=4)
-        self.regex_highlight_checkbutton = ttk.Checkbutton(button_frame, text="Regex", variable=self.parent.highlight_use_regex_var)
-        self.regex_highlight_checkbutton.pack(side='left', anchor="n", pady=4)
-        ToolTip.create(self.regex_highlight_checkbutton, "Use Regular Expressions for highlighting text", 200, 6, 12)
+        highlight_btn = ttk.Button(btn_frame, text="Go!", width=5, command=self.parent.highlight_custom_string)
+        highlight_btn.pack(side='left', anchor="n", pady=4)
+        clear_btn = ttk.Button(btn_frame, text="Clear", width=5, command=self.clear_highlight_tab)
+        clear_btn.pack(side='left', anchor="n", pady=4)
+        regex_highlight_chk = ttk.Checkbutton(btn_frame, text="Regex", variable=self.parent.highlight_use_regex_var)
+        regex_highlight_chk.pack(side='left', anchor="n", pady=4)
+        ToolTip.create(regex_highlight_chk, "Use Regular Expressions for highlighting text", 200, 6, 12)
         text_frame = Frame(tab_frame, borderwidth=0)
         text_frame.pack(side='top', fill="both")
-        description_textbox = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
-        description_textbox.pack(side='bottom', fill='both')
-        description_textbox.insert("1.0",
+        info_text = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
+        info_text.pack(side='bottom', fill='both')
+        info_text.insert("1.0",
             "Enter the text you want to highlight each time you move to a new img-txt pair.\n\n"
             "Use ' + ' to highlight multiple strings of text\n\n"
             "Example: dog + cat"
         )
-        description_textbox.config(state="disabled", wrap="word")
+        info_text.config(state="disabled", wrap="word")
 
 
     def clear_highlight_tab(self):
@@ -978,29 +980,29 @@ class TextController:
             if font and size:
                 size = int(size)
                 self.parent.text_box.config(font=(font, size))
-                self.font_size_label.config(text=f"Size: {size}")
-                font_box_tooltip.config(text=f"{font}")
+                self.font_size_lbl.config(text=f"Size: {size}")
+                font_combo_tooltip.config(text=f"{font}")
         def reset_to_defaults():
             self.parent.font_var.set(self.parent.default_font)
             self.size_scale.set(self.parent.default_font_size)
             set_font_and_size(self.parent.default_font, self.parent.default_font_size)
-        font_label = Label(self.parent.tab7, width=8, text="Font:")
-        font_label.pack(side="left", anchor="n", pady=4)
-        ToolTip.create(font_label, "Recommended Fonts: Courier New, Ariel, Consolas, Segoe UI", 200, 6, 12)
-        font_box = ttk.Combobox(self.parent.tab7, textvariable=self.parent.font_var, width=4, takefocus=False, state="readonly", values=list(font.families()))
-        font_box.set(self.parent.current_font_name)
-        font_box.bind("<<ComboboxSelected>>", lambda event: set_font_and_size(self.parent.font_var.get(), self.size_scale.get()))
-        font_box_tooltip = ToolTip.create(font_box, f"{self.parent.current_font_name}", 200, 6, 12)
-        font_box.pack(side="left", anchor="n", pady=4, fill="x", expand=True)
-        self.font_size_label = Label(self.parent.tab7, text=f"Size: {self.parent.font_size_var.get()}", width=14)
-        self.font_size_label.pack(side="left", anchor="n", pady=4)
-        ToolTip.create(self.font_size_label, "Default size: 10", 200, 6, 12)
+        font_lbl = Label(self.parent.tab7, width=8, text="Font:")
+        font_lbl.pack(side="left", anchor="n", pady=4)
+        ToolTip.create(font_lbl, "Recommended Fonts: Courier New, Ariel, Consolas, Segoe UI", 200, 6, 12)
+        font_combo = ttk.Combobox(self.parent.tab7, textvariable=self.parent.font_var, width=4, takefocus=False, state="readonly", values=list(font.families()))
+        font_combo.set(self.parent.current_font_name)
+        font_combo.bind("<<ComboboxSelected>>", lambda event: set_font_and_size(self.parent.font_var.get(), self.size_scale.get()))
+        font_combo.pack(side="left", anchor="n", pady=4, fill="x", expand=True)
+        font_combo_tooltip = ToolTip.create(font_combo, f"{self.parent.current_font_name}", 200, 6, 12)
+        self.font_size_lbl = Label(self.parent.tab7, text=f"Size: {self.parent.font_size_var.get()}", width=14)
+        self.font_size_lbl.pack(side="left", anchor="n", pady=4)
+        ToolTip.create(self.font_size_lbl, "Default size: 10", 200, 6, 12)
         self.size_scale = ttk.Scale(self.parent.tab7, from_=6, to=24, variable=self.parent.font_size_var, takefocus=False)
         self.size_scale.set(self.parent.current_font_size)
         self.size_scale.bind("<B1-Motion>", lambda event: set_font_and_size(self.parent.font_var.get(), self.size_scale.get()))
         self.size_scale.pack(side="left", anchor="n", pady=4, fill="x", expand=True)
-        reset_button = ttk.Button(self.parent.tab7, text="Reset", width=5, takefocus=False, command=reset_to_defaults)
-        reset_button.pack(side="left", anchor="n", pady=4)
+        reset_btn = ttk.Button(self.parent.tab7, text="Reset", width=5, takefocus=False, command=reset_to_defaults)
+        reset_btn.pack(side="left", anchor="n", pady=4)
 
 
 #endregion
@@ -1076,12 +1078,12 @@ class TextController:
                     listbox.selection_set(new_index)
         # ADD TO MYTAGS
         def add_to_mytags():
-            selected_indices = self.all_tags_listbox.curselection()
+            selected_indices = self.alltags_listbox.curselection()
             if not selected_indices:
                 return
             existing_tags = set(self.custom_dictionary_listbox.get(0, 'end'))
             for index in selected_indices:
-                tag = self.all_tags_listbox.get(index)
+                tag = self.alltags_listbox.get(index)
                 if tag not in existing_tags:
                     self.custom_dictionary_listbox.insert('end', tag)
         # CONTEXT MENU
@@ -1137,96 +1139,94 @@ class TextController:
         # Top Row - Row 0
         top_frame = Frame(tab_frame)
         top_frame.grid(row=0, column=0, sticky='ew')
-        help_button = ttk.Button(top_frame, text="?", takefocus=False, width=2, command=self.show_my_tags_help)
-        help_button.pack(side='left')
-        options_menu = ttk.Menubutton(top_frame, text="Options", takefocus=False)
-        options_menu.pack(side='left')
-        options_menu.menu = Menu(options_menu, tearoff=0)
-        options_menu["menu"] = options_menu.menu
-        options_menu.menu.add_checkbutton(label="Use: MyTags", variable=self.parent.use_mytags_var, command=self.parent.refresh_custom_dictionary)
-        options_menu.menu.add_checkbutton(label="Show: All Tags", variable=self.show_all_tags_var, command=self.toggle_all_tags_listbox)
-        options_menu.menu.add_separator()
-        options_menu.menu.add_command(label="Refresh: My Tags", command=load_tag_file)
-        options_menu.menu.add_command(label="Refresh: All Tags", command=self.refresh_all_tags_listbox)
-        options_menu.menu.add_separator()
-        options_menu.menu.add_checkbutton(label="Hide: My Tags - Controls", variable=self.hide_mytags_controls_var, command=self.toggle_mytags_controls)
-        options_menu.menu.add_checkbutton(label="Hide: All Tags - Controls", variable=self.hide_alltags_controls_var, command=self.toggle_alltags_controls)
-        options_menu.menu.add_separator()
-        options_menu.menu.add_command(label="Open MyTags File...", command=lambda: self.parent.open_textfile(self.parent.my_tags_csv))
+        help_btn = ttk.Button(top_frame, text="?", takefocus=False, width=2, command=self.show_my_tags_help)
+        help_btn.pack(side='left')
+        menubutton = ttk.Menubutton(top_frame, text="Options", takefocus=False)
+        menubutton.pack(side='left')
+        menu = Menu(menubutton, tearoff=0)
+        menubutton.config(menu=menu)
+        menu.add_checkbutton(label="Use: MyTags", variable=self.parent.use_mytags_var, command=self.parent.refresh_custom_dictionary)
+        menu.add_checkbutton(label="Show: All Tags", variable=self.show_all_tags_var, command=self.toggle_all_tags_listbox)
+        menu.add_separator()
+        menu.add_command(label="Refresh: My Tags", command=load_tag_file)
+        menu.add_command(label="Refresh: All Tags", command=self.refresh_all_tags_listbox)
+        menu.add_separator()
+        menu.add_checkbutton(label="Hide: My Tags - Controls", variable=self.hide_mytags_controls_var, command=self.toggle_mytags_controls)
+        menu.add_checkbutton(label="Hide: All Tags - Controls", variable=self.hide_alltags_controls_var, command=self.toggle_alltags_controls)
+        menu.add_separator()
+        menu.add_command(label="Open MyTags File...", command=lambda: self.parent.open_textfile(self.parent.my_tags_csv))
         # entry_frame
         entry_frame = Frame(top_frame)
         entry_frame.pack(side='left', fill='x', expand=True, pady=4)
         tag_entry = ttk.Entry(entry_frame)
         tag_entry.pack(side='left', fill='x', expand=True)
         tag_entry.bind('<Return>', lambda event: add_tag())
-        add_button = ttk.Button(entry_frame, text="Add", command=add_tag)
-        add_button.pack(side='left')
-        save_button = ttk.Button(top_frame, text="Save Tags", takefocus=False, command=save)
-        save_button.pack(side='right')
+        add_btn = ttk.Button(entry_frame, text="Add", command=add_tag)
+        add_btn.pack(side='left')
+        save_btn = ttk.Button(top_frame, text="Save Tags", takefocus=False, command=save)
+        save_btn.pack(side='right')
         # Middle Row
         self.text_frame = ttk.PanedWindow(tab_frame, orient='horizontal')
         self.text_frame.grid(row=1, column=0, sticky='nsew')
         # My Tags section
         my_tags_frame = Frame(self.text_frame)
-        header_frame = Frame(my_tags_frame)
-        header_frame.grid(row=0, column=0, sticky='ew', padx=2, pady=(2,0))
-        my_tags_label = ttk.Label(header_frame, text="My Tags:")
-        my_tags_label.pack(side='left', padx=(0,5))
-        self.custom_dictionary_listbox = Listbox(my_tags_frame, selectmode='extended')
-        self.custom_dictionary_listbox.grid(row=1, column=0, sticky='nsew')
+        self.text_frame.add(my_tags_frame, weight=1)
         my_tags_frame.grid_rowconfigure(1, weight=1)
         my_tags_frame.grid_columnconfigure(0, weight=1)
+        top_frame = Frame(my_tags_frame)
+        top_frame.grid(row=0, column=0, sticky='ew', padx=2, pady=(2,0))
+        ttk.Label(top_frame, text="My Tags:").pack(side='left', padx=(0,5))
+        self.custom_dictionary_listbox = Listbox(my_tags_frame, selectmode='extended')
+        self.custom_dictionary_listbox.grid(row=1, column=0, sticky='nsew')
         self.custom_dictionary_listbox.bind("<Button-3>", show_context_menu)
         self.custom_dictionary_listbox.bind("<Double-Button-1>", lambda event: insert_tag(self.custom_dictionary_listbox, 'end'))
         # Buttons
-        self.my_tags_button_frame = Frame(my_tags_frame)
-        self.my_tags_button_frame.grid(row=2, column=0, sticky='ew', pady=(2,0))
-        self.my_tags_button_frame.grid_columnconfigure(0, weight=1)
-        self.my_tags_button_frame.grid_columnconfigure(1, weight=1)
-        prefix_button = ttk.Button(self.my_tags_button_frame, text="Prefix", command=lambda: insert_tag(self.custom_dictionary_listbox, 'start'))
-        prefix_button.grid(row=0, column=0, sticky='ew', padx=2)
-        append_button = ttk.Button(self.my_tags_button_frame, text="Append", command=lambda: insert_tag(self.custom_dictionary_listbox, 'end'))
-        append_button.grid(row=0, column=1, sticky='ew', padx=2)
-        edit_button = ttk.Button(self.my_tags_button_frame, text="Edit", command=edit_tag)
-        edit_button.grid(row=2, column=0, sticky='ew', padx=2)
-        remove_button = ttk.Button(self.my_tags_button_frame, text="Remove", command=remove_tag)
-        remove_button.grid(row=2, column=1, sticky='ew', padx=2)
-        move_up_button = ttk.Button(self.my_tags_button_frame, text="Move Up", command=lambda: move(self.custom_dictionary_listbox, 'up'))
-        move_up_button.grid(row=4, column=0, sticky='ew', padx=2)
-        move_down_button = ttk.Button(self.my_tags_button_frame, text="Move Down", command=lambda: move(self.custom_dictionary_listbox, 'down'))
-        move_down_button.grid(row=4, column=1, sticky='ew', padx=2)
+        self.list_btn_frame = Frame(my_tags_frame)
+        self.list_btn_frame.grid(row=2, column=0, sticky='ew', pady=(2,0))
+        self.list_btn_frame.grid_columnconfigure(0, weight=1)
+        self.list_btn_frame.grid_columnconfigure(1, weight=1)
+        prefix_btn = ttk.Button(self.list_btn_frame, text="Prefix", command=lambda: insert_tag(self.custom_dictionary_listbox, 'start'))
+        prefix_btn.grid(row=0, column=0, sticky='ew', padx=2)
+        append_btn = ttk.Button(self.list_btn_frame, text="Append", command=lambda: insert_tag(self.custom_dictionary_listbox, 'end'))
+        append_btn.grid(row=0, column=1, sticky='ew', padx=2)
+        edit_btn = ttk.Button(self.list_btn_frame, text="Edit", command=edit_tag)
+        edit_btn.grid(row=2, column=0, sticky='ew', padx=2)
+        remove_btn = ttk.Button(self.list_btn_frame, text="Remove", command=remove_tag)
+        remove_btn.grid(row=2, column=1, sticky='ew', padx=2)
+        up_btn = ttk.Button(self.list_btn_frame, text="Move Up", command=lambda: move(self.custom_dictionary_listbox, 'up'))
+        up_btn.grid(row=4, column=0, sticky='ew', padx=2)
+        down_btn = ttk.Button(self.list_btn_frame, text="Move Down", command=lambda: move(self.custom_dictionary_listbox, 'down'))
+        down_btn.grid(row=4, column=1, sticky='ew', padx=2)
         # All Tags section
-        self.all_tags_frame = Frame(self.text_frame)
-        self.all_tags_frame.grid_rowconfigure(1, weight=1)
-        self.all_tags_frame.grid_columnconfigure(0, weight=1)
-        all_tags_label = ttk.Label(self.all_tags_frame, text="All Tags")
-        all_tags_label.grid(row=0, column=0, sticky='w', padx=2, pady=(2,0))
-        self.all_tags_listbox = Listbox(self.all_tags_frame, selectmode='extended')
-        self.all_tags_listbox.grid(row=1, column=0, columnspan=2, sticky='nsew')
-        self.all_tags_listbox.bind("<Button-3>", show_context_menu)
-        self.all_tags_listbox.bind("<Double-Button-1>", lambda event: insert_tag(self.all_tags_listbox, 'end'))
-        # Add frames to PanedWindow
-        self.text_frame.add(my_tags_frame, weight=1)
-        self.text_frame.add(self.all_tags_frame, weight=1)
+        self.alltags_frame = Frame(self.text_frame)
+        self.text_frame.add(self.alltags_frame, weight=1)
+        self.alltags_frame.grid_rowconfigure(1, weight=1)
+        self.alltags_frame.grid_columnconfigure(0, weight=1)
+        alltags_lbl = ttk.Label(self.alltags_frame, text="All Tags")
+        alltags_lbl.grid(row=0, column=0, sticky='w', padx=2, pady=(2,0))
+        self.alltags_listbox = Listbox(self.alltags_frame, selectmode='extended')
+        self.alltags_listbox.grid(row=1, column=0, columnspan=2, sticky='nsew')
+        self.alltags_listbox.bind("<Button-3>", show_context_menu)
+        self.alltags_listbox.bind("<Double-Button-1>", lambda event: insert_tag(self.alltags_listbox, 'end'))
         # Buttons
-        self.all_tags_button_frame = Frame(self.all_tags_frame)
-        self.all_tags_button_frame.grid(row=2, column=0, sticky='ew', pady=(2,0))
-        self.all_tags_button_frame.grid_columnconfigure(0, weight=1)
-        self.all_tags_button_frame.grid_columnconfigure(1, weight=0)
-        self.all_tags_button_frame.grid_columnconfigure(2, weight=1)
-        prefix_button = ttk.Button(self.all_tags_button_frame, text="Prefix", command=lambda: insert_tag(self.all_tags_listbox, 'start'))
-        prefix_button.grid(row=0, column=0, sticky='ew', padx=2)
-        add_button = ttk.Button(self.all_tags_button_frame, text="<", command=add_to_mytags, width=2)
-        add_button.grid(row=0, column=1)
-        ToolTip.create(add_button, "Add selected tags to 'My Tags'", 200, 6, 12)
-        append_button = ttk.Button(self.all_tags_button_frame, text="Append", command=lambda: insert_tag(self.all_tags_listbox, 'end'))
-        append_button.grid(row=0, column=2, sticky='ew', padx=2)
+        self.alltags_btn_frame = Frame(self.alltags_frame)
+        self.alltags_btn_frame.grid(row=2, column=0, sticky='ew', pady=(2,0))
+        self.alltags_btn_frame.grid_columnconfigure(0, weight=1)
+        self.alltags_btn_frame.grid_columnconfigure(1, weight=0)
+        self.alltags_btn_frame.grid_columnconfigure(2, weight=1)
+        prefix_btn = ttk.Button(self.alltags_btn_frame, text="Prefix", command=lambda: insert_tag(self.alltags_listbox, 'start'))
+        prefix_btn.grid(row=0, column=0, sticky='ew', padx=2)
+        add_btn = ttk.Button(self.alltags_btn_frame, text="<", command=add_to_mytags, width=2)
+        add_btn.grid(row=0, column=1)
+        ToolTip.create(add_btn, "Add selected tags to 'My Tags'", 200, 6, 12)
+        append_btn = ttk.Button(self.alltags_btn_frame, text="Append", command=lambda: insert_tag(self.alltags_listbox, 'end'))
+        append_btn.grid(row=0, column=2, sticky='ew', padx=2)
         load_tag_file()
         self.parent.refresh_custom_dictionary()
 
 
     def refresh_all_tags_listbox(self, tags=None):
-        listbox = self.all_tags_listbox
+        listbox = self.alltags_listbox
         if not tags:
             self.parent.stat_calculator.calculate_file_stats()
             tags = self.parent.stat_calculator.sorted_captions
@@ -1237,24 +1237,24 @@ class TextController:
 
     def toggle_all_tags_listbox(self):
         if self.show_all_tags_var.get():
-            self.all_tags_frame.grid(row=0, column=2, sticky='nsew')
-            self.text_frame.add(self.all_tags_frame, weight=1)
+            self.alltags_frame.grid(row=0, column=2, sticky='nsew')
+            self.text_frame.add(self.alltags_frame, weight=1)
         else:
-            self.text_frame.remove(self.all_tags_frame)
+            self.text_frame.remove(self.alltags_frame)
 
 
     def toggle_mytags_controls(self):
         if self.hide_mytags_controls_var.get():
-            self.my_tags_button_frame.grid_remove()
+            self.list_btn_frame.grid_remove()
         else:
-            self.my_tags_button_frame.grid(row=2, column=0, sticky='ew', pady=(2,0))
+            self.list_btn_frame.grid(row=2, column=0, sticky='ew', pady=(2,0))
 
 
     def toggle_alltags_controls(self):
         if self.hide_alltags_controls_var.get():
-            self.all_tags_button_frame.grid_remove()
+            self.alltags_btn_frame.grid_remove()
         else:
-            self.all_tags_button_frame.grid(row=2, column=0, sticky='ew', pady=(2,0))
+            self.alltags_btn_frame.grid(row=2, column=0, sticky='ew', pady=(2,0))
 
 
     def show_my_tags_help(self):
@@ -1287,77 +1287,21 @@ class TextController:
     def create_stats_widgets_tab9(self):
         tab_frame = Frame(self.parent.tab9)
         tab_frame.pack(fill='both', expand=True)
-        button_frame = Frame(tab_frame)
-        button_frame.pack(side='top', fill='x', pady=4)
-        self.info_label = Label(button_frame, text="Characters: 0  |  Words: 0")
-        self.info_label.pack(side='left')
-        refresh_button = ttk.Button(button_frame, width=10, text="Refresh", takefocus=False, command=lambda: self.parent.stat_calculator.calculate_file_stats(manual_refresh=True))
-        refresh_button.pack(side='right')
-        ToolTip.create(refresh_button, "Refresh the file stats", 200, 6, 12)
-        truncate_checkbutton = ttk.Checkbutton(button_frame, text="Truncate Captions", takefocus=False, variable=self.parent.truncate_stat_captions_var)
-        truncate_checkbutton.pack(side='right')
-        ToolTip.create(truncate_checkbutton, "Limit the displayed captions if they exceed either 8 words or 50 characters", 200, 6, 12)
-        process_images_checkbutton = ttk.Checkbutton(button_frame, text="Image/Video Stats", takefocus=False, variable=self.parent.process_image_stats_var)
-        process_images_checkbutton.pack(side='right')
-        ToolTip.create(process_images_checkbutton, "Enable/Disable image and video stat processing (Can be slow with many HD images or videos)", 200, 6, 12)
-        self.tab8_stats_textbox = scrolledtext.ScrolledText(tab_frame, wrap="word", state="disabled")
-        self.tab8_stats_textbox.pack(fill='both', expand=True)
-
-
-#endregion
-#region Misc
-
-
-    def bind_entry_functions(self, widget: 'ttk.Entry'):
-        widget.bind("<Double-1>", self.custom_select_word_for_entry)
-        widget.bind("<Triple-1>", self.select_all_in_entry)
-        widget.bind("<Button-3>", self.show_entry_context_menu)
-
-
-    def custom_select_word_for_entry(self, event):
-        widget: 'ttk.Entry' = event.widget
-        separators = " ,.-|()[]<>\\/\"'{}:;!@#$%^&*+=~`?"
-        click_index = widget.index(f"@{event.x}")
-        entry_text = widget.get()
-        if click_index < len(entry_text) and entry_text[click_index] in separators:
-            widget.selection_clear()
-            widget.selection_range(click_index, click_index + 1)
-        else:
-            word_start = click_index
-            while word_start > 0 and entry_text[word_start - 1] not in separators:
-                word_start -= 1
-            word_end = click_index
-            while word_end < len(entry_text) and entry_text[word_end] not in separators:
-                word_end += 1
-            widget.selection_clear()
-            widget.selection_range(word_start, word_end)
-        widget.icursor(click_index)
-        return "break"
-
-
-    def select_all_in_entry(self, event):
-        widget: 'ttk.Entry' = event.widget
-        widget.selection_range(0, 'end')
-        return "break"
-
-
-    def show_entry_context_menu(self, event):
-        widget: 'ttk.Entry' = event.widget
-        if isinstance(widget, ttk.Entry):
-            context_menu = Menu(self.root, tearoff=0)
-            try:
-                widget.selection_get()
-                has_selection = True
-            except TclError:
-                has_selection = False
-            has_text = bool(widget.get())
-            context_menu.add_command(label="Cut", command=lambda: widget.event_generate("<Control-x>"), state="normal" if has_selection else "disabled")
-            context_menu.add_command(label="Copy", command=lambda: widget.event_generate("<Control-c>"), state="normal" if has_selection else "disabled")
-            context_menu.add_command(label="Paste", command=lambda: widget.event_generate("<Control-v>"))
-            context_menu.add_separator()
-            context_menu.add_command(label="Delete", command=lambda: widget.delete("sel.first", "sel.last"), state="normal" if has_selection else "disabled")
-            context_menu.add_command(label="Clear", command=lambda: widget.delete(0, "end"), state="normal" if has_text else "disabled")
-            context_menu.post(event.x_root, event.y_root)
+        btn_frame = Frame(tab_frame)
+        btn_frame.pack(side='top', fill='x', pady=4)
+        self.stats_info_lbl = Label(btn_frame, text="Characters: 0  |  Words: 0")
+        self.stats_info_lbl.pack(side='left')
+        refresh_btn = ttk.Button(btn_frame, width=10, text="Refresh", takefocus=False, command=lambda: self.parent.stat_calculator.calculate_file_stats(manual_refresh=True))
+        refresh_btn.pack(side='right')
+        ToolTip.create(refresh_btn, "Refresh the file stats", 200, 6, 12)
+        truncate_chk = ttk.Checkbutton(btn_frame, text="Truncate Captions", takefocus=False, variable=self.parent.truncate_stat_captions_var)
+        truncate_chk.pack(side='right')
+        ToolTip.create(truncate_chk, "Limit the displayed captions if they exceed either 8 words or 50 characters", 200, 6, 12)
+        image_video_chk = ttk.Checkbutton(btn_frame, text="Image/Video Stats", takefocus=False, variable=self.parent.process_image_stats_var)
+        image_video_chk.pack(side='right')
+        ToolTip.create(image_video_chk, "Enable/Disable image and video stat processing (Can be slow with many HD images or videos)", 200, 6, 12)
+        self.filestats_textbox = scrolledtext.ScrolledText(tab_frame, wrap="word", state="disabled")
+        self.filestats_textbox.pack(fill='both', expand=True)
 
 
 #endregion
