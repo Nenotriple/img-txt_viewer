@@ -581,7 +581,7 @@ class ImgTxtViewer:
         # Image Stats
         self.label_image_stats = Label(self.stats_frame, text="...")
         self.label_image_stats.grid(row=0, column=1, sticky="ew")
-        self.label_image_stats_tooltip = ToolTip.create(self.label_image_stats, "...", 250, 6, 12)
+        self.label_image_stats_tooltip = ToolTip.create(self.label_image_stats, "...", delay=250, padx=6, pady=12)
         # Primary Image
         self.primary_display_image = Label(self.master_image_inner_frame, cursor="hand2")
         self.primary_display_image.grid(row=1, column=0, sticky="nsew")
@@ -598,7 +598,7 @@ class ImgTxtViewer:
         self.video_player.grid_remove()
         self.popup_zoom = PopUpZoom(self.primary_display_image)
         self.toggle_zoom_var = BooleanVar(value=self.popup_zoom.zoom_enabled.get())
-        self.image_preview_tooltip = ToolTip.create(self.primary_display_image, "Right-Click for more\nMiddle-click to open in file explorer\nDouble-Click to open in your system image viewer\nALT+Left/Right or Mouse-Wheel to move between pairs", 1000, 6, 12)
+        self.image_preview_tooltip = ToolTip.create(self.primary_display_image, "Right-Click for more\nMiddle-click to open in file explorer\nDouble-Click to open in your system image viewer\nALT+Left/Right or Mouse-Wheel to move between pairs", delay=500, padx=6, pady=12)
         # Thumbnail Panel
         self.thumbnail_panel = ThumbnailPanel(master=self.master_image_inner_frame, parent=self)
         self.thumbnail_panel.grid(row=3, column=0, sticky="ew")
@@ -611,7 +611,7 @@ class ImgTxtViewer:
         directory_frame.pack(side="top", fill="x", padx=(0,2))
         self.text_path_indicator = Label(directory_frame)
         self.text_path_indicator.pack(side="left", fill="y", pady=2)
-        self.text_path_tooltip = ToolTip.create(self.text_path_indicator, "Text Path: Same as image path", 10, 6, 12)
+        self.text_path_tooltip = ToolTip.create(self.text_path_indicator, "Text Path: Same as image path", delay=10, padx=6, pady=12)
         self.directory_entry = ttk.Entry(directory_frame, textvariable=self.image_dir)
         self.directory_entry.pack(side="left", fill="both", expand=True, pady=2)
         self.directory_entry.bind('<Return>', self.set_working_directory)
@@ -619,6 +619,7 @@ class ImgTxtViewer:
         self.directory_entry.bind("<Triple-1>", lambda event: self.entry_helper.select_all_in_entry(event))
         self.directory_entry.bind("<Button-3>", self.open_directory_context_menu)
         self.directory_entry.bind("<Button-1>", self.clear_directory_entry_on_click)
+        self.directory_entry_tooltip = ToolTip.create(self.directory_entry, "...", delay=500, pady=2, origin="widget", anchor="sw")
         self.dir_context_menu = Menu(self.directory_entry, tearoff=0)
         self.dir_context_menu.add_command(label="Cut", command=self.directory_cut)
         self.dir_context_menu.add_command(label="Copy", command=self.directory_copy)
@@ -630,7 +631,7 @@ class ImgTxtViewer:
         self.dir_context_menu.add_command(label="Reset Text Path To Image Path", state="disabled", command=lambda: self.set_text_file_path(self.image_dir.get()))
         self.browse_button = ttk.Button(directory_frame, text="Browse...", width=8, takefocus=False, command=self.choose_working_directory)
         self.browse_button.pack(side="left", pady=2)
-        ToolTip.create(self.browse_button, "Right click to set an alternate path for text files", 250, 6, 12)
+        ToolTip.create(self.browse_button, "Right click to set an alternate path for text files", delay=250, padx=6, pady=12)
         self.browse_context_menu = Menu(self.browse_button, tearoff=0)
         self.browse_context_menu.add_command(label="Set Text File Path...", state="disabled", command=self.set_text_file_path)
         self.browse_context_menu.add_command(label="Reset Text Path To Image Path", state="disabled", command=lambda: self.set_text_file_path(self.image_dir.get()))
@@ -658,10 +659,10 @@ class ImgTxtViewer:
         # Save Button
         self.save_button = ttk.Button(self.index_frame, text="Save", state="disabled", style="Blue.TButton", padding=(5, 5), takefocus=False, command=self.save_text_file)
         self.save_button.pack(side="left", pady=2, fill="x", expand=True)
-        ToolTip.create(self.save_button, "CTRL+S to save\n\nRight-Click to make the save button larger", 1000, 6, 12)
+        ToolTip.create(self.save_button, "CTRL+S to save", delay=500, padx=6, pady=12)
         self.auto_save_checkbutton = ttk.Checkbutton(self.index_frame, width=10, text="Auto-save", state="disabled", variable=self.auto_save_var, takefocus=False, command=self.sync_title_with_content)
         self.auto_save_checkbutton.pack(side="left")
-        ToolTip.create(self.auto_save_checkbutton, "Automatically save the current text file when:\nNavigating img-txt pairs, changing active directory, or closing the app", 1000, 6, 12)
+        ToolTip.create(self.auto_save_checkbutton, "Automatically save the current text file when:\nNavigating img-txt pairs, changing active directory, or closing the app", delay=500, padx=6, pady=12)
         # Navigation Buttons
         nav_button_frame = Frame(self.master_control_frame)
         nav_button_frame.pack(fill="x", padx=2)
@@ -669,8 +670,8 @@ class ImgTxtViewer:
         self.prev_button = ttk.Button(nav_button_frame, text="Previous", width=12, state="disabled", takefocus=False, command=lambda: self.update_pair("prev"))
         self.next_button.pack(side="right", fill="x", expand=True)
         self.prev_button.pack(side="right", fill="x", expand=True)
-        ToolTip.create(self.next_button, "Hotkey: ALT+R\nHold shift to advance by 5", 1000, 6, 12)
-        ToolTip.create(self.prev_button, "Hotkey: ALT+L\nHold shift to advance by 5", 1000, 6, 12)
+        ToolTip.create(self.next_button, "Hotkey: ALT+R\nHold shift to advance by 5", delay=500, padx=6, pady=12)
+        ToolTip.create(self.prev_button, "Hotkey: ALT+L\nHold shift to advance by 5", delay=500, padx=6, pady=12)
         # Suggestion text
         self.suggestion_frame = Frame(self.master_control_frame, bg='#f0f0f0')
         self.suggestion_frame.pack(side="top", fill="x", pady=2)
@@ -706,7 +707,7 @@ class ImgTxtViewer:
             "  - Error: Red\n"
             "  - Official Content: Dark-Orange\n"
             "  - Original Content: Light-Pink",
-            1000, 6, 12, justify="left"
+            delay=500, padx=6, pady=12, justify="left"
         )
         # Suggestion Options
         self.suggestion_menubutton = ttk.Button(self.suggestion_frame, text="☰", takefocus=False, width=2, command=lambda: self.show_suggestion_context_menu(button=True))
@@ -1061,10 +1062,10 @@ class ImgTxtViewer:
     def update_text_path_indicator(self):
         if os.path.normpath(self.text_dir) != os.path.normpath(self.image_dir.get()):
             self.text_path_indicator.config(bg="#5da9be")
-            self.text_path_tooltip.config(f"Text Path: {os.path.normpath(self.text_dir)}", 10, 6, 12)
+            self.text_path_tooltip.config(f"Text Path: {os.path.normpath(self.text_dir)}", delay=10, padx=6, pady=12)
         else:
             self.text_path_indicator.config(bg="#f0f0f0")
-            self.text_path_tooltip.config("Text Path: Same as image path", 10, 6, 12)
+            self.text_path_tooltip.config("Text Path: Same as image path", delay=10, padx=6, pady=12)
 
 
 # --------------------------------------
@@ -1545,6 +1546,7 @@ class ImgTxtViewer:
             self.update_pair(save=False, silent=True)
         self.configure_pane_position()
         self.stat_calculator.calculate_file_stats()
+        self.directory_entry_tooltip.config(f"Directory: {self.image_dir.get()}", delay=500, pady=2, origin="widget", anchor="sw")
 
 
     def restore_previous_index(self, current_image_path):
