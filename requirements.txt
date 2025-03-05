@@ -3,4 +3,4 @@ Pillow==11.0.0
 onnxruntime==1.20.0
 onnxruntime-directml==1.20.1
 tkvideoplayer==2.8
-git+https://github.com/Nenotriple/TkToolTip.git
+git+https://github.com/Nenotriple/TkToolTip.git@main
