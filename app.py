@@ -177,6 +177,9 @@ class ImgTxtViewer:
         self.current_frame = 0
         self.current_gif_frame_image = None
 
+        # Video variables
+        self.video_thumb_dict = {}
+
         # Color Palette
         self.pastel_colors = [
             "#a2d2ff", "#ffafcf", "#aec3ae", "#ebe3d5", "#beadfa",
