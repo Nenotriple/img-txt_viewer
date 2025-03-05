@@ -168,8 +168,8 @@ class ImgTxtViewer:
         self.update_thumbnail_job_id = None
 
         # Image Resize Variables
-        self.current_image = None # ImageTk.PhotoImage object
-        self.original_image = None # ImageTk.PhotoImage object
+        self.current_image: ImageTk.PhotoImage = None
+        self.original_image: ImageTk.PhotoImage = None
         self.current_max_img_height = None
         self.current_max_img_width = None
 
@@ -545,6 +545,7 @@ class ImgTxtViewer:
         self.image_grid = image_grid.ImageGrid(self.master_image_frame, self)
         self.image_grid.grid(row=1, column=0, sticky="nsew")
         self.image_grid.grid_remove()
+        self.image_grid.bind('<Configure>', self.debounce_refresh_image)
         # master_control_frame serves as a container for all primary UI frames (except the master image frame)
         self.master_control_frame = Frame(container)
         self.primary_paned_window.add(self.master_control_frame, stretch="always")
