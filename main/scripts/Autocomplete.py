@@ -216,20 +216,52 @@ class Autocomplete:
 # --------------------------------------
 # Score Calculation
 # --------------------------------------
-    def get_score(self, suggestion, text):
-        """Calculate suggestion relevance score based on match quality."""
-        score = 0
-        if suggestion == text:
-            return len(text) * 2
-        for suggestion_char, input_char in zip(suggestion, text):
-            if suggestion_char == input_char:
+    def get_score(self, suggestion, text, algorithm="simple"):
+        """
+        Calculate suggestion relevance score based on match quality."""
+        # Use simple scoring algorithm (default)
+        if algorithm == "simple":
+            score = 0
+            # Exact match gets highest priority
+            if suggestion == text:
+                return len(text) * 2
+            # Starting match gets high priority
+            for suggestion_char, input_char in zip(suggestion, text):
+                if suggestion_char == input_char:
+                    score += 1
+                else:
+                    break
+            # Contains match gets lower score
+            classifier_id, _ = self.autocomplete_dict.get(suggestion, ('', []))
+            if not classifier_id and suggestion.startswith(text[:3]):
                 score += 1
-            else:
-                break
-        classifier_id, _ = self.autocomplete_dict.get(suggestion, ('', []))
-        if not classifier_id and suggestion.startswith(text[:3]):
-            score += 1
-        return score
+            return score
+        # Use advanced scoring algorithm
+        else:
+            # Exact match gets highest priority
+            if suggestion == text:
+                return 1000
+            # Starting match gets high priority
+            if suggestion.startswith(text):
+                base_score = 500 + len(text) * 2
+                # Shorter suggestions ranked higher
+                return base_score - (len(suggestion) - len(text)) * 0.5
+            # Partial match at word boundaries
+            words = suggestion.split('_')
+            for word in words:
+                if word.startswith(text):
+                    return 300 + len(text)
+            # Contains match gets lower score
+            if text in suggestion:
+                return 200 + len(text)
+            # Character-by-character match
+            common_prefix_length = 0
+            for s_char, t_char in zip(suggestion, text):
+                if s_char == t_char:
+                    common_prefix_length += 1
+                else:
+                    break
+            return common_prefix_length * 10
 
 
 #endregion
