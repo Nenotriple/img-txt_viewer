@@ -20,7 +20,6 @@ if TYPE_CHECKING:
 
 
 #endregion
-################################################################################################################################################
 #region CLS CalculateFileStats
 
 
@@ -43,7 +42,7 @@ class CalculateFileStats:
         if text_only and image_only:
             raise ValueError("Cannot set both text_only and image_only to True")
         self.initialize_counters()
-        num_total_files, num_txt_files, num_img_files, formatted_total_files = self.filter_and_update_textfiles(initial_call=True)
+        num_total_files, num_txt_files, num_img_files, num_video_files, formatted_total_files = self.filter_and_update_textfiles(initial_call=True)
         # Process files based on flags
         if not image_only:
             self.process_text_files()
@@ -64,6 +63,7 @@ class CalculateFileStats:
         self.char_counter = Counter()
         self.image_resolutions_counter = Counter()
         self.aspect_ratios_counter = Counter()
+        self.video_formats_counter = Counter()
         # Accumulators
         self.total_chars = 0
         self.total_words = 0
@@ -72,15 +72,24 @@ class CalculateFileStats:
         self.total_paragraphs = 0
         self.total_text_filesize = 0
         self.total_image_filesize = 0
+        self.total_video_filesize = 0
         self.total_ppi = 0
         self.total_image_width = 0
         self.total_image_height = 0
         self.square_images = 0
         self.portrait_images = 0
         self.landscape_images = 0
+        self.video_count = 0
+        self.total_video_width = 0
+        self.total_video_height = 0
+        self.total_video_duration = 0
+        self.square_videos = 0
+        self.portrait_videos = 0
+        self.landscape_videos = 0
         # Sets
         self.unique_words = set()
         self.image_formats = set()
+        self.video_formats = set()
         self.longest_words = set()
         # Lists
         self.word_lengths = []
@@ -125,30 +134,72 @@ class CalculateFileStats:
 
     def process_image_files(self):
         """Process image files to calculate statistics."""
-        for image_file in self.parent.image_files:
+        for media_file in self.parent.image_files:
             try:
-                width, height, dpi, aspect_ratio, image_format = self.compute_image_file(image_file)
-                self.total_image_filesize += os.path.getsize(image_file)
-                self.image_formats.add(image_format)
-                self.total_ppi += dpi[0]
-                self.image_resolutions_counter[(width, height)] += 1
-                self.aspect_ratios_counter[round(aspect_ratio, 2)] += 1
-                self.total_image_width += width
-                self.total_image_height += height
-                if aspect_ratio == 1:
-                    self.square_images += 1
-                elif aspect_ratio > 1:
-                    self.landscape_images += 1
+                if media_file.lower().endswith('.mp4'):
+                    # Handle video file
+                    self.process_video_file(media_file)
                 else:
-                    self.portrait_images += 1
+                    # Handle image file
+                    width, height, dpi, aspect_ratio, image_format = self.compute_image_file(media_file)
+                    self.total_image_filesize += os.path.getsize(media_file)
+                    self.image_formats.add(image_format)
+                    self.total_ppi += dpi[0]
+                    self.image_resolutions_counter[(width, height)] += 1
+                    self.aspect_ratios_counter[round(aspect_ratio, 2)] += 1
+                    self.total_image_width += width
+                    self.total_image_height += height
+                    if aspect_ratio == 1:
+                        self.square_images += 1
+                    elif aspect_ratio > 1:
+                        self.landscape_images += 1
+                    else:
+                        self.portrait_images += 1
             except FileNotFoundError:
                 pass
             except Exception as e:
-                messagebox.showerror("Error: process_image_files()", f"An error occurred while processing {os.path.basename(image_file)}:\n\n{e}")
+                messagebox.showerror("Error: process_image_files()", f"An error occurred while processing {os.path.basename(media_file)}:\n\n{e}")
+
+
+    def process_video_file(self, video_file):
+        """Process a video file to calculate statistics."""
+        try:
+            file_size = os.path.getsize(video_file)
+            self.total_video_filesize += file_size
+            # Get video information from video_thumb_dict
+            if video_file in self.parent.video_thumb_dict:
+                video_info = self.parent.video_thumb_dict[video_file]
+                width, height = video_info['resolution']
+                framerate = video_info.get('framerate', 0)
+                # Update counters
+                self.video_count += 1
+                self.video_formats.add('.mp4')
+                self.video_formats_counter['.mp4'] += 1
+                self.image_resolutions_counter[(width, height)] += 1
+                # Calculate aspect ratio
+                aspect_ratio = width / height if height > 0 else 0
+                self.aspect_ratios_counter[round(aspect_ratio, 2)] += 1
+                # Update totals
+                self.total_video_width += width
+                self.total_video_height += height
+                # Classify video shape
+                if aspect_ratio == 1:
+                    self.square_videos += 1
+                elif aspect_ratio > 1:
+                    self.landscape_videos += 1
+                else:
+                    self.portrait_videos += 1
+            else:
+                # If video is not in thumb dict, just count it
+                self.video_count += 1
+                self.video_formats.add('.mp4')
+                self.video_formats_counter['.mp4'] += 1
+
+        except Exception as e:
+            messagebox.showerror("Error: process_video_file()", f"An error occurred while processing {os.path.basename(video_file)}:\n\n{e}")
 
 
 #endregion
-################################################################################################################################################
 #region Statistics Functions
 
 
@@ -166,8 +217,13 @@ class CalculateFileStats:
         type_token_ratio = len(self.unique_words) / self.total_words if self.total_words else 0
         std_dev_word_length = statistics.stdev(self.word_lengths) if len(self.word_lengths) > 1 else 0
         std_dev_sentence_length = statistics.stdev(self.sentence_lengths) if len(self.sentence_lengths) > 1 else 0
-        avg_image_width = self.total_image_width / len(self.parent.image_files) if self.parent.image_files else 0
-        avg_image_height = self.total_image_height / len(self.parent.image_files) if self.parent.image_files else 0
+        # Calculate image averages (excluding videos)
+        image_count = len(self.parent.image_files) - self.video_count if self.parent.image_files else 0
+        avg_image_width = self.total_image_width / image_count if image_count else 0
+        avg_image_height = self.total_image_height / image_count if image_count else 0
+        # Calculate video averages
+        avg_video_width = self.total_video_width / self.video_count if self.video_count else 0
+        avg_video_height = self.total_video_height / self.video_count if self.video_count else 0
         avg_caption_length = sum(self.caption_lengths) / len(self.caption_lengths) if self.caption_lengths else 0
         # Sort and format the most common words, characters, resolutions, aspect ratios, and captions
         most_common_words = self.word_counter.most_common(50)
@@ -190,13 +246,14 @@ class CalculateFileStats:
         formatted_top_5_files_captions = "\n".join([f"{count}x, {file}" for file, count in top_5_files_captions])
         word_page_count = self.total_words / 500 if self.total_words > 0 else 0
         formatted_filepath = os.path.normpath(self.parent.image_dir.get())
-        formatted_total_filesize = self.format_filesize(self.total_image_filesize + self.total_text_filesize)
+        formatted_total_filesize = self.format_filesize(self.total_image_filesize + self.total_text_filesize + self.total_video_filesize)
         # Format statistics into a dictionary
         stats = {
             'filepath': formatted_filepath,
             'formatted_total_files': formatted_total_files,
             'total_text_filesize': self.format_filesize(self.total_text_filesize),
             'total_image_filesize': self.format_filesize(self.total_image_filesize),
+            'total_video_filesize': self.format_filesize(self.total_video_filesize),
             'total_filesize': formatted_total_filesize,
             'total_chars': self.total_chars,
             'total_words': self.total_words,
@@ -215,7 +272,16 @@ class CalculateFileStats:
             'square_images': self.square_images,
             'portrait_images': self.portrait_images,
             'landscape_images': self.landscape_images,
+            'video_formats': self.video_formats,
+            'video_count': self.video_count,
+            'square_videos': self.square_videos,
+            'portrait_videos': self.portrait_videos,
+            'landscape_videos': self.landscape_videos,
             'avg_ppi': avg_ppi,
+            'avg_image_width': avg_image_width,
+            'avg_image_height': avg_image_height,
+            'avg_video_width': avg_video_width,
+            'avg_video_height': avg_video_height,
             'formatted_resolutions': formatted_resolutions,
             'formatted_aspect_ratios': formatted_aspect_ratios,
             'formatted_top_5_files_words': formatted_top_5_files_words,
@@ -228,8 +294,6 @@ class CalculateFileStats:
             'type_token_ratio': type_token_ratio,
             'std_dev_word_length': std_dev_word_length,
             'std_dev_sentence_length': std_dev_sentence_length,
-            'avg_image_width': avg_image_width,
-            'avg_image_height': avg_image_height,
             'avg_caption_length': avg_caption_length,
         }
         stats_text = self.format_stats_text(stats)
@@ -245,6 +309,7 @@ class CalculateFileStats:
             f"Total Files: {stats['formatted_total_files']}\n"
             f"Total Text Filesize: {stats['total_text_filesize']}\n"
             f"Total Image Filesize: {stats['total_image_filesize']}\n"
+            f"Total Video Filesize: {stats['total_video_filesize']}\n"
             f"Total Filesize: {stats['total_filesize']}\n"
             # Text Statistics
             f"\n--- Text Statistics ---\n"
@@ -277,10 +342,19 @@ class CalculateFileStats:
             f"Average PPI for All Images: {stats['avg_ppi']:.2f}\n"
             f"Average Image Width: {stats['avg_image_width']:.2f}px\n"
             f"Average Image Height: {stats['avg_image_height']:.2f}px\n"
+            # Video Statistics
+            f"\n--- Video Information ---\n"
+            f"Total Videos: {stats['video_count']}\n"
+            f"Video File Formats: {', '.join(stats['video_formats'])}\n"
+            f"Square Videos: {stats['square_videos']}\n"
+            f"Portrait Videos: {stats['portrait_videos']}\n"
+            f"Landscape Videos: {stats['landscape_videos']}\n"
+            f"Average Video Width: {stats['avg_video_width']:.2f}px\n"
+            f"Average Video Height: {stats['avg_video_height']:.2f}px\n"
             # Other Statistics
-            f"\n--- Image Resolutions ---\n"
+            f"\n--- Media Resolutions ---\n"
             f"{stats['formatted_resolutions']}\n"
-            f"\n--- Image Aspect Ratios ---\n"
+            f"\n--- Media Aspect Ratios ---\n"
             f"{stats['formatted_aspect_ratios']}\n"
             f"\n--- Top 5 Files by Word Count ---\n"
             f"{stats['formatted_top_5_files_words']}\n"
@@ -301,7 +375,6 @@ class CalculateFileStats:
 
 
 #endregion
-################################################################################################################################################
 #region Helper Functions
 
 
@@ -360,12 +433,14 @@ class CalculateFileStats:
     def filter_and_update_textfiles(self, initial_call=False):
         """Filter out non-existent text files and update the text file list."""
         self.parent.text_files = [text_file for text_file in self.parent.text_files if os.path.exists(text_file)]
-        num_txt_files, num_img_files = len(self.parent.text_files), len(self.parent.image_files)
-        num_total_files = num_img_files + num_txt_files
-        formatted_total_files = f"{num_total_files} (Text: {num_txt_files}, Images: {num_img_files})"
+        num_txt_files = len(self.parent.text_files)
+        num_img_files = sum(1 for f in self.parent.image_files if not f.lower().endswith('.mp4'))
+        num_video_files = sum(1 for f in self.parent.image_files if f.lower().endswith('.mp4'))
+        num_total_files = num_img_files + num_txt_files + num_video_files
+        formatted_total_files = f"{num_total_files} (Text: {num_txt_files}, Images: {num_img_files}, Videos: {num_video_files})"
         if not initial_call:
             self.parent.refresh_file_lists()
-        return num_total_files, num_txt_files, num_img_files, formatted_total_files
+        return num_total_files, num_txt_files, num_img_files, num_video_files, formatted_total_files
 
 
     def format_filesize(self, size):
@@ -379,7 +454,6 @@ class CalculateFileStats:
 
 
 #endregion
-################################################################################################################################################
 #region GUI Functions
 
 
@@ -391,3 +465,6 @@ class CalculateFileStats:
         self.parent.text_controller.tab8_stats_textbox.config(state="disabled")
         if manual_refresh:
             messagebox.showinfo("Stats Calculated", "Stats have been updated!")
+
+
+#endregion
