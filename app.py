@@ -66,12 +66,12 @@ from main.scripts import (
     edit_panel,
     CropUI,
 )
+import main.scripts.video_thumbnail_generator as vtg
+from main.scripts.ThumbnailPanel import ThumbnailPanel
 from main.scripts.Autocomplete import SuggestionHandler
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
 from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
-from main.scripts.ThumbnailPanel import ThumbnailPanel
 from main.scripts.video_player_widget import VideoPlayerWidget
-import main.scripts.video_thumbnail_generator as vtg
 
 
 #endregion
@@ -89,10 +89,10 @@ class ImgTxtViewer:
         self.set_icon()
         self.initial_class_setup()
         self.define_app_settings()
-        self.setup_general_binds()
         self.create_menu_bar()
         self.create_primary_ui()
         self.settings_manager.read_settings()
+        self.setup_general_binds()
 
 
 #endregion
@@ -161,6 +161,7 @@ class ImgTxtViewer:
         self.is_ffmpeg_installed = shutil.which("ffmpeg") is not None
 
         # 'after()' Job IDs
+        self.window_configure_job_id = None
         self.is_resizing_job_id = None
         self.delete_tag_job_id = None
         self.animation_job_id = None
@@ -275,7 +276,6 @@ class ImgTxtViewer:
         self.root.bind("<Alt-Right>", lambda event: self.next_pair(event))
         self.root.bind("<Alt-Left>", lambda event: self.prev_pair(event))
         self.root.bind('<Shift-Delete>', lambda event: self.delete_pair())
-        self.root.bind('<Configure>', self.handle_window_configure)
         self.root.bind('<F1>', lambda event: self.toggle_image_grid(event))
         self.root.bind('<F2>', lambda event: self.toggle_zoom_popup(event))
         self.root.bind('<F4>', lambda event: self.open_image_in_editor(event))
@@ -574,6 +574,7 @@ class ImgTxtViewer:
         self.master_image_inner_frame.grid(row=1, column=0, sticky="nsew")
         self.master_image_inner_frame.grid_columnconfigure(0, weight=1)
         self.master_image_inner_frame.grid_rowconfigure(1, weight=1)
+        self.master_image_inner_frame.bind('<Configure>', self.debounce_refresh_image)
         self.image_grid = image_grid.ImageGrid(self.master_image_frame, self)
         self.image_grid.grid(row=1, column=0, sticky="nsew")
         self.image_grid.grid_remove()
@@ -1386,7 +1387,6 @@ class ImgTxtViewer:
             self.root.bind("<Alt-Right>", lambda event: self.next_pair(event))
             self.root.bind("<Alt-Left>", lambda event: self.prev_pair(event))
             self.root.bind('<Shift-Delete>', lambda event: self.delete_pair())
-            self.root.bind('<Configure>', self.handle_window_configure)
             self.root.bind('<F1>', lambda event: self.toggle_image_grid(event))
             self.root.bind('<F2>', lambda event: self.toggle_zoom_popup(event))
             self.root.bind('<F4>', lambda event: self.open_image_in_editor(event))
@@ -1789,7 +1789,6 @@ class ImgTxtViewer:
                 self.current_image = self.original_image.copy()
                 self.current_max_img_height = max_img_height
                 self.current_max_img_width = max_img_width
-                self.primary_display_image.unbind("<Configure>")
                 self.primary_display_image.bind("<Configure>", self.resize_and_scale_image_event)
             self.autocomplete.clear_suggestions()
             self.toggle_list_mode()
@@ -1801,8 +1800,6 @@ class ImgTxtViewer:
             if self.is_image_grid_visible_var.get():
                 self.image_grid.highlight_thumbnail(self.current_index)
             self.update_videoinfo()
-        else:
-            self.primary_display_image.unbind("<Configure>")
 
 
     def resize_and_scale_image_event(self, event):
@@ -1832,14 +1829,6 @@ class ImgTxtViewer:
                 self.is_resizing_job_id = self.root.after(250, self.refresh_image)
             else:
                 self.is_resizing_job_id = self.root.after(250, self.image_grid.reload_grid)
-
-
-    def handle_window_configure(self, event):  # Window resize
-        if event.widget == self.root:
-            current_size = (event.width, event.height)
-            if current_size != self.previous_window_size:
-                self.previous_window_size = current_size
-                self.debounce_refresh_image(event)
 
 
     def update_videoinfo(self, image_file=None):
