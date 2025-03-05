@@ -944,25 +944,10 @@ class ImgTxtViewer:
         self.image_context_menu.add_command(label="Upscale...", command=lambda: self.create_batch_upscale_ui(show=True, quick_swap=True))
         self.image_context_menu.add_command(label="Resize...", command=self.resize_image)
         self.image_context_menu.add_command(label="Crop...", command=lambda: self.create_crop_ui(show=True, refresh=True))
-        if not self.image_file.lower().endswith('.gif'):
-            self.image_context_menu.add_command(label="Expand", command=self.expand_image)
-        else:
-            self.image_context_menu.add_command(label="Expand", state="disabled", command=self.expand_image)
+        self.image_context_menu.add_separator()
+        self.image_context_menu.add_command(label="Expand", command=self.expand_image)
         self.image_context_menu.add_command(label="Rotate", command=self.rotate_current_image)
         self.image_context_menu.add_command(label="Flip", command=self.flip_current_image)
-        self.image_context_menu.add_separator()
-        # Misc
-        self.image_context_menu.add_checkbutton(label="Toggle Image-Grid", accelerator="F1", variable=self.is_image_grid_visible_var, command=self.toggle_image_grid)
-        self.image_context_menu.add_checkbutton(label="Toggle Zoom", accelerator="F2", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
-        self.image_context_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.debounce_update_thumbnail_panel)
-        self.image_context_menu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
-        self.image_context_menu.add_checkbutton(label="Vertical View", variable=self.panes_swap_ns_var, command=self.swap_pane_orientation)
-        self.image_context_menu.add_checkbutton(label="Swap img-txt Sides", variable=self.panes_swap_ew_var, command=self.swap_pane_sides)
-        # Image Display Quality
-        image_quality_menu = Menu(self.optionsMenu, tearoff=0)
-        self.image_context_menu.add_cascade(label="Image Display Quality", menu=image_quality_menu)
-        for value in ["High", "Normal", "Low"]:
-            image_quality_menu.add_radiobutton(label=value, variable=self.image_quality_var, value=value, command=self.set_image_quality)
         self.image_context_menu.tk_popup(event.x_root, event.y_root)
 
 
