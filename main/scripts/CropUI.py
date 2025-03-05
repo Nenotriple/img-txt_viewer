@@ -935,7 +935,7 @@ class CropSelGuidelines:
 
     def update_guidelines(self, mode=None, event=None):
         self.clear_guidelines()
-        if not self.crop_selection.rect or mode in (None, 'No Guides'):
+        if not self.crop_selection.rect or mode in (None, 'None'):
             return
         self.mode = mode
         x1, y1, x2, y2 = self.img_canvas.coords(self.crop_selection.rect)
@@ -1381,11 +1381,12 @@ class CropInterface:
         frame = ttk.LabelFrame(self.control_frame, text="Options")
         frame.pack(pady=self.pady, padx=self.padx, fill="x")
         frame.columnconfigure(0, weight=1)
+        frame.columnconfigure(1, weight=1)
         check_frame = tk.Frame(frame)
-        check_frame.grid(row=0, column=0, sticky="ew")
+        check_frame.grid(row=0, column=0, columnspan=2, sticky="ew")
         check_frame.columnconfigure(0, weight=1)
         # Expand From Center
-        expand_from_center_check = ttk.Checkbutton(check_frame, variable=self.expand_center_var, text="Expand Center")
+        expand_from_center_check = ttk.Checkbutton(check_frame, variable=self.expand_center_var, text="Expand from Center")
         expand_from_center_check.grid(row=0, column=0, padx=self.padxl, pady=self.pady, sticky="w")
         ToolTip(expand_from_center_check, "Expand selection from center outwards", 200, 6, 12)
         # Highlight/Overlay
@@ -1393,8 +1394,9 @@ class CropInterface:
         overlay_check.grid(row=0, column=1, padx=self.padxl, pady=self.pady, sticky="e")
         ToolTip(overlay_check, "Toggle the overlay/highlight that darkens the background during selection", 200, 6, 12)
         # Guidelines
-        self.guideline_combo = ttk.Combobox(frame, values=["No Guides", "Crosshair", "Center Lines", "Rule of Thirds", "Diagonal Lines"], textvariable=self.guidelines_var, state="readonly", width=16)
-        self.guideline_combo.grid(row=1, column=0, padx=self.pady, pady=self.pady, sticky="ew")
+        ttk.Label(frame, text="Guidelines:").grid(row=1, column=0, padx=self.padxl, pady=self.pady, sticky="w")
+        self.guideline_combo = ttk.Combobox(frame, values=["None", "Crosshair", "Center Lines", "Rule of Thirds", "Diagonal Lines"], textvariable=self.guidelines_var, state="readonly", width=16)
+        self.guideline_combo.grid(row=1, column=1, padx=self.pady, pady=self.pady, sticky="ew")
         self.guideline_combo.bind("<<ComboboxSelected>>", lambda event: self.crop_selection.guideline_manager.update_guidelines(self.guidelines_var.get()))
 
 
