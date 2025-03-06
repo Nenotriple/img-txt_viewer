@@ -35,3 +35,4 @@ onnx_models/*
 
 # Misc
 test_space/
+/.github
