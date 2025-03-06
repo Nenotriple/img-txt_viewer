@@ -2,6 +2,7 @@
 
 # Index
 
+- [v1.97 🎉🎈](#v197)
 - [v1.96](#v196)
 - [v1.95](#v195)
 - [v1.94](#v194)
@@ -49,6 +50,9 @@
 
 <details>
   <summary>Release Notes for v1.97</summary>
+
+
+I'm very happy to announce **img-txt_viewer is 2 years old!** 🎉🎈
 
 
 **New:**
