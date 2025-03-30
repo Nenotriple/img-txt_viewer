@@ -25,6 +25,6 @@ pyinstaller app.py --onefile --windowed --icon=icon.ico --add-data="icon.ico;." 
 5. `--icon=icon.ico`
    - Path to the icon file for the executable. This is used to set the icon of the executable file itself.
 6. `--add-data="icon.ico;."`
-   - Include the icon file in the root directory of the bundled application. This is used to set the UI icon.
+   - Include the icon file in the root directory of the bundled application. This is so the app can access the icon.
 7. `--add-data="main;main"`
-   - Include the `main` directory in the bundled application. This is required to load the dictionaries, upscale mode, etc.
+   - Include data from the `main` directory in the `main` folder of the bundled application. This is required to load the dictionaries, upscale model, etc.
