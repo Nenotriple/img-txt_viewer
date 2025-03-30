@@ -31,21 +31,26 @@ if "%AUTO_FAST_START%"=="TRUE" (
 )
 
 
-REM Skip setup if FAST_START is TRUE
+REM Skip setup if FAST_START is TRUE and venv exists
 if "%FAST_START%"=="TRUE" (
-    call "%VENV_DIR%\Scripts\activate.bat" || (
-        echo Activating the virtual environment... FAIL
-        pause
-        exit /b 1
+    if exist "%VENV_DIR%\Scripts\activate.bat" (
+        call "%VENV_DIR%\Scripts\activate.bat" || (
+            echo Activating the virtual environment... FAIL
+            pause
+            exit /b 1
+        )
+        echo Virtual environment activated.
+        echo Launching: %PYTHON_SCRIPT%
+        echo.
+        python "%PYTHON_SCRIPT%" || (
+            echo Launching... FAIL
+        )
+        call cmd /k
+        exit /b 0
+    ) else (
+        echo Fast start enabled but virtual environment not found.
+        set "FAST_START=FALSE"
     )
-    echo Virtual environment activated.
-    echo Launching: %PYTHON_SCRIPT%
-    echo.
-    python "%PYTHON_SCRIPT%" || (
-        echo Launching... FAIL
-    )
-    call cmd /k
-    exit /b 0
 )
 
 
@@ -86,16 +91,11 @@ python -m pip install --upgrade pip
 
 REM Install requirements if requirements.txt exists
 if exist "requirements.txt" (
-    set /p INSTALL_REQ="requirements.txt found. Do you want to install the requirements? (Y/N): "
-    if /i "!INSTALL_REQ!"=="Y" (
-        echo Installing requirements...
-        pip install -r requirements.txt || (
-            echo Failed to install requirements.
-            pause
-            exit /b 1
-        )
-    ) else (
-        echo Skipping requirements installation.
+    echo Installing requirements...
+    pip install -r requirements.txt || (
+        echo Failed to install requirements.
+        pause
+        exit /b 1
     )
 )
 
