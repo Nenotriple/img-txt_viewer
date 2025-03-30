@@ -648,6 +648,7 @@ class TextController:
                 return
             self.stop_batch = False
             popup = Toplevel(self.root)
+            popup.iconbitmap(self.parent.icon_path)
             popup.title("Batch Interrogate")
             popup.geometry("300x150")
             self.root.update_idletasks()
