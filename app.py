@@ -2638,7 +2638,7 @@ class ImgTxtViewer:
         return initialdir
 
 
-    def set_working_directory(self, path=None, silent=False, event=None):
+    def set_working_directory(self, event=None, path=None, silent=False):
         try:
             if self.auto_save_var.get():
                 self.save_text_file()
