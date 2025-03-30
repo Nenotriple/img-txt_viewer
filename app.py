@@ -205,6 +205,7 @@ class ImgTxtViewer:
         self.my_tags_csv = 'my_tags.csv'
         self.onnx_models_dir = "onnx_models"
         self.image_dir = StringVar(value="Choose Directory...")
+        self.restore_last_path_var = BooleanVar(value=True)
         self.text_dir = ""
         self.external_image_editor_path = "mspaint"
         self.always_on_top_var = BooleanVar(value=False)
@@ -318,7 +319,7 @@ class ImgTxtViewer:
         # Directory Operations
         self.fileMenu.add_command(label="Select Directory...", command=self.choose_working_directory)
         self.fileMenu.add_command(label="Open Current Directory...", state="disable", command=self.open_image_directory)
-        self.fileMenu.add_command(label="Refresh Files", command=self.refresh_files)
+        self.fileMenu.add_command(label="Refresh Files", state="disabled", command=self.refresh_files)
         self.fileMenu.add_separator()
         # File Operations
         self.fileMenu.add_command(label="Open Current Image...", state="disable", command=self.open_image)
@@ -403,6 +404,8 @@ class ImgTxtViewer:
         match_modes = {"Match Whole String": False, "Match Last Word": True}
         for mode, value in match_modes.items():
             match_mode_menu.add_radiobutton(label=mode, variable=self.last_word_match_var, value=value)
+        # Restore last path on startup
+        self.optionsMenu.add_checkbutton(label="Restore Last Path", variable=self.restore_last_path_var)
         # Reset Settings
         self.optionsMenu.add_separator()
         self.optionsMenu.add_command(label="Reset Settings", state="disable", command=self.settings_manager.reset_settings)
@@ -437,6 +440,7 @@ class ImgTxtViewer:
         ]
         file_commands = [
             "Open Current Directory...",
+            "Refresh Files",
             "Open Current Image...",
             "Open Text File...",
             "Edit Image...",

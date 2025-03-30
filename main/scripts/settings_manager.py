@@ -93,6 +93,8 @@ class SettingsManager:
         self.config.set("Path", "last_index", str(self.parent.current_index))
         self.config.set("Path", "load_order", str(self.parent.load_order_var.get()))
         self.config.set("Path", "reverse_load_order", str(self.parent.reverse_load_order_var.get()))
+        # Restore last path
+        self.config.set("Path", "restore_last_path_var", str(self.parent.restore_last_path_var.get()))
 
 
     def _save_window_settings(self):
@@ -182,6 +184,13 @@ class SettingsManager:
         self.external_image_editor_path = self.config.get("Path", "external_image_editor_path", fallback="mspaint")
         self.parent.load_order_var.set(value=self.config.get("Path", "load_order", fallback="Name (default)"))
         self.parent.reverse_load_order_var.set(value=self.config.getboolean("Path", "reverse_load_order", fallback=False))
+        self.parent.restore_last_path_var.set(value=self.config.getboolean("Path", "restore_last_path_var", fallback=True))
+        self.reload_last_directory()
+
+
+    def reload_last_directory(self):
+        if not self.parent.restore_last_path_var.get():
+            return
         last_img_directory = self.config.get("Path", "last_img_directory", fallback=None)
         if not last_img_directory or not os.path.exists(last_img_directory) or not messagebox.askyesno("Confirmation", "Reload last directory?"):
             return
@@ -288,6 +297,7 @@ class SettingsManager:
         self.parent.set_image_quality()
         self.parent.big_save_button_var.set(value=True)
         self.parent.auto_insert_comma_var.set(value=True)
+        self.parent.restore_last_path_var.set(value=True)
         # Window
         self.parent.always_on_top_var.set(value=False)
         self.parent.set_always_on_top()
