@@ -858,6 +858,8 @@ class ImgTxtViewer:
         self.text_box.bind("<Control-e>", self.index_goto_next_empty)
         # Show random img-txt pair
         self.text_box.bind("<Control-r>", self.index_goto_random)
+        # Delete previous word
+        self.text_box.bind("<Control-BackSpace>", self.delete_word_before_cursor)
         # Refresh text box
         #self.text_box.bind("<F5>", lambda event: self.refresh_text_box())
 
@@ -2062,6 +2064,25 @@ class ImgTxtViewer:
         if self.delete_tag_job_id is not None:
             self.text_box.after_cancel(self.delete_tag_job_id)
         self.delete_tag_job_id = self.text_box.after(100, delete_tag)
+
+
+    def delete_word_before_cursor(self, event=None):
+        current_pos = self.text_box.index("insert")
+        line, col = map(int, current_pos.split("."))
+        if col == 0:
+            if line > 1:
+                self.text_box.delete(f"{line-1}.end", current_pos)
+                return "break"
+            return None
+        line_text = self.text_box.get(f"{line}.0", current_pos)
+        i = col - 1
+        while i >= 0 and line_text[i].isspace():
+            i -= 1
+        while i >= 0 and not line_text[i].isspace():
+            i -= 1
+        word_start = f"{line}.{i + 1}"
+        self.text_box.delete(word_start, current_pos)
+        return "break"
 
 
     def collate_captions(self):
