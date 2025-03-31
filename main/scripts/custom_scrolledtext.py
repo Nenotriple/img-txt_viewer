@@ -35,7 +35,8 @@ class CustomScrolledText(scrolledtext.ScrolledText):
                 self.replace_selection_with_wrapped_text(start, end, selected_text, opening_char, closing_char)
                 self.reselect_wrapped_text(start, opening_char, selected_text, closing_char)
             else:
-                self.insert_empty_wrap(opening_char, closing_char)
+                cursor_pos = self.index(tk.INSERT)
+                self.insert(cursor_pos, opening_char)
         except tk.TclError:
             pass
 
