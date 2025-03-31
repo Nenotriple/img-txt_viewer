@@ -829,27 +829,27 @@ class ImgTxtViewer:
     # --------------------------------------
     def set_text_box_binds(self):
         # Mouse binds
-        self.text_box.bind("<Double-1>", lambda event: self.custom_select_word_for_text(event, self.text_box))
-        self.text_box.bind("<Triple-1>", lambda event: self.custom_select_line_for_text(event, self.text_box))
-        self.text_box.bind("<Button-1>", lambda event: (self.remove_tag(), self.autocomplete.clear_suggestions()))
-        self.text_box.bind("<Button-2>", lambda event: (self.delete_tag_under_mouse(event), self.sync_title_with_content(event)))
-        self.text_box.bind("<Button-3>", lambda event: (self.show_text_context_menu(event)))
-        # Update the autocomplete suggestion label after every KeyRelease event.
-        self.text_box.bind("<KeyRelease>", lambda event: (self.autocomplete.update_suggestions(event), self.sync_title_with_content(event), self.get_text_summary()))
+        self.text_box.bind("<Double-1>", lambda e: self.custom_select_word_for_text(e, self.text_box))
+        self.text_box.bind("<Triple-1>", lambda e: self.custom_select_line_for_text(e, self.text_box))
+        self.text_box.bind("<Button-1>", lambda _: (self.remove_tag(), self.autocomplete.clear_suggestions()))
+        self.text_box.bind("<Button-2>", lambda e: (self.delete_tag_under_mouse(e), self.sync_title_with_content(e)))
+        self.text_box.bind("<Button-3>", lambda e: (self.show_text_context_menu(e)))
+        # Update the autocomplete suggestion label after every KeyRelease.
+        self.text_box.bind("<KeyRelease>", lambda e: (self.autocomplete.update_suggestions(e), self.sync_title_with_content(e), self.get_text_summary()))
         # Insert a newline after inserting an autocomplete suggestion when list_mode is active.
         self.text_box.bind('<comma>', self.autocomplete.insert_newline_listmode)
         # Highlight duplicates when selecting text with keyboard or mouse.
-        self.text_box.bind("<Shift-Right>", lambda event: self.highlight_duplicates(event, mouse=False))
-        self.text_box.bind("<Shift-Left>", lambda event: self.highlight_duplicates(event, mouse=False))
+        self.text_box.bind("<Shift-Right>", lambda e: self.highlight_duplicates(e, mouse=False))
+        self.text_box.bind("<Shift-Left>", lambda e: self.highlight_duplicates(e, mouse=False))
         self.text_box.bind("<ButtonRelease-1>", self.highlight_duplicates)
         # Removes highlights when these keys are pressed.
-        self.text_box.bind("<Up>", lambda event: self.remove_highlight())
-        self.text_box.bind("<Down>", lambda event: self.remove_highlight())
-        self.text_box.bind("<Left>", lambda event: self.remove_highlight())
-        self.text_box.bind("<Right>", lambda event: self.remove_highlight())
-        self.text_box.bind("<BackSpace>", lambda event: (self.remove_highlight(), self.sync_title_with_content()))
+        self.text_box.bind("<Up>", self.remove_highlight, add="+")
+        self.text_box.bind("<Down>", self.remove_highlight, add="+")
+        self.text_box.bind("<Left>", self.remove_highlight, add="+")
+        self.text_box.bind("<Right>", self.remove_highlight, add="+")
+        self.text_box.bind("<BackSpace>", lambda _: (self.remove_highlight(), self.sync_title_with_content()))
         # Update the title status whenever a key is pressed.
-        self.text_box.bind("<Key>", lambda event: self.sync_title_with_content(event))
+        self.text_box.bind("<Key>", lambda e: self.sync_title_with_content(e))
         # Disable normal button behavior
         self.text_box.bind("<Tab>", self.disable_button)
         self.text_box.bind("<Alt_L>", self.disable_button)
@@ -858,10 +858,10 @@ class ImgTxtViewer:
         self.text_box.bind("<Control-e>", self.index_goto_next_empty)
         # Show random img-txt pair
         self.text_box.bind("<Control-r>", self.index_goto_random)
-        # Delete previous word
+        # Delete previous word with Ctrl+Backspace
         self.text_box.bind("<Control-BackSpace>", self.delete_word_before_cursor)
         # Refresh text box
-        #self.text_box.bind("<F5>", lambda event: self.refresh_text_box())
+        #self.text_box.bind("<F5>", lambda e: self.refresh_text_box())
 
 
     # --------------------------------------
@@ -1434,13 +1434,13 @@ class ImgTxtViewer:
 #region - TextBox Highlights
 
 
-    def highlight_duplicates(self, event, mouse=True):
-        if not self.highlight_selection_var.get():
-            return
-        self.text_box.after_idle(self._highlight_duplicates, mouse)
+    def highlight_duplicates(self, event=None, mouse=True):
+       if not self.highlight_selection_var.get():
+           return
+       self.text_box.after_idle(self._highlight_duplicates, mouse)
 
 
-    def _highlight_duplicates(self, mouse):
+    def _highlight_duplicates(self, mouse=False):
         self.text_box.tag_remove("highlight", "1.0", "end")
         if not self.text_box.tag_ranges("sel"):
             return
@@ -1520,9 +1520,16 @@ class ImgTxtViewer:
                         self.text_box.tag_add(tag_name, f"1.0 + {start} chars", f"1.0 + {end} chars")
 
 
-    def remove_highlight(self):
+    def remove_highlight(self, event=None):
         self.text_box.tag_remove("highlight", "1.0", "end")
-        self.root.after(100, lambda: self.remove_tag())
+        self.root.after(100, lambda: self.remove_custom_tags())
+
+
+    def remove_custom_tags(self):
+        self.highlight_all_duplicates_var.set(False)
+        for tag in self.text_box.tag_names():
+            if tag not in ["sel", "highlight"]:
+                self.text_box.tag_remove(tag, "1.0", "end")
 
 
     def remove_tag(self):
