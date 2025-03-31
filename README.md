@@ -173,7 +173,7 @@ For detailed information on the tools and features, see the [User Guide✨](http
 
 
 ### Python Package Setup
-![Static Badge](https://img.shields.io/badge/git-gray) ![Static Badge](https://img.shields.io/badge/Windows-Python_3.10%2B-green)
+![Static Badge](https://img.shields.io/badge/git-gray) ![Static Badge](https://img.shields.io/badge/Windows-Python_3.10-green)
 
 1. Download the source code package from the latest [releases page](https://github.com/Nenotriple/img-txt_viewer/releases?q=executable&expanded=true).
 2. Run the `Start.bat` file to automatically create and activate a virtual environment, then launch the app.
@@ -189,7 +189,7 @@ For detailed information on the tools and features, see the [User Guide✨](http
   <summary>Manual Python Setup...</summary>
 
 
-![Static Badge](https://img.shields.io/badge/git-gray) ![Static Badge](https://img.shields.io/badge/Windows-Python_3.10%2B-green)
+![Static Badge](https://img.shields.io/badge/git-gray) ![Static Badge](https://img.shields.io/badge/Windows-Python_3.10-green)
 
 
 <br>
