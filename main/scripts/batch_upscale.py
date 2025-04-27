@@ -279,21 +279,21 @@ class BatchUpscale:
         input_path = self.input_path_var.get()
         if not os.path.isdir(input_path):
             input_path = os.path.dirname(input_path)
-        for file in os.listdir(input_path):
-            if file.lower().endswith(self.supported_filetypes):
-                filepath = os.path.join(input_path, file)
-                try:
-                    with Image.open(filepath) as img:
-                        width, height = img.size
-                        dimensions = f"{width}x{height}"
-                        new_width = int(width * scaling_factor)
-                        new_height = int(height * scaling_factor)
-                        new_dimensions = f"{new_width}x{new_height}"
-                except Exception:
-                    dimensions = "0x0"
-                    new_dimensions = "0x0"
-                ext = os.path.splitext(file)[1]
-                self.file_tree.insert("", "end", values=(file, dimensions, new_dimensions, ext))
+        file_list = self._get_sorted_file_list(input_path)
+        for file in file_list:
+            filepath = os.path.join(input_path, file)
+            try:
+                with Image.open(filepath) as img:
+                    width, height = img.size
+                    dimensions = f"{width}x{height}"
+                    new_width = int(width * scaling_factor)
+                    new_height = int(height * scaling_factor)
+                    new_dimensions = f"{new_width}x{new_height}"
+            except Exception:
+                dimensions = "0x0"
+                new_dimensions = "0x0"
+            ext = os.path.splitext(file)[1]
+            self.file_tree.insert("", "end", values=(file, dimensions, new_dimensions, ext))
 
 
     def get_selection_details(self):
@@ -534,14 +534,15 @@ class BatchUpscale:
         try:
             if not os.path.exists(output_path):
                 os.makedirs(output_path)
-            for filename in os.listdir(input_path):
+            file_list = self._get_sorted_file_list(input_path)
+            for filename in file_list:
                 self.batch_upscale_frame.update()
                 self.batch_upscale_frame.update_idletasks()
                 if not self.batch_thread_var:
                     self.batch_upscale_cancel_message(count)
                     break
                 file_path = os.path.join(input_path, filename)
-                if os.path.isfile(file_path) and filename.lower().endswith(self.supported_filetypes):
+                if os.path.isfile(file_path):
                     self.working_img_path = file_path
                     self.highlight_upscale_item(filename)
                     if filename.lower().endswith('.gif'):
@@ -823,3 +824,12 @@ class BatchUpscale:
             return False
         else:
             return True
+
+
+    def _get_sorted_file_list(self, directory):
+        files = [file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)]
+        if hasattr(self.parent, "get_file_sort_key"):
+            sort_key = self.parent.get_file_sort_key()
+            reverse = getattr(self.parent, "reverse_load_order_var", tk.BooleanVar(value=False)).get()
+            return sorted(files, key=sort_key, reverse=reverse)
+        return files

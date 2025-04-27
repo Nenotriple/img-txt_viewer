@@ -469,6 +469,16 @@ class BatchResizeImages:
         self.help_window.open_window(geometry="450x700", help_text=help_text)
 
 
+    def _get_sorted_files(self):
+        if not self.working_dir:
+            return []
+        files = [f for f in os.listdir(self.working_dir) if f.lower().endswith(self.supported_filetypes)]
+        if self.parent and hasattr(self.parent, "get_file_sort_key"):
+            sort_key = self.parent.get_file_sort_key()
+            return sorted(files, key=sort_key)
+        return sorted(files)
+
+
 #endregion
 ################################################################################################################################################
 #region -  Filetree Functions
@@ -477,7 +487,7 @@ class BatchResizeImages:
     def populate_file_tree(self):
         self.file_tree.delete(*self.file_tree.get_children())
         if self.working_dir:
-            files = [f for f in os.listdir(self.working_dir) if f.lower().endswith(self.supported_filetypes)]
+            files = self._get_sorted_files()
             for file in files:
                 filepath = os.path.join(self.working_dir, file)
                 try:
@@ -792,7 +802,7 @@ class BatchResizeImages:
                     width = None
                     height = None
 
-                image_files = [file for file in os.listdir(self.working_dir) if file.endswith(self.supported_filetypes)]
+                image_files = self._get_sorted_files()
                 total_images = len(image_files)
                 output_folder_path = self.get_output_folder_path()
                 confirm_message = self.get_resize_confirmation(output_folder_path)
@@ -951,3 +961,4 @@ class BatchResizeImages:
                 "\n\nDownload the Windows executable from exiftool.org and place in the same folder as batch_resize_images.exe, restart the program and try again."
                 "\n\nThe resize operation will now stop."
             )
+
