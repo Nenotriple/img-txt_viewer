@@ -118,27 +118,36 @@ class TextController:
         replace_string = self.parent.replace_string_var.get()
         if not search_string:
             return
-        confirm = messagebox.askokcancel("Search and Replace", "This will replace all occurrences of the text\n\n{}\n\nWith\n\n{}\n\nA backup will be created before making changes.\n\nDo you want to proceed?".format(search_string, replace_string))
+        confirm = messagebox.askokcancel("Search and Replace", f"This will replace all occurrences of the text\n\n{search_string}\n\nWith\n\n{replace_string}\n\nA backup will be created before making changes.\n\nDo you want to proceed?")
         if not confirm:
             return
         self.parent.backup_text_files()
         if not self.parent.filter_string_var.get():
             self.parent.update_image_file_count()
+        files_altered = 0
+        words_replaced = 0
         for text_file in self.parent.text_files:
             try:
+                if not os.path.exists(text_file):
+                    continue
                 with open(text_file, 'r', encoding="utf-8") as file:
                     filedata = file.read()
+                original_data = filedata
                 if self.parent.search_and_replace_regex_var.get():
-                    filedata = re.sub(search_string, replace_string, filedata)
+                    new_data, count = re.subn(search_string, replace_string, filedata)
                 else:
-                    filedata = filedata.replace(search_string, replace_string)
-                with open(text_file, 'w', encoding="utf-8") as file:
-                    file.write(filedata)
+                    count = filedata.count(search_string)
+                    new_data = filedata.replace(search_string, replace_string)
+                if new_data != original_data:
+                    files_altered += 1
+                    words_replaced += count
+                    with open(text_file, 'w', encoding="utf-8") as file:
+                        file.write(new_data)
             except Exception as e:
                 messagebox.showerror("Error: search_and_replace()", f"An error occurred while trying to replace text in {text_file}.\n\n{e}")
         self.parent.cleanup_all_text_files(show_confirmation=False)
         self.parent.show_pair()
-        messagebox.showinfo("Search and Replace", "Search and Replace completed successfully.")
+        messagebox.showinfo("Search and Replace", f"Search and Replace completed successfully.\n\nFiles altered: {files_altered}\nWords replaced: {words_replaced}")
 
 
 #endregion
