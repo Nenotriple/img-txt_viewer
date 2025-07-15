@@ -2415,7 +2415,8 @@ class ImgTxtViewer:
                         f.seek(0)
                         f.write(cleaned_text)
                         f.truncate()
-            messagebox.showinfo("Success", "All text files have been cleaned!")
+            if show_confirmation:
+                messagebox.showinfo("Success", "All text files have been cleaned!")
         except Exception as e:
             messagebox.showerror("Error: cleanup_all_text_files()", f"An unexpected error occurred: {str(e)}")
         self.show_pair()
