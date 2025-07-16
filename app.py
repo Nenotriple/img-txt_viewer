@@ -869,7 +869,7 @@ class ImgTxtViewer:
         # Delete previous word with Ctrl+Backspace
         self.text_box.bind("<Control-BackSpace>", self.delete_word_before_cursor)
         # Display FindReplaceEntry
-        self.text_box.bind("<Control-f>", lambda _: self.find_replace_widget.show_widget())
+        self.text_box.bind("<Control-f>", self.find_replace_widget.show_widget)
         # Refresh text box
         #self.text_box.bind("<F5>", lambda e: self.refresh_text_box())
 

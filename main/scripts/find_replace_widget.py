@@ -347,7 +347,7 @@ class FindReplaceEntry(ttk.Frame):
             self.results_label.config(text=f"{current_idx} of {count}")
 
 
-    def show_widget(self):
+    def show_widget(self, event=None):
         """Toggle the visibility of the find/replace widget and search for selected text."""
         if self.winfo_viewable():
             self.focus_find_entry()
@@ -358,7 +358,7 @@ class FindReplaceEntry(ttk.Frame):
             self.search_for_text(self.get_selected_text())
 
 
-    def hide_widget(self):
+    def hide_widget(self, event=None):
         """Handle the close button click"""
         if self.search_manager:
             self.search_manager.clear_highlights()
