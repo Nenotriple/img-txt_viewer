@@ -253,8 +253,13 @@ class ImageGrid(ttk.Frame):
         for image_index, img_path in enumerate(image_files):
             if len(images) >= self.loaded_images:
                 break
-            txt_path = text_files[image_index]
-            current_text_file_size = current_text_file_sizes[txt_path]
+            if image_index < len(text_files):
+                txt_path = text_files[image_index]
+            else:
+                txt_path = os.path.splitext(img_path)[0] + '.txt'
+            current_text_file_size = current_text_file_sizes.get(txt_path, 0)
+            if current_text_file_size == 0 and not os.path.exists(txt_path):
+                current_text_file_size = 0
             cached_text_file_size = self.text_file_cache.get(txt_path, -1)
             if img_path not in self.image_cache[image_size_key] or current_text_file_size != cached_text_file_size:
                 new_img = self.create_new_image(img_path, txt_path)
