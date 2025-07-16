@@ -292,7 +292,7 @@ class FindReplaceEntry(ttk.Frame):
         # Close
         close_btn = ttk.Button(self, text="X", width=3, command=self.hide_widget)
         close_btn.grid(row=0, column=8, sticky="e")
-        Tip.create(close_btn, "Close (Ctrl+F)", delay=250, origin="widget", pady=-22)
+        Tip.create(close_btn, "Close (Esc)", delay=250, origin="widget", pady=-22)
 
 
     def create_replace_row(self):
