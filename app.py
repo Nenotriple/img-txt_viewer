@@ -72,6 +72,7 @@ from main.scripts.Autocomplete import SuggestionHandler
 from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
 from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
 from main.scripts.video_player_widget import VideoPlayerWidget
+from main.scripts.find_replace_widget import FindReplaceEntry
 
 
 #endregion
@@ -272,7 +273,7 @@ class ImgTxtViewer:
 # Bindings
 # --------------------------------------
     def setup_general_binds(self):
-        self.root.bind("<Control-f>", lambda event: self.toggle_highlight_all_duplicates())
+        #self.root.bind("<Control-f>", lambda event: self.toggle_highlight_all_duplicates())
         self.root.bind("<Control-s>", lambda event: self.save_text_file(highlight=True))
         self.root.bind("<Alt-Right>", lambda event: self.next_pair(event))
         self.root.bind("<Alt-Left>", lambda event: self.prev_pair(event))
@@ -752,10 +753,17 @@ class ImgTxtViewer:
             self.text_frame = Frame(self.master_control_frame)
             self.text_pane.add(self.text_frame, stretch="always")
             self.text_pane.paneconfigure(self.text_frame, minsize=80)
+            self.text_frame.grid_rowconfigure(1, weight=1)
+            self.text_frame.grid_columnconfigure(0, weight=1)
+            # Create Text Box
             self.text_box = custom_scrolledtext.CustomScrolledText(self.text_frame, wrap="word", undo=True, maxundo=200, inactiveselectbackground="#0078d7")
-            self.text_box.pack(side="top", expand="yes", fill="both")
+            self.text_box.grid(row=1, column=0, sticky="nsew")
             self.text_box.tag_configure("highlight", background="#5da9be", foreground="white")
             self.text_box.config(font=(self.font_var.get(), self.font_size_var.get()))
+            # Create FindReplaceEntry
+            self.find_replace_widget = FindReplaceEntry(self.text_frame, self.text_box)
+            self.find_replace_widget.grid(row=0, column=0, sticky="ew")
+            self.find_replace_widget.grid_remove()
             self.set_text_box_binds()
             self.get_default_font()
             self.primary_paned_window.unbind("<B1-Motion>")
@@ -860,6 +868,8 @@ class ImgTxtViewer:
         self.text_box.bind("<Control-r>", self.index_goto_random)
         # Delete previous word with Ctrl+Backspace
         self.text_box.bind("<Control-BackSpace>", self.delete_word_before_cursor)
+        # Display FindReplaceEntry
+        self.text_box.bind("<Control-f>", lambda _: self.find_replace_widget.show_widget())
         # Refresh text box
         #self.text_box.bind("<F5>", lambda e: self.refresh_text_box())
 
