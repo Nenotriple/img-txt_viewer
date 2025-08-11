@@ -1,6 +1,6 @@
 # Virtual Environment
 venv/
-
+.venv/
 
 # Visual Studio Code workspace settings
 /.vscode
