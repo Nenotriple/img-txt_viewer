@@ -5,26 +5,28 @@ setlocal enabledelayedexpansion
 REM ======================================================
 REM Python Virtual Environment Setup and Script Launcher
 REM Created by: github.com/Nenotriple
-set "SCRIPT_VERSION=1.01"
+set "SCRIPT_VERSION=1.02"
 REM ======================================================
 
 
-REM Configuration
+REM Configuration (see README.md for details)
 set "PYTHON_SCRIPT=app.py"
 set "REQUIREMENTS_FILE=requirements.txt"
 
 set "FAST_START=FALSE"
 set "AUTO_FAST_START=TRUE"
 set "AUTO_CLOSE_CONSOLE=FALSE"
+set "UPDATE_REQUIREMENTS_ON_LAUNCH=FALSE"
 
 set "ENABLE_COLORS=TRUE"
 set "QUIET_MODE=FALSE"
 set "SETUP_ONLY=FALSE"
+set "SET_VENV_HIDDEN=TRUE"
 
 REM Runtime Variables
 set "SCRIPT_DIR=%~dp0"
 set "PIP_TIMEOUT=30"
-set "VENV_DIR=venv"
+set "VENV_DIR=.venv"
 
 
 REM ==============================================
@@ -79,7 +81,7 @@ REM ==============================================
     REM Fast start path
     if "%FAST_START%"=="TRUE" (
         call :ActivateVenv && (
-            call :CheckRequirementsUpdate
+            if "%UPDATE_REQUIREMENTS_ON_LAUNCH%"=="TRUE" call :InstallRequirements
             exit /b 0
         )
         REM If activation fails, fall through to full setup
@@ -100,6 +102,7 @@ exit /b 0
     if exist "%VENV_DIR%" rmdir /s /q "%VENV_DIR%" 2>nul
     call :LogInfo "Creating virtual environment: %SCRIPT_DIR%%VENV_DIR%"
     python -m venv "%VENV_DIR%" || (call :LogError "Failed to create virtual environment" & exit /b 1)
+    if "%SET_VENV_HIDDEN%"=="TRUE" call :SetVenvHidden
     call :LogOK "Virtual environment created"
 exit /b 0
 
@@ -109,17 +112,6 @@ exit /b 0
     call "%VENV_DIR%\Scripts\activate.bat" || (call :LogError "Failed to activate virtual environment" & exit /b 1)
     where python | findstr "%VENV_DIR%" >nul || (call :LogError "Virtual environment activation failed" & exit /b 1)
     call :LogOK "Virtual environment activated"
-exit /b 0
-
-
-:CheckRequirementsUpdate
-    if not exist "%REQUIREMENTS_FILE%" exit /b 0
-    REM Compare file timestamps
-    for /f %%i in ('dir /b /od "%REQUIREMENTS_FILE%" "%VENV_DIR%\Scripts\python.exe" 2^>nul') do set "NEWEST=%%i"
-    if /i "!NEWEST!"=="%REQUIREMENTS_FILE%" (
-        call :LogInfo "Requirements file is newer - updating packages"
-        call :InstallRequirements
-    )
 exit /b 0
 
 
@@ -215,6 +207,16 @@ exit /b 0
 
 :LogError
     echo %COLOR_ERROR%[ERROR] %~1%COLOR_RESET%
+    if "%AUTO_CLOSE_CONSOLE%"=="TRUE" (
+        echo Press any key to exit...
+        pause >nul
+    )
+exit /b 0
+
+
+:SetVenvHidden
+    attrib +h "%VENV_DIR%" 2>nul && call :LogInfo "Virtual environment directory set as hidden" || call :LogWarn "Failed to set directory as hidden"
+exit /b 0
     if "%AUTO_CLOSE_CONSOLE%"=="TRUE" (
         echo Press any key to exit...
         pause >nul
