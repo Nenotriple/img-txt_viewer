@@ -43,7 +43,7 @@ from tkinter import (
 
 # Third-Party Libraries
 import numpy
-from TkToolTip.TkToolTip import TkToolTip as ToolTip
+from TkToolTip import TkToolTip as ToolTip
 from PIL import Image, ImageTk, ImageSequence, UnidentifiedImageError
 
 
@@ -604,7 +604,7 @@ class ImgTxtViewer:
         self.video_player.grid_remove()
         self.popup_zoom = PopUpZoom(self.primary_display_image)
         self.toggle_zoom_var = BooleanVar(value=self.popup_zoom.zoom_enabled.get())
-        self.image_preview_tooltip = ToolTip.create(self.primary_display_image, "Right-Click for more\nMiddle-click to open in file explorer\nDouble-Click to open in your system image viewer\nALT+Left/Right or Mouse-Wheel to move between pairs", delay=500, padx=6, pady=12)
+        self.image_preview_tooltip = ToolTip.create(self.primary_display_image, "Right-Click for more\nMiddle-click to open in file explorer\nDouble-Click to open in your system image viewer\nALT+Left/Right or Mouse-Wheel to move between pairs", delay=500, padx=6, pady=12, fade_out=200, follow_mouse=True)
         # Thumbnail Panel
         self.thumbnail_panel = ThumbnailPanel(master=self.master_image_inner_frame, parent=self)
         self.thumbnail_panel.grid(row=3, column=0, sticky="ew")
