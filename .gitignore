@@ -30,8 +30,10 @@ my_tags.csv
 
 
 # ONNX Models
-/img-txt_viewer/onnx_models
-onnx_models/*
+*.onnx
+img-txt_viewer/onnx_models/wd-v1-4-moat-tagger-v2/selected_tags.csv
+img-txt_viewer/onnx_models/wd-vit-tagger-v3/selected_tags.csv
+
 
 
 # Misc
