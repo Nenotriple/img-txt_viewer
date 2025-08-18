@@ -204,7 +204,8 @@ class ImgTxtViewer:
         # Misc Settings
         self.app_settings_cfg = 'settings.cfg'
         self.my_tags_csv = 'my_tags.csv'
-        self.onnx_models_dir = "onnx_models"
+        self.onnx_models_dir = "models/onnx_models"
+        self.ncnn_models_dir = "models/ncnn_models"
         self.image_dir = StringVar(value="Choose Directory...")
         self.restore_last_path_var = BooleanVar(value=True)
         self.text_dir = ""
