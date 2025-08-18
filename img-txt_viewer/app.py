@@ -3092,12 +3092,12 @@ class ImgTxtViewer:
 
 
     def set_icon(self):
-        self.icon_path = os.path.join(self.app_path, "icon.ico")
+        self.icon_path = os.path.join(self.app_path, "main", "icon.ico")
         try:
             self.root.iconbitmap(self.icon_path)
         except TclError: pass
         # Blank image (app icon)
-        self.icon_path = os.path.join(self.app_path, "icon.ico")
+        self.icon_path = os.path.join(self.app_path, "main", "icon.ico")
         with Image.open(self.icon_path) as img:
             self.blank_image = ImageTk.PhotoImage(img)
 
