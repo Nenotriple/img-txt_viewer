@@ -30,8 +30,8 @@ my_tags.csv
 
 
 # ONNX Models
+/img-txt_viewer/onnx_models
 onnx_models/*
-!onnx_models/ONNX vision models go here
 
 
 # Misc
