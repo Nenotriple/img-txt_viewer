@@ -1128,6 +1128,9 @@ class CropInterface:
         self.working_dir = None
         self.entry_helper = entry_helper
 
+        # Source image path independent of temp display
+        self.current_source_path = None
+
         # Image Variables
         self.gif_frames = []
         self.img_info_cache = {}
@@ -1454,7 +1457,7 @@ class CropInterface:
                         raise ValueError
                 elif option == "Aspect Ratio":
                     if ':' in value:
-                        ratio_width, ratio_height = map(int, value.split(':'))
+                        ratio_width, ratio_height = map(float, value.split(':'))
                         aspect_ratio = ratio_width / ratio_height
                     else:
                         aspect_ratio = float(value)
@@ -1651,7 +1654,7 @@ class CropInterface:
                 self.img_stats_label_var.set("No images found in directory")
 
 
-    def display_img(self, img_path):
+    def display_img(self, img_path, logical_path=None):
         self.img_canvas._display_img(img_path)
         self.crop_selection.clear_selection()
         original_width, original_height = self.img_canvas.original_img.size
@@ -1662,14 +1665,19 @@ class CropInterface:
         self.height_spin.config(to=self.img_canvas.original_img_height)
         self.img_index_spin.config(from_=1, to=len(self.img_files))
         self.img_index_spin.set(self.current_index + 1)
-        self.dir_entry_var.set(img_path)
-        if self.img_file.lower().endswith('.gif'):
+        if logical_path is None:
+            self.current_source_path = img_path
+        else:
+            self.current_source_path = logical_path
+        self.dir_entry_var.set(self.current_source_path)
+        if logical_path is None and self.current_source_path and self.current_source_path.lower().endswith('.gif'):
             self.extract_gif_frames()
             self.extract_gif_button.config(state="normal")
             self.highlight_thumbnail(index=0)
         else:
-            self.thumb_frame.grid_remove()
-            self.extract_gif_button.config(state="disabled")
+            if not (self.current_source_path and self.current_source_path.lower().endswith('.gif')):
+                self.thumb_frame.grid_remove()
+                self.extract_gif_button.config(state="disabled")
 
 
     def show_previous_img(self):
@@ -1702,19 +1710,23 @@ class CropInterface:
 
     def after_crop_option(self, cropped_img):
         option = self.after_crop_var.get()
-        path = self.img_canvas.img_path
+        source_path = self.current_source_path or self.img_canvas.img_path
         if option == "Save & Close":
-            if self.save_cropped_img(cropped_img, 'normal', path):
-                self.close_crop_ui(path=path)
+            saved_path = self.save_cropped_img(cropped_img, 'normal', source_path)
+            if saved_path:
+                self.close_crop_ui(path=saved_path)
         elif option == "Save & Next":
-            if self.save_cropped_img(cropped_img, 'normal', path):
+            saved_path = self.save_cropped_img(cropped_img, 'normal', source_path)
+            if saved_path:
                 self.show_next_img()
         elif option == "Save As...":
             self.save_cropped_img(cropped_img, 'save_as')
         elif option == "Save":
-            self.save_cropped_img(cropped_img, 'normal', path)
+            self.save_cropped_img(cropped_img, 'normal', source_path)
         elif option == "Overwrite":
-            self.save_cropped_img(cropped_img, 'overwrite', path)
+            saved_path = self.save_cropped_img(cropped_img, 'overwrite', source_path)
+            if saved_path:
+                pass
 
 
     def save_cropped_img(self, cropped_img, save_mode, original_path=None):
@@ -1722,23 +1734,26 @@ class CropInterface:
             if save_mode == 'normal':
                 save_path = self.generate_unique_filename(original_path)
             elif save_mode == 'save_as':
-                save_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG files", "*.png"), ("All files", "*.*")])
+                save_path = filedialog.asksaveasfilename(defaultextension=".png")
                 if not save_path:
                     return False
+                root, ext = os.path.splitext(save_path)
+                if ext.lower() != ".png":
+                    save_path = root + ".png"
             elif save_mode == 'overwrite':
                 confirm = messagebox.askyesno("Confirm Overwrite", "Are you sure you want to overwrite the original image?")
                 if not confirm:
                     return False
-                save_path = original_path
-            ext = os.path.splitext(save_path)[1].lower()
-            save_args = {}
-            if ext in ['.jpg', '.jpeg', '.webp']:
-                save_args['quality'] = 100
-            cropped_img.save(save_path, **save_args)
+                directory, filename = os.path.split(original_path)
+                name, ext = os.path.splitext(filename)
+                save_path = os.path.join(directory, f"{name}.png")
+            else:
+                return False
+            cropped_img.save(save_path, format="PNG")
             if save_mode == 'overwrite':
                 self.img_canvas._display_img(save_path)
                 self.crop_selection.clear_selection()
-            return True
+            return save_path
         except Exception as e:
             messagebox.showerror("Save Error", f"Failed to save image: {str(e)}")
             return False
@@ -1746,10 +1761,10 @@ class CropInterface:
 
     def generate_unique_filename(self, original_path):
         directory, filename = os.path.split(original_path)
-        name, ext = os.path.splitext(filename)
+        name, _ = os.path.splitext(filename)
         counter = 1
         while True:
-            new_filename = f"{name}_crop_{counter}{ext}"
+            new_filename = f"{name}_crop_{counter}.png"
             new_filepath = os.path.join(directory, new_filename)
             if not os.path.exists(new_filepath):
                 return new_filepath
@@ -1824,12 +1839,12 @@ class CropInterface:
         )
         if not confirm:
             return
-        if not self.img_canvas.img_path or not self.img_canvas.img_path.lower().endswith('.gif'):
+        if not self.current_source_path or not self.current_source_path.lower().endswith('.gif'):
             messagebox.showerror("Error", "No GIF file selected.")
             return
         try:
             frames = self.extract_gif_frames(display=False)
-            base_path, _ = os.path.splitext(self.img_canvas.img_path)
+            base_path, _ = os.path.splitext(self.current_source_path)
             folder_path = f"{base_path}_frames"
             os.makedirs(folder_path, exist_ok=True)
             for i, frame in enumerate(frames):
@@ -1848,10 +1863,10 @@ class CropInterface:
 
 
     def extract_gif_frames(self, display=True, event=None):
-        if not self.img_canvas.img_path or not self.img_canvas.img_path.lower().endswith('.gif'):
+        if not self.current_source_path or not self.current_source_path.lower().endswith('.gif'):
             return []
         try:
-            with Image.open(self.img_canvas.img_path) as img:
+            with Image.open(self.current_source_path) as img:
                 self.gif_frames = [frame.copy().convert("RGBA") for frame in ImageSequence.Iterator(img)]
                 if display:
                     self.display_gif_thumbnails(self.gif_frames)
@@ -1865,12 +1880,12 @@ class CropInterface:
     def display_gif_thumbnails(self, frames):
         def save_and_display_frame(img, index):
             try:
-                trash_folder = os.path.join(os.path.dirname(self.img_files[0]), "Trash")
+                trash_folder = os.path.join(os.path.dirname(self.current_source_path), "Trash")
                 os.makedirs(trash_folder, exist_ok=True)
                 filename = os.path.basename(self.img_files[self.current_index])
                 save_img_path = os.path.join(trash_folder, f"{filename}.png")
                 img.save(save_img_path)
-                self.display_img(save_img_path)
+                self.display_img(save_img_path, logical_path=self.img_files[self.current_index])
                 self.highlight_thumbnail(index)
                 self.thumb_timeline.set(index)
             except Exception as e:
@@ -1909,12 +1924,12 @@ class CropInterface:
         try:
             index = int(float(self.thumb_timeline.get()))
             frame = self.gif_frames[index]
-            trash_folder = os.path.join(os.path.dirname(self.img_files[0]), "Trash")
+            trash_folder = os.path.join(os.path.dirname(self.current_source_path), "Trash")
             os.makedirs(trash_folder, exist_ok=True)
             filename = os.path.basename(self.img_files[self.current_index])
             save_img_path = os.path.join(trash_folder, f"{filename}.png")
             frame.save(save_img_path)
-            self.display_img(save_img_path)
+            self.display_img(save_img_path, logical_path=self.img_files[self.current_index])
             self.highlight_thumbnail(index)
             self.ensure_thumbnail_visible(index)
             padded_index = str(index + 1).zfill(len(str(len(self.gif_frames))))
