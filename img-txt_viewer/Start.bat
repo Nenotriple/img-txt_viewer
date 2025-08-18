@@ -5,22 +5,22 @@ setlocal enabledelayedexpansion
 REM ======================================================
 REM Python Virtual Environment Setup and Script Launcher
 REM Created by: github.com/Nenotriple
-set "SCRIPT_VERSION=1.02"
+set "SCRIPT_VERSION=1.03"
 REM ======================================================
 
 
-REM Configuration (see README.md for details)
+REM Configuration (see https://github.com/Nenotriple/pyvenv-launcher/blob/main/README.md for details)
 set "PYTHON_SCRIPT=app.py"
 set "REQUIREMENTS_FILE=requirements.txt"
 
 set "FAST_START=FALSE"
 set "AUTO_FAST_START=TRUE"
-set "AUTO_CLOSE_CONSOLE=FALSE"
+set "AUTO_CLOSE_CONSOLE=TRUE"
 set "UPDATE_REQUIREMENTS_ON_LAUNCH=FALSE"
 
 set "ENABLE_COLORS=TRUE"
 set "QUIET_MODE=FALSE"
-set "SETUP_ONLY=FALSE"
+set "LAUNCH_SCRIPT=TRUE"
 set "SET_VENV_HIDDEN=TRUE"
 
 REM Runtime Variables
@@ -44,9 +44,9 @@ pushd "%SCRIPT_DIR%" || (call :LogError "Failed to set working directory" & exit
 
 call :SetupVirtualEnvironment || exit /b 1
 
-REM Check if only setup is requested
-if "%SETUP_ONLY%"=="TRUE" (
-    call :LogInfo "SETUP_ONLY is enabled. Skipping script launch."
+REM Launch or drop to shell
+if "%LAUNCH_SCRIPT%"=="FALSE" (
+    call :LogInfo "LAUNCH_SCRIPT is FALSE. Skipping app launch."
     call :LogInfo "Dropping into interactive shell inside the virtual environment."
     call "%VENV_DIR%\Scripts\activate.bat"
     cmd /k
