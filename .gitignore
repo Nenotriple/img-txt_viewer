@@ -12,6 +12,7 @@ __pycache__/
 
 # Dictionary Pre-Cache
 main/dict/cache/
+/img-txt_viewer/main/dict/cache
 
 
 # PyInstaller
