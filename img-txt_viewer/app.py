@@ -84,7 +84,7 @@ class ImgTxtViewer:
     def __init__(self, root: 'Tk'):
         self.app_version = "v1.97"
         self.root = root
-        self.application_path = self.get_app_path()
+        self.app_path = self.get_app_path()
         self.set_appid()
         self.setup_window()
         self.set_icon()
@@ -202,10 +202,10 @@ class ImgTxtViewer:
 # --------------------------------------
     def define_app_settings(self):
         # Misc Settings
-        self.app_settings_cfg = 'settings.cfg'
-        self.my_tags_csv = 'my_tags.csv'
-        self.onnx_models_dir = "models/onnx_models"
-        self.ncnn_models_dir = "models/ncnn_models"
+        self.app_settings_cfg = os.path.join(self.app_path, "settings.cfg")
+        self.my_tags_csv = os.path.join(self.app_path, "my_tags.csv")
+        self.onnx_models_dir = os.path.join(self.app_path, "models", "onnx_models")
+        self.ncnn_models_dir = os.path.join(self.app_path, "models", "ncnn_models")
         self.image_dir = StringVar(value="Choose Directory...")
         self.restore_last_path_var = BooleanVar(value=True)
         self.text_dir = ""
@@ -3092,12 +3092,12 @@ class ImgTxtViewer:
 
 
     def set_icon(self):
-        self.icon_path = os.path.join(self.application_path, "icon.ico")
+        self.icon_path = os.path.join(self.app_path, "icon.ico")
         try:
             self.root.iconbitmap(self.icon_path)
         except TclError: pass
         # Blank image (app icon)
-        self.icon_path = os.path.join(self.application_path, "icon.ico")
+        self.icon_path = os.path.join(self.app_path, "icon.ico")
         with Image.open(self.icon_path) as img:
             self.blank_image = ImageTk.PhotoImage(img)
 

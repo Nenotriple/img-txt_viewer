@@ -135,7 +135,7 @@ class AboutWindow:
 
 
     def _set_icon(self):
-        self.icon_path = os.path.join(self.parent.application_path, "icon.ico")
+        self.icon_path = os.path.join(self.parent.app_path, "icon.ico")
         try:
             self.about_window.iconbitmap(self.icon_path)
         except TclError:
