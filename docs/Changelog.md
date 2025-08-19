@@ -1,5 +1,3 @@
-
-
 # Index
 
 - [v1.97 🎉🎈](#v197)
@@ -71,8 +69,10 @@ I'm very happy to announce **img-txt_viewer is 2 years old!** 🎉🎈
 - The `Image Grid` is now built into the primary interface.
 - New option `Add Comma After Tag` [#51](https://github.com/Nenotriple/img-txt_viewer/issues/51)
   - When enabled (default), a comma and space ", " will be inserted at the end of the text box and after inserting a suggestion.
+- New hotkey `Ctrl+Backspace`: Use in the Tagger UI text box to delete the previous word. [#60](https://github.com/Nenotriple/img-txt_viewer/issues/60)
 - Added a refresh option all tools.
 - Added or improved the help popup for all tools, usually a `?` button.
+- Find/Replace directly in the Tagger textbox with `Ctrl+F` [#66](https://github.com/Nenotriple/img-txt_viewer/issues/66)
 - Tag-Editor:
   - Small improvements to the UI.
 - Batch Upscale:
@@ -94,17 +94,22 @@ I'm very happy to announce **img-txt_viewer is 2 years old!** 🎉🎈
 - Fixed not being able to open an image using the default editor `MS Paint`.
 - Fixed error when deleting the last pair in the file list.
 - Fixed an issue where the incorrect tag-list would be loaded when swapping AutoTag models.
+- Fixed an issue/error when setting the 'Tagger' path via the Enter hotkey.
 - Creating a wildcard from the text files now skips blank text files.
+- Fixed an error when using Search and Replace on a dataset with unpaired image files. [#65](https://github.com/Nenotriple/img-txt_viewer/issues/65)
+- CropUI: Double-Clicking when `Fixed Selection` is enabled now works as expected.
+- CropUI: Fixed issue where guidelines wouldn't be drawn when double-clicking to create a selection.
 
 **Other Changes:**
+- New app icon.
 - The Menu Bar has been reorganized.
 - It's now possible to *loop around* while clicking inside the Thumbnail panel for navigation.
 - You can now resize the AutoTag tag list.
-- Added a tooltip to the image stats for better readability when text is cut off.
+- Added a tool tip to the directory entry and image stats for better readability when text is cut off.
+- You can now enable/disable the "Reload last directory?" popup via the Options menu. [#58](https://github.com/Nenotriple/img-txt_viewer/issues/58)
 
 ---
-Thank you to @younyokel, and @MNeMoNiCuZ for your suggestions during this release!
-
+Thank you to @younyokel, and @MNeMoNiCuZ for your help and suggestions during this release!
 
 </details>
 <br>
