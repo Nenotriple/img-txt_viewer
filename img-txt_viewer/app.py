@@ -401,6 +401,9 @@ class ImgTxtViewer:
         match_modes = {"Match Whole String": False, "Match Last Word": True}
         for mode, value in match_modes.items():
             match_mode_menu.add_radiobutton(label=mode, variable=self.last_word_match_var, value=value)
+        self.optionsMenu.add_separator()
+        # Set external editor
+        self.optionsMenu.add_command(label="Set Default External Image Editor...", command=self.set_external_image_editor_path)
         # Restore last path on startup
         self.optionsMenu.add_checkbutton(label="Restore Last Path", variable=self.restore_last_path_var)
         # Reset Settings
@@ -414,12 +417,9 @@ class ImgTxtViewer:
         self.toolsMenu.add_cascade(label="Batch Operations", state="disable", menu=self.batch_operations_menu)
         self.batch_operations_menu.add_command(label="Batch Crop Images...", command=self.batch_crop_images)
         self.batch_operations_menu.add_command(label="Create Wildcard From Captions...", command=self.collate_captions)
-        self.batch_operations_menu.add_separator()
-        self.batch_operations_menu.add_command(label="Zip Dataset...", command=self.archive_dataset)
         # Edit Current Pair
         self.individual_operations_menu = Menu(self.toolsMenu, tearoff=0)
         self.toolsMenu.add_cascade(label="Edit Current Pair", state="disable", menu=self.individual_operations_menu)
-        self.individual_operations_menu.add_command(label="Rename Pair", command=self.manually_rename_single_pair)
         self.individual_operations_menu.add_command(label="Upscale...", command=lambda: self.create_batch_upscale_ui(show=True, quick_swap=True))
         self.individual_operations_menu.add_command(label="Crop...", command=lambda: self.create_crop_ui(show=True, refresh=True))
         self.individual_operations_menu.add_command(label="Resize...", command=self.resize_image)
@@ -1365,7 +1365,7 @@ class ImgTxtViewer:
             "<F4>",
         ]
         if self.ui_state == "ImgTxtViewer":
-            self.root.bind("<Control-f>", lambda event: self.toggle_highlight_all_duplicates())
+            self.root.bind("<Control-f>", self.find_replace_widget.show_widget)
             self.root.bind("<Control-s>", lambda event: self.save_text_file(highlight=True))
             self.root.bind("<Alt-Right>", lambda event: self.next_pair(event))
             self.root.bind("<Alt-Left>", lambda event: self.prev_pair(event))
