@@ -714,15 +714,23 @@ class ImgTxtViewer:
         self.suggestion_menubutton = ttk.Button(self.suggestion_frame, text="☰", takefocus=False, width=2, command=lambda: self.show_suggestion_context_menu(button=True))
         self.suggestion_menubutton.pack(side="right", padx=2)
         # Startup info text
-        self.info_text = scrolledtext.ScrolledText(self.master_control_frame)
+        self.info_text = scrolledtext.ScrolledText(self.master_control_frame, padx=5, pady=5)
         self.info_text.pack(expand=True, fill="both")
         for header, section in zip(self.about_window.info_headers, self.about_window.info_content):
             self.info_text.insert("end", header + "\n", "header")
-            self.info_text.insert("end", section + "\n", "section")
-        self.info_text.tag_config("header", font=("Segoe UI", 9, "bold"))
-        self.info_text.tag_config("section", font=("Segoe UI", 9))
+            self.info_text.insert("end", section + "\n\n", "section")
+        self.info_text.tag_config("header", font=("Segoe UI", 9, "bold"), spacing3=8)
+        self.info_text.tag_config("section", font=("Segoe UI", 9), lmargin1=10, lmargin2=20, spacing1=2, spacing3=6, rmargin=8)
+        self.info_text.tag_config("bullet", lmargin1=22, lmargin2=36)
+        total_lines = int(self.info_text.index('end-1c').split('.')[0])
+        for line_no in range(1, total_lines + 1):
+            line_start = f"{line_no}.0"
+            line_end = f"{line_no}.0 lineend"
+            line_text = self.info_text.get(line_start, line_end)
+            if line_text.lstrip().startswith("⦁") or line_text.lstrip().startswith("•"):
+                self.info_text.tag_add("bullet", line_start, line_end)
+        self.info_text.config(state='disabled', wrap="word", height=1)
         self.info_text.bind("<Button-3>", self.show_text_context_menu)
-        self.info_text.config(state='disabled', wrap="word")
 
 
 #endregion
