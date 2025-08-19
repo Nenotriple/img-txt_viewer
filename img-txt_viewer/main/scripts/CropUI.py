@@ -1746,6 +1746,14 @@ class CropInterface:
                 return False
             cropped_img.save(save_path, format="PNG")
             if save_mode == 'overwrite':
+                try:
+                    if original_path and os.path.normcase(original_path) != os.path.normcase(save_path) and os.path.exists(original_path):
+                        os.remove(original_path)
+                except Exception as del_err:
+                    messagebox.showwarning("Overwrite Warning", f"Could not remove original file:\n{original_path}\n\n{del_err}")
+                if hasattr(self, 'parent') and hasattr(self.parent, 'refresh_file_lists'):
+                    self.parent.refresh_file_lists()
+                    self.img_files = self.parent.image_files
                 self.img_canvas._display_img(save_path)
                 self.crop_selection.clear_selection()
             return save_path
