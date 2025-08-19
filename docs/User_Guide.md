@@ -12,6 +12,8 @@ If you have any questions, need assistance with an issue, or anything else, plea
 - **Check for updates:** [Releases](https://github.com/Nenotriple/img-txt_viewer/releases)
 - **Wiki:** [Documentation Wiki](https://github.com/Nenotriple/img-txt_viewer/wiki)
 
+Last Updated for: `img-txt_viewer v1.97`
+
 ## Index
 
 - ✂️ [**Tagger Shortcuts**](#tagger-shortcuts)
