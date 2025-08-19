@@ -2166,6 +2166,7 @@ class ImgTxtViewer:
                 self.check_image_dir()
                 index_value = self.image_files.index(new_filename)
                 self.jump_to_image(index_value)
+            self.thumbnail_panel.refresh_thumbnails()
         except Exception as e:
             messagebox.showerror("Error: expand_image()", f'Failed to process {filename}. Reason: {e}')
 
@@ -2188,6 +2189,7 @@ class ImgTxtViewer:
                 flipped_img = img.transpose(Image.FLIP_LEFT_RIGHT)
                 flipped_img.save(filename)
         self.show_pair()
+        self.thumbnail_panel.refresh_thumbnails()
 
 
     def rotate_current_image(self):
@@ -2208,6 +2210,7 @@ class ImgTxtViewer:
                 rotated_img = img.transpose(Image.ROTATE_270)
                 rotated_img.save(filename)
         self.show_pair()
+        self.thumbnail_panel.refresh_thumbnails()
 
 
     def resize_image(self):
