@@ -112,7 +112,7 @@ class AboutWindow:
             "  ⦁ View statistics about your dataset, including text/image/video statistics, most common words, a list of all tags, and more.\n",
 
             # Main Toolbar
-            "The main toolbar provides quick access to the various image and text editing tools. These tools use the same directory as set in the Tagger UI and in the case of Tag-Editor and Crop, they require a directory to be first set in the Tagger UI.\n\n"
+            "The main toolbar gives quick access to image and text tools. These use the same directory as set in the Tagger UI. For Tag-Editor and Crop, set a directory in Tagger UI first.\n\n"
             "Tag-Editor:\n"
             "  ⦁ Display and edit image tags. Tags are listed with their occurrences.\n"
             "  ⦁ Changes are pending until you apply save them.\n"
