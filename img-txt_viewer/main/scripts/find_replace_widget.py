@@ -380,6 +380,9 @@ class FindReplaceEntry(ttk.Frame):
 
     def perform_search(self, event=None):
         """Perform search based on the current find entry"""
+        # Do nothing if the widget is hidden
+        if not self.winfo_viewable():
+            return
         # Ignore Return and Shift+Return key events
         if event and event.keysym in ("Return", "KP_Enter"):
             return
