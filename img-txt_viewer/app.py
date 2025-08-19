@@ -845,7 +845,7 @@ class ImgTxtViewer:
         self.text_box.bind("<Button-2>", lambda e: (self.delete_tag_under_mouse(e), self.sync_title_with_content(e)))
         self.text_box.bind("<Button-3>", lambda e: (self.show_text_context_menu(e)))
         # Update the autocomplete suggestion label after every KeyRelease.
-        self.text_box.bind("<KeyRelease>", lambda e: (self.autocomplete.update_suggestions(e), self.sync_title_with_content(e), self.get_text_summary()))
+        self.text_box.bind("<KeyRelease>", lambda e: (self.autocomplete.update_suggestions(e), self.sync_title_with_content(e), self.get_text_summary(), self.find_replace_widget.perform_search()))
         # Insert a newline after inserting an autocomplete suggestion when list_mode is active.
         self.text_box.bind('<comma>', self.autocomplete.insert_newline_listmode)
         # Highlight duplicates when selecting text with keyboard or mouse.
