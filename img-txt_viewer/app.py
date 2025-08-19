@@ -1791,6 +1791,7 @@ class ImgTxtViewer:
             if self.is_image_grid_visible_var.get():
                 self.image_grid.highlight_thumbnail(self.current_index)
             self.update_videoinfo()
+            self.find_replace_widget.perform_search()
 
 
     def resize_and_scale_image_event(self, event):
