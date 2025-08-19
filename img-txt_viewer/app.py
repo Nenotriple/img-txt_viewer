@@ -1,13 +1,12 @@
 """
-########################################
-#            IMG-TXT VIEWER            #
-#   Version : v1.97                    #
-#   Author  : github.com/Nenotriple    #
-########################################
+Name    :  IMG-TXT VIEWER
+Version :  v1.97
+Author  :  github.com/Nenotriple
 
 Description:
 -------------
-Display an image and text file side-by-side for easy manual caption editing.
+Display an image and text file side-by-side for easy manual caption editing,
+with other tools focused on LoRA training dataset creation and preparation.
 
 More info here: https://github.com/Nenotriple/img-txt_viewer
 
