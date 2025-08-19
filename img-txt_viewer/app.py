@@ -1199,8 +1199,6 @@ class ImgTxtViewer:
         new_state = not self.popup_zoom.zoom_enabled.get()
         self.popup_zoom.zoom_enabled.set(new_state)
         self.toggle_zoom_var.set(new_state)
-        if hasattr(self, 'image_context_menu'):
-            self.image_context_menu.entryconfig("Toggle Zoom", variable=self.toggle_zoom_var)
         state, text = ("disabled", "") if new_state else ("normal", "Double-Click to open in system image viewer \n\nMiddle click to open in file explorer\n\nALT+Left/Right or Mouse-Wheel to move between img-txt pairs")
         self.image_preview_tooltip.config(state=state, text=text)
         if new_state:
