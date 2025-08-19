@@ -1,8 +1,15 @@
+#region Imports
+
+
 import av
 import os
 from typing import List, Dict, Optional, Tuple, Any
 
 from PIL import Image
+
+
+#endregion
+#region Video Thumbnail Generator
 
 
 def _open_video_container(file_path: str) -> Optional[av.container.InputContainer]:

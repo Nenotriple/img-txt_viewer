@@ -1,4 +1,4 @@
-#region -  Imports
+#region Imports
 
 
 # Standard Library
@@ -32,8 +32,7 @@ if TYPE_CHECKING:
 
 
 #endregion
-################################################################################################################################################
-#region - CLS BatchUpscale
+#region BatchUpscale
 
 
 class BatchUpscale:
@@ -87,8 +86,7 @@ class BatchUpscale:
 
 
 #endregion
-################################################################################################################################################
-#region -  Interface
+#region Interface
 
 
     def setup_ui(self):
@@ -269,8 +267,7 @@ class BatchUpscale:
 
 
 #endregion
-################################################################################################################################################
-#region -  Treeview Logic
+#region Treeview Logic
 
 
     def populate_file_tree(self):
@@ -373,8 +370,7 @@ class BatchUpscale:
 
 
 #endregion
-################################################################################################################################################
-#region -  UI Functions
+#region UI Functions
 
 
     def set_widget_state(self, state):
@@ -495,8 +491,7 @@ class BatchUpscale:
 
 
 #endregion
-################################################################################################################################################
-#region -  Primary Functions
+#region Primary Functions
 
 
     def determine_image_type(self, event=None):
@@ -728,8 +723,7 @@ class BatchUpscale:
 
 
 #endregion
-################################################################################################################################################
-#region -  Misc
+#region Misc
 
 
     def set_working_directory(self, path=None, batch=None):

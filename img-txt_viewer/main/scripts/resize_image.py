@@ -1,4 +1,4 @@
-#region -  Imports
+#region Imports
 
 
 # Standard Library
@@ -25,8 +25,7 @@ if TYPE_CHECKING:
 
 
 #endregion
-################################################################################################################################################
-#region - CLASS: ResizeTool
+#region ResizeTool
 
 
 class ResizeTool:
@@ -92,8 +91,7 @@ class ResizeTool:
 
 
 #endregion
-################################################################################################################################################
-#region -  Interface Setup
+#region Interface Setup
 
 
     def create_interface(self):
@@ -253,8 +251,7 @@ class ResizeTool:
 
 
 #endregion
-################################################################################################################################################
-#region -  Update interface
+#region Update interface
 
 
     def on_key_release(self, event):
@@ -407,8 +404,7 @@ class ResizeTool:
 
 
 #endregion
-################################################################################################################################################
-#region - Misc
+#region Misc
 
 
     def get_image_index(self, directory, filename):
@@ -440,8 +436,7 @@ class ResizeTool:
 
 
 #endregion
-################################################################################################################################################
-#region - Entry field handling
+#region Entry field handling
 
 
     def validate_entry(self, string):
@@ -477,8 +472,7 @@ class ResizeTool:
 
 
 #endregion
-################################################################################################################################################
-#region - Window drag
+#region Window drag
 
 
     def start_drag(self, event):
@@ -500,8 +494,7 @@ class ResizeTool:
 
 
 #endregion
-################################################################################################################################################
-#region - Widget highlighting
+#region Widget highlighting
 
 
     def bind_widget_highlight(self, widget, add=False, color=None):
@@ -523,8 +516,7 @@ class ResizeTool:
 
 
 #endregion
-################################################################################################################################################
-#region - File Management
+#region File Management
 
 
     def calculate_image_size(self, event=None):

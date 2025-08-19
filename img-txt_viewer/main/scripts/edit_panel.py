@@ -1,4 +1,4 @@
-#region - Imports
+#region Imports
 
 
 # Standard Library
@@ -22,8 +22,7 @@ if TYPE_CHECKING:
 
 
 #endregion
-################################################################################################################################################
-#region - CLASS: EditPanel
+#region EditPanel
 
 
 class EditPanel:
@@ -39,8 +38,7 @@ class EditPanel:
 
 
 #endregion
-################################################################################################################################################
-#region - Create Widgets
+#region Create Widgets
 
 
     def toggle_edit_panel(self):
@@ -146,8 +144,7 @@ class EditPanel:
 
 
 #endregion
-################################################################################################################################################
-#region - UI Helpers
+#region UI Helpers
 
 
     def update_slider_value(self, event):
@@ -251,8 +248,7 @@ class EditPanel:
 
 
 #endregion
-################################################################################################################################################
-#region - Primary Functions
+#region Primary Functions
 
 
 # --------------------------------------
@@ -368,8 +364,7 @@ class EditPanel:
 
 
 #endregion
-################################################################################################################################################
-#region - Image Functions
+#region Image Functions
 
 
 # --------------------------------------
@@ -507,6 +502,3 @@ class EditPanel:
         elif image_type == "original" and image:
             return _adjust_color_temperature(image, factor)
         return image
-
-
-#endregion

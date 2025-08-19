@@ -1,4 +1,4 @@
-#region - Imports
+#region Imports
 
 
 # Standard Library
@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 
 
 #endregion
-#region CLS TextController
+#region TextController
 
 
 class TextController:

@@ -10,8 +10,7 @@ from PIL import Image, ImageTk, ImageDraw
 
 
 #endregion
-################################################################################################################################################
-#region CLS PopUpZoom
+#region PopUpZoom
 
 
 class PopUpZoom:

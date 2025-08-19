@@ -19,7 +19,7 @@ General Use:
 """
 
 
-#region - Imports
+#region Imports
 
 
 import tkinter as tk
@@ -27,7 +27,7 @@ from tkinter import scrolledtext
 
 
 #endregion
-#region - HelpWindow
+#region HelpWindow
 
 
 class HelpWindow(tk.Toplevel):
@@ -43,7 +43,7 @@ class HelpWindow(tk.Toplevel):
 
 
 #endregion
-#region - Window Methods
+#region Window Methods
 
 
     def open_window(self, title=None, geometry=None, help_text=None, text_format="rich"):
@@ -106,7 +106,7 @@ class HelpWindow(tk.Toplevel):
 
 
 #endregion
-#region - Create Interface
+#region Create Interface
 
 
     def _setup_widgets(self):
@@ -131,7 +131,7 @@ class HelpWindow(tk.Toplevel):
 
 
 #endregion
-#region - Update Text
+#region Update Text
 
 
     def _update_help_text(self, help_text=None, text_format="rich"):

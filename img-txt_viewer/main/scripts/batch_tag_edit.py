@@ -1,4 +1,4 @@
-#region - Imports
+#region Imports
 
 
 # Standard Library
@@ -31,8 +31,7 @@ if TYPE_CHECKING:
 
 
 #endregion
-################################################################################################################################################
-#region - CLASS: BatchTagEdit
+#region BatchTagEdit
 
 
 class BatchTagEdit:
@@ -55,8 +54,7 @@ class BatchTagEdit:
 
 
 #endregion
-################################################################################################################################################
-#region - Setup - UI
+#region UI setup
 
 
     def setup_window(self, parent, root):
@@ -268,8 +266,7 @@ class BatchTagEdit:
 
 
 #endregion
-################################################################################################################################################
-#region - Primary Functions
+#region Primary Functions
 
 
     def analyze_tags(self):

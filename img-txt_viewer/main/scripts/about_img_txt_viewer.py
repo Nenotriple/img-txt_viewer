@@ -1,8 +1,7 @@
 """About Window for img-txt Viewer."""
 
-# --------------------------------------
-# Imports
-# --------------------------------------
+
+#region Imports
 
 
 # Standard Library
@@ -26,9 +25,10 @@ if TYPE_CHECKING:
     from app import ImgTxtViewer as Main
 
 
-# --------------------------------------
-# Class - AboutWindow
-# --------------------------------------
+#endregion
+#region AboutWindow
+
+
 class AboutWindow:
     def __init__(self, parent: 'Main', root: 'tk.Tk', icon):
         self.parent = parent
@@ -112,9 +112,10 @@ class AboutWindow:
         return headers, content
 
 
-# --------------------------------------
-# Class - AboutWindow
-# --------------------------------------
+#endregion
+#region Methods
+
+
     def create_about_window(self):
         """Create the About window."""
         self._initialize_window()

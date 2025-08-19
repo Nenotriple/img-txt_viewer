@@ -1,4 +1,4 @@
-#region -  Imports
+#region Imports
 
 
 # Standard Library
@@ -21,8 +21,7 @@ if TYPE_CHECKING:
 
 
 #endregion
-################################################################################################################################################
-#region - CLS BatchRename
+#region BatchRename
 
 
 class BatchRename:
@@ -55,8 +54,7 @@ class BatchRename:
 
 
 #endregion
-################################################################################################################################################
-#region -  Interface
+#region  Interface
 
 
     def setup_ui(self):
@@ -181,8 +179,7 @@ class BatchRename:
 
 
 #endregion
-################################################################################################################################################
-#region -  Rename Process
+#region  Rename Process
 
 
     def rename_files(self):
@@ -229,8 +226,7 @@ class BatchRename:
 
 
 #endregion
-################################################################################################################################################
-#region -  Treeview Functions
+#region  Treeview Functions
 
 
     def on_selection_change(self, event=None):
@@ -299,8 +295,7 @@ class BatchRename:
 
 
 #endregion
-################################################################################################################################################
-#region -  Rename Preview
+#region  Rename Preview
 
 
     def update_rename_preview(self):
@@ -413,8 +408,7 @@ class BatchRename:
 
 
 #endregion
-################################################################################################################################################
-#region -  Other Functions
+#region  Other Functions
 
 
     def set_working_directory(self, path=None):

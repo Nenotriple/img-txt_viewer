@@ -1,4 +1,4 @@
-#region - Imports
+#region Imports
 
 
 # Standard Library
@@ -27,7 +27,6 @@ if TYPE_CHECKING:
 
 
 #endregion
-######################################################################
 #region CropSelection
 
 
@@ -679,7 +678,6 @@ class CropSelection:
 
 
 #endregion
-######################################################################
 #region CropSelHandles
 
 
@@ -922,7 +920,6 @@ class CropSelHandles:
 
 
 #endregion
-######################################################################
 #region CropSelGuidelines
 
 
@@ -1029,7 +1026,6 @@ class CropSelGuidelines:
 
 
 #endregion
-######################################################################
 #region ImageCanvas
 
 
@@ -1115,7 +1111,6 @@ class ImageCanvas(tk.Canvas):
 
 
 #endregion
-######################################################################
 #region CropInterface
 
 

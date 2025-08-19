@@ -1,5 +1,5 @@
 #endregion
-#region - Crop UI
+#region Crop UI
 
 
 CROP_UI_HELP = {
@@ -68,7 +68,7 @@ CROP_UI_HELP = {
 
 
 #endregion
-#region - Batch Upscale
+#region Batch Upscale
 
 
 BATCH_UPSCALE_HELP = {
@@ -108,7 +108,7 @@ BATCH_UPSCALE_HELP = {
 
 
 #endregion
-#region - Batch Tag Edit
+#region Batch Tag Edit
 
 
 BATCH_TAG_EDIT_HELP = {
@@ -137,7 +137,7 @@ BATCH_TAG_EDIT_HELP = {
 
 
 #endregion
-#region -  Batch Resize Images
+#region Batch Resize Images
 
 
 BATCH_RESIZE_IMAGES_HELP = {
@@ -194,7 +194,7 @@ BATCH_RESIZE_IMAGES_HELP = {
 
 
 #endregion
-#region -  Batch Rename
+#region Batch Rename
 
 
 BATCH_RENAME_HELP = {
@@ -229,7 +229,7 @@ BATCH_RENAME_HELP = {
 
 
 #endregion
-#region -  Find Dupe File
+#region Find Dupe File
 
 
 FIND_DUPLICATE_FILE_HELP = {

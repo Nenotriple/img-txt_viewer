@@ -1,4 +1,4 @@
-#region -  Imports
+#region Imports
 
 
 # Standard Library
@@ -30,8 +30,7 @@ if TYPE_CHECKING:
 
 
 #endregion
-################################################################################################################################################
-#region -  Duplicate Image Finder - Main class setup
+#region FindDupeFile
 
 
 class FindDupeFile:
@@ -73,8 +72,7 @@ class FindDupeFile:
 
 
 #endregion
-################################################################################################################################################
-#region -  Interface
+#region Interface
 
 
     def setup_window(self, parent, root, path=None):
@@ -294,14 +292,8 @@ class FindDupeFile:
         self.progress.pack(side="left", fill="x", padx=2, expand=True)
 
 
-# --------------------------------------
-# Textlog
-# --------------------------------------
-
-
 #endregion
-################################################################################################################################################
-#region -  Textlog Helpers
+#region Textlog Helpers
 
 
     def insert_to_textlog(self, text):
@@ -325,8 +317,7 @@ class FindDupeFile:
 
 
 #endregion
-################################################################################################################################################
-#region -  Find Duplicates
+#region Find Duplicates
 
 
     def find_duplicates(self):
@@ -466,8 +457,7 @@ class FindDupeFile:
 
 
 #endregion
-################################################################################################################################################
-#region -  Undo
+#region Undo
 
 
     def undo_file_move(self):
@@ -525,8 +515,7 @@ class FindDupeFile:
 
 
 #endregion
-################################################################################################################################################
-#region -  Delete Duplicates
+#region Delete Duplicates
 
 
     def delete_all_duplicates(self):
@@ -563,8 +552,7 @@ class FindDupeFile:
 
 
 #endregion
-################################################################################################################################################
-#region -  Move Duplicate Upfront
+#region Move Duplicate Upfront
 
 
     def move_all_duplicates_to_root(self):
@@ -630,8 +618,7 @@ class FindDupeFile:
 
 
 #endregion
-################################################################################################################################################
-#region -  Settings Dialog
+#region Settings Dialog
 
 
     # Set max image scanning size
@@ -650,8 +637,7 @@ class FindDupeFile:
 
 
 #endregion
-################################################################################################################################################
-#region -  Handle Widget States
+#region Handle Widget States
 
 
     def disable_all(self):
@@ -674,8 +660,7 @@ class FindDupeFile:
 
 
 #endregion
-################################################################################################################################################
-#region -  Misc
+#region Misc
 
 
     def set_working_directory(self, path=None):
@@ -724,8 +709,7 @@ class FindDupeFile:
 
 
 #endregion
-################################################################################################################################################
-#region -  Framework
+#region Framework
 
 
     def close_find_dupe_files(self):

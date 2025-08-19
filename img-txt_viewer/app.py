@@ -14,8 +14,7 @@ More info here: https://github.com/Nenotriple/img-txt_viewer
 """
 
 
-####################################################################################################
-#region - Imports
+#region Imports
 
 
 # Standard Library
@@ -76,8 +75,7 @@ from main.scripts.find_replace_widget import FindReplaceEntry
 
 
 #endregion
-####################################################################################################
-#region CLS: ImgTxtViewer
+#region ImgTxtViewer
 
 
 class ImgTxtViewer:
@@ -97,8 +95,7 @@ class ImgTxtViewer:
 
 
 #endregion
-####################################################################################################
-#region - Setup
+#region Setup
 
     def initial_class_setup(self):
         # Setup tools
@@ -286,8 +283,7 @@ class ImgTxtViewer:
 
 
 #endregion
-####################################################################################################
-#region - Menubar
+#region Menubar
 
     def create_menu_bar(self):
         self.initialize_menu()
@@ -493,8 +489,7 @@ class ImgTxtViewer:
 
 
 #endregion
-####################################################################################################
-#region - Create Primary UI
+#region Create Primary UI
 
 
     def create_primary_ui(self):
@@ -732,8 +727,7 @@ class ImgTxtViewer:
 
 
 #endregion
-####################################################################################################
-#region - Text Box setup
+#region Text Box setup
 
 
     # --------------------------------------
@@ -1082,8 +1076,7 @@ class ImgTxtViewer:
 
 
 #endregion
-####################################################################################################
-#region - Additional UI Setup
+#region Additional UI Setup
 
 
 # --------------------------------------
@@ -1286,8 +1279,7 @@ class ImgTxtViewer:
 
 
 #endregion
-####################################################################################################
-#region - Alt-UI Setup
+#region Alt-UI Setup
 
 
     def toggle_main_notebook_state(self, state):
@@ -1441,8 +1433,7 @@ class ImgTxtViewer:
 
 
 #endregion
-####################################################################################################
-#region - TextBox Highlights
+#region TextBox Highlights
 
 
     def highlight_duplicates(self, event=None, mouse=True):
@@ -1550,8 +1541,7 @@ class ImgTxtViewer:
 
 
 #endregion
-####################################################################################################
-#region - Primary Functions
+#region Primary Functions
 
 
     def load_pairs(self, silent=False):
@@ -1871,8 +1861,7 @@ class ImgTxtViewer:
 
 
 #endregion
-####################################################################################################
-#region - Navigation
+#region Navigation
 
 
     def update_pair(self, direction=None, save=True, step=1, silent=False):
@@ -1984,8 +1973,7 @@ class ImgTxtViewer:
 
 
 #endregion
-####################################################################################################
-#region - Text Options
+#region Text Options
 
 
     def refresh_text_box(self):
@@ -2033,8 +2021,7 @@ class ImgTxtViewer:
 
 
 #endregion
-####################################################################################################
-#region - Text Tools
+#region Text Tools
 
 
     def delete_tag_under_mouse(self, event):
@@ -2126,8 +2113,7 @@ class ImgTxtViewer:
 
 
 #endregion
-####################################################################################################
-#region - Image Tools
+#region Image Tools
 
 
     def expand_image(self):
@@ -2300,8 +2286,7 @@ class ImgTxtViewer:
 
 
 #endregion
-####################################################################################################
-#region - Misc Functions
+#region Misc Functions
 
 
     def sync_title_with_content(self, event=None):
@@ -2365,8 +2350,7 @@ class ImgTxtViewer:
 
 
 #endregion
-####################################################################################################
-#region - Window drag setup
+#region Window drag setup
 
 
     def start_drag(self, event):
@@ -2392,8 +2376,7 @@ class ImgTxtViewer:
             self.root.geometry(f"{width}x{height}+{x}+{y}")
 
 #endregion
-####################################################################################################
-#region - About Window
+#region About Window
 
 
     def toggle_about_window(self):
@@ -2406,8 +2389,7 @@ class ImgTxtViewer:
 
 
 #endregion
-####################################################################################################
-#region - Text Cleanup
+#region Text Cleanup
 
 
     def cleanup_all_text_files(self, show_confirmation=True):
@@ -2468,8 +2450,7 @@ class ImgTxtViewer:
 
 
 #endregion
-####################################################################################################
-#region - Save and close
+#region Save and close
 
 
     def save_text_file(self, highlight=False):
@@ -2548,8 +2529,7 @@ class ImgTxtViewer:
 
 
 #endregion
-####################################################################################################
-#region - Custom Dictionary
+#region Custom Dictionary
 
 
     def refresh_custom_dictionary(self):
@@ -2600,8 +2580,7 @@ class ImgTxtViewer:
 
 
 #endregion
-####################################################################################################
-#region - File Management
+#region File Management
 
 
     def natural_sort(self, string):
@@ -3063,8 +3042,7 @@ class ImgTxtViewer:
 
 
 #endregion
-####################################################################################################
-#region - Framework
+#region Framework
 
 
     def set_appid(self):

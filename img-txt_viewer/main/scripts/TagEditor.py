@@ -1,4 +1,4 @@
-#region - Imports
+#region Imports
 
 
 import re
@@ -6,8 +6,7 @@ import os
 
 
 #endregion
-################################################################################################################################################
-#region - Tag Editor
+#region Tag Editor
 
 
 def analyze_tags(text_files):

@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 #endregion
-#region CLS CalculateFileStats
+#region CalculateFileStats
 
 
 class CalculateFileStats:

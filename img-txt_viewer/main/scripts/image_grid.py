@@ -1,4 +1,4 @@
-#region -  Imports
+#region Imports
 
 
 # Standard Library
@@ -25,8 +25,7 @@ if TYPE_CHECKING:
 
 
 #endregion
-################################################################################################################################################
-#region - CLASS: ImageGrid
+#region ImageGrid
 
 
 class ImageGrid(ttk.Frame):
@@ -87,8 +86,7 @@ class ImageGrid(ttk.Frame):
 
 
 #endregion
-################################################################################################################################################
-#region -  Create Interface
+#region Create Interface
 
 
     def create_interface(self):
@@ -137,8 +135,7 @@ class ImageGrid(ttk.Frame):
 
 
 #endregion
-################################################################################################################################################
-#region -  Primary Logic
+#region Primary Logic
 
 
     def reload_grid(self, event=None):
@@ -361,8 +358,7 @@ class ImageGrid(ttk.Frame):
 
 
 #endregion
-################################################################################################################################################
-#region -  Interface Logic
+#region Interface Logic
 
 
     def configure_scroll_region(self):

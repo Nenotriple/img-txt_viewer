@@ -1,4 +1,4 @@
-#region -  Imports
+#region Imports
 
 
 # Standard Library
@@ -31,8 +31,7 @@ if TYPE_CHECKING:
 
 
 #endregion
-################################################################################################################################################
-#region - CLASS: ResizeImages
+#region ResizeImages
 
 
 class BatchResizeImages:
@@ -49,8 +48,7 @@ class BatchResizeImages:
 
 
 #endregion
-################################################################################################################################################
-#region -  Interface
+#region  Interface
 
 
     def setup_window(self, parent, root, path=None):
@@ -271,8 +269,7 @@ class BatchResizeImages:
 
 
 #endregion
-################################################################################################################################################
-#region -  UI Functions
+#region  UI Functions
 
 
     def handle_combo_selection(self, event=None):
@@ -412,8 +409,7 @@ class BatchResizeImages:
 
 
 #endregion
-################################################################################################################################################
-#region -  Misc
+#region  Misc
 
 
     def set_working_directory(self, path=None):
@@ -480,8 +476,7 @@ class BatchResizeImages:
 
 
 #endregion
-################################################################################################################################################
-#region -  Filetree Functions
+#region Filetree Functions
 
 
     def populate_file_tree(self):
@@ -588,8 +583,7 @@ class BatchResizeImages:
 
 
 #endregion
-################################################################################################################################################
-#region -  Resize
+#region  Resize
 
 
 # --------------------------------------
@@ -866,8 +860,7 @@ class BatchResizeImages:
 
 
 #endregion
-################################################################################################################################################
-#region -  Handle Metadata
+#region  Handle Metadata
 
 
     def handle_metadata(self, filename, src_image_path, output_image_path):

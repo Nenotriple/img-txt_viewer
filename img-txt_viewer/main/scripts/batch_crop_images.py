@@ -1,4 +1,4 @@
-#region - Imports
+#region Imports
 
 
 # Standard Library
@@ -19,8 +19,7 @@ from PIL import Image
 
 
 #endregion
-################################################################################################################################################
-#region - CLASS: BatchCrop
+#region BatchCrop
 
 
 class BatchCrop:
@@ -37,8 +36,7 @@ class BatchCrop:
 
 
 #endregion
-################################################################################################################################################
-#region - Create Interface
+#region Create Interface
 
 
     def create_interface(self):
@@ -96,8 +94,7 @@ class BatchCrop:
 
 
 #endregion
-################################################################################################################################################
-#region - Primary Functions
+#region Primary Functions
 
 
     def resize_image(self, image, resolution):
@@ -190,8 +187,7 @@ class BatchCrop:
 
 
 #endregion
-################################################################################################################################################
-#region - Window drag bar setup
+#region Window drag bar setup
 
 
     def start_drag(self, event):
@@ -213,8 +209,7 @@ class BatchCrop:
 
 
 #endregion
-################################################################################################################################################
-#region - Widget highlight setup
+#region Widget highlight setup
 
 
     def bind_widget_highlight(self, widget, add=False, color=None):
@@ -236,10 +231,8 @@ class BatchCrop:
 
 
 #endregion
-################################################################################################################################################
-#region - Misc
+#region Misc
 
 
     def close_window(self, event=None):
         self.top.destroy()
-

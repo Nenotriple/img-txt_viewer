@@ -1,5 +1,7 @@
+#region Imports
+
+
 import datetime
-import tkinter as tk
 from tkinter import ttk, filedialog
 from tkVideoPlayer import TkinterVideo
 
@@ -8,6 +10,10 @@ from tkVideoPlayer import TkinterVideo
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main
+
+
+#endregion
+#region VideoPlayerWidget
 
 
 class VideoPlayerWidget(ttk.Frame):
@@ -189,6 +195,7 @@ class VideoPlayerWidget(ttk.Frame):
         self.vid_player = None
         self.playing = False
         self.destroy()
+
 
     def get_current_frame(self):
         """

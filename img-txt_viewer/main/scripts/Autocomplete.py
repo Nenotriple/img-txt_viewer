@@ -1,4 +1,4 @@
-#region - Imports
+#region Imports
 
 
 # Standard Library
@@ -8,9 +8,9 @@ import sys
 import csv
 import pickle
 import itertools
-from collections import defaultdict
+import tkinter as tk
 from functools import partial
-import tkinter as tk  # Added for type hinting
+from collections import defaultdict
 
 
 # Type Hinting
@@ -20,8 +20,7 @@ if TYPE_CHECKING:
 
 
 #endregion
-################################################################################################################################################
-#region CLS Autocomplete
+#region Autocomplete
 
 
 class Autocomplete:
@@ -267,8 +266,7 @@ class Autocomplete:
 
 
 #endregion
-################################################################################################################################################
-#region CLS SuggestionHandler
+#region SuggestionHandler
 
 
 class SuggestionHandler:
@@ -468,12 +466,12 @@ class SuggestionHandler:
     def _set_suggestion_color(self, csv_file: str) -> None:
         """Configure suggestion color scheme based on data source."""
         color_mappings: Dict[str, Dict[int, str]] = {
-            'None':                 {0: "black"},
-            'dictionary.csv':       {0: "black",    1: "black",     2: "black",     3: "black",     4: "black",     5: "black",     6: "black",     7: "black",     8: "black"},
-            'danbooru.csv':         {0: "black",    1: "#c00004",   2: "black",     3: "#a800aa",   4: "#00ab2c",   5: "#fd9200"},
-            'danbooru_safe.csv':    {0: "black",    1: "#c00004",   2: "black",     3: "#a800aa",   4: "#00ab2c",   5: "#fd9200"},
-            'e621.csv':             {-1: "black",   0: "black",     1: "#f2ac08",   3: "#dd00dd",   4: "#00aa00",   5: "#ed5d1f",   6: "#ff3d3d",   7: "#ff3d3d",   8: "#228822"},
-            'derpibooru.csv':       {0: "black",    1: "#e5b021",   3: "#fd9961",   4: "#cf5bbe",   5: "#3c8ad9",   6: "#a6a6a6",   7: "#47abc1",   8: "#7871d0",   9: "#df3647",   10: "#c98f2b",  11: "#e87ebe"}
+            'None': {0: "black"},
+            'dictionary.csv': {0: "black", 1: "black", 2: "black", 3: "black", 4: "black", 5: "black", 6: "black", 7: "black", 8: "black"},
+            'danbooru.csv': {0: "black", 1: "#c00004", 2: "black", 3: "#a800aa", 4: "#00ab2c", 5: "#fd9200"},
+            'danbooru_safe.csv': {0: "black", 1: "#c00004", 2: "black", 3: "#a800aa", 4: "#00ab2c", 5: "#fd9200"},
+            'e621.csv': {-1: "black", 0: "black", 1: "#f2ac08", 3: "#dd00dd", 4: "#00aa00", 5: "#ed5d1f", 6: "#ff3d3d", 7: "#ff3d3d", 8: "#228822"},
+            'derpibooru.csv': {0: "black", 1: "#e5b021", 3: "#fd9961", 4: "#cf5bbe", 5: "#3c8ad9", 6: "#a6a6a6", 7: "#47abc1", 8: "#7871d0", 9: "#df3647", 10: "#c98f2b", 11: "#e87ebe"}
         }
         black_mappings: Dict[int, str] = {key: "black" for key in color_mappings[csv_file].keys()}
         self.suggestion_colors = color_mappings[csv_file] if self.parent.colored_suggestion_var.get() else black_mappings
