@@ -1417,6 +1417,8 @@ class ImgTxtViewer:
 # ImgTxtViewer states
 # --------------------------------------
     def toggle_image_grid(self, event=None):
+        if event is not None:
+            self.is_image_grid_visible_var.set(not self.is_image_grid_visible_var.get())
         if not self.is_image_grid_visible_var.get():
             self.refresh_image()
             self.image_grid.grid_remove()
