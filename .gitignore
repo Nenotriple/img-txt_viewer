@@ -1,6 +1,6 @@
 # Virtual Environment
 venv/
-
+.venv/
 
 # Visual Studio Code workspace settings
 /.vscode
@@ -12,6 +12,7 @@ __pycache__/
 
 # Dictionary Pre-Cache
 main/dict/cache/
+/img-txt_viewer/main/dict/cache
 
 
 # PyInstaller
@@ -29,9 +30,12 @@ my_tags.csv
 
 
 # ONNX Models
-onnx_models/*
-!onnx_models/ONNX vision models go here
+*.onnx
+img-txt_viewer/models/onnx_models/wd-v1-4-moat-tagger-v2/selected_tags.csv
+img-txt_viewer/models/onnx_models/wd-vit-tagger-v3/selected_tags.csv
+
+
 
 # Misc
-docs/Workpad.md
-
+test_space/
+/.github

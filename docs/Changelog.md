@@ -1,7 +1,6 @@
-
-
 # Index
 
+- [v1.97 🎉🎈](#v197)
 - [v1.96](#v196)
 - [v1.95](#v195)
 - [v1.94](#v194)
@@ -38,6 +37,82 @@
 - [v1.30](#v130)
 - [v1.20](#v120)
 - [v1.0](#⬆v10)
+
+
+
+<!--###########################################################################-->
+
+
+## v1.97
+- [⬆️](#index)
+
+<details>
+  <summary>Release Notes for v1.97</summary>
+
+
+I'm very happy to announce **img-txt_viewer is 2 years old!** 🎉🎈
+
+
+**New:**
+- Added a tabbed row that holds the various UI tools:
+  - Tagger *(the main tab)*, Tag-Editor *(Batch Tag Edit)*, Crop, Batch Upscale, Batch Rename, and Find Duplicates.
+- Added `mp4` video support. [#52](https://github.com/Nenotriple/img-txt_viewer/issues/52)
+  - *NOTE:* MP4 support requires [FFmpeg](https://www.ffmpeg.org/) is installed to your system PATH.
+- Wrap selected text in brackets:
+  - Select text in the primary text box, press a *LEFT / OPENING* bracket key `(`, `[`, `{`, `"`, `'`
+  - Useful for weighted captions, example: `((sometext))`
+- You can now see a list of all tags from the `MyTags` tab, allowing you to insert these tags into MyTags or the text box.
+- Added commands to `AutoTags` context menu:
+  - `Add to Exclude` - Quickly add the selected tag(s) to the Exclude entry.
+  - `Add to Keep` - Quickly add the selected tag(s) to the Keep entry.
+- The `Stats` tab now shows the current character and word count.
+- The `Image Grid` is now built into the primary interface.
+- New option `Add Comma After Tag` [#51](https://github.com/Nenotriple/img-txt_viewer/issues/51)
+  - When enabled (default), a comma and space ", " will be inserted at the end of the text box and after inserting a suggestion.
+- New hotkey `Ctrl+Backspace`: Use in the Tagger UI text box to delete the previous word. [#60](https://github.com/Nenotriple/img-txt_viewer/issues/60)
+- Added a refresh option all tools.
+- Added or improved the help popup for all tools, usually a `?` button.
+- Find/Replace directly in the Tagger textbox with `Ctrl+F` [#66](https://github.com/Nenotriple/img-txt_viewer/issues/66)
+- Tag-Editor:
+  - Small improvements to the UI.
+- Batch Upscale:
+  - Remodeled the UI making it easier to switch between batch and single mode.
+  - Added a file list for selecting single images and viewing old and new image dimensions.
+- Batch Resize:
+  - Added a file list that displays old and new image dimensions.
+  - Added `Convert Only` mode.
+- Batch Rename:
+  - Added a file list for selecting the files and viewing old and new names.
+  - Added duplicate handling options:
+    - Rename, Move, Overwrite, Skip.
+  - Added rename preset: Numbering and Auto-Date
+
+**Fixed:**
+- Fixed error when typing in the primary text box when no dictionary is selected.
+- Fixed issue when resetting the font.
+- Fixed error closing the Crop image interface.
+- Fixed not being able to open an image using the default editor `MS Paint`.
+- Fixed error when deleting the last pair in the file list.
+- Fixed an issue where the incorrect tag-list would be loaded when swapping AutoTag models.
+- Fixed an issue/error when setting the 'Tagger' path via the Enter hotkey.
+- Creating a wildcard from the text files now skips blank text files.
+- Fixed an error when using Search and Replace on a dataset with unpaired image files. [#65](https://github.com/Nenotriple/img-txt_viewer/issues/65)
+- CropUI: Double-Clicking when `Fixed Selection` is enabled now works as expected.
+- CropUI: Fixed issue where guidelines wouldn't be drawn when double-clicking to create a selection.
+
+**Other Changes:**
+- New app icon.
+- The Menu Bar has been reorganized.
+- It's now possible to *loop around* while clicking inside the Thumbnail panel for navigation.
+- You can now resize the AutoTag tag list.
+- Added a tool tip to the directory entry and image stats for better readability when text is cut off.
+- You can now enable/disable the "Reload last directory?" popup via the Options menu. [#58](https://github.com/Nenotriple/img-txt_viewer/issues/58)
+
+---
+Thank you to @younyokel, and @MNeMoNiCuZ for your help and suggestions during this release!
+
+</details>
+<br>
 
 
 <!--###########################################################################-->
@@ -166,7 +241,6 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 
 </details>
 <br>
-
 
 
 <!--###########################################################################-->
