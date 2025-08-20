@@ -8,6 +8,19 @@ specifically targets LoRA dataset preparation.
 
 ![Cover Image](docs/img/img-txt_viewer_v1.97_MAIN_Tagger_preview.png)
 
+<details>
+<summary><strong>Show App Previews...</strong></summary>
+
+![Tag Editor](docs/img/img-txt_viewer_v1.97_Tag-Editor_preview.png)
+![Crop Tool](docs/img/img-txt_viewer_v1.97_Crop_preview.png)
+![Batch Upscale](docs/img/img-txt_viewer_v1.97_Batch-Upscale_preview.png)
+![Batch Resize](docs/img/img-txt_viewer_v1.97_Batch-Resize_preview.png)
+![Batch Rename](docs/img/img-txt_viewer_v1.97_Batch-Rename_preview.png)
+![Find Duplicates](docs/img/img-txt_viewer_v1.97_Find-Duplicates_preview.png)
+![Image Grid](docs/img/img-txt_viewer_v1.97_AutoTag_preview.png)
+
+</details>
+
 ![GitHub last commit](https://img.shields.io/github/last-commit/Nenotriple/img-txt_viewer)
 ![GitHub contributors](https://img.shields.io/github/contributors/Nenotriple/img-txt_viewer)
 ![GitHub repo size](https://img.shields.io/github/repo-size/Nenotriple/img-txt_viewer)
