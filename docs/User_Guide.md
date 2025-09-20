@@ -349,10 +349,11 @@ Example directory structure for ONNX models:
 
 ```plaintext
 img-txt_viewer/
-  └── onnx_models/
-      └── wd-v1-4-moat-tagger-v2/
-          ├── model.onnx
-          └── selected_tags.csv
+  └── models/
+    └── onnx_models/
+        └── wd-v1-4-moat-tagger-v2/
+            ├── model.onnx
+            └── selected_tags.csv
 ```
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -620,6 +621,16 @@ Upscale images using `realesrgan-ncnn-vulkan`.
 - Click the `Refresh` button to update the file list if it appears out of date.
 - Click `Upscale` when ready.
   The process may take a long time depending on input image size and GPU speed.
+
+Example directory structure for NCNN models:
+
+```plaintext
+img-txt_viewer/
+  └── models/
+    └── ncnn_models/
+          ├── UltraSharp-4x.bin
+          └── UltraSharp-4x.param
+```
 
 ### Batch Resize
 
