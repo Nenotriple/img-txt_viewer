@@ -5,7 +5,7 @@ setlocal enabledelayedexpansion
 REM ======================================================
 REM Python Virtual Environment Setup and Script Launcher
 REM Created by: github.com/Nenotriple
-set "SCRIPT_VERSION=1.03"
+set "SCRIPT_VERSION=1.04"
 REM ======================================================
 
 
@@ -36,6 +36,8 @@ REM ==============================================
 
 call :initialize_colors
 
+call :DetermineProjectName
+title %PROJECT_NAME%
 call :PrintHeader
 
 call :ValidatePython || exit /b 1
@@ -187,6 +189,8 @@ exit /b 0
     echo %COLOR_INFO%  Created by: github.com/Nenotriple%COLOR_RESET%
     echo %COLOR_INFO%============================================================%COLOR_RESET%
     echo.
+    echo %COLOR_OK%[PROJECT]%COLOR_RESET% %COLOR_WARN%%PROJECT_NAME%%COLOR_RESET%
+    echo.
 exit /b 0
 
 
@@ -217,8 +221,11 @@ exit /b 0
 :SetVenvHidden
     attrib +h "%VENV_DIR%" 2>nul && call :LogInfo "Virtual environment directory set as hidden" || call :LogWarn "Failed to set directory as hidden"
 exit /b 0
-    if "%AUTO_CLOSE_CONSOLE%"=="TRUE" (
-        echo Press any key to exit...
-        pause >nul
-    )
+
+
+:DetermineProjectName
+    set "DIR=%SCRIPT_DIR%"
+    if "%DIR:~-1%"=="\" set "DIR=%DIR:~0,-1%"
+    for %%A in ("%DIR%") do set "PROJECT_NAME=%%~nxA"
+    if not defined PROJECT_NAME set "PROJECT_NAME=Unknown"
 exit /b 0
