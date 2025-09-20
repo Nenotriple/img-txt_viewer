@@ -9,9 +9,8 @@ pip install --upgrade pyinstaller
 ```
 3. Run PyInstaller
 ```
-pyinstaller app.py --name img_txt_viewer --onefile --windowed --icon=icon.ico --add-data="icon.ico;." --add-data="main;main"
+pyinstaller app.py --name img_txt_viewer --onefile --windowed --icon="main\icon.ico" --add-data="main\icon.ico;main" --add-data="main;main"
 ```
-
 ## Breakdown of the PyInstaller Command:
 
 1. `pyinstaller`
