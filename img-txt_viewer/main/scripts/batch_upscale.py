@@ -73,8 +73,8 @@ class BatchUpscale:
         self.help_window = HelpWindow(self.root)
 
         self.working_img_path = self.parent.image_files[self.parent.current_index]
-        self.executable_path = os.path.join(self.parent.app_path, "main", "resrgan", "realesrgan-ncnn-vulkan.exe")
-        self.extra_models_path = os.path.join(self.parent.app_path, self.parent.ncnn_models_dir)
+        self.executable_path = os.path.join(self.parent.app_root_path, "main", "resrgan", "realesrgan-ncnn-vulkan.exe")
+        self.extra_models_path = os.path.join(self.parent.get_direct_app_path(), self.parent.ncnn_models_dir)
         self.ncnn_models = self.find_additional_models()
         self.input_path_var.set(self.working_dir)
         self.output_path_var.set(value=os.path.join(self.input_path_var.get(), "Upscale_Output"))

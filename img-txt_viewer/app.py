@@ -81,7 +81,7 @@ class ImgTxtViewer:
     def __init__(self, root: 'Tk'):
         self.app_version = "v1.97"
         self.root = root
-        self.app_path = self.get_app_path()
+        self.is_frozen, self.app_root_path, self.app_launch_path = self.get_app_path()
         self.set_appid()
         self.setup_window()
         self.set_icon()
@@ -198,10 +198,11 @@ class ImgTxtViewer:
 # --------------------------------------
     def define_app_settings(self):
         # Misc Settings
-        self.app_settings_cfg = os.path.join(self.app_path, "settings.cfg")
-        self.my_tags_csv = os.path.join(self.app_path, "my_tags.csv")
-        self.onnx_models_dir = os.path.join(self.app_path, "models", "onnx_models")
-        self.ncnn_models_dir = os.path.join(self.app_path, "models", "ncnn_models")
+        app_path = self.get_direct_app_path()
+        self.app_settings_cfg = os.path.join(app_path, "settings.cfg")
+        self.my_tags_csv = os.path.join(app_path, "my_tags.csv")
+        self.onnx_models_dir = os.path.join(app_path, "models", "onnx_models")
+        self.ncnn_models_dir = os.path.join(app_path, "models", "ncnn_models")
         self.image_dir = StringVar(value="Choose Directory...")
         self.restore_last_path_var = BooleanVar(value=True)
         self.text_dir = ""
@@ -3081,22 +3082,34 @@ class ImgTxtViewer:
 
 
     def set_icon(self):
-        self.icon_path = os.path.join(self.app_path, "main", "icon.ico")
+        self.icon_path = os.path.join(self.app_root_path, "main", "icon.ico")
         try:
             self.root.iconbitmap(self.icon_path)
         except TclError: pass
         # Blank image (app icon)
-        self.icon_path = os.path.join(self.app_path, "main", "icon.ico")
+        self.icon_path = os.path.join(self.app_root_path, "main", "icon.ico")
         with Image.open(self.icon_path) as img:
             self.blank_image = ImageTk.PhotoImage(img)
 
 
     def get_app_path(self):
         if getattr(sys, 'frozen', False):
-            return sys._MEIPASS
-        elif __file__:
-            return os.path.dirname(__file__)
-        return ""
+            is_frozen = True
+            root_path = sys._MEIPASS
+            launch_path = os.getcwd()
+        else:
+            is_frozen = False
+            root_path = os.path.dirname(__file__)
+            launch_path = os.getcwd()
+        return is_frozen, root_path, launch_path
+
+
+    def get_direct_app_path(self):
+        if self.is_frozen:
+            app_path = self.app_launch_path
+        else:
+            app_path = self.app_root_path
+        return app_path
 
 
     def set_custom_ttk_button_highlight_style(self):
