@@ -251,7 +251,7 @@ class ImgTxtViewer:
         # Image Quality
         self.image_quality_var = StringVar(value="Normal")
         self.quality_max_size = 1280
-        self.quality_filter = Image.BILINEAR
+        self.quality_filter = Image.Resampling.BILINEAR
         Image.MAX_IMAGE_PIXELS = 300000000  # ~(17320x17320)px
 
         # Autocomplete
