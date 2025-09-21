@@ -1164,6 +1164,7 @@ class TextController:
         menu.add_checkbutton(label="Hide: My Tags - Controls", variable=self.hide_mytags_controls_var, command=self.toggle_mytags_controls)
         menu.add_checkbutton(label="Hide: All Tags - Controls", variable=self.hide_alltags_controls_var, command=self.toggle_alltags_controls)
         menu.add_separator()
+        menu.add_command(label="Cleanup MyTags", command=self.parent.cleanup_custom_dictionary)
         menu.add_command(label="Open MyTags File...", command=lambda: self.parent.open_textfile(self.parent.my_tags_csv))
         # entry_frame
         entry_frame = Frame(top_frame)

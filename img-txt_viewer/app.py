@@ -2574,9 +2574,8 @@ class ImgTxtViewer:
             elif origin == "auto_tag":
                 selected_text = self.text_controller.autotag_listbox.get("active")
                 selected_text = selected_text.split(':', 1)[-1].strip()
-            with open(self.my_tags_csv, 'a', newline='', encoding="utf-8") as f:
-                writer = csv.writer(f)
-                writer.writerow([selected_text])
+            with open(self.my_tags_csv, 'a', encoding="utf-8") as f:
+                f.write(selected_text.strip() + "\n")
             self.refresh_custom_dictionary()
         except (PermissionError, IOError, TclError) as e:
             messagebox.showerror("Error: add_to_custom_dictionary()", f"An error occurred while saving the selected to 'my_tags.csv'.\n\n{e}")
@@ -2589,6 +2588,30 @@ class ImgTxtViewer:
         if not result.endswith('\n'):
             result += '\n'
         return result
+
+
+    def cleanup_custom_dictionary(self):
+        """remove quotes, extra spaces, duplicate tags, and empty lines from my_tags.csv"""
+        try:
+            if not os.path.isfile(self.my_tags_csv):
+                return
+            with open(self.my_tags_csv, 'r', encoding='utf-8') as file:
+                content = file.read()
+            lines = content.split('\n')
+            cleaned_lines = []
+            seen = set()
+            for line in lines:
+                cleaned_line = line.replace('"', '').replace("'", "").strip()
+                if cleaned_line and cleaned_line not in seen:
+                    seen.add(cleaned_line)
+                    cleaned_lines.append(cleaned_line)
+            cleaned_content = '\n'.join(cleaned_lines) + '\n'
+            with open(self.my_tags_csv, 'w', encoding='utf-8') as file:
+                file.write(cleaned_content)
+            self.refresh_custom_dictionary()
+            messagebox.showinfo("Success", "Custom dictionary has been cleaned.")
+        except (PermissionError, IOError, TclError) as e:
+            messagebox.showerror("Error: cleanup_custom_dictionary()", f"An error occurred while cleaning the custom dictionary:\n\n{e}")
 
 
 #endregion
