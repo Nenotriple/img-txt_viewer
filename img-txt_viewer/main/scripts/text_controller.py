@@ -1101,6 +1101,155 @@ class TextController:
                 tag = self.alltags_listbox.get(index)
                 if tag not in existing_tags:
                     self.custom_dictionary_listbox.insert('end', tag)
+        # DRAG & DROP (Middle Mouse) for MyTags
+        drag_state = {
+            'active': False,
+            'indices': tuple(),
+            'start_index': None,
+            'placeholder_index': None,
+            'prev_cursor': None,
+        }
+        # Light blue background for the placeholder slot while dragging
+        placeholder_bg = '#dbeafe'
+
+        def compute_insert_index(listbox: 'Listbox', y: int) -> int:
+            size = listbox.size()
+            if size <= 0:
+                return 0
+            over_idx = listbox.nearest(y)
+            if over_idx < 0:
+                over_idx = 0
+            if over_idx >= size:
+                over_idx = size - 1
+            bbox = listbox.bbox(over_idx)
+            insert_idx = over_idx
+            if bbox is not None:
+                _, yrow, _, h = bbox
+                if y > (yrow + h / 2):
+                    insert_idx = over_idx + 1
+            if insert_idx < 0:
+                insert_idx = 0
+            if insert_idx > size:
+                insert_idx = size
+            return insert_idx
+
+        def remove_placeholder(listbox: 'Listbox'):
+            ph_idx = drag_state.get('placeholder_index')
+            if ph_idx is not None and 0 <= ph_idx < listbox.size():
+                try:
+                    listbox.delete(ph_idx)
+                except Exception:
+                    pass
+            drag_state['placeholder_index'] = None
+
+        def insert_placeholder(listbox: 'Listbox', insert_idx: int):
+            # Remove any existing placeholder first
+            remove_placeholder(listbox)
+            size = listbox.size()
+            if insert_idx >= size:
+                listbox.insert('end', '')
+                drag_state['placeholder_index'] = listbox.size() - 1
+            else:
+                listbox.insert(insert_idx, '')
+                drag_state['placeholder_index'] = insert_idx
+            # Color the placeholder row for clear visual feedback
+            try:
+                listbox.itemconfig(drag_state['placeholder_index'], bg=placeholder_bg)
+            except Exception:
+                pass
+
+        def move_placeholder(listbox: 'Listbox', insert_idx: int):
+            size = listbox.size()
+            # Normalize target
+            target_idx = insert_idx if insert_idx < size else size
+            # If already in place, do nothing
+            ph_idx = drag_state.get('placeholder_index')
+            if ph_idx is not None:
+                # ph_idx equals size-1 when at end; desired target is size
+                if (target_idx == size and ph_idx == size - 1) or ph_idx == target_idx:
+                    return
+            insert_placeholder(listbox, target_idx)
+
+        def dnd_start(event):
+            listbox: 'Listbox' = event.widget
+            if listbox is not self.custom_dictionary_listbox:
+                return
+            idx = listbox.nearest(event.y)
+            if idx < 0 or idx >= listbox.size():
+                return 'break'
+            # Ensure something is selected; if clicked outside selection, select the row
+            if idx not in listbox.curselection():
+                listbox.selection_clear(0, 'end')
+                listbox.selection_set(idx)
+            drag_state['active'] = True
+            drag_state['indices'] = tuple(sorted(listbox.curselection()))
+            drag_state['start_index'] = idx
+            listbox.activate(idx)
+            # Change cursor and show initial highlight
+            drag_state['prev_cursor'] = listbox.cget('cursor')
+            try:
+                listbox.config(cursor='hand2')
+            except Exception:
+                pass
+            # Initial placeholder at current insert position
+            insert_idx = compute_insert_index(listbox, event.y)
+            move_placeholder(listbox, insert_idx)
+            return 'break'
+
+        def dnd_motion(event):
+            if not drag_state['active']:
+                return 'break'
+            listbox: 'Listbox' = event.widget
+            # Auto-scroll when dragging near edges
+            height = listbox.winfo_height()
+            margin = 12
+            if event.y < margin:
+                listbox.yview_scroll(-1, 'units')
+            elif event.y > height - margin:
+                listbox.yview_scroll(1, 'units')
+            # Compute intended insertion index and move placeholder there
+            insert_idx = compute_insert_index(listbox, event.y)
+            move_placeholder(listbox, insert_idx)
+            return 'break'
+
+        def dnd_drop(event):
+            if not drag_state['active']:
+                return 'break'
+            listbox: 'Listbox' = event.widget
+            drag_state['active'] = False
+            if not drag_state['indices']:
+                return 'break'
+            # Use placeholder position as drop index
+            size = listbox.size()
+            drop_idx_original = drag_state.get('placeholder_index')
+            if drop_idx_original is None:
+                drop_idx_original = compute_insert_index(listbox, event.y)
+            # Remove placeholder first to avoid interfering with deletions
+            remove_placeholder(listbox)
+            # Get current selection indices after placeholder removal
+            sel_indices = list(listbox.curselection())
+            sel_items = [listbox.get(i) for i in sel_indices]
+            # Delete selected items from bottom to top
+            for i in reversed(sel_indices):
+                listbox.delete(i)
+            # Adjust drop index after deletions
+            offset = sum(1 for i in sel_indices if i < drop_idx_original)
+            drop_idx = max(0, drop_idx_original - offset)
+            drop_idx = min(drop_idx, listbox.size())
+            # Insert items preserving order
+            for n, item in enumerate(sel_items):
+                listbox.insert(drop_idx + n, item)
+            # Restore selection to moved items
+            listbox.selection_clear(0, 'end')
+            for n in range(len(sel_items)):
+                listbox.selection_set(drop_idx + n)
+            listbox.activate(drop_idx)
+            # Clear visual state and cursor
+            try:
+                listbox.config(cursor=drag_state.get('prev_cursor') or '')
+            except Exception:
+                pass
+            return 'break'
         # CONTEXT MENU
         def show_context_menu(event):
             listbox: 'Listbox' = event.widget
@@ -1196,6 +1345,10 @@ class TextController:
         self.custom_dictionary_listbox.grid(row=1, column=0, sticky='nsew')
         self.custom_dictionary_listbox.bind("<Button-3>", show_context_menu)
         self.custom_dictionary_listbox.bind("<Double-Button-1>", lambda event: insert_tag(self.custom_dictionary_listbox, 'end'))
+        # Middle-mouse drag & drop reordering (keeps left-click behavior intact)
+        self.custom_dictionary_listbox.bind('<Button-2>', dnd_start)
+        self.custom_dictionary_listbox.bind('<B2-Motion>', dnd_motion)
+        self.custom_dictionary_listbox.bind('<ButtonRelease-2>', dnd_drop)
         # Buttons
         self.list_btn_frame = Frame(my_tags_frame)
         self.list_btn_frame.grid(row=2, column=0, sticky='ew', pady=(2,0))
@@ -1283,7 +1436,7 @@ class TextController:
             "• Double-click any tag to instantly insert it (append)\n\n"
             "Tag Management:\n"
             "• Edit/Remove selected tags\n"
-            "• Reorder with Move Up/Down (affects autocomplete priority)\n"
+            "• Reorder: drag with middle mouse, or use Move Up/Down (affects autocomplete priority)\n"
             "• Save changes to file (required to apply changes)\n\n"
             "Features:\n"
             "• Use MyTags: Toggle autocomplete suggestions\n"
