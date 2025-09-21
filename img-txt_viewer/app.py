@@ -831,7 +831,7 @@ class ImgTxtViewer:
         tab_height = 60 if self.initialize_text_pane else tab_heights.get(selected_tab, 60)
         self.initialize_text_pane = False
         if selected_tab == "MyTags":
-            self.text_controller.refresh_all_tags_listbox(tags=self.stat_calculator.sorted_captions)
+            self.text_controller.my_tags.refresh_all_tags_listbox(tags=self.stat_calculator.sorted_captions)
         self.text_pane.paneconfigure(self.text_widget_frame, height=tab_height)
 
 
@@ -2548,10 +2548,10 @@ class ImgTxtViewer:
         with open(self.my_tags_csv, 'r', encoding='utf-8') as file:
             content = self.remove_extra_newlines(file.read())
             tags = content.split('\n')
-            self.text_controller.custom_dictionary_listbox.delete(0, 'end')
+            self.text_controller.my_tags.custom_dictionary_listbox.delete(0, 'end')
             for tag in tags:
                 if tag.strip():
-                    self.text_controller.custom_dictionary_listbox.insert('end', tag.strip())
+                    self.text_controller.my_tags.custom_dictionary_listbox.insert('end', tag.strip())
             self.autocomplete.update_autocomplete_dictionary()
 
 
