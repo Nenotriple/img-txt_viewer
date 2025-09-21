@@ -1068,11 +1068,16 @@ class TextController:
             for index in selected_indices:
                 tag = listbox.get(index)
                 current_text = self.parent.text_box.get('1.0', 'end-1c')
-                separator = ', ' if current_text else ''
+                # Remove trailing commas and spaces
+                current_text = current_text.rstrip(', ')
                 if position == 'start':
-                    self.parent.text_box.insert('1.0', f"{tag}{separator}")
+                    separator = ', ' if current_text else ''
+                    self.parent.text_box.delete('1.0', 'end')
+                    self.parent.text_box.insert('1.0', f"{tag}{separator}{current_text}")
                 else:  # 'end'
-                    self.parent.text_box.insert('end', f"{separator}{tag}")
+                    separator = ', ' if current_text else ''
+                    self.parent.text_box.delete('1.0', 'end')
+                    self.parent.text_box.insert('1.0', f"{current_text}{separator}{tag}")
         # MOVE
         def move(listbox: 'Listbox', direction):
             selected_indices = listbox.curselection()
