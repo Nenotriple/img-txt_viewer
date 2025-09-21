@@ -29,6 +29,10 @@ class CalculateFileStats:
         self.root = root
         self.caption_counter = Counter()
         self.sorted_captions = []
+        # Internal copies for stats calculation
+        self._text_files = []
+        self._image_files = []
+        self._video_thumb_dict = {}
 
 
     def calculate_file_stats(self, manual_refresh=None, text_only=False, image_only=False):
@@ -42,7 +46,15 @@ class CalculateFileStats:
         if text_only and image_only:
             raise ValueError("Cannot set both text_only and image_only to True")
         self.initialize_counters()
-        num_total_files, num_txt_files, num_img_files, num_video_files, formatted_total_files = self.filter_and_update_textfiles(initial_call=True)
+        # Use internal copies, do not modify parent
+        self._text_files = [f for f in self.parent.text_files if os.path.exists(f)]
+        self._image_files = list(self.parent.image_files)
+        self._video_thumb_dict = dict(getattr(self.parent, "video_thumb_dict", {}))
+        num_txt_files = len(self._text_files)
+        num_img_files = sum(1 for f in self._image_files if not f.lower().endswith('.mp4'))
+        num_video_files = sum(1 for f in self._image_files if f.lower().endswith('.mp4'))
+        num_total_files = num_img_files + num_txt_files + num_video_files
+        formatted_total_files = f"{num_total_files} (Text: {num_txt_files}, Images: {num_img_files}, Videos: {num_video_files})"
         # Process files based on flags
         if not image_only:
             self.process_text_files()
@@ -52,7 +64,7 @@ class CalculateFileStats:
         stats_text = self.compile_file_statistics(formatted_total_files)
         self.update_filestats_textbox(stats_text, manual_refresh)
         if self.sorted_captions:
-            self.parent.text_controller.refresh_all_tags_listbox(tags=self.sorted_captions)
+            self.parent.text_controller.my_tags.refresh_all_tags_listbox(tags=self.sorted_captions)
 
 
     def initialize_counters(self):
@@ -102,7 +114,7 @@ class CalculateFileStats:
 
     def process_text_files(self):
         """Process text files to calculate statistics."""
-        for text_file in self.parent.text_files:
+        for text_file in self._text_files:
             try:
                 file_content, words, sentences, paragraphs, captions = self.compute_text_file(text_file)
                 self.total_chars += len(file_content)
@@ -134,7 +146,7 @@ class CalculateFileStats:
 
     def process_image_files(self):
         """Process image files to calculate statistics."""
-        for media_file in self.parent.image_files:
+        for media_file in self._image_files:
             try:
                 if media_file.lower().endswith('.mp4'):
                     # Handle video file
@@ -166,9 +178,9 @@ class CalculateFileStats:
         try:
             file_size = os.path.getsize(video_file)
             self.total_video_filesize += file_size
-            # Get video information from video_thumb_dict
-            if video_file in self.parent.video_thumb_dict:
-                video_info = self.parent.video_thumb_dict[video_file]
+            # Get video information from local copy
+            if video_file in self._video_thumb_dict:
+                video_info = self._video_thumb_dict[video_file]
                 width, height = video_info['resolution']
                 framerate = video_info.get('framerate', 0)
                 # Update counters
@@ -206,10 +218,10 @@ class CalculateFileStats:
     def compile_file_statistics(self, formatted_total_files):
         """Compile all calculated statistics into a text string."""
         # Calculate average statistics
-        avg_chars = self.total_chars / len(self.parent.text_files) if self.parent.text_files else 0
-        avg_words = self.total_words / len(self.parent.text_files) if self.parent.text_files else 0
-        avg_captions = self.total_captions / len(self.parent.text_files) if self.parent.text_files else 0
-        avg_ppi = self.total_ppi / len(self.parent.image_files) if self.parent.image_files else 0
+        avg_chars = self.total_chars / len(self._text_files) if self._text_files else 0
+        avg_words = self.total_words / len(self._text_files) if self._text_files else 0
+        avg_captions = self.total_captions / len(self._text_files) if self._text_files else 0
+        avg_ppi = self.total_ppi / len(self._image_files) if self._image_files else 0
         avg_word_length = sum(self.word_lengths) / len(self.word_lengths) if self.word_lengths else 0
         median_word_length = statistics.median(self.word_lengths) if self.word_lengths else 0
         avg_sentence_length = sum(self.sentence_lengths) / len(self.sentence_lengths) if self.sentence_lengths else 0
@@ -218,7 +230,7 @@ class CalculateFileStats:
         std_dev_word_length = statistics.stdev(self.word_lengths) if len(self.word_lengths) > 1 else 0
         std_dev_sentence_length = statistics.stdev(self.sentence_lengths) if len(self.sentence_lengths) > 1 else 0
         # Calculate image averages (excluding videos)
-        image_count = len(self.parent.image_files) - self.video_count if self.parent.image_files else 0
+        image_count = len(self._image_files) - self.video_count if self._image_files else 0
         avg_image_width = self.total_image_width / image_count if image_count else 0
         avg_image_height = self.total_image_height / image_count if image_count else 0
         # Calculate video averages
@@ -432,10 +444,11 @@ class CalculateFileStats:
 
     def filter_and_update_textfiles(self, initial_call=False):
         """Filter out non-existent text files and update the text file list."""
-        self.parent.text_files = [text_file for text_file in self.parent.text_files if os.path.exists(text_file)]
-        num_txt_files = len(self.parent.text_files)
-        num_img_files = sum(1 for f in self.parent.image_files if not f.lower().endswith('.mp4'))
-        num_video_files = sum(1 for f in self.parent.image_files if f.lower().endswith('.mp4'))
+        # This function is now only used for initial filtering, but does not update parent.text_files
+        # Use self._text_files instead
+        num_txt_files = len(self._text_files)
+        num_img_files = sum(1 for f in self._image_files if not f.lower().endswith('.mp4'))
+        num_video_files = sum(1 for f in self._image_files if f.lower().endswith('.mp4'))
         num_total_files = num_img_files + num_txt_files + num_video_files
         formatted_total_files = f"{num_total_files} (Text: {num_txt_files}, Images: {num_img_files}, Videos: {num_video_files})"
         if not initial_call:
