@@ -148,7 +148,6 @@ class MyTags:
 
 
     def _split_csv(self, text: str):
-        # Simple CSV split by comma, trimming whitespace; assumes tags do not contain commas
         return [t.strip() for t in text.split(',') if t.strip()]
 
 
@@ -157,7 +156,6 @@ class MyTags:
 
 
     def insert_selected_tags(self, listbox: 'Listbox', position: str = 'start'):
-        # Efficiently insert all selected tags at once
         selected_indices = listbox.curselection()
         if not selected_indices:
             return
@@ -220,7 +218,7 @@ class MyTags:
                     menu.add_separator()
                     menu.add_command(label="Move Up", command=lambda: self.move_selection(listbox, 'up'))
                     menu.add_command(label="Move Down", command=lambda: self.move_selection(listbox, 'down'))
-                else:
+                elif listbox == self.alltags_listbox:
                     menu.add_command(label="Prefix", command=lambda: self.insert_selected_tags(listbox, 'start'))
                     menu.add_command(label="Append", command=lambda: self.insert_selected_tags(listbox, 'end'))
                     menu.add_separator()
