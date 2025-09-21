@@ -75,8 +75,12 @@ class MyTags:
             return
         tags = self.custom_dictionary_listbox.get(0, 'end')
         content = '\n'.join(tags) + ('\n' if tags else '')
-        with open(self.app.my_tags_csv, 'w', encoding='utf-8') as file:
-            file.write(content)
+        try:
+            with open(self.app.my_tags_csv, 'w', encoding='utf-8') as file:
+                file.write(content)
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save tags file:\n{e}")
+            return
         self.root.after(100, self.app.refresh_custom_dictionary)
 
 
@@ -85,7 +89,9 @@ class MyTags:
             return
         tag = (tag_text or '').strip()
         if tag:
-            self.custom_dictionary_listbox.insert('end', tag)
+            existing = set(self.custom_dictionary_listbox.get(0, 'end'))
+            if tag not in existing:
+                self.custom_dictionary_listbox.insert('end', tag)
 
 
     def remove_selected_tags(self):
@@ -119,7 +125,7 @@ class MyTags:
             return
         delta = -1 if direction == 'up' else 1
         order = (selected_indices if direction == 'up' else reversed(selected_indices))
-        for index in order:
+        for idx, index in enumerate(order):
             new_index = index + delta
             if 0 <= new_index < listbox.size():
                 tag = listbox.get(index)
@@ -260,8 +266,10 @@ class MyTags:
         self.tag_entry.bind('<Return>', lambda event: (self.add_tag(self.tag_entry.get()), self.tag_entry.delete(0, 'end')))
         add_btn = ttk.Button(entry_frame, text="Add", command=lambda: (self.add_tag(self.tag_entry.get()), self.tag_entry.delete(0, 'end')))
         add_btn.pack(side='left')
+        ToolTip.create(add_btn, "Add tag to 'My Tags'", 200, 6, 12)
         save_btn = ttk.Button(top_frame, text="Save Tags", takefocus=False, command=self.save_my_tags_file)
         save_btn.pack(side='right')
+        ToolTip.create(save_btn, "Save changes to 'My Tags' file", 200, 6, 12)
         # Middle Row
         self.text_frame = ttk.PanedWindow(tab_frame, orient='horizontal')
         self.text_frame.grid(row=1, column=0, sticky='nsew')
