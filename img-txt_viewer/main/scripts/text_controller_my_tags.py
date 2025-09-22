@@ -637,6 +637,18 @@ class MyTags:
 
 
     def cleanup_custom_dictionary(self):
+        # Initial warning messagebox
+        msg = (
+            "Cleanup MyTags will:\n"
+            "• Remove duplicate tags (case-sensitive)\n"
+            "• Remove empty tags\n"
+            "• Remove quotes from tags\n"
+            "• Remove empty groups\n\n"
+            "This operation cannot be undone.\n"
+            "Do you want to continue?"
+        )
+        if not messagebox.askokcancel("Cleanup MyTags", msg):
+            return
         try:
             data = self._read_mytags_data()
             seen = set()
