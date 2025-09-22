@@ -9,7 +9,8 @@ from tkinter import (
     ttk, Tk, messagebox, TclError,
     BooleanVar,
     Frame, Menu,
-    Listbox
+    Listbox,
+    simpledialog
 )
 
 
@@ -67,34 +68,85 @@ class MyTags:
             widget: 'ttk.Treeview' | 'Listbox' = event.widget
             if widget == self.custom_dictionary_treeview:
                 iid = widget.identify_row(event.y)
-                if not widget.selection():
-                    if iid:
+                # normalize selection to clicked row if needed
+                if iid:
+                    if iid not in widget.selection():
                         widget.selection_set(iid)
-                elif iid and iid not in widget.selection():
-                    widget.selection_set(iid)
+                else:
+                    # clicked on empty area
+                    widget.selection_remove(widget.selection())
 
                 def select_all():
-                    widget.selection_set(widget.get_children())
+                    widget.selection_set(widget.get_children(''))
 
                 def invert_selection():
                     current = set(widget.selection())
-                    all_iids = set(widget.get_children())
+                    all_iids = set(widget.get_children(''))
                     inverted = all_iids - current
                     widget.selection_remove(*current)
                     widget.selection_set(*inverted)
 
+                is_folder = False
+                if iid:
+                    try:
+                        is_folder = 'folder' in widget.item(iid, 'tags')
+                    except Exception:
+                        is_folder = False
+
+                selected_items_exist = False
+                try:
+                    for _iid in (widget.selection() or []):
+                        if 'folder' not in (widget.item(_iid, 'tags') or ()):
+                            selected_items_exist = True
+                            break
+                except Exception:
+                    selected_items_exist = False
+
+                def build_groups_submenu(parent_menu):
+                    sub = Menu(parent_menu, tearoff=0)
+                    # Move out of any group into root
+                    sub.add_command(label="(Root)", command=lambda: self.move_selected_items_to_folder(None))
+                    # List top-level groups
+                    groups = []
+                    for gid in widget.get_children(''):
+                        try:
+                            if 'folder' in (widget.item(gid, 'tags') or ()):
+                                groups.append(gid)
+                        except Exception:
+                            pass
+                    if groups:
+                        for gid in groups:
+                            name = widget.item(gid)['text']
+                            sub.add_command(label=name, command=lambda fid=gid: self.move_selected_items_to_folder(fid))
+                    else:
+                        sub.add_command(label="No groups", state='disabled')
+                    return sub
+
                 menu = Menu(widget, tearoff=0)
-                menu.add_command(label="Prefix", command=lambda: self.insert_selected_tags(widget, 'start'))
-                menu.add_command(label="Append", command=lambda: self.insert_selected_tags(widget, 'end'))
-                menu.add_separator()
-                menu.add_command(label="Edit", command=self.edit_selected_tag_to_entry)
-                menu.add_command(label="Remove", command=self.remove_selected_tags)
-                menu.add_separator()
-                menu.add_command(label="Move Up", command=lambda: self.move_selection(widget, 'up'))
-                menu.add_command(label="Move Down", command=lambda: self.move_selection(widget, 'down'))
-                menu.add_separator()
-                menu.add_command(label="Selection: All", command=select_all)
-                menu.add_command(label="Selection: Invert", command=invert_selection)
+                # Global/new actions
+                menu.add_command(label="New Group...", command=self.add_group_via_prompt)
+                if iid:
+                    if selected_items_exist:
+                        menu.add_cascade(label="Add to group...", menu=build_groups_submenu(menu))
+                    menu.add_separator()
+                    # Insert into text (only items will be used)
+                    menu.add_command(label="Prefix", command=lambda: self.insert_selected_tags(widget, 'start'))
+                    menu.add_command(label="Append", command=lambda: self.insert_selected_tags(widget, 'end'))
+                    menu.add_separator()
+                    if is_folder:
+                        menu.add_command(label="Add Item Here", command=lambda: self.add_item_to_folder(iid))
+                        menu.add_command(label="Rename Group", command=lambda: self.rename_node(iid))
+                        menu.add_command(label="Remove", command=self.remove_selected_tags)
+                    else:
+                        menu.add_command(label="Edit", command=self.edit_selected_tag_to_entry)
+                        menu.add_command(label="Rename", command=lambda: self.rename_node(iid))
+                        menu.add_command(label="Remove", command=self.remove_selected_tags)
+                    menu.add_separator()
+                    menu.add_command(label="Move Up", command=lambda: self.move_selection(widget, 'up'))
+                    menu.add_command(label="Move Down", command=lambda: self.move_selection(widget, 'down'))
+                    menu.add_separator()
+                    menu.add_command(label="Selection: All", command=select_all)
+                    menu.add_command(label="Selection: Invert", command=invert_selection)
                 menu.tk_popup(event.x_root, event.y_root)
 
             elif widget == self.alltags_listbox:
@@ -190,9 +242,15 @@ class MyTags:
         top_frame.grid(row=0, column=0, sticky='ew', padx=2, pady=(2, 0))
         ttk.Label(top_frame, text="My Tags:").pack(side='left', padx=(0, 5))
 
-        self.custom_dictionary_treeview = ttk.Treeview(my_tags_frame, columns=('Tag',), show='headings', selectmode='extended', height=12)
-        self.custom_dictionary_treeview.heading('Tag', text='Tag')
+        # Use single tree column (no headings)
+        self.custom_dictionary_treeview = ttk.Treeview(my_tags_frame, show='tree', selectmode='extended', height=12)
+        self.custom_dictionary_treeview.column('#0', anchor='w')
         self.custom_dictionary_treeview.grid(row=1, column=0, sticky='nsew')
+        # Styling for folder rows (bold)
+        try:
+            self.custom_dictionary_treeview.tag_configure('folder', font=('', 9, 'bold'))
+        except Exception:
+            pass
         self.custom_dictionary_treeview.bind("<Button-3>", show_context_menu)
         self.custom_dictionary_treeview.bind("<Double-Button-1>", lambda event: self.insert_selected_tags(self.custom_dictionary_treeview, 'end'))
 
@@ -309,17 +367,16 @@ class MyTags:
         if not self.custom_dictionary_treeview:
             return
         self.custom_dictionary_treeview.delete(*self.custom_dictionary_treeview.get_children())
-        tags = self._read_mytags_list()
-        for tag in tags:
-            self.custom_dictionary_treeview.insert('', 'end', values=(tag,))
+        data = self._read_mytags_data()
+        self._populate_tree_from_data(data)
 
 
     def save_my_tags_file(self):
         if not self.custom_dictionary_treeview:
             return
-        tags = [self.custom_dictionary_treeview.item(iid)['values'][0] for iid in self.custom_dictionary_treeview.get_children()]
+        data = self._collect_tree_data()
         try:
-            self._write_mytags_list(tags)
+            self._write_mytags_data(data)
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save MyTags (YAML):\n{e}")
             return
@@ -330,10 +387,29 @@ class MyTags:
         if not self.custom_dictionary_treeview:
             return
         tag = (tag_text or '').strip()
-        if tag:
-            existing = set(self.custom_dictionary_treeview.item(iid)['values'][0] for iid in self.custom_dictionary_treeview.get_children())
+        if not tag:
+            return
+        tree = self.custom_dictionary_treeview
+        sel = tree.selection()
+        # If exactly one folder is selected, add to that folder
+        folder_iid = None
+        if len(sel) == 1:
+            try:
+                if 'folder' in tree.item(sel[0], 'tags'):
+                    folder_iid = sel[0]
+            except Exception:
+                folder_iid = None
+        if folder_iid:
+            # ensure no duplicate within that folder
+            existing = set(tree.item(i)['text'] for i in tree.get_children(folder_iid) if 'item' in tree.item(i, 'tags'))
             if tag not in existing:
-                self.custom_dictionary_treeview.insert('', 'end', values=(tag,))
+                tree.insert(folder_iid, 'end', text=tag, tags=('item',))
+                tree.item(folder_iid, open=True)
+        else:
+            # add to root if not duplicate in root
+            existing = set(tree.item(i)['text'] for i in tree.get_children('') if 'folder' not in tree.item(i, 'tags'))
+            if tag not in existing:
+                tree.insert('', 'end', text=tag, tags=('item',))
 
 
     def remove_selected_tags(self):
@@ -351,7 +427,14 @@ class MyTags:
         if not selected:
             return
         iid = selected[0]
-        tag = self.custom_dictionary_treeview.item(iid)['values'][0]
+        # Only edit items into entry; folders use rename
+        try:
+            if 'folder' in self.custom_dictionary_treeview.item(iid, 'tags'):
+                self.rename_node(iid)
+                return
+        except Exception:
+            pass
+        tag = self.custom_dictionary_treeview.item(iid)['text']
         self.tag_entry.delete(0, 'end')
         self.tag_entry.insert(0, tag)
         self.custom_dictionary_treeview.delete(iid)
@@ -361,13 +444,18 @@ class MyTags:
         selected = treeview.selection()
         if not selected:
             return
-        items = list(treeview.get_children())
         delta = -1 if direction == 'up' else 1
-        for iid in (selected if direction == 'up' else reversed(selected)):
-            idx = items.index(iid)
+        # Move each selected within its parent
+        order = selected if direction == 'up' else tuple(reversed(selected))
+        for iid in order:
+            parent = treeview.parent(iid)
+            siblings = list(treeview.get_children(parent))
+            idx = siblings.index(iid) if iid in siblings else -1
+            if idx == -1:
+                continue
             new_idx = idx + delta
-            if 0 <= new_idx < len(items):
-                treeview.move(iid, '', new_idx)
+            if 0 <= new_idx < len(siblings):
+                treeview.move(iid, parent, new_idx)
                 treeview.selection_set(iid)
 
 
@@ -377,11 +465,28 @@ class MyTags:
         selected_indices = self.alltags_listbox.curselection()
         if not selected_indices:
             return
-        existing = set(self.custom_dictionary_treeview.item(iid)['values'][0] for iid in self.custom_dictionary_treeview.get_children())
-        for idx in selected_indices:
-            tag = self.alltags_listbox.get(idx)
-            if tag not in existing:
-                self.custom_dictionary_treeview.insert('', 'end', values=(tag,))
+        tree = self.custom_dictionary_treeview
+        sel = tree.selection()
+        folder_iid = None
+        if len(sel) == 1:
+            try:
+                if 'folder' in tree.item(sel[0], 'tags'):
+                    folder_iid = sel[0]
+            except Exception:
+                folder_iid = None
+        if folder_iid:
+            existing = set(tree.item(i)['text'] for i in tree.get_children(folder_iid) if 'item' in tree.item(i, 'tags'))
+            for idx in selected_indices:
+                tag = self.alltags_listbox.get(idx)
+                if tag not in existing:
+                    tree.insert(folder_iid, 'end', text=tag, tags=('item',))
+            tree.item(folder_iid, open=True)
+        else:
+            existing = set(tree.item(i)['text'] for i in tree.get_children('') if 'folder' not in tree.item(i, 'tags'))
+            for idx in selected_indices:
+                tag = self.alltags_listbox.get(idx)
+                if tag not in existing:
+                    tree.insert('', 'end', text=tag, tags=('item',))
 
 
     def refresh_all_tags_listbox(self, tags=None):
@@ -407,14 +512,13 @@ class MyTags:
 
 
     def refresh_custom_dictionary(self):
-        tags = self._read_mytags_list()
+        data = self._read_mytags_data()
         treeview = self.custom_dictionary_treeview
         # Clear existing items
         for item in treeview.get_children():
             treeview.delete(item)
-        # Insert tags into Treeview
-        for tag in tags:
-            treeview.insert('', 'end', values=(tag,))
+        # Insert folders and items
+        self._populate_tree_from_data(data)
         self.app.autocomplete.update_autocomplete_dictionary()
 
 
@@ -428,11 +532,12 @@ class MyTags:
                         with open(csv_path, 'r', encoding='utf-8') as f:
                             lines = f.read().splitlines()
                         tags = [line.strip() for line in lines if line.strip() and not line.strip().startswith('###')]
-                        self._write_mytags_list(tags)
+                        # Write structured data to preserve grouping (no flat list)
+                        self._write_mytags_data({'items': tags, 'groups': []})
                     except Exception:
-                        self._write_mytags_list([])
+                        self._write_mytags_data({'items': [], 'groups': []})
                 else:
-                    self._write_mytags_list([])
+                    self._write_mytags_data({'items': [], 'groups': []})
                 if refresh:
                     self.refresh_custom_dictionary()
         except (PermissionError, IOError, TclError) as e:
@@ -450,15 +555,26 @@ class MyTags:
 
     def cleanup_custom_dictionary(self):
         try:
-            tags = self._read_mytags_list()
+            data = self._read_mytags_data()
             seen = set()
-            cleaned = []
-            for tag in tags:
+            cleaned_items = []
+            for tag in data.get('items', []):
                 cleaned_tag = str(tag).replace('"', '').replace("'", "").strip()
                 if cleaned_tag and cleaned_tag not in seen:
                     seen.add(cleaned_tag)
-                    cleaned.append(cleaned_tag)
-            self._write_mytags_list(cleaned)
+                    cleaned_items.append(cleaned_tag)
+            cleaned_groups = []
+            for grp in data.get('groups', []):
+                name = str(grp.get('name', '')).strip() or 'Group'
+                new_items = []
+                for tag in grp.get('items', []):
+                    cleaned_tag = str(tag).replace('"', '').replace("'", "").strip()
+                    if cleaned_tag and cleaned_tag not in seen:
+                        seen.add(cleaned_tag)
+                        new_items.append(cleaned_tag)
+                if new_items:
+                    cleaned_groups.append({'name': name, 'items': new_items})
+            self._write_mytags_data({'items': cleaned_items, 'groups': cleaned_groups})
             self.refresh_custom_dictionary()
             messagebox.showinfo("Success", "MyTags has been cleaned.")
         except (PermissionError, IOError, TclError) as e:
@@ -475,10 +591,15 @@ class MyTags:
             else:
                 selected_text = ""
             if selected_text:
-                tags = self._read_mytags_list()
-                if selected_text not in tags:
-                    tags.append(selected_text)
-                    self._write_mytags_list(tags)
+                # Update structured data, preserving existing groups
+                data = self._read_mytags_data()
+                existing = set(data.get('items', []))
+                for grp in data.get('groups', []):
+                    for it in grp.get('items', []):
+                        existing.add(it)
+                if selected_text not in existing:
+                    data.setdefault('items', []).append(selected_text)
+                    self._write_mytags_data(data)
             self.refresh_custom_dictionary()
         except (PermissionError, IOError, TclError) as e:
             messagebox.showerror("Error: add_to_custom_dictionary()", f"An error occurred while saving the selection to 'my_tags.yaml'.\n\n{e}")
@@ -500,7 +621,16 @@ class MyTags:
         # Treeview
         if hasattr(widget, 'selection') and callable(getattr(widget, 'selection')):
             selected = widget.selection()
-            return [widget.item(iid)['values'][0] for iid in selected] if selected else []
+            # Only return item texts, skip folders
+            out = []
+            for iid in selected or []:
+                try:
+                    if 'folder' in widget.item(iid, 'tags'):
+                        continue
+                except Exception:
+                    pass
+                out.append(widget.item(iid)['text'])
+            return out
         # Listbox
         if hasattr(widget, 'curselection') and callable(getattr(widget, 'curselection')):
             indices = widget.curselection()
@@ -517,63 +647,245 @@ class MyTags:
 
 
     def _read_mytags_list(self):
+        # Flatten hierarchical data for consumers needing a flat list
+        data = self._read_mytags_data()
+        flat = list(data.get('items', []))
+        for grp in data.get('groups', []):
+            flat.extend(grp.get('items', []))
+        if flat:
+            return flat
+        return []
+
+
+    def _read_mytags_data(self):
         path = self.app.my_tags_yml
-        # Prefer YAML
         if os.path.isfile(path):
             try:
                 with open(path, 'r', encoding='utf-8') as f:
-                    data = yaml.safe_load(f) or []
+                    data = yaml.safe_load(f)
+                if not data:
+                    return {'items': [], 'groups': []}
+                if isinstance(data, dict) and ('items' in data or 'groups' in data):
+                    items = []
+                    groups = []
+                    # items
+                    if isinstance(data.get('items'), list):
+                        items = [str(x).strip() for x in data['items'] if str(x).strip()]
+                    # groups could be list[dict{name,items}] or dict[name] -> list
+                    g = data.get('groups') or []
+                    if isinstance(g, dict):
+                        for name, lst in g.items():
+                            lst2 = [str(x).strip() for x in (lst or []) if str(x).strip()]
+                            groups.append({'name': str(name).strip() or 'Group', 'items': lst2})
+                    elif isinstance(g, list):
+                        for entry in g:
+                            if isinstance(entry, dict):
+                                name = str(entry.get('name', '')).strip() or 'Group'
+                                lst2 = [str(x).strip() for x in (entry.get('items') or []) if str(x).strip()]
+                                groups.append({'name': name, 'items': lst2})
+                    return {'items': items, 'groups': groups}
+                # Legacy dict with 'tags'
                 if isinstance(data, dict) and 'tags' in data and isinstance(data['tags'], list):
-                    tags = [str(x).strip() for x in data['tags'] if str(x).strip()]
-                    if tags:
-                        return tags
+                    items = [str(x).strip() for x in data['tags'] if str(x).strip()]
+                    return {'items': items, 'groups': []}
+                # Legacy list
                 if isinstance(data, list):
-                    tags = [str(x).strip() for x in data if str(x).strip()]
-                    if tags:
-                        return tags
+                    items = [str(x).strip() for x in data if str(x).strip()]
+                    return {'items': items, 'groups': []}
             except Exception:
                 pass
-        # Fallback: migrate from CSV if present
+        # Fallback CSV migration
         csv_path = self._csv_legacy_path()
         if os.path.isfile(csv_path):
             try:
                 with open(csv_path, 'r', encoding='utf-8') as f:
                     lines = f.read().splitlines()
-                tags = [line.strip() for line in lines if line.strip() and not line.strip().startswith('###')]
-                # Attempt a one-time migration to YAML
+                items = [line.strip() for line in lines if line.strip() and not line.strip().startswith('###')]
                 try:
-                    self._write_mytags_list(tags)
+                    self._write_mytags_data({'items': items, 'groups': []})
                 except Exception:
                     pass
-                return tags
+                return {'items': items, 'groups': []}
             except Exception:
-                return []
-        return []
+                return {'items': [], 'groups': []}
+        return {'items': [], 'groups': []}
 
 
     def _write_mytags_list(self, tags):
-        # Store as simple list in YAML
+        # Never write a flat list. Preserve existing groups and update only root 'items'.
+        data = self._read_mytags_data()
+        data['items'] = [str(t).strip() for t in tags if str(t).strip()]
+        self._write_mytags_data(data)
+
+
+    def _write_mytags_data(self, data: dict):
+        # Store structured data: {'items': [...], 'groups': [{'name':..., 'items':[...]}]}
         path = self.app.my_tags_yml
         os.makedirs(os.path.dirname(path), exist_ok=True)
+        items = [str(t).strip() for t in (data.get('items') or []) if str(t).strip()]
+        groups = []
+        for g in data.get('groups') or []:
+            name = str(g.get('name', '')).strip() or 'Group'
+            lst = [str(t).strip() for t in (g.get('items') or []) if str(t).strip()]
+            groups.append({'name': name, 'items': lst})
         with open(path, 'w', encoding='utf-8') as f:
-            yaml.safe_dump([str(t) for t in tags if str(t).strip()], f, allow_unicode=True, sort_keys=False)
+            yaml.safe_dump({'items': items, 'groups': groups}, f, allow_unicode=True, sort_keys=False)
 
+
+    def _populate_tree_from_data(self, data: dict):
+        tree = self.custom_dictionary_treeview
+        # Root items
+        for tag in data.get('items', []):
+            tree.insert('', 'end', text=tag, tags=('item',))
+        # Groups
+        for grp in data.get('groups', []):
+            folder_iid = tree.insert('', 'end', text=grp.get('name', 'Group'), tags=('folder',))
+            for item in grp.get('items', []):
+                tree.insert(folder_iid, 'end', text=item, tags=('item',))
+            tree.item(folder_iid, open=True)
+
+
+    def _collect_tree_data(self) -> dict:
+        tree = self.custom_dictionary_treeview
+        items = []
+        groups = []
+        for iid in tree.get_children(''):
+            text = tree.item(iid)['text']
+            tags = tree.item(iid, 'tags') or ()
+            if 'folder' in tags:
+                children = [tree.item(ci)['text'] for ci in tree.get_children(iid) if 'item' in (tree.item(ci, 'tags') or ())]
+                groups.append({'name': text, 'items': children})
+            else:
+                items.append(text)
+        return {'items': items, 'groups': groups}
+
+
+    # Convenience actions for folders/items
+    def add_group_via_prompt(self):
+        name = simpledialog.askstring("New Group", "Enter group name:", parent=self.root)
+        if not name:
+            return
+        name = name.strip()
+        if not name:
+            return
+        self.custom_dictionary_treeview.insert('', 'end', text=name, tags=('folder',))
+
+
+    def add_item_to_folder(self, folder_iid, name: str | None = None):
+        if not folder_iid:
+            return
+        if name is None:
+            name = simpledialog.askstring("New Item", "Enter item name:", parent=self.root)
+            if name is None:
+                return
+            name = name.strip()
+            if not name:
+                return
+        tree = self.custom_dictionary_treeview
+        existing = set(tree.item(i)['text'] for i in tree.get_children(folder_iid) if 'item' in tree.item(i, 'tags'))
+        if name not in existing:
+            tree.insert(folder_iid, 'end', text=name, tags=('item',))
+            tree.item(folder_iid, open=True)
+
+
+    def rename_node(self, iid):
+        if not iid:
+            return
+        tree = self.custom_dictionary_treeview
+        text = tree.item(iid)['text']
+        is_folder = False
+        try:
+            is_folder = 'folder' in tree.item(iid, 'tags')
+        except Exception:
+            is_folder = False
+        title = "Rename Group" if is_folder else "Rename Item"
+        new_name = simpledialog.askstring(title, "Enter new name:", initialvalue=text, parent=self.root)
+        if new_name is None:
+            return
+        new_name = new_name.strip()
+        if not new_name:
+            return
+        tree.item(iid, text=new_name)
+
+
+    def move_selected_items_to_folder(self, folder_iid):
+        tree = self.custom_dictionary_treeview
+        if not tree:
+            return
+        selected = tree.selection()
+        if not selected:
+            return
+
+        dest_parent = '' if not folder_iid else folder_iid
+
+        def dest_item_names():
+            if dest_parent == '':
+                # names of root-level items (exclude folders)
+                return set(
+                    tree.item(i)['text']
+                    for i in tree.get_children('')
+                    if 'folder' not in (tree.item(i, 'tags') or ())
+                )
+            else:
+                # names of items inside the destination folder
+                return set(
+                    tree.item(i)['text']
+                    for i in tree.get_children(dest_parent)
+                    if 'item' in (tree.item(i, 'tags') or ())
+                )
+
+        existing_names = dest_item_names()
+        moved = []
+        for iid in selected:
+            try:
+                tags = tree.item(iid, 'tags') or ()
+            except Exception:
+                continue
+            # skip folders
+            if 'folder' in tags:
+                continue
+            current_parent = tree.parent(iid)
+            # already in destination
+            if current_parent == dest_parent:
+                continue
+            name = tree.item(iid)['text']
+            # avoid duplicates in destination
+            if name in existing_names:
+                continue
+            try:
+                tree.move(iid, dest_parent, 'end')
+                moved.append(iid)
+                existing_names.add(name)
+            except Exception:
+                pass
+
+        if folder_iid:
+            try:
+                tree.item(folder_iid, open=True)
+            except Exception:
+                pass
+
+        if moved:
+            try:
+                tree.selection_set(moved)
+                tree.focus(moved[0])
+            except Exception:
+                pass
 
     #endregion
     #region DnD
 
 
-    def _compute_insert_index(self, tree: 'ttk.Treeview', y: int) -> int:
-        items = list(tree.get_children(''))
-        # Exclude placeholder if present
+    def _compute_insert_index(self, tree: 'ttk.Treeview', y: int, parent) -> int:
+        items = list(tree.get_children(parent))
         ph_iid = self._drag_state.get('placeholder_iid')
         items_wo = [iid for iid in items if iid != ph_iid]
         size = len(items_wo)
         if size <= 0:
             return 0
         over_iid = tree.identify_row(y)
-        # If outside any row, decide top/bottom by position
-        if not over_iid:
+        # if hovered row not in our sibling set, fallback to top/bottom by position
+        if not over_iid or over_iid not in items_wo + ([ph_iid] if ph_iid else []):
             first_bbox = tree.bbox(items_wo[0])
             last_bbox = tree.bbox(items_wo[-1])
             if last_bbox and y >= (last_bbox[1] + last_bbox[3]):
@@ -581,31 +893,24 @@ class MyTags:
             if first_bbox and y <= first_bbox[1]:
                 return 0
             return size
-        # If hovering placeholder, use its own midpoint
+        # hovering placeholder
         if ph_iid and over_iid == ph_iid:
             bbox = tree.bbox(over_iid)
             idx = tree.index(over_iid)
             if bbox and y > (bbox[1] + bbox[3] / 2):
                 return min(idx + 1, len(items)) - (1 if ph_iid in items and tree.index(ph_iid) < idx + 1 else 0)
             else:
-                # Adjust to ignore placeholder itself
                 return idx - (1 if ph_iid in items and tree.index(ph_iid) <= idx else 0)
-        # Normal row hovered
-        # Base index relative to list without placeholder
+        # normal row
         try:
             base_idx = items_wo.index(over_iid)
         except ValueError:
             base_idx = 0
         bbox = tree.bbox(over_iid)
         insert_idx = base_idx
-        if bbox is not None:
-            if y > (bbox[1] + bbox[3] / 2):
-                insert_idx = base_idx + 1
-        if insert_idx < 0:
-            insert_idx = 0
-        if insert_idx > size:
-            insert_idx = size
-        return insert_idx
+        if bbox is not None and y > (bbox[1] + bbox[3] / 2):
+            insert_idx = base_idx + 1
+        return max(0, min(insert_idx, size))
 
 
     def _remove_placeholder(self, tree: 'ttk.Treeview'):
@@ -618,39 +923,37 @@ class MyTags:
         self._drag_state['placeholder_iid'] = None
 
 
-    def _insert_placeholder(self, tree: 'ttk.Treeview', insert_idx: int):
+    def _insert_placeholder(self, tree: 'ttk.Treeview', parent, insert_idx: int):
         self._remove_placeholder(tree)
-        items = list(tree.get_children(''))
+        items = list(tree.get_children(parent))
         size = len([iid for iid in items if iid != self._drag_state.get('placeholder_iid')])
         try:
             tree.tag_configure('placeholder', background=self._placeholder_bg)
         except Exception:
             pass
         if insert_idx >= size:
-            ph_iid = tree.insert('', 'end', values=('',), tags=('placeholder',))
+            ph_iid = tree.insert(parent, 'end', text='', tags=('placeholder',))
         else:
-            ph_iid = tree.insert('', insert_idx, values=('',), tags=('placeholder',))
+            ph_iid = tree.insert(parent, insert_idx, text='', tags=('placeholder',))
         self._drag_state['placeholder_iid'] = ph_iid
 
 
-    def _move_placeholder(self, tree: 'ttk.Treeview', insert_idx: int):
-        items = list(tree.get_children(''))
-        # Exclude placeholder in size calculation
+    def _move_placeholder(self, tree: 'ttk.Treeview', parent, insert_idx: int):
+        items = list(tree.get_children(parent))
         ph_iid = self._drag_state.get('placeholder_iid')
         items_wo = [iid for iid in items if iid != ph_iid]
         size = len(items_wo)
         target_idx = insert_idx if insert_idx < size else size
         if ph_iid and ph_iid in items:
             current_idx = tree.index(ph_iid)
-            # Adjust target against current placeholder position
             if (target_idx == size and current_idx == len(items) - 1) or current_idx == target_idx:
                 return
             try:
-                tree.move(ph_iid, '', target_idx)
+                tree.move(ph_iid, parent, target_idx)
                 return
             except Exception:
                 pass
-        self._insert_placeholder(tree, target_idx)
+        self._insert_placeholder(tree, parent, target_idx)
 
 
     def _dnd_start(self, event):
@@ -662,21 +965,24 @@ class MyTags:
             return 'break'
         if over_iid not in tree.selection():
             tree.selection_set(over_iid)
-        # Order selected items as they appear in the tree
-        ordered = [iid for iid in tree.get_children('') if iid in set(tree.selection())]
+        parent = tree.parent(over_iid)
+        # Order only selected items within same parent
+        sel_set = set(tree.selection())
+        ordered = [iid for iid in tree.get_children(parent) if iid in sel_set]
         if not ordered:
             return 'break'
         self._drag_state['active'] = True
         self._drag_state['selected_iids'] = tuple(ordered)
         self._drag_state['start_iid'] = over_iid
+        self._drag_state['parent'] = parent
         tree.focus(over_iid)
         self._drag_state['prev_cursor'] = tree.cget('cursor')
         try:
             tree.config(cursor='hand2')
         except Exception:
             pass
-        insert_idx = self._compute_insert_index(tree, event.y)
-        self._move_placeholder(tree, insert_idx)
+        insert_idx = self._compute_insert_index(tree, event.y, parent)
+        self._move_placeholder(tree, parent, insert_idx)
         return 'break'
 
 
@@ -684,14 +990,15 @@ class MyTags:
         if not self._drag_state['active']:
             return 'break'
         tree: 'ttk.Treeview' = event.widget
+        parent = self._drag_state.get('parent')
         height = tree.winfo_height()
         margin = 12
         if event.y < margin:
             tree.yview_scroll(-1, 'units')
         elif event.y > height - margin:
             tree.yview_scroll(1, 'units')
-        insert_idx = self._compute_insert_index(tree, event.y)
-        self._move_placeholder(tree, insert_idx)
+        insert_idx = self._compute_insert_index(tree, event.y, parent)
+        self._move_placeholder(tree, parent, insert_idx)
         return 'break'
 
 
@@ -700,33 +1007,26 @@ class MyTags:
             return 'break'
         tree: 'ttk.Treeview' = event.widget
         self._drag_state['active'] = False
+        parent = self._drag_state.get('parent')
         selected = list(self._drag_state.get('selected_iids') or ())
         if not selected:
             return 'break'
-        all_items = list(tree.get_children(''))
+        all_items = list(tree.get_children(parent))
         ph_iid = self._drag_state.get('placeholder_iid')
-        # Determine raw drop index among all items (including selected, excluding none or including placeholder)
         if ph_iid and ph_iid in all_items:
             drop_idx_original = tree.index(ph_iid)
         else:
-            drop_idx_original = self._compute_insert_index(tree, event.y)
-        # Prepare lists and maps
+            drop_idx_original = self._compute_insert_index(tree, event.y, parent)
         sel_set = set(selected)
         ordered_selected = [iid for iid in all_items if iid in sel_set]
-        # Others excludes selected and placeholder
         others = [iid for iid in all_items if iid not in sel_set and iid != ph_iid]
         index_map = {iid: idx for idx, iid in enumerate(all_items)}
-        # Convert drop index to index within 'others' by removing selected before it
         offset_before = sum(1 for iid in ordered_selected if index_map[iid] < drop_idx_original)
         drop_idx_others = max(0, min(len(others), drop_idx_original - offset_before))
-        # Clean placeholder now that we have computed indices
         self._remove_placeholder(tree)
-        # If dropping into the same spot (within the selected block), no-op
         if ordered_selected:
             sel_start = min(index_map[iid] for iid in ordered_selected)
-            sel_end = max(index_map[iid] for iid in ordered_selected) + 1
             start_in_others = sum(1 for iid in others if index_map[iid] < sel_start)
-            # end_in_others would be the same because others excludes selected
             if drop_idx_others == start_in_others:
                 try:
                     tree.config(cursor=self._drag_state.get('prev_cursor') or '')
@@ -734,22 +1034,20 @@ class MyTags:
                     pass
                 self._drag_state['selected_iids'] = tuple()
                 self._drag_state['start_iid'] = None
+                self._drag_state['parent'] = None
                 return 'break'
-        # Determine anchor to insert before; if at end, anchor is None
         anchor_iid = None
         if drop_idx_others < len(others):
             anchor_iid = others[drop_idx_others]
-        # Move selected items as a group preserving order
         try:
             if anchor_iid is None:
                 for iid in ordered_selected:
-                    tree.move(iid, '', 'end')
+                    tree.move(iid, parent, 'end')
             else:
                 for iid in ordered_selected:
-                    tree.move(iid, '', tree.index(anchor_iid))
+                    tree.move(iid, parent, tree.index(anchor_iid))
         except Exception:
             pass
-        # Restore selection and focus
         try:
             tree.selection_set(ordered_selected)
             tree.focus(ordered_selected[0])
@@ -759,9 +1057,9 @@ class MyTags:
             tree.config(cursor=self._drag_state.get('prev_cursor') or '')
         except Exception:
             pass
-        # Clear state
         self._drag_state['selected_iids'] = tuple()
         self._drag_state['start_iid'] = None
+        self._drag_state['parent'] = None
         return 'break'
 
 
