@@ -51,6 +51,7 @@ class SettingsManager:
             self._save_window_settings()
             self._save_autocomplete_settings()
             self._save_other_settings()
+            self._save_mytags_style_settings()
             self.write_settings_to_file()
         except (PermissionError, IOError) as e:
             messagebox.showerror("Error: save_settings()", f"An error occurred while saving the user settings.\n\n{e}")
@@ -134,13 +135,6 @@ class SettingsManager:
         self.config.set("Other", "font", str(self.parent.font_var.get()))
         self.config.set("Other", "font_size", str(self.parent.font_size_var.get()))
         self.config.set("Other", "list_mode", str(self.parent.list_mode_var.get()))
-        self._save_mytags_style_settings()
-
-
-    def write_settings_to_file(self):
-        """Writes the current settings to the configuration file."""
-        with open(self.parent.app_settings_cfg, "w", encoding="utf-8") as f:
-            self.config.write(f)
 
 
     def _save_mytags_style_settings(self):
@@ -166,6 +160,12 @@ class SettingsManager:
         self.config.set("MyTagsStyle", "groups_overstrike", str(groups_style.get('overstrike', False)))
         self.config.set("MyTagsStyle", "groups_foreground", str(groups_style.get('foreground', '')))
         self.config.set("MyTagsStyle", "groups_background", str(groups_style.get('background', '')))
+
+
+    def write_settings_to_file(self):
+        """Writes the current settings to the configuration file."""
+        with open(self.parent.app_settings_cfg, "w", encoding="utf-8") as f:
+            self.config.write(f)
 
 
 #endregion
@@ -202,6 +202,7 @@ class SettingsManager:
         self._read_directory_settings()
         self._read_autocomplete_settings()
         self._read_other_settings()
+        self._read_mytags_style_settings()
 
 
     def _read_directory_settings(self):
@@ -260,7 +261,6 @@ class SettingsManager:
         if hasattr(self.parent, 'text_box'):
             self.parent.text_box.config(font=(self.parent.font_var.get(), self.parent.font_size_var.get()))
         self.parent.list_mode_var.set(value=self.config.getboolean("Other", "list_mode", fallback=False))
-        self._read_mytags_style_settings()
 
 
     def _read_mytags_style_settings(self):
