@@ -829,9 +829,14 @@ class ImgTxtViewer:
         selected_tab = event.widget.tab("current", "text")
         tab_height = 60 if self.initialize_text_pane else tab_heights.get(selected_tab, 60)
         self.initialize_text_pane = False
-        if selected_tab == "MyTags":
-            self.text_controller.my_tags.refresh_all_tags_listbox(tags=self.stat_calculator.sorted_captions)
+        self.update_mytags_tab()
         self.text_pane.paneconfigure(self.text_widget_frame, height=tab_height)
+
+
+    def update_mytags_tab(self):
+        selected_tab = self.text_notebook.tab("current", "text")
+        if selected_tab == "MyTags":
+            self.text_controller.my_tags.refresh_all_tags_listbox()
 
 
     # --------------------------------------
@@ -1792,6 +1797,7 @@ class ImgTxtViewer:
                 self.image_grid.highlight_thumbnail(self.current_index)
             self.update_videoinfo()
             self.find_replace_widget.perform_search()
+            self.update_mytags_tab()
 
 
     def resize_and_scale_image_event(self, event):
@@ -2472,6 +2478,7 @@ class ImgTxtViewer:
                     self.refresh_text_box()
                 if file_saved:
                     self.root.title(self.title)
+                    self.update_mytags_tab()
                     if highlight:
                         self.save_button.configure(style="Blue+.TButton")
                         self.root.after(120, lambda: self.save_button.configure(style="Blue.TButton"))

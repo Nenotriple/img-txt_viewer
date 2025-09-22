@@ -257,8 +257,8 @@ class MyTags:
                     for i in inverted:
                         widget.selection_set(i)
 
+                menu = Menu(widget, tearoff=0)
                 if widget.curselection():
-                    menu = Menu(widget, tearoff=0)
                     menu.add_command(label="Prefix", command=lambda: self.insert_selected_tags(widget, 'start'))
                     menu.add_command(label="Append", command=lambda: self.insert_selected_tags(widget, 'end'))
                     menu.add_separator()
@@ -268,7 +268,9 @@ class MyTags:
                     menu.add_separator()
                     menu.add_command(label="Selection: All", command=select_all)
                     menu.add_command(label="Selection: Invert", command=invert_selection)
-                    menu.tk_popup(event.x_root, event.y_root)
+                else:
+                    menu.add_command(label="Refresh", command=self.refresh_all_tags_listbox)
+                menu.tk_popup(event.x_root, event.y_root)
 
         # Interface
         self.create_custom_dictionary(refresh=False)
