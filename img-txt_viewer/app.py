@@ -19,7 +19,6 @@ More info here: https://github.com/Nenotriple/img-txt_viewer
 # Standard Library
 import os
 import re
-import csv
 import sys
 import glob
 import time
@@ -2538,83 +2537,6 @@ class ImgTxtViewer:
                 if messagebox.askyesno("Quit", "Quit without saving?"):
                     self.root.destroy()
             except Exception: pass
-
-
-#endregion
-#region Custom Dictionary
-
-
-    def refresh_custom_dictionary(self):
-        with open(self.my_tags_csv, 'r', encoding='utf-8') as file:
-            content = self.remove_extra_newlines(file.read())
-            tags = [tag.strip() for tag in content.split('\n') if tag.strip()]
-            treeview = self.text_controller.my_tags.custom_dictionary_treeview
-            # Clear existing items
-            for item in treeview.get_children():
-                treeview.delete(item)
-            # Insert tags into Treeview
-            for tag in tags:
-                treeview.insert('', 'end', values=(tag,))
-            self.autocomplete.update_autocomplete_dictionary()
-
-
-    def create_custom_dictionary(self, reset=False, refresh=True):
-        try:
-            csv_filename = self.my_tags_csv
-            if reset or not os.path.isfile(csv_filename):
-                with open(csv_filename, 'w', newline='', encoding="utf-8") as file:
-                    file.write("")
-                if refresh:
-                    self.refresh_custom_dictionary()
-        except (PermissionError, IOError, TclError) as e:
-            messagebox.showerror("Error: create_custom_dictionary()", f"An error occurred while creating the custom dictionary file:\n\n{csv_filename}\n\n{e}")
-
-
-    def add_to_custom_dictionary(self, origin):
-        try:
-            if origin == "text_box":
-                selected_text = self.text_box.get("sel.first", "sel.last")
-            elif origin == "auto_tag":
-                selected_text = self.text_controller.autotag_listbox.get("active")
-                selected_text = selected_text.split(':', 1)[-1].strip()
-            with open(self.my_tags_csv, 'a', encoding="utf-8") as f:
-                f.write(selected_text.strip() + "\n")
-            self.refresh_custom_dictionary()
-        except (PermissionError, IOError, TclError) as e:
-            messagebox.showerror("Error: add_to_custom_dictionary()", f"An error occurred while saving the selected to 'my_tags.csv'.\n\n{e}")
-
-
-    def remove_extra_newlines(self, text: "str"):
-        lines = text.split('\n')
-        cleaned_lines = [line for line in lines if line.strip() != '']
-        result = '\n'.join(cleaned_lines)
-        if not result.endswith('\n'):
-            result += '\n'
-        return result
-
-
-    def cleanup_custom_dictionary(self):
-        """remove quotes, extra spaces, duplicate tags, and empty lines from my_tags.csv"""
-        try:
-            if not os.path.isfile(self.my_tags_csv):
-                return
-            with open(self.my_tags_csv, 'r', encoding='utf-8') as file:
-                content = file.read()
-            lines = content.split('\n')
-            cleaned_lines = []
-            seen = set()
-            for line in lines:
-                cleaned_line = line.replace('"', '').replace("'", "").strip()
-                if cleaned_line and cleaned_line not in seen:
-                    seen.add(cleaned_line)
-                    cleaned_lines.append(cleaned_line)
-            cleaned_content = '\n'.join(cleaned_lines) + '\n'
-            with open(self.my_tags_csv, 'w', encoding='utf-8') as file:
-                file.write(cleaned_content)
-            self.refresh_custom_dictionary()
-            messagebox.showinfo("Success", "Custom dictionary has been cleaned.")
-        except (PermissionError, IOError, TclError) as e:
-            messagebox.showerror("Error: cleanup_custom_dictionary()", f"An error occurred while cleaning the custom dictionary:\n\n{e}")
 
 
 #endregion

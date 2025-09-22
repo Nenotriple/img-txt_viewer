@@ -317,7 +317,7 @@ class SettingsManager:
         if messagebox.askyesno("Confirm Reset", "Reset 'My Tags' to default?"):
             with open(self.parent.app_settings_cfg, 'w', encoding="utf-8") as cfg_file:
                 cfg_file.write("")
-            self.parent.create_custom_dictionary(reset=True)
+            self.parent.text_controller.my_tags.create_custom_dictionary(reset=True)
         # Extra panels
         self.parent.thumbnails_visible.set(value=True)
         self.parent.thumbnail_width.set(value=50)

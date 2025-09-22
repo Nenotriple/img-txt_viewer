@@ -1,9 +1,12 @@
 #region Imports
 
 
+# Standard Library
+import os
+
 # Standard Library - GUI
 from tkinter import (
-    ttk, Tk, messagebox,
+    ttk, Tk, messagebox, TclError,
     BooleanVar,
     Frame, Menu,
     Listbox
@@ -127,7 +130,7 @@ class MyTags:
                     menu.tk_popup(event.x_root, event.y_root)
 
         # Interface
-        self.app.create_custom_dictionary(refresh=False)
+        self.create_custom_dictionary(refresh=False)
 
         tab_frame = Frame(self.app.tab8)
         tab_frame.pack(side='top', fill='both', expand=True)
@@ -145,7 +148,7 @@ class MyTags:
         menubutton.pack(side='left')
         menu = Menu(menubutton, tearoff=0)
         menubutton.config(menu=menu)
-        menu.add_checkbutton(label="Use: MyTags", variable=self.app.use_mytags_var, command=self.app.refresh_custom_dictionary)
+        menu.add_checkbutton(label="Use: MyTags", variable=self.app.use_mytags_var, command=self.refresh_custom_dictionary)
         menu.add_checkbutton(label="Show: All Tags", variable=self.show_all_tags_var, command=self.toggle_all_tags_listbox)
         menu.add_separator()
         menu.add_command(label="Refresh: My Tags", command=self.load_my_tags_file)
@@ -154,7 +157,7 @@ class MyTags:
         menu.add_checkbutton(label="Hide: My Tags - Controls", variable=self.hide_mytags_controls_var, command=self.toggle_mytags_controls)
         menu.add_checkbutton(label="Hide: All Tags - Controls", variable=self.hide_alltags_controls_var, command=self.toggle_alltags_controls)
         menu.add_separator()
-        menu.add_command(label="Cleanup MyTags", command=self.app.cleanup_custom_dictionary)
+        menu.add_command(label="Cleanup MyTags", command=self.cleanup_custom_dictionary)
         menu.add_command(label="Open MyTags File...", command=lambda: self.app.open_textfile(self.app.my_tags_csv))
 
         entry_frame = Frame(top_frame)
@@ -246,7 +249,7 @@ class MyTags:
         append_btn.grid(row=0, column=2, sticky='ew', padx=2)
 
         self.load_my_tags_file()
-        self.app.refresh_custom_dictionary()
+        self.refresh_custom_dictionary()
 
 
     def show_my_tags_help(self):
@@ -307,7 +310,7 @@ class MyTags:
         self.custom_dictionary_treeview.delete(*self.custom_dictionary_treeview.get_children())
         try:
             with open(self.app.my_tags_csv, 'r', encoding='utf-8') as file:
-                content = self.app.remove_extra_newlines(file.read())
+                content = self.remove_extra_newlines(file.read())
         except Exception:
             content = ''
         for line in content.split('\n'):
@@ -327,7 +330,7 @@ class MyTags:
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save tags file:\n{e}")
             return
-        self.root.after(100, self.app.refresh_custom_dictionary)
+        self.root.after(100, self.refresh_custom_dictionary)
 
 
     def add_tag(self, tag_text: str):
@@ -408,6 +411,78 @@ class MyTags:
         new_text = self._join_csv(new_parts)
         self.app.text_box.delete('1.0', 'end')
         self.app.text_box.insert('1.0', new_text)
+
+
+    def refresh_custom_dictionary(self):
+        with open(self.app.my_tags_csv, 'r', encoding='utf-8') as file:
+            content = self.remove_extra_newlines(file.read())
+            tags = [tag.strip() for tag in content.split('\n') if tag.strip()]
+            treeview = self.custom_dictionary_treeview
+            # Clear existing items
+            for item in treeview.get_children():
+                treeview.delete(item)
+            # Insert tags into Treeview
+            for tag in tags:
+                treeview.insert('', 'end', values=(tag,))
+            self.app.autocomplete.update_autocomplete_dictionary()
+
+
+    def create_custom_dictionary(self, reset=False, refresh=True):
+        try:
+            csv_filename = self.app.my_tags_csv
+            if reset or not os.path.isfile(csv_filename):
+                with open(csv_filename, 'w', newline='', encoding="utf-8") as file:
+                    file.write("")
+                if refresh:
+                    self.refresh_custom_dictionary()
+        except (PermissionError, IOError, TclError) as e:
+            messagebox.showerror("Error: create_custom_dictionary()", f"An error occurred while creating the custom dictionary file:\n\n{csv_filename}\n\n{e}")
+
+
+    def remove_extra_newlines(self, text: "str"):
+        lines = text.split('\n')
+        cleaned_lines = [line for line in lines if line.strip() != '']
+        result = '\n'.join(cleaned_lines)
+        if not result.endswith('\n'):
+            result += '\n'
+        return result
+
+
+    def cleanup_custom_dictionary(self):
+        try:
+            if not os.path.isfile(self.app.my_tags_csv):
+                return
+            with open(self.app.my_tags_csv, 'r', encoding='utf-8') as file:
+                content = file.read()
+            lines = content.split('\n')
+            cleaned_lines = []
+            seen = set()
+            for line in lines:
+                cleaned_line = line.replace('"', '').replace("'", "").strip()
+                if cleaned_line and cleaned_line not in seen:
+                    seen.add(cleaned_line)
+                    cleaned_lines.append(cleaned_line)
+            cleaned_content = '\n'.join(cleaned_lines) + '\n'
+            with open(self.app.my_tags_csv, 'w', encoding='utf-8') as file:
+                file.write(cleaned_content)
+            self.refresh_custom_dictionary()
+            messagebox.showinfo("Success", "Custom dictionary has been cleaned.")
+        except (PermissionError, IOError, TclError) as e:
+            messagebox.showerror("Error: cleanup_custom_dictionary()", f"An error occurred while cleaning the custom dictionary:\n\n{e}")
+
+
+    def add_to_custom_dictionary(self, origin):
+        try:
+            if origin == "text_box":
+                selected_text = self.app.text_box.get("sel.first", "sel.last")
+            elif origin == "auto_tag":
+                selected_text = self.app.text_controller.autotag_listbox.get("active")
+                selected_text = selected_text.split(':', 1)[-1].strip()
+            with open(self.app.my_tags_csv, 'a', encoding="utf-8") as f:
+                f.write(selected_text.strip() + "\n")
+            self.refresh_custom_dictionary()
+        except (PermissionError, IOError, TclError) as e:
+            messagebox.showerror("Error: add_to_custom_dictionary()", f"An error occurred while saving the selected to 'my_tags.csv'.\n\n{e}")
 
 
     #endregion

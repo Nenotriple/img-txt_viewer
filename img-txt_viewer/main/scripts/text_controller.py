@@ -357,7 +357,7 @@ class TextController:
         contextmenu.add_command(label="Invert Selection", command=invert_selection)
         contextmenu.add_command(label="Clear Selection", command=clear_selection)
         contextmenu.add_separator()
-        contextmenu.add_command(label="Add to MyTags", command=lambda: self.parent.add_to_custom_dictionary(origin="auto_tag"))
+        contextmenu.add_command(label="Add to MyTags", command=lambda: self.my_tags.add_to_custom_dictionary(origin="auto_tag"))
         contextmenu.add_separator()
         contextmenu.add_command(label="Add to Exclude", command=lambda: self.add_selected_tags_to_excluded_tags())
         contextmenu.add_command(label="Add to Keep", command=lambda: self.add_selected_tags_to_keep_tags())
