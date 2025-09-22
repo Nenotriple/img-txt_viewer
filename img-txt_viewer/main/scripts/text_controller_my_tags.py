@@ -36,7 +36,7 @@ class MyTags:
 
         # UI state
         self.show_all_tags_var = BooleanVar(value=True)
-        self.hide_mytags_controls_var = BooleanVar(value=False)
+        self.hide_mytags_controls_var = BooleanVar(value=True)
         self.hide_alltags_controls_var = BooleanVar(value=False)
 
         # UI widgets (set during create_tab8)
@@ -93,40 +93,63 @@ class MyTags:
                     except Exception:
                         is_folder = False
 
-                selected_items_exist = False
+                # any selected rows (items or folders)
+                selected_rows_exist = False
                 try:
-                    for _iid in (widget.selection() or []):
-                        if 'folder' not in (widget.item(_iid, 'tags') or ()):
-                            selected_items_exist = True
-                            break
+                    selected_rows_exist = bool(widget.selection())
                 except Exception:
-                    selected_items_exist = False
+                    selected_rows_exist = False
+
+                def context_parent_for_new_group():
+                    # Right-click root -> root
+                    # Right-click on folder -> inside that folder
+                    # Right-click on item -> inside that item's parent (same group)
+                    if not iid:
+                        return None
+                    try:
+                        if 'folder' in (widget.item(iid, 'tags') or ()):
+                            return iid
+                    except Exception:
+                        pass
+                    try:
+                        return widget.parent(iid)
+                    except Exception:
+                        return None
 
                 def build_groups_submenu(parent_menu):
                     sub = Menu(parent_menu, tearoff=0)
-                    # Move out of any group into root
-                    sub.add_command(label="(Root)", command=lambda: self.move_selected_items_to_folder(None))
-                    # List top-level groups
-                    groups = []
-                    for gid in widget.get_children(''):
-                        try:
-                            if 'folder' in (widget.item(gid, 'tags') or ()):
-                                groups.append(gid)
-                        except Exception:
-                            pass
-                    if groups:
-                        for gid in groups:
-                            name = widget.item(gid)['text']
-                            sub.add_command(label=name, command=lambda fid=gid: self.move_selected_items_to_folder(fid))
-                    else:
+                    sub.add_command(label="(Root)", command=lambda: self.move_selection_to_folder(None))
+
+                    tree = widget
+
+                    def add_folder_entries(menu, parent_iid):
+                        for gid in tree.get_children(parent_iid):
+                            try:
+                                if 'folder' in (tree.item(gid, 'tags') or ()):
+                                    name = tree.item(gid)['text']
+                                else:
+                                    continue
+                            except Exception:
+                                continue
+                            # submenu for this folder
+                            child_sub = Menu(menu, tearoff=0)
+                            # entry to move directly into this folder
+                            child_sub.add_command(label="(Here)", command=lambda fid=gid: self.move_selection_to_folder(fid))
+                            # recurse into children
+                            add_folder_entries(child_sub, gid)
+                            menu.add_cascade(label=name, menu=child_sub)
+
+                    add_folder_entries(sub, '')
+                    # If no folders exist at all
+                    if not sub.index('end'):
                         sub.add_command(label="No groups", state='disabled')
                     return sub
 
                 menu = Menu(widget, tearoff=0)
                 # Global/new actions
-                menu.add_command(label="New Group...", command=self.add_group_via_prompt)
+                menu.add_command(label="New Group...", command=lambda: self.add_group_via_prompt(context_parent_for_new_group()))
                 if iid:
-                    if selected_items_exist:
+                    if selected_rows_exist:
                         menu.add_cascade(label="Add to group...", menu=build_groups_submenu(menu))
                     menu.add_separator()
                     # Insert into text (only items will be used)
@@ -277,6 +300,9 @@ class MyTags:
         up_btn.grid(row=4, column=0, sticky='ew', padx=2)
         down_btn = ttk.Button(self.list_btn_frame, text="Move Down", command=lambda: self.move_selection(self.custom_dictionary_treeview, 'down'))
         down_btn.grid(row=4, column=1, sticky='ew', padx=2)
+
+        # Apply initial visibility for MyTags controls based on the default-enabled hide option
+        self.toggle_mytags_controls()
 
         # All Tags section
         self.alltags_frame = Frame(self.text_frame)
@@ -557,23 +583,36 @@ class MyTags:
         try:
             data = self._read_mytags_data()
             seen = set()
-            cleaned_items = []
-            for tag in data.get('items', []):
-                cleaned_tag = str(tag).replace('"', '').replace("'", "").strip()
-                if cleaned_tag and cleaned_tag not in seen:
-                    seen.add(cleaned_tag)
-                    cleaned_items.append(cleaned_tag)
-            cleaned_groups = []
-            for grp in data.get('groups', []):
-                name = str(grp.get('name', '')).strip() or 'Group'
-                new_items = []
-                for tag in grp.get('items', []):
+
+            def clean_items(lst):
+                cleaned = []
+                for tag in lst or []:
                     cleaned_tag = str(tag).replace('"', '').replace("'", "").strip()
                     if cleaned_tag and cleaned_tag not in seen:
                         seen.add(cleaned_tag)
-                        new_items.append(cleaned_tag)
-                if new_items:
-                    cleaned_groups.append({'name': name, 'items': new_items})
+                        cleaned.append(cleaned_tag)
+                return cleaned
+
+            def clean_group(grp: dict):
+                name = str(grp.get('name', '')).strip() or 'Group'
+                items = clean_items(grp.get('items') or [])
+                cleaned_children = []
+                for child in grp.get('groups') or []:
+                    cg = clean_group(child)
+                    if cg is not None:
+                        cleaned_children.append(cg)
+                # keep group if it has items or non-empty children
+                if items or cleaned_children:
+                    return {'name': name, 'items': items, 'groups': cleaned_children}
+                return None
+
+            cleaned_items = clean_items(data.get('items') or [])
+            cleaned_groups = []
+            for grp in data.get('groups') or []:
+                cg = clean_group(grp)
+                if cg is not None:
+                    cleaned_groups.append(cg)
+
             self._write_mytags_data({'items': cleaned_items, 'groups': cleaned_groups})
             self.refresh_custom_dictionary()
             messagebox.showinfo("Success", "MyTags has been cleaned.")
@@ -649,9 +688,16 @@ class MyTags:
     def _read_mytags_list(self):
         # Flatten hierarchical data for consumers needing a flat list
         data = self._read_mytags_data()
-        flat = list(data.get('items', []))
-        for grp in data.get('groups', []):
-            flat.extend(grp.get('items', []))
+
+        def flatten_groups(groups):
+            out = []
+            for g in groups or []:
+                out.extend(g.get('items') or [])
+                out.extend(flatten_groups(g.get('groups') or []))
+            return out
+
+        flat = list(data.get('items', []) or [])
+        flat.extend(flatten_groups(data.get('groups') or []))
         if flat:
             return flat
         return []
@@ -659,6 +705,29 @@ class MyTags:
 
     def _read_mytags_data(self):
         path = self.app.my_tags_yml
+
+        def normalize_group_entry(entry):
+            if not isinstance(entry, dict):
+                return None
+            name = str(entry.get('name', '')).strip() or 'Group'
+            # normalize items
+            items = []
+            if isinstance(entry.get('items'), list):
+                items = [str(x).strip() for x in entry['items'] if str(x).strip()]
+            # normalize children groups (supports list or dict legacy)
+            raw_children = entry.get('groups') or []
+            children = []
+            if isinstance(raw_children, dict):
+                for n, lst in raw_children.items():
+                    lst2 = [str(x).strip() for x in (lst or []) if str(x).strip()]
+                    children.append({'name': str(n).strip() or 'Group', 'items': lst2, 'groups': []})
+            elif isinstance(raw_children, list):
+                for sub in raw_children:
+                    sg = normalize_group_entry(sub)
+                    if sg:
+                        children.append(sg)
+            return {'name': name, 'items': items, 'groups': children}
+
         if os.path.isfile(path):
             try:
                 with open(path, 'r', encoding='utf-8') as f:
@@ -671,18 +740,17 @@ class MyTags:
                     # items
                     if isinstance(data.get('items'), list):
                         items = [str(x).strip() for x in data['items'] if str(x).strip()]
-                    # groups could be list[dict{name,items}] or dict[name] -> list
+                    # groups could be list[dict{name,items,groups}] or dict[name] -> list (legacy)
                     g = data.get('groups') or []
                     if isinstance(g, dict):
                         for name, lst in g.items():
                             lst2 = [str(x).strip() for x in (lst or []) if str(x).strip()]
-                            groups.append({'name': str(name).strip() or 'Group', 'items': lst2})
+                            groups.append({'name': str(name).strip() or 'Group', 'items': lst2, 'groups': []})
                     elif isinstance(g, list):
                         for entry in g:
-                            if isinstance(entry, dict):
-                                name = str(entry.get('name', '')).strip() or 'Group'
-                                lst2 = [str(x).strip() for x in (entry.get('items') or []) if str(x).strip()]
-                                groups.append({'name': name, 'items': lst2})
+                            ng = normalize_group_entry(entry)
+                            if ng:
+                                groups.append(ng)
                     return {'items': items, 'groups': groups}
                 # Legacy dict with 'tags'
                 if isinstance(data, dict) and 'tags' in data and isinstance(data['tags'], list):
@@ -719,57 +787,83 @@ class MyTags:
 
 
     def _write_mytags_data(self, data: dict):
-        # Store structured data: {'items': [...], 'groups': [{'name':..., 'items':[...]}]}
+        # Store structured data: {'items': [...], 'groups': [{'name':..., 'items':[...], 'groups':[...]}]}
         path = self.app.my_tags_yml
         os.makedirs(os.path.dirname(path), exist_ok=True)
+
+        def sanitize_group(g: dict):
+            name = str(g.get('name', '')).strip() or 'Group'
+            lst = [str(t).strip() for t in (g.get('items') or []) if str(t).strip()]
+            subs = []
+            for sub in g.get('groups') or []:
+                if isinstance(sub, dict):
+                    subs.append(sanitize_group(sub))
+            return {'name': name, 'items': lst, 'groups': subs}
+
         items = [str(t).strip() for t in (data.get('items') or []) if str(t).strip()]
         groups = []
         for g in data.get('groups') or []:
-            name = str(g.get('name', '')).strip() or 'Group'
-            lst = [str(t).strip() for t in (g.get('items') or []) if str(t).strip()]
-            groups.append({'name': name, 'items': lst})
+            if isinstance(g, dict):
+                groups.append(sanitize_group(g))
+
         with open(path, 'w', encoding='utf-8') as f:
             yaml.safe_dump({'items': items, 'groups': groups}, f, allow_unicode=True, sort_keys=False)
 
-
     def _populate_tree_from_data(self, data: dict):
         tree = self.custom_dictionary_treeview
-        # Root items
-        for tag in data.get('items', []):
-            tree.insert('', 'end', text=tag, tags=('item',))
-        # Groups
-        for grp in data.get('groups', []):
-            folder_iid = tree.insert('', 'end', text=grp.get('name', 'Group'), tags=('folder',))
-            for item in grp.get('items', []):
+
+        def insert_group(parent_iid, grp: dict):
+            folder_iid = tree.insert(parent_iid, 'end', text=grp.get('name', 'Group'), tags=('folder',))
+            for item in grp.get('items', []) or []:
                 tree.insert(folder_iid, 'end', text=item, tags=('item',))
+            for child in grp.get('groups', []) or []:
+                insert_group(folder_iid, child)
             tree.item(folder_iid, open=True)
 
+        # Root items
+        for tag in data.get('items', []) or []:
+            tree.insert('', 'end', text=tag, tags=('item',))
+        # Groups (recursive)
+        for grp in data.get('groups', []) or []:
+            insert_group('', grp)
 
     def _collect_tree_data(self) -> dict:
         tree = self.custom_dictionary_treeview
-        items = []
-        groups = []
-        for iid in tree.get_children(''):
-            text = tree.item(iid)['text']
-            tags = tree.item(iid, 'tags') or ()
-            if 'folder' in tags:
-                children = [tree.item(ci)['text'] for ci in tree.get_children(iid) if 'item' in (tree.item(ci, 'tags') or ())]
-                groups.append({'name': text, 'items': children})
-            else:
-                items.append(text)
+
+        def collect(parent_iid):
+            items = []
+            groups = []
+            for iid in tree.get_children(parent_iid):
+                text = tree.item(iid)['text']
+                tags = tree.item(iid, 'tags') or ()
+                if 'folder' in tags:
+                    sub_items, sub_groups = collect(iid)
+                    groups.append({'name': text, 'items': sub_items, 'groups': sub_groups})
+                elif 'item' in tags:
+                    items.append(text)
+                else:
+                    # skip placeholders or unknown tags
+                    continue
+            return items, groups
+
+        items, groups = collect('')
         return {'items': items, 'groups': groups}
 
-
     # Convenience actions for folders/items
-    def add_group_via_prompt(self):
+    def add_group_via_prompt(self, parent_iid=None):
         name = simpledialog.askstring("New Group", "Enter group name:", parent=self.root)
         if not name:
             return
         name = name.strip()
         if not name:
             return
-        self.custom_dictionary_treeview.insert('', 'end', text=name, tags=('folder',))
-
+        parent = parent_iid or ''
+        self.custom_dictionary_treeview.insert(parent, 'end', text=name, tags=('folder',))
+        if parent_iid:
+            try:
+                self.custom_dictionary_treeview.item(parent_iid, open=True)
+            except Exception:
+                pass
 
     def add_item_to_folder(self, folder_iid, name: str | None = None):
         if not folder_iid:
@@ -809,6 +903,10 @@ class MyTags:
 
 
     def move_selected_items_to_folder(self, folder_iid):
+        # Backward-compatible wrapper, now moves both items and folders
+        return self.move_selection_to_folder(folder_iid)
+
+    def move_selection_to_folder(self, folder_iid):
         tree = self.custom_dictionary_treeview
         if not tree:
             return

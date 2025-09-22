@@ -33,6 +33,10 @@ class Autocomplete:
     - Column 2: Classifier ID (optional) - used for color-coding
     - Column 3: Tag ranking (optional) - used for sorting
     - Column 4: Similar names (comma-separated, optional) - used for suggestions
+
+    Also supports MyTags from YAML (my_tags.yaml / my_tags.yml):
+    - Structure: {'items': [...], 'groups': [{name, items, groups}]}
+    - Items are flattened in logical (depth-first) order into a simple list of tags
     """
     def __init__(self, data_file: str, include_my_tags: bool = True) -> None:
         # Data
@@ -72,34 +76,20 @@ class Autocomplete:
 
 
     def load_autocomplete_data(self) -> Tuple[Dict[str, Tuple[str, List[str]]], DefaultDict[str, List[str]]]:
-        """Load and merge tag data from primary and custom CSV sources."""
+        """Load and merge tag data from primary CSV dictionary and MyTags YAML."""
         app_path: str = self._get_app_path()
         data_file_path: str = os.path.join(app_path, "main\dict", self.data_file)
-        # Determine MyTags file to use: YAML > YML > CSV
-        yaml_path: str = os.path.join(app_path, 'my_tags.yaml')
-        yml_path: str = os.path.join(app_path, 'my_tags.yml')
-        csv_path: str = os.path.join(app_path, 'my_tags.csv')
-        additional_file_path: Optional[str] = None
-        additional_format: Optional[str] = None
-        if os.path.isfile(yaml_path):
-            additional_file_path = yaml_path
-            additional_format = 'yaml'
-        elif os.path.isfile(yml_path):
-            additional_file_path = yml_path
-            additional_format = 'yaml'
-        elif os.path.isfile(csv_path):
-            additional_file_path = csv_path
-            additional_format = 'csv'
-        else:
+        mytags_path: Optional[str] = os.path.join(app_path, 'my_tags.yaml')
+        if not os.path.isfile(mytags_path):
             self.include_my_tags = False
+            mytags_path = None
         autocomplete_data: Dict[str, Tuple[str, List[str]]] = {}
         similar_names_dict: DefaultDict[str, List[str]] = defaultdict(list)
+        # Primary CSV dictionary
         self._read_csv(data_file_path, autocomplete_data, similar_names_dict)
-        if self.include_my_tags and additional_file_path:
-            if additional_format == 'yaml':
-                self._read_yaml_mytags(additional_file_path, autocomplete_data, similar_names_dict)
-            else:
-                self._read_csv(additional_file_path, autocomplete_data, similar_names_dict, include_classifier_id=False)
+        # Merge MyTags, flattened in defined order
+        if self.include_my_tags and mytags_path:
+            self._read_yaml_mytags(mytags_path, autocomplete_data, similar_names_dict)
         return autocomplete_data, similar_names_dict
 
 
@@ -130,20 +120,42 @@ class Autocomplete:
 
 
     def _read_yaml_mytags(self, file_path: str, data: Dict[str, Tuple[str, List[str]]], similar_names_dict: DefaultDict[str, List[str]]) -> None:
-        """Parse YAML MyTags file (list or {tags: [...]}) and populate data.
-        Classifier IDs and similar names are not provided for MyTags.
-        """
+        """Parse MyTags YAML, flatten hierarchical items in logical order, and add to data."""
         if not os.path.isfile(file_path):
             return
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 yaml_data = yaml.safe_load(f) or []
-            items: List[str] = []
-            if isinstance(yaml_data, dict) and 'tags' in yaml_data and isinstance(yaml_data['tags'], list):
-                items = [str(x).strip() for x in yaml_data['tags'] if str(x).strip()]
+            # Normalize into a flat ordered list of items
+            flat_items: List[str] = []
+
+            def append_items(items):
+                for x in items or []:
+                    s = str(x).strip()
+                    if s:
+                        flat_items.append(s)
+
+            def walk_group(grp: Dict[str, Any]):
+                if not isinstance(grp, dict):
+                    return
+                append_items(grp.get('items') or [])
+                for child in grp.get('groups') or []:
+                    walk_group(child)
+
+            if isinstance(yaml_data, dict):
+                # Structured format: {'items': [...], 'groups': [...]}
+                if 'items' in yaml_data or 'groups' in yaml_data:
+                    append_items(yaml_data.get('items') or [])
+                    for g in yaml_data.get('groups') or []:
+                        walk_group(g)
+                # Legacy dict with 'tags'
+                elif 'tags' in yaml_data and isinstance(yaml_data['tags'], list):
+                    append_items(yaml_data['tags'])
             elif isinstance(yaml_data, list):
-                items = [str(x).strip() for x in yaml_data if str(x).strip()]
-            for tag in items:
+                # Legacy flat list
+                append_items(yaml_data)
+            # Merge into autocomplete data in order, no classifier/similar-names for MyTags
+            for tag in flat_items:
                 if tag and tag not in data:
                     data[tag] = ('', [])
         except Exception:
