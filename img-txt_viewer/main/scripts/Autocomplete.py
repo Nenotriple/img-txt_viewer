@@ -11,6 +11,7 @@ import itertools
 import tkinter as tk
 from functools import partial
 from collections import defaultdict
+import yaml
 
 
 # Type Hinting
@@ -36,7 +37,8 @@ class Autocomplete:
     def __init__(self, data_file: str, include_my_tags: bool = True) -> None:
         # Data
         self.data_file: str = data_file
-        self.my_tags_csv: str = 'my_tags.csv'
+        # MyTags storage
+        self.my_tags_yml: str = 'my_tags.yaml'
 
         # Settings
         self.max_suggestions: int = 4
@@ -73,14 +75,31 @@ class Autocomplete:
         """Load and merge tag data from primary and custom CSV sources."""
         app_path: str = self._get_app_path()
         data_file_path: str = os.path.join(app_path, "main\dict", self.data_file)
-        additional_file_path: str = os.path.join(app_path, self.my_tags_csv)
-        if not os.path.isfile(additional_file_path):
+        # Determine MyTags file to use: YAML > YML > CSV
+        yaml_path: str = os.path.join(app_path, 'my_tags.yaml')
+        yml_path: str = os.path.join(app_path, 'my_tags.yml')
+        csv_path: str = os.path.join(app_path, 'my_tags.csv')
+        additional_file_path: Optional[str] = None
+        additional_format: Optional[str] = None
+        if os.path.isfile(yaml_path):
+            additional_file_path = yaml_path
+            additional_format = 'yaml'
+        elif os.path.isfile(yml_path):
+            additional_file_path = yml_path
+            additional_format = 'yaml'
+        elif os.path.isfile(csv_path):
+            additional_file_path = csv_path
+            additional_format = 'csv'
+        else:
             self.include_my_tags = False
         autocomplete_data: Dict[str, Tuple[str, List[str]]] = {}
         similar_names_dict: DefaultDict[str, List[str]] = defaultdict(list)
         self._read_csv(data_file_path, autocomplete_data, similar_names_dict)
-        if self.include_my_tags:
-            self._read_csv(additional_file_path, autocomplete_data, similar_names_dict, include_classifier_id=False)
+        if self.include_my_tags and additional_file_path:
+            if additional_format == 'yaml':
+                self._read_yaml_mytags(additional_file_path, autocomplete_data, similar_names_dict)
+            else:
+                self._read_csv(additional_file_path, autocomplete_data, similar_names_dict, include_classifier_id=False)
         return autocomplete_data, similar_names_dict
 
 
@@ -108,6 +127,28 @@ class Autocomplete:
                             data[true_name] = (classifier_id, similar_names)
                         for sim_name in similar_names:
                             similar_names_dict[sim_name].append(true_name)
+
+
+    def _read_yaml_mytags(self, file_path: str, data: Dict[str, Tuple[str, List[str]]], similar_names_dict: DefaultDict[str, List[str]]) -> None:
+        """Parse YAML MyTags file (list or {tags: [...]}) and populate data.
+        Classifier IDs and similar names are not provided for MyTags.
+        """
+        if not os.path.isfile(file_path):
+            return
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                yaml_data = yaml.safe_load(f) or []
+            items: List[str] = []
+            if isinstance(yaml_data, dict) and 'tags' in yaml_data and isinstance(yaml_data['tags'], list):
+                items = [str(x).strip() for x in yaml_data['tags'] if str(x).strip()]
+            elif isinstance(yaml_data, list):
+                items = [str(x).strip() for x in yaml_data if str(x).strip()]
+            for tag in items:
+                if tag and tag not in data:
+                    data[tag] = ('', [])
+        except Exception:
+            # Fail silently; YAML may be malformed
+            pass
 
 
 # --------------------------------------

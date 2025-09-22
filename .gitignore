@@ -27,6 +27,8 @@ settings.cfg
 
 # MyTags file
 my_tags.csv
+my_tags.yaml
+my_tags.yml
 
 
 # ONNX Models

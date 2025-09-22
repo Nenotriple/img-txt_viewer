@@ -199,7 +199,7 @@ class ImgTxtViewer:
         # Misc Settings
         app_path = self.get_direct_app_path()
         self.app_settings_cfg = os.path.join(app_path, "settings.cfg")
-        self.my_tags_csv = os.path.join(app_path, "my_tags.csv")
+        self.my_tags_yml = os.path.join(app_path, "my_tags.yaml")
         self.onnx_models_dir = os.path.join(app_path, "models", "onnx_models")
         self.ncnn_models_dir = os.path.join(app_path, "models", "ncnn_models")
         self.image_dir = StringVar(value="Choose Directory...")
@@ -348,7 +348,7 @@ class ImgTxtViewer:
         self.editMenu.add_separator()
         # Settings Files
         self.editMenu.add_command(label="Open Settings File...", command=lambda: self.open_textfile(self.app_settings_cfg))
-        self.editMenu.add_command(label="Open MyTags File...", command=lambda: self.open_textfile(self.my_tags_csv))
+        self.editMenu.add_command(label="Open MyTags File...", command=lambda: self.open_textfile(self.my_tags_yml))
 
 
     def create_options_menu(self):
@@ -906,7 +906,7 @@ class ImgTxtViewer:
                 text_context_menu.add_separator()
                 text_context_menu.add_command(label="Open Text Directory...", command=self.open_text_directory)
                 text_context_menu.add_command(label="Open Text File...", command=self.open_textfile)
-                text_context_menu.add_command(label="Add to MyTags", state=select_state, command=lambda: self.add_to_custom_dictionary(origin="text_box"))
+                text_context_menu.add_command(label="Add to MyTags", state=select_state, command=lambda: self.text_controller.my_tags.add_to_custom_dictionary(origin="text_box"))
                 text_context_menu.add_separator()
                 text_context_menu.add_command(label="Highlight all Duplicates", accelerator="Ctrl+F", command=self.highlight_all_duplicates)
                 text_context_menu.add_command(label="Next Empty Text File", accelerator="Ctrl+E", command=self.index_goto_next_empty)

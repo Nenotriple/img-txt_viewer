@@ -15,6 +15,7 @@ from tkinter import (
 
 # Third-Party Libraries
 from TkToolTip.TkToolTip import TkToolTip as ToolTip
+import yaml
 
 
 # Type Hinting
@@ -158,7 +159,7 @@ class MyTags:
         menu.add_checkbutton(label="Hide: All Tags - Controls", variable=self.hide_alltags_controls_var, command=self.toggle_alltags_controls)
         menu.add_separator()
         menu.add_command(label="Cleanup MyTags", command=self.cleanup_custom_dictionary)
-        menu.add_command(label="Open MyTags File...", command=lambda: self.app.open_textfile(self.app.my_tags_csv))
+        menu.add_command(label="Open MyTags File...", command=lambda: self.app.open_textfile(self.app.my_tags_yml))
 
         entry_frame = Frame(top_frame)
         entry_frame.pack(side='left', fill='x', expand=True, pady=4)
@@ -269,8 +270,8 @@ class MyTags:
             "• Show All Tags: View tags from all text files\n"
             "• Refresh: Update My Tags or All Tags lists\n"
             "• Hide Controls: Toggle visibility of control buttons\n"
-            "• Open my_tags.csv: Edit tags directly in text editor\n\n"
-            "Note: Tags are stored in 'my_tags.csv'\n"
+            "• Open my_tags.yaml: Edit tags directly in text editor\n\n"
+            "Note: Tags are stored in 'my_tags.yaml' (CSV is still read if present)\n"
             "Use 'Batch Tag Edit' tool to modify All Tags"
         )
 
@@ -308,27 +309,19 @@ class MyTags:
         if not self.custom_dictionary_treeview:
             return
         self.custom_dictionary_treeview.delete(*self.custom_dictionary_treeview.get_children())
-        try:
-            with open(self.app.my_tags_csv, 'r', encoding='utf-8') as file:
-                content = self.remove_extra_newlines(file.read())
-        except Exception:
-            content = ''
-        for line in content.split('\n'):
-            tag = line.strip()
-            if tag:
-                self.custom_dictionary_treeview.insert('', 'end', values=(tag,))
+        tags = self._read_mytags_list()
+        for tag in tags:
+            self.custom_dictionary_treeview.insert('', 'end', values=(tag,))
 
 
     def save_my_tags_file(self):
         if not self.custom_dictionary_treeview:
             return
         tags = [self.custom_dictionary_treeview.item(iid)['values'][0] for iid in self.custom_dictionary_treeview.get_children()]
-        content = '\n'.join(tags) + ('\n' if tags else '')
         try:
-            with open(self.app.my_tags_csv, 'w', encoding='utf-8') as file:
-                file.write(content)
+            self._write_mytags_list(tags)
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to save tags file:\n{e}")
+            messagebox.showerror("Error", f"Failed to save MyTags (YAML):\n{e}")
             return
         self.root.after(100, self.refresh_custom_dictionary)
 
@@ -414,29 +407,36 @@ class MyTags:
 
 
     def refresh_custom_dictionary(self):
-        with open(self.app.my_tags_csv, 'r', encoding='utf-8') as file:
-            content = self.remove_extra_newlines(file.read())
-            tags = [tag.strip() for tag in content.split('\n') if tag.strip()]
-            treeview = self.custom_dictionary_treeview
-            # Clear existing items
-            for item in treeview.get_children():
-                treeview.delete(item)
-            # Insert tags into Treeview
-            for tag in tags:
-                treeview.insert('', 'end', values=(tag,))
-            self.app.autocomplete.update_autocomplete_dictionary()
+        tags = self._read_mytags_list()
+        treeview = self.custom_dictionary_treeview
+        # Clear existing items
+        for item in treeview.get_children():
+            treeview.delete(item)
+        # Insert tags into Treeview
+        for tag in tags:
+            treeview.insert('', 'end', values=(tag,))
+        self.app.autocomplete.update_autocomplete_dictionary()
 
 
     def create_custom_dictionary(self, reset=False, refresh=True):
         try:
-            csv_filename = self.app.my_tags_csv
-            if reset or not os.path.isfile(csv_filename):
-                with open(csv_filename, 'w', newline='', encoding="utf-8") as file:
-                    file.write("")
+            filename = self.app.my_tags_yml
+            if reset or not os.path.isfile(filename):
+                csv_path = self._csv_legacy_path()
+                if os.path.isfile(csv_path):
+                    try:
+                        with open(csv_path, 'r', encoding='utf-8') as f:
+                            lines = f.read().splitlines()
+                        tags = [line.strip() for line in lines if line.strip() and not line.strip().startswith('###')]
+                        self._write_mytags_list(tags)
+                    except Exception:
+                        self._write_mytags_list([])
+                else:
+                    self._write_mytags_list([])
                 if refresh:
                     self.refresh_custom_dictionary()
         except (PermissionError, IOError, TclError) as e:
-            messagebox.showerror("Error: create_custom_dictionary()", f"An error occurred while creating the custom dictionary file:\n\n{csv_filename}\n\n{e}")
+            messagebox.showerror("Error: create_custom_dictionary()", f"An error occurred while creating the MyTags file:\n\n{filename}\n\n{e}")
 
 
     def remove_extra_newlines(self, text: "str"):
@@ -450,25 +450,19 @@ class MyTags:
 
     def cleanup_custom_dictionary(self):
         try:
-            if not os.path.isfile(self.app.my_tags_csv):
-                return
-            with open(self.app.my_tags_csv, 'r', encoding='utf-8') as file:
-                content = file.read()
-            lines = content.split('\n')
-            cleaned_lines = []
+            tags = self._read_mytags_list()
             seen = set()
-            for line in lines:
-                cleaned_line = line.replace('"', '').replace("'", "").strip()
-                if cleaned_line and cleaned_line not in seen:
-                    seen.add(cleaned_line)
-                    cleaned_lines.append(cleaned_line)
-            cleaned_content = '\n'.join(cleaned_lines) + '\n'
-            with open(self.app.my_tags_csv, 'w', encoding='utf-8') as file:
-                file.write(cleaned_content)
+            cleaned = []
+            for tag in tags:
+                cleaned_tag = str(tag).replace('"', '').replace("'", "").strip()
+                if cleaned_tag and cleaned_tag not in seen:
+                    seen.add(cleaned_tag)
+                    cleaned.append(cleaned_tag)
+            self._write_mytags_list(cleaned)
             self.refresh_custom_dictionary()
-            messagebox.showinfo("Success", "Custom dictionary has been cleaned.")
+            messagebox.showinfo("Success", "MyTags has been cleaned.")
         except (PermissionError, IOError, TclError) as e:
-            messagebox.showerror("Error: cleanup_custom_dictionary()", f"An error occurred while cleaning the custom dictionary:\n\n{e}")
+            messagebox.showerror("Error: cleanup_custom_dictionary()", f"An error occurred while cleaning MyTags:\n\n{e}")
 
 
     def add_to_custom_dictionary(self, origin):
@@ -478,11 +472,16 @@ class MyTags:
             elif origin == "auto_tag":
                 selected_text = self.app.text_controller.autotag_listbox.get("active")
                 selected_text = selected_text.split(':', 1)[-1].strip()
-            with open(self.app.my_tags_csv, 'a', encoding="utf-8") as f:
-                f.write(selected_text.strip() + "\n")
+            else:
+                selected_text = ""
+            if selected_text:
+                tags = self._read_mytags_list()
+                if selected_text not in tags:
+                    tags.append(selected_text)
+                    self._write_mytags_list(tags)
             self.refresh_custom_dictionary()
         except (PermissionError, IOError, TclError) as e:
-            messagebox.showerror("Error: add_to_custom_dictionary()", f"An error occurred while saving the selected to 'my_tags.csv'.\n\n{e}")
+            messagebox.showerror("Error: add_to_custom_dictionary()", f"An error occurred while saving the selection to 'my_tags.yaml'.\n\n{e}")
 
 
     #endregion
@@ -507,6 +506,57 @@ class MyTags:
             indices = widget.curselection()
             return [widget.get(i) for i in indices] if indices else []
         return []
+
+
+    # YAML storage helpers
+    def _csv_legacy_path(self) -> str:
+        # my_tags.yaml path stored in self.app.my_tags_csv; legacy CSV lives alongside
+        yaml_path = self.app.my_tags_yml
+        base_dir = os.path.dirname(yaml_path)
+        return os.path.join(base_dir, "my_tags.csv")
+
+
+    def _read_mytags_list(self):
+        path = self.app.my_tags_yml
+        # Prefer YAML
+        if os.path.isfile(path):
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    data = yaml.safe_load(f) or []
+                if isinstance(data, dict) and 'tags' in data and isinstance(data['tags'], list):
+                    tags = [str(x).strip() for x in data['tags'] if str(x).strip()]
+                    if tags:
+                        return tags
+                if isinstance(data, list):
+                    tags = [str(x).strip() for x in data if str(x).strip()]
+                    if tags:
+                        return tags
+            except Exception:
+                pass
+        # Fallback: migrate from CSV if present
+        csv_path = self._csv_legacy_path()
+        if os.path.isfile(csv_path):
+            try:
+                with open(csv_path, 'r', encoding='utf-8') as f:
+                    lines = f.read().splitlines()
+                tags = [line.strip() for line in lines if line.strip() and not line.strip().startswith('###')]
+                # Attempt a one-time migration to YAML
+                try:
+                    self._write_mytags_list(tags)
+                except Exception:
+                    pass
+                return tags
+            except Exception:
+                return []
+        return []
+
+
+    def _write_mytags_list(self, tags):
+        # Store as simple list in YAML
+        path = self.app.my_tags_yml
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'w', encoding='utf-8') as f:
+            yaml.safe_dump([str(t) for t in tags if str(t).strip()], f, allow_unicode=True, sort_keys=False)
 
 
     #endregion
