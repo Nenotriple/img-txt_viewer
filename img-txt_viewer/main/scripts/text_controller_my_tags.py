@@ -4,6 +4,7 @@
 # Standard Library
 import os
 
+
 # Standard Library - GUI
 from tkinter import (
     ttk, Tk, messagebox, TclError,
@@ -17,6 +18,10 @@ from tkinter import (
 # Third-Party Libraries
 from TkToolTip.TkToolTip import TkToolTip as ToolTip
 import yaml
+
+
+# Custom Libraries
+import main.scripts.custom_simpledialog as custom_dialog
 
 
 # Type Hinting
@@ -851,7 +856,7 @@ class MyTags:
 
     # Convenience actions for folders/items
     def add_group_via_prompt(self, parent_iid=None):
-        name = simpledialog.askstring("New Group", "Enter group name:", parent=self.root)
+        name = custom_dialog.askstring("New Group", "Enter group name:", parent=self.root, icon_image=self.app.blank_image)
         if not name:
             return
         name = name.strip()
@@ -869,7 +874,7 @@ class MyTags:
         if not folder_iid:
             return
         if name is None:
-            name = simpledialog.askstring("New Item", "Enter item name:", parent=self.root)
+            name = custom_dialog.askstring("New Item", "Enter item name:", parent=self.root, icon_image=self.app.blank_image)
             if name is None:
                 return
             name = name.strip()
@@ -893,7 +898,7 @@ class MyTags:
         except Exception:
             is_folder = False
         title = "Rename Group" if is_folder else "Rename Item"
-        new_name = simpledialog.askstring(title, "Enter new name:", initialvalue=text, parent=self.root)
+        new_name = custom_dialog.askstring(title, "Enter new name:", initialvalue=text, parent=self.root, icon_image=self.app.blank_image)
         if new_name is None:
             return
         new_name = new_name.strip()
