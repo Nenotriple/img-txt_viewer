@@ -10,8 +10,7 @@ from tkinter import (
     ttk, Tk, messagebox, TclError,
     BooleanVar,
     Frame, Menu,
-    Listbox,
-    simpledialog
+    Listbox
 )
 
 
@@ -81,15 +80,73 @@ class MyTags:
                     # clicked on empty area
                     widget.selection_remove(widget.selection())
 
+                def _all_node_iids():
+                    def walk(parent=''):
+                        for child in widget.get_children(parent):
+                            try:
+                                tags = widget.item(child, 'tags') or ()
+                            except Exception:
+                                tags = ()
+                            # skip transient placeholder rows
+                            if 'placeholder' in tags:
+                                continue
+                            yield child
+                            yield from walk(child)
+                    return tuple(walk(''))
+
                 def select_all():
-                    widget.selection_set(widget.get_children(''))
+                    try:
+                        all_iids = _all_node_iids()
+                        if all_iids:
+                            widget.selection_set(*all_iids)
+                        else:
+                            widget.selection_remove(widget.selection())
+                    except Exception:
+                        pass
 
                 def invert_selection():
-                    current = set(widget.selection())
-                    all_iids = set(widget.get_children(''))
-                    inverted = all_iids - current
-                    widget.selection_remove(*current)
-                    widget.selection_set(*inverted)
+                    try:
+                        all_iids = set(_all_node_iids())
+                        current = set(widget.selection() or ())
+                        inverted = tuple(all_iids - current)
+                        if current:
+                            widget.selection_remove(*tuple(current))
+                        if inverted:
+                            widget.selection_set(*inverted)
+                    except Exception:
+                        pass
+
+                def select_all_groups():
+                    try:
+                        groups = []
+                        for nid in _all_node_iids():
+                            try:
+                                if 'folder' in (widget.item(nid, 'tags') or ()):
+                                    groups.append(nid)
+                            except Exception:
+                                continue
+                        if groups:
+                            widget.selection_set(*tuple(groups))
+                        else:
+                            widget.selection_remove(widget.selection())
+                    except Exception:
+                        pass
+
+                def select_all_items():
+                    try:
+                        items = []
+                        for nid in _all_node_iids():
+                            try:
+                                if 'item' in (widget.item(nid, 'tags') or ()):
+                                    items.append(nid)
+                            except Exception:
+                                continue
+                        if items:
+                            widget.selection_set(*tuple(items))
+                        else:
+                            widget.selection_remove(widget.selection())
+                    except Exception:
+                        pass
 
                 is_folder = False
                 if iid:
@@ -166,15 +223,18 @@ class MyTags:
                         menu.add_command(label="Rename Group", command=lambda: self.rename_node(iid))
                         menu.add_command(label="Remove", command=self.remove_selected_tags)
                     else:
-                        menu.add_command(label="Edit", command=self.edit_selected_tag_to_entry)
                         menu.add_command(label="Rename", command=lambda: self.rename_node(iid))
                         menu.add_command(label="Remove", command=self.remove_selected_tags)
                     menu.add_separator()
                     menu.add_command(label="Move Up", command=lambda: self.move_selection(widget, 'up'))
                     menu.add_command(label="Move Down", command=lambda: self.move_selection(widget, 'down'))
                     menu.add_separator()
+                    # --- updated selection menu entries ---
                     menu.add_command(label="Selection: All", command=select_all)
                     menu.add_command(label="Selection: Invert", command=invert_selection)
+                    menu.add_command(label="Selection: Select All Groups", command=select_all_groups)
+                    menu.add_command(label="Selection: Select All Items", command=select_all_items)
+                    # --- end updated selection menu entries ---
                 menu.tk_popup(event.x_root, event.y_root)
 
             elif widget == self.alltags_listbox:
@@ -458,17 +518,7 @@ class MyTags:
         if not selected:
             return
         iid = selected[0]
-        # Only edit items into entry; folders use rename
-        try:
-            if 'folder' in self.custom_dictionary_treeview.item(iid, 'tags'):
-                self.rename_node(iid)
-                return
-        except Exception:
-            pass
-        tag = self.custom_dictionary_treeview.item(iid)['text']
-        self.tag_entry.delete(0, 'end')
-        self.tag_entry.insert(0, tag)
-        self.custom_dictionary_treeview.delete(iid)
+        self.rename_node(iid)
 
 
     def move_selection(self, treeview: 'ttk.Treeview', direction: str):
