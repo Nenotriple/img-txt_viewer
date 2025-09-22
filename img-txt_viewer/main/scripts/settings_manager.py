@@ -33,6 +33,7 @@ class SettingsManager:
         self.parent = parent
         self.root = root
         self.version = self.parent.app_version
+        self.my_tags = self.parent.text_controller.my_tags
 
         self.config = configparser.ConfigParser()
 
@@ -133,12 +134,38 @@ class SettingsManager:
         self.config.set("Other", "font", str(self.parent.font_var.get()))
         self.config.set("Other", "font_size", str(self.parent.font_size_var.get()))
         self.config.set("Other", "list_mode", str(self.parent.list_mode_var.get()))
+        self._save_mytags_style_settings()
 
 
     def write_settings_to_file(self):
         """Writes the current settings to the configuration file."""
         with open(self.parent.app_settings_cfg, "w", encoding="utf-8") as f:
             self.config.write(f)
+
+
+    def _save_mytags_style_settings(self):
+        """Saves MyTags style settings to configuration."""
+        self._add_section("MyTagsStyle")
+        # Save Items style settings
+        items_style = self.my_tags._style_items
+        self.config.set("MyTagsStyle", "items_family", str(items_style.get('family', '')))
+        self.config.set("MyTagsStyle", "items_size", str(items_style.get('size', 9)))
+        self.config.set("MyTagsStyle", "items_weight", str(items_style.get('weight', 'normal')))
+        self.config.set("MyTagsStyle", "items_slant", str(items_style.get('slant', 'roman')))
+        self.config.set("MyTagsStyle", "items_underline", str(items_style.get('underline', False)))
+        self.config.set("MyTagsStyle", "items_overstrike", str(items_style.get('overstrike', False)))
+        self.config.set("MyTagsStyle", "items_foreground", str(items_style.get('foreground', '')))
+        self.config.set("MyTagsStyle", "items_background", str(items_style.get('background', '')))
+        # Save Groups style settings
+        groups_style = self.my_tags._style_groups
+        self.config.set("MyTagsStyle", "groups_family", str(groups_style.get('family', '')))
+        self.config.set("MyTagsStyle", "groups_size", str(groups_style.get('size', 9)))
+        self.config.set("MyTagsStyle", "groups_weight", str(groups_style.get('weight', 'bold')))
+        self.config.set("MyTagsStyle", "groups_slant", str(groups_style.get('slant', 'roman')))
+        self.config.set("MyTagsStyle", "groups_underline", str(groups_style.get('underline', False)))
+        self.config.set("MyTagsStyle", "groups_overstrike", str(groups_style.get('overstrike', False)))
+        self.config.set("MyTagsStyle", "groups_foreground", str(groups_style.get('foreground', '')))
+        self.config.set("MyTagsStyle", "groups_background", str(groups_style.get('background', '')))
 
 
 #endregion
@@ -233,6 +260,42 @@ class SettingsManager:
         if hasattr(self.parent, 'text_box'):
             self.parent.text_box.config(font=(self.parent.font_var.get(), self.parent.font_size_var.get()))
         self.parent.list_mode_var.set(value=self.config.getboolean("Other", "list_mode", fallback=False))
+        self._read_mytags_style_settings()
+
+
+    def _read_mytags_style_settings(self):
+        """Reads MyTags style settings from configuration."""
+        # Read Items style settings
+        items_style = self.my_tags._style_items
+        items_style['family'] = self.config.get("MyTagsStyle", "items_family", fallback='')
+        items_style['size'] = self.config.getint("MyTagsStyle", "items_size", fallback=9)
+        items_style['weight'] = self.config.get("MyTagsStyle", "items_weight", fallback='normal')
+        items_style['slant'] = self.config.get("MyTagsStyle", "items_slant", fallback='roman')
+        items_style['underline'] = self.config.getboolean("MyTagsStyle", "items_underline", fallback=False)
+        items_style['overstrike'] = self.config.getboolean("MyTagsStyle", "items_overstrike", fallback=False)
+        items_style['foreground'] = self.config.get("MyTagsStyle", "items_foreground", fallback='')
+        items_style['background'] = self.config.get("MyTagsStyle", "items_background", fallback='')
+        # Read Groups style settings
+        groups_style = self.my_tags._style_groups
+        groups_style['family'] = self.config.get("MyTagsStyle", "groups_family", fallback='')
+        groups_style['size'] = self.config.getint("MyTagsStyle", "groups_size", fallback=9)
+        groups_style['weight'] = self.config.get("MyTagsStyle", "groups_weight", fallback='bold')
+        groups_style['slant'] = self.config.get("MyTagsStyle", "groups_slant", fallback='roman')
+        groups_style['underline'] = self.config.getboolean("MyTagsStyle", "groups_underline", fallback=False)
+        groups_style['overstrike'] = self.config.getboolean("MyTagsStyle", "groups_overstrike", fallback=False)
+        groups_style['foreground'] = self.config.get("MyTagsStyle", "groups_foreground", fallback='')
+        groups_style['background'] = self.config.get("MyTagsStyle", "groups_background", fallback='')
+        # Update the variables to match the loaded style
+        self.my_tags.items_bold_var.set(value=items_style['weight'] == 'bold')
+        self.my_tags.items_italic_var.set(value=items_style['slant'] == 'italic')
+        self.my_tags.items_underline_var.set(value=items_style['underline'])
+        self.my_tags.items_overstrike_var.set(value=items_style['overstrike'])
+        self.my_tags.groups_bold_var.set(value=groups_style['weight'] == 'bold')
+        self.my_tags.groups_italic_var.set(value=groups_style['slant'] == 'italic')
+        self.my_tags.groups_underline_var.set(value=groups_style['underline'])
+        self.my_tags.groups_overstrike_var.set(value=groups_style['overstrike'])
+        # Apply the loaded styles
+        self.my_tags._apply_treeview_styles()
 
 
 #endregion
@@ -310,6 +373,8 @@ class SettingsManager:
             self.parent.text_controller.font_size_lbl.config(text=f"Size: 10")
             current_text = self.parent.text_box.get("1.0", "end-1c")
             self.parent.text_box.config(font=(self.parent.default_font, self.parent.default_font_size))
+        # MyTags style settings
+        self._reset_mytags_style_settings()
         self.parent.load_pairs()
         if hasattr(self.parent, 'text_box'):
             self.parent.text_box.delete("1.0", "end")
@@ -328,6 +393,43 @@ class SettingsManager:
         self.parent.sync_title_with_content()
         # Guided setup
         self.prompt_first_time_setup()
+
+
+    def _reset_mytags_style_settings(self):
+        """Resets MyTags style settings to their default values."""
+        # Reset Items style to defaults
+        self.my_tags._style_items = {
+            'family': '',
+            'size': 9,
+            'weight': 'normal',
+            'slant': 'roman',
+            'underline': False,
+            'overstrike': False,
+            'foreground': '',
+            'background': '',
+        }
+        # Reset Groups style to defaults
+        self.my_tags._style_groups = {
+            'family': '',
+            'size': 9,
+            'weight': 'bold',
+            'slant': 'roman',
+            'underline': False,
+            'overstrike': False,
+            'foreground': '',
+            'background': '',
+        }
+        # Reset Bool vars to match the default style
+        self.my_tags.items_bold_var.set(value=False)
+        self.my_tags.items_italic_var.set(value=False)
+        self.my_tags.items_underline_var.set(value=False)
+        self.my_tags.items_overstrike_var.set(value=False)
+        self.my_tags.groups_bold_var.set(value=True)
+        self.my_tags.groups_italic_var.set(value=False)
+        self.my_tags.groups_underline_var.set(value=False)
+        self.my_tags.groups_overstrike_var.set(value=False)
+        # Apply the reset styles
+        self.my_tags._apply_treeview_styles()
 
 
 #endregion
