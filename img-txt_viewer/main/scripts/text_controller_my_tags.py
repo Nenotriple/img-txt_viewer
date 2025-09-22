@@ -12,6 +12,8 @@ from tkinter import (
     Frame, Menu,
     Listbox
 )
+from tkinter import colorchooser
+import tkinter.font as tkfont
 
 
 # Third-Party Libraries
@@ -61,6 +63,46 @@ class MyTags:
             'prev_cursor': None,
         }
         self._placeholder_bg = '#dbeafe'
+
+        # Font style state for MyTags (applied to Treeview tags)
+        # Items
+        self._style_items = {
+            'family': '',
+            'size': 9,
+            'weight': 'normal',
+            'slant': 'roman',
+            'underline': False,
+            'overstrike': False,
+            'foreground': '',
+            'background': '',
+        }
+        # Groups (folders)
+        self._style_groups = {
+            'family': '',
+            'size': 9,
+            'weight': 'bold',
+            'slant': 'roman',
+            'underline': False,
+            'overstrike': False,
+            'foreground': '',
+            'background': '',
+        }
+        # Tk Font objects (created lazily)
+        self._font_items = None
+        self._font_groups = None
+        self._ttk_style = None
+        self._tree_style_name = 'MyTags.Treeview'
+
+        # Toggle vars for style flags (for menu checkbuttons)
+        self.items_bold_var = BooleanVar(value=self._style_items['weight'] == 'bold')
+        self.items_italic_var = BooleanVar(value=self._style_items['slant'] == 'italic')
+        self.items_underline_var = BooleanVar(value=self._style_items['underline'])
+        self.items_overstrike_var = BooleanVar(value=self._style_items['overstrike'])
+
+        self.groups_bold_var = BooleanVar(value=self._style_groups['weight'] == 'bold')
+        self.groups_italic_var = BooleanVar(value=self._style_groups['slant'] == 'italic')
+        self.groups_underline_var = BooleanVar(value=self._style_groups['underline'])
+        self.groups_overstrike_var = BooleanVar(value=self._style_groups['overstrike'])
 
 
     #region UI Build
@@ -287,6 +329,7 @@ class MyTags:
         help_btn = ttk.Button(top_frame, text="?", takefocus=False, width=2, command=self.show_my_tags_help)
         help_btn.pack(side='left')
 
+        # Options Menu
         menubutton = ttk.Menubutton(top_frame, text="Options", takefocus=False)
         menubutton.pack(side='left')
         menu = Menu(menubutton, tearoff=0)
@@ -300,9 +343,47 @@ class MyTags:
         menu.add_checkbutton(label="Hide: My Tags - Controls", variable=self.hide_mytags_controls_var, command=self.toggle_mytags_controls)
         menu.add_checkbutton(label="Hide: All Tags - Controls", variable=self.hide_alltags_controls_var, command=self.toggle_alltags_controls)
         menu.add_separator()
+
+        # MyTags Font Style submenu
+        font_menu = Menu(menu, tearoff=0)
+        menu.add_cascade(label="MyTags Font Style", menu=font_menu)
+
+        # Groups Style submenu
+        groups_menu = Menu(font_menu, tearoff=0)
+        font_menu.add_cascade(label="Groups", menu=groups_menu)
+        groups_menu.add_command(label="Font...", command=lambda: self._prompt_font_family('groups'))
+        groups_menu.add_command(label="Size...", command=lambda: self._prompt_font_size('groups'))
+        groups_menu.add_separator()
+        groups_menu.add_checkbutton(label="Bold", variable=self.groups_bold_var, command=lambda: self._toggle_style_flags('groups'))
+        groups_menu.add_checkbutton(label="Italic", variable=self.groups_italic_var, command=lambda: self._toggle_style_flags('groups'))
+        groups_menu.add_checkbutton(label="Underline", variable=self.groups_underline_var, command=lambda: self._toggle_style_flags('groups'))
+        groups_menu.add_checkbutton(label="Overstrike", variable=self.groups_overstrike_var, command=lambda: self._toggle_style_flags('groups'))
+        groups_menu.add_separator()
+        groups_menu.add_command(label="Foreground...", command=lambda: self._choose_color('groups', 'foreground'))
+        groups_menu.add_command(label="Background...", command=lambda: self._choose_color('groups', 'background'))
+        groups_menu.add_separator()
+        groups_menu.add_command(label="Reset", command=lambda: self._reset_font_style('groups'))
+
+        # Items Style submenu
+        items_menu = Menu(font_menu, tearoff=0)
+        font_menu.add_cascade(label="Items", menu=items_menu)
+        items_menu.add_command(label="Font...", command=lambda: self._prompt_font_family('items'))
+        items_menu.add_command(label="Size...", command=lambda: self._prompt_font_size('items'))
+        items_menu.add_separator()
+        items_menu.add_checkbutton(label="Bold", variable=self.items_bold_var, command=lambda: self._toggle_style_flags('items'))
+        items_menu.add_checkbutton(label="Italic", variable=self.items_italic_var, command=lambda: self._toggle_style_flags('items'))
+        items_menu.add_checkbutton(label="Underline", variable=self.items_underline_var, command=lambda: self._toggle_style_flags('items'))
+        items_menu.add_checkbutton(label="Overstrike", variable=self.items_overstrike_var, command=lambda: self._toggle_style_flags('items'))
+        items_menu.add_separator()
+        items_menu.add_command(label="Foreground...", command=lambda: self._choose_color('items', 'foreground'))
+        items_menu.add_command(label="Background...", command=lambda: self._choose_color('items', 'background'))
+        items_menu.add_separator()
+        items_menu.add_command(label="Reset", command=lambda: self._reset_font_style('items'))
+        menu.add_separator()
         menu.add_command(label="Cleanup MyTags", command=self.cleanup_custom_dictionary)
         menu.add_command(label="Open MyTags File...", command=lambda: self.app.open_textfile(self.app.my_tags_yml))
 
+        # Tag entry + Add + Save
         entry_frame = Frame(top_frame)
         entry_frame.pack(side='left', fill='x', expand=True, pady=4)
 
@@ -332,15 +413,16 @@ class MyTags:
         top_frame.grid(row=0, column=0, sticky='ew', padx=2, pady=(2, 0))
         ttk.Label(top_frame, text="My Tags:").pack(side='left', padx=(0, 5))
 
-        # Use single tree column (no headings)
         self.custom_dictionary_treeview = ttk.Treeview(my_tags_frame, show='tree', selectmode='extended', height=12)
         self.custom_dictionary_treeview.column('#0', anchor='w')
         self.custom_dictionary_treeview.grid(row=1, column=0, sticky='nsew')
-        # Styling for folder rows (bold)
+        self._apply_treeview_styles()
+        # Ensure Treeview uses the custom style
         try:
-            self.custom_dictionary_treeview.tag_configure('folder', font=('', 9, 'bold'))
+            self.custom_dictionary_treeview.configure(style=self._tree_style_name)
         except Exception:
             pass
+
         self.custom_dictionary_treeview.bind("<Button-3>", show_context_menu)
         self.custom_dictionary_treeview.bind("<Double-Button-1>", lambda event: self.insert_selected_tags(self.custom_dictionary_treeview, 'end'))
 
@@ -402,6 +484,7 @@ class MyTags:
 
         self.load_my_tags_file()
         self.refresh_custom_dictionary()
+        self._apply_treeview_styles()
 
 
     def show_my_tags_help(self):
@@ -715,6 +798,173 @@ class MyTags:
 
     #endregion
     #region Helpers
+
+
+    #region Font Style
+
+
+    def _ensure_fonts(self):
+        if self._font_items is None:
+            self._font_items = tkfont.Font(self.root, name='MyTagsItemFont', family=tkfont.nametofont('TkDefaultFont').cget('family'), size=9)
+        if self._font_groups is None:
+            self._font_groups = tkfont.Font(self.root, name='MyTagsGroupFont', family=tkfont.nametofont('TkDefaultFont').cget('family'), size=9, weight='bold')
+
+
+    def _apply_treeview_styles(self):
+        if not self.custom_dictionary_treeview:
+            return
+        self._ensure_fonts()
+        # Ensure ttk.Style exists and our style is configured
+        if self._ttk_style is None:
+            try:
+                self._ttk_style = ttk.Style(self.root)
+            except Exception:
+                self._ttk_style = ttk.Style()
+        try:
+            self._ttk_style.configure(self._tree_style_name)
+        except Exception:
+            pass
+        # Items font
+        items_style = self._style_items
+        fam_i = items_style['family'] or tkfont.nametofont('TkDefaultFont').cget('family')
+        try:
+            size_i = int(items_style['size'])
+        except Exception:
+            size_i = 9
+        self._font_items.configure(
+            family=fam_i,
+            size=size_i,
+            weight=items_style['weight'],
+            slant=items_style['slant'],
+            underline=bool(items_style['underline']),
+            overstrike=bool(items_style['overstrike'])
+        )
+        # Groups font
+        groups_style = self._style_groups
+        fam_g = groups_style['family'] or tkfont.nametofont('TkDefaultFont').cget('family')
+        try:
+            size_g = int(groups_style['size'])
+        except Exception:
+            size_g = 9
+        self._font_groups.configure(
+            family=fam_g,
+            size=size_g,
+            weight=groups_style['weight'],
+            slant=groups_style['slant'],
+            underline=bool(groups_style['underline']),
+            overstrike=bool(groups_style['overstrike'])
+        )
+        # Apply to Treeview tags
+        try:
+            self.custom_dictionary_treeview.tag_configure('item', font=self._font_items, foreground=(items_style['foreground'] or ''), background=(items_style['background'] or ''))
+        except Exception:
+            pass
+        try:
+            self.custom_dictionary_treeview.tag_configure('folder', font=self._font_groups, foreground=(groups_style['foreground'] or ''), background=(groups_style['background'] or ''))
+        except Exception:
+            pass
+        # Compute and apply rowheight using larger of items/groups font line space
+        try:
+            metrics_items = self._font_items.metrics()
+            metrics_groups = self._font_groups.metrics()
+            font_h_items = metrics_items.get('linespace', 0)
+            font_h_groups = metrics_groups.get('linespace', 0)
+        except Exception:
+            font_h_items = 0
+            font_h_groups = 0
+        row_h = max(16, font_h_items, font_h_groups)
+        try:
+            self._ttk_style.configure(self._tree_style_name, rowheight=row_h)
+            self.custom_dictionary_treeview.configure(style=self._tree_style_name)
+        except Exception:
+            pass
+
+
+    def _toggle_style_flags(self, which: str):
+        if which == 'items':
+            self._style_items['weight'] = 'bold' if self.items_bold_var.get() else 'normal'
+            self._style_items['slant'] = 'italic' if self.items_italic_var.get() else 'roman'
+            self._style_items['underline'] = bool(self.items_underline_var.get())
+            self._style_items['overstrike'] = bool(self.items_overstrike_var.get())
+        else:
+            self._style_groups['weight'] = 'bold' if self.groups_bold_var.get() else 'normal'
+            self._style_groups['slant'] = 'italic' if self.groups_italic_var.get() else 'roman'
+            self._style_groups['underline'] = bool(self.groups_underline_var.get())
+            self._style_groups['overstrike'] = bool(self.groups_overstrike_var.get())
+        self._apply_treeview_styles()
+
+
+    def _prompt_font_family(self, which: str):
+        try:
+            families = sorted(set(tkfont.families(self.root)))
+        except Exception:
+            families = []
+        current = self._style_items['family'] if which == 'items' else self._style_groups['family']
+        name = custom_dialog.askcombo("Font Family", "Select font", values=families, initialvalue=current or '', parent=self.root, icon_image=self.app.blank_image)
+        if name is None:
+            return
+        name = name.strip()
+        if which == 'items':
+            self._style_items['family'] = name
+        else:
+            self._style_groups['family'] = name
+        self._apply_treeview_styles()
+
+
+    def _prompt_font_size(self, which: str):
+        current = self._style_items['size'] if which == 'items' else self._style_groups['size']
+        val = custom_dialog.askstring("Font Size", "Enter font size (e.g., 9)", initialvalue=str(current), parent=self.root, icon_image=self.app.blank_image)
+        if val is None:
+            return
+        try:
+            size = max(6, min(96, int(str(val).strip())))
+        except Exception:
+            return
+        if which == 'items':
+            self._style_items['size'] = size
+        else:
+            self._style_groups['size'] = size
+        self._apply_treeview_styles()
+
+    # Removed row height manual controls; auto-calculated from font metrics
+
+
+    def _choose_color(self, which: str, field: str):
+        style = self._style_items if which == 'items' else self._style_groups
+        initial = style.get(field) or None
+        try:
+            _rgb, hexval = colorchooser.askcolor(initialcolor=initial, parent=self.root, title=("Choose " + field.capitalize()))
+        except Exception:
+            hexval = None
+        if not hexval:
+            return
+        style[field] = hexval
+        self._apply_treeview_styles()
+
+
+    def _reset_font_style(self, which: str):
+        if which == 'items':
+            self._style_items = {
+                'family': '', 'size': 9, 'weight': 'normal', 'slant': 'roman',
+                'underline': False, 'overstrike': False, 'foreground': '', 'background': ''
+            }
+            self.items_bold_var.set(False)
+            self.items_italic_var.set(False)
+            self.items_underline_var.set(False)
+            self.items_overstrike_var.set(False)
+        else:
+            self._style_groups = {
+                'family': '', 'size': 9, 'weight': 'bold', 'slant': 'roman',
+                'underline': False, 'overstrike': False, 'foreground': '', 'background': ''
+            }
+            self.groups_bold_var.set(True)
+            self.groups_italic_var.set(False)
+            self.groups_underline_var.set(False)
+            self.groups_overstrike_var.set(False)
+        self._apply_treeview_styles()
+
+
+    #endregion
 
 
     def _split_csv(self, text: str):
