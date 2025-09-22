@@ -10,11 +10,11 @@ from __future__ import annotations
 
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from typing import Optional
 
 
-__all__ = ["askstring"]
+__all__ = ["askstring", "askinteger", "askfloat"]
 
 
 class _AskStringDialog(tk.Toplevel):
@@ -121,6 +121,25 @@ class _AskStringDialog(tk.Toplevel):
 		self.destroy()
 
 
+def _get_or_create_root(parent: Optional[tk.Misc]) -> tuple[tk.Misc, bool]:
+	"""Return (root, created_root_flag)."""
+	root: Optional[tk.Misc] = parent
+	created = False
+	if root is None:
+		try:
+			root = tk._get_default_root()  # type: ignore[attr-defined]
+		except Exception:
+			root = None
+		if root is None:
+			root = tk.Tk()
+			created = True
+			try:
+				root.withdraw()
+			except Exception:
+				pass
+	return root, created
+
+
 def askstring(
 	title: Optional[str],
 	prompt: str,
@@ -167,6 +186,93 @@ def askstring(
 	return res
 
 
+def askinteger(
+	title: Optional[str],
+	prompt: str,
+	initialvalue: Optional[int] = None,
+	minvalue: Optional[int] = None,
+	maxvalue: Optional[int] = None,
+	parent: Optional[tk.Misc] = None,
+	icon_image: Optional["tk.PhotoImage"] = None,
+) -> Optional[int]:
+	"""
+	Prompt for an integer. Returns None if canceled.
+	"""
+	root, created = _get_or_create_root(parent)
+	try:
+		current = str(initialvalue) if initialvalue is not None else None
+		while True:
+			s = askstring(title, prompt, initialvalue=current, parent=root, icon_image=icon_image)
+			if s is None:
+				return None
+			try:
+				val = int(s)
+			except Exception:
+				messagebox.showerror(title or "Invalid integer", "Please enter a valid integer.", parent=root)
+				current = s
+				continue
+			if (minvalue is not None and val < minvalue) or (maxvalue is not None and val > maxvalue):
+				if minvalue is not None and maxvalue is not None:
+					msg = f"Please enter an integer between {minvalue} and {maxvalue}."
+				elif minvalue is not None:
+					msg = f"Please enter an integer >= {minvalue}."
+				else:
+					msg = f"Please enter an integer <= {maxvalue}."
+				messagebox.showerror(title or "Out of range", msg, parent=root)
+				current = s
+				continue
+			return val
+	finally:
+		if created and isinstance(root, tk.Tk):
+			try:
+				root.destroy()
+			except Exception:
+				pass
+
+def askfloat(
+	title: Optional[str],
+	prompt: str,
+	initialvalue: Optional[float] = None,
+	minvalue: Optional[float] = None,
+	maxvalue: Optional[float] = None,
+	parent: Optional[tk.Misc] = None,
+	icon_image: Optional["tk.PhotoImage"] = None,
+) -> Optional[float]:
+	"""
+	Prompt for a float. Returns None if canceled.
+	"""
+	root, created = _get_or_create_root(parent)
+	try:
+		current = str(initialvalue) if initialvalue is not None else None
+		while True:
+			s = askstring(title, prompt, initialvalue=current, parent=root, icon_image=icon_image)
+			if s is None:
+				return None
+			try:
+				val = float(s)
+			except Exception:
+				messagebox.showerror(title or "Invalid number", "Please enter a valid number.", parent=root)
+				current = s
+				continue
+			if (minvalue is not None and val < minvalue) or (maxvalue is not None and val > maxvalue):
+				if minvalue is not None and maxvalue is not None:
+					msg = f"Please enter a number between {minvalue} and {maxvalue}."
+				elif minvalue is not None:
+					msg = f"Please enter a number >= {minvalue}."
+				else:
+					msg = f"Please enter a number <= {maxvalue}."
+				messagebox.showerror(title or "Out of range", msg, parent=root)
+				current = s
+				continue
+			return val
+	finally:
+		if created and isinstance(root, tk.Tk):
+			try:
+				root.destroy()
+			except Exception:
+				pass
+
+
 if __name__ == "__main__":
 	# Minimal manual test when running this file directly.
 	# Example usage with icon (requires PIL.ImageTk and a valid image):
@@ -174,5 +280,5 @@ if __name__ == "__main__":
 	# img = Image.open("icon.png")
 	# icon = ImageTk.PhotoImage(img)
 	# val = askstring("Input required", "Enter a value:", initialvalue="Hello", icon_image=icon)
-	val = askstring("Input required", "Enter a value:", initialvalue="Hello")
+	val = askinteger("Input required", "Enter a value (10-100):", initialvalue=42, minvalue=10, maxvalue=100)
 	print("Result:", repr(val))
