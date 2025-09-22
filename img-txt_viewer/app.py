@@ -2547,11 +2547,14 @@ class ImgTxtViewer:
     def refresh_custom_dictionary(self):
         with open(self.my_tags_csv, 'r', encoding='utf-8') as file:
             content = self.remove_extra_newlines(file.read())
-            tags = content.split('\n')
-            self.text_controller.my_tags.custom_dictionary_listbox.delete(0, 'end')
+            tags = [tag.strip() for tag in content.split('\n') if tag.strip()]
+            treeview = self.text_controller.my_tags.custom_dictionary_treeview
+            # Clear existing items
+            for item in treeview.get_children():
+                treeview.delete(item)
+            # Insert tags into Treeview
             for tag in tags:
-                if tag.strip():
-                    self.text_controller.my_tags.custom_dictionary_listbox.insert('end', tag.strip())
+                treeview.insert('', 'end', values=(tag,))
             self.autocomplete.update_autocomplete_dictionary()
 
 
