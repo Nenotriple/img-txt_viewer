@@ -864,6 +864,7 @@ class MyTags:
         with open(path, 'w', encoding='utf-8') as f:
             yaml.safe_dump({'items': items, 'groups': groups}, f, allow_unicode=True, sort_keys=False)
 
+
     def _populate_tree_from_data(self, data: dict):
         tree = self.custom_dictionary_treeview
 
@@ -881,6 +882,7 @@ class MyTags:
         # Groups (recursive)
         for grp in data.get('groups', []) or []:
             insert_group('', grp)
+
 
     def _collect_tree_data(self) -> dict:
         tree = self.custom_dictionary_treeview
@@ -904,6 +906,7 @@ class MyTags:
         items, groups = collect('')
         return {'items': items, 'groups': groups}
 
+
     # Convenience actions for folders/items
     def add_group_via_prompt(self, parent_iid=None):
         name = custom_dialog.askstring("New Group", "Enter group name:", parent=self.root, icon_image=self.app.blank_image)
@@ -919,6 +922,7 @@ class MyTags:
                 self.custom_dictionary_treeview.item(parent_iid, open=True)
             except Exception:
                 pass
+
 
     def add_item_to_folder(self, folder_iid, name: str | None = None):
         if not folder_iid:
@@ -961,6 +965,7 @@ class MyTags:
         # Backward-compatible wrapper, now moves both items and folders
         return self.move_selection_to_folder(folder_iid)
 
+
     def move_selection_to_folder(self, folder_iid):
         tree = self.custom_dictionary_treeview
         if not tree:
@@ -968,7 +973,6 @@ class MyTags:
         selected = tree.selection()
         if not selected:
             return
-
         dest_parent = '' if not folder_iid else folder_iid
 
         def dest_item_names():
@@ -1024,6 +1028,7 @@ class MyTags:
                 tree.focus(moved[0])
             except Exception:
                 pass
+
 
     #endregion
     #region DnD
