@@ -8,6 +8,7 @@ from collections import deque
 
 # Standard Library - GUI
 from tkinter import ttk, Tk, Toplevel, messagebox, Frame, LabelFrame, Canvas, Label, TclError
+import tkinter as tk
 
 
 #endregion
@@ -665,10 +666,9 @@ class PyTrominosGame:
 #region Debugging
 
 
-# Run the game
-#import tkinter as tk
-#root = tk.Tk()
-#root.withdraw()
-#game = PyTrominosGame(root)
-#game.run()
-#root.mainloop()
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.withdraw()
+    game = PyTrominosGame(root)
+    game.run()
+    root.mainloop()
