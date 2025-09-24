@@ -33,7 +33,7 @@ class SettingsManager:
         self.parent = parent
         self.root = root
         self.version = self.parent.app_version
-        self.my_tags = self.parent.text_controller.my_tags
+        #my_tags = self.parent.text_controller.my_tags
 
         self.config = configparser.ConfigParser()
 
@@ -140,8 +140,9 @@ class SettingsManager:
     def _save_mytags_style_settings(self):
         """Saves MyTags style settings to configuration."""
         self._add_section("MyTagsStyle")
+        my_tags = self.parent.text_controller.my_tags
         # Save Items style settings
-        items_style = self.my_tags._style_items
+        items_style = my_tags._style_items
         self.config.set("MyTagsStyle", "items_family", str(items_style.get('family', '')))
         self.config.set("MyTagsStyle", "items_size", str(items_style.get('size', 9)))
         self.config.set("MyTagsStyle", "items_weight", str(items_style.get('weight', 'normal')))
@@ -151,7 +152,7 @@ class SettingsManager:
         self.config.set("MyTagsStyle", "items_foreground", str(items_style.get('foreground', '')))
         self.config.set("MyTagsStyle", "items_background", str(items_style.get('background', '')))
         # Save Groups style settings
-        groups_style = self.my_tags._style_groups
+        groups_style = my_tags._style_groups
         self.config.set("MyTagsStyle", "groups_family", str(groups_style.get('family', '')))
         self.config.set("MyTagsStyle", "groups_size", str(groups_style.get('size', 9)))
         self.config.set("MyTagsStyle", "groups_weight", str(groups_style.get('weight', 'bold')))
@@ -265,8 +266,9 @@ class SettingsManager:
 
     def _read_mytags_style_settings(self):
         """Reads MyTags style settings from configuration."""
+        my_tags = self.parent.text_controller.my_tags
         # Read Items style settings
-        items_style = self.my_tags._style_items
+        items_style = my_tags._style_items
         items_style['family'] = self.config.get("MyTagsStyle", "items_family", fallback='')
         items_style['size'] = self.config.getint("MyTagsStyle", "items_size", fallback=9)
         items_style['weight'] = self.config.get("MyTagsStyle", "items_weight", fallback='normal')
@@ -276,7 +278,7 @@ class SettingsManager:
         items_style['foreground'] = self.config.get("MyTagsStyle", "items_foreground", fallback='')
         items_style['background'] = self.config.get("MyTagsStyle", "items_background", fallback='')
         # Read Groups style settings
-        groups_style = self.my_tags._style_groups
+        groups_style = my_tags._style_groups
         groups_style['family'] = self.config.get("MyTagsStyle", "groups_family", fallback='')
         groups_style['size'] = self.config.getint("MyTagsStyle", "groups_size", fallback=9)
         groups_style['weight'] = self.config.get("MyTagsStyle", "groups_weight", fallback='bold')
@@ -286,16 +288,16 @@ class SettingsManager:
         groups_style['foreground'] = self.config.get("MyTagsStyle", "groups_foreground", fallback='')
         groups_style['background'] = self.config.get("MyTagsStyle", "groups_background", fallback='')
         # Update the variables to match the loaded style
-        self.my_tags.items_bold_var.set(value=items_style['weight'] == 'bold')
-        self.my_tags.items_italic_var.set(value=items_style['slant'] == 'italic')
-        self.my_tags.items_underline_var.set(value=items_style['underline'])
-        self.my_tags.items_overstrike_var.set(value=items_style['overstrike'])
-        self.my_tags.groups_bold_var.set(value=groups_style['weight'] == 'bold')
-        self.my_tags.groups_italic_var.set(value=groups_style['slant'] == 'italic')
-        self.my_tags.groups_underline_var.set(value=groups_style['underline'])
-        self.my_tags.groups_overstrike_var.set(value=groups_style['overstrike'])
+        my_tags.items_bold_var.set(value=items_style['weight'] == 'bold')
+        my_tags.items_italic_var.set(value=items_style['slant'] == 'italic')
+        my_tags.items_underline_var.set(value=items_style['underline'])
+        my_tags.items_overstrike_var.set(value=items_style['overstrike'])
+        my_tags.groups_bold_var.set(value=groups_style['weight'] == 'bold')
+        my_tags.groups_italic_var.set(value=groups_style['slant'] == 'italic')
+        my_tags.groups_underline_var.set(value=groups_style['underline'])
+        my_tags.groups_overstrike_var.set(value=groups_style['overstrike'])
         # Apply the loaded styles
-        self.my_tags._apply_treeview_styles()
+        my_tags._apply_treeview_styles()
 
 
 #endregion
@@ -397,8 +399,9 @@ class SettingsManager:
 
     def _reset_mytags_style_settings(self):
         """Resets MyTags style settings to their default values."""
+        my_tags = self.parent.text_controller.my_tags
         # Reset Items style to defaults
-        self.my_tags._style_items = {
+        my_tags._style_items = {
             'family': '',
             'size': 9,
             'weight': 'normal',
@@ -409,7 +412,7 @@ class SettingsManager:
             'background': '',
         }
         # Reset Groups style to defaults
-        self.my_tags._style_groups = {
+        my_tags._style_groups = {
             'family': '',
             'size': 9,
             'weight': 'bold',
@@ -420,16 +423,16 @@ class SettingsManager:
             'background': '',
         }
         # Reset Bool vars to match the default style
-        self.my_tags.items_bold_var.set(value=False)
-        self.my_tags.items_italic_var.set(value=False)
-        self.my_tags.items_underline_var.set(value=False)
-        self.my_tags.items_overstrike_var.set(value=False)
-        self.my_tags.groups_bold_var.set(value=True)
-        self.my_tags.groups_italic_var.set(value=False)
-        self.my_tags.groups_underline_var.set(value=False)
-        self.my_tags.groups_overstrike_var.set(value=False)
+        my_tags.items_bold_var.set(value=False)
+        my_tags.items_italic_var.set(value=False)
+        my_tags.items_underline_var.set(value=False)
+        my_tags.items_overstrike_var.set(value=False)
+        my_tags.groups_bold_var.set(value=True)
+        my_tags.groups_italic_var.set(value=False)
+        my_tags.groups_underline_var.set(value=False)
+        my_tags.groups_overstrike_var.set(value=False)
         # Apply the reset styles
-        self.my_tags._apply_treeview_styles()
+        my_tags._apply_treeview_styles()
 
 
 #endregion
