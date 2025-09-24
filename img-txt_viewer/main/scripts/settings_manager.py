@@ -33,7 +33,6 @@ class SettingsManager:
         self.parent = parent
         self.root = root
         self.version = self.parent.app_version
-        #my_tags = self.parent.text_controller.my_tags
 
         self.config = configparser.ConfigParser()
 
