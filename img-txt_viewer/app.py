@@ -1,6 +1,6 @@
 """
 Name    :  IMG-TXT VIEWER
-Version :  v1.97
+Version :  v1.99
 Author  :  github.com/Nenotriple
 
 Description:
@@ -78,7 +78,7 @@ from main.scripts.find_replace_widget import FindReplaceEntry
 
 class ImgTxtViewer:
     def __init__(self, root: 'Tk'):
-        self.app_version = "v1.97"
+        self.app_version = "v1.99"
         self.root = root
         self.is_frozen, self.app_root_path, self.app_launch_path = self.get_app_path()
         self.set_appid()
