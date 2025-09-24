@@ -9,7 +9,7 @@ pip install --upgrade pyinstaller
 ```
 3. Run PyInstaller
 ```
-pyinstaller app.py --name img_txt_viewer --onefile --windowed --icon="main\icon.ico" --add-data="main\icon.ico;main" --add-data="main;main"
+pyinstaller app.py --name img_txt_viewer --onefile --windowed --icon="main\icon.ico" --add-data="main;main"
 ```
 ## Breakdown of the PyInstaller Command:
 
@@ -25,7 +25,5 @@ pyinstaller app.py --name img_txt_viewer --onefile --windowed --icon="main\icon.
    - Run the executable without opening a console window.
 6. `--icon=icon.ico`
    - Path to the icon file for the executable. This is used to set the icon of the executable file itself.
-7. `--add-data="icon.ico;."`
-   - Include the icon file in the root directory of the bundled application. This is so the app can access the icon.
-8. `--add-data="main;main"`
+7. `--add-data="main;main"`
    - Include data from the `main` directory in the `main` folder of the bundled application. This is required to load the dictionaries, upscale model, etc.
