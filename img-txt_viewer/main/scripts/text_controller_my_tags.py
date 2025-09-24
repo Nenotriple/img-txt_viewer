@@ -23,6 +23,8 @@ import yaml
 
 # Custom Libraries
 import main.scripts.custom_simpledialog as custom_dialog
+from main.scripts import HelpText
+from main.scripts.help_window import HelpWindow
 
 
 # Type Hinting
@@ -103,6 +105,9 @@ class MyTags:
         self.groups_italic_var = BooleanVar(value=self._style_groups['slant'] == 'italic')
         self.groups_underline_var = BooleanVar(value=self._style_groups['underline'])
         self.groups_overstrike_var = BooleanVar(value=self._style_groups['overstrike'])
+
+        # Help Window
+        self.help_window = HelpWindow(self.root)
 
 
     #region UI Build
@@ -488,26 +493,7 @@ class MyTags:
 
 
     def show_my_tags_help(self):
-        messagebox.showinfo("Help",
-            "MyTags:\n"
-            "A list of custom tags/keywords that will be used for autocomplete suggestions or for quick insertion into the text box.\n\n"
-            "Basic Operations:\n"
-            "• Add tags: Type + Enter, right-click text, or use All Tags list\n"
-            "• Insert tags: Select and use Prefix/Append buttons or right-click menu\n"
-            "• Double-click any tag to instantly insert it (append)\n\n"
-            "Tag Management:\n"
-            "• Edit/Remove selected tags\n"
-            "• Reorder: drag with middle mouse, or use Move Up/Down (affects autocomplete priority)\n"
-            "• Save changes to file (required to apply changes)\n\n"
-            "Features:\n"
-            "• Use MyTags: Toggle autocomplete suggestions\n"
-            "• Show All Tags: View tags from all text files\n"
-            "• Refresh: Update My Tags or All Tags lists\n"
-            "• Hide Controls: Toggle visibility of control buttons\n"
-            "• Open my_tags.yaml: Edit tags directly in text editor\n\n"
-            "Note: Tags are stored in 'my_tags.yaml' (CSV is still read if present)\n"
-            "Use 'Batch Tag Edit' tool to modify All Tags"
-        )
+        self.help_window.open_window(geometry="600x700", help_text=HelpText.MY_TAGS_HELP)
 
 
     #endregion
