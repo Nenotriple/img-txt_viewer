@@ -17,7 +17,7 @@ from tkinter import (
 
 
 # Custom Libraries
-from TkToolTip.TkToolTip import TkToolTip as ToolTip
+from TkToolTip.TkToolTip import TkToolTip as Tip
 from main.scripts.help_window import HelpWindow
 import main.scripts.HelpText as HelpText
 import main.scripts.entry_helper as EntryHelper
@@ -129,7 +129,7 @@ class FindDupeFile:
         # Help Button
         self.help_button = ttk.Button(self.top_frame, text="?", width=2, command=self.open_help_window)
         self.help_button.pack(side="right", fill="x", padx=2)
-        ToolTip.create(self.help_button, "Show/Hide Help", 50, 6, 12)
+        Tip.create(widget=self.help_button, text="Show/Hide Help", show_delay=50)
 
 
     def create_menubar(self):
@@ -185,11 +185,11 @@ class FindDupeFile:
         self.entry_helper.setup_entry_binds(self.folder_entry)
         # Button - Browse
         self.browse_button = ttk.Button(self.folder_frame, text="Browse...", command=self.set_working_directory)
-        ToolTip.create(self.browse_button, "Select a folder to analyze for duplicate files.", delay=150, padx=2)
+        Tip.create(widget=self.browse_button, text="Select a folder to analyze for duplicate files.", padx=2)
         self.browse_button.pack(side="left")
         # Button - Open
         self.open_button = ttk.Button(self.folder_frame, text="Open", command=self.open_folder)
-        ToolTip.create(self.open_button, "Open path from folder entry.", delay=150, padx=2)
+        Tip.create(widget=self.open_button, text="Open path from folder entry.", padx=2)
         self.open_button.pack(side="left")
 
 
@@ -215,43 +215,43 @@ class FindDupeFile:
     def create_duplicate_handling_mode(self):
         # Radio Buttons - Duplicate Handling Mode
         self.radio_single = ttk.Radiobutton(self.widget_frame, text="Single", variable=self.dupe_handling_mode, value="Single")
-        ToolTip.create(self.radio_single, "Move extra duplicate files, leaving a copy behind.\nFiles will be stored in the '_Duplicate__Files' folder located in the parent folder.", delay=150, padx=2, pady=6)
+        Tip.create(widget=self.radio_single, text="Move extra duplicate files, leaving a copy behind.\nFiles will be stored in the '_Duplicate__Files' folder located in the parent folder.")
         self.radio_single.pack(side="left")
         self.radio_both = ttk.Radiobutton(self.widget_frame, text="Both", variable=self.dupe_handling_mode, value="Both")
-        ToolTip.create(self.radio_both, "Move all duplicate files, leaving no copy behind.\nFiles will be stored in the '_Duplicate__Files' folder located in the parent folder.\nDuplicates will be grouped into subfolders.", delay=150, padx=2, pady=6)
+        Tip.create(widget=self.radio_both, text="Move all duplicate files, leaving no copy behind.\nFiles will be stored in the '_Duplicate__Files' folder located in the parent folder.\nDuplicates will be grouped into subfolders.")
         self.radio_both.pack(side="left")
         # Button - Undo
         self.undo_button = ttk.Button(self.widget_frame, text="Undo", width=6, command=self.undo_file_move)
-        ToolTip.create(self.undo_button, "Restore all files to their original path.\nEnable 'Recursive' To also restore all files within subfolders.", delay=150, padx=2, pady=6)
+        Tip.create(widget=self.undo_button, text="Restore all files to their original path.\nEnable 'Recursive' To also restore all files within subfolders.")
         self.undo_button.pack(side="left")
 
 
     def create_run_stop_buttons(self):
         # Button - Run
         self.run_button = ttk.Button(self.widget_frame, text="Find Duplicates", command=self.find_duplicates)
-        ToolTip.create(self.run_button, "Process the selected folder.", delay=1000, padx=2, pady=6)
+        Tip.create(widget=self.run_button, text="Process the selected folder.", show_delay=1000)
         self.run_button.pack(side="left", fill="x", expand=True)
         # Button - Stop
         self.stop_button = ttk.Button(self.widget_frame, text="Stop!", width=6, command=self.stop_process)
-        ToolTip.create(self.stop_button, "Stop all running processes.", delay=150, padx=2, pady=6)
+        Tip.create(widget=self.stop_button, text="Stop all running processes.")
         self.stop_button.pack(side="left")
 
 
     def create_scan_mode_options(self):
         # Radio Buttons - Scanning Mode
         self.radio_images = ttk.Radiobutton(self.widget_frame, text="Images", variable=self.scanning_mode, value="Images")
-        ToolTip.create(self.radio_images, "Scan only image filetypes.", delay=150, padx=2, pady=6)
+        Tip.create(widget=self.radio_images, text="Scan only image filetypes.")
         self.radio_images.pack(side="left")
         self.radio_all_files = ttk.Radiobutton(self.widget_frame, text="All Files", variable=self.scanning_mode, value="All Files")
-        ToolTip.create(self.radio_all_files, "Scan all filetypes.", delay=150, padx=2, pady=6)
+        Tip.create(widget=self.radio_all_files, text="Scan all filetypes.")
         self.radio_all_files.pack(side="left")
         # Checkbutton - Subfolder Scanning
         self.recursive_checkbutton = ttk.Checkbutton(self.widget_frame, text="Recursive", variable=self.recursive_mode, offvalue=False)
-        ToolTip.create(self.recursive_checkbutton, "Enable to scan subfolders.\nNOTE: This only compares files within the same subfolder, not across all scanned folders.", delay=150, padx=2, pady=6)
+        Tip.create(widget=self.recursive_checkbutton, text="Enable to scan subfolders.\nNOTE: This only compares files within the same subfolder, not across all scanned folders.")
         self.recursive_checkbutton.pack(side="left")
         # Checkbutton - Move Captions
         self.move_captions_checkbutton = ttk.Checkbutton(self.widget_frame, text="Move Captions", variable=self.move_captions, offvalue=False)
-        ToolTip.create(self.move_captions_checkbutton, "Move caption text files with images.", padx=2, pady=6)
+        Tip.create(widget=self.move_captions_checkbutton, text="Move caption text files with images.")
         self.move_captions_checkbutton.pack(side="left")
         self.scanning_mode.trace_add('write', self.toggle_move_captions_option)
 
@@ -276,19 +276,19 @@ class FindDupeFile:
     def create_status_tray(self):
         # Label - Tray - Status
         self.tray_label_status = ttk.Label(self.find_dupe_files_frame, width=15, relief="groove", text=" Idle...")
-        ToolTip.create(self.tray_label_status, "App status.", delay=150, padx=2, pady=6)
+        Tip.create(widget=self.tray_label_status, text="App status.")
         self.tray_label_status.pack(side="left", padx=2, ipadx=2, ipady=2)
         # Label - Tray - Total Duplicates
         self.tray_label_duplicates = ttk.Label(self.find_dupe_files_frame, width=15, relief="groove", text="Duplicates: 00000")
-        ToolTip.create(self.tray_label_duplicates, "Total number of duplicate files across all scanned folders.", delay=150, padx=2, pady=6)
+        Tip.create(widget=self.tray_label_duplicates, text="Total number of duplicate files across all scanned folders.")
         self.tray_label_duplicates.pack(side="left", padx=2, ipadx=2, ipady=2)
         # Label - Tray - Total Images Checked
         self.tray_label_total_files = ttk.Label(self.find_dupe_files_frame, width=19, relief="groove", text="Files Checked: 000000")
-        ToolTip.create(self.tray_label_total_files, "Total number of files checked across all scanned folders.", delay=150, padx=2, pady=6)
+        Tip.create(widget=self.tray_label_total_files, text="Total number of files checked across all scanned folders.")
         self.tray_label_total_files.pack(side="left", padx=2, ipadx=2, ipady=2)
         # Progressbar
         self.progress = ttk.Progressbar(self.find_dupe_files_frame, length=100, mode='determinate')
-        ToolTip.create(self.progress, "Progressbar.", delay=150, padx=2, pady=6)
+        Tip.create(widget=self.progress, text="Progressbar.")
         self.progress.pack(side="left", fill="x", padx=2, expand=True)
 
 

@@ -16,7 +16,7 @@ from tkinter import ttk, filedialog, messagebox
 
 # Third-Party Libraries
 from PIL import Image, ImageSequence
-from TkToolTip.TkToolTip import TkToolTip as ToolTip
+from TkToolTip.TkToolTip import TkToolTip as Tip
 
 
 # Custom Libraries
@@ -172,7 +172,7 @@ class BatchUpscale:
         # Batch Mode
         self.batch_mode_checkbox = ttk.Checkbutton(input_frame, text="Batch Mode", variable=self.batch_mode_var, width=12, takefocus=False, command=self.toggle_batch_mode)
         self.batch_mode_checkbox.pack(side="left", fill="x")
-        ToolTip.create(self.batch_mode_checkbox, "Enable or disable batch processing", delay=250, padx=6, pady=12)
+        Tip.create(widget=self.batch_mode_checkbox, text="Enable or disable batch processing")
         # Browse
         self.browse_input_button = ttk.Button(input_frame, text="Browse...", command=lambda: self.set_upscale_paths(path="input"))
         self.browse_input_button.pack(side="left", fill="x")
@@ -191,7 +191,7 @@ class BatchUpscale:
         # Auto
         self.auto_output_checkbox = ttk.Checkbutton(batch_output_frame, text="Auto Name", variable=self.auto_output_var, width=12, takefocus=False, command=self.toggle_batch_mode)
         self.auto_output_checkbox.pack(side="left", fill="x")
-        ToolTip.create(self.auto_output_checkbox, "Automatically set a unique output path relative to the input path", delay=250, padx=6, pady=12)
+        Tip.create(widget=self.auto_output_checkbox, text="Automatically set a unique output path relative to the input path")
         # Browse
         self.browse_output_button = ttk.Button(batch_output_frame, text="Browse...", command=lambda: self.set_upscale_paths(path="output"))
         self.browse_output_button.pack(side="left", fill="x")
@@ -228,7 +228,7 @@ class BatchUpscale:
         # Label
         self.label_upscale_model = tk.Label(frame_model, text="Upscale Model:", width=20)
         self.label_upscale_model.pack(side="left")
-        ToolTip.create(self.label_upscale_model, "Select the RESRGAN upscale model", delay=250, padx=6, pady=12)
+        Tip.create(widget=self.label_upscale_model, text="Select the RESRGAN upscale model")
         # Combobox
         self.combobox_upscale_model = ttk.Combobox(frame_model, width=25, state="readonly", values=self.ncnn_models)
         self.combobox_upscale_model.pack(side="top", fill="x")
@@ -240,7 +240,7 @@ class BatchUpscale:
         # Label
         label_upscale_factor = tk.Label(frame_size, text="Upscale Factor:", width=20)
         label_upscale_factor.pack(side="left")
-        ToolTip.create(label_upscale_factor, "Determines the final size of the image.\n\nImages are first upscaled by 4x and then resized according to the selected upscale factor.\n\nThe final resolution is calculated as: (4 * original size) / upscale factor.", delay=250, padx=6, pady=12)
+        Tip.create(widget=label_upscale_factor, text="Determines the final size of the image.\n\nImages are first upscaled by 4x and then resized according to the selected upscale factor.\n\nThe final resolution is calculated as: (4 * original size) / upscale factor.")
         # Slider
         self.upscale_factor_value = tk.DoubleVar(value=2.00)
         self.slider_upscale_factor = ttk.Scale(frame_size, from_=0.25, to=8.00, orient="horizontal", variable=self.upscale_factor_value, command=self.update_upscale_factor_label)
@@ -255,7 +255,7 @@ class BatchUpscale:
         # Label
         self.label_upscale_strength = tk.Label(frame_strength, text="Upscale Strength:", width=20)
         self.label_upscale_strength.pack(side="left")
-        ToolTip.create(self.label_upscale_strength, "Adjust the upscale strength to determine the final blending value of the output image.\n\n0% = Only original image, 100% = Only upscaled image.", delay=250, padx=6, pady=12)
+        Tip.create(widget=self.label_upscale_strength, text="Adjust the upscale strength to determine the final blending value of the output image.\n\n0% = Only original image, 100% = Only upscaled image.")
         # Slider
         self.upscale_strength_value = tk.IntVar(value=100)
         self.slider_upscale_strength = ttk.Scale(frame_strength, from_=0, to=100, orient="horizontal", variable=self.upscale_strength_value, command=self.update_strength_label)

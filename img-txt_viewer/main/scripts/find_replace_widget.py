@@ -258,7 +258,7 @@ class FindReplaceEntry(ttk.Frame):
     def create_find_row(self):
         self.toggle_btn = ttk.Button(self, text="˃", width=3, command=self.toggle_replace_row)
         self.toggle_btn.grid(row=0, column=0, rowspan=2, sticky="ns")
-        Tip.create(self.toggle_btn, "Toggle replace row", delay=250, origin="widget", pady=-22)
+        Tip.create(widget=self.toggle_btn, text="Toggle replace row", origin='widget', tooltip_anchor='sw', padx=1, pady=-2)
         # Label
         ttk.Label(self, text="Find:").grid(row=0, column=1, sticky="w")
         # Entry
@@ -277,22 +277,22 @@ class FindReplaceEntry(ttk.Frame):
         self.options_menu.add_checkbutton(label="Match case (Aa)", variable=self.case_sensitive, command=self.perform_search)
         self.options_menu.add_checkbutton(label="Match whole word (≃)", variable=self.match_whole_word, command=self.perform_search)
         self.options_menu.add_checkbutton(label="Use regular expressions (.*)", variable=self.use_regex, command=self.perform_search)
-        Tip.create(self.options_menubutton, "Search options", delay=250, origin="widget", pady=-22)
+        Tip.create(widget=self.options_menubutton, text="Search options", origin='widget', tooltip_anchor='sw', padx=1, pady=-2)
         # Results label
         self.results_label = tk.Label(self, text="No results", highlightbackground="#dcdcdc", highlightthickness=1, anchor="w")
         self.results_label.grid(row=0, column=4, columnspan=2, sticky="w")
         # Prev
         prev_btn = ttk.Button(self, text="˄", width=3, command=self.previous_match)
         prev_btn.grid(row=0, column=6, sticky="e")
-        Tip.create(prev_btn, "Previous match (Shift+Enter)", delay=250, origin="widget", pady=-22)
+        Tip.create(widget=prev_btn, text="Previous match (Shift+Enter)", origin='widget', tooltip_anchor='sw', padx=1, pady=-2)
         # Next
         next_btn = ttk.Button(self, text="˅", width=3, command=self.next_match)
         next_btn.grid(row=0, column=7, sticky="e")
-        Tip.create(next_btn, "Next match (Enter)", delay=250, origin="widget", pady=-22)
+        Tip.create(widget=next_btn, text="Next match (Enter)", origin='widget', tooltip_anchor='sw', padx=1, pady=-2)
         # Close
         close_btn = ttk.Button(self, text="X", width=3, command=self.hide_widget)
         close_btn.grid(row=0, column=8, sticky="e")
-        Tip.create(close_btn, "Close (Esc)", delay=250, origin="widget", pady=-22)
+        Tip.create(widget=close_btn, text="Close (Esc)", origin='widget', tooltip_anchor='sw', padx=1, pady=-2)
 
 
     def create_replace_row(self):
@@ -309,12 +309,12 @@ class FindReplaceEntry(ttk.Frame):
         replace_btn = ttk.Button(self, text="Replace", command=self.replace_current)
         replace_btn.grid(row=1, column=3, columnspan=2, sticky="ew")
         replace_btn.grid_remove()
-        Tip.create(replace_btn, "Replace current match", delay=250, origin="widget", pady=-22)
+        Tip.create(widget=replace_btn, text="Replace current match", origin='widget', tooltip_anchor='sw', padx=1, pady=-2)
         # Replace All button
         replace_all_btn = ttk.Button(self, text="Replace All", command=self.replace_all)
         replace_all_btn.grid(row=1, column=5, columnspan=4, sticky="ew")
         replace_all_btn.grid_remove()
-        Tip.create(replace_all_btn, "Replace all matches", delay=250, origin="widget", pady=-22)
+        Tip.create(widget=replace_all_btn, text="Replace all matches", origin='widget', tooltip_anchor='sw', padx=1, pady=-2)
         # Store references to widgets
         self.replace_row_widgets = [replace_label, self.replace_entry, replace_btn, replace_all_btn]
 

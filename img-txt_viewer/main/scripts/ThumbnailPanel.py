@@ -12,7 +12,7 @@ from tkinter import ttk, Frame, Menu
 from PIL import Image, ImageTk, ImageOps
 
 # Custom Libraries
-from TkToolTip.TkToolTip import TkToolTip as ToolTip
+from TkToolTip.TkToolTip import TkToolTip as Tip
 
 # Type Hinting
 from typing import TYPE_CHECKING
@@ -194,7 +194,7 @@ class ThumbnailPanel(Frame):
         image_file = self.parent.image_files[index]
         image_info = self.image_info_cache[image_file]
         tooltip_text = f"#{index + 1} | {image_info['filename']} | {image_info['resolution']} | {image_info['size']}"
-        ToolTip.create(button, tooltip_text, delay=100, pady=-25, origin='widget')
+        Tip.create(widget=button, text=tooltip_text, show_delay=100, origin='widget', tooltip_anchor='sw', padx=1, pady=-2)
         return button
 
 

@@ -16,7 +16,7 @@ from tkinter import (
 
 
 # Third-Party Libraries
-from TkToolTip.TkToolTip import TkToolTip as ToolTip
+from TkToolTip.TkToolTip import TkToolTip as Tip
 
 
 # Custom Libraries
@@ -104,7 +104,7 @@ class BatchTagEdit:
         # Button
         help_button = ttk.Button(top_frame, text="?", width=2, command=self.open_help_window)
         help_button.grid(row=0, column=3, padx=2)
-        ToolTip.create(help_button, "Show/Hide Help", 50, 6, 12)
+        Tip.create(widget=help_button, text="Show/Hide Help", show_delay=50)
 
 
     def setup_listbox_frame(self):
@@ -137,27 +137,27 @@ class BatchTagEdit:
         # Select All
         self.button_all = ttk.Button(self.listbox_sub_frame, text="All", width=8, command=lambda: self.listbox_selection("all"))
         self.button_all.grid(row=0, column=0, padx=2, pady=2, sticky="ew")
-        ToolTip.create(self.button_all, "Select all tags in the listbox", 150, 6, 12)
+        Tip.create(widget=self.button_all, text="Select all tags in the listbox")
         # Invert Selection
         self.button_invert = ttk.Button(self.listbox_sub_frame, text="Invert", width=8, command=lambda: self.listbox_selection("invert"))
         self.button_invert.grid(row=0, column=1, padx=2, pady=2, sticky="ew")
-        ToolTip.create(self.button_invert, "Invert the current selection of tags", 150, 6, 12)
+        Tip.create(widget=self.button_invert, text="Invert the current selection of tags")
         # Clear Selection
         self.button_clear = ttk.Button(self.listbox_sub_frame, text="Clear", width=8, command=lambda: self.listbox_selection("clear"))
         self.button_clear.grid(row=0, column=2, padx=2, pady=2, sticky="ew")
-        ToolTip.create(self.button_clear, "Clear the current selection of tags", 150, 6, 12)
+        Tip.create(widget=self.button_clear, text="Clear the current selection of tags")
         # Revert Selection
         self.button_revert_sel = ttk.Button(self.listbox_sub_frame, text="Revert Sel", width=8, command=self.revert_listbox_changes)
         self.button_revert_sel.grid(row=1, column=0, padx=2, pady=2, sticky="ew")
-        ToolTip.create(self.button_revert_sel, "Revert the selected tags to their original state", 150, 6, 12)
+        Tip.create(widget=self.button_revert_sel, text="Revert the selected tags to their original state")
         # Revert All
         self.button_revert_all = ttk.Button(self.listbox_sub_frame, text="Revert All", width=8, command=self.clear_filter)
         self.button_revert_all.grid(row=1, column=1, padx=2, pady=2, sticky="ew")
-        ToolTip.create(self.button_revert_all, "Revert all tags to their original state. (Reset)", 150, 6, 12)
+        Tip.create(widget=self.button_revert_all, text="Revert all tags to their original state. (Reset)")
         # Copy
         self.button_copy = ttk.Button(self.listbox_sub_frame, text="Copy", width=8, command=self.copy_listbox_selection)
         self.button_copy.grid(row=1, column=2, padx=2, pady=2, sticky="ew")
-        ToolTip.create(self.button_copy, "Copy the selected tags to the clipboard", 150, 6, 12)
+        Tip.create(widget=self.button_copy, text="Copy the selected tags to the clipboard")
 
 
     def setup_option_frame(self):
@@ -180,7 +180,7 @@ class BatchTagEdit:
         # Label
         self.sort_label = Label(self.sort_frame, text="Sort by:", width=8)
         self.sort_label.grid(row=0, column=0, padx=2)
-        ToolTip.create(self.sort_label, "Sort the visible tags", 250, 6, 12)
+        Tip.create(widget=self.sort_label, text="Sort the visible tags")
         # Combobox
         self.sort_options_combobox = ttk.Combobox(self.sort_frame, values=["Frequency", "Name", "Length"], state="readonly", width=12)
         self.sort_options_combobox.set("Frequency")
@@ -201,7 +201,7 @@ class BatchTagEdit:
         # Label
         self.filter_label = Label(filter_frame, text="Filter :", width=8)
         self.filter_label.grid(row=0, column=0, padx=2)
-        ToolTip.create(self.filter_label, "All options except <, and >, support multiple values separated by commas.\n\nTag : Filter tags by the input text\n!Tag : Filter tags that do not contain the input text\n== : Filter tags equal to the given value\n!= : Filter tags not equal to the given value\n< : Filter tags less than the given value\n> : Filter tags greater than the given value", 250, 6, 12)
+        Tip.create(widget=self.filter_label, text="All options except <, and >, support multiple values separated by commas.\n\nTag : Filter tags by the input text\n!Tag : Filter tags that do not contain the input text\n== : Filter tags equal to the given value\n!= : Filter tags not equal to the given value\n< : Filter tags less than the given value\n> : Filter tags greater than the given value")
         # Combobox
         self.filter_combobox = ttk.Combobox(filter_frame, values=["Tag", "!Tag", "==", "!=", "<", ">"], state="readonly", width=12)
         self.filter_combobox.set("Tag")
@@ -218,7 +218,7 @@ class BatchTagEdit:
         # Button
         filter_clear_button = ttk.Button(filter_frame, text="Reset", command=self.clear_filter)
         filter_clear_button.grid(row=0, column=4, padx=2, sticky="e")
-        ToolTip.create(filter_clear_button, "Clear any filters or pending changes", 250, 6, 12)
+        Tip.create(widget=filter_clear_button, text="Clear any filters or pending changes")
 
 
     def setup_edit_frame(self):
@@ -234,7 +234,7 @@ class BatchTagEdit:
         # Label
         edit_label = ttk.Label(edit_row_frame, text="Edit:", width=10)
         edit_label.grid(row=0, column=0, sticky="w", padx=2, pady=5)
-        ToolTip.create(edit_label, "Select an option and enter text to apply to the selected tags", 250, 6, 12, justify="left")
+        Tip.create(widget=edit_label, text="Select an option and enter text to apply to the selected tags", justify="left")
         # Entry
         self.edit_entry = ttk.Entry(edit_row_frame)
         self.edit_entry.grid(row=0, column=1, sticky="ew", padx=2, pady=5)
@@ -243,11 +243,11 @@ class BatchTagEdit:
         # Button
         edit_apply_button = ttk.Button(edit_row_frame, text="Apply", command=self.apply_commands_to_listbox)
         edit_apply_button.grid(row=0, column=2, sticky="e", padx=2, pady=5)
-        ToolTip.create(edit_apply_button, "Apply the selected changes to the listbox. This does not apply the changes to the text files!", 250, 6, 12)
+        Tip.create(widget=edit_apply_button, text="Apply the selected changes to the listbox. This does not apply the changes to the text files!")
         # Button
         edit_reset_button = ttk.Button(edit_row_frame, text="Reset", command=self.clear_filter)
         edit_reset_button.grid(row=0, column=3, sticky="e", padx=2, pady=5)
-        ToolTip.create(edit_reset_button, "Clear any filters or pending changes", 250, 6, 12)
+        Tip.create(widget=edit_reset_button, text="Clear any filters or pending changes")
 
         # Delete frame
         delete_row = ttk.Frame(edit_frame)
@@ -262,7 +262,7 @@ class BatchTagEdit:
         # Button
         delete_button = ttk.Button(delete_row, text="Delete", command=lambda: self.apply_commands_to_listbox(delete=True))
         delete_button.grid(row=0, column=3, sticky="e", padx=2, pady=5)
-        ToolTip.create(delete_button, "Delete the selected tags", 250, 6, 12)
+        Tip.create(widget=delete_button, text="Delete the selected tags")
 
 
 #endregion

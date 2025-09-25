@@ -14,7 +14,7 @@ from tkinter import (
 
 
 # Third-Party Libraries
-from TkToolTip.TkToolTip import TkToolTip as ToolTip
+from TkToolTip.TkToolTip import TkToolTip as Tip
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 
 
@@ -115,23 +115,23 @@ class ImageGrid(ttk.Frame):
         # Size slider
         self.label_size = Label(self.frame_bottom, text="Size:")
         self.label_size.pack(side="left", padx=5)
-        ToolTip.create(self.label_size, "Adjust grid size", 500, 6, 12)
+        Tip.create(widget=self.label_size, text="Adjust grid size")
         self.slider_image_size = ttk.Scale(self.frame_bottom, variable=self.image_size, orient="horizontal", from_=1, to=3, command=self.round_scale_input)
         self.slider_image_size.bind("<ButtonRelease-1>", lambda event: self.reload_grid())
         self.slider_image_size.pack(side="left")
-        ToolTip.create(self.slider_image_size, "Adjust grid size", 500, 6, 12)
+        Tip.create(widget=self.slider_image_size, text="Adjust grid size")
         # Refresh
         self.button_refresh = ttk.Button(self.frame_bottom, text="Refresh", command=self.reload_grid)
         self.button_refresh.pack(side="right", padx=5)
-        ToolTip.create(self.button_refresh, "Refresh the image grid", 500, 6, 12)
+        Tip.create(widget=self.button_refresh, text="Refresh the image grid")
         # Load All
         self.button_load_all = ttk.Button(self.frame_bottom, text="Load All", command=lambda: self.load_images(all_images=True))
         self.button_load_all.pack(side="right", padx=5)
-        ToolTip.create(self.button_load_all, "Load all images in the folder (Slow)", 500, 6, 12)
+        Tip.create(widget=self.button_load_all, text="Load all images in the folder (Slow)")
         # Image Info
         self.label_image_info = Label(self.frame_bottom, width=14)
         self.label_image_info.pack(side="right", padx=5)
-        ToolTip.create(self.label_image_info, "Loaded Images / Total Images", 500, 6, 12)
+        Tip.create(widget=self.label_image_info, text="Loaded Images / Total Images")
 
 
 #endregion
@@ -229,7 +229,7 @@ class ImageGrid(ttk.Frame):
                     width, height = img.size
                 resolution = f"({width} x {height})"
                 tooltip_text = f"#{image_index + 1}, {os.path.basename(filepath)}, {filesize}, {resolution}"
-            ToolTip.create(thumbnail, tooltip_text, 200, 6, 12)
+            Tip.create(widget=thumbnail, text=tooltip_text)
 
 
     def load_images(self, all_images=False):
@@ -378,7 +378,7 @@ class ImageGrid(ttk.Frame):
             final_row = (total_items - 1) // self.columns
             self.load_more_button = ttk.Button(self.frame_image_grid, text="Load More", command=self.load_images)
             self.load_more_button.grid(row=final_row + 1, column=0, columnspan=self.columns, pady=10, sticky='ew')
-            ToolTip.create(self.load_more_button, "Load the next 150 images", 500, 6, 12)
+            Tip.create(widget=self.load_more_button, text="Load the next 150 images")
 
 
     def highlight_thumbnail(self, index):

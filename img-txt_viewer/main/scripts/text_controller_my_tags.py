@@ -17,7 +17,7 @@ import tkinter.font as tkfont
 
 
 # Third-Party Libraries
-from TkToolTip.TkToolTip import TkToolTip as ToolTip
+from TkToolTip.TkToolTip import TkToolTip as Tip
 import yaml
 
 
@@ -398,11 +398,11 @@ class MyTags:
 
         add_btn = ttk.Button(entry_frame, text="Add", command=lambda: (self.add_tag(self.tag_entry.get()), self.tag_entry.delete(0, 'end')))
         add_btn.pack(side='left')
-        ToolTip.create(add_btn, "Add tag to 'My Tags'", 200, 6, 12)
+        Tip.create(widget=add_btn, text="Add tag to 'My Tags'")
 
         save_btn = ttk.Button(top_frame, text="Save Tags", takefocus=False, command=self.save_my_tags_file)
         save_btn.pack(side='right')
-        ToolTip.create(save_btn, "Save changes to 'My Tags' file", 200, 6, 12)
+        Tip.create(widget=save_btn, text="Save changes to 'My Tags' file")
 
         # Middle Row
         self.text_frame = ttk.PanedWindow(tab_frame, orient='horizontal')
@@ -483,7 +483,7 @@ class MyTags:
         prefix_btn.grid(row=0, column=0, sticky='ew', padx=2)
         add_btn = ttk.Button(self.alltags_btn_frame, text="<", command=self.add_selected_alltags_to_mytags, width=2)
         add_btn.grid(row=0, column=1)
-        ToolTip.create(add_btn, "Add selected tags to 'My Tags'", 200, 6, 12)
+        Tip.create(widget=add_btn, text="Add selected tags to 'My Tags'")
         append_btn = ttk.Button(self.alltags_btn_frame, text="Append", command=lambda: self.insert_selected_tags(self.alltags_listbox, 'end'))
         append_btn.grid(row=0, column=2, sticky='ew', padx=2)
 

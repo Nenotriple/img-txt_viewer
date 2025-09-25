@@ -12,7 +12,7 @@ from tkinter import ttk, filedialog, messagebox
 
 # Third Party Library
 from PIL import Image, ImageTk, ImageSequence
-from TkToolTip.TkToolTip import TkToolTip as ToolTip
+from TkToolTip.TkToolTip import TkToolTip as Tip
 
 
 # Local
@@ -1208,7 +1208,7 @@ class CropInterface:
         # Help
         help_btn = ttk.Button(frame, text="?", width=2, command=self.open_help_window)
         help_btn.grid(row=0, column=4, padx=2, sticky="e")
-        ToolTip.create(help_btn, "Show/Hide Help", 50, 6, 12)
+        Tip.create(widget=help_btn, text="Show/Hide Help", show_delay=50)
 
 
     def create_img_ui(self):
@@ -1294,7 +1294,7 @@ class CropInterface:
         # Width
         width_label = ttk.Label(frame, text="W (px):")
         width_label.grid(row=0, column=0, padx=self.padxl, pady=self.pady, sticky='w')
-        ToolTip(width_label, "Width of selection in pixels", 200, 6, 12)
+        Tip.create(widget=width_label, text="Width of selection in pixels")
         self.width_spin = ttk.Spinbox(frame, from_=1, to=9999, width=7, command=self.adjust_selection)
         self.width_spin.grid(row=0, column=1, padx=self.padxr, pady=self.pady, sticky='e')
         self.width_spin.set(0)
@@ -1304,7 +1304,7 @@ class CropInterface:
         # Height
         height_label = ttk.Label(frame, text="H (px):")
         height_label.grid(row=1, column=0, padx=self.padxl, pady=self.pady, sticky='w')
-        ToolTip(height_label, "Height of selection in pixels", 200, 6, 12)
+        Tip.create(widget=height_label, text="Height of selection in pixels")
         self.height_spin = ttk.Spinbox(frame, from_=1, to=9999, width=7, command=self.adjust_selection)
         self.height_spin.grid(row=1, column=1, padx=self.padxr, pady=self.pady, sticky='e')
         self.height_spin.set(0)
@@ -1320,7 +1320,7 @@ class CropInterface:
         # X Position
         pos_x_label = ttk.Label(frame, text="X (px):")
         pos_x_label.grid(row=0, column=0, padx=self.padxl, pady=self.pady, sticky='w')
-        ToolTip(pos_x_label, "X coordinate of selection in pixels (From top left corner)", 200, 6, 12)
+        Tip.create(widget=pos_x_label, text="X coordinate of selection in pixels (From top left corner)")
         self.pos_x_spin = ttk.Spinbox(frame, from_=0, to=9999, width=7, command=self.adjust_selection)
         self.pos_x_spin.grid(row=0, column=1, padx=self.padxr, pady=self.pady, sticky='e')
         self.pos_x_spin.set(0)
@@ -1330,7 +1330,7 @@ class CropInterface:
         # Y Position
         pos_y_label = ttk.Label(frame, text="Y (px):")
         pos_y_label.grid(row=1, column=0, padx=self.padxl, pady=self.pady, sticky='w')
-        ToolTip(pos_y_label, "Y coordinate of selection in pixels (From top left corner)", 200, 6, 12)
+        Tip.create(widget=pos_y_label, text="Y coordinate of selection in pixels (From top left corner)")
         self.pos_y_spin = ttk.Spinbox(frame, from_=0, to=9999, width=7, command=self.adjust_selection)
         self.pos_y_spin.grid(row=1, column=1, padx=self.padxr, pady=self.pady, sticky='e')
         self.pos_y_spin.set(0)
@@ -1346,36 +1346,36 @@ class CropInterface:
         # Fixed selection
         fixed_sel_check = ttk.Checkbutton(frame, variable=self.fixed_sel_toggle_var, text="Fixed", command=self.toggle_widgets_by_mode)
         fixed_sel_check.grid(row=0, column=0, padx=self.padxl, pady=self.pady, sticky="w")
-        ToolTip(fixed_sel_check, "Enable fixed aspect ratio, width, height, or size", 200, 6, 12)
+        Tip.create(widget=fixed_sel_check, text="Enable fixed aspect ratio, width, height, or size")
         # Fixed selection Combobox
         fixed_sel_combo = ttk.Combobox(frame, values=["Aspect Ratio", "Width", "Height", "Size"], textvariable=self.fixed_sel_mode_var, state="readonly", width=16)
         fixed_sel_combo.grid(row=0, column=1, columnspan=99, sticky="e", padx=self.pady, pady=self.pady)
         fixed_sel_combo.bind("<<ComboboxSelected>>", self.toggle_widgets_by_mode)
         fixed_sel_combo.bind("<MouseWheel>", self.toggle_widgets_by_mode)
-        ToolTip(fixed_sel_combo, "Choose what to be fixed", 200, 6, 12)
+        Tip.create(widget=fixed_sel_combo, text="Choose what to be fixed")
         # Auto Mode
         self.auto_aspect_check = ttk.Checkbutton(frame, text="Auto", variable=self.auto_aspect_var, command=self.update_auto_entry_state, state="disabled")
         self.auto_aspect_check.grid(row=1, column=0, padx=self.padxl, pady=self.pady, sticky="w")
-        ToolTip(self.auto_aspect_check, "Automatically select the best aspect ratio for the selection based on the predefined ratios and the aspect ratio of the displayed image.\n\n'Fixed' and 'Aspect Ratio' must be enabled!", 200, 6, 12, wraplength=240)
+        Tip.create(widget=self.auto_aspect_check, text="Automatically select the best aspect ratio for the selection based on the predefined ratios and the aspect ratio of the displayed image.\n\n'Fixed' and 'Aspect Ratio' must be enabled!", wraplength=240)
         # Error Pip
         self.sel_error_pip = tk.Label(frame)
         self.sel_error_pip.grid(row=1, column=1, pady=self.pady, sticky="w")
-        self.selection_error_pip_tooltip = ToolTip(self.sel_error_pip, 100, 6, 12, state="disabled")
+        self.selection_error_pip_tooltip = Tip.create(widget=self.sel_error_pip, show_delay=100, state="disabled")
         # Selection Entry
         self.fixed_sel_entry = ttk.Entry(frame, textvariable=self.fixed_sel_entry_var, width=12)
         self.fixed_sel_entry.grid(row=1, column=2, padx=self.pady, pady=self.pady, sticky="ew")
-        self.fixed_selection_entry_tooltip = ToolTip(self.fixed_sel_entry, "Enter a ratio 'W:H' or a decimal '1.0'", 200, 6, 12)
+        self.fixed_selection_entry_tooltip = Tip.create(widget=self.fixed_sel_entry, text="Enter a ratio 'W:H' or a decimal '1.0'")
         self.fixed_sel_entry.bind("<KeyRelease>", lambda event: self.update_widget_values(resize=True))
         self.entry_helper.setup_entry_binds(self.fixed_sel_entry)
         # Insert Button
         insert_btn = ttk.Button(frame, text="<", width=1, command=self.insert_selection_dimension)
         insert_btn.grid(row=1, column=3, padx=self.pady, pady=self.pady, sticky="e")
-        ToolTip(insert_btn, "Insert current selection dimensions relative to the selected mode", 200, 6, 12)
+        Tip.create(widget=insert_btn, text="Insert current selection dimensions relative to the selected mode")
         # Auto Entry
         self.auto_entry = ttk.Entry(frame, textvariable=self.auto_entry_var, width=12, state="disabled")
         self.auto_entry.grid(row=3, column=0, columnspan=99, sticky="ew", padx=self.pady, pady=self.pady)
         self.entry_helper.setup_entry_binds(self.auto_entry)
-        ToolTip(self.auto_entry, "Enter aspect ratios separated by commas. As a ratio: 'W:H', or a decimal: '1.0'", 200, 6, 12)
+        Tip.create(widget=self.auto_entry, text="Enter aspect ratios separated by commas. As a ratio: 'W:H', or a decimal: '1.0'")
 
 
     def create_option_widgets(self):
@@ -1389,11 +1389,11 @@ class CropInterface:
         # Expand From Center
         expand_from_center_check = ttk.Checkbutton(check_frame, variable=self.expand_center_var, text="Expand from Center")
         expand_from_center_check.grid(row=0, column=0, padx=self.padxl, pady=self.pady, sticky="w")
-        ToolTip(expand_from_center_check, "Expand selection from center outwards", 200, 6, 12)
+        Tip.create(widget=expand_from_center_check, text="Expand selection from center outwards")
         # Highlight/Overlay
         overlay_check = ttk.Checkbutton(check_frame, variable=self.overlay_var, text="Highlight", command=self.toggle_overlay)
         overlay_check.grid(row=0, column=1, padx=self.padxl, pady=self.pady, sticky="e")
-        ToolTip(overlay_check, "Toggle the overlay/highlight that darkens the background during selection", 200, 6, 12)
+        Tip.create(widget=overlay_check, text="Toggle the overlay/highlight that darkens the background during selection")
         # Guidelines
         ttk.Label(frame, text="Guidelines:").grid(row=1, column=0, padx=self.padxl, pady=self.pady, sticky="w")
         self.guideline_combo = ttk.Combobox(frame, values=["None", "Crosshair", "Center Lines", "Rule of Thirds", "Diagonal Lines"], textvariable=self.guidelines_var, state="readonly", width=16)
