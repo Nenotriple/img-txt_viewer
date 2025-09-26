@@ -10,6 +10,7 @@ Default settings should be set in both the main application (parent) and the Set
 
 # Standard Library
 import os
+import ast
 import traceback
 import configparser
 
@@ -98,9 +99,14 @@ class SettingsManager:
 
     def _save_window_settings(self):
         self._add_section("Window")
+        self.config.set("Window", "restore_last_window_size_var", str(self.parent.restore_last_window_size_var.get()))
+        self.config.set("Window", "restore_last_text_pane_heights_var", str(self.parent.restore_last_text_pane_heights_var.get()))
+        self.config.set("Window", "window_geometry", str(self.parent.get_window_geometry()))
+        self.config.set("Window", "always_on_top_var", str(self.parent.always_on_top_var.get()))
+        self.config.set("Window", "primary_pane_state", str(self.parent.get_windowpane_state(windowpane=self.parent.primary_paned_window)))
         self.config.set("Window", "panes_swap_ew_var", str(self.parent.panes_swap_ew_var.get()))
         self.config.set("Window", "panes_swap_ns_var", str(self.parent.panes_swap_ns_var.get()))
-        self.config.set("Window", "always_on_top_var", str(self.parent.always_on_top_var.get()))
+        self.config.set("Window", "text_widget_frame_dict", str(self.parent.text_widget_frame_dict))
 
 
     def _save_autocomplete_settings(self):
@@ -203,6 +209,7 @@ class SettingsManager:
         self._read_autocomplete_settings()
         self._read_other_settings()
         self._read_mytags_style_settings()
+        self._read_window_settings()
 
 
     def _read_directory_settings(self):
@@ -299,6 +306,25 @@ class SettingsManager:
         my_tags._apply_treeview_styles()
 
 
+    def _read_window_settings(self):
+        self.parent.restore_last_window_size_var.set(value=self.config.getboolean("Window", "restore_last_window_size_var", fallback=True))
+        self.parent.restore_last_text_pane_heights_var.set(value=self.config.getboolean("Window", "restore_last_text_pane_heights_var", fallback=True))
+        if self.parent.restore_last_window_size_var.get():
+            self.parent.panes_swap_ew_var.set(value=self.config.getboolean("Window", "panes_swap_ew_var", fallback=False))
+            self.parent.panes_swap_ns_var.set(value=self.config.getboolean("Window", "panes_swap_ns_var", fallback=False))
+            self.parent.swap_pane_sides(swap_state=self.parent.panes_swap_ew_var.get())
+            self.parent.swap_pane_orientation(swap_state=self.parent.panes_swap_ns_var.get())
+            self.parent.always_on_top_var.set(value=self.config.getboolean("Window", "always_on_top_var", fallback=False))
+            self.parent.set_always_on_top()
+            window_geometry = ast.literal_eval(self.config.get("Window", "window_geometry", fallback=None))
+            self.parent.setup_window(geometry=window_geometry)
+            if self.parent.restore_last_path_var.get():
+                primary_pane_state = ast.literal_eval(self.config.get("Window", "primary_pane_state", fallback=None))
+                self.parent.set_windowpane_state(windowpane=self.parent.primary_paned_window, state=primary_pane_state)
+                text_widget_frame_dict = ast.literal_eval(self.config.get("Window", "text_widget_frame_dict", fallback="{}"))
+                self.parent.text_widget_frame_dict = text_widget_frame_dict
+
+
 #endregion
 #region Reset
 
@@ -365,7 +391,7 @@ class SettingsManager:
         self.parent.panes_swap_ns_var.set(value=False)
         self.parent.swap_pane_sides(swap_state=False)
         self.parent.swap_pane_orientation(swap_state=False)
-        self.parent.setup_window()
+        self.parent.reset_window_geometry()
         # Font and text_box
         if hasattr(self.parent, 'text_box'):
             self.parent.font_var.set(value="Courier New")

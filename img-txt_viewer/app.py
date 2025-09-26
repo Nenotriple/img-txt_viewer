@@ -119,6 +119,8 @@ class ImgTxtViewer:
         # Setup UI state
         self.ui_state = "ImgTxtViewer"
         self.current_ui_state = {"tab": "Tagger", "index": 0}
+        self.current_text_notebook_tab = "S&R"
+        self.text_widget_frame_dict = {}
 
         # Window drag variables
         self.drag_x = None
@@ -208,6 +210,8 @@ class ImgTxtViewer:
         self.ncnn_models_dir = os.path.join(app_path, "models", "ncnn_models")
         self.image_dir = StringVar(value="Choose Directory...")
         self.restore_last_path_var = BooleanVar(value=True)
+        self.restore_last_window_size_var = BooleanVar(value=True)
+        self.restore_last_text_pane_heights_var = BooleanVar(value=True)
         self.text_dir = ""
         self.external_image_editor_path = "mspaint"
         self.always_on_top_var = BooleanVar(value=False)
@@ -408,11 +412,18 @@ class ImgTxtViewer:
         self.optionsMenu.add_separator()
         # Set external editor
         self.optionsMenu.add_command(label="Set Default External Image Editor...", command=self.set_external_image_editor_path)
+        self.optionsMenu.add_separator()
         # Restore last path on startup
         self.optionsMenu.add_checkbutton(label="Restore Last Path", variable=self.restore_last_path_var)
+        # Restore last window and Windowpane geometry on startup
+        self.optionsMenu.add_checkbutton(label="Restore Last Window Size", variable=self.restore_last_window_size_var)
+        # Restore last text pane heights when switching tabs
+        self.optionsMenu.add_checkbutton(label="Restore Last Text Pane Heights", variable=self.restore_last_text_pane_heights_var)
         # Reset Settings
         self.optionsMenu.add_separator()
-        self.optionsMenu.add_command(label="Reset Settings", state="disable", command=self.settings_manager.reset_settings)
+        self.optionsMenu.add_command(label="Reset All Settings", state="disable", command=self.settings_manager.reset_settings)
+        self.optionsMenu.add_command(label="Reset Window Size & Position", command=self.reset_window_geometry)
+
 
 
     def create_tools_menu(self):
@@ -462,7 +473,7 @@ class ImgTxtViewer:
             "Text Options",
             "Loading Order",
             "Autocomplete",
-            "Reset Settings"
+            "Reset All Settings"
         ]
         for t_command in tool_commands:
             self.toolsMenu.entryconfig(t_command, state="normal")
@@ -783,10 +794,11 @@ class ImgTxtViewer:
     # --------------------------------------
     def create_text_control_frame(self):
         self.text_widget_frame = Frame(self.master_control_frame)
+        self.text_widget_frame.bind("<Configure>", self.on_text_widget_frame_configure)
         self.text_pane.add(self.text_widget_frame, stretch="never")
         self.text_pane.paneconfigure(self.text_widget_frame)
         self.text_notebook = ttk.Notebook(self.text_widget_frame)
-        self.text_notebook.bind("<<NotebookTabChanged>>", self.adjust_text_pane_height)
+        self.text_notebook.bind("<<NotebookTabChanged>>", self.on_text_notebook_tab_change)
         self.tab1 = Frame(self.text_notebook)
         self.tab2 = Frame(self.text_notebook)
         self.tab3 = Frame(self.text_notebook)
@@ -818,7 +830,29 @@ class ImgTxtViewer:
         #self.text_widget_frame.bind("<Configure>", lambda event: print(f"text_widget_frame height: {event.height}"))
 
 
-    def adjust_text_pane_height(self, event):
+    def on_text_notebook_tab_change(self, event):
+        previous_tab = self.current_text_notebook_tab
+        self.current_text_notebook_tab = event.widget.tab("current", "text")
+        # Save previous tab's state before switching
+        self.save_text_pane_state(tab_name=previous_tab)
+        # Restore state for tab if available
+        self.config_text_pane_for_tab()
+        self.update_mytags_tab()
+        self.initialize_text_pane = False
+
+
+    def on_text_widget_frame_configure(self, event):
+        self.text_widget_frame_dict[self.current_text_notebook_tab] = event.height
+
+
+    def save_text_pane_state(self, tab_name=None):
+        if not self.initialize_text_pane:
+            height = self.text_widget_frame.winfo_height()
+            tab = tab_name if tab_name is not None else self.current_text_notebook_tab
+            self.text_widget_frame_dict[tab] = height
+
+
+    def config_text_pane_for_tab(self, reset=False):
         tab_heights = {
             'S&R': 60,
             'Prefix': 60,
@@ -830,11 +864,18 @@ class ImgTxtViewer:
             'MyTags': 340,
             'Stats': 340
         }
-        selected_tab = event.widget.tab("current", "text")
-        tab_height = 60 if self.initialize_text_pane else tab_heights.get(selected_tab, 60)
-        self.initialize_text_pane = False
-        self.update_mytags_tab()
-        self.text_pane.paneconfigure(self.text_widget_frame, height=tab_height)
+        tab_height = tab_heights.get(self.current_text_notebook_tab, 60)
+        if not self.text_widget_frame_dict:
+            height = tab_height
+        else:
+            if self.restore_last_text_pane_heights_var.get():
+                height = self.text_widget_frame_dict.get(self.current_text_notebook_tab, tab_height)
+            else:
+                height = tab_height
+        if reset:
+            self.text_widget_frame_dict = tab_heights.copy()
+            height = tab_heights.get(self.current_text_notebook_tab, 60)
+        self.text_pane.paneconfigure(self.text_widget_frame, height=height)
 
 
     def update_mytags_tab(self):
@@ -1279,6 +1320,91 @@ class ImgTxtViewer:
         self.primary_paned_window.paneconfigure(self.master_control_frame, minsize=200, stretch="always")
         if self.is_image_grid_visible_var.get():
             self.image_grid.reload_grid()
+
+
+    def get_windowpane_state(self, windowpane: 'PanedWindow') -> dict:
+        self.root.update_idletasks()
+        windowpane.update_idletasks()
+        sash_x, sash_y = windowpane.sash_coord(0)
+        orient = windowpane.cget("orient")
+        if orient == 'vertical':
+            total_length = windowpane.winfo_height()
+            fallback = self.root.winfo_height()
+            position = sash_y
+        else:
+            total_length = windowpane.winfo_width()
+            fallback = self.root.winfo_width()
+            position = sash_x
+        if total_length <= 1:
+            total_length = fallback
+        if total_length > 1:
+            try:
+                ratio = float(position) / float(total_length)
+            except ZeroDivisionError:
+                ratio = 0.5
+        else:
+            ratio = 0.5
+        ratio = max(0.0, min(1.0, float(ratio)))
+        return {
+            "ratio": ratio,
+            "position": float(position),
+            "length": float(total_length) if total_length else 0.0,
+            "orient": orient,
+        }
+
+
+    def set_windowpane_state(self, windowpane: 'PanedWindow', state: dict):
+        if not isinstance(state, dict):
+            return
+        orient = state.get("orient")
+        orient = orient if orient in ("horizontal", "vertical") else windowpane.cget("orient")
+        windowpane.configure(orient=orient)
+        if orient == "horizontal":
+            self.root.minsize(0, 200)
+        else:
+            self.root.minsize(200, 0)
+
+        def apply_position():
+            if orient == "vertical":
+                total_length = windowpane.winfo_height()
+                fallback = self.root.winfo_height()
+            else:
+                total_length = windowpane.winfo_width()
+                fallback = self.root.winfo_width()
+            if total_length <= 1:
+                total_length = state.get("length") or fallback or 0
+            ratio = state.get("ratio")
+            position = state.get("position")
+            try:
+                if ratio is not None and total_length:
+                    ratio = max(0.0, min(1.0, float(ratio)))
+                    position = ratio * total_length
+            except (TypeError, ValueError):
+                pass
+            if position is None:
+                ref_length = state.get("length")
+                ref_ratio = state.get("ratio")
+                if ref_length not in (None, 0) and state.get("position") is not None:
+                    try:
+                        ref_ratio = state["position"] / ref_length
+                    except (TypeError, ZeroDivisionError):
+                        ref_ratio = None
+                if ref_ratio is not None and total_length:
+                    position = ref_ratio * total_length
+            if position is None:
+                position = total_length / 2
+            try:
+                position = max(0, min(total_length, int(position)))
+            except (TypeError, ValueError):
+                position = total_length // 2
+            if orient == "vertical":
+                windowpane.sash_place(0, 0, position)
+            else:
+                windowpane.sash_place(0, position, 0)
+            self.configure_pane()
+            windowpane.after(250, self.refresh_image)
+
+        self.root.after_idle(apply_position)
 
 
 # --------------------------------------
@@ -2339,10 +2465,11 @@ class ImgTxtViewer:
         return False
 
 
-    def set_always_on_top(self, initial=False):
-        if initial:
-            self.always_on_top_var = BooleanVar(value=False)
-        self.root.attributes('-topmost', self.always_on_top_var.get())
+    def set_always_on_top(self):
+        if self.always_on_top_var.get():
+            self.root.attributes('-topmost', True)
+        else:
+            self.root.attributes('-topmost', False)
 
 
     def toggle_list_menu(self):
@@ -3021,21 +3148,25 @@ class ImgTxtViewer:
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 
-    def setup_window(self):
+    def setup_window(self, geometry=None):
         self.title = f"{self.app_version} - img-txt Viewer"
         self.root.title(self.title)
         self.root.minsize(545, 200) # Width x Height
-        window_width = 1110
-        window_height = 660
-        position_right = self.root.winfo_screenwidth()//2 - window_width//2
-        position_top = self.root.winfo_screenheight()//2 - window_height//2
+        if geometry:
+            window_width = geometry.get("width")
+            window_height = geometry.get("height")
+            position_right = geometry.get("x")
+            position_top = geometry.get("y")
+        else:
+            window_width = 1110
+            window_height = 660
+            position_right = self.root.winfo_screenwidth()//2 - window_width//2
+            position_top = self.root.winfo_screenheight()//2 - window_height//2
         self.root.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
         self.additional_window_setup()
 
 
     def additional_window_setup(self):
-        self.set_always_on_top(initial=True)
-        self.root.attributes('-topmost', 0)
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.set_custom_ttk_button_highlight_style()
 
@@ -3077,6 +3208,28 @@ class ImgTxtViewer:
         style.configure("Red.TButton", foreground="red")
         style.configure("Blue.TButton", foreground="blue")
         style.configure("Blue+.TButton", foreground="blue", background="#005dd7")
+
+
+    def get_window_geometry(self):
+        self.root.update_idletasks()
+        geometry = self.root.winfo_geometry()
+        match = re.match(r"(\d+)x(\d+)([+-]\d+)([+-]\d+)", geometry)
+        if match:
+            width, height, x_offset, y_offset = match.groups()
+            return {
+                "geometry": geometry,
+                "width": int(width),
+                "height": int(height),
+                "x": int(x_offset),
+                "y": int(y_offset),
+            }
+        return {"geometry": geometry}
+
+
+    def reset_window_geometry(self):
+        self.setup_window()
+        self.config_text_pane_for_tab(reset=True)
+        self.root.update_idletasks()
 
 
 # --------------------------------------
