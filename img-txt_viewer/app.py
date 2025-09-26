@@ -422,7 +422,7 @@ class ImgTxtViewer:
         # Reset Settings
         self.optionsMenu.add_separator()
         self.optionsMenu.add_command(label="Reset All Settings", state="disable", command=self.settings_manager.reset_settings)
-        self.optionsMenu.add_command(label="Reset Window Size & Position", command=self.reset_window_geometry)
+        self.optionsMenu.add_command(label="Reset Window and Tab Size", command=self.reset_window_geometry)
 
 
 
@@ -3228,6 +3228,12 @@ class ImgTxtViewer:
 
     def reset_window_geometry(self):
         self.setup_window()
+        self.always_on_top_var.set(value=False)
+        self.set_always_on_top()
+        self.panes_swap_ew_var.set(value=False)
+        self.panes_swap_ns_var.set(value=False)
+        self.swap_pane_sides(swap_state=False)
+        self.swap_pane_orientation(swap_state=False)
         self.config_text_pane_for_tab(reset=True)
         self.root.update_idletasks()
 
