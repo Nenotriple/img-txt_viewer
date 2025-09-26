@@ -411,18 +411,18 @@ class ImgTxtViewer:
             match_mode_menu.add_radiobutton(label=mode, variable=self.last_word_match_var, value=value)
         self.optionsMenu.add_separator()
         # Set external editor
-        self.optionsMenu.add_command(label="Set Default External Image Editor...", command=self.set_external_image_editor_path)
+        self.optionsMenu.add_command(label="Set Default External Image Editor...", state="disable", command=self.set_external_image_editor_path)
         self.optionsMenu.add_separator()
         # Restore last path on startup
-        self.optionsMenu.add_checkbutton(label="Restore Last Path", variable=self.restore_last_path_var)
+        self.optionsMenu.add_checkbutton(label="Restore Last Path", state="disable", variable=self.restore_last_path_var)
         # Restore last window and Windowpane geometry on startup
-        self.optionsMenu.add_checkbutton(label="Restore Last Window Size", variable=self.restore_last_window_size_var)
+        self.optionsMenu.add_checkbutton(label="Restore Last Window Size", state="disable", variable=self.restore_last_window_size_var)
         # Restore last text pane heights when switching tabs
-        self.optionsMenu.add_checkbutton(label="Restore Last Text Pane Heights", variable=self.restore_last_text_pane_heights_var)
+        self.optionsMenu.add_checkbutton(label="Restore Last Text Pane Heights", state="disable", variable=self.restore_last_text_pane_heights_var)
         # Reset Settings
         self.optionsMenu.add_separator()
         self.optionsMenu.add_command(label="Reset All Settings", state="disable", command=self.settings_manager.reset_settings)
-        self.optionsMenu.add_command(label="Reset Window and Tab Size", command=self.reset_window_geometry)
+        self.optionsMenu.add_command(label="Reset Window and Tab Size", state="disable", command=self.reset_window_geometry)
 
 
 
@@ -473,7 +473,12 @@ class ImgTxtViewer:
             "Text Options",
             "Loading Order",
             "Autocomplete",
-            "Reset All Settings"
+            "Set Default External Image Editor...",
+            "Restore Last Path",
+            "Restore Last Window Size",
+            "Restore Last Text Pane Heights",
+            "Reset All Settings",
+            "Reset Window and Tab Size"
         ]
         for t_command in tool_commands:
             self.toolsMenu.entryconfig(t_command, state="normal")
