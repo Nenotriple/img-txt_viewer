@@ -9,7 +9,7 @@ import os
 from tkinter import (
     ttk,
     IntVar,
-    Frame, Label, Scrollbar, Canvas
+    Frame, Canvas
 )
 
 
@@ -30,7 +30,6 @@ if TYPE_CHECKING:
 
 class ImageGrid(ttk.Frame):
     image_cache = {1: {}, 2: {}, 3: {}}  # Cache for each thumbnail size
-    image_size_cache = {}  # Cache to store image sizes
     text_file_cache = {}  # Cache to store text file pairs
 
 
@@ -39,6 +38,7 @@ class ImageGrid(ttk.Frame):
         # Initialize ImgTxtViewer variables and methods
         self.parent = parent
         self.is_initialized = False
+        self.canvas_window = None
         # Supported file types
         self.supported_filetypes = (".png", ".webp", ".jpg", ".jpeg", ".jpg_large", ".jfif", ".tif", ".tiff", ".bmp", ".gif", ".mp4")
         # Used keeping track of thumbnail buttons
@@ -72,12 +72,12 @@ class ImageGrid(ttk.Frame):
 
         # Image loading
         self.loaded_images = 0  # Num of images loaded to the UI
-        # Image flag
-        self.image_flag = self.create_image_flag()
         # Get number of total images from parent
         self.num_total_images = len(self.parent.image_files)
         # Default thumbnail size. Range=(1,2,3). Set to 3 if total_images is less than 25.
-        self.image_size = IntVar(value=2) if self.num_total_images < 25 else IntVar(value=2)
+        self.image_size = IntVar(value=3 if self.num_total_images < 25 else 2)
+        # Image flag
+        self.image_flag = self.create_image_flag()
 
         # Interface creation
         self.create_interface()
@@ -89,49 +89,102 @@ class ImageGrid(ttk.Frame):
 #region Create Interface
 
 
+    # --- Build Interface ---
     def create_interface(self):
+        self.configure_grid_structure()
         self.create_canvas()
         self.create_control_row()
 
 
+    # --- Grid Setup ---
+    def configure_grid_structure(self):
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=0)
+
+
+    # --- Canvas Setup ---
     def create_canvas(self):
-        self.frame_main = Frame(self)
-        self.frame_main.pack(fill="both", expand=True)
-        self.scrollbar = Scrollbar(self.frame_main)
-        self.scrollbar.pack(side="right", fill="y")
-        self.frame_thumbnails = Frame(self.frame_main, takefocus=False)
-        self.frame_thumbnails.pack(side="left", fill="both", expand=True)
-        self.canvas_thumbnails = Canvas(self.frame_thumbnails, takefocus=False, yscrollcommand=self.scrollbar.set)
-        self.canvas_thumbnails.pack(side="top", fill="both", expand=True)
+        self.frame_main = ttk.Frame(self, padding=(10, 10, 10, 4))
+        self.frame_main.grid(row=0, column=0, sticky="nsew")
+        self.frame_main.columnconfigure(0, weight=1)
+        self.frame_main.rowconfigure(0, weight=1)
+
+        self.canvas_container = ttk.Frame(self.frame_main)
+        self.canvas_container.grid(row=0, column=0, sticky="nsew")
+        self.canvas_container.columnconfigure(0, weight=1)
+        self.canvas_container.rowconfigure(0, weight=1)
+
+        self.scrollbar = ttk.Scrollbar(self.canvas_container, orient="vertical")
+        self.scrollbar.grid(row=0, column=1, sticky="ns", padx=(4, 0))
+
+        self.canvas_thumbnails = Canvas(
+            self.canvas_container,
+            takefocus=False,
+            yscrollcommand=self.scrollbar.set,
+            highlightthickness=0
+        )
+        self.canvas_thumbnails.grid(row=0, column=0, sticky="nsew")
         self.canvas_thumbnails.bind("<MouseWheel>", self.on_mousewheel)
         self.scrollbar.config(command=self.canvas_thumbnails.yview)
-        self.frame_image_grid = Frame(self.canvas_thumbnails, takefocus=False)
+
+        self.frame_image_grid = ttk.Frame(self.canvas_thumbnails, padding=(self.padding, self.padding))
         self.frame_image_grid.bind("<MouseWheel>", self.on_mousewheel)
+        self.canvas_window = self.canvas_thumbnails.create_window((0, 0), window=self.frame_image_grid, anchor="nw")
+        self.canvas_thumbnails.bind("<Configure>", self.on_canvas_configure)
+        self.frame_image_grid.bind("<Configure>", self.on_frame_configure)
 
 
+    # --- Controls ---
     def create_control_row(self):
-        self.frame_bottom = Frame(self.frame_thumbnails)
-        self.frame_bottom.pack(side="bottom", fill="x", padx=5)
-        # Size slider
-        self.label_size = Label(self.frame_bottom, text="Size:")
-        self.label_size.pack(side="left", padx=5)
+        self.frame_bottom = ttk.LabelFrame(self, text="Grid Controls", padding=(10, 6))
+        self.frame_bottom.grid(row=1, column=0, sticky="ew", padx=10, pady=(0, 10))
+        self.frame_bottom.columnconfigure(1, weight=1)
+        self.frame_bottom.columnconfigure(3, weight=1)
+
+        self.label_size = ttk.Label(self.frame_bottom, text="Size:")
+        self.label_size.grid(row=0, column=0, sticky="w", padx=(0, 8))
         Tip.create(widget=self.label_size, text="Adjust grid size")
-        self.slider_image_size = ttk.Scale(self.frame_bottom, variable=self.image_size, orient="horizontal", from_=1, to=3, command=self.round_scale_input)
+
+        self.slider_image_size = ttk.Scale(
+            self.frame_bottom,
+            variable=self.image_size,
+            orient="horizontal",
+            from_=1,
+            to=3,
+            command=self.round_scale_input
+        )
+        self.slider_image_size.grid(row=0, column=1, sticky="ew")
         self.slider_image_size.bind("<ButtonRelease-1>", lambda event: self.reload_grid())
-        self.slider_image_size.pack(side="left")
         Tip.create(widget=self.slider_image_size, text="Adjust grid size")
-        # Refresh
+
+        self.label_size_value = ttk.Label(self.frame_bottom, textvariable=self.image_size, width=3)
+        self.label_size_value.grid(row=0, column=2, padx=(8, 12))
+        Tip.create(widget=self.label_size_value, text="Current grid size")
+
+        self.label_image_info = ttk.Label(self.frame_bottom, width=16, anchor="e")
+        self.label_image_info.grid(row=0, column=3, sticky="e")
+        Tip.create(widget=self.label_image_info, text="Loaded images / total images")
+
+        self.button_load_all = ttk.Button(self.frame_bottom, text="Load All", command=self.load_all_images)
+        self.button_load_all.grid(row=0, column=4, padx=(12, 6))
+        Tip.create(widget=self.button_load_all, text="Load all images in the folder (slower)")
+
         self.button_refresh = ttk.Button(self.frame_bottom, text="Refresh", command=self.reload_grid)
-        self.button_refresh.pack(side="right", padx=5)
+        self.button_refresh.grid(row=0, column=5)
         Tip.create(widget=self.button_refresh, text="Refresh the image grid")
-        # Load All
-        self.button_load_all = ttk.Button(self.frame_bottom, text="Load All", command=lambda: self.load_images(all_images=True))
-        self.button_load_all.pack(side="right", padx=5)
-        Tip.create(widget=self.button_load_all, text="Load all images in the folder (Slow)")
-        # Image Info
-        self.label_image_info = Label(self.frame_bottom, width=14)
-        self.label_image_info.pack(side="right", padx=5)
-        Tip.create(widget=self.label_image_info, text="Loaded Images / Total Images")
+
+
+    # --- Canvas Events ---
+    def on_canvas_configure(self, event):
+        if self.canvas_window is not None:
+            self.canvas_thumbnails.itemconfigure(self.canvas_window, width=event.width)
+            self.configure_scroll_region(reset_view=False)
+
+
+    # --- Grid Events ---
+    def on_frame_configure(self, _event):
+        self.configure_scroll_region(reset_view=False)
 
 
 #endregion
@@ -177,9 +230,9 @@ class ImageGrid(ttk.Frame):
 
 
     def calculate_columns(self):
-        frame_width = self.frame_thumbnails.winfo_width()
+        frame_width = self.canvas_container.winfo_width()
         if frame_width <= 1:
-            frame_width = self.frame_thumbnails.winfo_reqwidth()
+            frame_width = self.canvas_container.winfo_reqwidth()
         available_width = frame_width - (2 * self.padding)
         thumbnail_width_with_padding = self.max_width + (2 * self.padding)
         columns = max(1, available_width // thumbnail_width_with_padding)
@@ -194,25 +247,30 @@ class ImageGrid(ttk.Frame):
             3: (170, 170, 4)
         }
         self.max_width, self.max_height, self.cols = size_settings.get(self.image_size.get(), (80, 80, 8))
+        self.image_flag = self.create_image_flag()
         self.cols = self.calculate_columns()
 
 
     def create_image_grid(self):
-        self.canvas_thumbnails.create_window((0, 0), window=self.frame_image_grid, anchor='nw')
         self.images = self.load_image_set()
         self.populate_image_grid()
-        self.configure_scroll_region()
+        self.configure_scroll_region(reset_view=True)
         self.add_load_more_button()
 
 
     def populate_image_grid(self):
+        self.thumbnail_buttons.clear()
+        self.prev_selected_thumbnail = None
+        self.initial_selected_thumbnail = None
+        for column in range(self.cols):
+            self.frame_image_grid.columnconfigure(column, weight=1)
         for index, (image, filepath, image_index) in enumerate(self.images):
             row, col = divmod(index, self.cols)
             button_style = "Highlighted.TButton" if index == self.parent.current_index else "TButton"
             thumbnail = ttk.Button(self.frame_image_grid, image=image, takefocus=False, style=button_style)
             thumbnail.configure(command=lambda idx=image_index: self.on_mouse_click(idx))
             thumbnail.image = image
-            thumbnail.grid(row=row, column=col)
+            thumbnail.grid(row=row, column=col, sticky="nsew")
             thumbnail.bind("<MouseWheel>", self.on_mousewheel)
             self.thumbnail_buttons[image_index] = thumbnail
             if index == self.parent.current_index:
@@ -229,13 +287,17 @@ class ImageGrid(ttk.Frame):
                     width, height = img.size
                 resolution = f"({width} x {height})"
                 tooltip_text = f"#{image_index + 1}, {os.path.basename(filepath)}, {filesize}, {resolution}"
-            Tip.create(widget=thumbnail, text=tooltip_text)
+            Tip.create(widget=thumbnail, text=tooltip_text, follow_mouse=True)
 
 
     def load_images(self, all_images=False):
         self.loaded_images = self.num_total_images if all_images else min(self.loaded_images + self.images_per_load, self.num_total_images)
         self.update_image_info_label()
         self.reload_grid()
+
+
+    def load_all_images(self):
+        self.load_images(all_images=True)
 
 
     def load_image_set(self):
@@ -304,49 +366,39 @@ class ImageGrid(ttk.Frame):
         return img_path, txt_path
 
 
-    def paste_image_flag(self, new_img, img_path, txt_path, current_text_file_size=None):
-        # Handle video files
-        if self._is_video_file(img_path):
-            if hasattr(self.parent, 'video_thumb_dict') and img_path in self.parent.video_thumb_dict:
-                # Access the thumbnail from the nested dictionary
-                thumb_data = self.parent.video_thumb_dict[img_path]['thumbnail']
-                thumb_data.thumbnail((self.max_width, self.max_height))
-                position = ((self.max_width - thumb_data.width) // 2, (self.max_height - thumb_data.height) // 2)
-                new_img.paste(thumb_data, position)
-        else:
-            # Regular image handling
-            with Image.open(img_path) as img:
-                img.thumbnail((self.max_width, self.max_height))
-                position = ((self.max_width - img.width) // 2, (self.max_height - img.height) // 2)
-                new_img.paste(img, position)
-        if current_text_file_size is None:
-            current_text_file_size = os.path.getsize(txt_path) if os.path.exists(txt_path) else 0
-        if current_text_file_size == 0:
-            flag_position = (self.max_width - self.image_flag.width, self.max_height - self.image_flag.height)
-            new_img.paste(self.image_flag, flag_position, mask=self.image_flag)
-        self.image_cache[self.image_size.get()][img_path] = new_img
-        return new_img
-
-
     def create_image_flag(self):
-        flag_size = 15
-        outline_width = 1
-        left, top = [dim - flag_size - outline_width for dim in (self.max_width, self.max_height)]
-        right, bottom = self.max_width, self.max_height
-        image_flag = Image.new('RGBA', (self.max_width, self.max_height))
-        draw = ImageDraw.Draw(image_flag)
-        draw.rectangle(((left, top), (right, bottom)), fill="black")
-        draw.rectangle(((left + outline_width, top + outline_width), (right - outline_width, bottom - outline_width)), fill="red")
-        corner_size = flag_size // 2
-        triangle_points = [
-            (left - outline_width, top - outline_width),
-            (left + corner_size, top - outline_width),
-            (left - outline_width, top + corner_size)]
-        draw.polygon(triangle_points, fill=(0, 0, 0, 0))
-        center = ((left + right) // 2, (top + bottom) // 2)
-        font = ImageFont.truetype("arial", 15)
-        draw.text(center, " -", fill="white", font=font, anchor="mm")
-        return image_flag
+        size = self.image_size.get() if isinstance(self.image_size, IntVar) else self.image_size
+        diameter = {1: 14, 2: 20, 3: 28}.get(size, 20)
+        margin = max(2, diameter // 5)
+        scale = 4
+        hr_width, hr_height = self.max_width * scale, self.max_height * scale
+        img_flag_hr = Image.new("RGBA", (hr_width, hr_height), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(img_flag_hr)
+        hr_diameter = diameter * scale
+        hr_margin = margin * scale
+        center_x = hr_width - hr_diameter // 2 - hr_margin
+        center_y = hr_height - hr_diameter // 2 - hr_margin
+        radius = hr_diameter // 2
+        circle_bbox = [
+            (center_x - radius, center_y - radius),
+            (center_x + radius, center_y + radius),
+        ]
+        draw.ellipse(circle_bbox, fill=(250, 80, 83, 230))
+        ring_thickness = max(scale, (diameter // 10) * scale)
+        inner_bbox = [
+            (circle_bbox[0][0] + ring_thickness, circle_bbox[0][1] + ring_thickness),
+            (circle_bbox[1][0] - ring_thickness, circle_bbox[1][1] - ring_thickness),
+        ]
+        draw.ellipse(inner_bbox, fill=(250, 80, 83, 160))
+        bar_height = max(2, diameter // 6) * scale
+        bar_width = int(hr_diameter / 1.6)
+        bar_bbox = [
+            (center_x - bar_width // 2, center_y - bar_height // 2),
+            (center_x + bar_width // 2, center_y + bar_height // 2),
+        ]
+        draw.rounded_rectangle(bar_bbox, radius=bar_height // 2, fill="white")
+        img_flag = img_flag_hr.resize((self.max_width, self.max_height), Image.LANCZOS)
+        return img_flag
 
 
     def get_image_index(self, directory, filename):
@@ -361,24 +413,34 @@ class ImageGrid(ttk.Frame):
 #region Interface Logic
 
 
-    def configure_scroll_region(self):
-        total_filtered_images = len(self.thumbnail_buttons)
-        total_rows = (total_filtered_images + self.cols - 1) // self.cols
-        cell_height = self.max_height + (2 * self.padding)
-        base_height = total_rows * cell_height
-        extra_height = cell_height if (self.loaded_images < self.num_total_images) else 0
-        scrollregion_height = base_height + extra_height
-        self.canvas_thumbnails.config(scrollregion=(0, 0, 750, scrollregion_height))
-        self.canvas_thumbnails.yview_moveto(0)
+    def configure_scroll_region(self, reset_view=True):
+        if self.canvas_window is None:
+            return
+        self.frame_image_grid.update_idletasks()
+        bbox = self.canvas_thumbnails.bbox(self.canvas_window)
+        if bbox is None:
+            return
+        x0, y0, x1, y1 = bbox
+        extra_height = self.max_height + (2 * self.padding) if self.loaded_images < self.num_total_images else 0
+        self.canvas_thumbnails.config(scrollregion=(x0, y0, x1, y1 + extra_height))
+        if reset_view:
+            self.canvas_thumbnails.yview_moveto(0)
 
 
     def add_load_more_button(self):
         if self.loaded_images < self.num_total_images:
             total_items = len(self.thumbnail_buttons)
-            final_row = (total_items - 1) // self.columns
+            final_row = (total_items - 1) // self.columns if total_items else 0
             self.load_more_button = ttk.Button(self.frame_image_grid, text="Load More", command=self.load_images)
-            self.load_more_button.grid(row=final_row + 1, column=0, columnspan=self.columns, pady=10, sticky='ew')
-            Tip.create(widget=self.load_more_button, text="Load the next 150 images")
+            self.load_more_button.grid(
+                row=final_row + 1,
+                column=0,
+                columnspan=self.columns,
+                pady=(self.padding * 2),
+                padx=self.padding,
+                sticky="ew"
+            )
+            Tip.create(widget=self.load_more_button, text=f"Load the next {self.images_per_load} images")
 
 
     def highlight_thumbnail(self, index):
