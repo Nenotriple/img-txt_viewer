@@ -37,6 +37,8 @@ class SettingsManager:
 
         self.config = configparser.ConfigParser()
 
+        self.restore_path_confirm = None
+
 
 #endregion
 #region Save
@@ -84,9 +86,13 @@ class SettingsManager:
         # Image directory
         if self._verify_filepath(last_img_directory):
             self.config.set("Path", "last_img_directory", last_img_directory)
+        else:
+            self.config.set("Path", "last_img_directory", "")
         # Text directory
         if self._verify_filepath(last_txt_directory) and last_txt_directory != ".":
             self.config.set("Path", "last_txt_directory", last_txt_directory)
+        else:
+            self.config.set("Path", "last_txt_directory", "")
         # External image editor
         self.config.set("Path", "external_image_editor_path", str(self.parent.external_image_editor_path))
         # Index and load order
@@ -224,7 +230,10 @@ class SettingsManager:
         if not self.parent.restore_last_path_var.get():
             return
         last_img_directory = self.config.get("Path", "last_img_directory", fallback=None)
+        if not self._verify_filepath(last_img_directory):
+            return
         if not last_img_directory or not os.path.exists(last_img_directory) or not messagebox.askyesno("Confirmation", "Reload last directory?"):
+            self.restore_path_confirm = False
             return
         self.parent.image_dir.set(last_img_directory)
         self.parent.set_working_directory(silent=True)
@@ -232,6 +241,7 @@ class SettingsManager:
         last_index = int(self.config.get("Path", "last_index", fallback=1))
         num_files = len([name for name in os.listdir(last_img_directory) if os.path.isfile(os.path.join(last_img_directory, name))])
         self.parent.jump_to_image(min(last_index, num_files))
+        self.restore_path_confirm = True
 
 
     def _read_autocomplete_settings(self):
@@ -312,13 +322,14 @@ class SettingsManager:
         if self.parent.restore_last_window_size_var.get():
             self.parent.panes_swap_ew_var.set(value=self.config.getboolean("Window", "panes_swap_ew_var", fallback=False))
             self.parent.panes_swap_ns_var.set(value=self.config.getboolean("Window", "panes_swap_ns_var", fallback=False))
-            self.parent.swap_pane_sides(swap_state=self.parent.panes_swap_ew_var.get())
-            self.parent.swap_pane_orientation(swap_state=self.parent.panes_swap_ns_var.get())
+            self.parent.swap_pane_sides(swap_state=self.parent.panes_swap_ew_var.get(), center=False)
+            self.parent.swap_pane_orientation(swap_state=self.parent.panes_swap_ns_var.get(), center=False)
             self.parent.always_on_top_var.set(value=self.config.getboolean("Window", "always_on_top_var", fallback=False))
             self.parent.set_always_on_top()
             window_geometry = ast.literal_eval(self.config.get("Window", "window_geometry", fallback=None))
             self.parent.setup_window(geometry=window_geometry)
-            if self.parent.restore_last_path_var.get():
+            self.parent.primary_paned_window.sash_place(0, 0, 0)
+            if self.restore_path_confirm:
                 primary_pane_state = ast.literal_eval(self.config.get("Window", "primary_pane_state", fallback=None))
                 self.parent.set_windowpane_state(windowpane=self.parent.primary_paned_window, state=primary_pane_state)
                 text_widget_frame_dict = ast.literal_eval(self.config.get("Window", "text_widget_frame_dict", fallback="{}"))

@@ -510,8 +510,8 @@ class ImgTxtViewer:
         # The main container for UI widgets and Alt-UI tabs
         self.create_main_notebook()
         # Build the primary UI within the 'Primary' tab
-        self.setup_primary_frames(self.primary_tab)
-        self.create_primary_widgets(self.primary_tab)
+        self.setup_primary_frames()
+        self.create_primary_widgets()
 
 
     def create_main_notebook(self):
@@ -538,16 +538,16 @@ class ImgTxtViewer:
         self.toggle_main_notebook_state("disable")
 
 
-    def setup_primary_frames(self, container: 'Frame'):
+    def setup_primary_frames(self):
         # Configure the grid weights for the container tab
-        container.grid_rowconfigure(0, weight=1)
-        container.grid_columnconfigure(0, weight=1)
+        self.primary_tab.grid_rowconfigure(0, weight=1)
+        self.primary_tab.grid_columnconfigure(0, weight=1)
         # primary_paned_window is used to contain the ImgTxtViewer UI.
-        self.primary_paned_window = PanedWindow(container, orient="horizontal", sashwidth=6, bg="#d0d0d0", bd=0)
+        self.primary_paned_window = PanedWindow(self.primary_tab, orient="horizontal", sashwidth=6, bg="#d0d0d0", bd=0)
         self.primary_paned_window.grid(row=0, column=0, sticky="nsew")
         self.primary_paned_window.bind("<B1-Motion>", self.disable_button)
         # master_image_frame: exclusively used for the master_image_inner_frame and image_grid.
-        self.master_image_frame = Frame(container)
+        self.master_image_frame = Frame(self.primary_tab)
         self.master_image_frame.grid_rowconfigure(0, weight=0)  # stats frame row
         self.master_image_frame.grid_rowconfigure(1, weight=1)  # image frame row
         self.master_image_frame.grid_columnconfigure(0, weight=1)
@@ -562,14 +562,14 @@ class ImgTxtViewer:
         self.image_grid.grid_remove()
         self.image_grid.bind('<Configure>', self.debounce_refresh_image)
         # master_control_frame serves as a container for all primary UI frames (except the master image frame)
-        self.master_control_frame = Frame(container)
+        self.master_control_frame = Frame(self.primary_tab)
         self.primary_paned_window.add(self.master_control_frame, stretch="always")
         self.primary_paned_window.paneconfigure(self.master_control_frame, minsize=300)
         self.primary_paned_window.update()
         self.primary_paned_window.sash_place(0, 0, 0)
 
 
-    def create_primary_widgets(self, container):
+    def create_primary_widgets(self):
         # Image stats
         self.stats_frame = Frame(self.master_image_frame)
         self.stats_frame.grid(row=0, column=0, sticky="new")
@@ -1274,7 +1274,7 @@ class ImgTxtViewer:
         self.configure_pane()
 
 
-    def swap_pane_sides(self, swap_state=None):
+    def swap_pane_sides(self, swap_state=None, center=True):
         if swap_state is None:
             swap_state = self.panes_swap_ew_var.get()
         else:
@@ -1287,10 +1287,11 @@ class ImgTxtViewer:
         else:
             self.primary_paned_window.add(self.master_image_frame)
             self.primary_paned_window.add(self.master_control_frame)
-        self.root.after_idle(self.configure_pane_position)
+        if center:
+            self.root.after_idle(self.configure_pane_position)
 
 
-    def swap_pane_orientation(self, swap_state=None):
+    def swap_pane_orientation(self, swap_state=None, center=True):
         if swap_state is None:
             swap_state = self.panes_swap_ns_var.get()
         else:
@@ -1301,7 +1302,8 @@ class ImgTxtViewer:
             self.root.minsize(0, 200)
         else:
             self.root.minsize(200, 0)
-        self.root.after_idle(self.configure_pane_position)
+        if center:
+            self.root.after_idle(self.configure_pane_position)
 
 
     def snap_sash_to_half(self, event):
@@ -3157,12 +3159,16 @@ class ImgTxtViewer:
             window_height = geometry.get("height")
             position_right = geometry.get("x")
             position_top = geometry.get("y")
+            state = geometry.get("maximized")
+            self.root.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
+            if state:
+                self.root.state('zoomed')
         else:
             window_width = 1110
             window_height = 660
             position_right = self.root.winfo_screenwidth()//2 - window_width//2
             position_top = self.root.winfo_screenheight()//2 - window_height//2
-        self.root.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
+            self.root.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
         self.additional_window_setup()
 
 
@@ -3213,7 +3219,25 @@ class ImgTxtViewer:
     def get_window_geometry(self):
         self.root.update_idletasks()
         geometry = self.root.winfo_geometry()
-        match = re.match(r"(\d+)x(\d+)([+-]\d+)([+-]\d+)", geometry)
+        # If the window is maximized on Windows, state() returns 'zoomed'
+        try:
+            state = self.root.state()
+        except Exception:
+            state = None
+        if state == "zoomed":
+            # Fall back to screen dimensions for maximized state
+            width = self.root.winfo_screenwidth()
+            height = self.root.winfo_screenheight()
+            return {
+                "geometry": geometry,
+                "width": int(width),
+                "height": int(height),
+                "x": 0,
+                "y": 0,
+                "maximized": True,
+            }
+        # Normal parsing (allow negative offsets for snapped windows)
+        match = re.match(r"(\d+)x(\d+)\+(-?\d+)\+(-?\d+)", geometry)
         if match:
             width, height, x_offset, y_offset = match.groups()
             return {
@@ -3222,8 +3246,17 @@ class ImgTxtViewer:
                 "height": int(height),
                 "x": int(x_offset),
                 "y": int(y_offset),
+                "maximized": False,
             }
-        return {"geometry": geometry}
+        # Fallback: use widget geometry functions which work for snapped/odd layouts
+        return {
+            "geometry": geometry,
+            "width": int(self.root.winfo_width()),
+            "height": int(self.root.winfo_height()),
+            "x": int(self.root.winfo_rootx()),
+            "y": int(self.root.winfo_rooty()),
+            "maximized": False,
+        }
 
 
     def reset_window_geometry(self):
