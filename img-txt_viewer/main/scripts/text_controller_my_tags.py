@@ -400,9 +400,9 @@ class MyTags:
         add_btn.pack(side='left')
         Tip.create(widget=add_btn, text="Add tag to 'My Tags'")
 
-        save_btn = ttk.Button(top_frame, text="Save Tags", takefocus=False, command=self.save_my_tags_file)
-        save_btn.pack(side='right')
-        Tip.create(widget=save_btn, text="Save changes to 'My Tags' file")
+        self.save_btn = ttk.Button(top_frame, text="Save Tags", takefocus=False, command=self.save_my_tags_file)
+        self.save_btn.pack(side='right')
+        self.save_btn_tooltip = Tip.create(widget=self.save_btn, text="Save changes to 'My Tags' file")
 
         # Middle Row
         self.text_frame = ttk.PanedWindow(tab_frame, orient='horizontal')
@@ -543,6 +543,7 @@ class MyTags:
             messagebox.showerror("Error", f"Failed to save MyTags (YAML):\n{e}")
             return
         self.root.after(100, self.refresh_custom_dictionary)
+        self.check_unsaved_changes()
 
 
     def add_tag(self, tag_text: str):
@@ -561,24 +562,33 @@ class MyTags:
                     folder_iid = sel[0]
             except Exception:
                 folder_iid = None
+        changed = False
         if folder_iid:
             # ensure no duplicate within that folder
             existing = set(tree.item(i)['text'] for i in tree.get_children(folder_iid) if 'item' in tree.item(i, 'tags'))
             if tag not in existing:
                 tree.insert(folder_iid, 'end', text=tag, tags=('item',))
+                changed = True
         else:
             # add to root if not duplicate in root
             existing = set(tree.item(i)['text'] for i in tree.get_children('') if 'folder' not in tree.item(i, 'tags'))
             if tag not in existing:
                 tree.insert('', 'end', text=tag, tags=('item',))
+                changed = True
+        if changed:
+            self.check_unsaved_changes()
 
 
     def remove_selected_tags(self):
         if not self.custom_dictionary_treeview:
             return
         selected = self.custom_dictionary_treeview.selection()
+        changed = False
         for iid in selected:
             self.custom_dictionary_treeview.delete(iid)
+            changed = True
+        if changed:
+            self.check_unsaved_changes()
 
 
     def edit_selected_tag_to_entry(self):
@@ -598,6 +608,7 @@ class MyTags:
         delta = -1 if direction == 'up' else 1
         # Move each selected within its parent
         order = selected if direction == 'up' else tuple(reversed(selected))
+        changed = False
         for iid in order:
             parent = treeview.parent(iid)
             siblings = list(treeview.get_children(parent))
@@ -608,6 +619,9 @@ class MyTags:
             if 0 <= new_idx < len(siblings):
                 treeview.move(iid, parent, new_idx)
                 treeview.selection_set(iid)
+                changed = True
+        if changed:
+            self.check_unsaved_changes()
 
 
     def add_selected_alltags_to_mytags(self):
@@ -625,18 +639,23 @@ class MyTags:
                     folder_iid = sel[0]
             except Exception:
                 folder_iid = None
+        changed = False
         if folder_iid:
             existing = set(tree.item(i)['text'] for i in tree.get_children(folder_iid) if 'item' in tree.item(i, 'tags'))
             for idx in selected_indices:
                 tag = self.alltags_listbox.get(idx)
                 if tag not in existing:
                     tree.insert(folder_iid, 'end', text=tag, tags=('item',))
+                    changed = True
         else:
             existing = set(tree.item(i)['text'] for i in tree.get_children('') if 'folder' not in tree.item(i, 'tags'))
             for idx in selected_indices:
                 tag = self.alltags_listbox.get(idx)
                 if tag not in existing:
                     tree.insert('', 'end', text=tag, tags=('item',))
+                    changed = True
+        if changed:
+            self.check_unsaved_changes()
 
 
     def refresh_all_tags_listbox(self, tags=None):
@@ -670,6 +689,7 @@ class MyTags:
         # Insert folders and items
         self._populate_tree_from_data(data)
         self.app.autocomplete.update_autocomplete_dictionary()
+        self.check_unsaved_changes()
 
 
     def create_custom_dictionary(self, reset=False, refresh=True):
@@ -751,6 +771,7 @@ class MyTags:
 
             self._write_mytags_data({'items': cleaned_items, 'groups': cleaned_groups})
             self.refresh_custom_dictionary()
+            self.check_unsaved_changes()
             messagebox.showinfo("Success", "MyTags has been cleaned.")
         except (PermissionError, IOError, TclError) as e:
             messagebox.showerror("Error: cleanup_custom_dictionary()", f"An error occurred while cleaning MyTags:\n\n{e}")
@@ -782,6 +803,28 @@ class MyTags:
 
     #endregion
     #region Helpers
+
+
+    def is_treeview_synced_with_yaml(self) -> bool:
+        try:
+            yaml_data = self._read_mytags_data()
+            tree_data = self._collect_tree_data()
+        except Exception:
+            return False
+        try:
+            synced = (yaml_data == tree_data)
+        except Exception:
+            return False
+        return synced
+
+
+    def check_unsaved_changes(self):
+        if self.is_treeview_synced_with_yaml():
+            self.save_btn.config(style="TButton")
+            self.save_btn_tooltip.config(text="No changes to save")
+        else:
+            self.save_btn.config(style="Red.TButton")
+            self.save_btn_tooltip.config(text="There are unsaved changes")
 
 
     #region Font Style
@@ -949,6 +992,7 @@ class MyTags:
 
 
     #endregion
+    #region Treeview helpers
 
 
     def _split_csv(self, text: str):
@@ -1168,6 +1212,7 @@ class MyTags:
             return
         parent = parent_iid or ''
         self.custom_dictionary_treeview.insert(parent, 'end', text=name, tags=('folder',))
+        self.check_unsaved_changes()
 
 
     def add_item_to_folder(self, folder_iid, name: str | None = None):
@@ -1184,6 +1229,7 @@ class MyTags:
         existing = set(tree.item(i)['text'] for i in tree.get_children(folder_iid) if 'item' in tree.item(i, 'tags'))
         if name not in existing:
             tree.insert(folder_iid, 'end', text=name, tags=('item',))
+            self.check_unsaved_changes()
 
 
     def rename_node(self, iid):
@@ -1204,11 +1250,7 @@ class MyTags:
         if not new_name:
             return
         tree.item(iid, text=new_name)
-
-
-    def move_selected_items_to_folder(self, folder_iid):
-        # Backward-compatible wrapper, now moves both items and folders
-        return self.move_selection_to_folder(folder_iid)
+        self.check_unsaved_changes()
 
 
     def move_selection_to_folder(self, folder_iid):
@@ -1266,7 +1308,7 @@ class MyTags:
                 tree.focus(moved[0])
             except Exception:
                 pass
-
+            self.check_unsaved_changes()
 
     #endregion
     #region DnD
@@ -1420,6 +1462,7 @@ class MyTags:
         offset_before = sum(1 for iid in ordered_selected if index_map[iid] < drop_idx_original)
         drop_idx_others = max(0, min(len(others), drop_idx_original - offset_before))
         self._remove_placeholder(tree)
+        changed = False
         if ordered_selected:
             sel_start = min(index_map[iid] for iid in ordered_selected)
             start_in_others = sum(1 for iid in others if index_map[iid] < sel_start)
@@ -1439,9 +1482,11 @@ class MyTags:
             if anchor_iid is None:
                 for iid in ordered_selected:
                     tree.move(iid, parent, 'end')
+                    changed = True
             else:
                 for iid in ordered_selected:
                     tree.move(iid, parent, tree.index(anchor_iid))
+                    changed = True
         except Exception:
             pass
         try:
@@ -1456,6 +1501,8 @@ class MyTags:
         self._drag_state['selected_iids'] = tuple()
         self._drag_state['start_iid'] = None
         self._drag_state['parent'] = None
+        if changed:
+            self.check_unsaved_changes()
         return 'break'
 
 
