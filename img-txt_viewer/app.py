@@ -121,6 +121,17 @@ class ImgTxtViewer:
         self.current_ui_state = {"tab": "Tagger", "index": 0}
         self.current_text_notebook_tab = "S&R"
         self.text_widget_frame_dict = {}
+        self.text_widget_tab_heights = {
+            'S&R': 59,
+            'Prefix': 59,
+            'Append': 59,
+            'AutoTag': 340,
+            'Filter': 59,
+            'Highlight': 59,
+            'Font': 59,
+            'MyTags': 340,
+            'Stats': 340
+        }
 
         # Window drag variables
         self.drag_x = None
@@ -802,7 +813,7 @@ class ImgTxtViewer:
         self.text_widget_frame = Frame(self.master_control_frame)
         self.text_widget_frame.bind("<Configure>", self.on_text_widget_frame_configure)
         self.text_pane.add(self.text_widget_frame, stretch="never")
-        self.text_pane.paneconfigure(self.text_widget_frame)
+        self.text_pane.paneconfigure(self.text_widget_frame, height=self.text_widget_tab_heights.get('S&R', 59))
         self.text_notebook = ttk.Notebook(self.text_widget_frame)
         self.text_notebook.bind("<<NotebookTabChanged>>", self.on_text_notebook_tab_change)
         self.tab1 = Frame(self.text_notebook)
@@ -823,7 +834,7 @@ class ImgTxtViewer:
         self.text_notebook.add(self.tab7, text='Font')
         self.text_notebook.add(self.tab8, text='MyTags')
         self.text_notebook.add(self.tab9, text='Stats')
-        self.text_notebook.pack(fill='both', expand=True)
+        self.text_notebook.pack(fill='x', expand=False)
         self.text_controller.create_search_and_replace_widgets_tab1()
         self.text_controller.create_prefix_text_widgets_tab2()
         self.text_controller.create_append_text_widgets_tab3()
@@ -839,9 +850,7 @@ class ImgTxtViewer:
     def on_text_notebook_tab_change(self, event):
         previous_tab = self.current_text_notebook_tab
         self.current_text_notebook_tab = event.widget.tab("current", "text")
-        # Save previous tab's state before switching
         self.save_text_pane_state(tab_name=previous_tab)
-        # Restore state for tab if available
         self.config_text_pane_for_tab()
         self.update_mytags_tab()
         self.initialize_text_pane = False
@@ -859,18 +868,7 @@ class ImgTxtViewer:
 
 
     def config_text_pane_for_tab(self, reset=False):
-        tab_heights = {
-            'S&R': 60,
-            'Prefix': 60,
-            'Append': 60,
-            'AutoTag': 340,
-            'Filter': 60,
-            'Highlight': 60,
-            'Font': 60,
-            'MyTags': 340,
-            'Stats': 340
-        }
-        tab_height = tab_heights.get(self.current_text_notebook_tab, 60)
+        tab_height = self.text_widget_tab_heights.get(self.current_text_notebook_tab, 59)
         if not self.text_widget_frame_dict:
             height = tab_height
         else:
@@ -879,8 +877,8 @@ class ImgTxtViewer:
             else:
                 height = tab_height
         if reset:
-            self.text_widget_frame_dict = tab_heights.copy()
-            height = tab_heights.get(self.current_text_notebook_tab, 60)
+            self.text_widget_frame_dict = self.text_widget_tab_heights.copy()
+            height = self.text_widget_tab_heights.get(self.current_text_notebook_tab, 59)
         self.text_pane.paneconfigure(self.text_widget_frame, height=height)
 
 
