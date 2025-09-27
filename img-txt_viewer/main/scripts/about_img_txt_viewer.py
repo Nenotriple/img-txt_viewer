@@ -40,6 +40,7 @@ class AboutWindow:
 
     def _create_header_text(self):
         headers = [
+            " Quick Start",
             " Tagger Shortcuts",
             " Tagger Tips",
             " Tagger Toolbar",
@@ -47,6 +48,12 @@ class AboutWindow:
             " Other"
         ]
         content = [
+            # General
+            "Welcome to img-txt Viewer!\n"
+            "This application is designed to help you quickly manage and tag image datasets.\n"
+            "Supported formats: PNG, JPG, JPEG, JFIF, JPG_LARGE, WEBP, BMP, GIF, MP4\n"
+            "To get started, select a directory containing image-text pairs using the `Browse...` button.",
+
             # Tagger Shortcuts
             "⦁ ALT + LEFT/RIGHT: Quickly move between img-txt pairs.\n"
             "⦁ SHIFT + DEL: Move the current pair to a local trash folder.\n"
@@ -165,7 +172,7 @@ class AboutWindow:
             "⦁ 'Options > Restore Last Path': Restore the last used file path when launching the app.\n"
             "⦁ About: Display this information.\n"
 
-            "\n\nFor more detailed information regarding the tools and features, please refer to the (?) help documentation and User Guide found in the repo docs.\n\n"
+            "\n\nFor more detailed information regarding the tools and features, look for (?) buttons throughout the interface or view the `docs/User_Guide.md` file in the repo.\n\n"
             "github.com/Nenotriple/img-txt_viewer\n"
         ]
         return headers, content
