@@ -254,34 +254,41 @@ class MyTags:
                         sub.add_command(label="No groups", state='disabled')
                     return sub
 
+                def add_selection_commands(menu: 'Menu'):
+                    selection_submenu = Menu(menu, tearoff=0)
+                    selection_submenu.add_command(label="All", command=select_all)
+                    selection_submenu.add_command(label="Invert", command=invert_selection)
+                    selection_submenu.add_command(label="Select All Groups", command=select_all_groups)
+                    selection_submenu.add_command(label="Select All Tags", command=select_all_items)
+                    menu.add_cascade(label="Selection", menu=selection_submenu)
+
                 menu = Menu(widget, tearoff=0)
-                # Global/new actions
+                # Always visible
                 menu.add_command(label="New Group...", command=lambda: self.add_group_via_prompt(context_parent_for_new_group()))
-                if iid:
+                if not iid: # On empty area
+                    menu.add_command(label="New Tag...", command=lambda: self.add_item_to_folder('', None))
+                    menu.add_separator()
+                    add_selection_commands(menu)
+                else:
+                    parent_for_new_tag = iid if is_folder else widget.parent(iid)
+                    menu.add_command(label="New Tag...", command=lambda: self.add_item_to_folder(parent_for_new_tag, None))
+                    if is_folder: # On folder
+                        menu.add_command(label="Sort Tags", command=lambda iid=iid: self.sort_group_items(iid))
+                    menu.add_separator()
+                    menu.add_command(label="Rename...", command=lambda: self.rename_node(iid))
+                    menu.add_command(label="Remove", command=self.remove_selected_tags)
+                    # Always visible
+                    menu.add_separator()
                     if selected_rows_exist:
-                        menu.add_cascade(label="Add to group...", menu=build_groups_submenu(menu))
-                    menu.add_separator()
-                    # Insert into text (only items will be used)
-                    menu.add_command(label="Prefix", command=lambda: self.insert_selected_tags(widget, 'start'))
-                    menu.add_command(label="Append", command=lambda: self.insert_selected_tags(widget, 'end'))
-                    menu.add_separator()
-                    if is_folder:
-                        menu.add_command(label="Add Item Here", command=lambda: self.add_item_to_folder(iid))
-                        menu.add_command(label="Rename Group", command=lambda: self.rename_node(iid))
-                        menu.add_command(label="Remove", command=self.remove_selected_tags)
-                    else:
-                        menu.add_command(label="Rename", command=lambda: self.rename_node(iid))
-                        menu.add_command(label="Remove", command=self.remove_selected_tags)
-                    menu.add_separator()
+                        menu.add_cascade(label="Move to...", menu=build_groups_submenu(menu))
                     menu.add_command(label="Move Up", command=lambda: self.move_selection(widget, 'up'))
                     menu.add_command(label="Move Down", command=lambda: self.move_selection(widget, 'down'))
                     menu.add_separator()
-                    # --- updated selection menu entries ---
-                    menu.add_command(label="Selection: All", command=select_all)
-                    menu.add_command(label="Selection: Invert", command=invert_selection)
-                    menu.add_command(label="Selection: Select All Groups", command=select_all_groups)
-                    menu.add_command(label="Selection: Select All Items", command=select_all_items)
-                    # --- end updated selection menu entries ---
+                    if not is_folder: # On item
+                        menu.add_command(label="Prefix to Text", command=lambda: self.insert_selected_tags(widget, 'start'))
+                        menu.add_command(label="Append to Text", command=lambda: self.insert_selected_tags(widget, 'end'))
+                        menu.add_separator()
+                    add_selection_commands(menu)
                 menu.tk_popup(event.x_root, event.y_root)
 
             elif widget == self.alltags_listbox:
@@ -347,6 +354,9 @@ class MyTags:
         menu.add_separator()
         menu.add_checkbutton(label="Hide: My Tags - Controls", variable=self.hide_mytags_controls_var, command=self.toggle_mytags_controls)
         menu.add_checkbutton(label="Hide: All Tags - Controls", variable=self.hide_alltags_controls_var, command=self.toggle_alltags_controls)
+        menu.add_separator()
+        menu.add_command(label="Sort MyTags Tags", command=self.sort_all_groups_items)
+        menu.add_command(label="Sort MyTags Groups", command=self.sort_all_groups)
         menu.add_separator()
 
         # MyTags Font Style submenu
@@ -531,6 +541,7 @@ class MyTags:
         self.custom_dictionary_treeview.delete(*self.custom_dictionary_treeview.get_children())
         data = self._read_mytags_data()
         self._populate_tree_from_data(data)
+        self.check_unsaved_changes()
 
 
     def save_my_tags_file(self):
@@ -1214,9 +1225,11 @@ class MyTags:
         self.custom_dictionary_treeview.insert(parent, 'end', text=name, tags=('folder',))
         self.check_unsaved_changes()
 
-
-    def add_item_to_folder(self, folder_iid, name: str | None = None):
-        if not folder_iid:
+    def add_item_to_folder(self, folder_iid: str | None, name: str | None = None):
+        if folder_iid is None:
+            folder_iid = ''
+        tree = self.custom_dictionary_treeview
+        if not tree:
             return
         if name is None:
             name = custom_dialog.askstring("New Item", "Enter item name:", parent=self.root, icon_image=self.app.blank_image)
@@ -1225,8 +1238,7 @@ class MyTags:
             name = name.strip()
             if not name:
                 return
-        tree = self.custom_dictionary_treeview
-        existing = set(tree.item(i)['text'] for i in tree.get_children(folder_iid) if 'item' in tree.item(i, 'tags'))
+        existing = set(tree.item(i)['text'] for i in tree.get_children(folder_iid) if 'item' in (tree.item(i, 'tags') or ()))
         if name not in existing:
             tree.insert(folder_iid, 'end', text=name, tags=('item',))
             self.check_unsaved_changes()
@@ -1309,6 +1321,66 @@ class MyTags:
             except Exception:
                 pass
             self.check_unsaved_changes()
+
+
+    def _sort_items_and_folders(self, tree, parent_iid):
+        """Sort items alphabetically, keep folders after items (preserve folder order)."""
+        items, folders = self.get_items_and_folders(tree, parent_iid)
+        sorted_items = sorted(items, key=lambda cid: tree.item(cid)['text'].lower())
+        for idx, cid in enumerate(sorted_items):
+            tree.move(cid, parent_iid, idx)
+        for idx, cid in enumerate(folders, start=len(sorted_items)):
+            tree.move(cid, parent_iid, idx)
+        return folders
+
+
+    def _sort_folders_recursively(self, tree, parent_iid):
+        """Sort folders alphabetically, keep items before folders (preserve item order)."""
+        items, folders = self.get_items_and_folders(tree, parent_iid)
+        sorted_folders = sorted(folders, key=lambda cid: tree.item(cid)['text'].lower())
+        for idx, cid in enumerate(items):
+            tree.move(cid, parent_iid, idx)
+        for idx, cid in enumerate(sorted_folders, start=len(items)):
+            tree.move(cid, parent_iid, idx)
+            self._sort_folders_recursively(tree, cid)
+
+
+    def get_items_and_folders(self, tree, parent_iid):
+        children = list(tree.get_children(parent_iid))
+        items = [cid for cid in children if 'item' in (tree.item(cid, 'tags') or ())]
+        folders = [cid for cid in children if 'folder' in (tree.item(cid, 'tags') or ())]
+        return items,folders
+
+
+    def sort_group_items(self, iid):
+        tree = self.custom_dictionary_treeview
+        if not tree or not iid:
+            return
+        self._sort_items_and_folders(tree, iid)
+        self.check_unsaved_changes()
+
+
+    def sort_all_groups_items(self):
+        tree = self.custom_dictionary_treeview
+        if not tree:
+            return
+
+        def sort_items_in_group(parent_iid):
+            folders = self._sort_items_and_folders(tree, parent_iid)
+            for folder_cid in folders:
+                sort_items_in_group(folder_cid)
+
+        sort_items_in_group('')
+        self.check_unsaved_changes()
+
+
+    def sort_all_groups(self):
+        tree = self.custom_dictionary_treeview
+        if not tree:
+            return
+        self._sort_folders_recursively(tree, '')
+        self.check_unsaved_changes()
+
 
     #endregion
     #region DnD
