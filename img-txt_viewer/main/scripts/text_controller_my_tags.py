@@ -566,7 +566,6 @@ class MyTags:
             existing = set(tree.item(i)['text'] for i in tree.get_children(folder_iid) if 'item' in tree.item(i, 'tags'))
             if tag not in existing:
                 tree.insert(folder_iid, 'end', text=tag, tags=('item',))
-                tree.item(folder_iid, open=True)
         else:
             # add to root if not duplicate in root
             existing = set(tree.item(i)['text'] for i in tree.get_children('') if 'folder' not in tree.item(i, 'tags'))
@@ -632,7 +631,6 @@ class MyTags:
                 tag = self.alltags_listbox.get(idx)
                 if tag not in existing:
                     tree.insert(folder_iid, 'end', text=tag, tags=('item',))
-            tree.item(folder_iid, open=True)
         else:
             existing = set(tree.item(i)['text'] for i in tree.get_children('') if 'folder' not in tree.item(i, 'tags'))
             for idx in selected_indices:
@@ -1031,7 +1029,8 @@ class MyTags:
                     sg = normalize_group_entry(sub)
                     if sg:
                         children.append(sg)
-            return {'name': name, 'items': items, 'groups': children}
+            open_state = entry.get('open', True)
+            return {'name': name, 'items': items, 'groups': children, 'open': bool(open_state)}
 
         if os.path.isfile(path):
             try:
@@ -1050,7 +1049,7 @@ class MyTags:
                     if isinstance(g, dict):
                         for name, lst in g.items():
                             lst2 = [str(x).strip() for x in (lst or []) if str(x).strip()]
-                            groups.append({'name': str(name).strip() or 'Group', 'items': lst2, 'groups': []})
+                            groups.append({'name': str(name).strip() or 'Group', 'items': lst2, 'groups': [], 'open': True})
                     elif isinstance(g, list):
                         for entry in g:
                             ng = normalize_group_entry(entry)
@@ -1092,7 +1091,7 @@ class MyTags:
 
 
     def _write_mytags_data(self, data: dict):
-        # Store structured data: {'items': [...], 'groups': [{'name':..., 'items':[...], 'groups':[...]}]}
+        # Store structured data: {'items': [...], 'groups': [{'name':..., 'items':[...], 'groups':[...], 'open': bool}]}
         path = self.app.my_tags_yml
         os.makedirs(os.path.dirname(path), exist_ok=True)
 
@@ -1103,7 +1102,8 @@ class MyTags:
             for sub in g.get('groups') or []:
                 if isinstance(sub, dict):
                     subs.append(sanitize_group(sub))
-            return {'name': name, 'items': lst, 'groups': subs}
+            open_state = bool(g.get('open', True))
+            return {'name': name, 'items': lst, 'groups': subs, 'open': open_state}
 
         items = [str(t).strip() for t in (data.get('items') or []) if str(t).strip()]
         groups = []
@@ -1124,7 +1124,7 @@ class MyTags:
                 tree.insert(folder_iid, 'end', text=item, tags=('item',))
             for child in grp.get('groups', []) or []:
                 insert_group(folder_iid, child)
-            tree.item(folder_iid, open=True)
+            tree.item(folder_iid, open=bool(grp.get('open', True)))
 
         # Root items
         for tag in data.get('items', []) or []:
@@ -1145,7 +1145,8 @@ class MyTags:
                 tags = tree.item(iid, 'tags') or ()
                 if 'folder' in tags:
                     sub_items, sub_groups = collect(iid)
-                    groups.append({'name': text, 'items': sub_items, 'groups': sub_groups})
+                    is_open = tree.item(iid, 'open')
+                    groups.append({'name': text, 'items': sub_items, 'groups': sub_groups, 'open': bool(is_open)})
                 elif 'item' in tags:
                     items.append(text)
                 else:
@@ -1167,11 +1168,6 @@ class MyTags:
             return
         parent = parent_iid or ''
         self.custom_dictionary_treeview.insert(parent, 'end', text=name, tags=('folder',))
-        if parent_iid:
-            try:
-                self.custom_dictionary_treeview.item(parent_iid, open=True)
-            except Exception:
-                pass
 
 
     def add_item_to_folder(self, folder_iid, name: str | None = None):
@@ -1188,7 +1184,6 @@ class MyTags:
         existing = set(tree.item(i)['text'] for i in tree.get_children(folder_iid) if 'item' in tree.item(i, 'tags'))
         if name not in existing:
             tree.insert(folder_iid, 'end', text=name, tags=('item',))
-            tree.item(folder_iid, open=True)
 
 
     def rename_node(self, iid):
@@ -1265,13 +1260,6 @@ class MyTags:
                 existing_names.add(name)
             except Exception:
                 pass
-
-        if folder_iid:
-            try:
-                tree.item(folder_iid, open=True)
-            except Exception:
-                pass
-
         if moved:
             try:
                 tree.selection_set(moved)
