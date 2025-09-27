@@ -297,6 +297,7 @@ FIND_DUPLICATE_FILE_HELP = {
 #endregion
 #region MyTags
 
+
 MY_TAGS_HELP = {
 "MyTags - Information":
     "Curate your own tags (with optional folders) for autocomplete and quick insertion into the caption box.\n",
@@ -307,22 +308,22 @@ MY_TAGS_HELP = {
 
 "Add & Organize:":
     "• Type in the box + Enter or click Add.\n"
-    "• To add inside a folder: select exactly one folder, then add; or right-click a folder → Add Item Here.\n"
-    "• New folder: right-click in the My Tags tree → New Group….\n"
+    "• To add inside a folder: select exactly one folder, then add; or right-click a folder → New Tag…\n"
+    "• New folder: right-click in the My Tags tree → New Group…\n"
     "• From All Tags: select and click “<” or right-click → Add to MyTags.\n"
     "• From elsewhere: right-click selected text or the AutoTag list → Add to MyTags.\n",
 
 "Selecting & Menus:":
     "• Use Ctrl/Shift to multi-select; right-click for context actions.\n"
-    "• Selection tools: All, Invert, Select All Groups, Select All Items.\n"
-    "• Add to group…: move selected items into any folder (choose (Root) for top level).\n",
+    "• Selection tools: All, Invert, Select All Groups, Select All Tags.\n"
+    "• Move to…: move selected items into any folder (choose (Root) for top level).\n",
 
 "Insert Into Text:":
     "• Prefix inserts before existing text; Append inserts after.\n"
     "• Double-click any tag to Append. Works from both panes.\n",
 
 "Edit, Move, Reorder:":
-    "• Edit/Rename: select and click Edit or right-click → Rename.\n"
+    "• Edit/Rename: select and click Edit or right-click → Rename…\n"
     "• Remove: deletes selected rows (deleting a folder removes its contents).\n"
     "• Reorder: drag with the middle mouse button (within the same parent) or use Move Up/Down.\n"
     "• Drag-and-drop shows a blue placeholder; multi-select reorder is supported.\n",
@@ -344,6 +345,5 @@ MY_TAGS_HELP = {
 
 "Notes:":
     "• Data is stored in `my_tags.yaml`. If a legacy `my_tags.csv` exists, it is imported automatically once.\n"
-    "• Ordering controls autocomplete priority and the default insertion order.\n"
-    "• Add to group… moves only item rows; folders in the selection are ignored.\n",
+    "• Ordering controls autocomplete priority and the default insertion order.\n",
 }
