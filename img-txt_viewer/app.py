@@ -1266,9 +1266,9 @@ class ImgTxtViewer:
         state, text = ("disabled", "") if new_state else ("normal", "Double-Click to open in system image viewer \n\nMiddle click to open in file explorer\n\nALT+Left/Right or Mouse-Wheel to move between img-txt pairs")
         self.image_preview_tooltip.config(state=state, text=text)
         if new_state:
-            self.popup_zoom.update_zoom(event)
+            self.popup_zoom.show_popup(event)
         else:
-            self.popup_zoom.hide_zoom(event)
+            self.popup_zoom.hide_popup(event)
 
 
 # --------------------------------------
@@ -1839,8 +1839,7 @@ class ImgTxtViewer:
                 self.current_frame_index = 0
                 if self.edit_panel_visible_var.get():
                     self.edit_panel.toggle_edit_panel_widgets("normal")
-            self.popup_zoom.set_image(image=image, path=self.image_file)
-            self.popup_zoom.set_resized_image(resized_image, resized_width, resized_height)
+            self.popup_zoom.set_image(image)
             self.current_image = resized_image
             return text_file, image, resize_event.width, resize_event.height
         except ValueError:
