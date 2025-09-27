@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD033-->
+
 # Index
 
 - [v1.98](#v198)
@@ -37,11 +39,7 @@
 - [v1.40](#v140)
 - [v1.30](#v130)
 - [v1.20](#v120)
-- [v1.0](#⬆v10)
-
-
-
-
+- [v1.0](#v10)
 
 <!--###########################################################################-->
 
@@ -49,32 +47,25 @@
 
 [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.98)
 
-<details>
-  <summary>Release Notes for v1.98</summary>
-
 **Fixed:**
+
 - Fixed an issue preventing the app from correctly assigning the application path.
   - Settings, MyTags, along with ONNX and NCNN models should now be correctly located when using the executable version.
 
-</details>
-<br>
+---
 
+Thank you to @Hamsterun for reporting this issue!
 
 <!--###########################################################################-->
-
 
 ## v1.97
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.97)
 
-<details>
-  <summary>Release Notes for v1.97</summary>
-
-
 I'm very happy to announce **img-txt_viewer is 2 years old!** 🎉🎈
 
-
 **New:**
+
 - Added a tabbed row that holds the various UI tools:
   - Tagger *(the main tab)*, Tag-Editor *(Batch Tag Edit)*, Crop, Batch Upscale, Batch Rename, and Find Duplicates.
 - Added `mp4` video support. [#52](https://github.com/Nenotriple/img-txt_viewer/issues/52)
@@ -109,6 +100,7 @@ I'm very happy to announce **img-txt_viewer is 2 years old!** 🎉🎈
   - Added rename preset: Numbering and Auto-Date
 
 **Fixed:**
+
 - Fixed error when typing in the primary text box when no dictionary is selected.
 - Fixed issue when resetting the font.
 - Fixed error closing the Crop image interface.
@@ -122,6 +114,7 @@ I'm very happy to announce **img-txt_viewer is 2 years old!** 🎉🎈
 - CropUI: Fixed issue where guidelines wouldn't be drawn when double-clicking to create a selection.
 
 **Other Changes:**
+
 - New app icon.
 - The Menu Bar has been reorganized.
 - It's now possible to *loop around* while clicking inside the Thumbnail panel for navigation.
@@ -130,11 +123,8 @@ I'm very happy to announce **img-txt_viewer is 2 years old!** 🎉🎈
 - You can now enable/disable the "Reload last directory?" popup via the Options menu. [#58](https://github.com/Nenotriple/img-txt_viewer/issues/58)
 
 ---
+
 Thank you to @younyokel, and @MNeMoNiCuZ for your help and suggestions during this release!
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
@@ -142,22 +132,16 @@ Thank you to @younyokel, and @MNeMoNiCuZ for your help and suggestions during th
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.96)
 
-
-<details>
-  <summary>Release Notes for v1.96</summary>
-
-
 This release introduces several new features and improvements, including AutoTag for automatic image tagging using ONNX vision models (WD14), revamped Batch Tag Edit and Crop tools, a Thumbnail Panel for quick navigation, and an Edit Image Panel for adjusting image properties. Additionally, numerous bugs have been fixed, such as issues with the Delete Pair tool, image quality degradation, and memory leaks.
 
 The app now targets Windows 11, providing a more modern look and feel for most widgets.
 
 Starting from this release, the `Lite` version will no longer be provided. All tools are now built-in.
 
-
 ---
 
-
 **New:**
+
 - **AutoTag**: Automatically tag images using ONNX vision models like `wd-v1-4-vit-tagger-v2`.
   - Download additional models from [Hugging Face](https://huggingface.co/SmilingWolf).
   - Place models in subfolders within the `onnx_models` directory, located in the same folder as this program. The subfolder name will be used as the model name.
@@ -194,8 +178,8 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 - **Danbooru (Safe)**: Added to the list of available dictionaries, a great choice to load with the English dictionary.
 - **Easter Egg Game**: Can be opened from the ImgTxtViewer About Window.
 
-
 **Fixed:**
+
 - Fixed issue where the `Delete Pair` tool would overwrite the next index with the deleted text. #31
 - Fixed an issue that was degrading the quality of the displayed image and not respecting the `Image Display Quality` setting.
 - Fixed a memory leak that could occur whenever the primary image is displayed.
@@ -217,8 +201,8 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 - Fixed an issue where suggestions weren't generated from `my_tags.csv` if no primary dictionary was loaded.
 - Reloading the last directory is a little faster / smoother now.
 
-
 **Other Changes:**
+
 - Autocomplete suggestions are now cached, so re-typing the same words returns suggestions quicker.
   - Some pre-caching is done for Autocomplete suggestions, which does slow down the initial launch slightly.
 - Using `Open Current Directory...` will now automatically select the current image in the file explorer. #30
@@ -237,8 +221,8 @@ Starting from this release, the `Lite` version will no longer be provided. All t
 - The target operating system for this project is now Windows 11, resulting in some UI changes.
   - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
 
-
 **Project Changes:**
+
 - **Upscale, Batch Upscale**: v1.05:
   - FIXED: Prevent the app from hanging while upscaling a GIF.
   - Batch Upscale: Added a label to display the number of images upscaled and the total number of images.
@@ -259,20 +243,11 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - Widgets are now made with ttk (when appropriate) for better styling on Windows 11.
 - `crop_image` has been replaced with `CropUI`.
 
-
-</details>
-<br>
-
-
 <!--###########################################################################-->
 
 ## v1.95
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.95)
-
-<details>
-  <summary>Release Notes for v1.96</summary>
-
 
 - New:
   - New tab `Stats`: View file stats related to the current directory, including total files, characters, captions, average characters, words, captions per file, lists of captions, resolutions, common words, and more.
@@ -286,10 +261,6 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - Enhanced text selection for the primary text box and most text entries, treating common punctuation and symbols as word boundaries on double-click and allowing selection of entire entry text strings with a triple-click. #26
   - New text box right-click menu option: `Open Text File...`
 
-
-<br>
-
-
 - Fixed:
   - Filtering using regex patterns now works as intended. #27
   - Fixed right-click not triggering the primary text box context menu if the textbox wasn't initially focused with a left-click.
@@ -301,10 +272,6 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - Prevented the Image-Grid from opening when there aren't any images to display.
   - The file filter is now cleared when changing the selected directory.
   - Fixed issue where settings were not reset when clicking NO to reset "my_tags"
-
-
-<br>
-
 
 - Other changes:
   - Toggle Zoom - The popup is now centered next to the mouse and behaves better around the screen edges.
@@ -321,10 +288,6 @@ Starting from this release, the `Lite` version will no longer be provided. All t
   - The tools *'Rename img-txt Pairs'* and *'Rename and Convert img-txt Pairs'* have been combined into a single tool called `Batch Rename and/or Convert`.
   - Using Undo after S&R/Prefix/Append, will now delete text files that previously didn't exist at the time when those tools were ran.
   - This version comes with many small UI tweaks and updates, along with some minor internal code refactoring.
-
-
-<br>
-
 
 - Project Changes:
   - **Image-Grid:** v1.03
@@ -354,13 +317,7 @@ Starting from this release, the `Lite` version will no longer be provided. All t
     - Other changes:
       - x_offset, and y_offset have been renamed to padx, and pady.
 
-
 Thank you to @MNeMoNiCuZ and @TeKett for your input!
-
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
@@ -368,43 +325,23 @@ Thank you to @MNeMoNiCuZ and @TeKett for your input!
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.94)
 
-<details>
-  <summary>Release Notes for v1.94</summary>
-
-
 - New:
-    - New option: `Toggle Zoom`, This allows you to hover the mouse over the current image and display a zoomed in preview.
-      - Use the Mouse-Wheel to zoom in and out.
-      - Use Shift+Mouse-Wheel to increase or decrease the popup size.
-
-
-<br>
-
+  - New option: `Toggle Zoom`, This allows you to hover the mouse over the current image and display a zoomed in preview.
+    - Use the Mouse-Wheel to zoom in and out.
+    - Use Shift+Mouse-Wheel to increase or decrease the popup size.
 
 - Fixed:
   - `Image Grid`, Fixed issue where supported file types were case sensitive, leading to images not appearing, and indexing issues.
 
-
-<br>
-
 - Other changes:
   - Improved performance of Autocomplete by optimizing: data loading, similar names, string operations, and suggestion retrieval. Up to 50% faster than v1.92
   - `Image Grid`, Now reuses image cache across instances to speed up loading.
-
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
 ## v1.93.1
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.93.1)
-
-<details>
-  <summary>Release Notes for v1.93.1</summary>
-
 
 - New:
   - New autocomplete matching modes: `Match Whole String`, and `Match Last Word` 732120e
@@ -414,18 +351,10 @@ Thank you to @MNeMoNiCuZ and @TeKett for your input!
   - New Tool: `Rename img-txt pairs`, Use this to clean-up the filenames of your dataset without converting the image types. 8f24a7e
   - You can now choose the crop anchor point when using `Batch Crop Images`. 9d247ea
 
-
-<br>
-
-
 - Fixed:
   - Fixed issue where Autocomplete was broken with the executable version. (incorrect build command)
   - Fixed issue #23 where initially loading a directory could result in the first text file displayed being erased. ae56143
   - Fixed issue where manually setting a directory, the text box and image index were not reset. 7874a13
-
-
-<br>
-
 
 - Other changes:
   - Improved performance of Autocomplete, by handling similar names more efficiently. Up to 40% faster than before. d8be0f2
@@ -433,30 +362,17 @@ Thank you to @MNeMoNiCuZ and @TeKett for your input!
   - Improved efficiency of TkToolTip by reusing tooltip widgets, adding visibility checks, and reducing unnecessary method calls. 8b6c0dc
   - Slightly faster image loading by using PIL's thumbnail function to reduce aspect ratio calculation. 921b4d3
 
-
-<br>
-
-
 - Project Changes:
   - `Batch Resize Images`: v1.06 19d5b4d
-    - See full list of changes here: https://github.com/Nenotriple/batch_resize_images/releases
+    - See full list of changes here: [full list of changes](https://github.com/Nenotriple/batch_resize_images/releases)
   - `Upscale`: v1.02 616ddaa
     - The current and total GIF frames are now displayed in the UI.
-
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
 ## v1.92
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.92)
-
-<details>
-  <summary>Release Notes for v1.92</summary>
-
 
 - New:
   - New tag list `Derpibooru`: Created from the top ~100k Derpibooru imageboard tags with additional filtering.
@@ -470,25 +386,13 @@ Thank you to @MNeMoNiCuZ and @TeKett for your input!
       - Hovering the mouse over this indicator will display a tooltip showing the text path.
   - The mouse wheel can now be used on the index entry to cycle through img-txt pairs.
 
-
-<br>
-
-
 - Fixed:
   - Fixed issue where "rename_and_convert_images" would save JPG in RGBA mode, which isn't supported.
   - Fixed error that occurred when double-clicking the image preview to drag the window.
   - Tons of small fixes.
 
-
-<br>
-
-
 - Other changes:
   - Small UI tweaks.
-
-
-<br>
-
 
 - Project Changes:
   - Refactored img_txt_viewer repo structure.
@@ -509,20 +413,11 @@ Thank you to @MNeMoNiCuZ and @TeKett for your input!
     - Text descriptions are now consolidated into a help button/popup.
     - Many small UI tweaks and adjustments.
 
-
-</details>
-<br>
-
-
 <!--###########################################################################-->
 
 ## v1.91
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.91)
-
-<details>
-  <summary>Release Notes for v1.91</summary>
-
 
 - New:
   - New Tool: `Upscale Image`, Upscale a single image using `realesrgan-ncnn-vulkan`.
@@ -534,10 +429,6 @@ Thank you to @MNeMoNiCuZ and @TeKett for your input!
   - New hotkey: Press `CTRL+R` to go to a random img-txt pair.
   - The scale of the image is now displayed in the info bar.
   - You can now move the window around by clicking and dragging the current image with the mouse.
-
-
-<br>
-
 
 - Fixed:
   - `Goto Random` now always returns a different index.
@@ -559,10 +450,6 @@ Thank you to @MNeMoNiCuZ and @TeKett for your input!
   - Quickly scrolling the mouse wheel to cycle through pairs is now smoother, with less chance of skipping.
   - Improved error handling for various other minor issues.
 
-
-<br>
-
-
 - Other changes:
   - Significant speedup when loading and scaling an image in the UI. Average time before ~45ms, now ~5ms.
   - Using `Undo Delete Pair` now displays the files that will be restored.
@@ -576,10 +463,6 @@ Thank you to @MNeMoNiCuZ and @TeKett for your input!
   - Inserting a suggestion no longer creates leading or trailing spaces.
   - `List View` and `Middle-click to delete tag` are now disabled if text cleanup is also disabled.
 
-
-<br>
-
-
 - Project Changes:
   - `Batch Resize Images`: (v1.02):
     - The `resize_images.py` script has been renamed to `batch_resize_images.py`.
@@ -590,20 +473,11 @@ Thank you to @MNeMoNiCuZ and @TeKett for your input!
   - `Find Duplicate Files`: (v1.01):
     - The `Pillow` import has been removed, reducing the size of the executable file by ~75%.
 
-
-</details>
-<br>
-
-
 <!--###########################################################################-->
 
 ## v1.90
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.90)
-
-<details>
-  <summary>Release Notes for v1.90</summary>
-
 
 I'm very happy to announce **img-txt_viewer is 1 year old!** 🎉🎈
 
@@ -611,9 +485,7 @@ I love knowing this app has helped at least a few people work faster and easier,
 
 Here's some new tools, fixes, and changes for version 1.90:
 
-
 ---
-
 
 - New:
   - `Find Duplicate Files`: Quickly find and separate duplicate images in your dataset.
@@ -654,19 +526,11 @@ Here's some new tools, fixes, and changes for version 1.90:
   - Image info is now displayed above the current image (filename, resolution, size)
   - The last directory and index can now be quickly restored when launching the app. #21
 
-
-<br>
-
-
 - Fixed:
   - Fixed image scaling regression that prevented images from scaling to fill the frame.
   - Fixed issue where the image index would no longer sort correctly after files were added or removed from the working directory.
   - Fixed issue where a new text file wasn't being created when saving the text box.
   - Fixed Auto-Save not triggering when loading a new directory.
-
-
-<br>
-
 
 - Other changes:
   - "file_watcher" logic has been removed.
@@ -685,23 +549,11 @@ Here's some new tools, fixes, and changes for version 1.90:
   - "Delete Pair" keyboard shortcut changed from `Del` to `Shift+Del`. #19
   - You now have the flexibility to choose any combination from the available autocomplete dictionaries.
 
-
-<br>
-
-
-</details>
-<br>
-
-
 <!--###########################################################################-->
 
 ## v1.85
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.85)
-
-<details>
-  <summary>Release Notes for v1.85</summary>
-
 
 - New:
   - New Text Tool `Filter Pairs`: Use this to search all text files and filter the img-txt pairs to display only those that include the matched text.
@@ -709,58 +561,33 @@ Here's some new tools, fixes, and changes for version 1.90:
   - New Text Tool `Active Highlights`: Use this to always highlight certain text.
     - Use ` + ` to highlight multiple strings of text, *(Note the spaces!)*. Example: dog + cat
 
-
-</details>
-<br>
-
-
 <!--###########################################################################-->
 
 ## v1.84
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.84)
 
-<details>
-  <summary>Release Notes for v1.84</summary>
-
-
 - New:
   - New tool: `Resize Images`: You can find this in the Tools menu.
     - Resize operations: Resize to Resolution, Resize to Width, Resize to Height, Resize to Shorter Side, Resize to Longer Side
     - Just like "batch_tag_delete.py", "resize_images.py" is a stand-alone tool. You can run it 100% independently of img-txt_viewer.
     - Images will be overwritten when resized.
-   - New option: `Colored Suggestions`, Use this to enable or disable the color coded autocomplete suggestions.
-
-
-<br>
-
+  - New option: `Colored Suggestions`, Use this to enable or disable the color coded autocomplete suggestions.
 
 - Fixed:
   - Fixed suggestions breaking when typing a parentheses.
 
-
-<br>
-
-
 - Other changes:
   - Batch Tag Delete is no longer bundled within img-txt_viewer. This allows you to run them separately.
 
-
 ---
-
 
 Batch Tag Delete
 v1.06 changes:
 
-
 - Fixed:
   - Fixed tag list refreshing twice
   - Fixed multi-tag delete when "batch_tag_delete" is ran from "img-txt_viewer"
-
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
@@ -768,25 +595,12 @@ v1.06 changes:
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.83)
 
-<details>
-  <summary>Release Notes for v1.83</summary>
-
-
 - Fixed:
   - Fix text box duplicating when selecting a new directory.
   - Fixed some small issues with the file watcher and image index.
 
-
-<br>
-
-
 - Other changes:
   - Minor code cleanup and internal changes.
-
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
@@ -794,21 +608,12 @@ v1.06 changes:
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.82)
 
-<details>
-  <summary>Release Notes for v1.82</summary>
-
-
 The biggest visible change this release is the addition of a new Paned Window that now holds all text tools. (excluding Batch Tag Delete)
 This makes it way more simple and easier to use these tools.
-
 
 - New:
   - Search and Replace, Prefix Text, Append Text, Font Options, and Edit Custom Dictionary are now in a convenient tabbed interface below the text box.
   - You can now refresh the custom dictionary
-
-
-<br>
-
 
 - Fixed:
   - Saving a blank text file now deletes it.
@@ -817,18 +622,9 @@ This makes it way more simple and easier to use these tools.
   - 'Batch Tag Delete' and 'About' no longer open beside the main window. This prevents the new window from opening off the screen.
   - Running 'Prefix' or 'Append' text now creates text files for images that previously didn't have a pair.
 
-
-<br>
-
-
 - Other changes:
   - Basically all text tools were completely redone.
   - I've tried to fix as many small bugs and add polish wherever possible. Too many changes to list them all.
-
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
@@ -836,16 +632,8 @@ This makes it way more simple and easier to use these tools.
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.81)
 
-<details>
-  <summary>Release Notes for v1.81</summary>
-
-
 - New:
   - Added underlining (Alt+Letter) to all menubar commands.
-
-
-<br>
-
 
 - Fixed:
   - Prevent app crash when selecting a folder without any text files.
@@ -857,79 +645,39 @@ This makes it way more simple and easier to use these tools.
   - Some menu options are now disabled before loading a directory.
   - `Edit Custom Suggestions` now opens the ".csv" file as a regular text document if no CSV file editor is present.
 
-
-</details>
-<br>
-
-
 <!--###########################################################################-->
 
 ## v1.80
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.80)
 
-<details>
-  <summary>Release Notes for v1.80</summary>
-
-
 - New:
-  - Small ui tweaks. [#22b2764][22b2764]
-  - `Fuzzy Search` You can now use an asterisk while typing to "search" for tags. [#05ca179][05ca179]
+  - Small ui tweaks. 22b2764
+  - `Fuzzy Search` You can now use an asterisk while typing to "search" for tags. 05ca179
     - For example: Typing `*lo*b` returns "<ins>**lo**</ins>oking <ins>**b**</ins>ack", and even "yel<ins>**lo**</ins>w <ins>**b**</ins>ackground"
-  - You can now undo the last operation for: Search and Replace, Prefix Text, and Append Text. [#c5be6a2][c5be6a2]
-  - Batch Tag Delete no longer locks the main img-txt_viewer window. [#f2f8414][f2f8414]
-  - You can now swap img-txt pair horizontal and vertical positions. [#ee7d052][ee7d052]
-  - About window added. [#e692ebe][e692ebe]
-  - The current text file is now scanned every 2 seconds, and refreshed if changed outside the app. [#95910e4][95910e4]
-
-
-<br>
-
+  - You can now undo the last operation for: Search and Replace, Prefix Text, and Append Text. c5be6a2
+  - Batch Tag Delete no longer locks the main img-txt_viewer window. f2f8414
+  - You can now swap img-txt pair horizontal and vertical positions. ee7d052
+  - About window added. e692ebe
+  - The current text file is now scanned every 2 seconds, and refreshed if changed outside the app. 95910e4
 
 - Fixed:
-  - Huge fix: Batch Tag Delete now properly opens when launched from the executable version. [#95910e4][95910e4]
-  - Fixed autosave bug causing warning on window close without directory selection. [#b3f00a2][b3f00a2]
-  - Batch Tag Delete now opens beside the main window. [#f75362f][f75362f]
-  - Selecting a new directory now removes the left over text backups. [#b1f4655][b1f4655]
-  - Closing the app now removes the "Trash" folder if empty. [#f8144ab][f8144ab]
-  - Prevent multiple instances of a tool window from opening. [#3320d8e][3320d8e]
-
-
-<br>
-
+  - Huge fix: Batch Tag Delete now properly opens when launched from the executable version. 95910e4
+  - Fixed autosave bug causing warning on window close without directory selection. b3f00a2
+  - Batch Tag Delete now opens beside the main window. f75362f
+  - Selecting a new directory now removes the left over text backups. b1f4655
+  - Closing the app now removes the "Trash" folder if empty. f8144ab
+  - Prevent multiple instances of a tool window from opening. 3320d8e
 
 - Other changes:
-  - PanedWindow adjustments. [#2bfdb3a][2bfdb3a]
-  - Other changes: [#f2f8414][f2f8414], [#9c8c580][9c8c580], [#0362e23][0362e23], [#fbcaaec][fbcaaec], [353827d][353827d], [#a41d99c][a41d99c], [#143140e][143140e], [#b38a786][b38a786]
-
-
-<!-- New -->
-[22b2764]: https://github.com/Nenotriple/img-txt_viewer/commit/22b2764edbf16e4477dce16bebdf08cf2d3459df
-[05ca179]: https://github.com/Nenotriple/img-txt_viewer/commit/05ca179914d3288108206465d78ab199874b6cc2
-[c5be6a2]: https://github.com/Nenotriple/img-txt_viewer/commit/c5be6a2861192d634777d5c0d5c6d9a8804bbc72
-[143140e]: https://github.com/Nenotriple/img-txt_viewer/commit/143140efc4bca1515579d3ce0d73c68837ac5c30
-[b38a786]: https://github.com/Nenotriple/img-txt_viewer/commit/b38a786c4f75edf0ad03d2966076f32c7d870d3e
-[ee7d052]: https://github.com/Nenotriple/img-txt_viewer/commit/ee7d0527d006803f4bf1377e5e95cebf13af429f
-[e692ebe]: https://github.com/Nenotriple/img-txt_viewer/commit/e692ebe56e34433ad5697ab2c1a3404b62b7c7c8
-
-<!-- Fixed -->
-[95910e4]: https://github.com/Nenotriple/img-txt_viewer/commit/95910e42c8f8212a66c0eb68d3d75db7078587cb
-[b3f00a2]: https://github.com/Nenotriple/img-txt_viewer/commit/b3f00a28c82beb2300e78693df5d771802b2cfe4
-
-
-</details>
-<br>
-
+  - PanedWindow adjustments. 2bfdb3a
+  - Other changes: f2f8414, 9c8c580, 0362e23, fbcaaec, 353827d, a41d99c, 143140e, b38a786
 
 <!--###########################################################################-->
 
 ## v1.79
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.79)
-
-<details>
-  <summary>Release Notes for v1.79</summary>
-
 
 - New:
   - The img-txt pair is now contained in a PanedWindow, this allows you to drag and resize these frames. [#0237473][0237473]
@@ -944,10 +692,6 @@ This makes it way more simple and easier to use these tools.
   - `Undo Delete` You can now restore deleted img-txt pairs. [#82a59d3][82a59d3]
   - Increase score/priority of tags from 'my_tags.csv' [#e800867][e800867]
 
-
-<br>
-
-
 - Fixed:
   - The app now always opens in the center of the screen. [#3ae6e13][3ae6e13]
   - Most new windows now open directly beside the main window. [#a943cfd][a943cfd]
@@ -956,16 +700,11 @@ This makes it way more simple and easier to use these tools.
   - Fixed annoying behaviour of "Font Options" dropdown boxes. [#e65f107][e65f107]
   - Fix for IndexError in delete_pair function. [#e12a73f][e12a73f]
 
-
-<br>
-
-
 - Other changes:
   - Suggestion style and alignment menu have been removed.  [#1a5cea1][1a5cea1]
   - English Dictionary: ~47,000 words were given an increased priority. [#33d717c][33d717c]
   - Danbooru tags: ~100 unnecessary tags removed. [#8d07b66][8d07b66]
   - Other changes: [#dd863c0][dd863c0], [#9dac3bf][9dac3bf], [#85ebb01][85ebb01], [#2e6804f][2e6804f], [#b3f02fb][b3f02fb], [#dc92a2f][dc92a2f], [#f8ca427][f8ca427], [#56e4519][56e4519], [#723f289][723f289], [#48f8d4f][48f8d4f], [#d36140f][d36140f]
-
 
 <!-- New -->
 [0237473]: https://github.com/Nenotriple/img-txt_viewer/commit/0237473dea9f27d30a959adf49fd6f5cec63d375
@@ -1001,26 +740,17 @@ This makes it way more simple and easier to use these tools.
 [48f8d4f]: https://github.com/Nenotriple/img-txt_viewer/commit/48f8d4fc5b861620bc3b17262dfb1104e4677fae
 [d36140f]: https://github.com/Nenotriple/img-txt_viewer/commit/d36140fcb53fd1a5290fdfcc5db511d236ed89ad
 
-
 ---
-
 
 Batch Token Delete
 v1.04 changes:
-
 
 - Fixed:
   - The window now opens in the center of the screen. [#dfc396d][dfc396d]
   - The window now always opens in focus. [#f886c4f][f886c4f]
 
-
 [dfc396d]: https://github.com/Nenotriple/img-txt_viewer/commit/dfc396d36b95fe6fc42ad9144008d839eb2e2dd5
 [f886c4f]: https://github.com/Nenotriple/img-txt_viewer/commit/f886c4fe51a41fcc4766f3d7b5d0659537ec5ea3
-
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
@@ -1028,24 +758,16 @@ v1.04 changes:
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.78)
 
-<details>
-  <summary>Release Notes for v1.78</summary>
-
-
 - New:
   - You can now use the English dictionary as a suggestion library while you type.
     - Enable this from: Options > Suggestion Dictionary > English Dictionary
     - Just like the danbooru.csv file, this dictionary can be downloaded from the script version.
     - Over 20,000 typos for just over 8,000 words also match the correct spelling while typing.
-    - You can also use both anime tags and the English dictionary at the same time. _(Can be slow)_
+    - You can also use both anime tags and the English dictionary at the same time. *(Can be slow)*
   - `Custom Suggestions:` You can now define custom tags that will be used for autocomplete suggestions.
     - Run the command from: Options > Edit Custom Suggestions
     - Running this command will create a file called "my_tags.csv" if it doesn't already exist, then open it up for you to edit.
     - Running the command again after saving "my_tags.csv" will refresh the dictionary with your changes.
-
-
-<br>
-
 
 - Fixed:
   - Fix autosave for first and last index navigation.
@@ -1053,13 +775,10 @@ v1.04 changes:
   - App icon now displays properly in the taskbar.
   - Further improvements to cursor positioning after inserting a suggestion.
 
-
 ---
-
 
 Batch Token Delete
 v1.03 changes:
-
 
 - New:
   - Now that text is cleaned within the script, this is a standalone app!
@@ -1067,27 +786,14 @@ v1.03 changes:
   - Deleting tags using a "less than or equal to" threshold now displays the affected tags.
   - A highlight has been added to the buttons/checkboxes.
 
-
-<br>
-
-
 - Fixed:
   - The app shares the parent icon, and groups with the main window in the taskbar.
-
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
 ## v1.77
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.77)
-
-<details>
-  <summary>Release Notes for v1.77</summary>
-
 
 - New:
   - `List View`: Display text files in a list format. Text is always saved in the standard single-line CSV format.
@@ -1096,24 +802,15 @@ v1.03 changes:
   - `Delete entire tokens`: By middle-clicking them.
   - `Text Context menu`
   - `Image Context menu`
-  - Enable or disable highlighting duplicate words when selecting text. _(Default = On)_
+  - Enable or disable highlighting duplicate words when selecting text. *(Default = On)*
   - You can now swap the image and text/control positions.
   - Various UI tweaks, the biggest change being: Image scaling is now more flexible.
 
-
-<br>
-
-
 - Fixed:
-  - When highlighting words: Any _selected_ words longer than 3 characters would be _highlighted_. Now, only exact matches are highlighted.
+  - When highlighting words: Any *selected* words longer than 3 characters would be *highlighted*. Now, only exact matches are highlighted.
   - Window size no longer changes when changing maximum image size.
   - You can no longer insert a suggestion "inside" an existing token.
   - Code refactoring for improved cleanliness and maintainability.
-
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
@@ -1121,40 +818,23 @@ v1.03 changes:
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.76)
 
-<details>
-  <summary>Release Notes for v1.76</summary>
-
-
 - New:
-   - Duplicate tokens are now removed when saving, cleaning, or inserting text.
-   - Periods at the end of words are now replaced with commas when saving or cleaning text.
-   - You can now enable or disable `Clean Text on Save`.
-   - Pillow is now installed much more gracefully than before. _(Python version only)_
-   - Various small UI tweaks
-
-
-<br>
-
+  - Duplicate tokens are now removed when saving, cleaning, or inserting text.
+  - Periods at the end of words are now replaced with commas when saving or cleaning text.
+  - You can now enable or disable `Clean Text on Save`.
+  - Pillow is now installed much more gracefully than before. *(Python version only)*
+  - Various small UI tweaks
 
 - Fixed:
   - `Autocomplete Inserting` fixes:
     - Duplicate trailing comma, duplicate first letter, no space inserted, double space inserted.
   - Using undo after inserting a suggestion should no longer be as jarring.
 
-
-</details>
-<br>
-
-
 <!--###########################################################################-->
 
 ## v1.75
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.75)
-
-<details>
-  <summary>Release Notes for v1.75</summary>
-
 
 - New:
   - New tool: `Batch Token Delete` This allows you to see a list of all tokens in the selected folder and delete them easily.
@@ -1163,12 +843,8 @@ v1.03 changes:
   - New tool: `Cleanup Text` This fixes common typos in all text files within a chosen folder, such as double commas or spaces and missing spaces after commas.
   - New option: `Suggestion Style` Here you can select from four options. The old style is still there, plus a new default style.
   - New option: `Suggestion Alignment` Here you can select between "Left Aligned", and "Centered". The default is now: Left Aligned.
-  - Changes: `Prefix` and `Append`: These tools now insert commas and spaces where appropriate. Prefix=`token, ` Append=`, token`
+  - Changes: `Prefix` and `Append`: These tools now insert commas and spaces where appropriate. Prefix=`token,` Append=`, token`
   - UI Tweaks.
-
-
-<br>
-
 
 - Fixed:
   - `cleanup_text` now handles situations like `, ,` *(and repeating)*
@@ -1179,28 +855,17 @@ v1.03 changes:
   - Issue where `Big Comma Mode` wouldn't enable when using some features.
   - Error handling is added to check for a directory before running certain tools.
 
-
-</details>
-<br>
-
-
 <!--###########################################################################-->
 
 ## v1.74
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.74)
 
-<details>
-  <summary>Release Notes for v1.74</summary>
-
-
 - New:
-    - `Search and Replace`: Replace any text string across all text files in the loaded directory.
-    - `Prefix Text Files`: Insert text at the START of all text files.
-    - `Append Text Files`: Insert text at the END of all text files.
-    - Minor UI tweaks and enhancements.
-
-<br>
+  - `Search and Replace`: Replace any text string across all text files in the loaded directory.
+  - `Prefix Text Files`: Insert text at the START of all text files.
+  - `Append Text Files`: Insert text at the END of all text files.
+  - Minor UI tweaks and enhancements.
 
 - Fixed:
   - Resolved an issue where the app would repeatedly ask: `Do you want to create '...' new text files?` even after selecting `No`.
@@ -1209,29 +874,16 @@ v1.03 changes:
   - Re-enabled the 'Undo' function.
   - Extensive internal code refactoring for improved cleanliness and maintainability.
 
-
-</details>
-<br>
-
-
 <!--###########################################################################-->
 
 ## v1.73
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.73)
 
-<details>
-  <summary>Release Notes for v1.73</summary>
-
-
 - New:
   - Big Comma Mode: This will make commas stand out much more, and it also changes the way text is spaced out.
   - Middle-clicking the directory button now opens the selected folder.
   - Right click or middle-click the displayed image to open the image directory.
-
-
-<br />
-
 
 - Fixed:
   - The image index now correctly updates with changes from outside the app. (Adding/Removing images)
@@ -1241,42 +893,23 @@ v1.03 changes:
   - `jpg_large` files are now renamed to .jpg before loading.
   - Unresponsive directory button.
 
-
-</details>
-<br>
-
-
 <!--###########################################################################-->
 
 ## v1.72
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.72)
 
-<details>
-  <summary>Release Notes for v1.72</summary>
-
-
 - New:
   - Now you can use the mouse wheel over the displayed image to cycle through images.
 
-
 - Fixed:
   - Escape characters `\` should now be properly handled during cleanup.
-
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
 ## v1.71
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.71)
-
-<details>
-  <summary>Release Notes for v1.71</summary>
-
 
 - New:
   - Now you can select any font installed on your system.
@@ -1285,7 +918,6 @@ v1.03 changes:
   - Delete Pair now simply moves the img-txt pair to a local trash folder in the selected directory.
   - Now you can delete an img-txt pair with the "del" keyboard key.
 
-
 - Fixed:
   - Issue where the proceeding tag would be deleted if inserting a suggestion without encapsulating the input between commas.
   - Improved handling of cursor position after inserting a suggestion. (again)
@@ -1293,20 +925,11 @@ v1.03 changes:
   - Where "on_closing" message would trigger even if the text file was saved.
   - Further improvements to the way text is cleaned up when saved.
 
-
-</details>
-<br>
-
-
 <!--###########################################################################-->
 
 ## v1.70
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.70)
-
-<details>
-  <summary>Release Notes for v1.70</summary>
-
 
 - Auto-Save
 *If auto-save is enabled, changes to the text file are now saved automatically when the window is closed.*
@@ -1335,20 +958,11 @@ v1.03 changes:
 *highlight_selected_suggestion now uses a “Black Medium-Small Square” as an additional visual indicator.*
 *An ellipsis has been added to the idle suggestion label.*
 
-
-</details>
-<br>
-
-
 <!--###########################################################################-->
 
 ## v1.68
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.68)
-
-<details>
-  <summary>Release Notes for v1.68</summary>
-
 
 - *New: Previous/Next buttons are now side-by-side.*
 - *New/Fixed: Choosing suggestions is now done with ALT. This prevents suggestions from being inserted erroneously.*
@@ -1356,27 +970,13 @@ v1.03 changes:
 - *Fixed: Duplicates will now be highlighted when selected with the keyboard.*
 - *Fixed: Commas are now ignored when matching highlighted duplicates.*
 
-
-</details>
-<br>
-
-
 <!--###########################################################################-->
 
 ## v1.67
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.67)
 
-<details>
-  <summary>Release Notes for v1.67</summary>
-
-
 - *New: Select image viewing size. - small, medium, large, etc.*
-
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
@@ -1384,17 +984,8 @@ v1.03 changes:
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.66)
 
-<details>
-  <summary>Release Notes for v1.66</summary>
-
-
 - *New: Image now scales with window size.*
 - *New: Zoom has been removed for now.*
-
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
@@ -1402,18 +993,9 @@ v1.03 changes:
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.65)
 
-<details>
-  <summary>Release Notes for v1.65</summary>
-
-
 - *New: Zoom into images by clicking them*
 - *New: Loop around the image index when hitting the end/start*
 - *New: Quickly jump to a specific image*
-
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
@@ -1421,27 +1003,14 @@ v1.03 changes:
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.63)
 
-<details>
-  <summary>Release Notes for v1.63</summary>
-
-
 - *Autocomplete now returns much better suggestions.*
 - *Further improvements to typo correction.*
-
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
 ## v1.62
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.62)
-
-<details>
-  <summary>Release Notes for v1.62</summary>
-
 
 - **New:** Tips and features added to startup.
 - **New:** Removed directory text widget and replaced it with a button with a dynamic label.
@@ -1450,29 +1019,15 @@ v1.03 changes:
 - **Fixed:** Saving now fixes various typos such as: Double and triple commas are replaced with single commas. Extra spaces are reduced to single spaces. leading and trailing spaces/commas are removed.
 - **Fixed:** Undo/Redo now works as expected.
 
-
-</details>
-<br>
-
-
 <!--###########################################################################-->
 
 ## v1.60
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.6)
 
-<details>
-  <summary>Release Notes for v1.60</summary>
-
-
 - **New:** Get autocomplete suggestions while you type using danbooru tags.
-- Pressing _TAB_ inserts the selected suggestion.
-- Pressing _TAB+Left/Right_ selects the autocomplete suggestion.
-
-
-</details>
-<br>
-
+- Pressing *TAB* inserts the selected suggestion.
+- Pressing *TAB+Left/Right* selects the autocomplete suggestion.
 
 <!--###########################################################################-->
 
@@ -1480,17 +1035,8 @@ v1.03 changes:
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v15.)
 
-<details>
-  <summary>Release Notes for v1.50</summary>
-
-
 - **New:** Select and highlight duplicates
 - You can now select text with the mouse/keyboard and you'll be able to quickly see duplicates. Super helpful when manually editing dense caption files.
-
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
@@ -1498,17 +1044,8 @@ v1.03 changes:
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.42)
 
-<details>
-  <summary>Release Notes for v1.42</summary>
-
-
 - **New:** Now supports loading `.jpeg` `.webp` `.bmp` image types.
 - **Misc:** Minor ui improvements.
-
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
@@ -1516,16 +1053,7 @@ v1.03 changes:
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.41)
 
-<details>
-  <summary>Release Notes for v1.41</summary>
-
-
 - **Fixed:** Image aspect ratio is now preserved.
-
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
@@ -1533,16 +1061,7 @@ v1.03 changes:
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.4)
 
-<details>
-  <summary>Release Notes for v1.40</summary>
-
-
 - **New:** The user is now asked whether or not they would like to create blank text files for images that don't already have a matching text pair.
-
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
@@ -1550,17 +1069,8 @@ v1.03 changes:
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.3)
 
-<details>
-  <summary>Release Notes for v1.30</summary>
-
-
 - **New:** Text files now created for images without them.
 - **Misc:** Window minsize now (675, 560) - prevents ui squish.
-
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
@@ -1568,16 +1078,7 @@ v1.03 changes:
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.2)
 
-<details>
-  <summary>Release Notes for v1.20</summary>
-
-
 - **Fixed:** Now removes trailing space/new line when saving.
-
-
-</details>
-<br>
-
 
 <!--###########################################################################-->
 
@@ -1585,31 +1086,4 @@ v1.03 changes:
 
 - [💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.0)
 
-<details>
-  <summary>Release Notes for v1.0</summary>
-
-
 **This is the first release.**
-
-
-</details>
-<br>
-
-
-
-<!--###########################################################################
-## TEMPLATE
-
-## v1.
-
-
-<details>
-  <summary>Release Notes for v1.</summary>
-
-
-
-</details>
-<br>
-
-
--->
