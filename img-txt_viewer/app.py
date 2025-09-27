@@ -613,13 +613,14 @@ class ImgTxtViewer:
         self.primary_display_image.bind("<ButtonPress-1>", self.start_drag)
         self.primary_display_image.bind("<ButtonRelease-1>", self.stop_drag)
         self.primary_display_image.bind("<B1-Motion>", self.dragging_window)
+        self.image_preview_tooltip = Tip.create(widget=self.primary_display_image, text="Right-Click: Menu\nMiddle-Click: Open In File Explorer\nDouble-Click: Open In Image Viewer\nAlt+Left / Alt+Right Or Mouse-Wheel: Navigate Pairs", origin="widget", widget_anchor="sw", justify="left", padx=1, pady=1)
         # Video Player
         self.video_player = VideoPlayerWidget(master=self.master_image_inner_frame)
         self.video_player.grid(row=1, column=0, sticky="nsew")
         self.video_player.grid_remove()
+        # Pop-up Zoom
         self.popup_zoom = PopUpZoom(self.primary_display_image)
         self.toggle_zoom_var = BooleanVar(value=self.popup_zoom.zoom_enabled.get())
-        self.image_preview_tooltip = Tip.create(widget=self.primary_display_image, text="Right-Click for more\nMiddle-click to open in file explorer\nDouble-Click to open in your system image viewer\nALT+Left/Right or Mouse-Wheel to move between pairs", follow_mouse=True)
         # Thumbnail Panel
         self.thumbnail_panel = ThumbnailPanel(master=self.master_image_inner_frame, parent=self)
         self.thumbnail_panel.grid(row=3, column=0, sticky="ew")
@@ -701,13 +702,13 @@ class ImgTxtViewer:
         self.suggestion_textbox.bind("<Button-1>", self.disable_button)
         self.suggestion_textbox.bind("<B1-Motion>", self.disable_button)
         Tip.create(widget=self.suggestion_textbox,
-            text="Color Codes:\n"
+            text=["Color Codes:",
             "Danbooru:\n"
             "  - General tags: Black\n"
             "  - Artists: Red\n"
             "  - Copyright: Magenta\n"
             "  - Characters: Green\n"
-            "  - Meta: Orange\n"
+            "  - Meta: Orange",
             "e621:\n"
             "  - General tags: Black\n"
             "  - Artists: Yellow\n"
@@ -715,7 +716,7 @@ class ImgTxtViewer:
             "  - Characters: Green\n"
             "  - Species: Orange\n"
             "  - Meta: Red\n"
-            "  - Lore: Green\n"
+            "  - Lore: Green",
             "Derpibooru:\n"
             "  - General tags: Black\n"
             "  - Official Content: Yellow\n"
@@ -727,7 +728,7 @@ class ImgTxtViewer:
             "  - Original Content: Light-Purple\n"
             "  - Error: Red\n"
             "  - Official Content: Dark-Orange\n"
-            "  - Original Content: Light-Pink",
+            "  - Original Content: Light-Pink"],
             justify="left"
         )
         # Suggestion Options
