@@ -313,8 +313,8 @@ class MyTags:
 
                 menu = Menu(widget, tearoff=0)
                 if widget.curselection():
-                    menu.add_command(label="Prefix", command=lambda: self.insert_selected_tags(widget, 'start'))
-                    menu.add_command(label="Append", command=lambda: self.insert_selected_tags(widget, 'end'))
+                    menu.add_command(label="Prefix to Text", command=lambda: self.insert_selected_tags(widget, 'start'))
+                    menu.add_command(label="Append to Text", command=lambda: self.insert_selected_tags(widget, 'end'))
                     menu.add_separator()
                     menu.add_command(label="Add to MyTags", command=self.add_selected_alltags_to_mytags)
                     menu.add_separator()
@@ -1269,58 +1269,78 @@ class MyTags:
         tree = self.custom_dictionary_treeview
         if not tree:
             return
-        selected = tree.selection()
+        selected = tuple(tree.selection() or ())
         if not selected:
             return
-        dest_parent = '' if not folder_iid else folder_iid
+        dest_parent = folder_iid or ''
+        selected_set = set(selected)
 
-        def dest_item_names():
-            if dest_parent == '':
-                # names of root-level items (exclude folders)
-                return set(
-                    tree.item(i)['text']
-                    for i in tree.get_children('')
-                    if 'folder' not in (tree.item(i, 'tags') or ())
-                )
-            else:
-                # names of items inside the destination folder
-                return set(
-                    tree.item(i)['text']
-                    for i in tree.get_children(dest_parent)
-                    if 'item' in (tree.item(i, 'tags') or ())
-                )
+        def ancestor_selected(node):
+            parent = tree.parent(node)
+            while parent:
+                if parent in selected_set:
+                    return True
+                parent = tree.parent(parent)
+            return False
 
-        existing_names = dest_item_names()
+        def is_descendant(node, ancestor):
+            while node:
+                if node == ancestor:
+                    return True
+                node = tree.parent(node)
+            return False
+
+        def existing_names(parent):
+            item_names, folder_names = set(), set()
+            for child in tree.get_children(parent):
+                try:
+                    tags = tree.item(child, 'tags') or ()
+                    if 'placeholder' in tags:
+                        continue
+                    name = tree.item(child)['text']
+                except Exception:
+                    continue
+                (folder_names if 'folder' in tags else item_names).add(name)
+            return item_names, folder_names
+
+        dest_item_names, dest_folder_names = existing_names(dest_parent)
         moved = []
         for iid in selected:
+            if ancestor_selected(iid):
+                continue
             try:
                 tags = tree.item(iid, 'tags') or ()
+                if 'placeholder' in tags:
+                    continue
+                name = tree.item(iid)['text']
             except Exception:
                 continue
-            # skip folders
+            if tree.parent(iid) == dest_parent:
+                continue
             if 'folder' in tags:
-                continue
-            current_parent = tree.parent(iid)
-            # already in destination
-            if current_parent == dest_parent:
-                continue
-            name = tree.item(iid)['text']
-            # avoid duplicates in destination
-            if name in existing_names:
-                continue
+                if dest_parent and (iid == dest_parent or is_descendant(dest_parent, iid)):
+                    continue
+                if name in dest_folder_names:
+                    continue
+                target_names = dest_folder_names
+            else:
+                if name in dest_item_names:
+                    continue
+                target_names = dest_item_names
             try:
                 tree.move(iid, dest_parent, 'end')
-                moved.append(iid)
-                existing_names.add(name)
             except Exception:
-                pass
-        if moved:
-            try:
-                tree.selection_set(moved)
-                tree.focus(moved[0])
-            except Exception:
-                pass
-            self.check_unsaved_changes()
+                continue
+            moved.append(iid)
+            target_names.add(name)
+        if not moved:
+            return
+        try:
+            tree.selection_set(moved)
+            tree.focus(moved[0])
+        except Exception:
+            pass
+        self.check_unsaved_changes()
 
 
     def _sort_items_and_folders(self, tree, parent_iid):
