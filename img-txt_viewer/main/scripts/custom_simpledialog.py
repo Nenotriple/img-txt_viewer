@@ -63,6 +63,8 @@ def _setup_dialog_window(dialog: tk.Toplevel, parent: Optional[tk.Misc], title: 
     dialog.title(title or "")
     dialog.resizable(False, False)
     dialog.protocol("WM_DELETE_WINDOW", lambda: _on_cancel(dialog))
+    dialog.bind("<Return>", lambda e: _on_ok(dialog))
+    dialog.bind("<Escape>", lambda e: _on_cancel(dialog))
     if icon_image is not None:
         try:
             dialog.iconphoto(False, icon_image)
@@ -87,19 +89,16 @@ def _create_container(dialog: tk.Toplevel, prompt: str) -> ttk.Frame:
 
 
 def create_general_dialog_buttons(dialog: tk.Toplevel, ok_text: str, cancel_text: str, container: ttk.Frame) -> None:
-    btns = ttk.Frame(container)
-    btns.grid(row=2, column=0, columnspan=2, sticky="e", pady=(10, 0))
-    ok_btn = ttk.Button(btns, text=ok_text, command=lambda: _on_ok(dialog), default="active")
-    cancel_btn = ttk.Button(btns, text=cancel_text, command=lambda: _on_cancel(dialog))
+    btn_frame = ttk.Frame(container)
+    btn_frame.grid(row=2, column=0, columnspan=2, sticky="e", pady=(10, 0))
+    ok_btn = ttk.Button(btn_frame, text=ok_text, command=lambda: _on_ok(dialog), default="active")
     ok_btn.grid(row=0, column=0, padx=(0, 6))
-    cancel_btn.grid(row=0, column=1)
     ok_btn.bind("<Enter>", lambda e: ok_btn.configure(cursor="hand2"))
     ok_btn.bind("<Leave>", lambda e: ok_btn.configure(cursor=""))
+    cancel_btn = ttk.Button(btn_frame, text=cancel_text, command=lambda: _on_cancel(dialog))
+    cancel_btn.grid(row=0, column=1)
     cancel_btn.bind("<Enter>", lambda e: cancel_btn.configure(cursor="hand2"))
     cancel_btn.bind("<Leave>", lambda e: cancel_btn.configure(cursor=""))
-    dialog.bind("<Return>", lambda e: _on_ok(dialog))
-    dialog.bind("<KP_Enter>", lambda e: _on_ok(dialog))
-    dialog.bind("<Escape>", lambda e: _on_cancel(dialog))
 
 
 def _center_window_to_parent(window: tk.Toplevel, parent: Optional[tk.Misc]) -> None:
@@ -176,22 +175,20 @@ def _ask_number(title: Optional[str], prompt: str, initialvalue: Optional[Union[
 
 class _AskStringDialog(tk.Toplevel):
     """A modal dialog asking for a single string input."""
-    def __init__(self, parent: tk.Misc, title: Optional[str], prompt: str, initialvalue: Optional[str] = None, show: Optional[str] = None, ok_text: str = "OK", cancel_text: str = "Cancel", icon_image: Optional["tk.PhotoImage"] = None) -> None:
+    def __init__(self, parent: tk.Misc, title: Optional[str], prompt: str, initialvalue: Optional[str] = None, ok_text: str = "OK", cancel_text: str = "Cancel", icon_image: Optional["tk.PhotoImage"] = None) -> None:
         super().__init__(parent)
         self.result: Optional[str] = None
         _setup_dialog_window(self, parent, title, icon_image)
-        container = self._create_dialog_widgets(prompt, initialvalue, show)
+        container = self._create_dialog_widgets(prompt, initialvalue)
         create_general_dialog_buttons(self, ok_text, cancel_text, container)
         self._show_dialog(parent, initialvalue)
 
 
-    def _create_dialog_widgets(self, prompt: str, initialvalue: Optional[str], show: Optional[str]) -> ttk.Frame:
+    def _create_dialog_widgets(self, prompt: str, initialvalue: Optional[str]) -> ttk.Frame:
         container = _create_container(self, prompt)
         self._var = tk.StringVar(value="" if initialvalue is None else str(initialvalue))
         entry_width = max(24, min(60, len(self._var.get()) + 10))
         self.entry = ttk.Entry(container, textvariable=self._var, width=entry_width)
-        if show:
-            self.entry.configure(show=show)
         self.entry.grid(row=1, column=0, columnspan=2, sticky="ew")
         self.entry.bind("<Enter>", lambda e: self.entry.configure(cursor="hand2"))
         self.entry.bind("<Leave>", lambda e: self.entry.configure(cursor=""))
@@ -320,7 +317,7 @@ class _AskRadioDialog(tk.Toplevel):
 # region Public API
 
 
-def askstring(title: Optional[str], prompt: str, initialvalue: Optional[str] = None, parent: Optional[tk.Misc] = None, show: Optional[str] = None, icon_image: Optional["tk.PhotoImage"] = None) -> Optional[str]:
+def askstring(title: Optional[str], prompt: str, initialvalue: Optional[str] = None, parent: Optional[tk.Misc] = None, icon_image: Optional["tk.PhotoImage"] = None) -> Optional[str]:
     """Show a modal prompt dialog and return the entered string, or None if canceled.
 
     Parameters:
@@ -328,32 +325,23 @@ def askstring(title: Optional[str], prompt: str, initialvalue: Optional[str] = N
         prompt: Text prompt displayed above the entry field
         initialvalue: Initial value for the entry field
         parent: Parent window
-        show: If set, masks the entry (e.g., for passwords)
         icon_image: Optional window icon
 
     Returns:
         Entered string value or None if canceled
     """
-    created_root = False
-    root: Optional[tk.Misc] = parent
-    if root is None:
-        root = tk._get_default_root()  # type: ignore[attr-defined]
-        if root is None:
-            root = tk.Tk()
-            created_root = True
+    root, created = _get_or_create_root(parent)
+    try:
+        dialog = _AskStringDialog(parent=root, title=title, prompt=prompt, initialvalue=initialvalue, icon_image=icon_image)
+        dialog.wait_window()
+        result = dialog.result
+        return result
+    finally:
+        if created and isinstance(root, tk.Tk):
             try:
-                root.withdraw()
+                root.destroy()
             except Exception:
                 pass
-    dialog = _AskStringDialog(parent=root, title=title, prompt=prompt, initialvalue=initialvalue, show=show, icon_image=icon_image)
-    dialog.wait_window()
-    result = dialog.result
-    if created_root and root:
-        try:
-            root.destroy()
-        except Exception:
-            pass
-    return result
 
 
 def askinteger(title: Optional[str], prompt: str, initialvalue: Optional[int] = None, minvalue: Optional[int] = None, maxvalue: Optional[int] = None, parent: Optional[tk.Misc] = None, icon_image: Optional["tk.PhotoImage"] = None) -> Optional[int]:
