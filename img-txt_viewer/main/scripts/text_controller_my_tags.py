@@ -25,6 +25,7 @@ import yaml
 import main.scripts.custom_simpledialog as custom_dialog
 from main.scripts import HelpText
 from main.scripts.help_window import HelpWindow
+import main.scripts.entry_helper as EntryHelper
 
 
 # Type Hinting
@@ -405,6 +406,7 @@ class MyTags:
         self.tag_entry = ttk.Entry(entry_frame)
         self.tag_entry.pack(side='left', fill='x', expand=True)
         self.tag_entry.bind('<Return>', lambda event: (self.add_tag(self.tag_entry.get()), self.tag_entry.delete(0, 'end')))
+        EntryHelper.bind_helpers(self.tag_entry)
 
         add_btn = ttk.Button(entry_frame, text="Add", command=lambda: (self.add_tag(self.tag_entry.get()), self.tag_entry.delete(0, 'end')))
         add_btn.pack(side='left')
@@ -671,12 +673,17 @@ class MyTags:
 
     def refresh_all_tags_listbox(self, tags=None):
         listbox = self.alltags_listbox
+        if not listbox:
+            return
         if tags is None:
             self.app.stat_calculator.calculate_file_stats()
             tags = self.app.stat_calculator.sorted_captions
         listbox.delete(0, 'end')
         for tag, count in tags:
-            listbox.insert('end', tag)
+            t = (tag or '').strip()
+            if not t:
+                continue
+            listbox.insert('end', t)
 
 
     def insert_selected_tags(self, widget, position: str = 'start'):
