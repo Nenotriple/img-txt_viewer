@@ -621,23 +621,23 @@ if __name__ == "__main__":
 	#print("String result:", repr(val))
 
 	# Test askcombo
-	colors = ["Red", "Green", "Blue", "Yellow", "Purple", "Orange"]
-	selected_color = askcombo("Color Selection", "Choose your favorite color:", colors, initialvalue="Blue")
-	print("Selected color:", repr(selected_color))
+	#colors = ["Red", "Green", "Blue", "Yellow", "Purple", "Orange"]
+	#selected_color = askcombo("Color Selection", "Choose your favorite color:", colors, initialvalue="Blue")
+	#print("Selected color:", repr(selected_color))
 
 	# Test askinteger
 	#val = askinteger("Input required", "Enter a value (10-100):", initialvalue=42, minvalue=10, maxvalue=100)
 	#print("Integer result:", repr(val))
 
 	# Test askradio
-	#radio_options = [
-	#	("return_val1", "display_label1"),
-	#	("return_val2", "display_label2", ("description2. " * 4)),
-	#	("return_val3", "display_label3", ("description3. " * 8)),
-	#	("return_val4", "display_label4", ("description4. " * 12)),
-	#]
-	#selected_radio = askradio("Radio Selection", "Choose an option:", radio_options, initialvalue="return_val1")
-	#print("Selected radio option:", repr(selected_radio))
+	radio_options = [
+		("return_val1", "display_label1"),
+		("return_val2", "display_label2", ("description2. " * 4)),
+		("return_val3", "display_label3", ("description3. " * 8)),
+		("return_val4", "display_label4", ("description4. " * 12)),
+	]
+	selected_radio = askradio("Radio Selection", "Choose an option:", radio_options, initialvalue="return_val1")
+	print("Selected radio option:", repr(selected_radio))
 
 
 # endregion
