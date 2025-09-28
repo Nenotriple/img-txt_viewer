@@ -10,7 +10,7 @@ import threading
 
 # Standard Library - GUI
 from tkinter import (
-    ttk, Tk, messagebox, simpledialog, filedialog,
+    ttk, Tk, messagebox, filedialog,
     StringVar, BooleanVar,
     Menu, Text,
 )
@@ -18,6 +18,7 @@ from tkinter import (
 
 # Custom Libraries
 from TkToolTip.TkToolTip import TkToolTip as Tip
+from main.scripts import custom_simpledialog
 from main.scripts.help_window import HelpWindow
 import main.scripts.HelpText as HelpText
 import main.scripts.entry_helper as EntryHelper
@@ -623,7 +624,7 @@ class FindDupeFile:
 
     # Set max image scanning size
     def open_max_scan_size_dialog(self):
-        temp = simpledialog.askinteger("Input", f"Current Max Scan Size: {self.max_scan_size} MB\n\nEnter Max Scan Size in megabytes (MB)\nExample (1GB): 1024")
+        temp = custom_simpledialog.askinteger("Input", f"Current Max Scan Size: {self.max_scan_size} MB\n\nEnter Max Scan Size in megabytes (MB)\nExample (1GB): 1024", self.max_scan_size, parent=self.root)
         if temp is not None:
             self.max_scan_size = temp
 
@@ -631,7 +632,7 @@ class FindDupeFile:
     # Set filetypes to scan
     def open_filetypes_dialog(self):
         current_filetypes = ', '.join(self.filetypes_to_scan)
-        new_filetypes = simpledialog.askstring("Input", f"Current filetypes: {current_filetypes}\n\nEnter filetypes you want to scan. Unlisted filetypes will be skipped.\n\nEnter: 'All' to return to default.\n\nExample: .jpg, .png, .txt", parent=self.root)
+        new_filetypes = custom_simpledialog.askstring("Input", f"Current filetypes: {current_filetypes}\n\nEnter filetypes you want to scan. Unlisted filetypes will be skipped.\n\nEnter: 'All' to return to default.\n\nExample: .jpg, .png, .txt", current_filetypes, parent=self.root)
         if new_filetypes is not None and new_filetypes.strip() != '':
             self.filetypes_to_scan = [ftype.strip() for ftype in new_filetypes.split(',')]
 

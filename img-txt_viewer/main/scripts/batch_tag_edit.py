@@ -20,7 +20,7 @@ from TkToolTip.TkToolTip import TkToolTip as Tip
 
 
 # Custom Libraries
-from main.scripts import TagEditor, help_window, HelpText
+from main.scripts import TagEditor, help_window, HelpText, custom_simpledialog
 import main.scripts.entry_helper as entry_helper
 
 
@@ -451,7 +451,7 @@ class BatchTagEdit:
 
 
     def context_menu_edit_tag(self):
-        edit_string = simpledialog.askstring("Edit Tag", "Enter new tag:", parent=self.root)
+        edit_string = custom_simpledialog.askstring("Edit Tag", "Enter new tag:", parent=self.root)
         if edit_string is not None:
             self.apply_commands_to_listbox(edit=edit_string)
 

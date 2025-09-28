@@ -30,7 +30,7 @@ import subprocess
 
 # Standard Library - GUI
 from tkinter import (
-    ttk, Tk, messagebox, filedialog, simpledialog,
+    ttk, Tk, messagebox, filedialog,
     StringVar, BooleanVar, IntVar,
     Frame, PanedWindow, Menu, scrolledtext,
     Label, Text,
@@ -50,6 +50,7 @@ from main.scripts import (
     calculate_file_stats,
     batch_resize_images,
     custom_scrolledtext,
+    custom_simpledialog,
     batch_crop_images,
     settings_manager,
     batch_tag_edit,
@@ -2899,7 +2900,7 @@ class ImgTxtViewer:
         current_image_name = os.path.basename(image_file)
         text_file = self.text_files[self.current_index] if self.current_index < len(self.text_files) and os.path.exists(self.text_files[self.current_index]) else None
         current_text_name = os.path.basename(text_file) if text_file else "(No associated text file)"
-        new_name = simpledialog.askstring("Rename", "Enter the new name for the pair (without extension):", initialvalue=os.path.splitext(current_image_name)[0])
+        new_name = custom_simpledialog.askstring("Rename", "Enter the new name for the pair (without extension):", initialvalue=os.path.splitext(current_image_name)[0])
         if not new_name:
             return
         new_image_name = new_name + os.path.splitext(image_file)[1]
