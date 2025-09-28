@@ -672,18 +672,15 @@ class MyTags:
 
 
     def refresh_all_tags_listbox(self, tags=None):
-        listbox = self.alltags_listbox
-        if not listbox:
-            return
         if tags is None:
             self.app.stat_calculator.calculate_file_stats()
             tags = self.app.stat_calculator.sorted_captions
-        listbox.delete(0, 'end')
+        self.alltags_listbox.delete(0, 'end')
         for tag, count in tags:
             t = (tag or '').strip()
             if not t:
                 continue
-            listbox.insert('end', t)
+            self.alltags_listbox.insert('end', t)
 
 
     def insert_selected_tags(self, widget, position: str = 'start'):
