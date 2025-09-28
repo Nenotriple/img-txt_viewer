@@ -9,29 +9,20 @@ API:
 - askradio(title, prompt, values, initialvalue=None, parent=None, icon_image=None) -> Optional[str]
 """
 
-
-# region Imports and Typing
+# region Imports
 
 
 from __future__ import annotations
-
-
-# Standard GUI
 import tkinter as tk
 from tkinter import ttk, messagebox
-
-
-# Type hints
 from typing import Optional, Sequence, Union
 
 
 # endregion
-# region API and Constants
+# region Constants
 
 
 __all__ = ["askstring", "askinteger", "askfloat", "askcombo", "askradio"]
-
-
 ChoiceValue = Union[str, tuple[str, str]]
 
 
@@ -88,7 +79,7 @@ def _create_container(dialog: tk.Toplevel, prompt: str) -> ttk.Frame:
     return container
 
 
-def create_general_dialog_buttons(dialog: tk.Toplevel, ok_text: str, cancel_text: str, container: ttk.Frame) -> None:
+def _create_general_dialog_buttons(dialog: tk.Toplevel, ok_text: str, cancel_text: str, container: ttk.Frame) -> None:
     btn_frame = ttk.Frame(container)
     btn_frame.grid(row=2, column=0, columnspan=2, sticky="e", pady=(10, 0))
     ok_btn = ttk.Button(btn_frame, text=ok_text, command=lambda: _on_ok(dialog), default="active")
@@ -146,7 +137,17 @@ def _validate_value(value_str: str, value_type: type, minvalue=None, maxvalue=No
     return True, ""
 
 
-def _ask_number(title: Optional[str], prompt: str, initialvalue: Optional[Union[int, float]], minvalue: Optional[Union[int, float]], maxvalue: Optional[Union[int, float]], parent: Optional[tk.Misc], icon_image: Optional["tk.PhotoImage"], value_type: type, error_title: str) -> Optional[Union[int, float]]:
+def _ask_number(
+    title: Optional[str],
+    prompt: str,
+    initialvalue: Optional[Union[int, float]],
+    minvalue: Optional[Union[int, float]],
+    maxvalue: Optional[Union[int, float]],
+    parent: Optional[tk.Misc],
+    icon_image: Optional["tk.PhotoImage"],
+    value_type: type,
+    error_title: str
+) -> Optional[Union[int, float]]:
     root, created = _get_or_create_root(parent)
     try:
         current = str(initialvalue) if initialvalue is not None else None
@@ -175,12 +176,20 @@ def _ask_number(title: Optional[str], prompt: str, initialvalue: Optional[Union[
 
 class _AskStringDialog(tk.Toplevel):
     """A modal dialog asking for a single string input."""
-    def __init__(self, parent: tk.Misc, title: Optional[str], prompt: str, initialvalue: Optional[str] = None, ok_text: str = "OK", cancel_text: str = "Cancel", icon_image: Optional["tk.PhotoImage"] = None) -> None:
+    def __init__(self,
+        parent: tk.Misc,
+        title: Optional[str],
+        prompt: str,
+        initialvalue: Optional[str] = None,
+        ok_text: str = "OK",
+        cancel_text: str = "Cancel",
+        icon_image: Optional["tk.PhotoImage"] = None
+    ) -> None:
         super().__init__(parent)
         self.result: Optional[str] = None
         _setup_dialog_window(self, parent, title, icon_image)
         container = self._create_dialog_widgets(prompt, initialvalue)
-        create_general_dialog_buttons(self, ok_text, cancel_text, container)
+        _create_general_dialog_buttons(self, ok_text, cancel_text, container)
         self._show_dialog(parent, initialvalue)
 
 
@@ -205,20 +214,28 @@ class _AskStringDialog(tk.Toplevel):
             self.entry.icursor(tk.END)
 
 
-
 # endregion
 # region _AskComboDialog
 
 
 class _AskComboDialog(tk.Toplevel):
     """A modal dialog asking for a selection from a dropdown list."""
-    def __init__(self, parent: tk.Misc, title: Optional[str], prompt: str, values: list[str], initialvalue: Optional[str] = None, ok_text: str = "OK", cancel_text: str = "Cancel", icon_image: Optional["tk.PhotoImage"] = None) -> None:
+    def __init__(self,
+        parent: tk.Misc,
+        title: Optional[str],
+        prompt: str,
+        values: list[str],
+        initialvalue: Optional[str] = None,
+        ok_text: str = "OK",
+        cancel_text: str = "Cancel",
+        icon_image: Optional["tk.PhotoImage"] = None
+    ) -> None:
         super().__init__(parent)
         self.result: Optional[str] = None
         _setup_dialog_window(self, parent, title, icon_image)
         container = self._create_dialog_widgets(prompt, values)
-        create_general_dialog_buttons(self, ok_text, cancel_text, container)
-        self.show_dialog(parent, initialvalue, values)
+        _create_general_dialog_buttons(self, ok_text, cancel_text, container)
+        self._show_dialog(parent, initialvalue, values)
 
 
     def _create_dialog_widgets(self, prompt: str, values: list[str], initialvalue: Optional[str] = None) -> ttk.Frame:
@@ -232,7 +249,7 @@ class _AskComboDialog(tk.Toplevel):
         return container
 
 
-    def show_dialog(self, parent: Optional[tk.Misc], initialvalue: Optional[str], values: list[str]) -> None:
+    def _show_dialog(self, parent: Optional[tk.Misc], initialvalue: Optional[str], values: list[str]) -> None:
         _center_window_to_parent(self, parent)
         self.deiconify()
         self.grab_set()
@@ -249,16 +266,26 @@ class _AskComboDialog(tk.Toplevel):
 
 class _AskRadioDialog(tk.Toplevel):
     """A modal dialog presenting a list of radio button choices, with optional descriptions."""
-    def __init__(self, parent: tk.Misc, title: Optional[str], prompt: str, values: Sequence[ChoiceValue], initialvalue: Optional[str] = None, ok_text: str = "OK", cancel_text: str = "Cancel", icon_image: Optional["tk.PhotoImage"] = None) -> None:
+    def __init__(
+        self,
+        parent: tk.Misc,
+        title: Optional[str],
+        prompt: str,
+        values: Sequence[ChoiceValue],
+        initialvalue: Optional[str] = None,
+        ok_text: str = "OK",
+        cancel_text: str = "Cancel",
+        icon_image: Optional["tk.PhotoImage"] = None
+    ) -> None:
         super().__init__(parent)
         self.result: Optional[str] = None
         _setup_dialog_window(self, parent, title, icon_image)
-        container, first_radiobutton = self.create_dialog_widgets(prompt, values)
-        create_general_dialog_buttons(self, ok_text, cancel_text, container)
-        self.show_dialog(parent, initialvalue, first_radiobutton)
+        container, first_radiobutton = self._create_dialog_widgets(prompt, values)
+        _create_general_dialog_buttons(self, ok_text, cancel_text, container)
+        self._show_dialog(parent, initialvalue, first_radiobutton)
 
 
-    def create_dialog_widgets(self, prompt, values):
+    def _create_dialog_widgets(self, prompt: str, values: Sequence[ChoiceValue]) -> tuple[ttk.Frame, Optional[ttk.Radiobutton]]:
         container = _create_container(self, prompt)
         self._var = tk.StringVar()
         self._choices: list[str] = []
@@ -300,7 +327,7 @@ class _AskRadioDialog(tk.Toplevel):
         return container, first_radiobutton
 
 
-    def show_dialog(self, parent: Optional[tk.Misc], initialvalue: Optional[str], first_radiobutton: Optional[ttk.Radiobutton]) -> None:
+    def _show_dialog(self, parent: Optional[tk.Misc], initialvalue: Optional[str], first_radiobutton: Optional[ttk.Radiobutton]) -> None:
         _center_window_to_parent(self, parent)
         self.deiconify()
         self.grab_set()
@@ -317,7 +344,13 @@ class _AskRadioDialog(tk.Toplevel):
 # region Public API
 
 
-def askstring(title: Optional[str], prompt: str, initialvalue: Optional[str] = None, parent: Optional[tk.Misc] = None, icon_image: Optional["tk.PhotoImage"] = None) -> Optional[str]:
+def askstring(
+    title: Optional[str],
+    prompt: str,
+    initialvalue: Optional[str] = None,
+    parent: Optional[tk.Misc] = None,
+    icon_image: Optional["tk.PhotoImage"] = None
+) -> Optional[str]:
     """Show a modal prompt dialog and return the entered string, or None if canceled.
 
     Parameters:
@@ -344,7 +377,15 @@ def askstring(title: Optional[str], prompt: str, initialvalue: Optional[str] = N
                 pass
 
 
-def askinteger(title: Optional[str], prompt: str, initialvalue: Optional[int] = None, minvalue: Optional[int] = None, maxvalue: Optional[int] = None, parent: Optional[tk.Misc] = None, icon_image: Optional["tk.PhotoImage"] = None) -> Optional[int]:
+def askinteger(
+    title: Optional[str],
+    prompt: str,
+    initialvalue: Optional[int] = None,
+    minvalue: Optional[int] = None,
+    maxvalue: Optional[int] = None,
+    parent: Optional[tk.Misc] = None,
+    icon_image: Optional["tk.PhotoImage"] = None
+) -> Optional[int]:
     """Show a modal prompt dialog for integer input. Returns None if canceled.
 
     Parameters:
@@ -362,7 +403,15 @@ def askinteger(title: Optional[str], prompt: str, initialvalue: Optional[int] = 
     return _ask_number(title, prompt, initialvalue, minvalue, maxvalue, parent, icon_image, int, "Invalid integer")
 
 
-def askfloat(title: Optional[str], prompt: str, initialvalue: Optional[float] = None, minvalue: Optional[float] = None, maxvalue: Optional[float] = None, parent: Optional[tk.Misc] = None, icon_image: Optional["tk.PhotoImage"] = None) -> Optional[float]:
+def askfloat(
+    title: Optional[str],
+    prompt: str,
+    initialvalue: Optional[float] = None,
+    minvalue: Optional[float] = None,
+    maxvalue: Optional[float] = None,
+    parent: Optional[tk.Misc] = None,
+    icon_image: Optional["tk.PhotoImage"] = None
+) -> Optional[float]:
     """Show a modal prompt dialog for float input. Returns None if canceled.
 
     Parameters:
@@ -380,7 +429,14 @@ def askfloat(title: Optional[str], prompt: str, initialvalue: Optional[float] = 
     return _ask_number(title, prompt, initialvalue, minvalue, maxvalue, parent, icon_image, float, "Invalid number")
 
 
-def askcombo(title: Optional[str], prompt: str, values: list[str], initialvalue: Optional[str] = None, parent: Optional[tk.Misc] = None, icon_image: Optional["tk.PhotoImage"] = None) -> Optional[str]:
+def askcombo(
+    title: Optional[str],
+    prompt: str,
+    values: list[str],
+    initialvalue: Optional[str] = None,
+    parent: Optional[tk.Misc] = None,
+    icon_image: Optional["tk.PhotoImage"] = None
+) -> Optional[str]:
     """Show a modal dialog with a combobox for selecting from predefined values.
 
     Parameters:
@@ -409,7 +465,14 @@ def askcombo(title: Optional[str], prompt: str, values: list[str], initialvalue:
                 pass
 
 
-def askradio(title: Optional[str], prompt: str, values: Sequence[ChoiceValue], initialvalue: Optional[str] = None, parent: Optional[tk.Misc] = None, icon_image: Optional["tk.PhotoImage"] = None) -> Optional[str]:
+def askradio(
+    title: Optional[str],
+    prompt: str,
+    values: Sequence[ChoiceValue],
+    initialvalue: Optional[str] = None,
+    parent: Optional[tk.Misc] = None,
+    icon_image: Optional["tk.PhotoImage"] = None
+) -> Optional[str]:
     """Show a modal dialog with radio buttons for selecting a single option.
 
     Parameters:
@@ -442,7 +505,7 @@ def askradio(title: Optional[str], prompt: str, values: Sequence[ChoiceValue], i
 
 
 # endregion
-# region Main Test Block
+# region Test Block
 
 
 if __name__ == "__main__":
