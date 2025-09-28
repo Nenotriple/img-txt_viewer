@@ -182,7 +182,7 @@ class FindDupeFile:
         # Entry - Folder Entry
         self.folder_entry = ttk.Entry(self.folder_frame)
         self.folder_entry.pack(side="left", fill="x", expand=True)
-        self.entry_helper.setup_entry_binds(self.folder_entry)
+        self.entry_helper.bind_helpers(self.folder_entry)
         # Button - Browse
         self.browse_button = ttk.Button(self.folder_frame, text="Browse...", command=self.set_working_directory)
         Tip.create(widget=self.browse_button, text="Select a folder to analyze for duplicate files.", padx=2)

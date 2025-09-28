@@ -168,7 +168,7 @@ class BatchUpscale:
         # Entry
         self.entry_input_path = ttk.Entry(input_frame, textvariable=self.input_path_var)
         self.entry_input_path.pack(side="left", fill="x", expand=True)
-        self.entry_helper.setup_entry_binds(self.entry_input_path)
+        self.entry_helper.bind_helpers(self.entry_input_path)
         # Batch Mode
         self.batch_mode_checkbox = ttk.Checkbutton(input_frame, text="Batch Mode", variable=self.batch_mode_var, width=12, takefocus=False, command=self.toggle_batch_mode)
         self.batch_mode_checkbox.pack(side="left", fill="x")
@@ -187,7 +187,7 @@ class BatchUpscale:
         # Entry
         self.entry_output_path = ttk.Entry(batch_output_frame, textvariable=self.output_path_var)
         self.entry_output_path.pack(side="left", fill="x", expand=True)
-        self.entry_helper.setup_entry_binds(self.entry_output_path)
+        self.entry_helper.bind_helpers(self.entry_output_path)
         # Auto
         self.auto_output_checkbox = ttk.Checkbutton(batch_output_frame, text="Auto Name", variable=self.auto_output_var, width=12, takefocus=False, command=self.toggle_batch_mode)
         self.auto_output_checkbox.pack(side="left", fill="x")

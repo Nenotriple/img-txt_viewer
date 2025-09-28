@@ -3,7 +3,7 @@ from tkinter import TclError, Event, Menu, Tk
 from tkinter import ttk
 
 
-def setup_entry_binds(entry_widget: ttk.Entry) -> None:
+def bind_helpers(entry_widget: ttk.Entry) -> None:
     """Set up standard bindings for ttk.Entry widgets.
 
     Args:

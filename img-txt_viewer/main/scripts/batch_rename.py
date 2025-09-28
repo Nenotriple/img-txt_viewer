@@ -88,7 +88,7 @@ class BatchRename:
         self.entry_directory.pack(side="left", fill="x", expand=True, padx=2)
         self.entry_directory.bind("<Return>", lambda event: self.set_working_directory(self.entry_directory.get()))
         self.entry_directory.bind("<Button-1>", lambda event: self.entry_directory.delete(0, "end") if self.entry_directory.get() == "..." else None)
-        self.entry_helper.setup_entry_binds(self.entry_directory)
+        self.entry_helper.bind_helpers(self.entry_directory)
         # Browse
         self.browse_button = ttk.Button(self.top_frame, width=8, text="Browse...", command=self.set_working_directory)
         self.browse_button.pack(side="left", padx=2)

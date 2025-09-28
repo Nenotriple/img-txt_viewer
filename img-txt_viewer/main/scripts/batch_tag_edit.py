@@ -211,7 +211,7 @@ class BatchTagEdit:
         self.filter_entry = ttk.Entry(filter_frame)
         self.filter_entry.grid(row=0, column=2, padx=2, sticky="ew")
         self.filter_entry.bind("<KeyRelease>", lambda event: self.warn_before_action(action="filter"))
-        self.entry_helper.setup_entry_binds(self.filter_entry)
+        self.entry_helper.bind_helpers(self.filter_entry)
         # Button
         self.filter_apply_button = ttk.Button(filter_frame, text="Apply", command=lambda: self.warn_before_action(action="filter"))
         self.filter_apply_button.grid(row=0, column=3, padx=2, sticky="e")
@@ -239,7 +239,7 @@ class BatchTagEdit:
         self.edit_entry = ttk.Entry(edit_row_frame)
         self.edit_entry.grid(row=0, column=1, sticky="ew", padx=2, pady=5)
         self.edit_entry.bind("<Return>", self.apply_commands_to_listbox)
-        self.entry_helper.setup_entry_binds(self.edit_entry)
+        self.entry_helper.bind_helpers(self.edit_entry)
         # Button
         edit_apply_button = ttk.Button(edit_row_frame, text="Apply", command=self.apply_commands_to_listbox)
         edit_apply_button.grid(row=0, column=2, sticky="e", padx=2, pady=5)

@@ -102,7 +102,7 @@ class BatchResizeImages:
         self.entry_directory.pack(side="left", fill="x", expand=True, padx=2)
         self.entry_directory.bind("<Return>", lambda event: self.set_working_directory(self.entry_directory.get()))
         self.entry_directory.bind("<Button-1>", lambda event: self.entry_directory.delete(0, "end") if self.entry_directory.get() == "..." else None)
-        self.entry_helper.setup_entry_binds(self.entry_directory)
+        self.entry_helper.bind_helpers(self.entry_directory)
         # Browse
         self.browse_button = ttk.Button(self.frame_top_row, width=8, text="Browse...", command=self.set_working_directory)
         self.browse_button.pack(side="left", padx=2)
@@ -186,7 +186,7 @@ class BatchResizeImages:
         self.width_entry = ttk.Entry(self.width_frame, width=20)
         self.width_entry.pack(side="left", padx=2, pady=2)
         self.width_entry.bind("<KeyRelease>", self.update_file_tree_info)
-        self.entry_helper.setup_entry_binds(self.width_entry)
+        self.entry_helper.bind_helpers(self.width_entry)
         # Height Frame
         self.height_frame = tk.Frame(self.frame_sizes)
         self.height_frame.pack(side="top", anchor="w")
@@ -195,7 +195,7 @@ class BatchResizeImages:
         self.height_entry = ttk.Entry(self.height_frame, width=20)
         self.height_entry.pack(side="left", padx=2, pady=2)
         self.height_entry.bind("<KeyRelease>", self.update_file_tree_info)
-        self.entry_helper.setup_entry_binds(self.height_entry)
+        self.entry_helper.bind_helpers(self.height_entry)
         # Quality Frame
         self.frame_quality = tk.Frame(self.frame_sizes)
         self.frame_quality.pack(fill="x")
