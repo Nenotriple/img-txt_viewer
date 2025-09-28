@@ -8,13 +8,17 @@ API:
 - askcombo(title, prompt, values, initialvalue=None, parent=None, icon_image=None) -> Optional[str]
 """
 
-
 from __future__ import annotations
 
-
+# Standard GUI
 import tkinter as tk
 from tkinter import ttk, messagebox
+
+# Typing
 from typing import Optional
+
+# Custom Libraries
+import main.scripts.entry_helper as EntryHelper
 
 
 __all__ = ["askstring", "askinteger", "askfloat", "askcombo"]
@@ -67,6 +71,7 @@ class _AskStringDialog(tk.Toplevel):
 		self._var = tk.StringVar(value="" if initialvalue is None else str(initialvalue))
 		entry_width = max(24, min(60, len(self._var.get()) + 10))
 		self.entry = ttk.Entry(container, textvariable=self._var, width=entry_width)
+		EntryHelper.bind_helpers(self.entry)
 		if show:
 			self.entry.configure(show=show)
 		self.entry.grid(row=1, column=0, columnspan=2, sticky="ew")

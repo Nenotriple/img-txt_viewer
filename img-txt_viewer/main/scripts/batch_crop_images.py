@@ -18,6 +18,10 @@ from tkinter import (
 from PIL import Image
 
 
+# Custom Libraries
+import main.scripts.entry_helper as EntryHelper
+
+
 #endregion
 #region BatchCrop
 
@@ -65,6 +69,7 @@ class BatchCrop:
         self.entry_width = ttk.Entry(self.frame_width, textvariable=self.entry_width_var)
         self.entry_width.pack(side="top", padx=5, pady=5)
         self.entry_width.bind("<Return>", self.process_images)
+        EntryHelper.bind_helpers(self.entry_width)
         # Height Entry
         self.frame_height = Frame(self.frame_width_height)
         self.frame_height.pack(side="left", fill="x", padx=10, pady=10)
@@ -74,6 +79,7 @@ class BatchCrop:
         self.entry_height = ttk.Entry(self.frame_height, textvariable=self.entry_height_var)
         self.entry_height.pack(side="top", padx=5, pady=5)
         self.entry_height.bind("<Return>", self.process_images)
+        EntryHelper.bind_helpers(self.entry_height)
         # Crop Anchor Combobox
         self.frame_anchor = Frame(self.top)
         self.frame_anchor.pack(side="top", padx=10, pady=10)
