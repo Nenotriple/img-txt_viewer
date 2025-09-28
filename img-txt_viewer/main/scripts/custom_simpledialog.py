@@ -29,9 +29,10 @@ ChoiceValue = Union[str, tuple[str, str]]
 # endregion
 # region Utility
 
+# region Root helpers
+
 
 def _get_or_create_root(parent: Optional[tk.Misc]) -> tuple[tk.Misc, bool]:
-    """Return (root, created_root_flag)."""
     root: Optional[tk.Misc] = parent
     created = False
     if root is None:
@@ -42,11 +43,43 @@ def _get_or_create_root(parent: Optional[tk.Misc]) -> tuple[tk.Misc, bool]:
         if root is None:
             root = tk.Tk()
             created = True
-            try:
-                root.withdraw()
-            except Exception:
-                pass
+            root.withdraw()
     return root, created
+
+
+def _release_tk_variable(var: object) -> None:
+    if isinstance(var, tk.Variable):
+        try:
+            var._tk = None  # type: ignore[attr-defined]
+        except Exception:
+            pass
+
+
+# endregion
+# region Dialog actions
+
+
+def _on_ok(dialog: tk.Toplevel, var_attr: str = "_var"):
+    var = getattr(dialog, var_attr, None)
+    if isinstance(var, tk.Variable):
+        dialog.result = var.get()
+    else:
+        dialog.result = getattr(dialog, var_attr, None)
+    dialog.destroy()
+    _release_tk_variable(var)
+    setattr(dialog, var_attr, None)
+
+
+def _on_cancel(dialog: tk.Toplevel, var_attr: str = "_var"):
+    var = getattr(dialog, var_attr, None)
+    dialog.result = None
+    dialog.destroy()
+    _release_tk_variable(var)
+    setattr(dialog, var_attr, None)
+
+
+# endregion
+# region Window and layout helpers
 
 
 def _setup_dialog_window(dialog: tk.Toplevel, parent: Optional[tk.Misc], title: str, icon_image: Optional["tk.PhotoImage"]) -> None:
@@ -66,34 +99,10 @@ def _setup_dialog_window(dialog: tk.Toplevel, parent: Optional[tk.Misc], title: 
             dialog.transient(parent)
         except Exception:
             pass
-
-
-def _create_container(dialog: tk.Toplevel, prompt: str) -> ttk.Frame:
-    container = ttk.Frame(dialog, padding=(12, 10))
-    container.grid(row=0, column=0, sticky="nsew")
-    dialog.columnconfigure(0, weight=1)
-    dialog.rowconfigure(0, weight=1)
-    container.columnconfigure(0, weight=1)
-    lbl = ttk.Label(container, text=prompt, anchor="w", justify="left")
-    lbl.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 8))
-    return container
-
-
-def _create_general_dialog_buttons(dialog: tk.Toplevel, ok_text: str, cancel_text: str, container: ttk.Frame) -> None:
-    btn_frame = ttk.Frame(container)
-    btn_frame.grid(row=2, column=0, columnspan=2, sticky="e", pady=(10, 0))
-    ok_btn = ttk.Button(btn_frame, text=ok_text, command=lambda: _on_ok(dialog), default="active")
-    ok_btn.grid(row=0, column=0, padx=(0, 6))
-    ok_btn.bind("<Enter>", lambda e: ok_btn.configure(cursor="hand2"))
-    ok_btn.bind("<Leave>", lambda e: ok_btn.configure(cursor=""))
-    cancel_btn = ttk.Button(btn_frame, text=cancel_text, command=lambda: _on_cancel(dialog))
-    cancel_btn.grid(row=0, column=1)
-    cancel_btn.bind("<Enter>", lambda e: cancel_btn.configure(cursor="hand2"))
-    cancel_btn.bind("<Leave>", lambda e: cancel_btn.configure(cursor=""))
+    dialog.minsize(340, 120)
 
 
 def _center_window_to_parent(window: tk.Toplevel, parent: Optional[tk.Misc]) -> None:
-    """Center a Toplevel window to its parent or screen."""
     window.update_idletasks()
     w = window.winfo_reqwidth()
     h = window.winfo_reqheight()
@@ -114,18 +123,35 @@ def _center_window_to_parent(window: tk.Toplevel, parent: Optional[tk.Misc]) -> 
     window.geometry(f"+{x}+{y}")
 
 
-def _on_ok(dialog: tk.Toplevel, var_attr: str = "_var"):
-    setattr(dialog, "result", getattr(dialog, var_attr).get())
-    dialog.destroy()
+def _create_container(dialog: tk.Toplevel, prompt: str) -> ttk.Frame:
+    container = ttk.Frame(dialog, padding=(18, 14, 18, 14))
+    container.grid(row=0, column=0, sticky="nsew")
+    dialog.columnconfigure(0, weight=1)
+    dialog.rowconfigure(0, weight=1)
+    container.columnconfigure(0, weight=1)
+    lbl = ttk.Label(container, text=prompt, anchor="w", justify="left", wraplength=420)
+    lbl.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 12), padx=(0, 0))
+    return container
 
 
-def _on_cancel(dialog: tk.Toplevel):
-    dialog.result = None
-    dialog.destroy()
+def _create_general_dialog_buttons(dialog: tk.Toplevel, ok_text: str, cancel_text: str, container: ttk.Frame) -> None:
+    btn_frame = ttk.Frame(container)
+    btn_frame.grid(row=2, column=0, columnspan=2, sticky="e", pady=(16, 0), padx=(0, 0))
+    ok_btn = ttk.Button(btn_frame, text=ok_text, command=lambda: _on_ok(dialog), default="active")
+    ok_btn.grid(row=0, column=0, padx=(0, 10))
+    ok_btn.bind("<Enter>", lambda e: ok_btn.configure(cursor="hand2"))
+    ok_btn.bind("<Leave>", lambda e: ok_btn.configure(cursor=""))
+    cancel_btn = ttk.Button(btn_frame, text=cancel_text, command=lambda: _on_cancel(dialog))
+    cancel_btn.grid(row=0, column=1)
+    cancel_btn.bind("<Enter>", lambda e: cancel_btn.configure(cursor="hand2"))
+    cancel_btn.bind("<Leave>", lambda e: cancel_btn.configure(cursor=""))
+
+
+# endregion
+# region Input validation
 
 
 def _validate_value(value_str: str, value_type: type, minvalue=None, maxvalue=None) -> tuple[bool, str]:
-    """Universal value validator for int/float dialogs. Returns (is_valid, error_message)."""
     try:
         val = value_type(value_str)
     except Exception:
@@ -163,11 +189,10 @@ def _ask_number(
             return value_type(input_string)
     finally:
         if created and isinstance(root, tk.Tk):
-            try:
-                root.destroy()
-            except Exception:
-                pass
+            root.destroy()
 
+
+# endregion
 
 # endregion
 # region Dialog Classes
@@ -196,9 +221,9 @@ class _AskStringDialog(tk.Toplevel):
     def _create_dialog_widgets(self, prompt: str, initialvalue: Optional[str]) -> ttk.Frame:
         container = _create_container(self, prompt)
         self._var = tk.StringVar(value="" if initialvalue is None else str(initialvalue))
-        entry_width = max(24, min(60, len(self._var.get()) + 10))
+        entry_width = max(28, min(60, len(self._var.get()) + 12))
         self.entry = ttk.Entry(container, textvariable=self._var, width=entry_width)
-        self.entry.grid(row=1, column=0, columnspan=2, sticky="ew")
+        self.entry.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 0), padx=(0, 0))
         self.entry.bind("<Enter>", lambda e: self.entry.configure(cursor="hand2"))
         self.entry.bind("<Leave>", lambda e: self.entry.configure(cursor=""))
         return container
@@ -238,14 +263,14 @@ class _AskComboDialog(tk.Toplevel):
         self._show_dialog(parent, initialvalue, values)
 
 
-    def _create_dialog_widgets(self, prompt: str, values: list[str], initialvalue: Optional[str] = None) -> ttk.Frame:
+    def _create_dialog_widgets(self, prompt: str, values: list[str]) -> ttk.Frame:
         container = _create_container(self, prompt)
         self._var = tk.StringVar()
-        combo_width = max(24, min(60, max(len(str(v)) for v in values) + 10))
+        combo_width = max(28, min(60, max(len(str(v)) for v in values) + 12))
         self.combo = ttk.Combobox(container, textvariable=self._var, values=values, width=combo_width, state="readonly")
         self.combo.bind("<Enter>", lambda e: self.combo.configure(cursor="hand2"))
         self.combo.bind("<Leave>", lambda e: self.combo.configure(cursor=""))
-        self.combo.grid(row=1, column=0, columnspan=2, sticky="ew")
+        self.combo.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 0), padx=(0, 0))
         return container
 
 
@@ -290,37 +315,29 @@ class _AskRadioDialog(tk.Toplevel):
         self._var = tk.StringVar()
         self._choices: list[str] = []
         radio_frame = ttk.Frame(container)
-        radio_frame.grid(row=1, column=0, columnspan=2, sticky="ew")
+        radio_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 0), padx=(0, 0))
         first_radiobutton: Optional[ttk.Radiobutton] = None
         for idx, choice in enumerate(values):
-            # Support (value, label), (value, label, description), or just value
             if isinstance(choice, tuple):
-                if len(choice) == 3:
-                    value, label, description = choice
-                elif len(choice) == 2:
-                    value, label = choice
-                    description = None
-                else:
-                    value = str(choice[0])
-                    label = value
-                    description = None
+                value = str(choice[0])
+                label = str(choice[1]) if len(choice) > 1 else value
+                description = str(choice[2]) if len(choice) > 2 else None
             else:
-                value = str(choice)
-                label = value
+                value = label = str(choice)
                 description = None
             self._choices.append(value)
             opt_frame = ttk.Frame(radio_frame)
-            opt_frame.grid(row=idx, column=0, sticky="ew", pady=(0 if idx == 0 else 8, 0))
+            opt_frame.grid(row=idx, column=0, sticky="ew", pady=(0 if idx == 0 else 10, 0))
             opt_frame.columnconfigure(0, weight=1)
             btn = ttk.Radiobutton(opt_frame, text=label, value=value, variable=self._var)
-            btn.grid(row=0, column=0, sticky="w")
+            btn.grid(row=0, column=0, sticky="w", padx=(0, 0))
             btn.bind("<Enter>", lambda e, b=btn: b.configure(cursor="hand2"))
             btn.bind("<Leave>", lambda e, b=btn: b.configure(cursor=""))
             if first_radiobutton is None:
                 first_radiobutton = btn
             if description:
                 desc_lbl = ttk.Label(opt_frame, text=description, anchor="w", justify="left", font=("TkDefaultFont", 9), foreground="gray", wraplength=400)
-                desc_lbl.grid(row=1, column=0, sticky="w", padx=(24, 0))
+                desc_lbl.grid(row=1, column=0, sticky="w", padx=(28, 0))
                 desc_lbl.bind("<Button-1>", lambda e, v=value: self._var.set(v))
                 desc_lbl.bind("<Enter>", lambda e, l=desc_lbl: l.configure(cursor="hand2"))
                 desc_lbl.bind("<Leave>", lambda e, l=desc_lbl: l.configure(cursor=""))
@@ -364,6 +381,7 @@ def askstring(
         Entered string value or None if canceled
     """
     root, created = _get_or_create_root(parent)
+    dialog = None
     try:
         dialog = _AskStringDialog(parent=root, title=title, prompt=prompt, initialvalue=initialvalue, icon_image=icon_image)
         dialog.wait_window()
@@ -371,10 +389,7 @@ def askstring(
         return result
     finally:
         if created and isinstance(root, tk.Tk):
-            try:
-                root.destroy()
-            except Exception:
-                pass
+            root.destroy()
 
 
 def askinteger(
@@ -453,16 +468,14 @@ def askcombo(
     if not values:
         raise ValueError("values list cannot be empty")
     root, created = _get_or_create_root(parent)
+    dialog = None
     try:
         dialog = _AskComboDialog(parent=root, title=title, prompt=prompt, values=values, initialvalue=initialvalue, icon_image=icon_image)
         dialog.wait_window()
         return dialog.result
     finally:
         if created and isinstance(root, tk.Tk):
-            try:
-                root.destroy()
-            except Exception:
-                pass
+            root.destroy()
 
 
 def askradio(
@@ -492,16 +505,14 @@ def askradio(
     if not values:
         raise ValueError("values list cannot be empty")
     root, created = _get_or_create_root(parent)
+    dialog = None
     try:
         dialog = _AskRadioDialog(parent=root, title=title, prompt=prompt, values=values, initialvalue=initialvalue, icon_image=icon_image)
         dialog.wait_window()
         return dialog.result
     finally:
         if created and isinstance(root, tk.Tk):
-            try:
-                root.destroy()
-            except Exception:
-                pass
+            root.destroy()
 
 
 # endregion
@@ -509,36 +520,43 @@ def askradio(
 
 
 if __name__ == "__main__":
-    # Test askstring
-    #val = askstring("Input required", "Enter a value:", initialvalue="Hello")
-    #print("String result:", repr(val))
+    def test_askstring():
+        val = askstring("Input required", "Enter a value:", initialvalue="Hello")
+        print("String result:", repr(val))
 
 
-    # Test askcombo
-    #colors = ["Red", "Green", "Blue", "Yellow", "Purple", "Orange"]
-    #selected_color = askcombo("Color Selection", "Choose your favorite color:", colors, initialvalue="Blue")
-    #print("Selected color:", repr(selected_color))
+    def test_askcombo():
+        colors = ["Red", "Green", "Blue", "Yellow", "Purple", "Orange"]
+        selected_color = askcombo("Color Selection", "Choose your favorite color:", colors, initialvalue="Blue")
+        print("Selected color:", repr(selected_color))
 
 
-    # Test askinteger
-    #val = askinteger("Input required", "Enter a value (10-100):", initialvalue=42, minvalue=10, maxvalue=100)
-    #print("Integer result:", repr(val))
+    def test_askinteger():
+        val = askinteger("Input required", "Enter a value (10-100):", initialvalue=42, minvalue=10, maxvalue=100)
+        print("Integer result:", repr(val))
 
 
-    # Test askfloat
-    #val = askfloat("Input required", "Enter a float value (0.0 - 1.0):", initialvalue=0.5, minvalue=0.0, maxvalue=1.0)
-    #print("Float result:", repr(val))
+    def test_askfloat():
+        val = askfloat("Input required", "Enter a float value (0.0 - 1.0):", initialvalue=0.5, minvalue=0.0, maxvalue=1.0)
+        print("Float result:", repr(val))
 
 
-    # Test askradio
-    radio_options = [
-        ("return_val1", "display_label1"),
-        ("return_val2", "display_label2", ("description2. " * 4)),
-        ("return_val3", "display_label3", ("description3. " * 8)),
-        ("return_val4", "display_label4", ("description4. " * 12)),
-    ]
-    selected_radio = askradio("Radio Selection", "Choose an option:", radio_options, initialvalue="return_val1")
-    print("Selected radio option:", repr(selected_radio))
+    def test_askradio():
+        radio_options = [
+            ("return_val1", "display_label1"),
+            ("return_val2", "display_label2", ("description2. " * 4)),
+            ("return_val3", "display_label3", ("description3. " * 8)),
+            ("return_val4", "display_label4", ("description4. " * 12)),
+        ]
+        selected_radio = askradio("Radio Selection", "Choose an option:", radio_options, initialvalue="return_val1")
+        print("Selected radio option:", repr(selected_radio))
+
+
+    test_askstring()
+    test_askcombo()
+    test_askinteger()
+    test_askfloat()
+    test_askradio()
 
 
 # endregion
