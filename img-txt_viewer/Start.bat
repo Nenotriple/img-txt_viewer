@@ -5,7 +5,7 @@ setlocal enabledelayedexpansion
 REM ======================================================
 REM Python Virtual Environment Setup and Script Launcher
 REM Created by: github.com/Nenotriple
-set "SCRIPT_VERSION=1.04"
+set "SCRIPT_VERSION=1.05"
 REM ======================================================
 
 
@@ -68,8 +68,88 @@ goto :EOF
 
 
 REM ==============================================
-REM Core Functions
+REM Initialization (colors, project name, header)
 REM ==============================================
+
+
+:initialize_colors
+    if "%ENABLE_COLORS%"=="TRUE" (
+        for /f %%A in ('echo prompt $E ^| cmd') do set "ESC=%%A"
+        set "COLOR_RESET=!ESC![0m"
+        set "COLOR_INFO=!ESC![36m"
+        set "COLOR_OK=!ESC![32m"
+        set "COLOR_WARN=!ESC![33m"
+        set "COLOR_ERROR=!ESC![91m"
+    ) else (
+        set "COLOR_RESET=" & set "COLOR_INFO=" & set "COLOR_OK=" & set "COLOR_WARN=" & set "COLOR_ERROR="
+    )
+exit /b 0
+
+
+:DetermineProjectName
+    set "DIR=%SCRIPT_DIR%"
+    if "%DIR:~-1%"=="\" set "DIR=%DIR:~0,-1%"
+    for %%A in ("%DIR%") do set "PROJECT_NAME=%%~nxA"
+    if not defined PROJECT_NAME set "PROJECT_NAME=Unknown"
+exit /b 0
+
+
+:PrintHeader
+    echo %COLOR_INFO%============================================================%COLOR_RESET%
+    echo %COLOR_INFO%  %SCRIPT_VERSION% Python Virtual Environment Setup and Script Launcher%COLOR_RESET%
+    echo %COLOR_INFO%  Created by: github.com/Nenotriple%COLOR_RESET%
+    echo %COLOR_INFO%============================================================%COLOR_RESET%
+    echo.
+    echo %COLOR_OK%[PROJECT]%COLOR_RESET% %COLOR_WARN%%PROJECT_NAME%%COLOR_RESET%
+    echo.
+exit /b 0
+
+
+REM ==============================================
+REM Validation
+REM ==============================================
+
+
+:ValidatePython
+    call :LogInfo "Checking Python installation..."
+    where python >nul 2>&1 || (
+        call :LogError "Python is not installed or not found in PATH"
+        call :LogError "Please install Python from https://python.org"
+        exit /b 1
+    )
+    for /f "tokens=2" %%i in ('python --version 2^>^&1') do call :LogOK "Found Python %%i"
+exit /b 0
+
+
+REM ==============================================
+REM Virtual Environment lifecycle
+REM ==============================================
+
+
+:CreateVirtualEnvironment
+    if exist "%VENV_DIR%\Scripts\python.exe" (
+        call :LogInfo "Using existing virtual environment"
+        exit /b 0
+    )
+    if exist "%VENV_DIR%" rmdir /s /q "%VENV_DIR%" 2>nul
+    call :LogInfo "Creating virtual environment: %SCRIPT_DIR%%VENV_DIR%"
+    python -m venv "%VENV_DIR%" || (call :LogError "Failed to create virtual environment" & exit /b 1)
+    if "%SET_VENV_HIDDEN%"=="TRUE" call :SetVenvHidden
+    call :LogOK "Virtual environment created"
+exit /b 0
+
+
+:ActivateVenv
+    call :LogInfo "Activating virtual environment..."
+    call "%VENV_DIR%\Scripts\activate.bat" || (call :LogError "Failed to activate virtual environment" & exit /b 1)
+    where python | findstr "%VENV_DIR%" >nul || (call :LogError "Virtual environment activation failed" & exit /b 1)
+    call :LogOK "Virtual environment activated"
+exit /b 0
+
+
+:SetVenvHidden
+    attrib +h "%VENV_DIR%" 2>nul && call :LogInfo "Virtual environment directory set as hidden" || call :LogWarn "Failed to set directory as hidden"
+exit /b 0
 
 
 :SetupVirtualEnvironment
@@ -96,25 +176,9 @@ REM ==============================================
 exit /b 0
 
 
-:CreateVirtualEnvironment
-    if exist "%VENV_DIR%\Scripts\python.exe" (
-        call :LogInfo "Using existing virtual environment"
-        exit /b 0
-    )
-    if exist "%VENV_DIR%" rmdir /s /q "%VENV_DIR%" 2>nul
-    call :LogInfo "Creating virtual environment: %SCRIPT_DIR%%VENV_DIR%"
-    python -m venv "%VENV_DIR%" || (call :LogError "Failed to create virtual environment" & exit /b 1)
-    if "%SET_VENV_HIDDEN%"=="TRUE" call :SetVenvHidden
-    call :LogOK "Virtual environment created"
-exit /b 0
-
-
-:ActivateVenv
-    call :LogInfo "Activating virtual environment..."
-    call "%VENV_DIR%\Scripts\activate.bat" || (call :LogError "Failed to activate virtual environment" & exit /b 1)
-    where python | findstr "%VENV_DIR%" >nul || (call :LogError "Virtual environment activation failed" & exit /b 1)
-    call :LogOK "Virtual environment activated"
-exit /b 0
+REM ==============================================
+REM Package management (pip / requirements)
+REM ==============================================
 
 
 :InstallOrUpdatePackages
@@ -140,15 +204,9 @@ exit /b 0
 exit /b 0
 
 
-:ValidatePython
-    call :LogInfo "Checking Python installation..."
-    where python >nul 2>&1 || (
-        call :LogError "Python is not installed or not found in PATH"
-        call :LogError "Please install Python from https://python.org"
-        exit /b 1
-    )
-    for /f "tokens=2" %%i in ('python --version 2^>^&1') do call :LogOK "Found Python %%i"
-exit /b 0
+REM ==============================================
+REM Execution / Launch
+REM ==============================================
 
 
 :LaunchPythonScript
@@ -165,33 +223,8 @@ exit /b 0
 
 
 REM ==============================================
-REM Utility Functions
+REM Utilities / Logging
 REM ==============================================
-
-
-:initialize_colors
-    if "%ENABLE_COLORS%"=="TRUE" (
-        for /f %%A in ('echo prompt $E ^| cmd') do set "ESC=%%A"
-        set "COLOR_RESET=!ESC![0m"
-        set "COLOR_INFO=!ESC![36m"
-        set "COLOR_OK=!ESC![32m"
-        set "COLOR_WARN=!ESC![33m"
-        set "COLOR_ERROR=!ESC![91m"
-    ) else (
-        set "COLOR_RESET=" & set "COLOR_INFO=" & set "COLOR_OK=" & set "COLOR_WARN=" & set "COLOR_ERROR="
-    )
-exit /b 0
-
-
-:PrintHeader
-    echo %COLOR_INFO%============================================================%COLOR_RESET%
-    echo %COLOR_INFO%  %SCRIPT_VERSION% Python Virtual Environment Setup and Script Launcher%COLOR_RESET%
-    echo %COLOR_INFO%  Created by: github.com/Nenotriple%COLOR_RESET%
-    echo %COLOR_INFO%============================================================%COLOR_RESET%
-    echo.
-    echo %COLOR_OK%[PROJECT]%COLOR_RESET% %COLOR_WARN%%PROJECT_NAME%%COLOR_RESET%
-    echo.
-exit /b 0
 
 
 :LogInfo
@@ -215,17 +248,4 @@ exit /b 0
         echo Press any key to exit...
         pause >nul
     )
-exit /b 0
-
-
-:SetVenvHidden
-    attrib +h "%VENV_DIR%" 2>nul && call :LogInfo "Virtual environment directory set as hidden" || call :LogWarn "Failed to set directory as hidden"
-exit /b 0
-
-
-:DetermineProjectName
-    set "DIR=%SCRIPT_DIR%"
-    if "%DIR:~-1%"=="\" set "DIR=%DIR:~0,-1%"
-    for %%A in ("%DIR%") do set "PROJECT_NAME=%%~nxA"
-    if not defined PROJECT_NAME set "PROJECT_NAME=Unknown"
 exit /b 0
