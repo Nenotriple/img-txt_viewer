@@ -1,6 +1,6 @@
 from typing import Literal
-from tkinter import TclError, Event, Menu, Tk
-from tkinter import ttk
+import tkinter as tk
+from tkinter import ttk, TclError, Event
 
 
 SEPARATORS: str = " ,.-|()[]<>\\/\"'{}:;!@#$%^&*+=~`?"
@@ -12,6 +12,11 @@ SEPARATORS: str = " ,.-|()[]<>\\/\"'{}:;!@#$%^&*+=~`?"
 def _is_separator(char: str) -> bool:
     """Check if a character is a separator."""
     return char in SEPARATORS
+
+
+def _tk_state(flag: bool) -> str:
+    """Return a valid tkinter menu state string for a boolean flag."""
+    return tk.NORMAL if flag else tk.DISABLED
 
 
 # endregion
@@ -72,20 +77,19 @@ def show_entry_context_menu(event: Event) -> None:
     """
     widget: ttk.Entry = event.widget
     if isinstance(widget, ttk.Entry):
-        root: Tk = widget.winfo_toplevel()
-        context_menu: Menu = Menu(root, tearoff=0)
+        root: tk.Tk = widget.winfo_toplevel()
+        context_menu: tk.Menu = tk.Menu(root, tearoff=0)
         try:
-            widget.selection_get()
-            has_selection: bool = True
+            has_selection: bool = bool(widget.selection_present())
         except TclError:
-            has_selection: bool = False
+            has_selection = False
         has_text: bool = bool(widget.get())
-        context_menu.add_command(label="Cut", command=lambda: widget.event_generate("<Control-x>"), state="normal" if has_selection else "disabled")
-        context_menu.add_command(label="Copy", command=lambda: widget.event_generate("<Control-c>"), state="normal" if has_selection else "disabled")
+        context_menu.add_command(label="Cut", command=lambda: widget.event_generate("<Control-x>"), state=_tk_state(has_selection))
+        context_menu.add_command(label="Copy", command=lambda: widget.event_generate("<Control-c>"), state=_tk_state(has_selection))
         context_menu.add_command(label="Paste", command=lambda: widget.event_generate("<Control-v>"))
         context_menu.add_separator()
-        context_menu.add_command(label="Delete", command=lambda: widget.delete("sel.first", "sel.last"), state="normal" if has_selection else "disabled")
-        context_menu.add_command(label="Clear", command=lambda: widget.delete(0, "end"), state="normal" if has_text else "disabled")
+        context_menu.add_command(label="Delete", command=lambda: widget.delete("sel.first", "sel.last"), state=_tk_state(has_selection))
+        context_menu.add_command(label="Clear", command=lambda: widget.delete(0, "end"), state=_tk_state(has_text))
         context_menu.post(event.x_root, event.y_root)
 
 
@@ -104,4 +108,5 @@ def bind_helpers(entry_widget: ttk.Entry) -> None:
     entry_widget.bind("<Button-3>", show_entry_context_menu)
 
 
+# endregion
 # endregion
