@@ -1,12 +1,30 @@
 """
-A minimal, standalone simpledialog-like module using Tkinter Toplevel and ttk.
+custom_simpledialog — simple, standalone dialogs using Tk/Ttk.
 
-API:
-- askstring(title, prompt, initialvalue=None, parent=None, show=None, icon_image=None) -> Optional[str]
+Purpose:
+- Minimal, dependency-free replacements for common tkinter.simpledialog dialogs.
+- Uses Toplevel + ttk widgets, returns Python values or None when cancelled.
+- Focused on simple, modal prompts.
+
+Public API:
+- askstring(title, prompt, initialvalue=None, parent=None, icon_image=None) -> Optional[str]
 - askinteger(title, prompt, initialvalue=None, minvalue=None, maxvalue=None, parent=None, icon_image=None) -> Optional[int]
 - askfloat(title, prompt, initialvalue=None, minvalue=None, maxvalue=None, parent=None, icon_image=None) -> Optional[float]
 - askcombo(title, prompt, values, initialvalue=None, parent=None, icon_image=None) -> Optional[str]
 - askradio(title, prompt, values, initialvalue=None, parent=None, icon_image=None) -> Optional[str]
+
+Notes:
+- askradio accepts a sequence of choices. Each choice may be:
+    - a string (used as both value and label)
+    - a tuple (value, label)
+    - a tuple (value, label, description) — description is displayed below the label
+- All dialogs are modal and return the chosen/entered value, or None if cancelled.
+- If no parent is provided, a temporary root window is created and destroyed after the dialog.
+- Not designed for multi-threaded GUI usage.
+
+Example:
+    val = askstring("Name", "Enter your name:", initialvalue="Alice")
+    num = askinteger("Count", "Enter a number:", initialvalue=5, minvalue=1, maxvalue=10)
 """
 
 # region Imports
@@ -79,7 +97,7 @@ def _on_cancel(dialog: tk.Toplevel, var_attr: str = "_var"):
 
 
 # endregion
-# region Window and layout helpers
+# region Layout helpers
 
 
 def _setup_dialog_window(dialog: tk.Toplevel, parent: Optional[tk.Misc], title: str, icon_image: Optional["tk.PhotoImage"]) -> None:
@@ -525,12 +543,6 @@ if __name__ == "__main__":
         print("String result:", repr(val))
 
 
-    def test_askcombo():
-        colors = ["Red", "Green", "Blue", "Yellow", "Purple", "Orange"]
-        selected_color = askcombo("Color Selection", "Choose your favorite color:", colors, initialvalue="Blue")
-        print("Selected color:", repr(selected_color))
-
-
     def test_askinteger():
         val = askinteger("Input required", "Enter a value (10-100):", initialvalue=42, minvalue=10, maxvalue=100)
         print("Integer result:", repr(val))
@@ -541,21 +553,27 @@ if __name__ == "__main__":
         print("Float result:", repr(val))
 
 
+    def test_askcombo():
+        colors = ["Red", "Green", "Blue", "Yellow", "Purple", "Orange"]
+        selected_color = askcombo("Color Selection", "Choose your favorite color:", colors, initialvalue="Blue")
+        print("Selected color:", repr(selected_color))
+
+
     def test_askradio():
         radio_options = [
             ("return_val1", "display_label1"),
-            ("return_val2", "display_label2", ("description2. " * 4)),
-            ("return_val3", "display_label3", ("description3. " * 8)),
-            ("return_val4", "display_label4", ("description4. " * 12)),
+            ("return_val2", "display_label2", ("description2. " * 5)),
+            ("return_val3", "display_label3", ("description3. " * 10)),
+            ("return_val4", "display_label4", ("description4. " * 20)),
         ]
         selected_radio = askradio("Radio Selection", "Choose an option:", radio_options, initialvalue="return_val1")
         print("Selected radio option:", repr(selected_radio))
 
 
     test_askstring()
-    test_askcombo()
     test_askinteger()
     test_askfloat()
+    test_askcombo()
     test_askradio()
 
 
