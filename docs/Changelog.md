@@ -2,6 +2,7 @@
 
 # Index
 
+- [v1.99](#v199)
 - [v1.98](#v198)
 - [v1.97 🎉🎈](#v197)
 - [v1.96](#v196)
@@ -42,6 +43,41 @@
 - [v1.0](#v10)
 
 <!--###########################################################################-->
+
+## v1.99
+
+[💾](https://github.com/Nenotriple/img-txt_viewer/releases/tag/v1.99)
+
+**New:**
+
+- Window size and position can now be saved and restored on launch.
+  - Toggle this setting from `Options > Restore Last Window Size`
+- The height of individual Tagger tool tabs can now be saved and restored when switching tabs.
+  - Toggle this setting from  `Options > Restore Last Text Pane Heights`
+- MyTags can now be sorted into groups and subgroups.
+- Entries in MyTags can now be organized by drag-and-drop with the middle mouse button.
+- Font and text style options can now be adjusted for MyTags.
+
+**Fixed:**
+
+- Fixed issue where adding tags that contain a comma to MyTags would wrap them in quotes.
+- Fixed issue where duplicate commas could appear when inserting a tag into the text box from MyTags.
+- Fixed issue that would prevent saving if the Stats or All Tags lists were refreshed.
+- The zoom popup view is now centered on centered on the mouse.
+- Fixed issue where the system clipboard could become unresponsive after interacting with text Entry widgets.
+
+**Other Changes:**
+
+- MyTags now uses YAML format instead of CSV.
+- The MyTags save button text color now changes to red when changes are unsaved.
+- Improved image grid thumbnail spacing to prevent empty space.
+- Updated [TkToolTips](https://github.com/Nenotriple/TkToolTip) to (v1.12). Tooltips now have a smooth sliding fade animation and general improvements.
+- Added an Options menu command: `Reset Window and Tab Size`, which will reset the main window and text pane tabs to their defaults.
+- Updated all input popups *(like in Tag-Editor, etc.)* for a more modern look.
+
+---
+
+Thank you to @Hamsterun for your suggestions! #68
 
 ## v1.98
 
