@@ -485,6 +485,10 @@ class SettingsManager:
         }
         last_word_match_var = StringVar(value="Match Last Word")
         match_modes = {"Match Whole String": False, "Match Last Word": True}
+        trace_ids = {
+            "Danbooru": None,
+            "Danbooru (Safe)": None,
+        }
 
         def save_and_continue(close=False, back=False):
             self.parent.csv_english_dictionary.set(dictionary_vars["English Dictionary"].get())
@@ -553,12 +557,16 @@ class SettingsManager:
 
         def create_dictionary_selection_widgets():
             def toggle_danbooru_safe(*args):
+                if not danbooru_safe_checkbutton.winfo_exists():
+                    return
                 if dictionary_vars["Danbooru"].get():
                     danbooru_safe_checkbutton.config(state="disabled")
                 else:
                     danbooru_safe_checkbutton.config(state="normal")
 
             def toggle_danbooru(*args):
+                if not danbooru_checkbutton.winfo_exists():
+                    return
                 if dictionary_vars["Danbooru (Safe)"].get():
                     danbooru_checkbutton.config(state="disabled")
                 else:
@@ -590,6 +598,15 @@ class SettingsManager:
             ttk.Separator(setup_window, orient="horizontal").pack(fill="x", padx=5, pady=5)
             Label(setup_window, text="The autocomplete dictionaries and settings can be changed at any time.").pack(pady=5)
             ttk.Button(setup_window, text="Next", width=10, command=save_and_continue).pack(side="bottom", anchor="e", pady=5, padx=10)
+            # Attach trace callbacks after widgets are created
+            nonlocal trace_ids
+            if trace_ids["Danbooru (Safe)"]:
+                dictionary_vars["Danbooru (Safe)"].trace_remove("write", trace_ids["Danbooru (Safe)"])
+            if trace_ids["Danbooru"]:
+                dictionary_vars["Danbooru"].trace_remove("write", trace_ids["Danbooru"])
+            trace_ids["Danbooru (Safe)"] = dictionary_vars["Danbooru (Safe)"].trace_add("write", lambda *args: toggle_danbooru())
+            trace_ids["Danbooru"] = dictionary_vars["Danbooru"].trace_add("write", lambda *args: toggle_danbooru_safe())
+
         setup_window = create_setup_window()
         create_dictionary_selection_widgets()
 
