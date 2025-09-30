@@ -2382,7 +2382,8 @@ class ImgTxtViewer:
         window_x = self.root.winfo_x() + -155 + main_window_width // 2
         window_y = self.root.winfo_y() - 100 + main_window_height // 2
         filepath = str(self.image_dir.get())
-        batch_crop_images.BatchCrop(self.root, filepath, window_x, window_y)
+        total_images = len(self.image_files)
+        batch_crop_images.BatchCrop(self.root, filepath, total_images, window_x, window_y)
 
 
     def duplicate_pair(self):
