@@ -25,6 +25,7 @@ if TYPE_CHECKING:
 
 
 class BatchRename:
+    # Initialization & setup
     def __init__(self):
         self.parent: 'Main' = None
         self.root: 'tk.Tk' = None
@@ -53,10 +54,7 @@ class BatchRename:
         self.set_working_directory(self.working_dir)
 
 
-#endregion
-#region  Interface
-
-
+    # UI setup
     def setup_ui(self):
         self.setup_primary_frame()
         self.create_directory_row()
@@ -131,9 +129,9 @@ class BatchRename:
         self.frame_control_row.grid_columnconfigure(0, weight=1)
         self.frame_control_row.grid_rowconfigure(0, weight=1)
         self.file_treeview.bind('<<TreeviewSelect>>', self.on_selection_change)
-        self.file_treeview.bind("<Control-a>", lambda event: self.file_treeview.selection_set(self.file_treeview.get_children()))
-        self.file_treeview.bind("<Control-d>", lambda event: self.file_treeview.selection_remove(self.file_treeview.selection()))
-        self.file_treeview.bind("<Control-i>", lambda event: self.file_treeview.selection_toggle(self.file_treeview.get_children()))
+        self.file_treeview.bind("<Control-a>", lambda event: self.select_all_treeview())
+        self.file_treeview.bind("<Control-d>", lambda event: self.deselect_all_treeview())
+        self.file_treeview.bind("<Control-i>", lambda event: self.invert_selection_treeview())
         self.file_treeview.bind("<F5>", lambda event: self.update_file_tree_view())
 
 
@@ -161,9 +159,9 @@ class BatchRename:
         self.actions_menu.pack(side="left", fill="x", padx=2, pady=2)
         self.actions_menu.menu = tk.Menu(self.actions_menu, tearoff=0)
         self.actions_menu["menu"] = self.actions_menu.menu
-        self.actions_menu.menu.add_command(label="Select All", accelerator="Ctrl+A", command=lambda: self.file_treeview.selection_set(self.file_treeview.get_children()))
-        self.actions_menu.menu.add_command(label="Deselect All", accelerator="Ctrl+D", command=lambda: self.file_treeview.selection_remove(self.file_treeview.selection()))
-        self.actions_menu.menu.add_command(label="Invert Selection", accelerator="Ctrl+I", command=lambda: self.file_treeview.selection_toggle(self.file_treeview.get_children()))
+        self.actions_menu.menu.add_command(label="Select All", accelerator="Ctrl+A", command=self.select_all_treeview)
+        self.actions_menu.menu.add_command(label="Deselect All", accelerator="Ctrl+D", command=self.deselect_all_treeview)
+        self.actions_menu.menu.add_command(label="Invert Selection", accelerator="Ctrl+I", command=self.invert_selection_treeview)
         self.actions_menu.menu.add_separator()
         self.actions_menu.menu.add_command(label="Refresh Files", accelerator="F5", command=self.update_file_tree_view)
         # Presets
@@ -179,50 +177,30 @@ class BatchRename:
 
 
 #endregion
-#region  Rename Process
+#region  Treeview Helpers
 
 
-    def rename_files(self):
-        selected_items = self.file_treeview.selection()
-        if not selected_items:
-            messagebox.showinfo("No Selection", "No files selected for renaming.")
-            return
-        # Show warning if enabled
-        if self.show_warning_var.get():
-            msg = f"Are you sure you want to rename {len(selected_items)} files?\n\nThere is no undo for this operation."
-            if not messagebox.askyesno("Confirm Rename", msg):
-                return
-        duplicate_option = self.handle_duplicates_var.get()
-        if (duplicate_option == "Move to Folder"):
-            renamed_folder = self.setup_renamed_folder()
-        else:
-            renamed_folder = None
-        for item in selected_items:
-            old_name = self.file_treeview.set(item, "Name")
-            new_name = self.file_treeview.set(item, "New Name")
-            if not new_name or new_name == old_name:
-                continue
-            old_path = os.path.join(self.working_dir, old_name)
-            if renamed_folder:
-                new_path = os.path.join(renamed_folder, new_name)
+    def select_all_treeview(self):
+         self.file_treeview.selection_set(self.file_treeview.get_children())
+
+
+    def deselect_all_treeview(self):
+        self.file_treeview.selection_remove(self.file_treeview.selection())
+
+
+    def invert_selection_treeview(self):
+        current = set(self.file_treeview.selection())
+        all_items = set(self.file_treeview.get_children())
+        to_select = all_items - current
+        self.file_treeview.selection_set(list(to_select))
+
+
+    def update_treeview_column_headings(self, sorted_column=None):
+        for col in self.file_treeview["columns"]:
+            if col == sorted_column:
+                self.file_treeview.heading(col, text=f"{col} {'↓' if self.sort_reverse else '↑'}")
             else:
-                new_path = os.path.join(self.working_dir, new_name)
-            try:
-                os.rename(old_path, new_path)
-            except FileExistsError:
-                # Overwrite or skip handled at preview, so just skip here if it still conflicts
-                continue
-            except Exception as e:
-                messagebox.showerror("Rename Error", f"Failed to rename {old_name}: {e}")
-        self.update_file_tree_view()
-
-
-
-    def setup_renamed_folder(self):
-        renamed_folder = os.path.join(self.working_dir, "Renamed Files")
-        if not os.path.exists(renamed_folder):
-            os.makedirs(renamed_folder)
-        return renamed_folder
+                self.file_treeview.heading(col, text=col)
 
 
 #endregion
@@ -286,12 +264,7 @@ class BatchRename:
         # Rearrange items in sorted order
         for index, (_, item) in enumerate(items):
             self.file_treeview.move(item, "", index)
-        # Add or update sort indicator in column heading
-        for col in self.file_treeview["columns"]:
-            if col == column:
-                self.file_treeview.heading(col, text=f"{col} {'↓' if self.sort_reverse else '↑'}")
-            else:
-                self.file_treeview.heading(col, text=col)
+        self.update_treeview_column_headings(sorted_column=column)
 
 
 #endregion
@@ -405,6 +378,53 @@ class BatchRename:
             if ext != '.txt' and txt_pair in files:
                 pairs[base] = (file, txt_pair)
         return pairs
+
+
+#endregion
+#region  Rename Process
+
+
+    def rename_files(self):
+        selected_items = self.file_treeview.selection()
+        if not selected_items:
+            messagebox.showinfo("No Selection", "No files selected for renaming.")
+            return
+        # Show warning if enabled
+        if self.show_warning_var.get():
+            msg = f"Are you sure you want to rename {len(selected_items)} files?\n\nThere is no undo for this operation."
+            if not messagebox.askyesno("Confirm Rename", msg):
+                return
+        duplicate_option = self.handle_duplicates_var.get()
+        if (duplicate_option == "Move to Folder"):
+            renamed_folder = self.setup_renamed_folder()
+        else:
+            renamed_folder = None
+        for item in selected_items:
+            old_name = self.file_treeview.set(item, "Name")
+            new_name = self.file_treeview.set(item, "New Name")
+            if not new_name or new_name == old_name:
+                continue
+            old_path = os.path.join(self.working_dir, old_name)
+            if renamed_folder:
+                new_path = os.path.join(renamed_folder, new_name)
+            else:
+                new_path = os.path.join(self.working_dir, new_name)
+            try:
+                os.rename(old_path, new_path)
+            except FileExistsError:
+                # Overwrite or skip handled at preview, so just skip here if it still conflicts
+                continue
+            except Exception as e:
+                messagebox.showerror("Rename Error", f"Failed to rename {old_name}: {e}")
+        self.update_file_tree_view()
+
+
+
+    def setup_renamed_folder(self):
+        renamed_folder = os.path.join(self.working_dir, "Renamed Files")
+        if not os.path.exists(renamed_folder):
+            os.makedirs(renamed_folder)
+        return renamed_folder
 
 
 #endregion
