@@ -42,7 +42,7 @@ class BatchCrop:
 
         self.style = ttk.Style()
         self.style.configure("Anchor.TButton", padding=5)
-        self.style.configure("Selected.Anchor.TButton", padding=5, background="#4a6984")
+        self.style.configure("Selected.Anchor.TButton", padding=5, background="#0078D4")
         self.selected_anchor = "Center"
 
         self.create_interface()
@@ -69,7 +69,7 @@ class BatchCrop:
         title.bind("<ButtonRelease-1>", self.stop_drag)
         title.bind("<B1-Motion>", self.dragging_window)
         self.button_close = Button(self.frame_container, text="🞨", relief="flat", command=self.close_window)
-        self.button_close.place(anchor="nw", relx=0.92, height=38, width=38, x=-10, y=-3)
+        self.button_close.place(anchor="nw", relx=0.92, height=38, width=38, x=-15, y=-5)
         self.bind_widget_highlight(self.button_close, color="#C42B1C")
         separator = ttk.Separator(self.frame_container)
         separator.pack(fill="x")
@@ -145,7 +145,7 @@ class BatchCrop:
     def _create_progress_bar(self):
         ttk.Separator(self.top).pack(fill="x")
         self.frame_progress = Frame(self.top)
-        self.frame_progress.pack(fill="x", pady=5)
+        self.frame_progress.pack(fill="x", padx=5, pady=5)
         self.progress_var = StringVar(value=f"0/{self.total_images}")
         self.progress_label = Label(self.frame_progress, textvariable=self.progress_var)
         self.progress_label.pack(side="right")
