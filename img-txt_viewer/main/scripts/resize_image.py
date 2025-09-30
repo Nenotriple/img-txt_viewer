@@ -34,19 +34,16 @@ import main.scripts.entry_helper as EntryHelper
 class ResizeTool:
     def __init__(self, root: 'Tk', parent: 'Main', filepath, window_x, window_y, update_pair, jump_to_image):
         self.top = Toplevel(root, borderwidth=2, relief="groove")
-        self.top.overrideredirect("true")
+        self.top.overrideredirect(True)
         self.top.geometry("+{}+{}".format(window_x, window_y))
         self.top.grab_set()
         self.top.focus_force()
         self.top.bind("<Escape>", self.close_window)
 
-
-        self.filepath = filepath
-        self.image = Image.open(self.filepath)
-
+        self.filepath = os.path.abspath(filepath)
+        self.load_image(self.filepath)
 
         self.supported_filetypes = (".png", ".webp", ".jpg", ".jpeg", ".jpg_large", ".jfif", ".tif", ".tiff", ".bmp", ".gif")
-
 
         self.parent = parent
         self.sort_key = self.parent.get_file_sort_key()
@@ -54,22 +51,15 @@ class ResizeTool:
         self.ImgTxt_update_pair = update_pair
         self.ImgTxt_jump_to_image = jump_to_image
 
-
-        self.original_image_width = IntVar()
-        self.original_image_height = IntVar()
-        self.original_image_filesize = IntVar()
-        self.original_image_filetype = StringVar()
         self.get_current_image_details()
-
 
         self.prev_width_percentage = None
         self.prev_height_percentage = None
         self.prev_width_pixels = None
-        self.prev_height_pixels =None
+        self.prev_height_pixels = None
 
-
-        self.entry_width_var = StringVar(value=self.original_image_width)
-        self.entry_height_var = StringVar(value=self.original_image_height)
+        self.entry_width_var = StringVar(value=str(self.original_image_width))
+        self.entry_height_var = StringVar(value=str(self.original_image_height))
         self.link_aspect_var = BooleanVar(value=True)
         self.overwrite_var = BooleanVar(value=False)
         self.scale_quality_var = IntVar(value=100)
@@ -78,17 +68,14 @@ class ResizeTool:
         self.combobox_filetype_var = StringVar(value="JPG")
         self.combobox_filter_var = StringVar(value="Lanczos")
 
-
         self.entry_width_var.trace_add("write", lambda name, index, mode, string=self.entry_width_var: self.validate_entry(string))
         self.entry_height_var.trace_add("write", lambda name, index, mode, string=self.entry_height_var: self.validate_entry(string))
-
 
         self.create_interface()
         self.update_current_image_info()
 
-
-        self.new_image_width = IntVar(value=self.original_image_width)
-        self.new_image_height = IntVar(value=self.original_image_height)
+        self.new_image_width = self.original_image_width
+        self.new_image_height = self.original_image_height
 
         self.calculate_image_size()
 
@@ -116,9 +103,9 @@ class ResizeTool:
         title.bind("<ButtonRelease-1>", self.stop_drag)
         title.bind("<B1-Motion>", self.dragging_window)
         # Close Button
-        button_close = Button(frame_container, text="X", overrelief="groove", relief="flat", command=self.close_window)
-        button_close.place(anchor="nw", relx=0.92, height=40, width=40, x=-5, y=0)
-        self.bind_widget_highlight(button_close, color='#ffcac9')
+        self.button_close = Button(frame_container, text="🞨", relief="flat", command=self.close_window)
+        self.button_close.place(anchor="nw", relx=0.91, height=40, width=40)
+        self.bind_widget_highlight(self.button_close, color="#C42B1C")
         separator = ttk.Separator(frame_container)
         separator.pack(side="top", fill="x")
 
@@ -144,11 +131,11 @@ class ResizeTool:
         self.label_width.pack(anchor="w", side="top", padx=5, pady=5)
         self.entry_width = ttk.Entry(frame_width, textvariable=self.entry_width_var)
         self.entry_width.pack(side="top", padx=5, pady=5)
-        self.entry_width.bind("<ButtonRelease-1>", lambda event: self.on_key_release)
+        self.entry_width.bind("<Button-1>", self.on_key_release)
         self.entry_width.bind("<KeyRelease>", self.on_key_release)
-        self.entry_width.bind("<Button-3>", lambda event: (self.reset_entry("width")))
-        self.entry_width.bind('<Up>', lambda event: self.adjust_entry_value(event, self.entry_width_var, True))
-        self.entry_width.bind('<Down>', lambda event: self.adjust_entry_value(event, self.entry_width_var, False))
+        self.entry_width.bind("<Button-3>", lambda event, entry="width": self.reset_entry(entry))
+        self.entry_width.bind("<Up>", lambda event: self.adjust_entry_value(event, self.entry_width_var, True))
+        self.entry_width.bind("<Down>", lambda event: self.adjust_entry_value(event, self.entry_width_var, False))
         EntryHelper.bind_helpers(self.entry_width)
         # Link Button
         frame_checkbutton = Frame(frame_width_height)
@@ -163,11 +150,11 @@ class ResizeTool:
         self.label_height.pack(anchor="w", side="top", padx=5, pady=5)
         self.entry_height = ttk.Entry(frame_height, textvariable=self.entry_height_var)
         self.entry_height.pack(side="top", padx=5, pady=5)
-        self.entry_height.bind("<Button-1>", lambda event: self.on_key_release)
+        self.entry_height.bind("<Button-1>", self.on_key_release)
         self.entry_height.bind("<KeyRelease>", self.on_key_release)
-        self.entry_height.bind("<Button-3>", lambda event: ( self.reset_entry("height")))
-        self.entry_height.bind('<Up>', lambda event: self.adjust_entry_value(event, self.entry_height_var, True))
-        self.entry_height.bind('<Down>', lambda event: self.adjust_entry_value(event, self.entry_height_var, False))
+        self.entry_height.bind("<Button-3>", lambda event, entry="height": self.reset_entry(entry))
+        self.entry_height.bind("<Up>", lambda event: self.adjust_entry_value(event, self.entry_height_var, True))
+        self.entry_height.bind("<Down>", lambda event: self.adjust_entry_value(event, self.entry_height_var, False))
         EntryHelper.bind_helpers(self.entry_height)
 
 
@@ -328,14 +315,12 @@ class ResizeTool:
         if not height.isdigit():
             height = "0"
         if self.resize_condition.get() == "pixels":
-            self.new_image_width.set(width)
-            self.new_image_height.set(height)
+            self.new_image_width = int(width)
+            self.new_image_height = int(height)
         elif self.resize_condition.get() == "percentage":
-            width = str(round(self.original_image_width * int(width) / 100))
-            height = str(round(self.original_image_height * int(height) / 100))
-            self.new_image_width.set(width)
-            self.new_image_height.set(height)
-        self.label_new_dimensions.config(text=f"{self.new_image_width.get()} x {self.new_image_height.get()}")
+            self.new_image_width = round(self.original_image_width * int(width) / 100)
+            self.new_image_height = round(self.original_image_height * int(height) / 100)
+        self.label_new_dimensions.config(text=f"{self.new_image_width} x {self.new_image_height}")
 
 
     def toggle_resize_condition(self):
@@ -412,9 +397,18 @@ class ResizeTool:
 #region Misc
 
 
+    def load_image(self, abs_filepath):
+        with Image.open(abs_filepath) as img:
+            self.image = img.copy()
+
+
     def get_image_index(self, directory, filename):
         filename = os.path.basename(filename)
-        image_files = sorted((file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)), key=self.sort_key, reverse=self.reverse_sort_direction_var)
+        image_files = sorted(
+            (file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)),
+            key=self.sort_key,
+            reverse=self.reverse_sort_direction_var
+        )
         return image_files.index(filename) if filename in image_files else -1
 
 
@@ -510,14 +504,16 @@ class ResizeTool:
             widget.bind("<Enter>", self.mouse_enter, add=add)
         widget.bind("<Leave>", self.mouse_leave, add=add)
 
-
     def mouse_enter(self, event, color='#e5f3ff'):
         if event.widget['state'] == 'normal':
-            event.widget['background'] = color
-
+            event.widget.configure(background=color)
+            event.widget.configure(foreground="white")
+            event.widget.configure(text="🞫")
 
     def mouse_leave(self, event):
-        event.widget['background'] = 'SystemButtonFace'
+        event.widget.configure(background='SystemButtonFace')
+        event.widget.configure(foreground="black")
+        event.widget.configure(text="🞨")
 
 
 #endregion
@@ -525,7 +521,7 @@ class ResizeTool:
 
 
     def calculate_image_size(self, event=None):
-        if self.new_image_width.get() > 12000 or self.new_image_height.get() > 12000:
+        if self.new_image_width > 12000 or self.new_image_height > 12000:
             self.label_new_size.config(text="???")
             return
         try:
@@ -537,12 +533,12 @@ class ResizeTool:
                 frames = []
                 durations = []
                 for frame in ImageSequence.Iterator(self.image):
-                    frame = frame.convert('RGBA').resize((self.new_image_width.get(), self.new_image_height.get()), getattr(Image, filter_method))
+                    frame = frame.convert('RGBA').resize((self.new_image_width, self.new_image_height), getattr(Image, filter_method))
                     frames.append(frame)
                     durations.append(frame.info['duration'])
                 frames[0].save(temp_file, format=file_type, save_all=True, append_images=frames[1:], duration=durations, loop=0)
             else:
-                resized_image = self.image.resize((self.new_image_width.get(), self.new_image_height.get()), getattr(Image, filter_method))
+                resized_image = self.image.resize((self.new_image_width, self.new_image_height), getattr(Image, filter_method))
                 if file_type in ['jpeg', 'webp']:
                     resized_image.save(temp_file, format=file_type, quality=self.scale_quality_var.get())
                 else:
@@ -559,33 +555,23 @@ class ResizeTool:
 
     def save_image(self):
         try:
-            if self.new_image_width.get() > 12000 or self.new_image_height.get() > 12000:
+            if self.new_image_width > 12000 or self.new_image_height > 12000:
                 result = messagebox.askyesno("Large Output", "The selected output size is very large: > 12000.\n\nSaving the image may take longer than usual, continue?")
-                if result == False:
+                if not result:
                     return
             file_type = self.combobox_filetype_var.get().lower()
             file_type = 'jpeg' if file_type == 'jpg' else file_type
             filter_method = str(self.combobox_filter_var.get()).upper()
             filename, extension = os.path.splitext(self.filepath)
-            new_filepath = f"{filename}.{file_type}"
+            new_filepath = os.path.join(os.path.dirname(self.filepath), f"{os.path.basename(filename)}.{file_type}")
             if os.path.exists(new_filepath):
                 result = messagebox.askyesno("File exists", "The file already exists.\n\nWould you like to overwrite it?")
-                if result == False:
+                if not result:
                     return
             if file_type == 'gif':
-                frames = []
-                durations = []
-                for frame in ImageSequence.Iterator(self.image):
-                    frame = frame.convert('RGBA').resize((self.new_image_width.get(), self.new_image_height.get()), getattr(Image, filter_method))
-                    frames.append(frame)
-                    durations.append(frame.info['duration'])
-                frames[0].save(new_filepath, save_all=True, append_images=frames[1:], duration=durations, loop=0)
+                self._save_gif(filter_method, new_filepath)
             else:
-                resized_image = self.image.resize((self.new_image_width.get(), self.new_image_height.get()), getattr(Image, filter_method))
-                if file_type in ['jpeg', 'webp']:
-                    resized_image.save(new_filepath, quality=self.scale_quality_var.get())
-                else:
-                    resized_image.save(new_filepath)
+                self._save_image(file_type, filter_method, new_filepath)
             index = self.get_image_index(os.path.dirname(new_filepath), new_filepath)
             self.close_window(index)
         except TypeError:
@@ -594,3 +580,21 @@ class ResizeTool:
             messagebox.showerror("Error", "Invalid values. Please enter valid digits.")
         except (PermissionError, IOError):
             messagebox.showerror("Error", "An error occurred while saving the image.")
+
+
+    def _save_image(self, file_type, filter_method, new_filepath):
+        resized_image = self.image.resize((self.new_image_width, self.new_image_height), getattr(Image, filter_method))
+        if file_type in ['jpeg', 'webp']:
+            resized_image.save(new_filepath, quality=self.scale_quality_var.get())
+        else:
+            resized_image.save(new_filepath)
+
+
+    def _save_gif(self, filter_method, new_filepath):
+        frames = []
+        durations = []
+        for frame in ImageSequence.Iterator(self.image):
+            frame = frame.convert('RGBA').resize((self.new_image_width, self.new_image_height), getattr(Image, filter_method))
+            frames.append(frame)
+            durations.append(frame.info['duration'])
+        frames[0].save(new_filepath, save_all=True, append_images=frames[1:], duration=durations, loop=0)
