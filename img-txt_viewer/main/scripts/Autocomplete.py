@@ -15,7 +15,7 @@ import yaml
 
 
 # Type Hinting
-from typing import TYPE_CHECKING, Dict, List, Tuple, Set, Optional, Pattern, Any, Union, DefaultDict, Callable, Iterator, Match
+from typing import TYPE_CHECKING, Dict, List, Tuple, Set, Optional, Pattern, Any, Union, DefaultDict, Sequence
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main
 
@@ -38,9 +38,13 @@ class Autocomplete:
     - Structure: {'items': [...], 'groups': [{name, items, groups}]}
     - Items are flattened in logical (depth-first) order into a simple list of tags
     """
-    def __init__(self, data_file: str, include_my_tags: bool = True) -> None:
-        # Data
-        self.data_file: str = data_file
+    def __init__(self, data_file: Union[str, Sequence[str]], include_my_tags: bool = True) -> None:
+        if isinstance(data_file, str):
+            self.data_files: Tuple[str, ...] = (data_file,)
+        else:
+            files = tuple(data_file)
+            self.data_files = files if files else ("None",)
+        self.data_file: str = self.data_files[0]
         # MyTags storage
         self.my_tags_yml: str = 'my_tags.yaml'
 
@@ -54,7 +58,6 @@ class Autocomplete:
         self.similar_names_dict: Optional[DefaultDict[str, List[str]]] = None
         self.previous_text: Optional[str] = None
         self.previous_suggestions: Optional[List[Tuple[str, Tuple[str, List[str]]]]] = None
-        self.previous_pattern: Optional[Pattern] = None
         self.previous_threshold_results: Dict[Tuple[str, int], Dict[str, Tuple[str, List[str]]]] = {}
         self.single_letter_cache: Dict[str, List[Tuple[str, Tuple[str, List[str]]]]] = {}
 
@@ -76,20 +79,21 @@ class Autocomplete:
 
 
     def load_autocomplete_data(self) -> Tuple[Dict[str, Tuple[str, List[str]]], DefaultDict[str, List[str]]]:
-        """Load and merge tag data from primary CSV dictionary and MyTags YAML."""
+        """Load autocomplete data with MyTags entries first, followed by CSV sources."""
         app_path: str = self._get_app_path()
-        data_file_path: str = os.path.join(app_path, "main\dict", self.data_file)
-        mytags_path: Optional[str] = os.path.join(app_path, 'my_tags.yaml')
+        mytags_path: Optional[str] = os.path.join(app_path, self.my_tags_yml)
         if not os.path.isfile(mytags_path):
-            self.include_my_tags = False
             mytags_path = None
+            self.include_my_tags = False
         autocomplete_data: Dict[str, Tuple[str, List[str]]] = {}
         similar_names_dict: DefaultDict[str, List[str]] = defaultdict(list)
-        # Primary CSV dictionary
-        self._read_csv(data_file_path, autocomplete_data, similar_names_dict)
-        # Merge MyTags, flattened in defined order
         if self.include_my_tags and mytags_path:
             self._read_yaml_mytags(mytags_path, autocomplete_data, similar_names_dict)
+        for filename in self.data_files:
+            if filename in ("None", ""):
+                continue
+            data_file_path: str = os.path.join(app_path, "main", "dict", filename)
+            self._read_csv(data_file_path, autocomplete_data, similar_names_dict)
         return autocomplete_data, similar_names_dict
 
 
@@ -168,11 +172,15 @@ class Autocomplete:
 # --------------------------------------
     def _precache_single_letter_suggestions(self) -> None:
         """Build and save cache of suggestions for single-letter inputs."""
-        dictionary_file_path: str = os.path.join(self._get_app_path(), "main\dict", self.data_file)
+        if len(self.data_files) != 1:
+            return
+        dictionary_name: str = self.data_files[0]
+        if dictionary_name in ("None", ""):
+            return
+        dictionary_file_path: str = os.path.join(self._get_app_path(), "main", "dict", dictionary_name)
         if not os.path.exists(dictionary_file_path):
             return
-        dictionary_name: str = os.path.splitext(self.data_file)[0]
-        cache_dir: str = os.path.join(self._get_app_path(), 'main\dict\cache')
+        cache_dir: str = os.path.join(self._get_app_path(), "main", "dict", "cache")
         cache_file: str = os.path.join(cache_dir, f'{dictionary_name}_pre-cache')
         cache_timestamp_file: str = os.path.join(cache_dir, f'{dictionary_name}_pre-cache-timestamp')
         os.makedirs(cache_dir, exist_ok=True)
@@ -217,7 +225,7 @@ class Autocomplete:
         suggestions: Dict[str, Tuple[str, List[str]]] = self._get_or_cache_threshold_results(pattern)
         self._include_similar_name_suggestions(pattern, suggestions)
         sorted_suggestions: List[Tuple[str, Tuple[str, List[str]]]] = self._sort_suggestions(suggestions, text_with_underscores)
-        self._cache_suggestions(text, sorted_suggestions, pattern)
+        self._cache_suggestions(text, sorted_suggestions)
         return sorted_suggestions[:self.max_suggestions]
 
 
@@ -260,55 +268,54 @@ class Autocomplete:
         return sorted(suggestions.items(), key=lambda x: self.get_score(x[0], text), reverse=True)
 
 
-    def _cache_suggestions(self, text: str, sorted_suggestions: List[Tuple[str, Tuple[str, List[str]]]], pattern: Pattern) -> None:
+    def _cache_suggestions(self, text: str, sorted_suggestions: List[Tuple[str, Tuple[str, List[str]]]]) -> None:
         """Store current suggestions for reuse."""
         self.previous_text = text
         self.previous_suggestions = sorted_suggestions
-        self.previous_pattern = pattern
 
 
 # --------------------------------------
 # Score Calculation
 # --------------------------------------
     def get_score(self, suggestion: str, text: str, algorithm: str = "simple") -> float:
-        """
-        Calculate suggestion relevance score based on match quality."""
-        # Use simple scoring algorithm (default)
+        """Calculate suggestion relevance score based on match quality."""
         if algorithm == "simple":
-            score: float = 0
+            text_len: int = len(text)
             # Exact match gets highest priority
             if suggestion == text:
-                return len(text) * 2
-            # Starting match gets high priority
-            for suggestion_char, input_char in zip(suggestion, text):
-                if suggestion_char == input_char:
+                return text_len * 2
+            # Starting match gets high priority (character-by-character)
+            score: float = 0
+            for s_char, t_char in zip(suggestion, text):
+                if s_char == t_char:
                     score += 1
                 else:
                     break
-            # Contains match gets lower score
-            classifier_id, _ = self.autocomplete_dict.get(suggestion, ('', []))
+            # Contains match gets lower score; fetch classifier_id once
+            autodict = self.autocomplete_dict or {}
+            classifier_id = autodict.get(suggestion, ('', []))[0]
             if not classifier_id and suggestion.startswith(text[:3]):
                 score += 1
             return score
-        # Use advanced scoring algorithm
         else:
+            text_len: int = len(text)
             # Exact match gets highest priority
             if suggestion == text:
                 return 1000
             # Starting match gets high priority
             if suggestion.startswith(text):
-                base_score: float = 500 + len(text) * 2
+                base_score: float = 500 + text_len * 2
                 # Shorter suggestions ranked higher
-                return base_score - (len(suggestion) - len(text)) * 0.5
-            # Partial match at word boundaries
-            words: List[str] = suggestion.split('_')
-            for word in words:
-                if word.startswith(text):
-                    return 300 + len(text)
+                return base_score - (len(suggestion) - text_len) * 0.5
+            # Partial match at word boundaries (only split if '_' is present)
+            if '_' in suggestion:
+                for word in suggestion.split('_'):
+                    if word.startswith(text):
+                        return 300 + text_len
             # Contains match gets lower score
             if text in suggestion:
-                return 200 + len(text)
-            # Character-by-character match
+                return 200 + text_len
+            # Character-by-character common prefix
             common_prefix_length: int = 0
             for s_char, t_char in zip(suggestion, text):
                 if s_char == t_char:
@@ -370,12 +377,7 @@ class SuggestionHandler:
             self.clear_suggestions()
             return
         text: str = self.parent.text_box.get("1.0", "insert")
-        # Get current word based on mode
-        if self.parent.last_word_match_var.get():
-            current_word: str = (text.split() or [''])[-1]
-        else:
-            separator: str = '\n' if self.parent.list_mode_var.get() else ','
-            current_word = (text.split(separator) or [''])[-1].strip()
+        current_word: str = self._get_current_word(text)
         # Check if suggestions should be shown
         if not current_word or (len(self.selected_csv_files) < 1 and not self.parent.use_mytags_var.get()):
             self.clear_suggestions()
@@ -386,7 +388,13 @@ class SuggestionHandler:
             self.clear_suggestions()
             return
         # Transform suggestions for display
-        self.suggestions = [(suggestion[0] if suggestion[0] in self.autocomplete.tags_with_underscore else suggestion[0].replace("_", " "), suggestion[1]) for suggestion in sorted(suggestions, key=lambda x: self.autocomplete.get_score(x[0], current_word), reverse=True)]
+        self.suggestions = [
+            (
+                suggestion_text if suggestion_text in self.autocomplete.tags_with_underscore else suggestion_text.replace("_", " "),
+                suggestion_meta,
+            )
+            for suggestion_text, suggestion_meta in suggestions
+        ]
         # Show or clear suggestions
         if self.suggestions:
             self._highlight_suggestions()
@@ -447,6 +455,16 @@ class SuggestionHandler:
         self.parent.suggestion_textbox.insert('1.0', "...")
         self.parent.suggestion_textbox.config(state='disabled')
 
+    def _get_current_word(self, text: str) -> str:
+        if self.parent.last_word_match_var.get():
+            words: List[str] = text.split()
+            return words[-1] if words else ''
+        separator: str = '\n' if self.parent.list_mode_var.get() else ','
+        parts: List[str] = text.split(separator)
+        if not parts:
+            return ''
+        return parts[-1].strip()
+
 
 # --------------------------------------
 # Insert Suggestion
@@ -455,12 +473,7 @@ class SuggestionHandler:
         """Insert chosen suggestion at cursor position."""
         selected_suggestion = selected_suggestion.strip()
         text: str = self.parent.text_box.get("1.0", "insert").rstrip()
-        if self.parent.last_word_match_var.get():
-            words: List[str] = text.split()
-            current_word: str = words[-1] if words else ''
-        else:
-            elements: List[str] = [element.strip() for element in text.split('\n' if self.parent.list_mode_var.get() else ',')]
-            current_word = elements[-1]
+        current_word: str = self._get_current_word(text)
         remaining_text: str = self.parent.text_box.get("insert", "end").rstrip('\n')
         start_of_current_word: str = "1.0 + {} chars".format(len(text) - len(current_word))
         self.parent.text_box.delete(start_of_current_word, "insert")
@@ -505,12 +518,11 @@ class SuggestionHandler:
             'derpibooru.csv': self.parent.csv_derpibooru
             }
         self.selected_csv_files = [csv_file for csv_file, var in csv_vars.items() if var.get()]
-        if not self.selected_csv_files:
-            self.autocomplete = Autocomplete("None", include_my_tags=self.parent.use_mytags_var.get())
+        include_my_tags: bool = self.parent.use_mytags_var.get()
+        if self.selected_csv_files:
+            self.autocomplete = Autocomplete(self.selected_csv_files, include_my_tags=include_my_tags)
         else:
-            self.autocomplete = Autocomplete(self.selected_csv_files[0], include_my_tags=self.parent.use_mytags_var.get())
-            for csv_file in self.selected_csv_files[1:]:
-                self.autocomplete.autocomplete_dict.update(Autocomplete(csv_file).autocomplete_dict, include_my_tags=self.parent.use_mytags_var.get())
+            self.autocomplete = Autocomplete("None", include_my_tags=include_my_tags)
         self.clear_suggestions()
         self._set_suggestion_color(self.selected_csv_files[0] if self.selected_csv_files else "None")
         self.set_suggestion_threshold()
@@ -549,6 +561,6 @@ class SuggestionHandler:
 
     def clear_dictionary_csv_selection(self) -> None:
         """Reset CSV source selection to none."""
-        for attr in ['csv_danbooru', 'danbooru_safe.csv', 'csv_derpibooru', 'csv_e621', 'csv_english_dictionary']:
-            getattr(self, attr).set(False)
+        for attr in ('csv_danbooru', 'csv_danbooru_safe', 'csv_derpibooru', 'csv_e621', 'csv_english_dictionary'):
+            getattr(self.parent, attr).set(False)
         self.update_autocomplete_dictionary()
