@@ -57,6 +57,11 @@
 - MyTags can now be sorted into groups and subgroups.
 - Entries in MyTags can now be organized by drag-and-drop with the middle mouse button.
 - Font and text style options can now be adjusted for MyTags.
+- Tag-Editor UI and functionality improvements:
+  - Re-worked the UI for a cleaner and simpler experience.
+  - Tags can now be sorted after creating pending changes.
+
+
 
 **Fixed:**
 
