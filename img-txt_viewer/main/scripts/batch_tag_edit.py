@@ -8,11 +8,9 @@ from collections import Counter
 # Standard Library - GUI
 from tkinter import (
     ttk, Tk, messagebox,
-    BooleanVar,
     Frame, Menu,
-    Label, Scrollbar
+    font, Scrollbar
 )
-
 
 # Third-Party Libraries
 from TkToolTip.TkToolTip import TkToolTip as Tip
@@ -42,7 +40,6 @@ class BatchTagEdit:
         self.working_dir = None
         self.batch_tag_edit_frame = None
         self.help_window = None
-        self.entry_helper = entry_helper
         # Local Variables
         self.tag_counts = 0
         self.total_unique_tags = 0
@@ -50,6 +47,11 @@ class BatchTagEdit:
         self.selected_tags = 0
         self.pending_delete = 0
         self.pending_edit = 0
+        # Sorting state dictionary
+        self.tree_sort_dict = {
+            "option": "Frequency",  # "Frequency", "Name", or "Length"
+            "reverse": False
+        }
 
 
 #endregion
@@ -63,45 +65,48 @@ class BatchTagEdit:
         self.working_dir = self.parent.image_dir.get()
         self.batch_tag_edit_frame = None
         self.help_window = help_window.HelpWindow(self.root)
-
         tag_dict = self.analyze_tags()
         self.tag_counts, self.total_unique_tags = self.count_file_tags(tag_dict)
         self.original_tags = []
         self.create_ui()
-        self.sort_tags(self.tag_counts.items(), "Frequency", False)
+        self.sort_tags(self.tag_counts.items())
 
 
     def create_ui(self):
         self.setup_primary_frame()
-        self.setup_top_frame()
-        self.setup_treeview_frame()
         self.setup_option_frame()
+        self.setup_treeview_frame()
+        self.setup_bottom_frame()
         self.count_treeview_tags()
 
 
     def setup_primary_frame(self):
         # Primary Frame
         self.batch_tag_edit_frame = self.parent.batch_tag_edit_tab
+        self.batch_tag_edit_frame.grid_columnconfigure(0, weight=1)
         self.batch_tag_edit_frame.grid_columnconfigure(1, weight=1)
-        self.batch_tag_edit_frame.grid_rowconfigure(1, weight=1)
+        self.batch_tag_edit_frame.grid_rowconfigure(2, weight=1)
+        self.batch_tag_edit_frame.grid_rowconfigure(3, weight=0)
 
 
-    def setup_top_frame(self):
+    def setup_bottom_frame(self):
         # Frame
-        top_frame = Frame(self.batch_tag_edit_frame)
-        top_frame.grid(row=0, column=0, columnspan=99, sticky="nsew", pady=2)
-        top_frame.grid_columnconfigure(0, weight=1)
+        bottom_frame = Frame(self.batch_tag_edit_frame)
+        bottom_frame.grid(row=3, column=0, columnspan=99, sticky="nsew", pady=2)
+        bottom_frame.grid_columnconfigure(0, weight=1)
         # Label
-        self.info_label = Label(top_frame, anchor="w", text=f"Total: {self.total_unique_tags}  | Visible: {self.visible_tags}  |  Selected: {self.selected_tags}  |  Pending Delete: {self.pending_delete}  |  Pending Edit: {self.pending_edit}")
+        self.info_label = ttk.Label(bottom_frame, anchor="w", text=f"Total: {self.total_unique_tags}  | Visible: {self.visible_tags}  |  Selected: {self.selected_tags}  |  Pending Delete: {self.pending_delete}  |  Pending Edit: {self.pending_edit}")
         self.info_label.grid(row=0, column=0, padx=1, sticky="ew")
         # Button
-        self.button_save = ttk.Button(top_frame, text="Save Changes", width=15, state="disabled", command=self.apply_tag_edits)
+        self.button_save = ttk.Button(bottom_frame, text="Commit Changes", state="disabled", command=self.apply_tag_edits)
         self.button_save.grid(row=0, column=1, padx=2)
+        self.button_save_tip = Tip.create(widget=self.button_save, text="Commit pending changes to text files", show_delay=50, state="disabled")
         # Button
-        refresh_button = ttk.Button(top_frame, text="Refresh", width=8, command=self.clear_filter)
+        refresh_button = ttk.Button(bottom_frame, text="Refresh", width=8, command=self.clear_filter)
         refresh_button.grid(row=0, column=2, padx=2)
+        Tip.create(widget=refresh_button, text="Refresh the tag list and clear any pending changes or filters", show_delay=50)
         # Button
-        help_button = ttk.Button(top_frame, text="?", width=2, command=self.open_help_window)
+        help_button = ttk.Button(bottom_frame, text="?", width=2, command=self.open_help_window)
         help_button.grid(row=0, column=3, padx=2)
         Tip.create(widget=help_button, text="Show/Hide Help", show_delay=50)
 
@@ -109,163 +114,98 @@ class BatchTagEdit:
     def setup_treeview_frame(self):
         # Frame
         tree_frame = ttk.Labelframe(self.batch_tag_edit_frame, text="Tags")
-        tree_frame.grid(row=1, column=0, padx=2, sticky="nsew")
+        tree_frame.grid(row=2, column=0, columnspan=2, padx=2, sticky="nsew")
+        tree_frame.grid_rowconfigure(0, weight=1)
+        tree_frame.grid_columnconfigure(0, weight=1)
         # Treeview
         self.tag_tree = ttk.Treeview(tree_frame, columns=("count", "tag"), show="headings", selectmode="extended")
-        self.tag_tree.heading("count", text="Count")
-        self.tag_tree.heading("tag", text="Tag")
-        self.tag_tree.column("count", width=60, anchor="center")
-        self.tag_tree.column("tag", width=300, anchor="w")
+        self.tag_tree.heading("count", text="Count", command=lambda: self.on_treeview_heading_click("count"))
+        self.tag_tree.heading("tag", text="Tag", anchor="w", command=lambda: self.on_treeview_heading_click("tag"))
+        self.tag_tree.column("count", width=60, anchor="center", stretch=False)
+        self.tag_tree.column("tag", width=200, anchor="w", stretch=False)
         self.tag_tree.grid(row=0, column=0, sticky="nsew")
         self.tag_tree.bind("<Control-c>", self.copy_tree_selection)
         self.tag_tree.bind("<Button-3>", self.show_tree_context_menu)
         self.tag_tree.bind("<<TreeviewSelect>>", self.count_treeview_tags)
-        tree_frame.grid_rowconfigure(0, weight=1)
+        self.tag_tree.bind("<Double-Button-1>", self.auto_size_tree_column)
         # Scrollbars
         self.vertical_scrollbar = Scrollbar(tree_frame, orient="vertical", command=self.tag_tree.yview)
         self.vertical_scrollbar.grid(row=0, column=1, sticky="ns")
         self.horizontal_scrollbar = Scrollbar(tree_frame, orient="horizontal", command=self.tag_tree.xview)
-        self.horizontal_scrollbar.grid(row=1, column=0, sticky="ew")
+        self.horizontal_scrollbar.grid(row=1, column=0, columnspan=2, sticky="ew")
         self.tag_tree.configure(yscrollcommand=self.vertical_scrollbar.set, xscrollcommand=self.horizontal_scrollbar.set)
-        self.setup_tree_sub_frame(tree_frame)
-
-
-    def setup_tree_sub_frame(self, tree_frame):
-        # Frame
-        self.tree_sub_frame = Frame(tree_frame)
-        self.tree_sub_frame.grid(row=2, column=0, sticky="ew")
-        self.tree_sub_frame.grid_columnconfigure(0, weight=1)
-        self.tree_sub_frame.grid_columnconfigure(1, weight=1)
-        self.tree_sub_frame.grid_columnconfigure(2, weight=1)
-        # Select All
-        self.button_all = ttk.Button(self.tree_sub_frame, text="All", width=8, command=lambda: self.tree_selection("all"))
-        self.button_all.grid(row=0, column=0, padx=2, pady=2, sticky="ew")
-        Tip.create(widget=self.button_all, text="Select all tags")
-        # Invert Selection
-        self.button_invert = ttk.Button(self.tree_sub_frame, text="Invert", width=8, command=lambda: self.tree_selection("invert"))
-        self.button_invert.grid(row=0, column=1, padx=2, pady=2, sticky="ew")
-        Tip.create(widget=self.button_invert, text="Invert the current selection of tags")
-        # Clear Selection
-        self.button_clear = ttk.Button(self.tree_sub_frame, text="Clear", width=8, command=lambda: self.tree_selection("clear"))
-        self.button_clear.grid(row=0, column=2, padx=2, pady=2, sticky="ew")
-        Tip.create(widget=self.button_clear, text="Clear the current selection of tags")
-        # Revert Selection
-        self.button_revert_sel = ttk.Button(self.tree_sub_frame, text="Revert Sel", width=8, command=self.revert_tree_changes)
-        self.button_revert_sel.grid(row=1, column=0, padx=2, pady=2, sticky="ew")
-        Tip.create(widget=self.button_revert_sel, text="Revert the selected tags to their original state")
-        # Revert All
-        self.button_revert_all = ttk.Button(self.tree_sub_frame, text="Revert All", width=8, command=self.clear_filter)
-        self.button_revert_all.grid(row=1, column=1, padx=2, pady=2, sticky="ew")
-        Tip.create(widget=self.button_revert_all, text="Revert all tags to their original state. (Reset)")
-        # Copy
-        self.button_copy = ttk.Button(self.tree_sub_frame, text="Copy", width=8, command=self.copy_tree_selection)
-        self.button_copy.grid(row=1, column=2, padx=2, pady=2, sticky="ew")
-        Tip.create(widget=self.button_copy, text="Copy the selected tags to the clipboard")
 
 
     def setup_option_frame(self):
         # Frame
-        self.option_frame = ttk.Labelframe(self.batch_tag_edit_frame, text="Options")
-        self.option_frame.grid(row=1, column=1, padx=2, sticky="nsew")
+        self.option_frame = Frame(self.batch_tag_edit_frame)
+        self.option_frame.grid(row=1, column=0, columnspan=2, sticky="nsew")
         self.option_frame.grid_columnconfigure(0, weight=1)
+        self.option_frame.grid_rowconfigure(0, weight=0)
         # Frame
-        self.sort_filter_frame = ttk.Labelframe(self.option_frame, text="Sort & Filter")
-        self.sort_filter_frame.grid(row=0, column=0, padx=2, pady=10, sticky="ew")
-        self.setup_sort_frame()
+        self.sort_filter_frame = Frame(self.option_frame)
+        self.sort_filter_frame.grid(row=0, column=0, sticky="ew")
+        self.sort_filter_frame.grid_columnconfigure(0, weight=1)
         self.setup_filter_frame()
         self.setup_edit_frame()
-
-
-    def setup_sort_frame(self):
-        # Frame
-        self.sort_frame = Frame(self.sort_filter_frame)
-        self.sort_frame.grid(row=0, column=0, padx=2, pady=10, sticky="ew")
-        # Label
-        self.sort_label = Label(self.sort_frame, text="Sort by:", width=8)
-        self.sort_label.grid(row=0, column=0, padx=2)
-        Tip.create(widget=self.sort_label, text="Sort the visible tags")
-        # Combobox
-        self.sort_options_combobox = ttk.Combobox(self.sort_frame, values=["Frequency", "Name", "Length"], state="readonly", width=12)
-        self.sort_options_combobox.set("Frequency")
-        self.sort_options_combobox.grid(row=0, column=1, padx=2, sticky="e")
-        self.sort_options_combobox.bind("<<ComboboxSelected>>", lambda event: self.warn_before_action(action="sort"))
-        # Checkbutton
-        self.reverse_sort_var = BooleanVar()
-        self.reverse_sort_checkbutton = ttk.Checkbutton(self.sort_frame, text="Reverse Order", variable=self.reverse_sort_var, command=lambda: self.warn_before_action(action="sort"))
-        self.reverse_sort_checkbutton.grid(row=0, column=2, padx=2, sticky="e")
 
 
     def setup_filter_frame(self):
         # Frame
         filter_frame = Frame(self.sort_filter_frame)
-        filter_frame.grid(row=1, column=0, padx=2, pady=10, sticky="ew")
+        filter_frame.grid(row=1, column=0, sticky="ew")
         filter_frame.grid_columnconfigure(2, weight=1)
-        self.sort_filter_frame.grid_columnconfigure(0, weight=1)
         # Label
-        self.filter_label = Label(filter_frame, text="Filter :", width=8)
-        self.filter_label.grid(row=0, column=0, padx=2)
+        self.filter_label = ttk.Label(filter_frame, text="Filter:", width=6)
+        self.filter_label.grid(row=0, column=0, sticky="w")
         Tip.create(widget=self.filter_label, text="All options except <, and >, support multiple values separated by commas.\n\nTag : Filter tags by the input text\n!Tag : Filter tags that do not contain the input text\n== : Filter tags equal to the given value\n!= : Filter tags not equal to the given value\n< : Filter tags less than the given value\n> : Filter tags greater than the given value")
-        # Combobox
-        self.filter_combobox = ttk.Combobox(filter_frame, values=["Tag", "!Tag", "==", "!=", "<", ">"], state="readonly", width=12)
-        self.filter_combobox.set("Tag")
-        self.filter_combobox.grid(row=0, column=1, padx=2, sticky="e")
+        filter_options = [
+            ("Tag", "Contains Text"),
+            ("!Tag", "Does Not Contain"),
+            ("==", "Count Equals"),
+            ("!=", "Count Not Equals"),
+            ("<", "Count Less Than"),
+            (">", "Count Greater Than")
+        ]
+        self.filter_option_map = {desc: key for key, desc in filter_options}
+        filter_descriptions = [desc for _, desc in filter_options]
+        self.filter_combobox = ttk.Combobox(filter_frame, values=filter_descriptions, state="readonly")
+        self.filter_combobox.set("Contains Text")
+        self.filter_combobox.grid(row=0, column=1, sticky="e")
         self.filter_combobox.bind("<<ComboboxSelected>>", lambda event: self.warn_before_action(action="filter"))
         # Entry
         self.filter_entry = ttk.Entry(filter_frame)
-        self.filter_entry.grid(row=0, column=2, padx=2, sticky="ew")
+        self.filter_entry.grid(row=0, column=2, sticky="ew")
         self.filter_entry.bind("<KeyRelease>", lambda event: self.warn_before_action(action="filter"))
-        self.entry_helper.bind_helpers(self.filter_entry)
+        entry_helper.bind_helpers(self.filter_entry)
         # Button
-        self.filter_apply_button = ttk.Button(filter_frame, text="Apply", command=lambda: self.warn_before_action(action="filter"))
-        self.filter_apply_button.grid(row=0, column=3, padx=2, sticky="e")
-        # Button
-        filter_clear_button = ttk.Button(filter_frame, text="Reset", command=self.clear_filter)
-        filter_clear_button.grid(row=0, column=4, padx=2, sticky="e")
-        Tip.create(widget=filter_clear_button, text="Clear any filters or pending changes")
+        self.filter_apply_button = ttk.Button(filter_frame, text="Apply", width=8, command=lambda: self.warn_before_action(action="filter"))
+        self.filter_apply_button.grid(row=0, column=3, sticky="e")
+        Tip.create(widget=self.filter_apply_button, text="Apply tag list filter", justify="left")
 
 
     def setup_edit_frame(self):
         # Frame
-        edit_frame = ttk.Labelframe(self.option_frame, text="Edit & Delete")
-        edit_frame.grid(row=2, column=0, padx=2, pady=10, sticky="ew")
+        edit_frame = Frame(self.option_frame)
+        edit_frame.grid(row=2, column=0, sticky="ew")
         edit_frame.columnconfigure(0, weight=1)
-
         # Edit frame
         edit_row_frame = ttk.Frame(edit_frame)
-        edit_row_frame.grid(row=0, column=0, sticky="ew", padx=2, pady=5)
+        edit_row_frame.grid(row=0, column=0, sticky="ew")
         edit_row_frame.columnconfigure(1, weight=1)
         # Label
-        edit_label = ttk.Label(edit_row_frame, text="Edit:", width=10)
-        edit_label.grid(row=0, column=0, sticky="w", padx=2, pady=5)
+        edit_label = ttk.Label(edit_row_frame, text="Edit:", width=6)
+        edit_label.grid(row=0, column=0, sticky="w")
         Tip.create(widget=edit_label, text="Select an option and enter text to add a pending change", justify="left")
         # Entry
         self.edit_entry = ttk.Entry(edit_row_frame)
-        self.edit_entry.grid(row=0, column=1, sticky="ew", padx=2, pady=5)
+        self.edit_entry.grid(row=0, column=1, sticky="ew")
         self.edit_entry.bind("<Return>", self.apply_commands_to_tree)
-        self.entry_helper.bind_helpers(self.edit_entry)
+        entry_helper.bind_helpers(self.edit_entry)
         # Button
-        edit_apply_button = ttk.Button(edit_row_frame, text="Apply", command=self.apply_commands_to_tree)
-        edit_apply_button.grid(row=0, column=2, sticky="e", padx=2, pady=5)
-        Tip.create(widget=edit_apply_button, text="Add pending changes. This does not apply the changes to the text files!")
-        # Button
-        edit_reset_button = ttk.Button(edit_row_frame, text="Reset", command=self.clear_filter)
-        edit_reset_button.grid(row=0, column=3, sticky="e", padx=2, pady=5)
-        Tip.create(widget=edit_reset_button, text="Clear any filters or pending changes")
-
-        # Delete frame
-        delete_row = ttk.Frame(edit_frame)
-        delete_row.grid(row=2, column=0, sticky="ew", padx=2, pady=5)
-        delete_row.columnconfigure(1, weight=1)
-        # label
-        delete_label = ttk.Label(delete_row, text="Delete Tags:")
-        delete_label.grid(row=0, column=0, sticky="ew", padx=2, pady=5)
-        # Label
-        self.delete_center_label = ttk.Label(delete_row, text="Select tags and click delete", anchor="center")
-        self.delete_center_label.grid(row=0, column=1, columnspan=2, sticky="ew", padx=2, pady=5)
-        # Button
-        delete_button = ttk.Button(delete_row, text="Delete", command=lambda: self.apply_commands_to_tree(delete=True))
-        delete_button.grid(row=0, column=3, sticky="e", padx=2, pady=5)
-        Tip.create(widget=delete_button, text="Delete the selected tags")
+        edit_apply_button = ttk.Button(edit_row_frame, text="Apply", width=8, command=self.apply_commands_to_tree)
+        edit_apply_button.grid(row=0, column=2, sticky="e")
+        Tip.create(widget=edit_apply_button, text="Add to pending changes.")
 
 
 #endregion
@@ -289,11 +229,15 @@ class BatchTagEdit:
         self.original_tags = []
         tag_dict = self.analyze_tags()
         self.tag_counts, self.total_unique_tags = self.count_file_tags(tag_dict)
-        self.sort_tags(self.tag_counts.items(), self.sort_options_combobox.get(), self.reverse_sort_var.get())
-        self.toggle_filter_and_sort_widgets()
+        self.sort_tags(self.tag_counts.items())
+        self.toggle_filter_widgets()
 
 
-    def sort_tags(self, tags, option, reverse):
+    def sort_tags(self, tags):
+        option = self.tree_sort_dict.get("option", "Frequency")
+        reverse = self.tree_sort_dict.get("reverse", False)
+        # Update headings with sort indicators
+        self.update_treeview_headings(option, reverse)
         if option == "Frequency":
             sorted_tags = sorted(tags, key=lambda tag: tag[1], reverse=not reverse)
         elif option == "Name":
@@ -301,6 +245,24 @@ class BatchTagEdit:
         elif option == "Length":
             sorted_tags = sorted(tags, key=lambda tag: len(tag[0]), reverse=not reverse)
         self.update_tree(sorted_tags)
+
+
+    def update_treeview_headings(self, option, reverse):
+        # Helper to update headings with sort method and arrow
+        arrow_up = " ↑"
+        arrow_down = " ↓"
+        count_title = "Count"
+        tag_title = "Tag"
+        # Determine which column is sorted and direction
+        if option == "Frequency":
+            count_title += arrow_up if not reverse else arrow_down
+        elif option == "Name":
+            tag_title += arrow_up if not reverse else arrow_down
+        elif option == "Length":
+            tag_title += f" (Len){arrow_up if not reverse else arrow_down}"
+        # Set headings
+        self.tag_tree.heading("count", text=count_title, command=lambda: self.on_treeview_heading_click("count"))
+        self.tag_tree.heading("tag", text=tag_title, command=lambda: self.on_treeview_heading_click("tag"))
 
 
     def filter_tags(self, filter_option, filter_value):
@@ -317,8 +279,9 @@ class BatchTagEdit:
                     "!=": lambda tag, count: all(count != int(val) for val in filter_values),
                     "==": lambda tag, count: any(count == int(val) for val in filter_values)
                 }
-                filtered_tags = [(tag, count) for tag, count in self.tag_counts.items() if filter_functions[filter_option](tag, count)]
-            self.sort_tags(filtered_tags, self.sort_options_combobox.get(), self.reverse_sort_var.get())
+                selected_key = self.filter_option_map[self.filter_combobox.get()]
+                filtered_tags = [(tag, count) for tag, count in self.tag_counts.items() if filter_functions[selected_key](tag, count)]
+            self.sort_tags(filtered_tags)
         except ValueError:
             messagebox.showinfo("Error", "Invalid filter value. Please enter a number.")
             self.filter_entry.delete(0, "end")
@@ -403,6 +366,7 @@ class BatchTagEdit:
             padded_count = str(count).zfill(padding_width)
             self.tag_tree.insert("", "end", values=(padded_count, tag))
         self.count_treeview_tags()
+        self.auto_size_tree_column()
         return tags
 
 
@@ -425,9 +389,11 @@ class BatchTagEdit:
         self.info_label.config(text=f"Total: {self.total_unique_tags}  | Visible: {visible_tags_str}  |  Selected: {selected_tags_str}  |  Pending Delete: {pending_delete_str}  |  Pending Edit: {pending_edit_str}")
         if self.pending_delete > 0 or self.pending_edit > 0:
             self.button_save.config(state="normal")
+            self.button_save_tip.config(state="normal")
         else:
             self.button_save.config(state="disabled")
-        self.toggle_filter_and_sort_widgets()
+            self.button_save_tip.config(state="disabled")
+        self.toggle_filter_widgets()
 
 
     def tree_selection(self, action):
@@ -466,12 +432,9 @@ class BatchTagEdit:
 # --------------------------------------
 # UI Helpers
 # --------------------------------------
-    def toggle_filter_and_sort_widgets(self, event=None):
+    def toggle_filter_widgets(self, event=None):
         try:
             widgets = [
-                self.sort_label,
-                self.sort_options_combobox,
-                self.reverse_sort_checkbutton,
                 self.filter_label,
                 self.filter_combobox,
                 self.filter_entry,
@@ -521,15 +484,14 @@ class BatchTagEdit:
             if not messagebox.askyesno("Warning", "Adjusting this option will clear all pending changes. Continue?"):
                 return
         if action == "sort":
-            self.sort_tags(self.tag_counts.items(), self.sort_options_combobox.get(), self.reverse_sort_var.get())
+            self.sort_tags(self.tag_counts.items())
             self.filter_tags(self.filter_combobox.get(), self.filter_entry.get())
         elif action == "filter":
             self.filter_tags(self.filter_combobox.get(), self.filter_entry.get())
 
 
     def set_working_directory(self, working_dir=None):
-        """
-        Updates the working directory and refreshes the UI with new tag data.
+        """Updates the working directory and refreshes the UI with new tag data.
         Args:
             working_dir (str): Path to the new working directory
         """
@@ -550,16 +512,61 @@ class BatchTagEdit:
         self.tag_tree.delete(0, "end")
         self.filter_entry.delete(0, "end")
         self.edit_entry.delete(0, "end")
-        # Reset sort options
-        self.sort_options_combobox.set("Frequency")
-        self.reverse_sort_var.set(False)
         # Analyze new tags and update UI
         tag_dict = self.analyze_tags()
         self.tag_counts, self.total_unique_tags = self.count_file_tags(tag_dict)
-        self.sort_tags(self.tag_counts.items(), "Frequency", False)
-        self.toggle_filter_and_sort_widgets()
+        self.sort_tags(self.tag_counts.items())
+        self.toggle_filter_widgets()
 
 
     def open_help_window(self):
         help_text = HelpText.BATCH_TAG_EDIT_HELP
         self.help_window.open_window(geometry="700x700", help_text=help_text)
+
+
+    def on_treeview_heading_click(self, column):
+        if column == "count":
+            if self.tree_sort_dict["option"] == "Frequency":
+                self.tree_sort_dict["reverse"] = not self.tree_sort_dict["reverse"]
+            else:
+                self.tree_sort_dict["option"] = "Frequency"
+                self.tree_sort_dict["reverse"] = False
+        elif column == "tag":
+            # Cycle through: Name → Name (reverse) → Length → Length (reverse) → Name...
+            tag_sort_modes = [("Name", False), ("Name", True), ("Length", False), ("Length", True)]
+            current = (self.tree_sort_dict["option"], self.tree_sort_dict["reverse"])
+            try:
+                idx = tag_sort_modes.index(current)
+                next_idx = (idx + 1) % len(tag_sort_modes)
+            except ValueError:
+                next_idx = 0
+            self.tree_sort_dict["option"], self.tree_sort_dict["reverse"] = tag_sort_modes[next_idx]
+        self.sort_tags(self.original_tags)
+
+
+    def auto_size_tree_column(self, event=None):
+        if event is None:
+            col_id = "tag"
+        else:
+            region = self.tag_tree.identify_region(event.x, event.y)
+            if region != "separator":
+                return
+            col = self.tag_tree.identify_column(event.x)
+            if not col:
+                return
+            col_id = self.tag_tree["columns"][int(col[1:]) - 1]
+        style = ttk.Style(self.tag_tree)
+        treeview_font_name = style.lookup("Treeview", "font")
+        if not treeview_font_name:
+            treeview_font_name = "TkDefaultFont"
+        tree_font = font.nametofont(treeview_font_name)
+        max_width = 0
+        heading_text = self.tag_tree.heading(col_id)["text"]
+        max_width = tree_font.measure(heading_text)
+        for iid in self.tag_tree.get_children():
+            value = self.tag_tree.set(iid, col_id)
+            width = tree_font.measure(str(value))
+            if width > max_width:
+                max_width = width
+        max_width += 40
+        self.tag_tree.column(col_id, width=max_width)
