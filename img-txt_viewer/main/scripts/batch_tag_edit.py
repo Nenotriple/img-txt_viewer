@@ -154,12 +154,7 @@ class BatchTagEdit:
         tree_frame.grid_rowconfigure(0, weight=1)
         tree_frame.grid_columnconfigure(0, weight=1)
         # Treeview
-        self.tag_tree = ttk.Treeview(
-            tree_frame,
-            columns=("count", "action", "tag", "new_tag"),
-            show="headings",
-            selectmode="extended"
-        )
+        self.tag_tree = ttk.Treeview(tree_frame, columns=("count", "action", "tag", "new_tag"), show="headings")
         self.tag_tree.heading("count", text="Count", command=lambda: self.on_treeview_heading_click("count"))
         self.tag_tree.heading("action", text="Action", anchor="w")
         self.tag_tree.heading("tag", text="Tag", anchor="w", command=lambda: self.on_treeview_heading_click("tag"))
@@ -175,12 +170,10 @@ class BatchTagEdit:
         self.tag_tree.bind("<Double-Button-1>", self._on_tree_double_left_click)
         self.tag_tree.bind("<Motion>", self.on_tree_motion, add="+")
         self.tag_tree.bind("<Leave>", self._disable_tag_tooltip, add="+")
-        # Scrollbars
-        self.vertical_scrollbar = Scrollbar(tree_frame, orient="vertical", command=self.tag_tree.yview)
-        self.vertical_scrollbar.grid(row=0, column=1, sticky="ns")
-        self.horizontal_scrollbar = Scrollbar(tree_frame, orient="horizontal", command=self.tag_tree.xview)
-        self.horizontal_scrollbar.grid(row=1, column=0, columnspan=2, sticky="ew")
-        self.tag_tree.configure(yscrollcommand=self.vertical_scrollbar.set, xscrollcommand=self.horizontal_scrollbar.set)
+        # Scrollbar
+        vert_scrollbar = Scrollbar(tree_frame, orient="vertical", command=self.tag_tree.yview)
+        vert_scrollbar.grid(row=0, column=1, sticky="ns")
+        self.tag_tree.configure(yscrollcommand=vert_scrollbar.set)
         self.tag_tooltip = Tip.create(widget=self.tag_tree, text="", state="disabled", wraplength=400, origin="mouse", follow_mouse=True, show_delay=200)
 
 
