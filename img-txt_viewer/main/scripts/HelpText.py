@@ -1,4 +1,3 @@
-#endregion
 #region Crop UI
 
 
@@ -112,7 +111,7 @@ BATCH_UPSCALE_HELP = {
 
 
 BATCH_TAG_EDIT_HELP = {
-"Batch Tag Edit Help": "",
+"Tag-Editor Help": "",
 
 "Technical Note:":
     "- This tool is designed to work with CSV-like text files. Both commas and periods are treated as caption delimiters.\n"
@@ -120,19 +119,25 @@ BATCH_TAG_EDIT_HELP = {
     "- You should always make backups of your text files before saving any changes.\n",
 
 "Instructions:":
-    "1) Use the filter or sort options to refine the File and Tag Lists.\n"
+    "1. Use the filter or sort options to refine the Tag List.\n"
     "   - You can input multiple filter values separated by commas.\n"
-    "2) Select the tags you want to modify from the Tag-List.\n"
-    "3) Choose an edit option:\n"
-    "   - **Edit**: Enter the new text to replace the selected tags.\n"
-    "   - **Delete**: The selected tags will be deleted.\n"
-    "4) Pending changes will be displayed in the Tag-List.\n"
-    "5) Click *'Save Changes'* to apply any pending changes to the text files. This action cannot be undone, so make sure to backup your files.\n",
+    "   - You can click the tag list headers to adjust the sort order.\n"
+    "2. Select the tags you want to modify from the Tag List.\n"
+    "   - You can select multiple tags using Ctrl+Click or Shift+Click.\n"
+    "3. To edit: Enter a new tag in the Edit box and click Apply (or press Enter).\n"
+    "   - To delete: Leave the Edit box empty and click Apply, or use the right-click menu.\n"
+    "   - You can also right-click a tag for Edit/Delete/Copy and selection tools.\n"
+    "4. Pending changes are shown in the Action/New Tag columns and highlighted (green for edit, red for delete).\n"
+    "5. Click 'Commit Changes' to apply all pending edits/deletes to the text files. This cannot be undone—make backups first!\n"
+    "6. Use 'Refresh' to reload the tag list and clear all pending changes and filters.\n",
 
 "Tips:":
-    "- *Adjust* the working directory in the *'Tagger'* tab to work with different sets of text files.\n"
-    "- Use the context menu in the listbox to quickly copy, delete, or edit tags.\n"
-    "- Use the *'Revert'* options to undo pending changes made to the selected tags, or use the *'Reset'* buttons to reset any changes or filters.",
+    "- Use the filter dropdown to filter tags by text or count (supports multiple values for most options).\n"
+    "- Use the context menu (right-click) for quick actions: Edit, Delete, Copy, Select All, Invert Selection, Clear Selection, Revert Selection, Revert All.\n"
+    "- Use the column headers to sort by Count, Tag, Length, Action, or New Tag (click repeatedly to cycle sort modes).\n"
+    "- The Info bar at the bottom shows total, visible, selected, and pending changes.\n"
+    "- Pending changes disable filtering/sorting until committed or reverted.\n"
+    "- Use the Tagger tab to change the working directory or file set.\n",
 }
 
 
