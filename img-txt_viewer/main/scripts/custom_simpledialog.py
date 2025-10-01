@@ -272,7 +272,6 @@ class _AskStringDialog(tk.Toplevel):
         entry_width = max(28, min(60, len(self._var.get()) + 12))
         self.entry = ttk.Entry(container, textvariable=self._var, width=entry_width)
         self.entry.grid(row=1, column=0, columnspan=2, sticky="ew")
-        _bind_widget_cursor_hand2(self.entry)
         return container
 
 
