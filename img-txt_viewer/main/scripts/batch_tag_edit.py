@@ -52,10 +52,46 @@ class BatchTagEdit:
             "option": "Frequency",  # "Frequency", "Name", or "Length"
             "reverse": False
         }
+        self.tag_tooltip = None
+        self._tree_tooltip_text = None
+        self.long_tag_tooltip_threshold = 64
+
+
+    def set_working_directory(self, working_dir=None):
+        """Updates the working directory and refreshes the UI with new tag data.
+        Args:
+            working_dir (str): Path to the new working directory
+        """
+        # Update working directory
+        if working_dir:
+            self.working_dir = working_dir
+        else:
+            self.working_dir = self.parent.image_dir.get()
+        self.text_files = self.parent.text_files
+        # Reset UI state variables
+        self.tag_counts = 0
+        self.total_unique_tags = 0
+        self.visible_tags = 0
+        self.selected_tags = 0
+        self.pending_delete = 0
+        self.pending_edit = 0
+        self.original_tags = []
+        # Clear UI elements
+        if hasattr(self, "tag_tree") and self.tag_tree is not None:
+            self.tag_tree.delete(*self.tag_tree.get_children())
+        if hasattr(self, "filter_entry") and self.filter_entry is not None:
+            self.filter_entry.delete(0, "end")
+        if hasattr(self, "edit_entry") and self.edit_entry is not None:
+            self.edit_entry.delete(0, "end")
+        # Get tags and update UI
+        tag_dict = self.get_tags()
+        self.tag_counts, self.total_unique_tags = self.count_file_tags(tag_dict)
+        self.sort_tags(self.tag_counts.items())
+        self.toggle_filter_widgets()
 
 
 #endregion
-#region UI setup
+#region GUI Setup
 
 
     def setup_window(self, parent, root):
@@ -65,7 +101,7 @@ class BatchTagEdit:
         self.working_dir = self.parent.image_dir.get()
         self.batch_tag_edit_frame = None
         self.help_window = help_window.HelpWindow(self.root)
-        tag_dict = self.analyze_tags()
+        tag_dict = self.get_tags()
         self.tag_counts, self.total_unique_tags = self.count_file_tags(tag_dict)
         self.original_tags = []
         self.create_ui()
@@ -118,22 +154,34 @@ class BatchTagEdit:
         tree_frame.grid_rowconfigure(0, weight=1)
         tree_frame.grid_columnconfigure(0, weight=1)
         # Treeview
-        self.tag_tree = ttk.Treeview(tree_frame, columns=("count", "tag"), show="headings", selectmode="extended")
+        self.tag_tree = ttk.Treeview(
+            tree_frame,
+            columns=("count", "action", "tag", "new_tag"),
+            show="headings",
+            selectmode="extended"
+        )
         self.tag_tree.heading("count", text="Count", command=lambda: self.on_treeview_heading_click("count"))
+        self.tag_tree.heading("action", text="Action", anchor="w")
         self.tag_tree.heading("tag", text="Tag", anchor="w", command=lambda: self.on_treeview_heading_click("tag"))
+        self.tag_tree.heading("new_tag", text="New Tag", anchor="w")
         self.tag_tree.column("count", width=60, anchor="center", stretch=False)
-        self.tag_tree.column("tag", width=200, anchor="w", stretch=False)
+        self.tag_tree.column("action", width=60, anchor="w", stretch=False)
+        self.tag_tree.column("tag", width=200, anchor="w", stretch=True)
+        self.tag_tree.column("new_tag", width=200, anchor="w", stretch=True)
         self.tag_tree.grid(row=0, column=0, sticky="nsew")
         self.tag_tree.bind("<Control-c>", self.copy_tree_selection)
         self.tag_tree.bind("<Button-3>", self.show_tree_context_menu)
         self.tag_tree.bind("<<TreeviewSelect>>", self.count_treeview_tags)
         self.tag_tree.bind("<Double-Button-1>", self.auto_size_tree_column)
+        self.tag_tree.bind("<Motion>", self.on_tree_motion, add="+")
+        self.tag_tree.bind("<Leave>", self._disable_tag_tooltip, add="+")
         # Scrollbars
         self.vertical_scrollbar = Scrollbar(tree_frame, orient="vertical", command=self.tag_tree.yview)
         self.vertical_scrollbar.grid(row=0, column=1, sticky="ns")
         self.horizontal_scrollbar = Scrollbar(tree_frame, orient="horizontal", command=self.tag_tree.xview)
         self.horizontal_scrollbar.grid(row=1, column=0, columnspan=2, sticky="ew")
         self.tag_tree.configure(yscrollcommand=self.vertical_scrollbar.set, xscrollcommand=self.horizontal_scrollbar.set)
+        self.tag_tooltip = Tip.create(widget=self.tag_tree, text="", state="disabled", wraplength=400, origin="mouse", follow_mouse=True, show_delay=200)
 
 
     def setup_option_frame(self):
@@ -209,253 +257,7 @@ class BatchTagEdit:
 
 
 #endregion
-#region Primary Functions
-
-
-    def analyze_tags(self):
-        tag_dict = TagEditor.analyze_tags(self.parent.text_files)
-        return tag_dict
-
-
-    def count_file_tags(self, tags):
-        tag_counts = Counter()
-        for tag, positions in tags.items():
-            tag_counts[tag] = len(positions)
-        total_unique_tags = len(tag_counts)
-        return tag_counts, total_unique_tags
-
-
-    def refresh_counts(self):
-        self.original_tags = []
-        tag_dict = self.analyze_tags()
-        self.tag_counts, self.total_unique_tags = self.count_file_tags(tag_dict)
-        self.sort_tags(self.tag_counts.items())
-        self.toggle_filter_widgets()
-
-
-    def sort_tags(self, tags):
-        option = self.tree_sort_dict.get("option", "Frequency")
-        reverse = self.tree_sort_dict.get("reverse", False)
-        # Update headings with sort indicators
-        self.update_treeview_headings(option, reverse)
-        if option == "Frequency":
-            sorted_tags = sorted(tags, key=lambda tag: tag[1], reverse=not reverse)
-        elif option == "Name":
-            sorted_tags = sorted(tags, reverse=reverse)
-        elif option == "Length":
-            sorted_tags = sorted(tags, key=lambda tag: len(tag[0]), reverse=not reverse)
-        self.update_tree(sorted_tags)
-
-
-    def update_treeview_headings(self, option, reverse):
-        # Helper to update headings with sort method and arrow
-        arrow_up = " ↑"
-        arrow_down = " ↓"
-        count_title = "Count"
-        tag_title = "Tag"
-        # Determine which column is sorted and direction
-        if option == "Frequency":
-            count_title += arrow_up if not reverse else arrow_down
-        elif option == "Name":
-            tag_title += arrow_up if not reverse else arrow_down
-        elif option == "Length":
-            tag_title += f" (Len){arrow_up if not reverse else arrow_down}"
-        # Set headings
-        self.tag_tree.heading("count", text=count_title, command=lambda: self.on_treeview_heading_click("count"))
-        self.tag_tree.heading("tag", text=tag_title, command=lambda: self.on_treeview_heading_click("tag"))
-
-
-    def filter_tags(self, filter_option, filter_value):
-        try:
-            if not filter_value:
-                filtered_tags = self.tag_counts.items()
-            else:
-                filter_values = [val.strip().lower() for val in filter_value.split(',') if val.strip()]
-                filter_functions = {
-                    "Tag": lambda tag, count: any(val in tag.lower() for val in filter_values),
-                    "!Tag": lambda tag, count: all(val not in tag.lower() for val in filter_values),
-                    "<": lambda tag, count: count < int(filter_values[0]),
-                    ">": lambda tag, count: count > int(filter_values[0]),
-                    "!=": lambda tag, count: all(count != int(val) for val in filter_values),
-                    "==": lambda tag, count: any(count == int(val) for val in filter_values)
-                }
-                selected_key = self.filter_option_map[self.filter_combobox.get()]
-                filtered_tags = [(tag, count) for tag, count in self.tag_counts.items() if filter_functions[selected_key](tag, count)]
-            self.sort_tags(filtered_tags)
-        except ValueError:
-            messagebox.showinfo("Error", "Invalid filter value. Please enter a number.")
-            self.filter_entry.delete(0, "end")
-            return
-
-
-    def apply_commands_to_tree(self, event=None, delete=False, edit=None):
-        selected_iids = self.tag_tree.selection()
-        selected_indices = [self.tag_tree.index(iid) for iid in selected_iids]
-        selected_items = [self.original_tags[i][0] for i in selected_indices]
-        if edit is None:
-            edit = self.edit_entry.get()
-        if edit == "":
-            delete = True
-        for iid, item in zip(reversed(selected_iids), reversed(selected_items)):
-            current_text = self.tag_tree.item(iid, "values")[1]
-            # If the item is already altered, remove the previous alteration
-            if current_text.startswith("DELETE :") or current_text.startswith("EDIT :"):
-                item = current_text.split(":", 1)[1].strip().split(">", 1)[0].strip()
-            if delete:
-                self.tag_tree.item(iid, values=(self.tag_tree.item(iid, "values")[0], f"DELETE : {item}"))
-                self.tag_tree.tag_configure("deleted", foreground="red")
-                self.tag_tree.item(iid, tags=("deleted",))
-            else:
-                self.tag_tree.item(iid, values=(self.tag_tree.item(iid, "values")[0], f"EDIT : {item} > {edit}"))
-                self.tag_tree.tag_configure("edited", foreground="green")
-                self.tag_tree.item(iid, tags=("edited",))
-        self.count_treeview_tags()
-
-
-    def revert_tree_changes(self):
-        padding_width = len(str(self.total_unique_tags))
-        selected_iids = self.tag_tree.selection()
-        for iid in selected_iids:
-            current_text = self.tag_tree.item(iid, "values")[1]
-            if current_text.startswith("DELETE :") or current_text.startswith("EDIT :"):
-                original_item = current_text.split(":", 1)[1].strip().split(">", 1)[0].strip()
-                for tag, count in self.tag_counts.items():
-                    if tag == original_item:
-                        padded_count = str(count).zfill(padding_width)
-                        reverted_text = f"{tag}"
-                        self.tag_tree.item(iid, values=(padded_count, reverted_text))
-                        self.tag_tree.item(iid, tags=())
-                        self.count_treeview_tags()
-                        break
-
-
-    def apply_tag_edits(self):
-        if self.pending_delete or self.pending_edit:
-            confirm = messagebox.askyesno("Save Changes", f"Commit pending changes to text files?\nThis action cannot be undone, you should make backups!\n\nPending Edits: {self.pending_edit}\nPending Deletes: {self.pending_delete}")
-            if not confirm:
-                return
-        delete_tags = []
-        edit_tags = {}
-        for iid in self.tag_tree.get_children():
-            current_text = self.tag_tree.item(iid, "values")[1]
-            if current_text.startswith("DELETE :"):
-                tag = current_text.split(":", 1)[1].strip()
-                delete_tags.append(tag)
-            elif current_text.startswith("EDIT :"):
-                original_tag, new_tag = current_text.split(":", 1)[1].strip().split(">", 1)
-                original_tag = original_tag.strip()
-                new_tag = new_tag.strip()
-                edit_tags[original_tag] = new_tag
-        if delete_tags:
-            TagEditor.edit_tags(self.parent.text_files, delete_tags, delete=True)
-        if edit_tags:
-            for original_tag, new_tag in edit_tags.items():
-                TagEditor.edit_tags(self.text_files, [original_tag], edit=new_tag)
-        self.clear_filter(warn=False)
-        self.parent.refresh_text_box()
-
-
-# --------------------------------------
-# Treeview
-# --------------------------------------
-    def update_tree(self, tags):
-        self.tag_tree.delete(*self.tag_tree.get_children())
-        padding_width = len(str(self.total_unique_tags))
-        self.original_tags = tags
-        for tag, count in tags:
-            padded_count = str(count).zfill(padding_width)
-            self.tag_tree.insert("", "end", values=(padded_count, tag))
-        self.count_treeview_tags()
-        self.auto_size_tree_column()
-        return tags
-
-
-    def count_treeview_tags(self, event=None):
-        self.pending_delete = 0
-        self.pending_edit = 0
-        for iid in self.tag_tree.get_children():
-            item = self.tag_tree.item(iid, "values")
-            if item and item[1].startswith("DELETE :"):
-                self.pending_delete += 1
-            elif item and item[1].startswith("EDIT :"):
-                self.pending_edit += 1
-        self.visible_tags = len(self.tag_tree.get_children())
-        self.selected_tags = len(self.tag_tree.selection())
-        padding_width = len(str(self.total_unique_tags))
-        pending_delete_str = str(self.pending_delete).zfill(padding_width)
-        pending_edit_str = str(self.pending_edit).zfill(padding_width)
-        visible_tags_str = str(self.visible_tags).zfill(padding_width)
-        selected_tags_str = str(self.selected_tags).zfill(padding_width)
-        self.info_label.config(text=f"Total: {self.total_unique_tags}  | Visible: {visible_tags_str}  |  Selected: {selected_tags_str}  |  Pending Delete: {pending_delete_str}  |  Pending Edit: {pending_edit_str}")
-        if self.pending_delete > 0 or self.pending_edit > 0:
-            self.button_save.config(state="normal")
-            self.button_save_tip.config(state="normal")
-        else:
-            self.button_save.config(state="disabled")
-            self.button_save_tip.config(state="disabled")
-        self.toggle_filter_widgets()
-
-
-    def tree_selection(self, action):
-        all_iids = self.tag_tree.get_children()
-        if action == "all":
-            self.tag_tree.selection_set(all_iids)
-        elif action == "invert":
-            selected = set(self.tag_tree.selection())
-            new_selection = [iid for iid in all_iids if iid not in selected]
-            self.tag_tree.selection_set(new_selection)
-        elif action == "clear":
-            self.tag_tree.selection_remove(all_iids)
-        self.count_treeview_tags()
-
-
-    def copy_tree_selection(self, event=None):
-        selected_tags = []
-        for iid in self.tag_tree.selection():
-            item = self.tag_tree.item(iid, "values")
-            if item:
-                # If edited/deleted, extract tag after ", " or after "EDIT :"/"DELETE :"
-                tag_val = item[1]
-                if tag_val.startswith("DELETE :") or tag_val.startswith("EDIT :"):
-                    tag_val = tag_val.split(":", 1)[1].strip().split(">", 1)[-1].strip() if ">" in tag_val else tag_val.split(":", 1)[1].strip()
-                selected_tags.append(tag_val)
-        self.root.clipboard_clear()
-        self.root.clipboard_append(", ".join(selected_tags))
-
-
-    def context_menu_edit_tag(self):
-        edit_string = custom_simpledialog.askstring("Edit Tag", "Enter new tag:", parent=self.root)
-        if edit_string is not None:
-            self.apply_commands_to_tree(edit=edit_string)
-
-
-# --------------------------------------
-# UI Helpers
-# --------------------------------------
-    def toggle_filter_widgets(self, event=None):
-        try:
-            widgets = [
-                self.filter_label,
-                self.filter_combobox,
-                self.filter_entry,
-                self.filter_apply_button
-            ]
-            state = "disabled" if self.pending_delete or self.pending_edit else "normal"
-            for widget in widgets:
-                if isinstance(widget, ttk.Combobox):
-                    widget.configure(state="readonly" if state == "normal" else state)
-                else:
-                    widget.configure(state=state)
-        except AttributeError:
-            pass
-
-
-    def clear_filter(self, warn=True):
-        if warn and (self.pending_delete or self.pending_edit):
-            if not messagebox.askyesno("Warning", "Clear all pending changes.\n\nContinue?"):
-                return
-        self.filter_entry.delete(0, "end")
-        self.refresh_counts()
+#region Treeview interaction
 
 
     def show_tree_context_menu(self, event):
@@ -476,52 +278,84 @@ class BatchTagEdit:
         context_menu.post(event.x_root, event.y_root)
 
 
-# --------------------------------------
-# Misc
-# --------------------------------------
-    def warn_before_action(self, event=None, action=None):
-        if self.pending_delete or self.pending_edit:
-            if not messagebox.askyesno("Warning", "Adjusting this option will clear all pending changes. Continue?"):
-                return
-        if action == "sort":
-            self.sort_tags(self.tag_counts.items())
-            self.filter_tags(self.filter_combobox.get(), self.filter_entry.get())
-        elif action == "filter":
-            self.filter_tags(self.filter_combobox.get(), self.filter_entry.get())
+    def apply_commands_to_tree(self, event=None, delete=False, edit=None):
+        selected_iids = self.tag_tree.selection()
+        selected_indices = [self.tag_tree.index(iid) for iid in selected_iids]
+        selected_items = [self.original_tags[i][0] for i in selected_indices if i < len(self.original_tags)]
+        if edit is None:
+            edit = self.edit_entry.get()
+        if edit == "":
+            delete = True
+        for iid, original_tag in zip(reversed(selected_iids), reversed(selected_items)):
+            values = list(self.tag_tree.item(iid, "values"))
+            if not values:
+                continue
+            count_value = values[0]
+            if delete:
+                self.tag_tree.item(iid, values=(count_value, "Delete", original_tag, ""))
+                self.tag_tree.tag_configure("deleted", foreground="red", background="#ffe5e5")
+                self.tag_tree.item(iid, tags=("deleted",))
+            else:
+                new_value = edit
+                if new_value == original_tag:
+                    self.tag_tree.item(iid, values=(count_value, "", original_tag, original_tag))
+                    self.tag_tree.item(iid, tags=())
+                else:
+                    self.tag_tree.item(iid, values=(count_value, "Edit", original_tag, new_value))
+                    self.tag_tree.tag_configure("edited", foreground="green", background="#e5ffe5")
+                    self.tag_tree.item(iid, tags=("edited",))
+        self.count_treeview_tags()
 
 
-    def set_working_directory(self, working_dir=None):
-        """Updates the working directory and refreshes the UI with new tag data.
-        Args:
-            working_dir (str): Path to the new working directory
-        """
-        # Update working directory
-        if working_dir:
-            self.working_dir = working_dir
-        else:
-            self.working_dir = self.parent.image_dir.get()
-        # Reset UI state variables
-        self.tag_counts = 0
-        self.total_unique_tags = 0
-        self.visible_tags = 0
-        self.selected_tags = 0
-        self.pending_delete = 0
-        self.pending_edit = 0
-        self.original_tags = []
-        # Clear UI elements
-        self.tag_tree.delete(0, "end")
-        self.filter_entry.delete(0, "end")
-        self.edit_entry.delete(0, "end")
-        # Analyze new tags and update UI
-        tag_dict = self.analyze_tags()
-        self.tag_counts, self.total_unique_tags = self.count_file_tags(tag_dict)
-        self.sort_tags(self.tag_counts.items())
-        self.toggle_filter_widgets()
+    def context_menu_edit_tag(self):
+        edit_string = custom_simpledialog.askstring("Edit Tag", "Enter new tag:", parent=self.root)
+        if edit_string is not None:
+            self.apply_commands_to_tree(edit=edit_string)
 
 
-    def open_help_window(self):
-        help_text = HelpText.BATCH_TAG_EDIT_HELP
-        self.help_window.open_window(geometry="700x700", help_text=help_text)
+    def copy_tree_selection(self, event=None):
+        selected_tags = []
+        for iid in self.tag_tree.selection():
+            idx = self.tag_tree.index(iid)
+            values = self.tag_tree.item(iid, "values")
+            if not values or idx >= len(self.original_tags):
+                continue
+            original_tag = self.original_tags[idx][0]
+            new_tag = values[3] if len(values) > 3 else original_tag
+            if new_tag == "":
+                selected_tags.append(original_tag)
+            elif new_tag != original_tag:
+                selected_tags.append(new_tag)
+            else:
+                selected_tags.append(original_tag)
+        self.root.clipboard_clear()
+        self.root.clipboard_append(", ".join(selected_tags))
+
+
+    def tree_selection(self, action):
+        all_iids = self.tag_tree.get_children()
+        if action == "all":
+            self.tag_tree.selection_set(all_iids)
+        elif action == "invert":
+            selected = set(self.tag_tree.selection())
+            new_selection = [iid for iid in all_iids if iid not in selected]
+            self.tag_tree.selection_set(new_selection)
+        elif action == "clear":
+            self.tag_tree.selection_remove(all_iids)
+        self.count_treeview_tags()
+
+
+    def revert_tree_changes(self):
+        padding_width = len(str(self.total_unique_tags))
+        selected_iids = self.tag_tree.selection()
+        for iid in selected_iids:
+            idx = self.tag_tree.index(iid)
+            if idx >= len(self.original_tags):
+                continue
+            original_tag, original_count = self.original_tags[idx]
+            padded_count = str(original_count).zfill(padding_width)
+            self.tag_tree.item(iid, values=(padded_count, "", original_tag, original_tag), tags=())
+        self.count_treeview_tags()
 
 
     def on_treeview_heading_click(self, column):
@@ -530,6 +364,12 @@ class BatchTagEdit:
                 self.tree_sort_dict["reverse"] = not self.tree_sort_dict["reverse"]
             else:
                 self.tree_sort_dict["option"] = "Frequency"
+                self.tree_sort_dict["reverse"] = False
+        elif column == "action":
+            if self.tree_sort_dict["option"] == "Action":
+                self.tree_sort_dict["reverse"] = not self.tree_sort_dict["reverse"]
+            else:
+                self.tree_sort_dict["option"] = "Action"
                 self.tree_sort_dict["reverse"] = False
         elif column == "tag":
             # Cycle through: Name → Name (reverse) → Length → Length (reverse) → Name...
@@ -541,7 +381,47 @@ class BatchTagEdit:
             except ValueError:
                 next_idx = 0
             self.tree_sort_dict["option"], self.tree_sort_dict["reverse"] = tag_sort_modes[next_idx]
+        elif column == "new_tag":
+            if self.tree_sort_dict["option"] == "NewTag":
+                self.tree_sort_dict["reverse"] = not self.tree_sort_dict["reverse"]
+            else:
+                self.tree_sort_dict["option"] = "NewTag"
+                self.tree_sort_dict["reverse"] = False
         self.sort_tags(self.original_tags)
+
+
+    def on_tree_motion(self, event):
+        if not hasattr(self, "tag_tree") or self.tag_tree is None or not self.tag_tooltip:
+            return
+        iid = self.tag_tree.identify_row(event.y)
+        column = self.tag_tree.identify_column(event.x)
+        if not iid or not column:
+            self._disable_tag_tooltip()
+            return
+        try:
+            column_index = int(column[1:]) - 1
+        except (ValueError, TypeError):
+            self._disable_tag_tooltip()
+            return
+        if column_index < 0:
+            self._disable_tag_tooltip()
+            return
+        values = self.tag_tree.item(iid, "values")
+        columns = self.tag_tree["columns"]
+        if not values or column_index >= len(values) or column_index >= len(columns):
+            self._disable_tag_tooltip()
+            return
+        column_name = columns[column_index]
+        if column_name not in ("tag", "new_tag"):
+            self._disable_tag_tooltip()
+            return
+        tag_text = values[column_index]
+        if not tag_text or len(tag_text) < self.long_tag_tooltip_threshold:
+            self._disable_tag_tooltip()
+            return
+        if self.tag_tooltip.state == "disabled" or tag_text != self._tree_tooltip_text:
+            self.tag_tooltip.config(text=tag_text, state="normal")
+            self._tree_tooltip_text = tag_text
 
 
     def auto_size_tree_column(self, event=None):
@@ -570,3 +450,297 @@ class BatchTagEdit:
                 max_width = width
         max_width += 40
         self.tag_tree.column(col_id, width=max_width)
+
+
+#endregion
+#region Tag Editing
+
+
+    def get_tags(self):
+        tag_dict = TagEditor.extract_tags_from_files(self.parent.text_files)
+        return tag_dict
+
+
+    def count_file_tags(self, tags):
+        tag_counts = Counter()
+        for tag, positions in tags.items():
+            tag_counts[tag] = len(positions)
+        total_unique_tags = len(tag_counts)
+        return tag_counts, total_unique_tags
+
+
+    def refresh_counts(self):
+        self.original_tags = []
+        tag_dict = self.get_tags()
+        self.tag_counts, self.total_unique_tags = self.count_file_tags(tag_dict)
+        self.sort_tags(self.tag_counts.items())
+        self.toggle_filter_widgets()
+
+
+    def apply_tag_edits(self):
+        if self.pending_delete or self.pending_edit:
+            confirm = messagebox.askyesno("Save Changes", f"Commit pending changes to text files?\nThis action cannot be undone, you should make backups!\n\nPending Edits: {self.pending_edit}\nPending Deletes: {self.pending_delete}")
+            if not confirm:
+                return
+        delete_tags = []
+        edit_tags = {}
+        target_files = self.parent.text_files
+        for idx, iid in enumerate(self.tag_tree.get_children()):
+            values = self.tag_tree.item(iid, "values")
+            if not values or len(values) < 4 or idx >= len(self.original_tags):
+                continue
+            original_tag = self.original_tags[idx][0]
+            new_tag = values[3]
+            if new_tag == "":
+                delete_tags.append(original_tag)
+            elif new_tag != original_tag:
+                edit_tags[original_tag] = new_tag
+        if delete_tags:
+            TagEditor.edit_tags(target_files, delete_tags, delete=True)
+        if edit_tags:
+            for original_tag, new_tag in edit_tags.items():
+                TagEditor.edit_tags(target_files, [original_tag], edit=new_tag)
+        self.clear_filter(warn=False)
+        self.parent.refresh_text_box()
+
+
+#endregion
+#region Filter & Sort
+
+
+    def warn_before_action(self, event=None, action=None):
+        if self.pending_delete or self.pending_edit:
+            if not messagebox.askyesno("Warning", "Adjusting this option will clear all pending changes. Continue?"):
+                return
+            self._reset_tag_changes()
+        if action == "sort":
+            self.sort_tags(self.tag_counts.items())
+            # Correct usage: pass filter key and value
+            filter_key = self.filter_option_map[self.filter_combobox.get()]
+            filter_value = self.filter_entry.get()
+            self.filter_tags(filter_key, filter_value)
+        elif action == "filter":
+            # Correct usage: pass filter key and value
+            filter_key = self.filter_option_map[self.filter_combobox.get()]
+            filter_value = self.filter_entry.get()
+            self.filter_tags(filter_key, filter_value)
+
+
+    def clear_filter(self, warn=True):
+        if warn and (self.pending_delete or self.pending_edit):
+            if not messagebox.askyesno("Warning", "Clear all pending changes.\n\nContinue?"):
+                return
+        if hasattr(self, "filter_entry") and self.filter_entry is not None:
+            self.filter_entry.delete(0, "end")
+        self.refresh_counts()
+
+
+    def _reset_tag_changes(self):
+        if not hasattr(self, "tag_tree") or self.tag_tree is None:
+            return
+        if not self.original_tags:
+            return
+        self.update_tree(list(self.original_tags), state={})
+
+
+    def filter_tags(self, filter_option, filter_value):
+        try:
+            if not filter_value:
+                filtered_tags = self.tag_counts.items()
+            else:
+                filter_values = [val.strip().lower() for val in filter_value.split(',') if val.strip()]
+                filter_functions = {
+                    "Tag": lambda tag, count: any(val in tag.lower() for val in filter_values),
+                    "!Tag": lambda tag, count: all(val not in tag.lower() for val in filter_values),
+                    "<": lambda tag, count: count < int(filter_values[0]),
+                    ">": lambda tag, count: count > int(filter_values[0]),
+                    "!=": lambda tag, count: all(count != int(val) for val in filter_values),
+                    "==": lambda tag, count: any(count == int(val) for val in filter_values)
+                }
+                selected_key = filter_option
+                filtered_tags = [(tag, count) for tag, count in self.tag_counts.items() if filter_functions[selected_key](tag, count)]
+            self.sort_tags(filtered_tags)
+        except ValueError:
+            messagebox.showinfo("Error", "Invalid filter value. Please enter a number.")
+            self.filter_entry.delete(0, "end")
+            return
+
+
+    def sort_tags(self, tags):
+        pending_state = self._capture_tree_state()
+        option = self.tree_sort_dict.get("option", "Frequency")
+        reverse = self.tree_sort_dict.get("reverse", False)
+        self._update_treeview_headings(option, reverse)
+        tags = list(tags)
+        if option == "Frequency":
+            sorted_tags = sorted(tags, key=lambda tag: tag[1], reverse=not reverse)
+        elif option == "Name":
+            sorted_tags = sorted(tags, reverse=reverse)
+        elif option == "Length":
+            sorted_tags = sorted(tags, key=lambda tag: len(tag[0]), reverse=not reverse)
+        elif option == "Action":
+            def action_key(item):
+                tag, _ = item
+                new_value = pending_state.get(tag, tag)
+                if new_value == "":
+                    action_label = "Delete"
+                elif new_value != tag:
+                    action_label = "Edit"
+                else:
+                    action_label = ""
+                priority = {"Delete": 0, "Edit": 1, "": 2}[action_label]
+                return (priority, tag.lower(), str(new_value).lower())
+            sorted_tags = sorted(tags, key=action_key, reverse=reverse)
+        elif option == "NewTag":
+            def new_tag_key(item):
+                tag, _ = item
+                new_value = pending_state.get(tag, tag)
+                return (str(new_value).lower(), tag.lower())
+            sorted_tags = sorted(tags, key=new_tag_key, reverse=reverse)
+        else:
+            sorted_tags = tags
+        self.update_tree(sorted_tags, pending_state)
+
+
+    def _update_treeview_headings(self, option, reverse):
+        arrow_up = " ↑"
+        arrow_down = " ↓"
+        count_title = "Count"
+        action_title = "Action"
+        tag_title = "Tag"
+        new_tag_title = "New Tag"
+        # Determine which column is sorted and direction
+        if option == "Frequency":
+            count_title += arrow_up if not reverse else arrow_down
+        elif option == "Name":
+            tag_title += arrow_up if not reverse else arrow_down
+        elif option == "Length":
+            tag_title += f" (Len){arrow_up if not reverse else arrow_down}"
+        elif option == "Action":
+            action_title += arrow_up if not reverse else arrow_down
+        elif option == "NewTag":
+            new_tag_title += arrow_up if not reverse else arrow_down
+        # Set headings
+        self.tag_tree.heading("count", text=count_title, anchor="center", command=lambda: self.on_treeview_heading_click("count"))
+        self.tag_tree.heading("action", text=action_title, anchor="w", command=lambda: self.on_treeview_heading_click("action"))
+        self.tag_tree.heading("tag", text=tag_title, anchor="w", command=lambda: self.on_treeview_heading_click("tag"))
+        self.tag_tree.heading("new_tag", text=new_tag_title, anchor="w", command=lambda: self.on_treeview_heading_click("new_tag"))
+
+
+    def toggle_filter_widgets(self, event=None):
+        try:
+            widgets = [
+                self.filter_label,
+                self.filter_combobox,
+                self.filter_entry,
+                self.filter_apply_button
+            ]
+            state = "disabled" if self.pending_delete or self.pending_edit else "normal"
+            for widget in widgets:
+                if isinstance(widget, ttk.Combobox):
+                    widget.configure(state="readonly" if state == "normal" else state)
+                else:
+                    widget.configure(state=state)
+        except AttributeError:
+            pass
+
+
+#endregion
+#region Treeview Helpers
+
+
+    def update_tree(self, tags, state=None):
+        if state is None:
+            state = {}
+        self.tag_tree.delete(*self.tag_tree.get_children())
+        tags = list(tags)
+        padding_width = len(str(self.total_unique_tags))
+        self.original_tags = tags
+        self.tag_tree.tag_configure("deleted", foreground="red", background="#ffe5e5")
+        self.tag_tree.tag_configure("edited", foreground="green", background="#e5ffe5")
+        for tag, count in tags:
+            padded_count = str(count).zfill(padding_width)
+            new_tag_value = state.get(tag, tag)
+            if new_tag_value == "":
+                item_tags = ("deleted",)
+                action_label = "Delete"
+            elif new_tag_value != tag:
+                item_tags = ("edited",)
+                action_label = "Edit"
+            else:
+                item_tags = ()
+                action_label = ""
+            self.tag_tree.insert("", "end", values=(padded_count, action_label, tag, new_tag_value), tags=item_tags)
+        self.count_treeview_tags()
+        if self.tag_tooltip:
+            self._disable_tag_tooltip()
+        return tags
+
+
+    def count_treeview_tags(self, event=None):
+        self.pending_delete = 0
+        self.pending_edit = 0
+        for idx, iid in enumerate(self.tag_tree.get_children()):
+            values = self.tag_tree.item(iid, "values")
+            if not values or len(values) < 4 or idx >= len(self.original_tags):
+                continue
+            original_tag = self.original_tags[idx][0]
+            new_tag = values[3]
+            if new_tag == "":
+                self.pending_delete += 1
+            elif new_tag != original_tag:
+                self.pending_edit += 1
+        self.visible_tags = len(self.tag_tree.get_children())
+        self.selected_tags = len(self.tag_tree.selection())
+        padding_width = len(str(self.total_unique_tags))
+        pending_delete_str = str(self.pending_delete).zfill(padding_width)
+        pending_edit_str = str(self.pending_edit).zfill(padding_width)
+        visible_tags_str = str(self.visible_tags).zfill(padding_width)
+        selected_tags_str = str(self.selected_tags).zfill(padding_width)
+        self.info_label.config(text=f"Total: {self.total_unique_tags}  | Visible: {visible_tags_str}  |  Selected: {selected_tags_str}  |  Pending Delete: {pending_delete_str}  |  Pending Edit: {pending_edit_str}")
+        if self.pending_delete > 0 or self.pending_edit > 0:
+            self.button_save.config(state="normal")
+            self.button_save_tip.config(state="normal")
+        else:
+            self.button_save.config(state="disabled")
+            self.button_save_tip.config(state="disabled")
+        self.toggle_filter_widgets()
+
+
+    def _disable_tag_tooltip(self, event=None):
+        if not self.tag_tooltip:
+            return
+        self.tag_tooltip.hide()
+        if self.tag_tooltip.state != "disabled" or self._tree_tooltip_text:
+            self.tag_tooltip.config(state="disabled", text="")
+        self._tree_tooltip_text = None
+
+
+    def _capture_tree_state(self):
+        state = {}
+        if not hasattr(self, "tag_tree") or self.tag_tree is None:
+            return state
+        for idx, iid in enumerate(self.tag_tree.get_children()):
+            if idx >= len(self.original_tags):
+                continue
+            values = self.tag_tree.item(iid, "values")
+            if not values or len(values) < 4:
+                continue
+            original_tag = self.original_tags[idx][0]
+            new_tag = values[3]
+            if new_tag == "" or new_tag != original_tag:
+                state[original_tag] = new_tag
+        return state
+
+
+#endregion
+#region Misc
+
+
+    def open_help_window(self):
+        help_text = HelpText.BATCH_TAG_EDIT_HELP
+        self.help_window.open_window(geometry="700x700", help_text=help_text)
+
+
+#endregion
+

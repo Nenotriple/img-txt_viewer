@@ -9,7 +9,7 @@ import os
 #region Tag Editor
 
 
-def analyze_tags(text_files):
+def extract_tags_from_files(text_files):
     """
     This method processes text files to extract tags and their
     positions, storing them in a dictionary. Keys are tags, and
