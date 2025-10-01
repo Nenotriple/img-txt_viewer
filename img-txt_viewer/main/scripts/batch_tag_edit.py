@@ -7,11 +7,10 @@ from collections import Counter
 
 # Standard Library - GUI
 from tkinter import (
-    ttk, Tk, messagebox, simpledialog,
+    ttk, Tk, messagebox,
     BooleanVar,
     Frame, Menu,
-    Label, Listbox, Scrollbar,
-    TclError
+    Label, Scrollbar
 )
 
 
@@ -75,9 +74,9 @@ class BatchTagEdit:
     def create_ui(self):
         self.setup_primary_frame()
         self.setup_top_frame()
-        self.setup_listbox_frame()
+        self.setup_treeview_frame()
         self.setup_option_frame()
-        self.count_listbox_tags()
+        self.count_treeview_tags()
 
 
     def setup_primary_frame(self):
@@ -107,55 +106,59 @@ class BatchTagEdit:
         Tip.create(widget=help_button, text="Show/Hide Help", show_delay=50)
 
 
-    def setup_listbox_frame(self):
+    def setup_treeview_frame(self):
         # Frame
-        listbox_frame = ttk.Labelframe(self.batch_tag_edit_frame, text="Tags")
-        listbox_frame.grid(row=1, column=0, padx=2, sticky="nsew")
-        # Listbox
-        self.listbox = Listbox(listbox_frame, width=50, selectmode="extended", relief="groove", exportselection=False)
-        self.listbox.grid(row=0, column=0, sticky="nsew")
-        self.listbox.bind("<Control-c>", self.copy_listbox_selection)
-        self.listbox.bind("<Button-3>", self.show_listbox_context_menu)
-        self.listbox.bind("<<ListboxSelect>>", self.count_listbox_tags)
-        listbox_frame.grid_rowconfigure(0, weight=1)
+        tree_frame = ttk.Labelframe(self.batch_tag_edit_frame, text="Tags")
+        tree_frame.grid(row=1, column=0, padx=2, sticky="nsew")
+        # Treeview
+        self.tag_tree = ttk.Treeview(tree_frame, columns=("count", "tag"), show="headings", selectmode="extended")
+        self.tag_tree.heading("count", text="Count")
+        self.tag_tree.heading("tag", text="Tag")
+        self.tag_tree.column("count", width=60, anchor="center")
+        self.tag_tree.column("tag", width=300, anchor="w")
+        self.tag_tree.grid(row=0, column=0, sticky="nsew")
+        self.tag_tree.bind("<Control-c>", self.copy_tree_selection)
+        self.tag_tree.bind("<Button-3>", self.show_tree_context_menu)
+        self.tag_tree.bind("<<TreeviewSelect>>", self.count_treeview_tags)
+        tree_frame.grid_rowconfigure(0, weight=1)
         # Scrollbars
-        self.vertical_scrollbar = Scrollbar(listbox_frame, orient="vertical", command=self.listbox.yview)
+        self.vertical_scrollbar = Scrollbar(tree_frame, orient="vertical", command=self.tag_tree.yview)
         self.vertical_scrollbar.grid(row=0, column=1, sticky="ns")
-        self.horizontal_scrollbar = Scrollbar(listbox_frame, orient="horizontal", command=self.listbox.xview)
+        self.horizontal_scrollbar = Scrollbar(tree_frame, orient="horizontal", command=self.tag_tree.xview)
         self.horizontal_scrollbar.grid(row=1, column=0, sticky="ew")
-        self.listbox.config(yscrollcommand=self.vertical_scrollbar.set, xscrollcommand=self.horizontal_scrollbar.set)
-        self.setup_listbox_sub_frame(listbox_frame)
+        self.tag_tree.configure(yscrollcommand=self.vertical_scrollbar.set, xscrollcommand=self.horizontal_scrollbar.set)
+        self.setup_tree_sub_frame(tree_frame)
 
 
-    def setup_listbox_sub_frame(self, listbox_frame):
+    def setup_tree_sub_frame(self, tree_frame):
         # Frame
-        self.listbox_sub_frame = Frame(listbox_frame)
-        self.listbox_sub_frame.grid(row=2, column=0, sticky="ew")
-        self.listbox_sub_frame.grid_columnconfigure(0, weight=1)
-        self.listbox_sub_frame.grid_columnconfigure(1, weight=1)
-        self.listbox_sub_frame.grid_columnconfigure(2, weight=1)
+        self.tree_sub_frame = Frame(tree_frame)
+        self.tree_sub_frame.grid(row=2, column=0, sticky="ew")
+        self.tree_sub_frame.grid_columnconfigure(0, weight=1)
+        self.tree_sub_frame.grid_columnconfigure(1, weight=1)
+        self.tree_sub_frame.grid_columnconfigure(2, weight=1)
         # Select All
-        self.button_all = ttk.Button(self.listbox_sub_frame, text="All", width=8, command=lambda: self.listbox_selection("all"))
+        self.button_all = ttk.Button(self.tree_sub_frame, text="All", width=8, command=lambda: self.tree_selection("all"))
         self.button_all.grid(row=0, column=0, padx=2, pady=2, sticky="ew")
-        Tip.create(widget=self.button_all, text="Select all tags in the listbox")
+        Tip.create(widget=self.button_all, text="Select all tags")
         # Invert Selection
-        self.button_invert = ttk.Button(self.listbox_sub_frame, text="Invert", width=8, command=lambda: self.listbox_selection("invert"))
+        self.button_invert = ttk.Button(self.tree_sub_frame, text="Invert", width=8, command=lambda: self.tree_selection("invert"))
         self.button_invert.grid(row=0, column=1, padx=2, pady=2, sticky="ew")
         Tip.create(widget=self.button_invert, text="Invert the current selection of tags")
         # Clear Selection
-        self.button_clear = ttk.Button(self.listbox_sub_frame, text="Clear", width=8, command=lambda: self.listbox_selection("clear"))
+        self.button_clear = ttk.Button(self.tree_sub_frame, text="Clear", width=8, command=lambda: self.tree_selection("clear"))
         self.button_clear.grid(row=0, column=2, padx=2, pady=2, sticky="ew")
         Tip.create(widget=self.button_clear, text="Clear the current selection of tags")
         # Revert Selection
-        self.button_revert_sel = ttk.Button(self.listbox_sub_frame, text="Revert Sel", width=8, command=self.revert_listbox_changes)
+        self.button_revert_sel = ttk.Button(self.tree_sub_frame, text="Revert Sel", width=8, command=self.revert_tree_changes)
         self.button_revert_sel.grid(row=1, column=0, padx=2, pady=2, sticky="ew")
         Tip.create(widget=self.button_revert_sel, text="Revert the selected tags to their original state")
         # Revert All
-        self.button_revert_all = ttk.Button(self.listbox_sub_frame, text="Revert All", width=8, command=self.clear_filter)
+        self.button_revert_all = ttk.Button(self.tree_sub_frame, text="Revert All", width=8, command=self.clear_filter)
         self.button_revert_all.grid(row=1, column=1, padx=2, pady=2, sticky="ew")
         Tip.create(widget=self.button_revert_all, text="Revert all tags to their original state. (Reset)")
         # Copy
-        self.button_copy = ttk.Button(self.listbox_sub_frame, text="Copy", width=8, command=self.copy_listbox_selection)
+        self.button_copy = ttk.Button(self.tree_sub_frame, text="Copy", width=8, command=self.copy_tree_selection)
         self.button_copy.grid(row=1, column=2, padx=2, pady=2, sticky="ew")
         Tip.create(widget=self.button_copy, text="Copy the selected tags to the clipboard")
 
@@ -234,16 +237,16 @@ class BatchTagEdit:
         # Label
         edit_label = ttk.Label(edit_row_frame, text="Edit:", width=10)
         edit_label.grid(row=0, column=0, sticky="w", padx=2, pady=5)
-        Tip.create(widget=edit_label, text="Select an option and enter text to apply to the selected tags", justify="left")
+        Tip.create(widget=edit_label, text="Select an option and enter text to add a pending change", justify="left")
         # Entry
         self.edit_entry = ttk.Entry(edit_row_frame)
         self.edit_entry.grid(row=0, column=1, sticky="ew", padx=2, pady=5)
-        self.edit_entry.bind("<Return>", self.apply_commands_to_listbox)
+        self.edit_entry.bind("<Return>", self.apply_commands_to_tree)
         self.entry_helper.bind_helpers(self.edit_entry)
         # Button
-        edit_apply_button = ttk.Button(edit_row_frame, text="Apply", command=self.apply_commands_to_listbox)
+        edit_apply_button = ttk.Button(edit_row_frame, text="Apply", command=self.apply_commands_to_tree)
         edit_apply_button.grid(row=0, column=2, sticky="e", padx=2, pady=5)
-        Tip.create(widget=edit_apply_button, text="Apply the selected changes to the listbox. This does not apply the changes to the text files!")
+        Tip.create(widget=edit_apply_button, text="Add pending changes. This does not apply the changes to the text files!")
         # Button
         edit_reset_button = ttk.Button(edit_row_frame, text="Reset", command=self.clear_filter)
         edit_reset_button.grid(row=0, column=3, sticky="e", padx=2, pady=5)
@@ -260,7 +263,7 @@ class BatchTagEdit:
         self.delete_center_label = ttk.Label(delete_row, text="Select tags and click delete", anchor="center")
         self.delete_center_label.grid(row=0, column=1, columnspan=2, sticky="ew", padx=2, pady=5)
         # Button
-        delete_button = ttk.Button(delete_row, text="Delete", command=lambda: self.apply_commands_to_listbox(delete=True))
+        delete_button = ttk.Button(delete_row, text="Delete", command=lambda: self.apply_commands_to_tree(delete=True))
         delete_button.grid(row=0, column=3, sticky="e", padx=2, pady=5)
         Tip.create(widget=delete_button, text="Delete the selected tags")
 
@@ -297,7 +300,7 @@ class BatchTagEdit:
             sorted_tags = sorted(tags, reverse=reverse)
         elif option == "Length":
             sorted_tags = sorted(tags, key=lambda tag: len(tag[0]), reverse=not reverse)
-        self.update_listbox(sorted_tags)
+        self.update_tree(sorted_tags)
 
 
     def filter_tags(self, filter_option, filter_value):
@@ -322,45 +325,44 @@ class BatchTagEdit:
             return
 
 
-    def apply_commands_to_listbox(self, event=None, delete=False, edit=None):
-        tags = self.listbox.curselection()
-        selected_items = [self.original_tags[i][0] for i in tags]
-        if edit is None:  # If None, use the edit entry
+    def apply_commands_to_tree(self, event=None, delete=False, edit=None):
+        selected_iids = self.tag_tree.selection()
+        selected_indices = [self.tag_tree.index(iid) for iid in selected_iids]
+        selected_items = [self.original_tags[i][0] for i in selected_indices]
+        if edit is None:
             edit = self.edit_entry.get()
-        if edit == "":  # If empty, delete the tags
+        if edit == "":
             delete = True
-        for i, item in zip(reversed(tags), reversed(selected_items)):
-            current_text = self.listbox.get(i)
+        for iid, item in zip(reversed(selected_iids), reversed(selected_items)):
+            current_text = self.tag_tree.item(iid, "values")[1]
             # If the item is already altered, remove the previous alteration
             if current_text.startswith("DELETE :") or current_text.startswith("EDIT :"):
-                # Strip away "DELETE :" or "EDIT :" to get the original item
                 item = current_text.split(":", 1)[1].strip().split(">", 1)[0].strip()
-            if delete:  # If delete, add delete command
-                self.listbox.delete(i)
-                self.listbox.insert(i, f"DELETE : {item}")
-                self.listbox.itemconfig(i, {'fg': 'red'})
-            else:  # If not delete, add edit command
-                self.listbox.delete(i)
-                self.listbox.insert(i, f"EDIT : {item} > {edit}")
-                self.listbox.itemconfig(i, {'fg': 'green'})
-        self.count_listbox_tags()
+            if delete:
+                self.tag_tree.item(iid, values=(self.tag_tree.item(iid, "values")[0], f"DELETE : {item}"))
+                self.tag_tree.tag_configure("deleted", foreground="red")
+                self.tag_tree.item(iid, tags=("deleted",))
+            else:
+                self.tag_tree.item(iid, values=(self.tag_tree.item(iid, "values")[0], f"EDIT : {item} > {edit}"))
+                self.tag_tree.tag_configure("edited", foreground="green")
+                self.tag_tree.item(iid, tags=("edited",))
+        self.count_treeview_tags()
 
 
-    def revert_listbox_changes(self):
+    def revert_tree_changes(self):
         padding_width = len(str(self.total_unique_tags))
-        tags = self.listbox.curselection()
-        for i in tags:
-            current_text = self.listbox.get(i)
+        selected_iids = self.tag_tree.selection()
+        for iid in selected_iids:
+            current_text = self.tag_tree.item(iid, "values")[1]
             if current_text.startswith("DELETE :") or current_text.startswith("EDIT :"):
                 original_item = current_text.split(":", 1)[1].strip().split(">", 1)[0].strip()
                 for tag, count in self.tag_counts.items():
                     if tag == original_item:
                         padded_count = str(count).zfill(padding_width)
-                        reverted_text = f" {padded_count}, {tag}"
-                        self.listbox.delete(i)
-                        self.listbox.insert(i, reverted_text)
-                        self.listbox.itemconfig(i, {'fg': 'black'})
-                        self.count_listbox_tags()
+                        reverted_text = f"{tag}"
+                        self.tag_tree.item(iid, values=(padded_count, reverted_text))
+                        self.tag_tree.item(iid, tags=())
+                        self.count_treeview_tags()
                         break
 
 
@@ -371,8 +373,8 @@ class BatchTagEdit:
                 return
         delete_tags = []
         edit_tags = {}
-        for i in range(self.listbox.size()):
-            current_text = self.listbox.get(i)
+        for iid in self.tag_tree.get_children():
+            current_text = self.tag_tree.item(iid, "values")[1]
             if current_text.startswith("DELETE :"):
                 tag = current_text.split(":", 1)[1].strip()
                 delete_tags.append(tag)
@@ -391,30 +393,30 @@ class BatchTagEdit:
 
 
 # --------------------------------------
-# Listbox
+# Treeview
 # --------------------------------------
-    def update_listbox(self, tags):
-        self.listbox.delete(0, "end")
+    def update_tree(self, tags):
+        self.tag_tree.delete(*self.tag_tree.get_children())
         padding_width = len(str(self.total_unique_tags))
         self.original_tags = tags
         for tag, count in tags:
             padded_count = str(count).zfill(padding_width)
-            self.listbox.insert("end", f" {padded_count}, {tag}")
-        self.count_listbox_tags()
+            self.tag_tree.insert("", "end", values=(padded_count, tag))
+        self.count_treeview_tags()
         return tags
 
 
-    def count_listbox_tags(self, event=None):
+    def count_treeview_tags(self, event=None):
         self.pending_delete = 0
         self.pending_edit = 0
-        for i in range(self.listbox.size()):
-            item = self.listbox.get(i)
-            if item.startswith("DELETE :"):
+        for iid in self.tag_tree.get_children():
+            item = self.tag_tree.item(iid, "values")
+            if item and item[1].startswith("DELETE :"):
                 self.pending_delete += 1
-            elif item.startswith("EDIT :"):
+            elif item and item[1].startswith("EDIT :"):
                 self.pending_edit += 1
-        self.visible_tags = self.listbox.size()
-        self.selected_tags = len(self.listbox.curselection())
+        self.visible_tags = len(self.tag_tree.get_children())
+        self.selected_tags = len(self.tag_tree.selection())
         padding_width = len(str(self.total_unique_tags))
         pending_delete_str = str(self.pending_delete).zfill(padding_width)
         pending_edit_str = str(self.pending_edit).zfill(padding_width)
@@ -428,24 +430,29 @@ class BatchTagEdit:
         self.toggle_filter_and_sort_widgets()
 
 
-    def listbox_selection(self, action):
+    def tree_selection(self, action):
+        all_iids = self.tag_tree.get_children()
         if action == "all":
-            self.listbox.selection_set(0, "end")
+            self.tag_tree.selection_set(all_iids)
         elif action == "invert":
-            selected_indices = self.listbox.curselection()
-            all_indices = set(range(self.listbox.size()))
-            new_selection = all_indices - set(selected_indices)
-            self.listbox.selection_clear(0, "end")
-            for index in new_selection:
-                self.listbox.selection_set(index)
+            selected = set(self.tag_tree.selection())
+            new_selection = [iid for iid in all_iids if iid not in selected]
+            self.tag_tree.selection_set(new_selection)
         elif action == "clear":
-            self.listbox.selection_anchor(0)
-            self.listbox.selection_clear(0, "end")
-        self.count_listbox_tags()
+            self.tag_tree.selection_remove(all_iids)
+        self.count_treeview_tags()
 
 
-    def copy_listbox_selection(self, event=None):
-        selected_tags = [self.listbox.get(i).split(", ", 1)[1].strip() for i in self.listbox.curselection()]
+    def copy_tree_selection(self, event=None):
+        selected_tags = []
+        for iid in self.tag_tree.selection():
+            item = self.tag_tree.item(iid, "values")
+            if item:
+                # If edited/deleted, extract tag after ", " or after "EDIT :"/"DELETE :"
+                tag_val = item[1]
+                if tag_val.startswith("DELETE :") or tag_val.startswith("EDIT :"):
+                    tag_val = tag_val.split(":", 1)[1].strip().split(">", 1)[-1].strip() if ">" in tag_val else tag_val.split(":", 1)[1].strip()
+                selected_tags.append(tag_val)
         self.root.clipboard_clear()
         self.root.clipboard_append(", ".join(selected_tags))
 
@@ -453,7 +460,7 @@ class BatchTagEdit:
     def context_menu_edit_tag(self):
         edit_string = custom_simpledialog.askstring("Edit Tag", "Enter new tag:", parent=self.root)
         if edit_string is not None:
-            self.apply_commands_to_listbox(edit=edit_string)
+            self.apply_commands_to_tree(edit=edit_string)
 
 
 # --------------------------------------
@@ -488,20 +495,20 @@ class BatchTagEdit:
         self.refresh_counts()
 
 
-    def show_listbox_context_menu(self, event):
-        listbox = event.widget
-        if not listbox.curselection():
+    def show_tree_context_menu(self, event):
+        tree = event.widget
+        if not tree.selection():
             return
         context_menu = Menu(self.root, tearoff=0)
-        context_menu.add_command(label="Delete", command=lambda: self.apply_commands_to_listbox(delete=True))
+        context_menu.add_command(label="Delete", command=lambda: self.apply_commands_to_tree(delete=True))
         context_menu.add_command(label="Edit...", command=self.context_menu_edit_tag)
-        context_menu.add_command(label="Copy", command=self.copy_listbox_selection)
+        context_menu.add_command(label="Copy", command=self.copy_tree_selection)
         context_menu.add_separator()
-        context_menu.add_command(label="Select All", command=lambda: self.listbox_selection("all"))
-        context_menu.add_command(label="Invert Selection", command=lambda: self.listbox_selection("invert"))
-        context_menu.add_command(label="Clear Selection", command=lambda: self.listbox_selection("clear"))
+        context_menu.add_command(label="Select All", command=lambda: self.tree_selection("all"))
+        context_menu.add_command(label="Invert Selection", command=lambda: self.tree_selection("invert"))
+        context_menu.add_command(label="Clear Selection", command=lambda: self.tree_selection("clear"))
         context_menu.add_separator()
-        context_menu.add_command(label="Revert Selection", command=self.revert_listbox_changes)
+        context_menu.add_command(label="Revert Selection", command=self.revert_tree_changes)
         context_menu.add_command(label="Revert All", command=self.clear_filter)
         context_menu.post(event.x_root, event.y_root)
 
@@ -540,7 +547,7 @@ class BatchTagEdit:
         self.pending_edit = 0
         self.original_tags = []
         # Clear UI elements
-        self.listbox.delete(0, "end")
+        self.tag_tree.delete(0, "end")
         self.filter_entry.delete(0, "end")
         self.edit_entry.delete(0, "end")
         # Reset sort options
