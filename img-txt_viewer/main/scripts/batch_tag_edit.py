@@ -172,7 +172,7 @@ class BatchTagEdit:
         self.tag_tree.bind("<Control-c>", self.copy_tree_selection)
         self.tag_tree.bind("<Button-3>", self.show_tree_context_menu)
         self.tag_tree.bind("<<TreeviewSelect>>", self.count_treeview_tags)
-        self.tag_tree.bind("<Double-Button-1>", self.auto_size_tree_column)
+        self.tag_tree.bind("<Double-Button-1>", self._on_tree_double_left_click)
         self.tag_tree.bind("<Motion>", self.on_tree_motion, add="+")
         self.tag_tree.bind("<Leave>", self._disable_tag_tooltip, add="+")
         # Scrollbars
@@ -308,7 +308,13 @@ class BatchTagEdit:
 
 
     def context_menu_edit_tag(self):
-        edit_string = custom_simpledialog.askstring("Edit Tag", "Enter new tag:", parent=self.root)
+        initialvalue = None
+        selection = self.tag_tree.selection()
+        if len(selection) == 1:
+            idx = self.tag_tree.index(selection[0])
+            if idx < len(self.original_tags):
+                initialvalue = self.original_tags[idx][0]
+        edit_string = custom_simpledialog.askstring("Edit Tag", "Enter new tag:", parent=self.root, initialvalue=initialvalue)
         if edit_string is not None:
             self.apply_commands_to_tree(edit=edit_string)
 
@@ -424,6 +430,12 @@ class BatchTagEdit:
             self._tree_tooltip_text = tag_text
 
 
+    def _on_tree_double_left_click(self, event):
+        self.auto_size_tree_column(event)
+        if not self.tag_tree.selection():
+            return
+        self.context_menu_edit_tag()
+
     def auto_size_tree_column(self, event=None):
         if event is None:
             col_id = "tag"
@@ -450,6 +462,7 @@ class BatchTagEdit:
                 max_width = width
         max_width += 40
         self.tag_tree.column(col_id, width=max_width)
+
 
 
 #endregion
@@ -685,7 +698,7 @@ class BatchTagEdit:
             if not values or len(values) < 4 or idx >= len(self.original_tags):
                 continue
             original_tag = self.original_tags[idx][0]
-            new_tag = values[3]
+            new_tag = values[3] if len(values) > 3 else original_tag
             if new_tag == "":
                 self.pending_delete += 1
             elif new_tag != original_tag:
@@ -705,6 +718,20 @@ class BatchTagEdit:
             self.button_save.config(state="disabled")
             self.button_save_tip.config(state="disabled")
         self.toggle_filter_widgets()
+        if hasattr(self, "edit_entry") and self.edit_entry is not None:
+            selection = self.tag_tree.selection()
+            if len(selection) == 1:
+                iid = selection[0]
+                idx = self.tag_tree.index(iid)
+                values = self.tag_tree.item(iid, "values")
+                if values and idx < len(self.original_tags):
+                    original_tag = self.original_tags[idx][0]
+                    new_tag = values[3] if len(values) > 3 else original_tag
+                    tag_to_insert = new_tag if new_tag != "" else original_tag
+                    self.edit_entry.delete(0, "end")
+                    self.edit_entry.insert(0, tag_to_insert)
+            else:
+                self.edit_entry.delete(0, "end")
 
 
     def _disable_tag_tooltip(self, event=None):
