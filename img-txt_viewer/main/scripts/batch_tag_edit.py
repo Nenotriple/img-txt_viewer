@@ -3,13 +3,15 @@
 
 # Standard Library
 from collections import Counter
+import re
 
 
 # Standard Library - GUI
 from tkinter import (
     ttk, Tk, messagebox,
-    Frame, Menu,
-    font, Scrollbar
+    Frame, Menu, Label,
+    font, Scrollbar,
+    BooleanVar,
 )
 
 # Third-Party Libraries
@@ -125,58 +127,6 @@ class BatchTagEdit:
         self.batch_tag_edit_frame.grid_rowconfigure(3, weight=0)
 
 
-    def setup_bottom_frame(self):
-        # Frame
-        bottom_frame = Frame(self.batch_tag_edit_frame)
-        bottom_frame.grid(row=3, column=0, columnspan=99, sticky="nsew", pady=2)
-        bottom_frame.grid_columnconfigure(0, weight=1)
-        # Label
-        self.info_label = ttk.Label(bottom_frame, anchor="w", text=f"Total: {self.total_unique_tags}  | Visible: {self.visible_tags}  |  Selected: {self.selected_tags}  |  Pending Delete: {self.pending_delete}  |  Pending Edit: {self.pending_edit}")
-        self.info_label.grid(row=0, column=0, padx=1, sticky="ew")
-        # Button
-        self.button_save = ttk.Button(bottom_frame, text="Commit Changes", state="disabled", command=self.apply_tag_edits)
-        self.button_save.grid(row=0, column=1, padx=2)
-        self.button_save_tip = Tip.create(widget=self.button_save, text="Commit pending changes to text files", show_delay=50, state="disabled")
-        # Button
-        refresh_button = ttk.Button(bottom_frame, text="Refresh", width=8, command=self.clear_filter)
-        refresh_button.grid(row=0, column=2, padx=2)
-        Tip.create(widget=refresh_button, text="Refresh the tag list and clear any pending changes or filters", show_delay=50)
-        # Button
-        help_button = ttk.Button(bottom_frame, text="?", width=2, command=self.open_help_window)
-        help_button.grid(row=0, column=3, padx=2)
-        Tip.create(widget=help_button, text="Show/Hide Help", show_delay=50)
-
-
-    def setup_treeview_frame(self):
-        # Frame
-        tree_frame = ttk.Labelframe(self.batch_tag_edit_frame, text="Tags")
-        tree_frame.grid(row=2, column=0, columnspan=2, padx=2, sticky="nsew")
-        tree_frame.grid_rowconfigure(0, weight=1)
-        tree_frame.grid_columnconfigure(0, weight=1)
-        # Treeview
-        self.tag_tree = ttk.Treeview(tree_frame, columns=("count", "action", "tag", "new_tag"), show="headings")
-        self.tag_tree.heading("count", text="Count", command=lambda: self.on_treeview_heading_click("count"))
-        self.tag_tree.heading("action", text="Action", anchor="w")
-        self.tag_tree.heading("tag", text="Tag", anchor="w", command=lambda: self.on_treeview_heading_click("tag"))
-        self.tag_tree.heading("new_tag", text="New Tag", anchor="w")
-        self.tag_tree.column("count", width=60, anchor="center", stretch=False)
-        self.tag_tree.column("action", width=60, anchor="w", stretch=False)
-        self.tag_tree.column("tag", width=200, anchor="w", stretch=True)
-        self.tag_tree.column("new_tag", width=200, anchor="w", stretch=True)
-        self.tag_tree.grid(row=0, column=0, sticky="nsew")
-        self.tag_tree.bind("<Control-c>", self.copy_tree_selection)
-        self.tag_tree.bind("<Button-3>", self.show_tree_context_menu)
-        self.tag_tree.bind("<<TreeviewSelect>>", self.count_treeview_tags)
-        self.tag_tree.bind("<Double-Button-1>", self._on_tree_double_left_click)
-        self.tag_tree.bind("<Motion>", self.on_tree_motion, add="+")
-        self.tag_tree.bind("<Leave>", self._disable_tag_tooltip, add="+")
-        # Scrollbar
-        vert_scrollbar = Scrollbar(tree_frame, orient="vertical", command=self.tag_tree.yview)
-        vert_scrollbar.grid(row=0, column=1, sticky="ns")
-        self.tag_tree.configure(yscrollcommand=vert_scrollbar.set)
-        self.tag_tooltip = Tip.create(widget=self.tag_tree, text="", state="disabled", wraplength=400, origin="mouse", follow_mouse=True, show_delay=200)
-
-
     def setup_option_frame(self):
         # Frame
         self.option_frame = Frame(self.batch_tag_edit_frame)
@@ -249,6 +199,105 @@ class BatchTagEdit:
         Tip.create(widget=edit_apply_button, text="Add to pending changes.")
 
 
+    def setup_treeview_frame(self):
+        # Frame
+        tree_frame = Frame(self.batch_tag_edit_frame)
+        tree_frame.grid(row=2, column=0, columnspan=2, sticky="nsew")
+        tree_frame.grid_rowconfigure(0, weight=1)
+        tree_frame.grid_columnconfigure(0, weight=1)
+        # Treeview
+        self.tag_tree = ttk.Treeview(tree_frame, columns=("count", "action", "tag", "new_tag"), show="headings")
+        self.tag_tree.heading("count", text="Count", command=lambda: self.on_treeview_heading_click("count"))
+        self.tag_tree.heading("action", text="Action", anchor="w")
+        self.tag_tree.heading("tag", text="Tag", anchor="w", command=lambda: self.on_treeview_heading_click("tag"))
+        self.tag_tree.heading("new_tag", text="New Tag", anchor="w")
+        self.tag_tree.column("count", width=60, anchor="center", stretch=False)
+        self.tag_tree.column("action", width=60, anchor="w", stretch=False)
+        self.tag_tree.column("tag", width=200, anchor="w", stretch=True)
+        self.tag_tree.column("new_tag", width=200, anchor="w", stretch=True)
+        self.tag_tree.grid(row=0, column=0, sticky="nsew")
+        self.tag_tree.bind("<Control-c>", self.copy_tree_selection)
+        self.tag_tree.bind("<Button-3>", self.show_tree_context_menu)
+        self.tag_tree.bind("<<TreeviewSelect>>", self.count_treeview_tags)
+        self.tag_tree.bind("<Double-Button-1>", self._on_tree_double_left_click)
+        self.tag_tree.bind("<Motion>", self.on_tree_motion, add="+")
+        self.tag_tree.bind("<Leave>", self._disable_tag_tooltip, add="+")
+        self.tag_tree.bind("<Control-a>", lambda event: self.tree_selection("all"))
+        self.tag_tree.bind("<Control-i>", lambda event: self.tree_selection("invert"))
+        self.tag_tree.bind("<Escape>", lambda event: self.tree_selection("clear"))
+        # Scrollbar
+        vert_scrollbar = Scrollbar(tree_frame, orient="vertical", command=self.tag_tree.yview)
+        vert_scrollbar.grid(row=0, column=1, sticky="ns")
+        self.tag_tree.configure(yscrollcommand=vert_scrollbar.set)
+        self.tag_tooltip = Tip.create(widget=self.tag_tree, text="", state="disabled", wraplength=400, origin="mouse", follow_mouse=True, show_delay=200)
+
+
+    def setup_bottom_frame(self):
+        # Frame
+        bottom_frame = Frame(self.batch_tag_edit_frame)
+        bottom_frame.grid(row=3, column=0, columnspan=99, sticky="nsew", pady=(3,0))
+        bottom_frame.grid_rowconfigure(0, weight=1)
+        bottom_frame.grid_columnconfigure(0, weight=1)
+        bottom_frame.grid_columnconfigure(1, weight=0)
+        # Labels
+        labels_frame = Frame(bottom_frame)
+        labels_frame.grid(row=0, column=0, sticky="ew")
+        self.total_label = Label(labels_frame, anchor="w", text=f"Total: {self.total_unique_tags}", relief="groove", width=15)
+        self.total_label.pack(side="left", padx=1)
+        self.visible_label = Label(labels_frame, anchor="w", text=f"Filtered: {self.visible_tags}", relief="groove", width=15)
+        self.visible_label.pack(side="left", padx=1)
+        self.selected_label = Label(labels_frame, anchor="w", text=f"Selected: {self.selected_tags}", relief="groove", width=15)
+        self.selected_label.pack(side="left", padx=1)
+        self.pending_delete_label = Label(labels_frame, anchor="w", text=f"Delete: {self.pending_delete}", relief="groove", width=15)
+        self.pending_delete_label.pack(side="left", padx=1)
+        self.pending_edit_label = Label(labels_frame, anchor="w", text=f"Edit: {self.pending_edit}", relief="groove", width=15)
+        self.pending_edit_label.pack(side="left", padx=1)
+        # Buttons
+        buttons_frame = Frame(bottom_frame)
+        buttons_frame.grid(row=0, column=1, sticky="e")
+        # Commit button
+        self.button_save = ttk.Button(buttons_frame, text="Commit Changes", state="disabled", command=self.apply_tag_edits)
+        self.button_save.pack(side="right")
+        self.button_save_tip = Tip.create(widget=self.button_save, text="Commit pending changes to text files", show_delay=50, state="disabled")
+        # Refresh button
+        refresh_button = ttk.Button(buttons_frame, text="Refresh", width=8, command=self.clear_filter)
+        refresh_button.pack(side="right")
+        Tip.create(widget=refresh_button, text="Refresh the tag list and clear any pending changes or filters", show_delay=50)
+        # Help button
+        help_button = ttk.Button(buttons_frame, text="?", width=2, command=self.open_help_window)
+        help_button.pack(side="right")
+        Tip.create(widget=help_button, text="Show/Hide Help", show_delay=50)
+        # Actions Menubutton
+        self.actions_menu = Menu(buttons_frame, tearoff=0)
+        self.actions_menu.add_command(label="Convert to Lowercase", command=lambda: self.transform_selected_tags("lower"))
+        self.actions_menu.add_command(label="Convert to Uppercase", command=lambda: self.transform_selected_tags("upper"))
+        self.actions_menu.add_command(label="Convert to Title Case", command=lambda: self.transform_selected_tags("title"))
+        self.actions_menu.add_separator()
+        self.actions_menu.add_command(label="Convert Spaces to Underscores", command=lambda: self.transform_selected_tags("spaces_to_underscores"))
+        self.actions_menu.add_command(label="Convert Underscores to Spaces", command=lambda: self.transform_selected_tags("underscores_to_spaces"))
+        self.actions_menu.add_separator()
+        self.actions_menu.add_command(label="Remove Escape Characters Around Parentheses/Brackets", command=lambda: self.transform_selected_tags("remove_escape"))
+        self.actions_menu.add_command(label="Remove Non-Alphanumeric Characters", command=lambda: self.transform_selected_tags("remove_non_alphanumeric"))
+        self.actions_menu.add_command(label="Remove Punctuation", command=lambda: self.transform_selected_tags("remove_punctuation"))
+        self.actions_menu.add_command(label="Remove Digits", command=lambda: self.transform_selected_tags("remove_digits"))
+        self.actions_menu.add_separator()
+        self.actions_menu.add_command(label="Add Escape Characters Around Parentheses/Brackets", command=lambda: self.transform_selected_tags("add_escape"))
+        actions_menubutton = ttk.Menubutton(buttons_frame, text="Actions", menu=self.actions_menu, width=8)
+        actions_menubutton.pack(side="right")
+        actions_menubutton["menu"] = self.actions_menu
+        Tip.create(widget=actions_menubutton, text="Common tag editing actions.\nApplies to selected tags", justify="left")
+        # Options Menubutton
+        self.double_click_to_edit_var = BooleanVar(value=True)
+        options_menu = Menu(buttons_frame, tearoff=0)
+        options_menu.add_radiobutton(label="Double-Click to Edit", variable=self.double_click_to_edit_var, value=True)
+        options_menu.add_radiobutton(label="Double-Click to Delete", variable=self.double_click_to_edit_var, value=False)
+        options_menubutton = ttk.Menubutton(buttons_frame, text="Options", menu=options_menu, width=8)
+        options_menubutton.pack(side="right")
+        options_menubutton["menu"] = options_menu
+        Tip.create(widget=options_menubutton, text="Additional options and settings", justify="left")
+
+
+
 #endregion
 #region Treeview interaction
 
@@ -258,13 +307,17 @@ class BatchTagEdit:
         if not tree.selection():
             return
         context_menu = Menu(self.root, tearoff=0)
+        context_menu.add_command(label="Copy", command=self.copy_tree_selection)
         context_menu.add_command(label="Delete", command=lambda: self.apply_commands_to_tree(delete=True))
         context_menu.add_command(label="Edit...", command=self.context_menu_edit_tag)
-        context_menu.add_command(label="Copy", command=self.copy_tree_selection)
         context_menu.add_separator()
-        context_menu.add_command(label="Select All", command=lambda: self.tree_selection("all"))
-        context_menu.add_command(label="Invert Selection", command=lambda: self.tree_selection("invert"))
-        context_menu.add_command(label="Clear Selection", command=lambda: self.tree_selection("clear"))
+        context_menu.add_cascade(label="Quick Actions", menu=self.actions_menu)
+        context_menu.add_separator()
+        selection_menu = Menu(context_menu, tearoff=0)
+        selection_menu.add_command(label="Select All", command=lambda: self.tree_selection("all"))
+        selection_menu.add_command(label="Invert Selection", command=lambda: self.tree_selection("invert"))
+        selection_menu.add_command(label="Clear Selection", command=lambda: self.tree_selection("clear"))
+        context_menu.add_cascade(label="Selection", menu=selection_menu)
         context_menu.add_separator()
         context_menu.add_command(label="Revert Selection", command=self.revert_tree_changes)
         context_menu.add_command(label="Revert All", command=self.clear_filter)
@@ -427,7 +480,11 @@ class BatchTagEdit:
         self.auto_size_tree_column(event)
         if not self.tag_tree.selection():
             return
-        self.context_menu_edit_tag()
+        if self.double_click_to_edit_var.get():
+            self.context_menu_edit_tag()
+        else:
+            self.apply_commands_to_tree(None, True)
+
 
     def auto_size_tree_column(self, event=None):
         if event is None:
@@ -684,47 +741,76 @@ class BatchTagEdit:
 
 
     def count_treeview_tags(self, event=None):
-        self.pending_delete = 0
-        self.pending_edit = 0
-        for idx, iid in enumerate(self.tag_tree.get_children()):
-            values = self.tag_tree.item(iid, "values")
-            if not values or len(values) < 4 or idx >= len(self.original_tags):
+        tag_tree = self.tag_tree
+        original_tags = self.original_tags
+        get_children = tag_tree.get_children
+        get_item = tag_tree.item
+        get_index = tag_tree.index
+        pending_delete = 0
+        pending_edit = 0
+        children = list(get_children())
+        num_children = len(children)
+        for idx, iid in enumerate(children):
+            values = get_item(iid, "values")
+            if not values or len(values) < 4 or idx >= len(original_tags):
                 continue
-            original_tag = self.original_tags[idx][0]
+            original_tag = original_tags[idx][0]
             new_tag = values[3] if len(values) > 3 else original_tag
             if new_tag == "":
-                self.pending_delete += 1
+                pending_delete += 1
             elif new_tag != original_tag:
-                self.pending_edit += 1
-        self.visible_tags = len(self.tag_tree.get_children())
-        self.selected_tags = len(self.tag_tree.selection())
-        padding_width = len(str(self.total_unique_tags))
-        pending_delete_str = str(self.pending_delete).zfill(padding_width)
-        pending_edit_str = str(self.pending_edit).zfill(padding_width)
-        visible_tags_str = str(self.visible_tags).zfill(padding_width)
-        selected_tags_str = str(self.selected_tags).zfill(padding_width)
-        self.info_label.config(text=f"Total: {self.total_unique_tags}  | Visible: {visible_tags_str}  |  Selected: {selected_tags_str}  |  Pending Delete: {pending_delete_str}  |  Pending Edit: {pending_edit_str}")
-        if self.pending_delete > 0 or self.pending_edit > 0:
+                pending_edit += 1
+        visible_tags = num_children
+        selected_iids = tag_tree.selection()
+        selected_tags = len(selected_iids)
+        # Only update UI if values have changed
+        if getattr(self, "pending_delete", None) != pending_delete:
+            self.pending_delete = pending_delete
+        if getattr(self, "pending_edit", None) != pending_edit:
+            self.pending_edit = pending_edit
+        if getattr(self, "visible_tags", None) != visible_tags:
+            self.visible_tags = visible_tags
+        if getattr(self, "selected_tags", None) != selected_tags:
+            self.selected_tags = selected_tags
+        # Update labels
+        self.total_label.config(text=f"Total: {self.total_unique_tags} ")
+        self.visible_label.config(text=f"Filtered: {visible_tags} ")
+        self.selected_label.config(text=f"Selected: {selected_tags} ")
+        bg_normal = self.batch_tag_edit_frame.cget("background")
+        if pending_delete > 0:
+            self.pending_delete_label.config(text=f"Delete: {pending_delete} ", foreground="red", background="#ffe5e5")
+        else:
+            self.pending_delete_label.config(text=f"Delete: {pending_delete} ", foreground="black", background=bg_normal)
+        if pending_edit > 0:
+            self.pending_edit_label.config(text=f"Edit: {pending_edit} ", foreground="green", background="#e5ffe5")
+        else:
+            self.pending_edit_label.config(text=f"Edit: {pending_edit} ", foreground="black", background=bg_normal)
+        # Enable/disable buttons only if state changes
+        if pending_delete > 0 or pending_edit > 0:
             self.button_save.config(state="normal")
             self.button_save_tip.config(state="normal")
         else:
             self.button_save.config(state="disabled")
             self.button_save_tip.config(state="disabled")
         self.toggle_filter_widgets()
+        # Only update edit_entry if needed
         if hasattr(self, "edit_entry") and self.edit_entry is not None:
-            selection = self.tag_tree.selection()
-            if len(selection) == 1:
-                iid = selection[0]
-                idx = self.tag_tree.index(iid)
-                values = self.tag_tree.item(iid, "values")
-                if values and idx < len(self.original_tags):
-                    original_tag = self.original_tags[idx][0]
+            edit_entry = self.edit_entry
+            if len(selected_iids) == 1:
+                iid = selected_iids[0]
+                idx = get_index(iid)
+                values = get_item(iid, "values")
+                if values and idx < len(original_tags):
+                    original_tag = original_tags[idx][0]
                     new_tag = values[3] if len(values) > 3 else original_tag
                     tag_to_insert = new_tag if new_tag != "" else original_tag
-                    self.edit_entry.delete(0, "end")
-                    self.edit_entry.insert(0, tag_to_insert)
+                    current = edit_entry.get()
+                    if current != tag_to_insert:
+                        edit_entry.delete(0, "end")
+                        edit_entry.insert(0, tag_to_insert)
             else:
-                self.edit_entry.delete(0, "end")
+                if self.edit_entry.get() != "":
+                    self.edit_entry.delete(0, "end")
 
 
     def _disable_tag_tooltip(self, event=None):
@@ -751,6 +837,62 @@ class BatchTagEdit:
             if new_tag == "" or new_tag != original_tag:
                 state[original_tag] = new_tag
         return state
+
+
+    def transform_selected_tags(self, transform_type: str):
+        if not hasattr(self, "tag_tree") or self.tag_tree is None:
+            return
+        selected_iids = list(self.tag_tree.selection())
+        if not selected_iids:
+            return
+        original_selection = list(selected_iids)
+        for iid in original_selection:
+            idx = self.tag_tree.index(iid)
+            if idx >= len(self.original_tags):
+                continue
+            original_tag = self.original_tags[idx][0]
+            new_tag = self._apply_transformation(original_tag, transform_type)
+            try:
+                self.tag_tree.selection_set(iid)
+            except Exception:
+                pass
+            if hasattr(self, "edit_entry") and self.edit_entry is not None:
+                self.edit_entry.delete(0, "end")
+                if new_tag is not None:
+                    self.edit_entry.insert(0, new_tag)
+            self.apply_commands_to_tree(edit=new_tag)
+        try:
+            self.tag_tree.selection_set(original_selection)
+        except Exception:
+            pass
+        self.count_treeview_tags()
+
+
+    def _apply_transformation(self, text: str, transform_type: str) -> str:
+        if text is None:
+            return text
+        if transform_type == "lower":
+            return text.lower()
+        if transform_type == "upper":
+            return text.upper()
+        if transform_type == "title":
+            return text.title()
+        if transform_type == "spaces_to_underscores":
+            return text.replace(" ", "_")
+        if transform_type == "underscores_to_spaces":
+            return text.replace("_", " ")
+        if transform_type == "remove_non_alphanumeric":
+            return re.sub(r'[^a-zA-Z0-9_\-\s]', '', text)
+        if transform_type == "remove_escape":
+            return re.sub(r'\\([\(\)\[\]\{\}])', r'\1', text)
+        if transform_type == "remove_punctuation":
+            return re.sub(r'[^\w\s]', '', text)
+        if transform_type == "remove_digits":
+            return re.sub(r'\d', '', text)
+        if transform_type == "add_escape":
+            return re.sub(r'([\(\)\[\]\{\}])', r'\\\1', text)
+        # default: no change
+        return text
 
 
 #endregion
