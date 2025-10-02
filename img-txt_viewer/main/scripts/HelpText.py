@@ -113,31 +113,59 @@ BATCH_UPSCALE_HELP = {
 BATCH_TAG_EDIT_HELP = {
 "Tag-Editor Help": "",
 
+"Overview:":
+    "Batch Tag Edit lets you view, filter, edit, and delete tags across all text files in your working directory. All changes are staged as 'pending' until you commit them.\n",
+
 "Technical Note:":
-    "- This tool is designed to work with CSV-like text files. Both commas and periods are treated as caption delimiters.\n"
-    "- It may not work as expected with certain combinations of characters, text or their formatting.\n"
-    "- You should always make backups of your text files before saving any changes.\n",
+    "- Designed for CSV-like text files. Both commas and periods are treated as tag/caption delimiters.\n"
+    "- Some special characters or formatting may not be handled as expected.\n"
+    "- Always back up your text files before committing changes.\n",
 
 "Instructions:":
-    "1. Use the filter or sort options to refine the Tag List.\n"
-    "   - You can input multiple filter values separated by commas.\n"
-    "   - You can click the tag list headers to adjust the sort order.\n"
-    "2. Select the tags you want to modify from the Tag List.\n"
-    "   - You can select multiple tags using Ctrl+Click or Shift+Click.\n"
+    "1. Use the filter controls to narrow down the tag list.\n"
+    "   • Filter by tag text or by tag count (see Filter Tips below).\n"
+    "   • Filtering can only be applied when there are no pending changes.\n"
+    "2. Select tags to edit or delete (Ctrl+Click or Shift+Click for multi-select).\n"
     "3. To edit: Enter a new tag in the Edit box and click Apply (or press Enter).\n"
-    "   - To delete: Leave the Edit box empty and click Apply, or use the right-click menu.\n"
-    "   - You can also right-click a tag for Edit/Delete/Copy and selection tools.\n"
+    "   • To delete: Leave the Edit box empty and click Apply, or use the right-click menu.\n"
+    "   • You can also right-click a tag for Edit/Delete/Copy and quick actions.\n"
     "4. Pending changes are shown in the Action/New Tag columns and highlighted (green for edit, red for delete).\n"
-    "5. Click 'Commit Changes' to apply all pending edits/deletes to the text files. This cannot be undone—make backups first!\n"
+    "5. Click 'Commit Changes' to apply all pending edits/deletes to the text files. This cannot be undone, so make backups first!\n"
     "6. Use 'Refresh' to reload the tag list and clear all pending changes and filters.\n",
 
-"Tips:":
-    "- Use the filter dropdown to filter tags by text or count (supports multiple values for most options).\n"
-    "- Use the context menu (right-click) for quick actions: Edit, Delete, Copy, Select All, Invert Selection, Clear Selection, Revert Selection, Revert All.\n"
-    "- Use the column headers to sort by Count, Tag, Length, Action, or New Tag (click repeatedly to cycle sort modes).\n"
-    "- The Info bar at the bottom shows total, visible, selected, and pending changes.\n"
-    "- Pending changes disable filtering/sorting until committed or reverted.\n"
-    "- Use the Tagger tab to change the working directory or file set.\n",
+"Filter Tips:":
+    "• Filter options:\n"
+    "   - Contains Text: Show tags containing the input text.\n"
+    "   - Does Not Contain: Exclude tags containing the input text.\n"
+    "   - Count Equals / Not Equals: Filter tags by exact count.\n"
+    "   - Count Less Than / Greater Than: Filter tags by count range.\n"
+    "• For most options, you can enter multiple values separated by commas.\n"
+    "• Example: To show tags used exactly 1 or 2 times, select 'Count Equals' and enter '1,2'.\n",
+
+"Sorting:":
+    "• Click column headers to sort by Count, Tag, Length, Action, or New Tag.\n"
+    "• The Tag column cycles through: Name, Name (reverse), Length, Length (reverse).\n",
+
+"Context Menu & Actions:":
+    "• Right-click selected tags for quick actions: Edit, Delete, Copy, Quick Actions (transformations), Selection tools, Revert changes.\n"
+    "• Quick Actions: Convert case, replace spaces/underscores, remove/add escape characters, strip punctuation/digits, etc.\n",
+
+"Selection Hotkeys:":
+    "• Ctrl+A: Select All\n"
+    "• Ctrl+I: Invert Selection\n"
+    "• Esc: Clear Selection\n"
+    "• Ctrl+C: Copy selected tags\n",
+
+"Pending Changes:":
+    "• Pending edits are highlighted green; deletes are red.\n"
+    "• Filtering is disabled while there are pending changes.\n"
+    "• Use 'Revert Selection' or 'Refresh' to discard pending changes.\n",
+
+"Other Features:":
+    "• Double-click a tag to quickly edit it.\n"
+    "• Tooltips show long tag names when hovering in the list.\n"
+    "• The info bar at the bottom shows total, filtered, selected, and pending changes.\n"
+    "• Use the Tagger tab to change the working directory or file set.\n",
 }
 
 
