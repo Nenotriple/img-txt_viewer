@@ -217,7 +217,8 @@ class BatchTagEdit:
         self.tag_tree.column("new_tag", width=200, anchor="w", stretch=True)
         self.tag_tree.grid(row=0, column=0, sticky="nsew")
         self.tag_tree.bind("<Control-c>", self.copy_tree_selection)
-        self.tag_tree.bind("<Button-3>", self.show_tree_context_menu)
+        # Change here: bind right-click to a new handler
+        self.tag_tree.bind("<Button-3>", self._on_tree_right_click)
         self.tag_tree.bind("<<TreeviewSelect>>", self.count_treeview_tags)
         self.tag_tree.bind("<Double-Button-1>", self._on_tree_double_left_click)
         self.tag_tree.bind("<Motion>", self.on_tree_motion, add="+")
@@ -225,6 +226,9 @@ class BatchTagEdit:
         self.tag_tree.bind("<Control-a>", lambda event: self.tree_selection("all"))
         self.tag_tree.bind("<Control-i>", lambda event: self.tree_selection("invert"))
         self.tag_tree.bind("<Escape>", lambda event: self.tree_selection("clear"))
+        self.tag_tree.bind("<Delete>", lambda event: self.apply_commands_to_tree(delete=True))
+        self.tag_tree.bind("<Control-e>", self.context_menu_edit_tag)
+        self.tag_tree.bind("<Control-r>", self.revert_tree_changes)
         # Scrollbar
         vert_scrollbar = Scrollbar(tree_frame, orient="vertical", command=self.tag_tree.yview)
         vert_scrollbar.grid(row=0, column=1, sticky="ns")
@@ -307,19 +311,19 @@ class BatchTagEdit:
         if not tree.selection():
             return
         context_menu = Menu(self.root, tearoff=0)
-        context_menu.add_command(label="Copy", command=self.copy_tree_selection)
-        context_menu.add_command(label="Delete", command=lambda: self.apply_commands_to_tree(delete=True))
-        context_menu.add_command(label="Edit...", command=self.context_menu_edit_tag)
+        context_menu.add_command(label="Copy", accelerator="Ctrl+C", command=self.copy_tree_selection)
+        context_menu.add_command(label="Delete", accelerator="Delete", command=lambda: self.apply_commands_to_tree(delete=True))
+        context_menu.add_command(label="Edit...", accelerator="Ctrl+E", command=self.context_menu_edit_tag)
         context_menu.add_separator()
         context_menu.add_cascade(label="Quick Actions", menu=self.actions_menu)
         context_menu.add_separator()
         selection_menu = Menu(context_menu, tearoff=0)
-        selection_menu.add_command(label="Select All", command=lambda: self.tree_selection("all"))
-        selection_menu.add_command(label="Invert Selection", command=lambda: self.tree_selection("invert"))
-        selection_menu.add_command(label="Clear Selection", command=lambda: self.tree_selection("clear"))
+        selection_menu.add_command(label="Select All", accelerator="Ctrl+A", command=lambda: self.tree_selection("all"))
+        selection_menu.add_command(label="Invert Selection", accelerator="Ctrl+I", command=lambda: self.tree_selection("invert"))
+        selection_menu.add_command(label="Clear Selection", accelerator="Esc", command=lambda: self.tree_selection("clear"))
         context_menu.add_cascade(label="Selection", menu=selection_menu)
         context_menu.add_separator()
-        context_menu.add_command(label="Revert Selection", command=self.revert_tree_changes)
+        context_menu.add_command(label="Revert Selection", accelerator="Ctrl+R", command=self.revert_tree_changes)
         context_menu.add_command(label="Revert All", command=self.clear_filter)
         context_menu.post(event.x_root, event.y_root)
 
@@ -353,7 +357,7 @@ class BatchTagEdit:
         self.count_treeview_tags()
 
 
-    def context_menu_edit_tag(self):
+    def context_menu_edit_tag(self, event=None):
         initialvalue = None
         selection = self.tag_tree.selection()
         if len(selection) == 1:
@@ -397,7 +401,7 @@ class BatchTagEdit:
         self.count_treeview_tags()
 
 
-    def revert_tree_changes(self):
+    def revert_tree_changes(self, event=None):
         padding_width = len(str(self.total_unique_tags))
         selected_iids = self.tag_tree.selection()
         for iid in selected_iids:
@@ -513,6 +517,13 @@ class BatchTagEdit:
         max_width += 40
         self.tag_tree.column(col_id, width=max_width)
 
+
+    def _on_tree_right_click(self, event):
+        iid = self.tag_tree.identify_row(event.y)
+        if iid:
+            if iid not in self.tag_tree.selection():
+                self.tag_tree.selection_set(iid)
+        self.show_tree_context_menu(event)
 
 
 #endregion
