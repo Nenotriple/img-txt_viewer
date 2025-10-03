@@ -254,4 +254,3 @@ def bind_undo_stack(entry_widget: ttk.Entry, max_depth: int = 10000) -> EntryHis
 
 
 #endregion
-#endregion
