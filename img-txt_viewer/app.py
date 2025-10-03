@@ -173,6 +173,7 @@ class ImgTxtViewer:
         self.previous_window_size = (self.root.winfo_width(), self.root.winfo_height())
         self.initialize_text_pane = True
         self.is_ffmpeg_installed = shutil.which("ffmpeg") is not None
+        self.dir_placeholder_text = "Choose Directory..."
 
         # 'after()' Job IDs
         self.window_configure_job_id = None
@@ -220,7 +221,7 @@ class ImgTxtViewer:
         self.my_tags_yml = os.path.join(app_path, "my_tags.yaml")
         self.onnx_models_dir = os.path.join(app_path, "models", "onnx_models")
         self.ncnn_models_dir = os.path.join(app_path, "models", "ncnn_models")
-        self.image_dir = StringVar(value="Choose Directory...")
+        self.image_dir = StringVar(value=self.dir_placeholder_text)
         self.restore_last_path_var = BooleanVar(value=True)
         self.restore_last_window_size_var = BooleanVar(value=True)
         self.restore_last_text_pane_heights_var = BooleanVar(value=True)
@@ -649,19 +650,8 @@ class ImgTxtViewer:
         self.directory_entry = ttk.Entry(directory_frame, textvariable=self.image_dir)
         self.directory_entry.pack(side="left", fill="both", expand=True, pady=2)
         self.directory_entry.bind('<Return>', self.set_working_directory)
-        self.directory_entry.bind("<Double-1>", lambda event: self.entry_helper.custom_select_word_for_entry(event))
-        self.directory_entry.bind("<Triple-1>", lambda event: self.entry_helper.select_all_in_entry(event))
-        self.directory_entry.bind("<Button-3>", self.open_directory_context_menu)
-        self.directory_entry.bind("<Button-1>", self.clear_directory_entry_on_click)
-        self.entry_helper.bind_undo_stack(self.directory_entry)
+        _, self.dir_context_menu, _ = self.entry_helper.bind_helpers(self.directory_entry)
         self.directory_entry_tooltip = Tip.create(widget=self.directory_entry, text="...", padx=1, pady=2, origin="widget", widget_anchor="sw")
-        self.dir_context_menu = Menu(self.directory_entry, tearoff=0)
-        self.dir_context_menu.add_command(label="Cut", command=self.directory_cut)
-        self.dir_context_menu.add_command(label="Copy", command=self.directory_copy)
-        self.dir_context_menu.add_command(label="Paste", command=self.directory_paste)
-        self.dir_context_menu.add_command(label="Delete", command=self.directory_delete)
-        self.dir_context_menu.add_command(label="Clear", command=self.directory_clear)
-        self.dir_context_menu.add_separator()
         self.dir_context_menu.add_command(label="Set Text File Path...", state="disabled", command=self.set_text_file_path)
         self.dir_context_menu.add_command(label="Reset Text Path To Image Path", state="disabled", command=lambda: self.set_text_file_path(self.image_dir.get()))
         self.browse_button = ttk.Button(directory_frame, text="Browse...", width=8, takefocus=False, command=self.choose_working_directory)
@@ -851,6 +841,7 @@ class ImgTxtViewer:
 
 
     def on_text_notebook_tab_change(self, event):
+        self.check_image_dir()
         previous_tab = self.current_text_notebook_tab
         self.current_text_notebook_tab = event.widget.tab("current", "text")
         self.save_text_pane_state(tab_name=previous_tab)
@@ -1144,58 +1135,6 @@ class ImgTxtViewer:
 
 
 # --------------------------------------
-# Directory entry context menu helpers
-# --------------------------------------
-    def open_directory_context_menu(self, event):
-        try:
-            self.dir_context_menu.tk_popup(event.x_root, event.y_root)
-        finally:
-            self.dir_context_menu.grab_release()
-
-
-    def directory_copy(self):
-        try:
-            selected_text = self.directory_entry.selection_get()
-            self.directory_entry.clipboard_clear()
-            self.directory_entry.clipboard_append(selected_text)
-        except TclError: pass
-
-
-    def directory_cut(self):
-        try:
-            selected_text = self.directory_entry.selection_get()
-            self.directory_entry.clipboard_clear()
-            self.directory_entry.clipboard_append(selected_text)
-            start = self.directory_entry.index("sel_first")
-            end = self.directory_entry.index("sel_last")
-            self.directory_entry.delete(start, end)
-        except TclError: pass
-
-
-    def directory_paste(self):
-        try:
-            self.directory_entry.insert("insert", self.directory_entry.clipboard_get())
-        except TclError: pass
-
-
-    def directory_delete(self):
-        try:
-            start = self.directory_entry.index("sel_first")
-            end = self.directory_entry.index("sel_last")
-            self.directory_entry.delete(start, end)
-        except TclError: pass
-
-
-    def directory_clear(self):
-        self.directory_entry.delete(0, "end")
-
-
-    def clear_directory_entry_on_click(self, event):
-        if self.directory_entry.get() == "Choose Directory...":
-            self.directory_entry.delete(0, "end")
-
-
-# --------------------------------------
 # Index entry context menu helpers
 # --------------------------------------
     def open_index_context_menu(self, event):
@@ -1449,9 +1388,10 @@ class ImgTxtViewer:
 
 
     def on_altui_tab_change(self, event):
-        if self.image_dir.get() == "Choose Directory..." or len(self.image_files) == 0:
+        if self.image_dir.get() == self.dir_placeholder_text or len(self.image_files) == 0:
             self.main_notebook.select(self.primary_tab)
             return
+        self.check_image_dir()
         selected_tab_index = self.main_notebook.index(self.main_notebook.select())
         tab_name = self.main_notebook.tab(selected_tab_index, "text")
         self.current_ui_state = {"tab": tab_name, "index": selected_tab_index}
@@ -1588,9 +1528,9 @@ class ImgTxtViewer:
 
 
     def highlight_duplicates(self, event=None, mouse=True):
-       if not self.highlight_selection_var.get():
-           return
-       self.text_box.after_idle(self._highlight_duplicates, mouse)
+        if not self.highlight_selection_var.get():
+            return
+        self.text_box.after_idle(self._highlight_duplicates, mouse)
 
 
     def _highlight_duplicates(self, mouse=False):
@@ -2017,7 +1957,7 @@ class ImgTxtViewer:
 
 
     def update_pair(self, direction=None, save=True, step=1, silent=False):
-        if self.image_dir.get() == "Choose Directory..." or len(self.image_files) == 0:
+        if self.image_dir.get() == self.dir_placeholder_text or len(self.image_files) == 0:
             return
         self.check_image_dir()
         if not self.text_modified_var:
@@ -2077,6 +2017,7 @@ class ImgTxtViewer:
 
 
     def check_image_dir(self):
+        self.check_working_directory()
         try:
             num_files_in_dir = len(os.listdir(self.image_dir.get()))
         except Exception:
@@ -2612,7 +2553,7 @@ class ImgTxtViewer:
 
     def save_text_file(self, highlight=False):
         try:
-            if self.image_dir.get() != "Choose Directory..." and self.check_if_directory() and self.text_files:
+            if self.image_dir.get() != self.dir_placeholder_text and self.check_if_directory() and self.text_files:
                 file_saved = self._save_file()
                 if self.cleaning_text_var.get() or self.list_mode_var.get():
                     self.refresh_text_box()
@@ -2755,7 +2696,7 @@ class ImgTxtViewer:
 
     def get_initial_directory(self):
         initialdir = self.image_dir.get()
-        if not initialdir or initialdir == "Choose Directory...":
+        if not initialdir or initialdir == self.dir_placeholder_text:
             initialdir = self.settings_manager.config.get("Path", "last_img_directory", fallback=None)
             if not initialdir or not os.path.exists(initialdir):
                 initialdir = os.path.dirname(__file__)
@@ -2852,18 +2793,19 @@ class ImgTxtViewer:
 
     def check_working_directory(self):
         try:
-            working_path = os.path.dirname(self.image_files[self.current_index])
-            textbox_path = self.image_dir.get()
-            if textbox_path == "Choose Directory...":
+            working_path = os.path.normcase(os.path.normpath(os.path.abspath(os.path.dirname(self.image_files[self.current_index]))))
+            textbox_path = os.path.normcase(os.path.normpath(os.path.abspath(self.image_dir.get())))
+            if textbox_path == self.dir_placeholder_text:
                 return
             if textbox_path != working_path:
                 self.directory_entry.delete(0, "end")
                 self.directory_entry.insert(0, working_path)
-        except IndexError: return
+        except IndexError:
+            return
 
 
     def check_if_directory(self):
-        if not os.path.isdir(self.image_dir.get()) or self.image_dir.get() == "Choose Directory...":
+        if not os.path.isdir(self.image_dir.get()) or self.image_dir.get() == self.dir_placeholder_text:
             return False
         return True
 
