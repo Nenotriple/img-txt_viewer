@@ -68,6 +68,7 @@
 - Fixed issue that would prevent saving if the Stats or All Tags lists were refreshed.
 - The zoom popup view is now centered on centered on the mouse.
 - Fixed issue where the system clipboard could become unresponsive after interacting with text Entry widgets.
+- Fixed issue when navigating or changing tabs with a broken or incorrect directory path set in Tagger.
 
 **Other Changes:**
 
