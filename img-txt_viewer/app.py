@@ -650,6 +650,7 @@ class ImgTxtViewer:
         self.directory_entry = ttk.Entry(directory_frame, textvariable=self.image_dir)
         self.directory_entry.pack(side="left", fill="both", expand=True, pady=2)
         self.directory_entry.bind('<Return>', self.set_working_directory)
+        self.directory_entry.bind('<FocusOut>', self.check_image_dir)
         _, self.dir_context_menu, _ = self.entry_helper.bind_helpers(self.directory_entry)
         self.directory_entry_tooltip = Tip.create(widget=self.directory_entry, text="...", padx=1, pady=2, origin="widget", widget_anchor="sw")
         self.dir_context_menu.add_command(label="Set Text File Path...", state="disabled", command=self.set_text_file_path)
@@ -2016,7 +2017,7 @@ class ImgTxtViewer:
             self.image_index_entry.insert(0, self.current_index + 1)
 
 
-    def check_image_dir(self):
+    def check_image_dir(self, event=None):
         self.check_working_directory()
         try:
             num_files_in_dir = len(os.listdir(self.image_dir.get()))
@@ -2707,22 +2708,23 @@ class ImgTxtViewer:
 
     def set_working_directory(self, event=None, path=None, silent=False):
         try:
+            directory = path if path is not None else self.directory_entry.get()
+            if not self.check_dir_for_img(directory):
+                return
             if self.auto_save_var.get():
                 self.save_text_file()
             if hasattr(self, 'text_box'):
                 self.text_controller.revert_text_image_filter(clear=True, silent=True)
-            directory = path if path is not None else self.directory_entry.get()
-            if self.check_dir_for_img(directory):
-                self.image_dir.set(os.path.normpath(directory))
-                self.current_index = 0
-                if not silent:
-                    self.load_pairs()
-                    self.set_text_file_path(directory)
-                else:
-                    self.load_pairs(silent=True)
-                    self.set_text_file_path(directory, silent=True)
-                self.jump_to_image(0)
-                self.toggle_main_notebook_state("normal")
+            self.image_dir.set(os.path.normpath(directory))
+            self.current_index = 0
+            if not silent:
+                self.load_pairs()
+                self.set_text_file_path(directory)
+            else:
+                self.load_pairs(silent=True)
+                self.set_text_file_path(directory, silent=True)
+            self.jump_to_image(0)
+            self.toggle_main_notebook_state("normal")
         except FileNotFoundError:
             messagebox.showwarning("Invalid Directory", f"The system cannot find the path specified:\n\n{directory}")
 
