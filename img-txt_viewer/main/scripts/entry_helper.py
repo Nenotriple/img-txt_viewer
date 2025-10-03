@@ -85,23 +85,39 @@ class EntryHistory:
     def __init__(self, entry: ttk.Entry, max_depth: int = 10000):
         self.entry = entry
         self.max_depth = max_depth
-        self.undo_stack: list[str] = []
-        self.redo_stack: list[str] = []
+        self.undo_stack: list[tuple[str, int]] = []
+        self.redo_stack: list[tuple[str, int]] = []
+        # Initialize previous value and cursor from the widget's current content
         self._prev_value = entry.get()
+        self._prev_cursor = entry.index("insert")
+        # Record changes
         self.entry.bind("<KeyRelease>", self._record_change)
+        self.entry.bind("<Button-1>", self._sync_prev_value)
+        self.entry.bind("<FocusIn>", self._sync_prev_value)
+        # Undo / redo bindings
         self.entry.bind("<Control-z>", self._on_undo)
         self.entry.bind("<Control-y>", self._on_redo)
+
+
+    def _sync_prev_value(self, event: Event) -> None:
+        """Synchronize the internal previous value with the widget content."""
+        self._prev_value = self.entry.get()
+        self._prev_cursor = self.entry.index("insert")
 
 
     def _record_change(self, event: Event) -> None:
         """Record text changes into the undo stack."""
         current_value = self.entry.get()
+        current_cursor = self.entry.index("insert")
         if current_value != self._prev_value:
             if len(self.undo_stack) >= self.max_depth:
                 self.undo_stack.pop(0)
-            self.undo_stack.append(self._prev_value)
+            self.undo_stack.append((self._prev_value, self._prev_cursor))
             self._prev_value = current_value
+            self._prev_cursor = current_cursor
             self.redo_stack.clear()
+        else:
+            self._prev_cursor = current_cursor  # Always update cursor
 
 
     def _on_undo(self, event: Event) -> Literal["break"]:
@@ -109,9 +125,10 @@ class EntryHistory:
         if not self.undo_stack:
             return "break"
         current_value = self.entry.get()
-        self.redo_stack.append(current_value)
-        prev_value = self.undo_stack.pop()
-        self._set_text(prev_value)
+        current_cursor = self.entry.index("insert")
+        self.redo_stack.append((current_value, current_cursor))
+        prev_value, prev_cursor = self.undo_stack.pop()
+        self._set_text(prev_value, prev_cursor)
         return "break"
 
 
@@ -120,17 +137,20 @@ class EntryHistory:
         if not self.redo_stack:
             return "break"
         current_value = self.entry.get()
-        self.undo_stack.append(current_value)
-        next_value = self.redo_stack.pop()
-        self._set_text(next_value)
+        current_cursor = self.entry.index("insert")
+        self.undo_stack.append((current_value, current_cursor))
+        next_value, next_cursor = self.redo_stack.pop()
+        self._set_text(next_value, next_cursor)
         return "break"
 
 
-    def _set_text(self, value: str) -> None:
-        """Replace the entry content with value."""
+    def _set_text(self, value: str, cursor: int) -> None:
+        """Replace the entry content with value and restore cursor position."""
         self.entry.delete(0, "end")
         self.entry.insert(0, value)
+        self.entry.icursor(cursor)
         self._prev_value = value
+        self._prev_cursor = cursor
 
 
 # endregion
@@ -143,6 +163,11 @@ def bind_helpers(entry_widget: ttk.Entry) -> None:
     entry_widget.bind("<Triple-1>", select_all_in_entry)
     entry_widget.bind("<Button-3>", show_entry_context_menu)
     EntryHistory(entry_widget)
+
+
+def bind_undo_stack(entry_widget: ttk.Entry, max_depth: int = 10000) -> None:
+    """Attach an undo/redo stack to a ttk.Entry widget."""
+    EntryHistory(entry_widget, max_depth)
 
 
 # endregion
