@@ -1,6 +1,7 @@
-from typing import Literal
 import tkinter as tk
 from tkinter import ttk, TclError, Event
+
+from typing import Literal
 
 
 SEPARATORS: str = " ,.-|()[]<>\\/\"'{}:;!@#$%^&*+=~`?"
@@ -24,14 +25,7 @@ def _tk_state(flag: bool) -> str:
 
 
 def custom_select_word_for_entry(event: Event) -> Literal["break"]:
-    """Select the word under cursor when double-clicking an entry widget.
-
-    Args:
-        event: The event triggered by double-clicking
-
-    Returns:
-        str: 'break' to prevent default event handling
-    """
+    """Select the word under cursor when double-clicking an entry widget."""
     widget: ttk.Entry = event.widget
     click_index: int = widget.index(f"@{event.x}")
     entry_text: str = widget.get()
@@ -52,14 +46,7 @@ def custom_select_word_for_entry(event: Event) -> Literal["break"]:
 
 
 def select_all_in_entry(event: Event) -> Literal["break"]:
-    """Select all text in the entry widget.
-
-    Args:
-        event: The event triggered by triple-clicking
-
-    Returns:
-        str: 'break' to prevent default event handling
-    """
+    """Select all text in the entry widget."""
     widget: ttk.Entry = event.widget
     widget.selection_range(0, 'end')
     return "break"
@@ -70,11 +57,7 @@ def select_all_in_entry(event: Event) -> Literal["break"]:
 
 
 def show_entry_context_menu(event: Event) -> None:
-    """Show a context menu for the entry widget.
-
-    Args:
-        event: The event triggered by right-clicking
-    """
+    """Show a context menu for the entry widget."""
     widget: ttk.Entry = event.widget
     if isinstance(widget, ttk.Entry):
         root: tk.Tk = widget.winfo_toplevel()
@@ -94,19 +77,72 @@ def show_entry_context_menu(event: Event) -> None:
 
 
 # endregion
+# region Undo/Redo Stack
+
+
+class EntryHistory:
+    """Undo/redo stack for ttk.Entry widgets."""
+    def __init__(self, entry: ttk.Entry, max_depth: int = 10000):
+        self.entry = entry
+        self.max_depth = max_depth
+        self.undo_stack: list[str] = []
+        self.redo_stack: list[str] = []
+        self._prev_value = entry.get()
+        self.entry.bind("<KeyRelease>", self._record_change)
+        self.entry.bind("<Control-z>", self._on_undo)
+        self.entry.bind("<Control-y>", self._on_redo)
+
+
+    def _record_change(self, event: Event) -> None:
+        """Record text changes into the undo stack."""
+        current_value = self.entry.get()
+        if current_value != self._prev_value:
+            if len(self.undo_stack) >= self.max_depth:
+                self.undo_stack.pop(0)
+            self.undo_stack.append(self._prev_value)
+            self._prev_value = current_value
+            self.redo_stack.clear()
+
+
+    def _on_undo(self, event: Event) -> Literal["break"]:
+        """Undo the last change."""
+        if not self.undo_stack:
+            return "break"
+        current_value = self.entry.get()
+        self.redo_stack.append(current_value)
+        prev_value = self.undo_stack.pop()
+        self._set_text(prev_value)
+        return "break"
+
+
+    def _on_redo(self, event: Event) -> Literal["break"]:
+        """Redo the last undone change."""
+        if not self.redo_stack:
+            return "break"
+        current_value = self.entry.get()
+        self.undo_stack.append(current_value)
+        next_value = self.redo_stack.pop()
+        self._set_text(next_value)
+        return "break"
+
+
+    def _set_text(self, value: str) -> None:
+        """Replace the entry content with value."""
+        self.entry.delete(0, "end")
+        self.entry.insert(0, value)
+        self._prev_value = value
+
+
+# endregion
 # region Main
 
 
 def bind_helpers(entry_widget: ttk.Entry) -> None:
-    """Set up standard bindings for ttk.Entry widgets.
-
-    Args:
-        entry_widget: A ttk.Entry widget to apply bindings to
-    """
+    """Set up standard bindings for ttk.Entry widgets."""
     entry_widget.bind("<Double-1>", custom_select_word_for_entry)
     entry_widget.bind("<Triple-1>", select_all_in_entry)
     entry_widget.bind("<Button-3>", show_entry_context_menu)
+    EntryHistory(entry_widget)
 
 
-# endregion
 # endregion
