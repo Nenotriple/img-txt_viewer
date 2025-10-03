@@ -61,8 +61,6 @@
   - Re-worked the UI for a cleaner and simpler experience.
   - Tags can now be sorted after creating pending changes.
 
-
-
 **Fixed:**
 
 - Fixed issue where adding tags that contain a comma to MyTags would wrap them in quotes.
@@ -79,6 +77,7 @@
 - Updated [TkToolTips](https://github.com/Nenotriple/TkToolTip) to (v1.12). Tooltips now have a smooth sliding fade animation and general improvements.
 - Added an Options menu command: `Reset Window and Tab Size`, which will reset the main window and text pane tabs to their defaults.
 - Updated all input popups *(like in Tag-Editor, etc.)* for a more modern look.
+- All text Entry widgets now support undo/redo with `CTRL+Z` and `CTRL+Y`.
 
 ---
 
