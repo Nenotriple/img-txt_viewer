@@ -1,27 +1,15 @@
+#region Imports
+
+
 import tkinter as tk
 from tkinter import ttk, TclError, Event
 
-from typing import Literal, Optional, Callable
+from typing import Literal
 
 
-SEPARATORS: str = " ,.-|()[]<>\\/\"'{}:;!@#$%^&*+=~`?"
 
-
-# region Utility
-
-
-def _is_separator(char: str) -> bool:
-    """Check if a character is a separator."""
-    return char in SEPARATORS
-
-
-def _tk_state(flag: bool) -> str:
-    """Return a valid tkinter menu state string for a boolean flag."""
-    return tk.NORMAL if flag else tk.DISABLED
-
-
-# endregion
-# region Selection
+#endregion
+#region EntrySelectionManager
 
 
 class EntrySelectionManager:
@@ -30,29 +18,32 @@ class EntrySelectionManager:
         self.entry = entry
         self._bind_selection_events()
 
+
     def _bind_selection_events(self):
         self.entry.bind("<Double-1>", self.select_word_event)
         self.entry.bind("<Triple-1>", self.select_all_event)
+
 
     def select_word_event(self, event: Event) -> Literal["break"]:
         """Select the word under cursor when double-clicking an entry widget."""
         widget: ttk.Entry = event.widget
         click_index: int = widget.index(f"@{event.x}")
         entry_text: str = widget.get()
-        if click_index < len(entry_text) and _is_separator(entry_text[click_index]):
+        if click_index < len(entry_text) and self._is_separator(entry_text[click_index]):
             widget.selection_clear()
             widget.selection_range(click_index, click_index + 1)
         else:
             word_start: int = click_index
-            while word_start > 0 and not _is_separator(entry_text[word_start - 1]):
+            while word_start > 0 and not self._is_separator(entry_text[word_start - 1]):
                 word_start -= 1
             word_end: int = click_index
-            while word_end < len(entry_text) and not _is_separator(entry_text[word_end]):
+            while word_end < len(entry_text) and not self._is_separator(entry_text[word_end]):
                 word_end += 1
             widget.selection_clear()
             widget.selection_range(word_start, word_end)
         widget.icursor(click_index)
         return "break"
+
 
     def select_all_event(self, event: Event) -> Literal["break"]:
         """Select all text in the entry widget."""
@@ -61,8 +52,14 @@ class EntrySelectionManager:
         return "break"
 
 
-# endregion
-# region Context Menu
+    @staticmethod
+    def _is_separator(char: str) -> bool:
+        """Check if a character is a separator."""
+        return char in " ,.-|()[]<>\\/\"'{}:;!@#$%^&*+=~`?"
+
+
+#endregion
+#region EntryContextMenu
 
 
 class EntryContextMenu:
@@ -75,6 +72,8 @@ class EntryContextMenu:
         self._has_custom_separator = False
         self._add_default_commands()
         self._custom_start_index = self.menu.index("end") + 1 if self.menu.index("end") is not None else 0
+        self.entry._entry_context_menu = self  # attach for event handler
+        self.entry.bind("<Button-3>", self.show_entry_context_menu)
 
 
     def _add_default_commands(self):
@@ -84,12 +83,12 @@ class EntryContextMenu:
         except TclError:
             has_selection = False
         has_text = bool(self.entry.get())
-        self.menu.add_command(label="Cut", command=lambda: self.entry.event_generate("<Control-x>"), state=_tk_state(has_selection))
-        self.menu.add_command(label="Copy", command=lambda: self.entry.event_generate("<Control-c>"), state=_tk_state(has_selection))
+        self.menu.add_command(label="Cut", command=lambda: self.entry.event_generate("<Control-x>"), state=self._tk_state(has_selection))
+        self.menu.add_command(label="Copy", command=lambda: self.entry.event_generate("<Control-c>"), state=self._tk_state(has_selection))
         self.menu.add_command(label="Paste", command=lambda: self.entry.event_generate("<Control-v>"))
         self.menu.add_separator()
-        self.menu.add_command(label="Delete", command=lambda: self.entry.delete("sel.first", "sel.last"), state=_tk_state(has_selection))
-        self.menu.add_command(label="Clear", command=lambda: self.entry.delete(0, "end"), state=_tk_state(has_text))
+        self.menu.add_command(label="Delete", command=lambda: self.entry.delete("sel.first", "sel.last"), state=self._tk_state(has_selection))
+        self.menu.add_command(label="Clear", command=lambda: self.entry.delete(0, "end"), state=self._tk_state(has_text))
 
 
     def show(self, event: Event):
@@ -132,15 +131,22 @@ class EntryContextMenu:
                 break
 
 
-def _show_entry_context_menu(event: Event):
-    """Internal handler to show the context menu instance."""
-    widget = event.widget
-    if hasattr(widget, "_entry_context_menu") and isinstance(widget._entry_context_menu, EntryContextMenu):
-        widget._entry_context_menu.show(event)
+    @staticmethod
+    def _tk_state(flag: bool) -> str:
+        """Return a valid tkinter menu state string for a boolean flag."""
+        return tk.NORMAL if flag else tk.DISABLED
 
 
-# endregion
-# region Undo/Redo Stack
+    @staticmethod
+    def show_entry_context_menu(event: Event):
+        """Internal handler to show the context menu instance."""
+        widget = event.widget
+        if hasattr(widget, "_entry_context_menu") and isinstance(widget._entry_context_menu, EntryContextMenu):
+            widget._entry_context_menu.show(event)
+
+
+#endregion
+#region EntryHistory
 
 
 class EntryHistory:
@@ -216,36 +222,36 @@ class EntryHistory:
         self._prev_cursor = cursor
 
 
-# endregion
-# region Main
+#endregion
+#region Main API
 
 
+# All
 def bind_helpers(entry_widget: ttk.Entry) -> tuple[EntrySelectionManager, EntryContextMenu, EntryHistory]:
     """Set up standard bindings for ttk.Entry widgets and return selection manager, context menu manager, and history."""
-    selection = EntrySelectionManager(entry_widget)
+    selection_manager = EntrySelectionManager(entry_widget)
     context_menu = EntryContextMenu(entry_widget)
-    entry_widget._entry_context_menu = context_menu  # attach for event handler
-    entry_widget.bind("<Button-3>", _show_entry_context_menu)
     history = EntryHistory(entry_widget)
-    return selection, context_menu, history
+    return selection_manager, context_menu, history
 
 
+# Selection
 def bind_selection_manager(entry_widget: ttk.Entry) -> EntrySelectionManager:
     """Bind only the selection logic to a ttk.Entry widget and return the selection manager."""
     return EntrySelectionManager(entry_widget)
 
 
+# Context Menu
 def bind_context_menu(entry_widget: ttk.Entry) -> EntryContextMenu:
     """Bind only the context menu logic to a ttk.Entry widget and return the context menu manager."""
-    context_menu = EntryContextMenu(entry_widget)
-    entry_widget._entry_context_menu = context_menu  # attach for event handler
-    entry_widget.bind("<Button-3>", _show_entry_context_menu)
-    return context_menu
+    return EntryContextMenu(entry_widget)
 
 
-def bind_undo_stack(entry_widget: ttk.Entry, max_depth: int = 10000) -> None:
+# Undo Stack
+def bind_undo_stack(entry_widget: ttk.Entry, max_depth: int = 10000) -> EntryHistory:
     """Attach an undo/redo stack to a ttk.Entry widget."""
-    EntryHistory(entry_widget, max_depth)
+    return EntryHistory(entry_widget, max_depth)
 
 
-# endregion
+#endregion
+#endregion
