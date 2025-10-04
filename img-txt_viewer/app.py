@@ -1365,7 +1365,7 @@ class ImgTxtViewer:
             return
         if self.update_thumbnail_job_id is not None:
             self.root.after_cancel(self.update_thumbnail_job_id)
-        self.update_thumbnail_job_id = self.root.after(250, self.thumbnail_panel.update_panel)
+        self.update_thumbnail_job_id = self.root.after(50, self.thumbnail_panel.update_panel)
 
 
 #endregion
