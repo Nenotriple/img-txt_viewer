@@ -1,12 +1,9 @@
 #region Imports
 
 
-# Standard Library
 import random
 from collections import deque
 
-
-# Standard Library - GUI
 from tkinter import ttk, Tk, Toplevel, messagebox, Frame, LabelFrame, Canvas, Label, TclError
 import tkinter as tk
 
@@ -15,7 +12,7 @@ import tkinter as tk
 #region Globals
 
 
-# Constants
+# Game configuration
 GRID_WIDTH = 10
 GRID_HEIGHT = 20
 CELL_SIZE = 20
@@ -26,7 +23,7 @@ PADX = 10
 PADY = 10
 
 
-# Tromino shapes
+# Tromino shapes and colors
 SHAPES = [
     # I
     [[1],
@@ -56,22 +53,14 @@ SHAPES = [
 ]
 
 
-# Tromino colors
 COLORS = [
-    # I
-    "#00bde7",
-    # J
-    "#6d47e8",
-    # L
-    "#e26a00",
-    # O
-    "#e4b507",
-    # S
-    "#94e606",
-    # T
-    "#9a2daa",
-    # Z
-    "#ec0054"
+    "#00bde7",  # I
+    "#6d47e8",  # J
+    "#e26a00",  # L
+    "#e4b507",  # O
+    "#94e606",  # S
+    "#9a2daa",  # T
+    "#ec0054"   # Z
 ]
 
 
@@ -105,6 +94,7 @@ class PyTrominosGame:
         self.root.focus_set()
         self.icon_path = icon_path
         self.movement_keys = {}
+        self.combo_count = 0
 
 
 #endregion
@@ -117,7 +107,6 @@ class PyTrominosGame:
         self._center_window()
         self.setup_game_binds()
         self.start_game()
-        #self.root.bind("<Configure>", lambda event: print(f"\rWindow size (W,H): {event.width},{event.height}    ", end='') if event.widget == self.root else None, add="+")
 
 
     def create_interface(self):
@@ -146,6 +135,11 @@ class PyTrominosGame:
         frame2.pack(padx=PADX, pady=PADY, fill="x")
         self.score_label = Label(frame2, text=f"Score: 0")
         self.score_label.pack(side="left", anchor="w")
+        # Combo label
+        frame3 = Frame(sidebar)
+        frame3.pack(padx=PADX, pady=(0, PADY), fill="x")
+        self.combo_label = Label(frame3, text="Combo: 0")
+        self.combo_label.pack(side="left", anchor="w")
         button_frame = Frame(sidebar)
         button_frame.pack(padx=(0,PADX), pady=(5,PADY))
         pause_button = ttk.Button(button_frame, text="Pause", takefocus=False, command=self.toggle_pause)
@@ -179,6 +173,8 @@ class PyTrominosGame:
         self.root.bind("<KeyRelease>", self.key_release)
         self.root.bind("<space>", self.instant_drop)
         self.root.bind("c", self.hold_shape)
+        self.root.bind("<Shift-Left>", self.slam_left)
+        self.root.bind("<Shift-Right>", self.slam_right)
 
 
     def start_game(self):
@@ -198,6 +194,7 @@ class PyTrominosGame:
         self.level = 1
         self.lines_cleared = 0
         self.speed = INITIAL_SPEED
+        self.combo_count = 0
         self.after_id = self.root.after(self.speed, self.drop_shape)
         self.draw_next_shape()
         self.draw_held_shape()
@@ -233,14 +230,14 @@ class PyTrominosGame:
                 if color:
                     self.draw_block(x, y, color)
         self.calculate_ghost_position()
-        # Ghost
+        # Draw ghost shape
         for i, row in enumerate(self.ghost_shape.shape):
             for j, val in enumerate(row):
                 if val:
                     x = self.ghost_shape.x_pos + j
                     y = self.ghost_shape.y_pos + i
                     self.draw_block(x, y, self.ghost_shape.color, ghost=True)
-        # Current
+        # Draw current shape
         for i, row in enumerate(self.current_shape.shape):
             for j, val in enumerate(row):
                 if val:
@@ -314,16 +311,21 @@ class PyTrominosGame:
 
 
     def update_level(self):
-        speed_step = 50
-        min_speed = 20
+        speed_step = 25
+        min_speed = 100
         self.level = self.score // 100 + 1
         self.speed = max(min_speed, INITIAL_SPEED - (self.level - 1) * speed_step)
         self.level_label.config(text=f"Level: {self.level}")
         self.update_score()
+        self.update_combo()
 
 
     def update_score(self):
         self.score_label.config(text=f"Score: {self.score}")
+
+
+    def update_combo(self):
+        self.combo_label.config(text=f"Combo: {self.combo_count}")
 
 
 #endregion
@@ -344,7 +346,6 @@ class PyTrominosGame:
             self.calculate_ghost_position()
             return True
 
-
     def drop_shape(self):
         if self.game_over:
             return
@@ -362,15 +363,33 @@ class PyTrominosGame:
 
     def instant_drop(self, event=None):
         if not self.paused and not self.game_over:
+            drop_distance = 0
             while self.move_shape(0, 1):
+                drop_distance += 1
                 self.draw_board()
                 self.root.update_idletasks()
                 self.root.after(5)
+            self.score += drop_distance * 2
+            self.update_score()
             self.lock_shape_and_spawn()
             if not self.game_over:
                 if self.after_id:
                     self.root.after_cancel(self.after_id)
                 self.after_id = self.root.after(self.speed, self.drop_shape)
+
+
+    def slam_left(self, event=None):
+        if not self.paused and not self.game_over:
+            while self.move_shape(-1, 0):
+                pass
+            self.draw_board()
+
+
+    def slam_right(self, event=None):
+        if not self.paused and not self.game_over:
+            while self.move_shape(1, 0):
+                pass
+            self.draw_board()
 
 
     def rotate_shape(self):
@@ -389,11 +408,15 @@ class PyTrominosGame:
                 self.current_shape.x_pos += dx
                 self.current_shape.y_pos += dy
                 if not self.check_collision():
+                    if self.lock_timer is not None:
+                        self.root.after_cancel(self.lock_timer)
+                        self.lock_timer = None
+                    self.calculate_ghost_position()
                     return
                 self.current_shape.x_pos = old_x
                 self.current_shape.y_pos = old_y
             self.current_shape.shape = old_shape
-        if not self.check_collision():
+        else:
             if self.lock_timer is not None:
                 self.root.after_cancel(self.lock_timer)
                 self.lock_timer = None
@@ -421,12 +444,12 @@ class PyTrominosGame:
                 if self.board[y][x] and not visited[y][x]:
                     floating.append((y, x))
         for y, x in sorted(floating, reverse=True):
+            color = self.board[y][x]
             self.board[y][x] = None
             new_y = y
             while new_y + 1 < GRID_HEIGHT and not self.board[new_y + 1][x]:
                 new_y += 1
-            self.board[new_y][x] = COLORS.index(self.board[y][x]) if self.board[y][x] else None
-        self.update_score()
+            self.board[new_y][x] = color
 
 
 #endregion
@@ -461,16 +484,23 @@ class PyTrominosGame:
 
 
     def hold_shape(self, event=None):
-        if not self.hold_used:
+        if not self.hold_used and not self.paused and not self.game_over:
             if self.held_shape:
                 self.current_shape, self.held_shape = self.held_shape, self.current_shape
                 self.current_shape.x_pos = GRID_WIDTH // 2 - len(self.current_shape.shape[0]) // 2
                 self.current_shape.y_pos = 0
+                if self.check_collision():
+                    self.game_over = True
+                    return
             else:
                 self.held_shape = self.current_shape
                 self.spawn_new_shape()
             self.hold_used = True
+            if self.lock_timer is not None:
+                self.root.after_cancel(self.lock_timer)
+                self.lock_timer = None
             self.draw_held_shape()
+            self.calculate_ghost_position()
             self.draw_board()
 
 
@@ -481,9 +511,13 @@ class PyTrominosGame:
     def clear_lines(self):
         lines_to_clear = [y for y in range(GRID_HEIGHT) if all(self.board[y])]
         if lines_to_clear:
+            self.combo_count += 1
+            self.update_combo()
             self.flash_lines(lines_to_clear)
             self.root.after(200, self.remove_lines, lines_to_clear)
         else:
+            self.combo_count = self.combo_count // 2
+            self.update_combo()
             self.collapse_floating_blocks()
 
 
@@ -507,7 +541,9 @@ class PyTrominosGame:
         new_board = [row for y, row in enumerate(self.board) if y not in lines]
         lines_cleared = len(lines)
         self.lines_cleared += lines_cleared
-        self.score += 10 * lines_cleared * (lines_cleared + 1) // 2 * min(self.level, 3)
+        base_score = 10 * lines_cleared * (lines_cleared + 1) // 2 * min(self.level, 3)
+        combo_bonus = (self.combo_count - 1) * 50 if self.combo_count > 1 else 0
+        self.score += base_score + combo_bonus
         while len(new_board) < GRID_HEIGHT:
             new_board.insert(0, [None for _ in range(GRID_WIDTH)])
         self.board = new_board
@@ -567,10 +603,19 @@ class PyTrominosGame:
 
 
     def key_press(self, event):
+        if self.game_over:
+            return
         keysym = event.keysym
+        if event.state & 0x1:  # Shift pressed
+            if keysym == "Left":
+                self.slam_left()
+                return
+            elif keysym == "Right":
+                self.slam_right()
+                return
         if keysym in ("Left", "Right", "Down", "Up"):
             if keysym not in self.movement_keys:
-                self.move_shape_key(keysym)  # Initial movement
+                self.move_shape_key(keysym)
                 after_id = self.root.after(INITIAL_MOVE_DELAY, self.move_repeat, keysym)
                 self.movement_keys[keysym] = after_id
         elif keysym == "space":
@@ -589,6 +634,8 @@ class PyTrominosGame:
 
 
     def move_repeat(self, keysym):
+        if self.game_over:
+            return
         self.move_shape_key(keysym)
         if keysym in self.movement_keys:
             repeat_rate = 10 if keysym == "Down" else MOVE_REPEAT_RATE
@@ -597,6 +644,8 @@ class PyTrominosGame:
 
 
     def move_shape_key(self, keysym):
+        if self.paused or self.game_over:
+            return
         if keysym == "Left":
             self.move_shape(-1, 0)
         elif keysym == "Right":
@@ -612,6 +661,8 @@ class PyTrominosGame:
 
 
     def toggle_pause(self, event=None):
+        if self.game_over:
+            return
         if self.paused:
             self.paused = False
             self.after_id = self.root.after(self.speed, self.drop_shape)
@@ -620,6 +671,7 @@ class PyTrominosGame:
             self.paused = True
             if self.after_id:
                 self.root.after_cancel(self.after_id)
+                self.after_id = None
             if self.lock_timer:
                 self.root.after_cancel(self.lock_timer)
                 self.lock_timer = None
@@ -627,19 +679,32 @@ class PyTrominosGame:
 
 
     def show_help(self):
-        self.toggle_pause()
+        was_paused = self.paused
+        if not was_paused:
+            self.toggle_pause()
         messagebox.showinfo("Help",
-            "Move: Up, Down, Left, Right"
+            "Move: Arrow Keys"
+            "\n\nRotate: Up Arrow"
             "\n\nDrop: Space"
+            "\n\nSlam Left/Right: Shift + Left/Right"
             "\n\nHold: C"
+            "\n\nPause: P"
         )
-        self.toggle_pause()
+        if not was_paused:
+            self.toggle_pause()
         self.root.focus_set()
 
 
     def restart_game(self, event=None):
         if self.after_id:
             self.root.after_cancel(self.after_id)
+            self.after_id = None
+        if self.lock_timer:
+            self.root.after_cancel(self.lock_timer)
+            self.lock_timer = None
+        for after_id in self.movement_keys.values():
+            self.root.after_cancel(after_id)
+        self.movement_keys.clear()
         self.board = [[None for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
         self.current_shape = Tromino(self.game_canvas)
         self.shape_bag = []
@@ -651,13 +716,16 @@ class PyTrominosGame:
         self.draw_next_shape()
         self.draw_held_shape()
         self.game_over = False
+        self.paused = False
         self.score = 0
         self.level = 1
         self.lines_cleared = 0
         self.speed = INITIAL_SPEED
+        self.combo_count = 0
         self.down_key_pressed = False
         self.update_level()
         self.update_score()
+        self.update_combo()
         self.after_id = self.root.after(self.speed, self.drop_shape)
         self.gameloop()
 
@@ -672,3 +740,6 @@ if __name__ == "__main__":
     game = PyTrominosGame(root)
     game.run()
     root.mainloop()
+
+
+#endregion
