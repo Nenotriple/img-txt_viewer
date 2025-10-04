@@ -458,15 +458,16 @@ class EditPanel:
         def sigmoid(x):
             return 1 / (1 + numpy.exp(-x))
         grayscale = ImageOps.grayscale(image)
-        gradient = numpy.array(grayscale).astype(numpy.float32)
+        gradient = numpy.asarray(grayscale, dtype=numpy.float32)
         gradient = (gradient - threshold) / 256.0
         gradient = sigmoid(gradient * 10)
         gradient = (gradient * 256).astype(numpy.uint8)
-        mask = Image.fromarray(gradient)
         if invert:
-            mask = ImageOps.invert(mask)
-        blurred_mask = mask.filter(ImageFilter.GaussianBlur(radius=blur_radius))
-        return blurred_mask
+            gradient = 255 - gradient
+        mask = Image.fromarray(gradient, mode='L')
+        if blur_radius > 0:
+            mask = mask.filter(ImageFilter.GaussianBlur(radius=blur_radius))
+        return mask
 
 
 # --------------------------------------
