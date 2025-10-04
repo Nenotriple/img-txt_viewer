@@ -414,7 +414,16 @@ class CalculateFileStats:
     def get_image_dpi(self, image):
         """Get the DPI of an image, calculating if necessary."""
         dpi = image.info.get('dpi', (0, 0))
-        if not all(dpi):
+        # Ensure dpi is a tuple of numbers (not strings)
+        if isinstance(dpi, tuple):
+            dpi = tuple(float(x) if isinstance(x, str) and x.replace('.', '', 1).isdigit() else x for x in dpi)
+        else:
+            # If dpi is a single value, make it a tuple
+            try:
+                dpi = (float(dpi), float(dpi))
+            except Exception:
+                dpi = (0, 0)
+        if not all(isinstance(x, (int, float)) and x > 0 for x in dpi):
             width, height = image.size
             diagonal_inches = 10
             diagonal_pixels = (width**2 + height**2) ** 0.5
