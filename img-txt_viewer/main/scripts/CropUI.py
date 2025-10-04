@@ -18,7 +18,9 @@ from TkToolTip.TkToolTip import TkToolTip as Tip
 # Local
 from main.scripts import HelpText
 from main.scripts.help_window import HelpWindow
+from main.scripts.scrollable_frame import ScrollableFrame
 import main.scripts.entry_helper as entry_helper
+
 
 # Type Hinting
 from typing import TYPE_CHECKING
@@ -1244,10 +1246,10 @@ class CropInterface:
 
 
     def create_control_panel(self):
-        self.control_frame = tk.Frame(self.crop_ui_frame, relief="sunken", borderwidth=1)
+        self.control_frame = ScrollableFrame(self.crop_ui_frame, layout="vertical", label="Controls")
         self.control_frame.grid(row=1, column=1, sticky="nsew", rowspan=2, pady=self.pady)
         self.create_nav_and_crop_widgets()
-        self.spin_frame = tk.Frame(self.control_frame)
+        self.spin_frame = tk.Frame(self.control_frame.frame)
         self.spin_frame.pack(pady=self.pady, padx=self.padx, fill="x")
         self.create_size_widgets()
         self.create_position_widgets()
@@ -1257,7 +1259,7 @@ class CropInterface:
 
 
     def create_nav_and_crop_widgets(self):
-        frame = tk.Frame(self.control_frame)
+        frame = tk.Frame(self.control_frame.frame)
         frame.pack(pady=self.pady, padx=self.padx, fill="x")
         # After Crop menu
         menubutton = ttk.Menubutton(frame, text="After Crop")
@@ -1279,12 +1281,12 @@ class CropInterface:
         self.entry_helper.bind_helpers(self.img_index_spin)
         ttk.Label(index_frame, textvariable=self.img_index_label_var).pack(side="left")
         # Nav Buttons
-        nav_btn_frame = tk.Frame(self.control_frame)
+        nav_btn_frame = tk.Frame(self.control_frame.frame)
         nav_btn_frame.pack(pady=self.pady, padx=self.padx, fill="x")
         ttk.Button(nav_btn_frame, text="<---Previous", command=self.show_previous_img).pack(side="left", fill="x", expand=True)
         ttk.Button(nav_btn_frame, text="Next--->", command=self.show_next_img).pack(side="left", fill="x", expand=True)
         # Crop Button
-        ttk.Button(self.control_frame, text="Crop Selection", command=self.crop_img).pack(fill="x", pady=self.pady, padx=self.padx)
+        ttk.Button(self.control_frame.frame, text="Crop Selection", command=self.crop_img).pack(fill="x", pady=self.pady, padx=self.padx)
 
 
     def create_size_widgets(self):
@@ -1340,7 +1342,7 @@ class CropInterface:
 
 
     def create_selection_widgets(self):
-        frame = ttk.LabelFrame(self.control_frame, text="Fixed Selection")
+        frame = ttk.LabelFrame(self.control_frame.frame, text="Fixed Selection")
         frame.pack(pady=self.pady, padx=self.padx, fill="x")
         frame.columnconfigure(1, weight=1)
         # Fixed selection
@@ -1379,7 +1381,7 @@ class CropInterface:
 
 
     def create_option_widgets(self):
-        frame = ttk.LabelFrame(self.control_frame, text="Options")
+        frame = ttk.LabelFrame(self.control_frame.frame, text="Options")
         frame.pack(pady=self.pady, padx=self.padx, fill="x")
         frame.columnconfigure(0, weight=1)
         frame.columnconfigure(1, weight=1)
@@ -1402,7 +1404,7 @@ class CropInterface:
 
 
     def create_transform_widgets(self):
-        frame = ttk.LabelFrame(self.control_frame, text="Transform")
+        frame = ttk.LabelFrame(self.control_frame.frame, text="Transform")
         frame.pack(pady=self.pady, padx=self.padx, fill="x")
         # Rotate
         ttk.Button(frame, text="Rotate", command=lambda: self.transform_img("rotate_270")).pack(side="left", fill="x", pady=self.pady, padx=2)
