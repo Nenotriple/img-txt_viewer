@@ -473,9 +473,6 @@ class EditPanel:
 
 
     def adjust_clarity(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None) -> Optional[Image.Image]:
-        """Local midtone contrast (clarity) implemented by adding a scaled high-pass (original - blurred)
-        back to the image. value in [-100, 100], where positive increases clarity, negative softens.
-        """
         if value == 0:
             return image
         amount = float(value) / 100.0  # scale factor: -1.0 .. 1.0
