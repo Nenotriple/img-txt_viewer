@@ -32,8 +32,8 @@ import main.scripts.entry_helper as EntryHelper
 
 
 class ResizeTool:
-    def __init__(self, root: 'Tk', parent: 'Main', filepath, window_x, window_y, update_pair, jump_to_image):
-        self.top = Toplevel(root, borderwidth=2, relief="groove")
+    def __init__(self, master: 'Tk', app: 'Main', filepath, window_x, window_y, update_pair, jump_to_image):
+        self.top = Toplevel(master, borderwidth=2, relief="groove")
         self.top.overrideredirect(True)
         self.top.geometry("+{}+{}".format(window_x, window_y))
         self.top.grab_set()
@@ -45,9 +45,9 @@ class ResizeTool:
 
         self.supported_filetypes = (".png", ".webp", ".jpg", ".jpeg", ".jpg_large", ".jfif", ".tif", ".tiff", ".bmp", ".gif")
 
-        self.parent = parent
-        self.sort_key = self.parent.get_file_sort_key()
-        self.reverse_sort_direction_var = self.parent.reverse_load_order_var.get()
+        self.app = app
+        self.sort_key = self.app.get_file_sort_key()
+        self.reverse_sort_direction_var = self.app.reverse_load_order_var.get()
         self.ImgTxt_update_pair = update_pair
         self.ImgTxt_jump_to_image = jump_to_image
 

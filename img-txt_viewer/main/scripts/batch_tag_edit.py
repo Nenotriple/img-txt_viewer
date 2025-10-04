@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 class BatchTagEdit:
     def __init__(self):
         # Inherited Variables
-        self.parent: 'Main' = None
+        self.app: 'Main' = None
         self.root: 'Tk' = None
         self.text_files = None
         self.working_dir = None
@@ -68,8 +68,8 @@ class BatchTagEdit:
         if working_dir:
             self.working_dir = working_dir
         else:
-            self.working_dir = self.parent.image_dir.get()
-        self.text_files = self.parent.text_files
+            self.working_dir = self.app.image_dir.get()
+        self.text_files = self.app.text_files
         # Reset UI state variables
         self.tag_counts = 0
         self.total_unique_tags = 0
@@ -96,11 +96,11 @@ class BatchTagEdit:
 #region GUI Setup
 
 
-    def setup_window(self, parent, root):
-        self.parent = parent
+    def setup_window(self, app, root):
+        self.app = app
         self.root = root
-        self.text_files = self.parent.text_files
-        self.working_dir = self.parent.image_dir.get()
+        self.text_files = self.app.text_files
+        self.working_dir = self.app.image_dir.get()
         self.batch_tag_edit_frame = None
         self.help_window = help_window.HelpWindow(self.root)
         tag_dict = self.get_tags()
@@ -120,7 +120,7 @@ class BatchTagEdit:
 
     def setup_primary_frame(self):
         # Primary Frame
-        self.batch_tag_edit_frame = self.parent.batch_tag_edit_tab
+        self.batch_tag_edit_frame = self.app.batch_tag_edit_tab
         self.batch_tag_edit_frame.grid_columnconfigure(0, weight=1)
         self.batch_tag_edit_frame.grid_columnconfigure(1, weight=1)
         self.batch_tag_edit_frame.grid_rowconfigure(2, weight=1)
@@ -531,7 +531,7 @@ class BatchTagEdit:
 
 
     def get_tags(self):
-        tag_dict = TagEditor.extract_tags_from_files(self.parent.text_files)
+        tag_dict = TagEditor.extract_tags_from_files(self.app.text_files)
         return tag_dict
 
 
@@ -558,7 +558,7 @@ class BatchTagEdit:
                 return
         delete_tags = []
         edit_tags = {}
-        target_files = self.parent.text_files
+        target_files = self.app.text_files
         for idx, iid in enumerate(self.tag_tree.get_children()):
             values = self.tag_tree.item(iid, "values")
             if not values or len(values) < 4 or idx >= len(self.original_tags):
@@ -575,7 +575,7 @@ class BatchTagEdit:
             for original_tag, new_tag in edit_tags.items():
                 TagEditor.edit_tags(target_files, [original_tag], edit=new_tag)
         self.clear_filter(warn=False)
-        self.parent.refresh_text_box()
+        self.app.refresh_text_box()
 
 
 #endregion

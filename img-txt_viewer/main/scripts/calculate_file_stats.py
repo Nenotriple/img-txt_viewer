@@ -24,8 +24,8 @@ if TYPE_CHECKING:
 
 
 class CalculateFileStats:
-    def __init__(self, parent: 'Main', root: 'Tk'):
-        self.parent = parent
+    def __init__(self, app: 'Main', root: 'Tk'):
+        self.app = app
         self.root = root
         self.caption_counter = Counter()
         self.sorted_captions = []
@@ -46,10 +46,10 @@ class CalculateFileStats:
         if text_only and image_only:
             raise ValueError("Cannot set both text_only and image_only to True")
         self.initialize_counters()
-        # Use internal copies, do not modify parent
-        self._text_files = [f for f in self.parent.text_files if os.path.exists(f)]
-        self._image_files = list(self.parent.image_files)
-        self._video_thumb_dict = dict(getattr(self.parent, "video_thumb_dict", {}))
+        # Use internal copies, do not modify app
+        self._text_files = [f for f in self.app.text_files if os.path.exists(f)]
+        self._image_files = list(self.app.image_files)
+        self._video_thumb_dict = dict(getattr(self.app, "video_thumb_dict", {}))
         num_txt_files = len(self._text_files)
         num_img_files = sum(1 for f in self._image_files if not f.lower().endswith('.mp4'))
         num_video_files = sum(1 for f in self._image_files if f.lower().endswith('.mp4'))
@@ -58,13 +58,13 @@ class CalculateFileStats:
         # Process files based on flags
         if not image_only:
             self.process_text_files()
-        if (self.parent.process_image_stats_var.get() and not text_only) or image_only:
+        if (self.app.process_image_stats_var.get() and not text_only) or image_only:
             self.process_image_files()
         # Format statistics into a text string
         stats_text = self.compile_file_statistics(formatted_total_files)
         self.update_filestats_textbox(stats_text, manual_refresh)
         if self.sorted_captions:
-            self.parent.text_controller.my_tags.refresh_all_tags_listbox(tags=self.sorted_captions)
+            self.app.text_controller.my_tags.refresh_all_tags_listbox(tags=self.sorted_captions)
 
 
     def initialize_counters(self):
@@ -257,7 +257,7 @@ class CalculateFileStats:
         top_5_files_captions = sorted(self.file_caption_counts, key=lambda x: (-x[1], x[0].lower()))[:5]
         formatted_top_5_files_captions = "\n".join([f"{count}x, {file}" for file, count in top_5_files_captions])
         word_page_count = self.total_words / 500 if self.total_words > 0 else 0
-        formatted_filepath = os.path.normpath(self.parent.image_dir.get())
+        formatted_filepath = os.path.normpath(self.app.image_dir.get())
         formatted_total_filesize = self.format_filesize(self.total_image_filesize + self.total_text_filesize + self.total_video_filesize)
         # Format statistics into a dictionary
         stats = {
@@ -446,14 +446,14 @@ class CalculateFileStats:
         """Update the caption counter with the captions from a text file."""
         for caption in captions:
             caption_words = caption.split()
-            if self.parent.truncate_stat_captions_var.get() and (len(caption_words) > 8 or len(caption) > 50):
+            if self.app.truncate_stat_captions_var.get() and (len(caption_words) > 8 or len(caption) > 50):
                 caption = ' '.join(caption_words[:8]) + "..." if len(caption_words) > 8 else caption[:50] + "..."
             self.caption_counter[caption] += 1
 
 
     def filter_and_update_textfiles(self, initial_call=False):
         """Filter out non-existent text files and update the text file list."""
-        # This function is now only used for initial filtering, but does not update parent.text_files
+        # This function is now only used for initial filtering, but does not update app.text_files
         # Use self._text_files instead
         num_txt_files = len(self._text_files)
         num_img_files = sum(1 for f in self._image_files if not f.lower().endswith('.mp4'))
@@ -461,7 +461,7 @@ class CalculateFileStats:
         num_total_files = num_img_files + num_txt_files + num_video_files
         formatted_total_files = f"{num_total_files} (Text: {num_txt_files}, Images: {num_img_files}, Videos: {num_video_files})"
         if not initial_call:
-            self.parent.refresh_file_lists()
+            self.app.refresh_file_lists()
         return num_total_files, num_txt_files, num_img_files, num_video_files, formatted_total_files
 
 
@@ -481,10 +481,10 @@ class CalculateFileStats:
 
     def update_filestats_textbox(self, stats_text, manual_refresh=None):
         """Update the GUI textbox with the calculated statistics."""
-        self.parent.text_controller.filestats_textbox.config(state="normal")
-        self.parent.text_controller.filestats_textbox.delete("1.0", "end")
-        self.parent.text_controller.filestats_textbox.insert("1.0", stats_text)
-        self.parent.text_controller.filestats_textbox.config(state="disabled")
+        self.app.text_controller.filestats_textbox.config(state="normal")
+        self.app.text_controller.filestats_textbox.delete("1.0", "end")
+        self.app.text_controller.filestats_textbox.insert("1.0", stats_text)
+        self.app.text_controller.filestats_textbox.config(state="disabled")
         if manual_refresh:
             messagebox.showinfo("Stats Calculated", "Stats have been updated!")
 

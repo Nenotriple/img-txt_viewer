@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 
 class BatchResizeImages:
     def __init__(self):
-        self.parent: 'Main' = None
+        self.app: 'Main' = None
         self.root: 'tk.Tk' = None
         self.working_dir = None
         self.help_window = None
@@ -51,8 +51,8 @@ class BatchResizeImages:
 #region  Interface
 
 
-    def setup_window(self, parent, root, path=None):
-        self.parent = parent
+    def setup_window(self, app, root, path=None):
+        self.app = app
         self.root = root
         self.working_dir = path
         self.help_window = HelpWindow(self.root)
@@ -72,10 +72,10 @@ class BatchResizeImages:
 
     def setup_primary_frame(self):
         # Configure the tab to expand properly
-        self.parent.batch_resize_images_tab.grid_rowconfigure(0, weight=1)
-        self.parent.batch_resize_images_tab.grid_columnconfigure(0, weight=1)
+        self.app.batch_resize_images_tab.grid_rowconfigure(0, weight=1)
+        self.app.batch_resize_images_tab.grid_columnconfigure(0, weight=1)
         # Create and configure the main frame
-        self.batch_resize_images_frame = tk.Frame(self.parent.batch_resize_images_tab)
+        self.batch_resize_images_frame = tk.Frame(self.app.batch_resize_images_tab)
         self.batch_resize_images_frame.grid(row=0, column=0, sticky="nsew")
         # Configure the main frame's grid
         self.batch_resize_images_frame.grid_rowconfigure(1, weight=1)
@@ -469,8 +469,8 @@ class BatchResizeImages:
         if not self.working_dir:
             return []
         files = [f for f in os.listdir(self.working_dir) if f.lower().endswith(self.supported_filetypes)]
-        if self.parent and hasattr(self.parent, "get_file_sort_key"):
-            sort_key = self.parent.get_file_sort_key()
+        if self.app and hasattr(self.app, "get_file_sort_key"):
+            sort_key = self.app.get_file_sort_key()
             return sorted(files, key=sort_key)
         return sorted(files)
 

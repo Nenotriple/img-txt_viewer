@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 class BatchRename:
     # Initialization & setup
     def __init__(self):
-        self.parent: 'Main' = None
+        self.app: 'Main' = None
         self.root: 'tk.Tk' = None
         self.working_dir = None
         self.help_window = None
@@ -45,10 +45,10 @@ class BatchRename:
         self.rename_preset_var = StringVar(value="Numbering")
 
 
-    def setup_window(self, parent, root):
-        self.parent = parent
+    def setup_window(self, app, root):
+        self.app = app
         self.root = root
-        self.working_dir = self.parent.image_dir.get()
+        self.working_dir = self.app.image_dir.get()
         self.help_window = HelpWindow(self.root)
         self.setup_ui()
         self.set_working_directory(self.working_dir)
@@ -64,10 +64,10 @@ class BatchRename:
 
     def setup_primary_frame(self):
         # Configure the tab to expand properly
-        self.parent.batch_rename_tab.grid_rowconfigure(0, weight=1)
-        self.parent.batch_rename_tab.grid_columnconfigure(0, weight=1)
+        self.app.batch_rename_tab.grid_rowconfigure(0, weight=1)
+        self.app.batch_rename_tab.grid_columnconfigure(0, weight=1)
         # Create and configure the main frame
-        self.batch_rename_frame = tk.Frame(self.parent.batch_rename_tab)
+        self.batch_rename_frame = tk.Frame(self.app.batch_rename_tab)
         self.batch_rename_frame.grid(row=0, column=0, sticky="nsew")
         # Configure the main frame's grid
         self.batch_rename_frame.grid_rowconfigure(1, weight=1)
@@ -223,11 +223,11 @@ class BatchRename:
         # Clear selection tracking
         self.selected_items.clear()
         self.last_preview_count = 0
-        # Get the sort key from the parent
-        sort_key = self.parent.get_file_sort_key()
+        # Get the sort key from the app
+        sort_key = self.app.get_file_sort_key()
         # List all supported files in the working directory
         files = [f for f in os.listdir(self.working_dir) if f.lower().endswith(self.supported_filetypes)]
-        # Sort files using the parent's sort key; prepend working_dir for full path if needed
+        # Sort files using the app's sort key; prepend working_dir for full path if needed
         files = sorted(files, key=lambda f: sort_key(f))
         # Clear existing treeview items
         for item in self.file_treeview.get_children():

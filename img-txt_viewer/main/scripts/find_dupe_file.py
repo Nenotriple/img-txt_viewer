@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 class FindDupeFile:
     def __init__(self):
         # Inherited Variables
-        self.parent: 'Main' = None
+        self.app: 'Main' = None
         self.root: 'Tk' = None
         self.working_dir = None
         self.help_window = None
@@ -76,8 +76,8 @@ class FindDupeFile:
 #region Interface
 
 
-    def setup_window(self, parent, root, path=None):
-        self.parent = parent
+    def setup_window(self, app, root, path=None):
+        self.app = app
         self.root = root
         self.working_dir = path
         self.help_window = HelpWindow(self.root)
@@ -112,9 +112,9 @@ class FindDupeFile:
 
 
     def setup_primary_frame(self):
-        self.parent.find_dupe_file_tab.columnconfigure(0, weight=1)
-        self.parent.find_dupe_file_tab.rowconfigure(0, weight=1)
-        self.find_dupe_files_frame = ttk.Frame(self.parent.find_dupe_file_tab)
+        self.app.find_dupe_file_tab.columnconfigure(0, weight=1)
+        self.app.find_dupe_file_tab.rowconfigure(0, weight=1)
+        self.find_dupe_files_frame = ttk.Frame(self.app.find_dupe_file_tab)
         self.find_dupe_files_frame.grid(row=0, column=0, sticky="nsew")
         self.find_dupe_files_frame.grid_rowconfigure(1, weight=1)
         self.find_dupe_files_frame.grid_columnconfigure(1, weight=1)

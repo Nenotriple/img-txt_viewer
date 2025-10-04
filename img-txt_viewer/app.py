@@ -636,7 +636,7 @@ class ImgTxtViewer:
         self.popup_zoom = PopUpZoom(self.primary_display_image)
         self.toggle_zoom_var = BooleanVar(value=self.popup_zoom.zoom_enabled.get())
         # Thumbnail Panel
-        self.thumbnail_panel = ThumbnailPanel(master=self.master_image_inner_frame, parent=self)
+        self.thumbnail_panel = ThumbnailPanel(master=self.master_image_inner_frame, app=self)
         self.thumbnail_panel.grid(row=3, column=0, sticky="ew")
         # Edit Image Panel
         self.edit_image_panel = Frame(self.master_image_inner_frame, relief="ridge", bd=1)
@@ -1465,13 +1465,13 @@ class ImgTxtViewer:
 
 
     def create_ui_tab(self, ui_component, ui_tab, extra_args=None, show=False, refresh=False):
-        parent = self
+        app = self
         root = self.root
-        if ui_component.parent is None:
+        if ui_component.app is None:
             if extra_args is not None:
-                ui_component.setup_window(parent, root, *extra_args)
+                ui_component.setup_window(app, root, *extra_args)
             else:
-                ui_component.setup_window(parent, root)
+                ui_component.setup_window(app, root)
         if show:
             self.main_notebook.select(ui_tab)
             if hasattr(ui_component, 'working_dir') and ui_component.working_dir != self.image_dir.get():
@@ -1826,7 +1826,7 @@ class ImgTxtViewer:
             return
         self.primary_display_image.grid_remove()
         self.video_player.destroy_player()
-        self.video_player = VideoPlayerWidget(master=self.master_image_inner_frame, parent=self)
+        self.video_player = VideoPlayerWidget(master=self.master_image_inner_frame, app=self)
         self.video_player.grid(row=1, column=0, sticky="nsew")
         try:
             self.video_player.load_video(file_path=self.image_file)

@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 class BatchUpscale:
     def __init__(self):
-        self.parent: 'Main' = None
+        self.app: 'Main' = None
         self.root: 'tk.Tk' = None
         self.working_dir = None
         self.help_window = None
@@ -66,15 +66,15 @@ class BatchUpscale:
         self.auto_output_var = tk.BooleanVar(value=True)
 
 
-    def setup_window(self, parent, root):
-        self.parent = parent
+    def setup_window(self, app, root):
+        self.app = app
         self.root = root
-        self.working_dir = self.parent.image_dir.get()
+        self.working_dir = self.app.image_dir.get()
         self.help_window = HelpWindow(self.root)
 
-        self.working_img_path = self.parent.image_files[self.parent.current_index]
-        self.executable_path = os.path.join(self.parent.app_root_path, "main", "resrgan", "realesrgan-ncnn-vulkan.exe")
-        self.extra_models_path = os.path.join(self.parent.get_direct_app_path(), self.parent.ncnn_models_dir)
+        self.working_img_path = self.app.image_files[self.app.current_index]
+        self.executable_path = os.path.join(self.app.app_root_path, "main", "resrgan", "realesrgan-ncnn-vulkan.exe")
+        self.extra_models_path = os.path.join(self.app.get_direct_app_path(), self.app.ncnn_models_dir)
         self.ncnn_models = self.find_additional_models()
         self.input_path_var.set(self.working_dir)
         self.output_path_var.set(value=os.path.join(self.input_path_var.get(), "Upscale_Output"))
@@ -99,10 +99,10 @@ class BatchUpscale:
 
     def setup_primary_frame(self):
         # Configure the tab to expand properly
-        self.parent.batch_upscale_tab.grid_rowconfigure(0, weight=1)
-        self.parent.batch_upscale_tab.grid_columnconfigure(0, weight=1)
+        self.app.batch_upscale_tab.grid_rowconfigure(0, weight=1)
+        self.app.batch_upscale_tab.grid_columnconfigure(0, weight=1)
         # Create and configure the main frame
-        self.batch_upscale_frame = tk.Frame(self.parent.batch_upscale_tab)
+        self.batch_upscale_frame = tk.Frame(self.app.batch_upscale_tab)
         self.batch_upscale_frame.grid(row=0, column=0, sticky="nsew")
         # Configure the main frame's grid
         self.batch_upscale_frame.grid_rowconfigure(1, weight=1)
@@ -365,7 +365,7 @@ class BatchUpscale:
 
     def highlight_parent_image(self):
         if not self.batch_mode_var.get():
-            parent_img_path = self.parent.image_files[self.parent.current_index]
+            parent_img_path = self.app.image_files[self.app.current_index]
             self.highlight_upscale_item(os.path.basename(parent_img_path))
 
 
@@ -697,7 +697,7 @@ class BatchUpscale:
 
     def get_image_index(self, directory, filename):
         filename = os.path.basename(filename)
-        image_files = sorted((file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)), key=self.parent.get_file_sort_key(), reverse=self.parent.reverse_load_order_var.get())
+        image_files = sorted((file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)), key=self.app.get_file_sort_key(), reverse=self.app.reverse_load_order_var.get())
         return image_files.index(filename) if filename in image_files else -1
 
 
@@ -737,7 +737,7 @@ class BatchUpscale:
             self.working_dir = path
         else:
             self.determine_working_directory()
-        self.working_img_path = self.parent.image_files[self.parent.current_index]
+        self.working_img_path = self.app.image_files[self.app.current_index]
         self.input_path_var.set(self.working_dir)
         self.output_path_var.set(value=os.path.join(self.input_path_var.get(), "Upscale_Output"))
         self.update_image_count()
@@ -822,8 +822,8 @@ class BatchUpscale:
 
     def _get_sorted_file_list(self, directory):
         files = [file for file in os.listdir(directory) if file.lower().endswith(self.supported_filetypes)]
-        if hasattr(self.parent, "get_file_sort_key"):
-            sort_key = self.parent.get_file_sort_key()
-            reverse = getattr(self.parent, "reverse_load_order_var", tk.BooleanVar(value=False)).get()
+        if hasattr(self.app, "get_file_sort_key"):
+            sort_key = self.app.get_file_sort_key()
+            reverse = getattr(self.app, "reverse_load_order_var", tk.BooleanVar(value=False)).get()
             return sorted(files, key=sort_key, reverse=reverse)
         return files

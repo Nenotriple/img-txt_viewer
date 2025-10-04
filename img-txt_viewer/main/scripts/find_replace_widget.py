@@ -223,10 +223,10 @@ class TextSearchManager:
 
 
 class FindReplaceEntry(ttk.Frame):
-    def __init__(self, parent: tk.Frame, text_widget: tk.Text, *args, **kwargs):
-        # Initialize the ttk.Frame with parent and any extra options
-        super().__init__(parent, *args, **kwargs)
-        self.parent: tk.Frame = parent
+    def __init__(self, master: tk.Frame, text_widget: tk.Text, *args, **kwargs):
+        # Initialize the ttk.Frame with master and any extra options
+        super().__init__(master, *args, **kwargs)
+        self.master: tk.Frame = master
         # Track the replace row visibility state
         self.replace_row_visible = False
         # Store text widget reference and create search manager if provided

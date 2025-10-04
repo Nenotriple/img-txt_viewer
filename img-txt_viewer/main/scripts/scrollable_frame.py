@@ -31,9 +31,9 @@ class _BaseScrollableFrame:
             to create/bind. This name matches the internal attribute
             ``self.layout`` and the validator method.
     """
-    def __init__(self, parent, layout="vertical", *args, **kwargs):
+    def __init__(self, master, layout="vertical", *args, **kwargs):
         self.layout = self._validate_layout(layout)
-        self._setup_scroll_canvas(parent)
+        self._setup_scroll_canvas(master)
         self._bind_mousewheel_events()
 
 
@@ -44,10 +44,10 @@ class _BaseScrollableFrame:
         return layout
 
 
-    def _setup_scroll_canvas(self, parent):
+    def _setup_scroll_canvas(self, master):
         """Create Canvas and a Frame window for content, bind config events."""
-        self.canvas = tk.Canvas(parent, highlightthickness=0)
-        self._setup_scrollbars(parent)
+        self.canvas = tk.Canvas(master, highlightthickness=0)
+        self._setup_scrollbars(master)
         self.canvas.pack(side="left", fill="both", expand=True)
         self.content_frame = ttk.Frame(self.canvas)
         self.content_window = self.canvas.create_window((0, 0), window=self.content_frame, anchor="nw")
@@ -56,14 +56,14 @@ class _BaseScrollableFrame:
         self.canvas.bind("<Configure>", self._on_canvas_configure)
 
 
-    def _setup_scrollbars(self, parent):
+    def _setup_scrollbars(self, master):
         """Create vertical and/or horizontal ttk.Scrollbar widgets as requested."""
         if self.layout in ("vertical", "both"):
-            self.vsb = ttk.Scrollbar(parent, orient="vertical", command=self.canvas.yview)
+            self.vsb = ttk.Scrollbar(master, orient="vertical", command=self.canvas.yview)
             self.canvas.configure(yscrollcommand=self.vsb.set)
             self.vsb.pack(side="right", fill="y")
         if self.layout in ("horizontal", "both"):
-            self.hsb = ttk.Scrollbar(parent, orient="horizontal", command=self.canvas.xview)
+            self.hsb = ttk.Scrollbar(master, orient="horizontal", command=self.canvas.xview)
             self.canvas.configure(xscrollcommand=self.hsb.set)
             self.hsb.pack(side="bottom", fill="x")
 
@@ -224,10 +224,10 @@ class ScrollableFrame(ttk.Frame, _BaseScrollableFrame):
     Use layout='vertical'|'horizontal'|'both'. Pass label to wrap
     content in a ttk.LabelFrame.
     """
-    def __init__(self, parent, layout="vertical", label=None, *args, **kwargs):
+    def __init__(self, master, layout="vertical", label=None, *args, **kwargs):
         """Initialize the ScrollableFrame container."""
         # Initialize the outer frame (this instance) which remains the widget to pack/grid.
-        ttk.Frame.__init__(self, parent, *args, **kwargs)
+        ttk.Frame.__init__(self, master, *args, **kwargs)
         if label is not None:
             self._inner_container = ttk.LabelFrame(self, text=label)
             self._inner_container.pack(fill="both", expand=True)
@@ -235,7 +235,7 @@ class ScrollableFrame(ttk.Frame, _BaseScrollableFrame):
         else:
             self._inner_container = None
             base_parent = self
-        # Initialize the scrollable machinery using the chosen container as the parent.
+        # Initialize the scrollable machinery using the chosen container as the master.
         _BaseScrollableFrame.__init__(self, base_parent, layout, *args, **kwargs)
 
 

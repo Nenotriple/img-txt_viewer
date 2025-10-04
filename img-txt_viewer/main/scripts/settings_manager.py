@@ -1,7 +1,7 @@
 """
 
 Manages saving and loading user settings, overwriting defaults with user preferences.
-Default settings should be set in both the main application (parent) and the SettingsManager.
+Default settings should be set in both the main application (Main) and the SettingsManager.
 
 """
 
@@ -30,10 +30,10 @@ if TYPE_CHECKING:
 
 
 class SettingsManager:
-    def __init__(self, parent: 'Main', root: 'Tk'):
-        self.parent = parent
+    def __init__(self, app: 'Main', root: 'Tk'):
+        self.app = app
         self.root = root
-        self.version = self.parent.app_version
+        self.version = self.app.app_version
 
         self.config = configparser.ConfigParser()
 
@@ -60,8 +60,8 @@ class SettingsManager:
 
 
     def _read_existing_settings(self):
-        if os.path.exists(self.parent.app_settings_cfg):
-            self.config.read(self.parent.app_settings_cfg)
+        if os.path.exists(self.app.app_settings_cfg):
+            self.config.read(self.app.app_settings_cfg)
 
 
     def _add_section(self, section_name):
@@ -75,14 +75,14 @@ class SettingsManager:
 
     def _save_version_settings(self):
         self._add_section("Version")
-        self.parent.check_working_directory()
+        self.app.check_working_directory()
         self.config.set("Version", "app_version", self.version)
 
 
     def _save_path_settings(self):
         self._add_section("Path")
-        last_img_directory = str(self.parent.image_dir.get())
-        last_txt_directory = str(os.path.normpath(self.parent.text_dir))
+        last_img_directory = str(self.app.image_dir.get())
+        last_txt_directory = str(os.path.normpath(self.app.text_dir))
         # Image directory
         if self._verify_filepath(last_img_directory):
             self.config.set("Path", "last_img_directory", last_img_directory)
@@ -94,64 +94,64 @@ class SettingsManager:
         else:
             self.config.set("Path", "last_txt_directory", "")
         # External image editor
-        self.config.set("Path", "external_image_editor_path", str(self.parent.external_image_editor_path))
+        self.config.set("Path", "external_image_editor_path", str(self.app.external_image_editor_path))
         # Index and load order
-        self.config.set("Path", "last_index", str(self.parent.current_index))
-        self.config.set("Path", "load_order", str(self.parent.load_order_var.get()))
-        self.config.set("Path", "reverse_load_order", str(self.parent.reverse_load_order_var.get()))
+        self.config.set("Path", "last_index", str(self.app.current_index))
+        self.config.set("Path", "load_order", str(self.app.load_order_var.get()))
+        self.config.set("Path", "reverse_load_order", str(self.app.reverse_load_order_var.get()))
         # Restore last path
-        self.config.set("Path", "restore_last_path_var", str(self.parent.restore_last_path_var.get()))
+        self.config.set("Path", "restore_last_path_var", str(self.app.restore_last_path_var.get()))
 
 
     def _save_window_settings(self):
         self._add_section("Window")
-        self.config.set("Window", "restore_last_window_size_var", str(self.parent.restore_last_window_size_var.get()))
-        self.config.set("Window", "restore_last_text_pane_heights_var", str(self.parent.restore_last_text_pane_heights_var.get()))
-        self.config.set("Window", "window_geometry", str(self.parent.get_window_geometry()))
-        self.config.set("Window", "always_on_top_var", str(self.parent.always_on_top_var.get()))
-        self.config.set("Window", "primary_pane_state", str(self.parent.get_windowpane_state(windowpane=self.parent.primary_paned_window)))
-        self.config.set("Window", "panes_swap_ew_var", str(self.parent.panes_swap_ew_var.get()))
-        self.config.set("Window", "panes_swap_ns_var", str(self.parent.panes_swap_ns_var.get()))
-        self.config.set("Window", "text_widget_frame_dict", str(self.parent.text_widget_frame_dict))
+        self.config.set("Window", "restore_last_window_size_var", str(self.app.restore_last_window_size_var.get()))
+        self.config.set("Window", "restore_last_text_pane_heights_var", str(self.app.restore_last_text_pane_heights_var.get()))
+        self.config.set("Window", "window_geometry", str(self.app.get_window_geometry()))
+        self.config.set("Window", "always_on_top_var", str(self.app.always_on_top_var.get()))
+        self.config.set("Window", "primary_pane_state", str(self.app.get_windowpane_state(windowpane=self.app.primary_paned_window)))
+        self.config.set("Window", "panes_swap_ew_var", str(self.app.panes_swap_ew_var.get()))
+        self.config.set("Window", "panes_swap_ns_var", str(self.app.panes_swap_ns_var.get()))
+        self.config.set("Window", "text_widget_frame_dict", str(self.app.text_widget_frame_dict))
 
 
     def _save_autocomplete_settings(self):
         self._add_section("Autocomplete")
-        self.config.set("Autocomplete", "csv_danbooru", str(self.parent.csv_danbooru.get()))
-        self.config.set("Autocomplete", "csv_danbooru_safe", str(self.parent.csv_danbooru_safe.get()))
-        self.config.set("Autocomplete", "csv_derpibooru", str(self.parent.csv_derpibooru.get()))
-        self.config.set("Autocomplete", "csv_e621", str(self.parent.csv_e621.get()))
-        self.config.set("Autocomplete", "csv_english_dictionary", str(self.parent.csv_english_dictionary.get()))
-        self.config.set("Autocomplete", "suggestion_quantity", str(self.parent.suggestion_quantity_var.get()))
-        self.config.set("Autocomplete", "use_colored_suggestions", str(self.parent.colored_suggestion_var.get()))
-        self.config.set("Autocomplete", "suggestion_threshold", str(self.parent.suggestion_threshold_var.get()))
-        self.config.set("Autocomplete", "last_word_match", str(self.parent.last_word_match_var.get()))
+        self.config.set("Autocomplete", "csv_danbooru", str(self.app.csv_danbooru.get()))
+        self.config.set("Autocomplete", "csv_danbooru_safe", str(self.app.csv_danbooru_safe.get()))
+        self.config.set("Autocomplete", "csv_derpibooru", str(self.app.csv_derpibooru.get()))
+        self.config.set("Autocomplete", "csv_e621", str(self.app.csv_e621.get()))
+        self.config.set("Autocomplete", "csv_english_dictionary", str(self.app.csv_english_dictionary.get()))
+        self.config.set("Autocomplete", "suggestion_quantity", str(self.app.suggestion_quantity_var.get()))
+        self.config.set("Autocomplete", "use_colored_suggestions", str(self.app.colored_suggestion_var.get()))
+        self.config.set("Autocomplete", "suggestion_threshold", str(self.app.suggestion_threshold_var.get()))
+        self.config.set("Autocomplete", "last_word_match", str(self.app.last_word_match_var.get()))
 
 
     def _save_other_settings(self):
         self._add_section("Other")
-        self.config.set("Other", "auto_save", str(self.parent.auto_save_var.get()))
-        self.config.set("Other", "cleaning_text", str(self.parent.cleaning_text_var.get()))
-        self.config.set("Other", "big_save_button", str(self.parent.big_save_button_var.get()))
-        self.config.set("Other", "auto_insert_comma", str(self.parent.auto_insert_comma_var.get()))
-        self.config.set("Other", "highlighting_duplicates", str(self.parent.highlight_selection_var.get()))
-        self.config.set("Other", "truncate_stat_captions", str(self.parent.truncate_stat_captions_var.get()))
-        self.config.set("Other", "process_image_stats", str(self.parent.process_image_stats_var.get()))
-        self.config.set("Other", "use_mytags", str(self.parent.use_mytags_var.get()))
-        self.config.set("Other", "auto_delete_blank_files", str(self.parent.auto_delete_blank_files_var.get()))
-        self.config.set("Other", "thumbnails_visible", str(self.parent.thumbnails_visible.get()))
-        self.config.set("Other", "thumbnail_width", str(self.parent.thumbnail_width.get()))
-        self.config.set("Other", "edit_panel_visible", str(self.parent.edit_panel_visible_var.get()))
-        self.config.set("Other", "image_quality", str(self.parent.image_quality_var.get()))
-        self.config.set("Other", "font", str(self.parent.font_var.get()))
-        self.config.set("Other", "font_size", str(self.parent.font_size_var.get()))
-        self.config.set("Other", "list_mode", str(self.parent.list_mode_var.get()))
+        self.config.set("Other", "auto_save", str(self.app.auto_save_var.get()))
+        self.config.set("Other", "cleaning_text", str(self.app.cleaning_text_var.get()))
+        self.config.set("Other", "big_save_button", str(self.app.big_save_button_var.get()))
+        self.config.set("Other", "auto_insert_comma", str(self.app.auto_insert_comma_var.get()))
+        self.config.set("Other", "highlighting_duplicates", str(self.app.highlight_selection_var.get()))
+        self.config.set("Other", "truncate_stat_captions", str(self.app.truncate_stat_captions_var.get()))
+        self.config.set("Other", "process_image_stats", str(self.app.process_image_stats_var.get()))
+        self.config.set("Other", "use_mytags", str(self.app.use_mytags_var.get()))
+        self.config.set("Other", "auto_delete_blank_files", str(self.app.auto_delete_blank_files_var.get()))
+        self.config.set("Other", "thumbnails_visible", str(self.app.thumbnails_visible.get()))
+        self.config.set("Other", "thumbnail_width", str(self.app.thumbnail_width.get()))
+        self.config.set("Other", "edit_panel_visible", str(self.app.edit_panel_visible_var.get()))
+        self.config.set("Other", "image_quality", str(self.app.image_quality_var.get()))
+        self.config.set("Other", "font", str(self.app.font_var.get()))
+        self.config.set("Other", "font_size", str(self.app.font_size_var.get()))
+        self.config.set("Other", "list_mode", str(self.app.list_mode_var.get()))
 
 
     def _save_mytags_style_settings(self):
         """Saves MyTags style settings to configuration."""
         self._add_section("MyTagsStyle")
-        my_tags = self.parent.text_controller.my_tags
+        my_tags = self.app.text_controller.my_tags
         # Save Items style settings
         items_style = my_tags._style_items
         self.config.set("MyTagsStyle", "items_family", str(items_style.get('family', '')))
@@ -176,7 +176,7 @@ class SettingsManager:
 
     def write_settings_to_file(self):
         """Writes the current settings to the configuration file."""
-        with open(self.parent.app_settings_cfg, "w", encoding="utf-8") as f:
+        with open(self.app.app_settings_cfg, "w", encoding="utf-8") as f:
             self.config.write(f)
 
 
@@ -187,15 +187,15 @@ class SettingsManager:
     def read_settings(self):
         """Reads the user settings from the configuration file."""
         try:
-            if os.path.exists(self.parent.app_settings_cfg):
-                self.config.read(self.parent.app_settings_cfg)
+            if os.path.exists(self.app.app_settings_cfg):
+                self.config.read(self.app.app_settings_cfg)
                 if not self._is_current_version():
                     self.reset_settings()
                     return
                 self._read_config_settings()
-                if hasattr(self.parent, 'text_box'):
-                    self.parent.show_pair()
-                    self.parent.debounce_refresh_image()
+                if hasattr(self.app, 'text_box'):
+                    self.app.show_pair()
+                    self.app.debounce_refresh_image()
             else:
                 self.prompt_first_time_setup()
         except Exception as e:
@@ -220,14 +220,14 @@ class SettingsManager:
 
     def _read_directory_settings(self):
         self.external_image_editor_path = self.config.get("Path", "external_image_editor_path", fallback="mspaint")
-        self.parent.load_order_var.set(value=self.config.get("Path", "load_order", fallback="Name (default)"))
-        self.parent.reverse_load_order_var.set(value=self.config.getboolean("Path", "reverse_load_order", fallback=False))
-        self.parent.restore_last_path_var.set(value=self.config.getboolean("Path", "restore_last_path_var", fallback=True))
+        self.app.load_order_var.set(value=self.config.get("Path", "load_order", fallback="Name (default)"))
+        self.app.reverse_load_order_var.set(value=self.config.getboolean("Path", "reverse_load_order", fallback=False))
+        self.app.restore_last_path_var.set(value=self.config.getboolean("Path", "restore_last_path_var", fallback=True))
         self.reload_last_directory()
 
 
     def reload_last_directory(self):
-        if not self.parent.restore_last_path_var.get():
+        if not self.app.restore_last_path_var.get():
             return
         last_img_directory = self.config.get("Path", "last_img_directory", fallback=None)
         if not self._verify_filepath(last_img_directory):
@@ -235,54 +235,54 @@ class SettingsManager:
         if not last_img_directory or not os.path.exists(last_img_directory) or not messagebox.askyesno("Confirmation", "Reload last directory?"):
             self.restore_path_confirm = False
             return
-        self.parent.image_dir.set(last_img_directory)
-        self.parent.set_working_directory(silent=True)
-        self.parent.set_text_file_path(str(self.config.get("Path", "last_txt_directory", fallback=last_img_directory)), silent=True)
+        self.app.image_dir.set(last_img_directory)
+        self.app.set_working_directory(silent=True)
+        self.app.set_text_file_path(str(self.config.get("Path", "last_txt_directory", fallback=last_img_directory)), silent=True)
         last_index = int(self.config.get("Path", "last_index", fallback=1))
         num_files = len([name for name in os.listdir(last_img_directory) if os.path.isfile(os.path.join(last_img_directory, name))])
-        self.parent.jump_to_image(min(last_index, num_files))
+        self.app.jump_to_image(min(last_index, num_files))
         self.restore_path_confirm = True
 
 
     def _read_autocomplete_settings(self):
-        self.parent.csv_danbooru.set(value=self.config.getboolean("Autocomplete", "csv_danbooru", fallback=False))
-        self.parent.csv_danbooru_safe.set(value=self.config.getboolean("Autocomplete", "csv_danbooru_safe", fallback=False))
-        self.parent.csv_derpibooru.set(value=self.config.getboolean("Autocomplete", "csv_derpibooru", fallback=False))
-        self.parent.csv_e621.set(value=self.config.getboolean("Autocomplete", "csv_e621", fallback=False))
-        self.parent.csv_english_dictionary.set(value=self.config.getboolean("Autocomplete", "csv_english_dictionary", fallback=False))
-        self.parent.suggestion_quantity_var.set(value=self.config.getint("Autocomplete", "suggestion_quantity", fallback=4))
-        self.parent.colored_suggestion_var.set(value=self.config.getboolean("Autocomplete", "use_colored_suggestions", fallback=True))
-        self.parent.suggestion_threshold_var.set(value=self.config.get("Autocomplete", "suggestion_threshold", fallback="Normal"))
-        self.parent.last_word_match_var.set(value=self.config.getboolean("Autocomplete", "last_word_match", fallback=False))
-        self.parent.autocomplete.update_autocomplete_dictionary()
+        self.app.csv_danbooru.set(value=self.config.getboolean("Autocomplete", "csv_danbooru", fallback=False))
+        self.app.csv_danbooru_safe.set(value=self.config.getboolean("Autocomplete", "csv_danbooru_safe", fallback=False))
+        self.app.csv_derpibooru.set(value=self.config.getboolean("Autocomplete", "csv_derpibooru", fallback=False))
+        self.app.csv_e621.set(value=self.config.getboolean("Autocomplete", "csv_e621", fallback=False))
+        self.app.csv_english_dictionary.set(value=self.config.getboolean("Autocomplete", "csv_english_dictionary", fallback=False))
+        self.app.suggestion_quantity_var.set(value=self.config.getint("Autocomplete", "suggestion_quantity", fallback=4))
+        self.app.colored_suggestion_var.set(value=self.config.getboolean("Autocomplete", "use_colored_suggestions", fallback=True))
+        self.app.suggestion_threshold_var.set(value=self.config.get("Autocomplete", "suggestion_threshold", fallback="Normal"))
+        self.app.last_word_match_var.set(value=self.config.getboolean("Autocomplete", "last_word_match", fallback=False))
+        self.app.autocomplete.update_autocomplete_dictionary()
 
 
     def _read_other_settings(self):
-        self.parent.auto_save_var.set(value=self.config.getboolean("Other", "auto_save", fallback=False))
-        self.parent.cleaning_text_var.set(value=self.config.getboolean("Other", "cleaning_text", fallback=True))
-        self.parent.big_save_button_var.set(value=self.config.getboolean("Other", "big_save_button", fallback=True))
-        self.parent.auto_insert_comma_var.set(value=self.config.getboolean("Other", "auto_insert_comma", fallback=True))
-        self.parent.highlight_selection_var.set(value=self.config.getboolean("Other", "highlighting_duplicates", fallback=True))
-        self.parent.truncate_stat_captions_var.set(value=self.config.getboolean("Other", "truncate_stat_captions", fallback=True))
-        self.parent.process_image_stats_var.set(value=self.config.getboolean("Other", "process_image_stats", fallback=False))
-        self.parent.use_mytags_var.set(value=self.config.getboolean("Other", "use_mytags", fallback=True))
-        self.parent.auto_delete_blank_files_var.set(value=self.config.getboolean("Other", "auto_delete_blank_files", fallback=False))
-        self.parent.thumbnails_visible.set(value=self.config.getboolean("Other", "thumbnails_visible", fallback=True))
-        self.parent.thumbnail_width.set(value=self.config.getint("Other", "thumbnail_width", fallback=50))
-        self.parent.edit_panel_visible_var.set(value=self.config.getboolean("Other", "edit_panel_visible", fallback=False))
-        self.parent.edit_panel.toggle_edit_panel()
-        self.parent.image_quality_var.set(value=self.config.get("Other", "image_quality", fallback="Normal"))
-        self.parent.set_image_quality()
-        self.parent.font_var.set(value=self.config.get("Other", "font", fallback="Courier New"))
-        self.parent.font_size_var.set(value=self.config.getint("Other", "font_size", fallback=10))
-        if hasattr(self.parent, 'text_box'):
-            self.parent.text_box.config(font=(self.parent.font_var.get(), self.parent.font_size_var.get()))
-        self.parent.list_mode_var.set(value=self.config.getboolean("Other", "list_mode", fallback=False))
+        self.app.auto_save_var.set(value=self.config.getboolean("Other", "auto_save", fallback=False))
+        self.app.cleaning_text_var.set(value=self.config.getboolean("Other", "cleaning_text", fallback=True))
+        self.app.big_save_button_var.set(value=self.config.getboolean("Other", "big_save_button", fallback=True))
+        self.app.auto_insert_comma_var.set(value=self.config.getboolean("Other", "auto_insert_comma", fallback=True))
+        self.app.highlight_selection_var.set(value=self.config.getboolean("Other", "highlighting_duplicates", fallback=True))
+        self.app.truncate_stat_captions_var.set(value=self.config.getboolean("Other", "truncate_stat_captions", fallback=True))
+        self.app.process_image_stats_var.set(value=self.config.getboolean("Other", "process_image_stats", fallback=False))
+        self.app.use_mytags_var.set(value=self.config.getboolean("Other", "use_mytags", fallback=True))
+        self.app.auto_delete_blank_files_var.set(value=self.config.getboolean("Other", "auto_delete_blank_files", fallback=False))
+        self.app.thumbnails_visible.set(value=self.config.getboolean("Other", "thumbnails_visible", fallback=True))
+        self.app.thumbnail_width.set(value=self.config.getint("Other", "thumbnail_width", fallback=50))
+        self.app.edit_panel_visible_var.set(value=self.config.getboolean("Other", "edit_panel_visible", fallback=False))
+        self.app.edit_panel.toggle_edit_panel()
+        self.app.image_quality_var.set(value=self.config.get("Other", "image_quality", fallback="Normal"))
+        self.app.set_image_quality()
+        self.app.font_var.set(value=self.config.get("Other", "font", fallback="Courier New"))
+        self.app.font_size_var.set(value=self.config.getint("Other", "font_size", fallback=10))
+        if hasattr(self.app, 'text_box'):
+            self.app.text_box.config(font=(self.app.font_var.get(), self.app.font_size_var.get()))
+        self.app.list_mode_var.set(value=self.config.getboolean("Other", "list_mode", fallback=False))
 
 
     def _read_mytags_style_settings(self):
         """Reads MyTags style settings from configuration."""
-        my_tags = self.parent.text_controller.my_tags
+        my_tags = self.app.text_controller.my_tags
         # Read Items style settings
         items_style = my_tags._style_items
         items_style['family'] = self.config.get("MyTagsStyle", "items_family", fallback='')
@@ -317,23 +317,23 @@ class SettingsManager:
 
 
     def _read_window_settings(self):
-        self.parent.restore_last_window_size_var.set(value=self.config.getboolean("Window", "restore_last_window_size_var", fallback=True))
-        self.parent.restore_last_text_pane_heights_var.set(value=self.config.getboolean("Window", "restore_last_text_pane_heights_var", fallback=True))
-        if self.parent.restore_last_window_size_var.get():
-            self.parent.panes_swap_ew_var.set(value=self.config.getboolean("Window", "panes_swap_ew_var", fallback=False))
-            self.parent.panes_swap_ns_var.set(value=self.config.getboolean("Window", "panes_swap_ns_var", fallback=False))
-            self.parent.swap_pane_sides(swap_state=self.parent.panes_swap_ew_var.get(), center=False)
-            self.parent.swap_pane_orientation(swap_state=self.parent.panes_swap_ns_var.get(), center=False)
-            self.parent.always_on_top_var.set(value=self.config.getboolean("Window", "always_on_top_var", fallback=False))
-            self.parent.set_always_on_top()
+        self.app.restore_last_window_size_var.set(value=self.config.getboolean("Window", "restore_last_window_size_var", fallback=True))
+        self.app.restore_last_text_pane_heights_var.set(value=self.config.getboolean("Window", "restore_last_text_pane_heights_var", fallback=True))
+        if self.app.restore_last_window_size_var.get():
+            self.app.panes_swap_ew_var.set(value=self.config.getboolean("Window", "panes_swap_ew_var", fallback=False))
+            self.app.panes_swap_ns_var.set(value=self.config.getboolean("Window", "panes_swap_ns_var", fallback=False))
+            self.app.swap_pane_sides(swap_state=self.app.panes_swap_ew_var.get(), center=False)
+            self.app.swap_pane_orientation(swap_state=self.app.panes_swap_ns_var.get(), center=False)
+            self.app.always_on_top_var.set(value=self.config.getboolean("Window", "always_on_top_var", fallback=False))
+            self.app.set_always_on_top()
             window_geometry = ast.literal_eval(self.config.get("Window", "window_geometry", fallback=None))
-            self.parent.setup_window(geometry=window_geometry)
-            self.parent.primary_paned_window.sash_place(0, 0, 0)
+            self.app.setup_window(geometry=window_geometry)
+            self.app.primary_paned_window.sash_place(0, 0, 0)
             if self.restore_path_confirm:
                 primary_pane_state = ast.literal_eval(self.config.get("Window", "primary_pane_state", fallback=None))
-                self.parent.set_windowpane_state(windowpane=self.parent.primary_paned_window, state=primary_pane_state)
+                self.app.set_windowpane_state(windowpane=self.app.primary_paned_window, state=primary_pane_state)
                 text_widget_frame_dict = ast.literal_eval(self.config.get("Window", "text_widget_frame_dict", fallback="{}"))
-                self.parent.text_widget_frame_dict = text_widget_frame_dict
+                self.app.text_widget_frame_dict = text_widget_frame_dict
 
 
 #endregion
@@ -345,97 +345,97 @@ class SettingsManager:
         if not messagebox.askokcancel("Confirm Reset", "Reset all settings to their default parameters?"):
             return
         # Path
-        self.parent.set_text_file_path(str(self.parent.image_dir.get()))
-        self.parent.load_order_var.set(value="Name (default)")
-        self.parent.reverse_load_order_var.set(value=False)
+        self.app.set_text_file_path(str(self.app.image_dir.get()))
+        self.app.load_order_var.set(value="Name (default)")
+        self.app.reverse_load_order_var.set(value=False)
         # Autocomplete
-        self.parent.csv_danbooru.set(value=False)
-        self.parent.csv_danbooru_safe.set(value=False)
-        self.parent.csv_derpibooru.set(value=False)
-        self.parent.csv_e621.set(value=False)
-        self.parent.csv_english_dictionary.set(value=False)
-        self.parent.colored_suggestion_var.set(value=True)
-        self.parent.suggestion_quantity_var.set(value=4)
-        self.parent.suggestion_threshold_var.set(value="Normal")
-        self.parent.last_word_match_var.set(value=False)
+        self.app.csv_danbooru.set(value=False)
+        self.app.csv_danbooru_safe.set(value=False)
+        self.app.csv_derpibooru.set(value=False)
+        self.app.csv_e621.set(value=False)
+        self.app.csv_english_dictionary.set(value=False)
+        self.app.colored_suggestion_var.set(value=True)
+        self.app.suggestion_quantity_var.set(value=4)
+        self.app.suggestion_threshold_var.set(value="Normal")
+        self.app.last_word_match_var.set(value=False)
         # ONNX
-        self.parent.text_controller.auto_insert_mode_var.set(value="disable")
-        self.parent.text_controller.batch_interrogate_images_var.set(value=False)
-        self.parent.text_controller.autotag_gen_threshold_spinbox.set(value=0.35)
-        self.parent.text_controller.autotag_char_threshold_spinbox.set(value=0.8)
-        self.parent.text_controller.autotag_max_tags_spinbox.set(value=40)
-        self.parent.onnx_tagger.keep_underscore.set(value=False)
-        self.parent.onnx_tagger.keep_escape_character.set(value=True)
-        self.parent.text_controller.excluded_tags_entry.delete(0, 'end')
-        self.parent.text_controller.auto_exclude_tags_var.set(value=False)
-        self.parent.text_controller.keep_tags_entry.delete(0, 'end')
-        self.parent.text_controller.replace_tags_entry.delete(0, 'end')
-        self.parent.text_controller.replace_with_tags_entry.delete(0, 'end')
+        self.app.text_controller.auto_insert_mode_var.set(value="disable")
+        self.app.text_controller.batch_interrogate_images_var.set(value=False)
+        self.app.text_controller.autotag_gen_threshold_spinbox.set(value=0.35)
+        self.app.text_controller.autotag_char_threshold_spinbox.set(value=0.8)
+        self.app.text_controller.autotag_max_tags_spinbox.set(value=40)
+        self.app.onnx_tagger.keep_underscore.set(value=False)
+        self.app.onnx_tagger.keep_escape_character.set(value=True)
+        self.app.text_controller.excluded_tags_entry.delete(0, 'end')
+        self.app.text_controller.auto_exclude_tags_var.set(value=False)
+        self.app.text_controller.keep_tags_entry.delete(0, 'end')
+        self.app.text_controller.replace_tags_entry.delete(0, 'end')
+        self.app.text_controller.replace_with_tags_entry.delete(0, 'end')
         # Other
-        self.parent.text_controller.clear_search_and_replace_tab()
-        self.parent.text_controller.prefix_entry.delete(0, 'end')
-        self.parent.text_controller.append_entry.delete(0, 'end')
-        self.parent.text_controller.revert_text_image_filter(clear=True, silent=False)
-        self.parent.text_controller.clear_highlight_tab()
-        self.parent.list_mode_var.set(value=False)
-        self.parent.toggle_list_mode()
-        self.parent.cleaning_text_var.set(value=True)
-        self.parent.auto_save_var.set(value=False)
-        self.parent.toggle_save_button_height(reset=True)
-        self.parent.highlight_selection_var.set(value=True)
-        self.parent.highlight_all_duplicates_var.set(value=False)
-        self.parent.toggle_highlight_all_duplicates()
-        self.parent.truncate_stat_captions_var.set(value=True)
-        self.parent.process_image_stats_var.set(value=False)
-        self.parent.use_mytags_var.set(value=True)
-        self.parent.auto_delete_blank_files_var.set(value=False)
-        self.parent.external_image_editor_path = "mspaint"
-        self.parent.image_quality_var.set(value="Normal")
-        self.parent.set_image_quality()
-        self.parent.big_save_button_var.set(value=True)
-        self.parent.auto_insert_comma_var.set(value=True)
-        self.parent.restore_last_path_var.set(value=True)
+        self.app.text_controller.clear_search_and_replace_tab()
+        self.app.text_controller.prefix_entry.delete(0, 'end')
+        self.app.text_controller.append_entry.delete(0, 'end')
+        self.app.text_controller.revert_text_image_filter(clear=True, silent=False)
+        self.app.text_controller.clear_highlight_tab()
+        self.app.list_mode_var.set(value=False)
+        self.app.toggle_list_mode()
+        self.app.cleaning_text_var.set(value=True)
+        self.app.auto_save_var.set(value=False)
+        self.app.toggle_save_button_height(reset=True)
+        self.app.highlight_selection_var.set(value=True)
+        self.app.highlight_all_duplicates_var.set(value=False)
+        self.app.toggle_highlight_all_duplicates()
+        self.app.truncate_stat_captions_var.set(value=True)
+        self.app.process_image_stats_var.set(value=False)
+        self.app.use_mytags_var.set(value=True)
+        self.app.auto_delete_blank_files_var.set(value=False)
+        self.app.external_image_editor_path = "mspaint"
+        self.app.image_quality_var.set(value="Normal")
+        self.app.set_image_quality()
+        self.app.big_save_button_var.set(value=True)
+        self.app.auto_insert_comma_var.set(value=True)
+        self.app.restore_last_path_var.set(value=True)
         # Window
-        self.parent.always_on_top_var.set(value=False)
-        self.parent.set_always_on_top()
-        self.parent.panes_swap_ew_var.set(value=False)
-        self.parent.panes_swap_ns_var.set(value=False)
-        self.parent.swap_pane_sides(swap_state=False)
-        self.parent.swap_pane_orientation(swap_state=False)
-        self.parent.reset_window_geometry()
+        self.app.always_on_top_var.set(value=False)
+        self.app.set_always_on_top()
+        self.app.panes_swap_ew_var.set(value=False)
+        self.app.panes_swap_ns_var.set(value=False)
+        self.app.swap_pane_sides(swap_state=False)
+        self.app.swap_pane_orientation(swap_state=False)
+        self.app.reset_window_geometry()
         # Font and text_box
-        if hasattr(self.parent, 'text_box'):
-            self.parent.font_var.set(value="Courier New")
-            self.parent.font_size_var.set(value=10)
-            self.parent.text_controller.size_scale.set(value=10)
-            self.parent.text_controller.font_size_lbl.config(text=f"Size: 10")
-            current_text = self.parent.text_box.get("1.0", "end-1c")
-            self.parent.text_box.config(font=(self.parent.default_font, self.parent.default_font_size))
+        if hasattr(self.app, 'text_box'):
+            self.app.font_var.set(value="Courier New")
+            self.app.font_size_var.set(value=10)
+            self.app.text_controller.size_scale.set(value=10)
+            self.app.text_controller.font_size_lbl.config(text=f"Size: 10")
+            current_text = self.app.text_box.get("1.0", "end-1c")
+            self.app.text_box.config(font=(self.app.default_font, self.app.default_font_size))
         # MyTags style settings
         self._reset_mytags_style_settings()
-        self.parent.load_pairs()
-        if hasattr(self.parent, 'text_box'):
-            self.parent.text_box.delete("1.0", "end")
-            self.parent.text_box.insert("1.0", current_text)
+        self.app.load_pairs()
+        if hasattr(self.app, 'text_box'):
+            self.app.text_box.delete("1.0", "end")
+            self.app.text_box.insert("1.0", current_text)
         if messagebox.askyesno("Confirm Reset", "Reset 'My Tags' to default?"):
-            with open(self.parent.app_settings_cfg, 'w', encoding="utf-8") as cfg_file:
+            with open(self.app.app_settings_cfg, 'w', encoding="utf-8") as cfg_file:
                 cfg_file.write("")
-            self.parent.text_controller.my_tags.create_custom_dictionary(reset=True)
+            self.app.text_controller.my_tags.create_custom_dictionary(reset=True)
         # Extra panels
-        self.parent.thumbnails_visible.set(value=True)
-        self.parent.thumbnail_width.set(value=50)
-        self.parent.debounce_update_thumbnail_panel()
-        self.parent.edit_panel_visible_var.set(value=False)
-        self.parent.edit_panel.toggle_edit_panel()
+        self.app.thumbnails_visible.set(value=True)
+        self.app.thumbnail_width.set(value=50)
+        self.app.debounce_update_thumbnail_panel()
+        self.app.edit_panel_visible_var.set(value=False)
+        self.app.edit_panel.toggle_edit_panel()
         # Title
-        self.parent.sync_title_with_content()
+        self.app.sync_title_with_content()
         # Guided setup
         self.prompt_first_time_setup()
 
 
     def _reset_mytags_style_settings(self):
         """Resets MyTags style settings to their default values."""
-        my_tags = self.parent.text_controller.my_tags
+        my_tags = self.app.text_controller.my_tags
         # Reset Items style to defaults
         my_tags._style_items = {
             'family': '',
@@ -491,12 +491,12 @@ class SettingsManager:
         }
 
         def save_and_continue(close=False, back=False):
-            self.parent.csv_english_dictionary.set(dictionary_vars["English Dictionary"].get())
-            self.parent.csv_danbooru.set(dictionary_vars["Danbooru"].get())
-            self.parent.csv_danbooru_safe.set(dictionary_vars["Danbooru (Safe)"].get())
-            self.parent.csv_e621.set(dictionary_vars["e621"].get())
-            self.parent.csv_derpibooru.set(dictionary_vars["Derpibooru"].get())
-            self.parent.last_word_match_var.set(match_modes.get(last_word_match_var.get(), False))
+            self.app.csv_english_dictionary.set(dictionary_vars["English Dictionary"].get())
+            self.app.csv_danbooru.set(dictionary_vars["Danbooru"].get())
+            self.app.csv_danbooru_safe.set(dictionary_vars["Danbooru (Safe)"].get())
+            self.app.csv_e621.set(dictionary_vars["e621"].get())
+            self.app.csv_derpibooru.set(dictionary_vars["Derpibooru"].get())
+            self.app.last_word_match_var.set(match_modes.get(last_word_match_var.get(), False))
             if close:
                 save_and_close()
             elif back:
@@ -540,12 +540,12 @@ class SettingsManager:
         def save_and_close():
             self.save_settings()
             setup_window.destroy()
-            self.parent.autocomplete.update_autocomplete_dictionary()
+            self.app.autocomplete.update_autocomplete_dictionary()
 
         def create_setup_window():
-            setup_window = Toplevel(self.parent.root)
+            setup_window = Toplevel(self.app.root)
             setup_window.title("Dictionary Setup")
-            setup_window.iconphoto(False, self.parent.blank_image)
+            setup_window.iconphoto(False, self.app.blank_image)
             window_width, window_height = 400, 250
             position_right = self.root.winfo_screenwidth() // 2 - window_width // 2
             position_top = self.root.winfo_screenheight() // 2 - window_height // 2

@@ -30,8 +30,8 @@ if TYPE_CHECKING:
 
 
 class AboutWindow:
-    def __init__(self, parent: 'Main', root: 'tk.Tk', icon):
-        self.parent = parent
+    def __init__(self, app: 'Main', root: 'tk.Tk', icon):
+        self.app = app
         self.root = root
         self.icon_img = icon
         self.icon_path = None
@@ -202,7 +202,7 @@ class AboutWindow:
 
 
     def _set_icon(self):
-        self.icon_path = os.path.join(self.parent.app_root_path, "icon.ico")
+        self.icon_path = os.path.join(self.app.app_root_path, "icon.ico")
         try:
             self.about_window.iconbitmap(self.icon_path)
         except TclError:
@@ -253,7 +253,7 @@ class AboutWindow:
 
 
     def _create_made_by_label(self):
-        self.made_by_label = Label(self.bottom_row_frame, text=f"{self.parent.app_version} - img-txt_viewer - Created by: Nenotriple (2023-2025)", font=("Segoe UI", 10))
+        self.made_by_label = Label(self.bottom_row_frame, text=f"{self.app.app_version} - img-txt_viewer - Created by: Nenotriple (2023-2025)", font=("Segoe UI", 10))
         self.made_by_label.pack(side="right", padx=10, pady=10)
         Tip.create(widget=self.made_by_label, text="🤍Thank you for using my app!🤍 (^‿^)", show_delay=10)
 
@@ -278,5 +278,5 @@ class AboutWindow:
 
     def close_about_window(self):
         if hasattr(self, 'about_window') and self.about_window:
-            self.parent.about_window_open = False
+            self.app.about_window_open = False
             self.about_window.destroy()

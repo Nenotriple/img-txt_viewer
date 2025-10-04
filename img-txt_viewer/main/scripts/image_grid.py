@@ -33,10 +33,10 @@ class ImageGrid(ttk.Frame):
     text_file_cache = {}  # Cache to store text file pairs
 
 
-    def __init__(self, master: 'Frame', parent: 'Main'):
+    def __init__(self, master: 'Frame', app: 'Main'):
         super().__init__(master)
         # Initialize ImgTxtViewer variables and methods
-        self.parent = parent
+        self.app = app
         self.is_initialized = False
         self.canvas_window = None
         # Supported file types
@@ -58,9 +58,9 @@ class ImageGrid(ttk.Frame):
         '''Initialize the ImageGrid widget. This must be called before using the widget.'''
         if self.is_initialized:
             return
-        # Parent variables
-        self.reverse_sort_direction_var = self.parent.reverse_load_order_var.get()
-        self.working_folder = self.parent.image_dir.get()
+        # App variables
+        self.reverse_sort_direction_var = self.app.reverse_load_order_var.get()
+        self.working_folder = self.app.image_dir.get()
 
         # Image grid configuration
         self.max_width = 80  # Thumbnail width
@@ -72,8 +72,8 @@ class ImageGrid(ttk.Frame):
 
         # Image loading
         self.loaded_images = 0  # Num of images loaded to the UI
-        # Get number of total images from parent
-        self.num_total_images = len(self.parent.image_files)
+        # Get number of total images from App
+        self.num_total_images = len(self.app.image_files)
         # Default thumbnail size. Range=(1,2,3). Set to 3 if total_images is less than 25.
         self.image_size = IntVar(value=3 if self.num_total_images < 25 else 2)
         # Image flag
@@ -184,7 +184,7 @@ class ImageGrid(ttk.Frame):
         self.set_size_settings()
         self.update_image_info_label()
         self.update_cache_and_grid()
-        self.highlight_thumbnail(self.parent.current_index)
+        self.highlight_thumbnail(self.app.current_index)
 
 
     def update_cache_and_grid(self):
@@ -194,7 +194,7 @@ class ImageGrid(ttk.Frame):
 
     def update_image_cache(self):
         image_size_key = self.image_size.get()
-        filtered_sorted_files = sorted(self.parent.image_files, key=self.parent.get_file_sort_key(), reverse=self.reverse_sort_direction_var)
+        filtered_sorted_files = sorted(self.app.image_files, key=self.app.get_file_sort_key(), reverse=self.reverse_sort_direction_var)
         current_text_file_sizes = {
             os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt': os.path.getsize(os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt') if os.path.exists(os.path.splitext(os.path.join(self.working_folder, filename))[0] + '.txt') else 0
             for filename in filtered_sorted_files}
@@ -254,20 +254,20 @@ class ImageGrid(ttk.Frame):
             self.frame_image_grid.columnconfigure(column, weight=1)
         for index, (image, filepath, image_index) in enumerate(self.images):
             row, col = divmod(index, self.cols)
-            button_style = "Highlighted.TButton" if index == self.parent.current_index else "TButton"
+            button_style = "Highlighted.TButton" if index == self.app.current_index else "TButton"
             thumbnail = ttk.Button(self.frame_image_grid, image=image, takefocus=False, style=button_style)
             thumbnail.configure(command=lambda idx=image_index: self.on_mouse_click(idx))
             thumbnail.image = image
             thumbnail.grid(row=row, column=col, sticky="nsew")
             thumbnail.bind("<MouseWheel>", self.on_mousewheel)
             self.thumbnail_buttons[image_index] = thumbnail
-            if index == self.parent.current_index:
+            if index == self.app.current_index:
                 self.initial_selected_thumbnail = thumbnail
             # Get file info (different approach for videos)
             filesize = os.path.getsize(filepath)
             filesize = f"{filesize / 1024:.2f} KB" if filesize < 1024 * 1024 else f"{filesize / 1024 / 1024:.2f} MB"
             if self._is_video_file(filepath):
-                video_info = self.parent.update_videoinfo(filepath)
+                video_info = self.app.update_videoinfo(filepath)
                 resolution = f"({video_info['resolution']})" if 'resolution' in video_info else "(Video)"
                 tooltip_text = f"#{image_index + 1}, {os.path.basename(filepath)}, {filesize}, {resolution}"
             else:
@@ -291,8 +291,8 @@ class ImageGrid(ttk.Frame):
     def load_image_set(self):
         images = []
         image_size_key = self.image_size.get()
-        image_files = self.parent.image_files
-        text_files = self.parent.text_files
+        image_files = self.app.image_files
+        text_files = self.app.text_files
         current_text_file_sizes = {
             text_file: os.path.getsize(text_file) if os.path.exists(text_file) else 0
             for text_file in text_files
@@ -321,9 +321,9 @@ class ImageGrid(ttk.Frame):
         # Handle video files
         if self._is_video_file(img_path):
             # Check if we have a thumbnail in the video_thumb_dict
-            if hasattr(self.parent, 'video_thumb_dict') and img_path in self.parent.video_thumb_dict:
+            if hasattr(self.app, 'video_thumb_dict') and img_path in self.app.video_thumb_dict:
                 # Access the thumbnail from the nested dictionary
-                thumb_data = self.parent.video_thumb_dict[img_path]['thumbnail']
+                thumb_data = self.app.video_thumb_dict[img_path]['thumbnail']
                 # Ensure thumbnail is the correct size
                 thumb = thumb_data.copy()
                 thumb = thumb.resize((self.max_width, self.max_height), Image.LANCZOS)
@@ -331,7 +331,7 @@ class ImageGrid(ttk.Frame):
                 new_img.paste(thumb, position)
             else:
                 # Request thumbnail generation
-                self.parent.update_video_thumbnails()
+                self.app.update_video_thumbnails()
                 # Create a temporary placeholder
                 draw = ImageDraw.Draw(new_img)
                 draw.rectangle([(0, 0), (self.max_width, self.max_height)], outline="gray", width=2)
@@ -394,7 +394,7 @@ class ImageGrid(ttk.Frame):
     def get_image_index(self, directory, filename):
         filename = os.path.basename(filename)
         try:
-            return self.parent.image_files.index(os.path.join(directory, filename))
+            return self.app.image_files.index(os.path.join(directory, filename))
         except ValueError:
             return -1
 
@@ -442,9 +442,9 @@ class ImageGrid(ttk.Frame):
         self.prev_selected_thumbnail = button
         # Handle video files differently
         if self._is_video_file(img_path):
-            if hasattr(self.parent, 'video_thumb_dict') and img_path in self.parent.video_thumb_dict:
+            if hasattr(self.app, 'video_thumb_dict') and img_path in self.app.video_thumb_dict:
                 # Access the thumbnail from the nested dictionary
-                img = self.parent.video_thumb_dict[img_path]['thumbnail'].copy()
+                img = self.app.video_thumb_dict[img_path]['thumbnail'].copy()
                 img = img.resize((self.max_width, self.max_height), Image.LANCZOS)
                 highlighted_thumbnail = self.apply_highlight(img)
                 bordered_thumb = ImageTk.PhotoImage(highlighted_thumbnail)
@@ -458,7 +458,7 @@ class ImageGrid(ttk.Frame):
                 button.configure(image=bordered_thumb, style="Highlighted.TButton")
                 button.image = bordered_thumb
         self.ensure_thumbnail_visible(button)
-        self.parent.update_imageinfo()
+        self.app.update_imageinfo()
 
 
     def _reset_thumbnail(self, button):
@@ -503,8 +503,8 @@ class ImageGrid(ttk.Frame):
 
 
     def on_mouse_click(self, index):
-        self.parent.jump_to_image(index)
-        self.parent.update_imageinfo()
+        self.app.jump_to_image(index)
+        self.app.update_imageinfo()
 
 
     def on_mousewheel(self, event):

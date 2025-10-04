@@ -331,8 +331,8 @@ class Autocomplete:
 
 class SuggestionHandler:
     """Manages suggestion display and interaction in the UI."""
-    def __init__(self, parent: 'Main') -> None:
-        self.parent: 'Main' = parent
+    def __init__(self, app: 'Main') -> None:
+        self.app: 'Main' = app
         self.autocomplete: Autocomplete = None  # Will be initialized later
         self.suggestions: List[Tuple[str, Tuple[str, List[str]]]] = []
         self.selected_suggestion_index: int = 0
@@ -368,7 +368,7 @@ class SuggestionHandler:
         """Refresh suggestions based on current input state."""
         # Initialize empty event if none provided
         event = type('', (), {'keysym': '', 'char': ''})() if event is None else event
-        cursor_position: str = self.parent.text_box.index("insert")
+        cursor_position: str = self.app.text_box.index("insert")
         # Early returns for special cases
         if self._cursor_inside_tag(cursor_position):
             self.clear_suggestions()
@@ -376,10 +376,10 @@ class SuggestionHandler:
         if self._handle_suggestion_event(event):
             self.clear_suggestions()
             return
-        text: str = self.parent.text_box.get("1.0", "insert")
+        text: str = self.app.text_box.get("1.0", "insert")
         current_word: str = self._get_current_word(text)
         # Check if suggestions should be shown
-        if not current_word or (len(self.selected_csv_files) < 1 and not self.parent.use_mytags_var.get()):
+        if not current_word or (len(self.selected_csv_files) < 1 and not self.app.use_mytags_var.get()):
             self.clear_suggestions()
             return
         # Get and process suggestions
@@ -411,7 +411,7 @@ class SuggestionHandler:
             else:
                 widget.tag_config(tag_name, relief='flat', borderwidth=0)
                 widget.config(cursor="")
-        widget = self.parent.suggestion_textbox
+        widget = self.app.suggestion_textbox
         widget.config(state='normal')
         widget.delete('1.0', 'end')
         configured_colors: Set[str] = set()
@@ -438,8 +438,8 @@ class SuggestionHandler:
     def _cursor_inside_tag(self, cursor_position: str) -> bool:
         """Check if cursor is within an existing tag."""
         line, column = map(int, cursor_position.split('.'))
-        line_text: str = self.parent.text_box.get(f"{line}.0", f"{line}.end")
-        if self.parent.list_mode_var.get():
+        line_text: str = self.app.text_box.get(f"{line}.0", f"{line}.end")
+        if self.app.list_mode_var.get():
             inside_tag: bool = column not in (0, len(line_text))
         else:
             inside_tag = not (column == 0 or line_text[column-1:column] in (',', ' ') or line_text[column:column+1] in (',', ' ') or column == len(line_text))
@@ -450,16 +450,16 @@ class SuggestionHandler:
         """Reset suggestion display to default state."""
         self.suggestions = []
         self.selected_suggestion_index = 0
-        self.parent.suggestion_textbox.config(state='normal')
-        self.parent.suggestion_textbox.delete('1.0', 'end')
-        self.parent.suggestion_textbox.insert('1.0', "...")
-        self.parent.suggestion_textbox.config(state='disabled')
+        self.app.suggestion_textbox.config(state='normal')
+        self.app.suggestion_textbox.delete('1.0', 'end')
+        self.app.suggestion_textbox.insert('1.0', "...")
+        self.app.suggestion_textbox.config(state='disabled')
 
     def _get_current_word(self, text: str) -> str:
-        if self.parent.last_word_match_var.get():
+        if self.app.last_word_match_var.get():
             words: List[str] = text.split()
             return words[-1] if words else ''
-        separator: str = '\n' if self.parent.list_mode_var.get() else ','
+        separator: str = '\n' if self.app.list_mode_var.get() else ','
         parts: List[str] = text.split(separator)
         if not parts:
             return ''
@@ -472,28 +472,28 @@ class SuggestionHandler:
     def _insert_selected_suggestion(self, selected_suggestion: str) -> None:
         """Insert chosen suggestion at cursor position."""
         selected_suggestion = selected_suggestion.strip()
-        text: str = self.parent.text_box.get("1.0", "insert").rstrip()
+        text: str = self.app.text_box.get("1.0", "insert").rstrip()
         current_word: str = self._get_current_word(text)
-        remaining_text: str = self.parent.text_box.get("insert", "end").rstrip('\n')
+        remaining_text: str = self.app.text_box.get("insert", "end").rstrip('\n')
         start_of_current_word: str = "1.0 + {} chars".format(len(text) - len(current_word))
-        self.parent.text_box.delete(start_of_current_word, "insert")
-        if self.parent.list_mode_var.get() and not remaining_text.startswith('\n') and not self.parent.last_word_match_var.get():
-            self.parent.text_box.insert(start_of_current_word, selected_suggestion + '\n')
+        self.app.text_box.delete(start_of_current_word, "insert")
+        if self.app.list_mode_var.get() and not remaining_text.startswith('\n') and not self.app.last_word_match_var.get():
+            self.app.text_box.insert(start_of_current_word, selected_suggestion + '\n')
         else:
-            self.parent.text_box.insert(start_of_current_word, selected_suggestion)
+            self.app.text_box.insert(start_of_current_word, selected_suggestion)
 
-        if self.parent.list_mode_var.get() and remaining_text:
+        if self.app.list_mode_var.get() and remaining_text:
             self.insert_newline_listmode(called_from_insert=True)
-            self.parent.text_box.mark_set("insert", "insert + 1 lines")
-        self.parent.append_comma_to_text()
+            self.app.text_box.mark_set("insert", "insert + 1 lines")
+        self.app.append_comma_to_text()
 
 
     def insert_newline_listmode(self, event: Optional[tk.Event] = None, called_from_insert: bool = False) -> str:
         """Handle newline insertion in list mode."""
-        if self.parent.list_mode_var.get():
-            self.parent.text_box.insert("insert", '\n')
-            if called_from_insert and self.parent.text_box.index("insert") != self.parent.text_box.index("end-1c"):
-                self.parent.text_box.mark_set("insert", "insert-1l")
+        if self.app.list_mode_var.get():
+            self.app.text_box.insert("insert", '\n')
+            if called_from_insert and self.app.text_box.index("insert") != self.app.text_box.index("end-1c"):
+                self.app.text_box.mark_set("insert", "insert-1l")
             return 'break'
         return ''
 
@@ -511,14 +511,14 @@ class SuggestionHandler:
     def update_autocomplete_dictionary(self) -> None:
         """Update tag database based on selected CSV sources."""
         csv_vars = {
-            'danbooru.csv': self.parent.csv_danbooru,
-            'danbooru_safe.csv': self.parent.csv_danbooru_safe,
-            'e621.csv': self.parent.csv_e621,
-            'dictionary.csv': self.parent.csv_english_dictionary,
-            'derpibooru.csv': self.parent.csv_derpibooru
+            'danbooru.csv': self.app.csv_danbooru,
+            'danbooru_safe.csv': self.app.csv_danbooru_safe,
+            'e621.csv': self.app.csv_e621,
+            'dictionary.csv': self.app.csv_english_dictionary,
+            'derpibooru.csv': self.app.csv_derpibooru
             }
         self.selected_csv_files = [csv_file for csv_file, var in csv_vars.items() if var.get()]
-        include_my_tags: bool = self.parent.use_mytags_var.get()
+        include_my_tags: bool = self.app.use_mytags_var.get()
         if self.selected_csv_files:
             self.autocomplete = Autocomplete(self.selected_csv_files, include_my_tags=include_my_tags)
         else:
@@ -539,7 +539,7 @@ class SuggestionHandler:
             'derpibooru.csv': {0: "black", 1: "#e5b021", 3: "#fd9961", 4: "#cf5bbe", 5: "#3c8ad9", 6: "#a6a6a6", 7: "#47abc1", 8: "#7871d0", 9: "#df3647", 10: "#c98f2b", 11: "#e87ebe"}
         }
         black_mappings: Dict[int, str] = {key: "black" for key in color_mappings[csv_file].keys()}
-        self.suggestion_colors = color_mappings[csv_file] if self.parent.colored_suggestion_var.get() else black_mappings
+        self.suggestion_colors = color_mappings[csv_file] if self.app.colored_suggestion_var.get() else black_mappings
 
 
     def set_suggestion_quantity(self, suggestion_quantity: int) -> None:
@@ -556,11 +556,11 @@ class SuggestionHandler:
             "Fast"  : 75000,
             "Faster": 40000
         }
-        self.autocomplete.suggestion_threshold = thresholds.get(self.parent.suggestion_threshold_var.get())
+        self.autocomplete.suggestion_threshold = thresholds.get(self.app.suggestion_threshold_var.get())
 
 
     def clear_dictionary_csv_selection(self) -> None:
         """Reset CSV source selection to none."""
         for attr in ('csv_danbooru', 'csv_danbooru_safe', 'csv_derpibooru', 'csv_e621', 'csv_english_dictionary'):
-            getattr(self.parent, attr).set(False)
+            getattr(self.app, attr).set(False)
         self.update_autocomplete_dictionary()

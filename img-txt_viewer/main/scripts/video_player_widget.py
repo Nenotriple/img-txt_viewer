@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 class VideoPlayerWidget(ttk.Frame):
     """A Tkinter widget for video playback using tkVideoPlayer"""
-    def __init__(self, master=None, parent: 'Main'=None, show_controls=True, **kwargs):
+    def __init__(self, master=None, app: 'Main'=None, show_controls=True, **kwargs):
         """
         Initialize the video player widget
 
@@ -43,15 +43,15 @@ class VideoPlayerWidget(ttk.Frame):
         # Create player controls if enabled
         if show_controls:
             self._create_controls()
-        # Bind events to parent if provided
-        if parent:
-            self.vid_player.bind("<Double-1>", lambda event: parent.open_image(index=parent.current_index, event=event))
-            self.vid_player.bind('<Button-2>', parent.open_image_directory)
-            self.vid_player.bind("<MouseWheel>", parent.mouse_scroll)
-            self.vid_player.bind("<Button-3>", parent.show_image_context_menu)
-            self.vid_player.bind("<ButtonPress-1>", parent.start_drag)
-            self.vid_player.bind("<ButtonRelease-1>", parent.stop_drag)
-            self.vid_player.bind("<B1-Motion>", parent.dragging_window)
+        # Bind events to app if provided
+        if app:
+            self.vid_player.bind("<Double-1>", lambda event: app.open_image(index=app.current_index, event=event))
+            self.vid_player.bind('<Button-2>', app.open_image_directory)
+            self.vid_player.bind("<MouseWheel>", app.mouse_scroll)
+            self.vid_player.bind("<Button-3>", app.show_image_context_menu)
+            self.vid_player.bind("<ButtonPress-1>", app.start_drag)
+            self.vid_player.bind("<ButtonRelease-1>", app.stop_drag)
+            self.vid_player.bind("<B1-Motion>", app.dragging_window)
 
 
     def _create_controls(self):
