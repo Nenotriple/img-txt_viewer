@@ -80,6 +80,7 @@
 - Added an Options menu command: `Reset Window and Tab Size`, which will reset the main window and text pane tabs to their defaults.
 - Updated all input popups *(like in Tag-Editor, etc.)* for a more modern look.
 - All text Entry widgets now support undo/redo with `CTRL+Z` and `CTRL+Y`.
+- The Crop control panel is now scrollable for smaller screens.
 
 ---
 
