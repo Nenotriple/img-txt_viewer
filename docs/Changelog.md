@@ -85,6 +85,7 @@
 - Updated all input popups *(like in Tag-Editor, etc.)* for a more modern look.
 - All text Entry widgets now support undo/redo with `CTRL+Z` and `CTRL+Y`.
 - The Crop control panel is now scrollable for smaller screens.
+- All `Edit Panel` adjustments now support RGBA images, preserving transparency.
 
 ---
 
