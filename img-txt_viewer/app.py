@@ -828,7 +828,7 @@ class ImgTxtViewer:
         self.text_notebook.add(self.tab7, text='Font')
         self.text_notebook.add(self.tab8, text='MyTags')
         self.text_notebook.add(self.tab9, text='Stats')
-        self.text_notebook.pack(fill='x', expand=False)
+        self.text_notebook.pack(fill='both', expand=True)
         self.text_controller.create_search_and_replace_widgets_tab1()
         self.text_controller.create_prefix_text_widgets_tab2()
         self.text_controller.create_append_text_widgets_tab3()
