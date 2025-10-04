@@ -25,6 +25,7 @@ import time
 import shutil
 import ctypes
 import zipfile
+import threading
 import subprocess
 
 
@@ -1720,30 +1721,6 @@ class ImgTxtViewer:
         self.text_box.config(undo=True)
 
 
-    def load_image_file(self, image_file, text_file):
-        try:
-            if not self.is_image_grid_visible_var.get():
-                with Image.open(image_file) as img:
-                    self.original_image_size = img.size
-                    max_size = (self.quality_max_size, self.quality_max_size)
-                    img.thumbnail(max_size, self.quality_filter)
-                    if img.format == 'GIF':
-                        self.gif_frames = [frame.copy() for frame in ImageSequence.Iterator(img)]
-                        self.frame_durations = [frame.info['duration'] for frame in ImageSequence.Iterator(img)]
-                    else:
-                        self.gif_frames = [img.copy()]
-                        self.frame_durations = [None]
-            else:
-                img = None
-        except (FileNotFoundError, UnidentifiedImageError):
-            self.update_image_file_count()
-            self.image_files.remove(image_file)
-            if text_file in self.text_files:
-                self.text_files.remove(text_file)
-            return
-        return img
-
-
     def display_image(self):
         try:
             self.image_file = self.image_files[self.current_index]
@@ -1763,29 +1740,85 @@ class ImgTxtViewer:
                         self.video_player.grid_remove()
                 if self.edit_panel_visible_var.get():
                     self.edit_panel.toggle_edit_panel_widgets("normal")
-            image = self.load_image_file(self.image_file, text_file)
-            if image is None:
-                return text_file, None, None, None
+
+            # Start image loading in a background thread
+            def after_load_callback(result):
+                # This runs in the main thread
+                text_file, image, resized_image, resized_width, resized_height, file_extension = result
+                if image is None:
+                    return text_file, None, None, None
+                if file_extension == '.gif':
+                    self.frame_iterator = iter(self.gif_frames)
+                    self.current_frame_index = 0
+                    self.display_animated_gif()
+                    if self.edit_panel_visible_var.get():
+                        self.edit_panel.toggle_edit_panel_widgets("disabled")
+                else:
+                    self.frame_iterator = None
+                    self.current_frame_index = 0
+                    if self.edit_panel_visible_var.get():
+                        self.edit_panel.toggle_edit_panel_widgets("normal")
+                self.popup_zoom.set_image(image)
+                self.current_image = resized_image
+                return text_file, image, resized_width, resized_height
+
+            # Use a threading.Event to synchronize result
+            self._image_load_result = None
+
+            def thread_target():
+                result = self._load_image_in_thread(self.image_file, text_file)
+                self._image_load_result = result
+                self.root.after(0, lambda: after_load_callback(result))
+            threading.Thread(target=thread_target, daemon=True).start()
+            # Return placeholders; actual UI update will happen in callback
+            return text_file, None, None, None
+        except ValueError:
+            self.check_image_dir()
+
+    def _load_image_in_thread(self, image_file, text_file):
+        # This runs in a background thread
+        try:
+            if not self.is_image_grid_visible_var.get():
+                with Image.open(image_file) as img:
+                    self.original_image_size = img.size
+                    max_size = (self.quality_max_size, self.quality_max_size)
+                    img.thumbnail(max_size, self.quality_filter)
+                    if img.format == 'GIF':
+                        self.gif_frames = [frame.copy() for frame in ImageSequence.Iterator(img)]
+                        self.frame_durations = [frame.info['duration'] for frame in ImageSequence.Iterator(img)]
+                    else:
+                        self.gif_frames = [img.copy()]
+                        self.frame_durations = [None]
+            else:
+                img = None
+        except (FileNotFoundError, UnidentifiedImageError):
+            self.root.after(0, self.update_image_file_count)
+            if image_file in self.image_files:
+                self.image_files.remove(image_file)
+            if text_file in self.text_files:
+                self.text_files.remove(text_file)
+            return (text_file, None, None, None, None, None)
+
+
+        # Resize image (must be done in main thread for Tkinter objects)
+        def resize_in_main_thread():
             resize_event = Event()
             resize_event.height = self.primary_display_image.winfo_height()
             resize_event.width = self.primary_display_image.winfo_width()
-            resized_image, resized_width, resized_height = self.resize_and_scale_image(image, resize_event.width, resize_event.height, resize_event)
-            if file_extension == '.gif':
-                self.frame_iterator = iter(self.gif_frames)
-                self.current_frame_index = 0
-                self.display_animated_gif()
-                if self.edit_panel_visible_var.get():
-                    self.edit_panel.toggle_edit_panel_widgets("disabled")
-            else:
-                self.frame_iterator = None
-                self.current_frame_index = 0
-                if self.edit_panel_visible_var.get():
-                    self.edit_panel.toggle_edit_panel_widgets("normal")
-            self.popup_zoom.set_image(image)
-            self.current_image = resized_image
-            return text_file, image, resize_event.width, resize_event.height
-        except ValueError:
-            self.check_image_dir()
+            resized_image, resized_width, resized_height = self.resize_and_scale_image(img, resize_event.width, resize_event.height, resize_event)
+            return (text_file, img, resized_image, resized_width, resized_height, os.path.splitext(image_file)[1].lower())
+
+        # Schedule resize in main thread and wait for result
+        result_holder = {}
+        event = threading.Event()
+
+        def callback():
+            result_holder['result'] = resize_in_main_thread()
+            event.set()
+
+        self.root.after(0, callback)
+        event.wait()
+        return result_holder['result']
 
 
     def display_mp4_video(self):
@@ -3080,7 +3113,7 @@ class ImgTxtViewer:
                 file_list.insert(index, original_path)
                 if not original_path.endswith('.txt'):
                     self.check_image_dir()
-                    index_value = int(self.image_files.index(original_path))
+                    index_value = self.image_files.index(original_path)
                     self.jump_to_image(index_value)
                 else:
                     self.load_text_file(original_path)
