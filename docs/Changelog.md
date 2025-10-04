@@ -71,6 +71,7 @@
 - Fixed issue when navigating or changing tabs with a broken or incorrect directory path set in Tagger.
 - Fixed an issue where the app would allow setting a directory without any supported files.
 - Tagger tool tabs now properly scale when the tab is very large.
+- Fixed a crash when calculating image statistics.
 
 **Other Changes:**
 
