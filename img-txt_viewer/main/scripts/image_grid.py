@@ -118,12 +118,7 @@ class ImageGrid(ttk.Frame):
         self.scrollbar = ttk.Scrollbar(self.canvas_container, orient="vertical")
         self.scrollbar.grid(row=0, column=1, sticky="ns", padx=(4, 0))
 
-        self.canvas_thumbnails = Canvas(
-            self.canvas_container,
-            takefocus=False,
-            yscrollcommand=self.scrollbar.set,
-            highlightthickness=0
-        )
+        self.canvas_thumbnails = Canvas(self.canvas_container, takefocus=False, yscrollcommand=self.scrollbar.set, highlightthickness=0)
         self.canvas_thumbnails.grid(row=0, column=0, sticky="nsew")
         self.canvas_thumbnails.bind("<MouseWheel>", self.on_mousewheel)
         self.scrollbar.config(command=self.canvas_thumbnails.yview)
@@ -146,14 +141,7 @@ class ImageGrid(ttk.Frame):
         self.label_size.grid(row=0, column=0, sticky="w", padx=(0, 8))
         Tip.create(widget=self.label_size, text="Adjust grid size")
 
-        self.slider_image_size = ttk.Scale(
-            self.frame_bottom,
-            variable=self.image_size,
-            orient="horizontal",
-            from_=1,
-            to=3,
-            command=self.round_scale_input
-        )
+        self.slider_image_size = ttk.Scale(self.frame_bottom, variable=self.image_size, orient="horizontal", from_=1, to=3, command=self.round_scale_input)
         self.slider_image_size.grid(row=0, column=1, sticky="ew")
         self.slider_image_size.bind("<ButtonRelease-1>", lambda event: self.reload_grid())
         Tip.create(widget=self.slider_image_size, text="Adjust grid size")
@@ -336,9 +324,11 @@ class ImageGrid(ttk.Frame):
             if hasattr(self.parent, 'video_thumb_dict') and img_path in self.parent.video_thumb_dict:
                 # Access the thumbnail from the nested dictionary
                 thumb_data = self.parent.video_thumb_dict[img_path]['thumbnail']
-                thumb_data.thumbnail((self.max_width, self.max_height))
-                position = ((self.max_width - thumb_data.width) // 2, (self.max_height - thumb_data.height) // 2)
-                new_img.paste(thumb_data, position)
+                # Ensure thumbnail is the correct size
+                thumb = thumb_data.copy()
+                thumb = thumb.resize((self.max_width, self.max_height), Image.LANCZOS)
+                position = (0, 0)
+                new_img.paste(thumb, position)
             else:
                 # Request thumbnail generation
                 self.parent.update_video_thumbnails()
@@ -432,14 +422,7 @@ class ImageGrid(ttk.Frame):
             total_items = len(self.thumbnail_buttons)
             final_row = (total_items - 1) // self.columns if total_items else 0
             self.load_more_button = ttk.Button(self.frame_image_grid, text="Load More", command=self.load_images)
-            self.load_more_button.grid(
-                row=final_row + 1,
-                column=0,
-                columnspan=self.columns,
-                pady=(self.padding * 2),
-                padx=self.padding,
-                sticky="ew"
-            )
+            self.load_more_button.grid(row=final_row + 1, column=0, columnspan=self.columns, pady=(self.padding * 2), padx=self.padding, sticky="ew")
             Tip.create(widget=self.load_more_button, text=f"Load the next {self.images_per_load} images")
 
 
@@ -462,7 +445,7 @@ class ImageGrid(ttk.Frame):
             if hasattr(self.parent, 'video_thumb_dict') and img_path in self.parent.video_thumb_dict:
                 # Access the thumbnail from the nested dictionary
                 img = self.parent.video_thumb_dict[img_path]['thumbnail'].copy()
-                img.thumbnail((self.max_width, self.max_height))
+                img = img.resize((self.max_width, self.max_height), Image.LANCZOS)
                 highlighted_thumbnail = self.apply_highlight(img)
                 bordered_thumb = ImageTk.PhotoImage(highlighted_thumbnail)
                 button.configure(image=bordered_thumb, style="Highlighted.TButton")
