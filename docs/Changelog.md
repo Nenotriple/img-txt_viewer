@@ -77,6 +77,7 @@
 
 **Other Changes:**
 
+- Loading and navigating images in the Tagger UI is now quicker and smoother.
 - MyTags now uses YAML format instead of CSV.
 - The MyTags save button text color now changes to red when changes are unsaved.
 - Improved image grid thumbnail spacing to prevent empty space.
