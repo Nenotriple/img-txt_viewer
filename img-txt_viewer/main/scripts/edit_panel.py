@@ -16,7 +16,7 @@ from PIL import Image, ImageTk, ImageOps, ImageEnhance, ImageFilter
 
 
 # Type Hinting
-from typing import TYPE_CHECKING, Optional, Any, Dict, Union
+from typing import TYPE_CHECKING, Optional, Any, Dict, Union, Callable
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main
 
@@ -98,14 +98,14 @@ class EditPanel:
         # Save Button
         self.edit_save_image_button = ttk.Button(self.app.edit_image_panel, text="Save", width=7, command=self.save_image_edit)
         self.edit_save_image_button.grid(row=0, column=5, padx=(0,5), pady=5, sticky="ew")
-        Tip.create(widget=self.edit_save_image_button, text="Save the current changes.\nOptionally overwrite the current image.")
+        Tip.create(widget=self.edit_save_image_button, text="Save the current changes.")
         # Spinbox Frame - Highlights
         self.highlights_spinbox_frame = ttk.Frame(self.app.edit_image_panel)
         self.highlights_spinbox_frame.grid(row=1, column=0, columnspan=2, pady=(0,5), sticky="ew")
         # Threshold
         self.highlights_threshold_label = ttk.Label(self.highlights_spinbox_frame, text="Threshold:")
         self.highlights_threshold_label.grid(row=0, column=0, padx=5, sticky="w")
-        Tip.create(widget=self.highlights_threshold_label, text="From 1 to 256\nLower values affect more pixels", show_delay=25)
+        Tip.create(widget=self.highlights_threshold_label, text=["From 1 to 256", "Lower values affect more pixels"], show_delay=25)
         self.highlights_threshold_spinbox = ttk.Spinbox(self.highlights_spinbox_frame, from_=1, to=256, increment=8, width=5, command=self.apply_image_edit)
         self.highlights_threshold_spinbox.grid(row=0, column=1, padx=5, sticky="ew")
         self.highlights_threshold_spinbox.set(128)
@@ -113,7 +113,7 @@ class EditPanel:
         # Blur Radius
         self.highlights_blur_radius_label = ttk.Label(self.highlights_spinbox_frame, text="Blur Radius:")
         self.highlights_blur_radius_label.grid(row=0, column=2, padx=5, sticky="w")
-        Tip.create(widget=self.highlights_blur_radius_label, text="From 0 to 10\nHigher values increase the blur effect", show_delay=25)
+        Tip.create(widget=self.highlights_blur_radius_label, text=["From 0 to 10", "Higher values increase the blur effect"], show_delay=25)
         self.highlights_blur_radius_spinbox = ttk.Spinbox(self.highlights_spinbox_frame, from_=0, to=10, width=5, command=self.apply_image_edit)
         self.highlights_blur_radius_spinbox.grid(row=0, column=3, padx=5, sticky="ew")
         self.highlights_blur_radius_spinbox.set(0)
@@ -124,7 +124,7 @@ class EditPanel:
         # Threshold
         self.shadows_threshold_label = ttk.Label(self.shadows_spinbox_frame, text="Threshold:")
         self.shadows_threshold_label.grid(row=0, column=0, padx=5, sticky="w")
-        Tip.create(widget=self.shadows_threshold_label, text="From 1 to 256\nHigher values affect more pixels", show_delay=25)
+        Tip.create(widget=self.shadows_threshold_label, text=["From 1 to 256", "Higher values affect more pixels"], show_delay=25)
         self.shadows_threshold_spinbox = ttk.Spinbox(self.shadows_spinbox_frame, from_=1, to=256, increment=8, width=5, command=self.apply_image_edit)
         self.shadows_threshold_spinbox.grid(row=0, column=1, padx=5, sticky="ew")
         self.shadows_threshold_spinbox.set(128)
@@ -132,7 +132,7 @@ class EditPanel:
         # Blur Radius
         self.shadows_blur_radius_label = ttk.Label(self.shadows_spinbox_frame, text="Blur Radius:")
         self.shadows_blur_radius_label.grid(row=0, column=2, padx=5, sticky="w")
-        Tip.create(widget=self.shadows_blur_radius_label, text="From 0 to 10\nHigher values increase the blur effect", show_delay=25)
+        Tip.create(widget=self.shadows_blur_radius_label, text=["From 0 to 10", "Higher values increase the blur effect"], show_delay=25)
         self.shadows_blur_radius_spinbox = ttk.Spinbox(self.shadows_spinbox_frame, from_=0, to=10, width=5, command=self.apply_image_edit)
         self.shadows_blur_radius_spinbox.grid(row=0, column=3, padx=5, sticky="ew")
         self.shadows_blur_radius_spinbox.set(0)
@@ -143,7 +143,7 @@ class EditPanel:
         # Boost
         self.sharpness_boost_label = ttk.Label(self.sharpness_spinbox_frame, text="Boost:")
         self.sharpness_boost_label.grid(row=0, column=0, padx=5, sticky="w")
-        Tip.create(widget=self.sharpness_boost_label, text="From 1 to 5\nHigher values add additional sharpening passes", show_delay=25)
+        Tip.create(widget=self.sharpness_boost_label, text=["From 1 to 5", "Higher values add additional sharpening passes"], show_delay=25)
         self.sharpness_boost_spinbox = ttk.Spinbox(self.sharpness_spinbox_frame, from_=1, to=5, width=5, command=self.apply_image_edit)
         self.sharpness_boost_spinbox.grid(row=0, column=1, padx=5, sticky="ew")
         self.sharpness_boost_spinbox.set(1)
@@ -160,11 +160,6 @@ class EditPanel:
 
     def update_slider_value(self, event: Optional[Any]) -> None:
         current_option = self.edit_combobox.get()
-        is_rgb = self.app.current_image.mode == "RGB"
-        rgb_required_options = ["AutoContrast", "Hue", "Color Temperature"]
-        if current_option in rgb_required_options and not is_rgb:
-            messagebox.showwarning("Unsupported Color Mode", f"{current_option} adjustment only supports images in RGB color mode!\n\nImage Color Mode: {self.app.current_image.mode}\n\nAdjustments will be ignored.")
-            return
         self.edit_slider.set(self.slider_value_dict[current_option])
         self.edit_value_label.config(text=str(self.slider_value_dict[current_option]))
         if current_option == "Highlights":
@@ -270,18 +265,17 @@ class EditPanel:
 
     def _apply_image_edit(self) -> None:
         self.app.current_image = self.app.original_image.copy()
-        is_rgb = self.app.current_image.mode == "RGB"
         adjustment_methods = {
             "Brightness": self.adjust_brightness,
             "Contrast": self.adjust_contrast,
-            "AutoContrast": self.adjust_autocontrast if is_rgb else None,
+            "AutoContrast": self.adjust_autocontrast,
             "Highlights": self.adjust_highlights,
             "Shadows": self.adjust_shadows,
             "Saturation": self.adjust_saturation,
             "Sharpness": self.adjust_sharpness,
-            "Hue": self.adjust_hue if is_rgb else None,
-            "Color Temperature": self.adjust_color_temperature if is_rgb else None,
-            "Clarity": self.adjust_clarity  # register clarity for preview
+            "Clarity": self.adjust_clarity,
+            "Hue": self.adjust_hue,
+            "Color Temperature": self.adjust_color_temperature,
         }
         if self.edit_cumulative_var.get():
             for option, value in self.slider_value_dict.items():
@@ -319,18 +313,17 @@ class EditPanel:
             return
         original_filepath = self.app.image_files[self.app.current_index]
         with Image.open(original_filepath) as original_image:
-            is_rgb = original_image.mode == "RGB"
             adjustment_methods = {
                 "Brightness": self.adjust_brightness,
                 "Contrast": self.adjust_contrast,
-                "AutoContrast": self.adjust_autocontrast if is_rgb else None,
+                "AutoContrast": self.adjust_autocontrast,
                 "Highlights": self.adjust_highlights,
                 "Shadows": self.adjust_shadows,
                 "Saturation": self.adjust_saturation,
                 "Sharpness": self.adjust_sharpness,
-                "Hue": self.adjust_hue if is_rgb else None,
-                "Color Temperature": self.adjust_color_temperature if is_rgb else None,
-                "Clarity": self.adjust_clarity  # register clarity for saving
+                "Clarity": self.adjust_clarity,
+                "Hue": self.adjust_hue,
+                "Color Temperature": self.adjust_color_temperature,
             }
             if self.edit_cumulative_var.get():
                 for option, value in self.slider_value_dict.items():
@@ -379,8 +372,8 @@ class EditPanel:
 #endregion
 #region Utility
 
-
     def _create_gradient_mask(self, image: Image.Image, threshold: int, blur_radius: int, invert: bool = False) -> Image.Image:
+        """Create a gradient mask from the image based on brightness threshold."""
         def sigmoid(x):
             return 1 / (1 + numpy.exp(-x))
         grayscale = ImageOps.grayscale(image)
@@ -396,16 +389,59 @@ class EditPanel:
         return mask
 
 
+    def _apply_rgb_preserve_alpha(self, img: Image.Image, func: Callable[[Image.Image], Image.Image]) -> Image.Image:
+        if img.mode == 'RGBA':
+            *rgb_parts, alpha = img.split()
+            rgb = Image.merge('RGB', rgb_parts)
+            processed = func(rgb)
+            if processed.mode != 'RGB':
+                processed = processed.convert('RGB')
+            processed.putalpha(alpha)
+            return processed
+        else:
+            return func(img)
+
+    def _apply_to_image(self, func: Callable[[Image.Image], Image.Image], image_type: str = "display", image: Optional[Image.Image] = None, preserve_alpha: bool = True) -> Optional[Image.Image]:
+        """
+        Apply func to either the display image (mutating self.app.current_image)
+        or to the provided original image and return the result.
+        If preserve_alpha is True, use _apply_rgb_preserve_alpha to avoid
+        corrupting alpha channel when func expects RGB input.
+        """
+        if image_type == "display":
+            if preserve_alpha:
+                self.app.current_image = self._apply_rgb_preserve_alpha(self.app.current_image, func)
+            else:
+                self.app.current_image = func(self.app.current_image)
+            return self.app.current_image
+        elif image_type == "original" and image is not None:
+            if preserve_alpha:
+                return self._apply_rgb_preserve_alpha(image, func)
+            else:
+                return func(image)
+        return image
+
+
 #endregion
 #region Image Functions
 
 
     def adjust_brightness(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None) -> Optional[Image.Image]:
-        return self.edit_image(value, ImageEnhance.Brightness, image_type=image_type, image=image)
+        if value == 0:
+            return image
+        factor = (value + 100) / 100.0
+        def _adjust(img_rgb: Image.Image) -> Image.Image:
+            return ImageEnhance.Brightness(img_rgb).enhance(factor)
+        return self._apply_to_image(_adjust, image_type=image_type, image=image, preserve_alpha=True)
 
 
     def adjust_contrast(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None) -> Optional[Image.Image]:
-        return self.edit_image(value, ImageEnhance.Contrast, image_type=image_type, image=image)
+        if value == 0:
+            return image
+        factor = (value + 100) / 100.0
+        def _adjust(img_rgb: Image.Image) -> Image.Image:
+            return ImageEnhance.Contrast(img_rgb).enhance(factor)
+        return self._apply_to_image(_adjust, image_type=image_type, image=image, preserve_alpha=True)
 
 
     def adjust_autocontrast(self, value: Optional[int] = None, image_type: str = "display", image: Optional[Image.Image] = None) -> Optional[Image.Image]:
@@ -413,74 +449,68 @@ class EditPanel:
             return image
         strength = max(0.0, min(1.0, value / 100.0))
         contrast_boost = 1.0 + (0.1 * strength)
-        if image_type == "display":
-            img = ImageOps.autocontrast(self.app.current_image)
-            enhancer = ImageEnhance.Contrast(img)
-            self.app.current_image = enhancer.enhance(contrast_boost)
-            return self.app.current_image
-        elif image_type == "original" and image is not None:
-            img = ImageOps.autocontrast(image)
-            enhancer = ImageEnhance.Contrast(img)
-            return enhancer.enhance(contrast_boost)
-        return image
+        def _adjust(img_rgb: Image.Image) -> Image.Image:
+            processed = ImageOps.autocontrast(img_rgb)
+            return ImageEnhance.Contrast(processed).enhance(contrast_boost)
+        return self._apply_to_image(_adjust, image_type=image_type, image=image, preserve_alpha=True)
 
 
     def adjust_highlights(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None) -> Optional[Image.Image]:
+        if value == 0:
+            return image
         old_min, old_max = -100, 100
         new_min, new_max = -30, 30
-        value = ((value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
-        factor = (value + 100) / 100.0
+        mapped_value = ((value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
+        factor = (mapped_value + 100) / 100.0
         threshold = self.validate_spinbox_value(self.highlights_threshold_spinbox, min_value=1, max_value=256, integer=True)
         blur_radius = self.validate_spinbox_value(self.highlights_blur_radius_spinbox, min_value=0, max_value=100, integer=True)
-        if image_type == "display":
-            mask = self._create_gradient_mask(self.app.current_image, threshold, blur_radius, invert=True)
-            self.app.current_image = Image.composite(self.app.current_image, ImageEnhance.Brightness(self.app.current_image).enhance(factor), mask)
-        elif image_type == "original" and image:
-            mask = self._create_gradient_mask(image, threshold, blur_radius, invert=True)
-            return Image.composite(image, ImageEnhance.Brightness(image).enhance(factor), mask)
-        return image
+        def _adjust(img: Image.Image) -> Image.Image:
+            mask = self._create_gradient_mask(img, threshold, blur_radius, invert=True)
+            return Image.composite(img, ImageEnhance.Brightness(img).enhance(factor), mask)
+        return self._apply_to_image(_adjust, image_type=image_type, image=image, preserve_alpha=True)
 
 
     def adjust_shadows(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None) -> Optional[Image.Image]:
+        if value == 0:
+            return image
         factor = (value + 100) / 100.0
         threshold = self.validate_spinbox_value(self.shadows_threshold_spinbox, min_value=1, max_value=256, integer=True)
         blur_radius = self.validate_spinbox_value(self.shadows_blur_radius_spinbox, min_value=0, max_value=100, integer=True)
-        if image_type == "display":
-            mask = self._create_gradient_mask(self.app.current_image, threshold, blur_radius)
-            self.app.current_image = Image.composite(self.app.current_image, ImageEnhance.Brightness(self.app.current_image).enhance(factor), mask)
-        elif image_type == "original" and image:
-            mask = self._create_gradient_mask(image, threshold, blur_radius)
-            return Image.composite(image, ImageEnhance.Brightness(image).enhance(factor), mask)
-        return image
+        def _adjust(img: Image.Image) -> Image.Image:
+            mask = self._create_gradient_mask(img, threshold, blur_radius)
+            return Image.composite(img, ImageEnhance.Brightness(img).enhance(factor), mask)
+        return self._apply_to_image(_adjust, image_type=image_type, image=image, preserve_alpha=True)
 
 
     def adjust_saturation(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None) -> Optional[Image.Image]:
-        return self.edit_image(value, ImageEnhance.Color, image_type=image_type, image=image)
+        if value == 0:
+            return image
+        factor = (value + 100) / 100.0
+        def _adjust(img_rgb: Image.Image) -> Image.Image:
+            return ImageEnhance.Color(img_rgb).enhance(factor)
+        return self._apply_to_image(_adjust, image_type=image_type, image=image, preserve_alpha=True)
 
 
     def adjust_sharpness(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None, boost: Optional[int] = None) -> Optional[Image.Image]:
+        if value == 0:
+            return image
         if boost is None:
             boost = self.validate_spinbox_value(self.sharpness_boost_spinbox, min_value=1, max_value=5, integer=True)
-        if image_type == "display":
-            result = self.app.current_image
-        else:
-            result = image
-        for _ in range(boost):
-            result = self.edit_image(value, ImageEnhance.Sharpness, image_type=image_type, image=result)
-        if image_type == "display":
-            return self.app.current_image
-        return result
+        factor = (value + 100) / 100.0
+        def _adjust(img: Image.Image) -> Image.Image:
+            r = img
+            for _ in range(boost):
+                r = ImageEnhance.Sharpness(r).enhance(factor)
+            return r
+        return self._apply_to_image(_adjust, image_type=image_type, image=image, preserve_alpha=True)
 
 
     def adjust_clarity(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None) -> Optional[Image.Image]:
         if value == 0:
             return image
-        amount = float(value) / 100.0  # scale factor: -1.0 .. 1.0
-        # heuristic blur radius based on magnitude so larger clarity affects larger structures
+        amount = float(value) / 100.0
         radius = max(1, int(1 + abs(value) * 0.05))
-
-        def _apply(img: Image.Image) -> Image.Image:
-            # preserve alpha if present
+        def _adjust(img: Image.Image) -> Image.Image:
             has_alpha = img.mode == 'RGBA'
             alpha = None
             if has_alpha:
@@ -488,58 +518,46 @@ class EditPanel:
                 img_rgb = Image.merge('RGB', rgb_parts)
             else:
                 img_rgb = img.convert('RGB')
-
             blurred = img_rgb.filter(ImageFilter.GaussianBlur(radius=radius))
             arr = numpy.array(img_rgb).astype(numpy.float32)
             barr = numpy.array(blurred).astype(numpy.float32)
-            # add scaled high-pass (original - blurred)
             result = arr + amount * (arr - barr)
             numpy.clip(result, 0, 255, out=result)
             out_img = Image.fromarray(result.astype(numpy.uint8), mode='RGB')
             if has_alpha and alpha is not None:
                 out_img.putalpha(alpha)
             return out_img
-        if image_type == "display":
-            self.app.current_image = _apply(self.app.current_image)
-            return self.app.current_image
-        elif image_type == "original" and image is not None:
-            return _apply(image)
-        return image
+
+        return self._apply_to_image(_adjust, image_type=image_type, image=image, preserve_alpha=False)
 
 
     def adjust_hue(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None) -> Optional[Image.Image]:
+        if value == 0:
+            return image
         shift = int(value * 255 / 200)
-        def _shift_hue(img):
-            hsv = img.convert('HSV')
+        def _adjust(img_rgb: Image.Image) -> Image.Image:
+            hsv = img_rgb.convert('HSV')
             h, s, v = hsv.split()
             h = h.point(lambda p: (p + shift) % 256)
             return Image.merge('HSV', (h, s, v)).convert('RGB')
-        if image_type == "display":
-            self.app.current_image = _shift_hue(self.app.current_image)
-            return self.app.current_image
-        elif image_type == "original" and image is not None:
-            return _shift_hue(image)
-        return image
+        return self._apply_to_image(_adjust, image_type=image_type, image=image, preserve_alpha=True)
 
 
     def adjust_color_temperature(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None) -> Optional[Image.Image]:
+        if value == 0:
+            return image
         factor = max(-1.0, min(1.0, value / 100.0))
-        def _adjust_color_temperature_np(img):
-            if img.mode != 'RGB':
-                img = img.convert('RGB')
-            arr = numpy.array(img).astype(numpy.float32)
+        def _adjust(img_rgb: Image.Image) -> Image.Image:
+            if img_rgb.mode != 'RGB':
+                img_rgb = img_rgb.convert('RGB')
+            arr = numpy.array(img_rgb).astype(numpy.float32)
             red_mult = 1.0 + 0.35 * factor
             blue_mult = 1.0 - 0.35 * factor
             arr[..., 0] *= red_mult
             arr[..., 2] *= blue_mult
             numpy.clip(arr, 0, 255, out=arr)
             return Image.fromarray(arr.astype(numpy.uint8), mode='RGB')
-        if image_type == "display":
-            self.app.current_image = _adjust_color_temperature_np(self.app.current_image)
-            return self.app.current_image
-        elif image_type == "original" and image is not None:
-            return _adjust_color_temperature_np(image)
-        return image
+        return self._apply_to_image(_adjust, image_type=image_type, image=image, preserve_alpha=True)
 
 
 #endregion
