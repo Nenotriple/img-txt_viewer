@@ -39,8 +39,8 @@ if TYPE_CHECKING:
 
 
 class TextController:
-    def __init__(self, parent: 'Main', root: 'Tk'):
-        self.parent = parent
+    def __init__(self, app: 'Main', root: 'Tk'):
+        self.app = app
         self.root = root
         self.entry_helper = entry_helper
 
@@ -52,7 +52,7 @@ class TextController:
         self.filter_is_active = False
 
         # MyTags
-        self.my_tags = MyTags(self.parent, self.root)
+        self.my_tags = MyTags(self.app, self.root)
 
 
 #endregion
@@ -60,20 +60,20 @@ class TextController:
 
 
     def create_search_and_replace_widgets_tab1(self):
-        tab_frame = Frame(self.parent.tab1)
+        tab_frame = Frame(self.app.tab1)
         tab_frame.pack(side='top', fill='both')
         btn_frame = Frame(tab_frame)
         btn_frame.pack(side='top', fill='x')
         search_lbl = Label(btn_frame, width=8, text="Search:")
         search_lbl.pack(side='left', anchor="n", pady=4)
         Tip.create(widget=search_lbl, text="Enter the EXACT text you want to search for")
-        self.search_entry = ttk.Entry(btn_frame, textvariable=self.parent.search_string_var, width=4)
+        self.search_entry = ttk.Entry(btn_frame, textvariable=self.app.search_string_var, width=4)
         self.search_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
         self.entry_helper.bind_helpers(self.search_entry)
         replace_lbl = Label(btn_frame, width=8, text="Replace:")
         replace_lbl.pack(side='left', anchor="n", pady=4)
         Tip.create(widget=replace_lbl, text="Enter the text you want to replace the searched text with\n\nLeave empty to replace with nothing (delete)")
-        self.replace_entry = ttk.Entry(btn_frame, textvariable=self.parent.replace_string_var, width=4)
+        self.replace_entry = ttk.Entry(btn_frame, textvariable=self.app.replace_string_var, width=4)
         self.replace_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
         self.entry_helper.bind_helpers(self.replace_entry)
         self.replace_entry.bind('<Return>', lambda event: self.search_and_replace())
@@ -82,10 +82,10 @@ class TextController:
         Tip.create(widget=replace_btn, text="Text files will be backup up")
         clear_btn = ttk.Button(btn_frame, text="Clear", width=5, command=self.clear_search_and_replace_tab)
         clear_btn.pack(side='left', anchor="n", pady=4)
-        undo_btn = ttk.Button(btn_frame, text="Undo", width=5, command=self.parent.restore_backup)
+        undo_btn = ttk.Button(btn_frame, text="Undo", width=5, command=self.app.restore_backup)
         undo_btn.pack(side='left', anchor="n", pady=4)
         Tip.create(widget=undo_btn, text="Revert last action")
-        regex_chk = ttk.Checkbutton(btn_frame, text="Regex", variable=self.parent.search_and_replace_regex_var)
+        regex_chk = ttk.Checkbutton(btn_frame, text="Regex", variable=self.app.search_and_replace_regex_var)
         regex_chk.pack(side='left', anchor="n", pady=4)
         Tip.create(widget=regex_chk, text="Use Regular Expressions in 'Search'")
         text_frame = Frame(tab_frame, borderwidth=0)
@@ -107,32 +107,32 @@ class TextController:
     def clear_search_and_replace_tab(self):
         self.search_entry.delete(0, 'end')
         self.replace_entry.delete(0, 'end')
-        self.parent.search_and_replace_regex_var.set(False)
+        self.app.search_and_replace_regex_var.set(False)
 
 
     def search_and_replace(self):
-        if not self.parent.check_if_directory():
+        if not self.app.check_if_directory():
             return
-        search_string = self.parent.search_string_var.get()
-        replace_string = self.parent.replace_string_var.get()
+        search_string = self.app.search_string_var.get()
+        replace_string = self.app.replace_string_var.get()
         if not search_string:
             return
         confirm = messagebox.askokcancel("Search and Replace", f"This will replace all occurrences of the text\n\n{search_string}\n\nWith\n\n{replace_string}\n\nA backup will be created before making changes.\n\nDo you want to proceed?")
         if not confirm:
             return
-        self.parent.backup_text_files()
-        if not self.parent.filter_string_var.get():
-            self.parent.update_image_file_count()
+        self.app.backup_text_files()
+        if not self.app.filter_string_var.get():
+            self.app.update_image_file_count()
         files_altered = 0
         words_replaced = 0
-        for text_file in self.parent.text_files:
+        for text_file in self.app.text_files:
             try:
                 if not os.path.exists(text_file):
                     continue
                 with open(text_file, 'r', encoding="utf-8") as file:
                     filedata = file.read()
                 original_data = filedata
-                if self.parent.search_and_replace_regex_var.get():
+                if self.app.search_and_replace_regex_var.get():
                     new_data, count = re.subn(search_string, replace_string, filedata)
                 else:
                     count = filedata.count(search_string)
@@ -144,8 +144,8 @@ class TextController:
                         file.write(new_data)
             except Exception as e:
                 messagebox.showerror("Error: search_and_replace()", f"An error occurred while trying to replace text in {text_file}.\n\n{e}")
-        self.parent.cleanup_all_text_files(show_confirmation=False)
-        self.parent.show_pair()
+        self.app.cleanup_all_text_files(show_confirmation=False)
+        self.app.show_pair()
         messagebox.showinfo("Search and Replace", f"Search and Replace completed successfully.\n\nFiles altered: {files_altered}\nWords replaced: {words_replaced}")
 
 
@@ -154,14 +154,14 @@ class TextController:
 
 
     def create_prefix_text_widgets_tab2(self):
-        tab_frame = Frame(self.parent.tab2)
+        tab_frame = Frame(self.app.tab2)
         tab_frame.pack(side='top', fill='both')
         btn_frame = Frame(tab_frame)
         btn_frame.pack(side='top', fill='x')
         prefix_lbl = Label(btn_frame, width=8, text="Prefix:")
         prefix_lbl.pack(side='left', anchor="n", pady=4)
         Tip.create(widget=prefix_lbl, text="Enter the text you want to insert at the START of all text files\n\nCommas will be inserted as needed")
-        self.prefix_entry = ttk.Entry(btn_frame, textvariable=self.parent.prefix_string_var)
+        self.prefix_entry = ttk.Entry(btn_frame, textvariable=self.app.prefix_string_var)
         self.prefix_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
         self.entry_helper.bind_helpers(self.prefix_entry)
         self.prefix_entry.bind('<Return>', lambda event: self.prefix_text_files())
@@ -170,7 +170,7 @@ class TextController:
         Tip.create(widget=prefix_btn, text="Text files will be backup up")
         clear_btn = ttk.Button(btn_frame, text="Clear", width=5, command=lambda: self.prefix_entry.delete(0, 'end'))
         clear_btn.pack(side='left', anchor="n", pady=4)
-        undo_btn = ttk.Button(btn_frame, text="Undo", width=5, command=self.parent.restore_backup)
+        undo_btn = ttk.Button(btn_frame, text="Undo", width=5, command=self.app.restore_backup)
         undo_btn.pack(side='left', anchor="n", pady=4)
         Tip.create(widget=undo_btn, text="Revert last action")
         text_frame = Frame(tab_frame, borderwidth=0)
@@ -186,9 +186,9 @@ class TextController:
 
 
     def prefix_text_files(self):
-        if not self.parent.check_if_directory():
+        if not self.app.check_if_directory():
             return
-        prefix_text = self.parent.prefix_string_var.get()
+        prefix_text = self.app.prefix_string_var.get()
         if not prefix_text:
             return
         if not prefix_text.endswith(', '):
@@ -196,10 +196,10 @@ class TextController:
         confirm = messagebox.askokcancel("Prefix", "This will prefix all text files with:\n\n{}\n\nA backup will be created before making changes.\n\nDo you want to proceed?".format(prefix_text))
         if not confirm:
             return
-        self.parent.backup_text_files()
-        if not self.parent.filter_string_var.get():
-            self.parent.update_image_file_count()
-        for text_file in self.parent.text_files:
+        self.app.backup_text_files()
+        if not self.app.filter_string_var.get():
+            self.app.update_image_file_count()
+        for text_file in self.app.text_files:
             try:
                 if not os.path.exists(text_file):
                     with open(text_file, 'w', encoding="utf-8") as file:
@@ -211,8 +211,8 @@ class TextController:
                         file.write(prefix_text + content)
             except Exception as e:
                 messagebox.showerror("Error: prefix_text_files()", f"An error occurred while trying to prefix text in {text_file}.\n\n{e}")
-        self.parent.cleanup_all_text_files(show_confirmation=False)
-        self.parent.show_pair()
+        self.app.cleanup_all_text_files(show_confirmation=False)
+        self.app.show_pair()
         messagebox.showinfo("Prefix", "Prefix completed successfully.")
 
 
@@ -221,14 +221,14 @@ class TextController:
 
 
     def create_append_text_widgets_tab3(self):
-        tab_frame = Frame(self.parent.tab3)
+        tab_frame = Frame(self.app.tab3)
         tab_frame.pack(side='top', fill='both')
         btn_frame = Frame(tab_frame)
         btn_frame.pack(side='top', fill='x')
         append_lbl = Label(btn_frame, width=8, text="Append:")
         append_lbl.pack(side='left', anchor="n", pady=4)
         Tip.create(widget=append_lbl, text="Enter the text you want to insert at the END of all text files\n\nCommas will be inserted as needed")
-        self.append_entry = ttk.Entry(btn_frame, textvariable=self.parent.append_string_var)
+        self.append_entry = ttk.Entry(btn_frame, textvariable=self.app.append_string_var)
         self.append_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
         self.entry_helper.bind_helpers(self.append_entry)
         self.append_entry.bind('<Return>', lambda event: self.append_text_files())
@@ -237,7 +237,7 @@ class TextController:
         Tip.create(widget=append_btn, text="Text files will be backup up")
         clear_btn = ttk.Button(btn_frame, text="Clear", width=5, command=lambda: self.append_entry.delete(0, 'end'))
         clear_btn.pack(side='left', anchor="n", pady=4)
-        undo_btn = ttk.Button(btn_frame, text="Undo", width=5, command=self.parent.restore_backup)
+        undo_btn = ttk.Button(btn_frame, text="Undo", width=5, command=self.app.restore_backup)
         undo_btn.pack(side='left', anchor="n", pady=4)
         Tip.create(widget=undo_btn, text="Revert last action")
         text_frame = Frame(tab_frame, borderwidth=0)
@@ -253,9 +253,9 @@ class TextController:
 
 
     def append_text_files(self):
-        if not self.parent.check_if_directory():
+        if not self.app.check_if_directory():
             return
-        append_text = self.parent.append_string_var.get()
+        append_text = self.app.append_string_var.get()
         if not append_text:
             return
         if not append_text.startswith(', '):
@@ -263,10 +263,10 @@ class TextController:
         confirm = messagebox.askokcancel("Append", "This will append all text files with:\n\n{}\n\nA backup will be created before making changes.\n\nDo you want to proceed?".format(append_text))
         if not confirm:
             return
-        self.parent.backup_text_files()
-        if not self.parent.filter_string_var.get():
-            self.parent.update_image_file_count()
-        for text_file in self.parent.text_files:
+        self.app.backup_text_files()
+        if not self.app.filter_string_var.get():
+            self.app.update_image_file_count()
+        for text_file in self.app.text_files:
             try:
                 if not os.path.exists(text_file):
                     with open(text_file, 'w', encoding="utf-8") as file:
@@ -276,8 +276,8 @@ class TextController:
                         file.write(append_text)
             except Exception as e:
                 messagebox.showerror("Error: append_text_files()", f"An error occurred while trying to append text in {text_file}.\n\n{e}")
-        self.parent.cleanup_all_text_files(show_confirmation=False)
-        self.parent.show_pair()
+        self.app.cleanup_all_text_files(show_confirmation=False)
+        self.app.show_pair()
         messagebox.showinfo("Append", "Append completed successfully.")
 
 
@@ -309,7 +309,7 @@ class TextController:
                 self.autotag_listbox.clipboard_append(', '.join(extracted_tags))
 
         # Top Frame for Buttons
-        top_frame = Frame(self.parent.tab4)
+        top_frame = Frame(self.app.tab4)
         top_frame.pack(fill='x')
         help_btn = ttk.Button(top_frame, text="?", takefocus=False, width=2, command=self.show_auto_tag_help)
         help_btn.pack(side='left')
@@ -332,7 +332,7 @@ class TextController:
         Tip.create(widget=batch_chk, text="Interrogate all images\nAn Auto-Insert mode must be selected")
 
         # Main Paned Window
-        pane = PanedWindow(self.parent.tab4, orient='horizontal', sashwidth=6, bg="#d0d0d0")
+        pane = PanedWindow(self.app.tab4, orient='horizontal', sashwidth=6, bg="#d0d0d0")
         pane.pack(fill='both', expand=True)
 
         # Listbox Frame
@@ -383,7 +383,7 @@ class TextController:
         Tip.create(widget=gen_thr_lbl, text="The minimum confidence threshold for general tags")
         self.autotag_gen_threshold_spinbox = ttk.Spinbox(gen_thr_frame, takefocus=False, from_=0, to=1, increment=0.01, width=8)
         self.autotag_gen_threshold_spinbox.pack(side='right')
-        self.autotag_gen_threshold_spinbox.set(self.parent.onnx_tagger.general_threshold)
+        self.autotag_gen_threshold_spinbox.set(self.app.onnx_tagger.general_threshold)
         # Character Threshold
         char_thr_frame = Frame(control_frame)
         char_thr_frame.pack(side='top', fill='x', padx=2, pady=2)
@@ -392,7 +392,7 @@ class TextController:
         Tip.create(widget=char_thr_lbl, text="The minimum confidence threshold for character tags")
         self.autotag_char_threshold_spinbox = ttk.Spinbox(char_thr_frame, takefocus=False, from_=0, to=1, increment=0.01, width=8)
         self.autotag_char_threshold_spinbox.pack(side='right')
-        self.autotag_char_threshold_spinbox.set(self.parent.onnx_tagger.character_threshold)
+        self.autotag_char_threshold_spinbox.set(self.app.onnx_tagger.character_threshold)
         # Max Tags
         max_tags_frame = Frame(control_frame)
         max_tags_frame.pack(side='top', fill='x', padx=2, pady=2)
@@ -406,11 +406,11 @@ class TextController:
         chk_frame = Frame(control_frame)
         chk_frame.pack(side='top', fill='x', padx=2, pady=2)
         # Keep (_)
-        self.autotag_keep_underscore_chk = ttk.Checkbutton(chk_frame, text="Keep: _", takefocus=False, variable=self.parent.onnx_tagger.keep_underscore)
+        self.autotag_keep_underscore_chk = ttk.Checkbutton(chk_frame, text="Keep: _", takefocus=False, variable=self.app.onnx_tagger.keep_underscore)
         self.autotag_keep_underscore_chk.pack(side='left', anchor='w', padx=2, pady=2)
         Tip.create(widget=self.autotag_keep_underscore_chk, text="If enabled, Underscores will be kept in tags, otherwise they will be replaced with a space\n\nExample: Keep = simple_background, Replace = simple background")
         # Keep (\)
-        self.autotag_keep_escape_chk = ttk.Checkbutton(chk_frame, text="Keep: \\", takefocus=False, variable=self.parent.onnx_tagger.keep_escape_character)
+        self.autotag_keep_escape_chk = ttk.Checkbutton(chk_frame, text="Keep: \\", takefocus=False, variable=self.app.onnx_tagger.keep_escape_character)
         self.autotag_keep_escape_chk.pack(side='left', anchor='w', padx=2, pady=2)
         Tip.create(widget=self.autotag_keep_escape_chk, text="If enabled, the escape character will be kept in tags\n\nExample: Keep = \(cat\), Replace = (cat)")
         # Entry Frame
@@ -494,8 +494,8 @@ class TextController:
             "Auto-Tagging was primarily tested with the 'wd-v1-4-moat-tagger-v2' model.\n\nCopy URL to clipboard?"
         )
         if confirm:
-            self.parent.text_box.clipboard_clear()
-            self.parent.text_box.clipboard_append("https://huggingface.co/SmilingWolf")
+            self.app.text_box.clipboard_clear()
+            self.app.text_box.clipboard_append("https://huggingface.co/SmilingWolf")
 
 
     def update_auto_tag_stats_label(self):
@@ -509,7 +509,7 @@ class TextController:
         selected_items, extracted_tags = self.get_auto_tag_selection()
         if not selected_items:
             return
-        current_text = self.parent.text_box.get("1.0", "end-1c").strip(', ')
+        current_text = self.app.text_box.get("1.0", "end-1c").strip(', ')
         if replace:
             new_text = ', '.join(extracted_tags)
         elif prefix:
@@ -519,8 +519,8 @@ class TextController:
         else:
             new_text = ', '.join(extracted_tags)
         new_text = new_text.strip(', ')
-        self.parent.text_box.delete("1.0", "end")
-        self.parent.text_box.insert("1.0", new_text)
+        self.app.text_box.delete("1.0", "end")
+        self.app.text_box.insert("1.0", new_text)
 
 
     def get_auto_tag_selection(self):
@@ -530,22 +530,22 @@ class TextController:
 
 
     def update_tag_options(self, current_tags=None):
-        self.parent.onnx_tagger.exclude_tags.clear()
-        self.parent.onnx_tagger.keep_tags.clear()
-        self.parent.onnx_tagger.replace_tag_dict.clear()
+        self.app.onnx_tagger.exclude_tags.clear()
+        self.app.onnx_tagger.keep_tags.clear()
+        self.app.onnx_tagger.replace_tag_dict.clear()
         excluded_tags = [tag.strip().replace(' ', '_') for tag in self.excluded_tags_entry.get().strip().split(',')]
         if self.auto_exclude_tags_var.get():
             if current_tags is not None:
                 source_tags = current_tags.strip()
             else:
-                source_tags = self.parent.text_box.get("1.0", "end-1c").strip()
+                source_tags = self.app.text_box.get("1.0", "end-1c").strip()
             excluded_tags.extend(tag.strip().replace(' ', '_') for tag in source_tags.split(','))
-        self.parent.onnx_tagger.exclude_tags = [tag.strip() for tag in excluded_tags if tag.strip()]
+        self.app.onnx_tagger.exclude_tags = [tag.strip() for tag in excluded_tags if tag.strip()]
         keep_tags = self.keep_tags_entry.get().strip().split(',')
-        self.parent.onnx_tagger.keep_tags = [tag.strip() for tag in keep_tags if tag.strip()]
+        self.app.onnx_tagger.keep_tags = [tag.strip() for tag in keep_tags if tag.strip()]
         replace_tags = self.replace_tags_entry.get().strip().split(',')
         replace_with_tags = self.replace_with_tags_entry.get().strip().split(',')
-        self.parent.onnx_tagger.replace_tag_dict = {tag.strip(): replace_with_tags[i].strip() for i, tag in enumerate(replace_tags) if tag.strip() and i < len(replace_with_tags) and replace_with_tags[i].strip()}
+        self.app.onnx_tagger.replace_tag_dict = {tag.strip(): replace_with_tags[i].strip() for i, tag in enumerate(replace_tags) if tag.strip() and i < len(replace_with_tags) and replace_with_tags[i].strip()}
 
 
     def update_tag_thresholds(self):
@@ -560,18 +560,18 @@ class TextController:
             return default_value
 
         validate_spinbox_value(self.autotag_max_tags_spinbox, 40, 1, 999)
-        self.parent.onnx_tagger.general_threshold = validate_spinbox_value(self.autotag_gen_threshold_spinbox, 0.35, 0, 1)
-        self.parent.onnx_tagger.character_threshold = validate_spinbox_value(self.autotag_char_threshold_spinbox, 0.85, 0, 1)
+        self.app.onnx_tagger.general_threshold = validate_spinbox_value(self.autotag_gen_threshold_spinbox, 0.35, 0, 1)
+        self.app.onnx_tagger.character_threshold = validate_spinbox_value(self.autotag_char_threshold_spinbox, 0.85, 0, 1)
 
 
     def interrogate_image_tags(self):
-        self.parent.text_notebook.select(self.parent.tab4)
+        self.app.text_notebook.select(self.app.tab4)
         if self.batch_interrogate_images_var.get():
             self.batch_interrogate_images()
             return
-        image_path = self.parent.image_files[self.parent.current_index]
+        image_path = self.app.image_files[self.app.current_index]
         if image_path.lower().endswith('.mp4'):
-            image_path = self.parent.video_player.get_current_frame()
+            image_path = self.app.video_player.get_current_frame()
         selected_model_path = self.onnx_model_dict.get(self.autotag_model_combo.get())
         if not selected_model_path or not os.path.exists(selected_model_path):
             confirm = messagebox.askyesno("Error", f"Model file not found: {selected_model_path}\n\nWould you like to view the Auto-Tag Help?")
@@ -580,7 +580,7 @@ class TextController:
             return
         self.update_tag_thresholds()
         self.update_tag_options()
-        tag_list, tag_dict = self.parent.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
+        tag_list, tag_dict = self.app.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
         max_tags = int(self.autotag_max_tags_spinbox.get())
         tag_list = tag_list[:max_tags]
         tag_dict = {k: v for k, v in list(tag_dict.items())[:max_tags]}
@@ -609,7 +609,7 @@ class TextController:
         if mode == "disable":
             return
         tags_str = ', '.join(tags)
-        current_text = self.parent.text_box.get("1.0", "end-1c")
+        current_text = self.app.text_box.get("1.0", "end-1c")
         if mode == "prefix":
             new_text = tags_str + ', ' + current_text if current_text else tags_str
         elif mode == "append":
@@ -618,13 +618,13 @@ class TextController:
             new_text = tags_str
         else:
             return
-        self.parent.text_box.delete("1.0", "end")
-        self.parent.text_box.insert("1.0", new_text)
+        self.app.text_box.delete("1.0", "end")
+        self.app.text_box.insert("1.0", new_text)
 
 
     def get_onnx_model_list(self):
         model_dict = {}
-        for onnx_model_path, dirs, files in os.walk(self.parent.onnx_models_dir):
+        for onnx_model_path, dirs, files in os.walk(self.app.onnx_models_dir):
             if "model.onnx" in files and "selected_tags.csv" in files:
                 folder_name = os.path.basename(onnx_model_path)
                 model_file_path = os.path.join(onnx_model_path, "model.onnx")
@@ -656,7 +656,7 @@ class TextController:
                 return
             self.stop_batch = False
             popup = Toplevel(self.root)
-            popup.iconbitmap(self.parent.icon_path)
+            popup.iconbitmap(self.app.icon_path)
             popup.title("Batch Interrogate")
             popup.geometry("300x150")
             self.root.update_idletasks()
@@ -682,10 +682,10 @@ class TextController:
                 return
             self.update_tag_thresholds()
             max_tags = int(self.autotag_max_tags_spinbox.get())
-            total_images = len(self.parent.image_files)
+            total_images = len(self.app.image_files)
             progress["maximum"] = total_images
             start_time = time.time()
-            for index, (image_path, text_file_path) in enumerate(zip(self.parent.image_files, self.parent.text_files), start=1):
+            for index, (image_path, text_file_path) in enumerate(zip(self.app.image_files, self.app.text_files), start=1):
                 if self.stop_batch:
                     break
                 current_text = ""
@@ -699,12 +699,12 @@ class TextController:
                 if image_path.lower().endswith('.mp4'):
                     video_frame = vtg.get_video_frame(image_path, timestamp_seconds=2.0)
                     if video_frame:
-                        tag_list, tag_dict = self.parent.onnx_tagger.tag_image(video_frame, model_path=selected_model_path)
+                        tag_list, tag_dict = self.app.onnx_tagger.tag_image(video_frame, model_path=selected_model_path)
                     else:
                         tag_list, tag_dict = [], {}  # Video frame could not be extracted
                         continue
                 else:
-                    tag_list, tag_dict = self.parent.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
+                    tag_list, tag_dict = self.app.onnx_tagger.tag_image(image_path, model_path=selected_model_path)
                 tag_list = tag_list[:max_tags]
                 tag_dict = {k: v for k, v in list(tag_dict.items())[:max_tags]}
                 self.auto_insert_batch_tags(tag_list, text_file_path)
@@ -722,7 +722,7 @@ class TextController:
         except TclError:
             pass
         finally:
-            self.parent.refresh_text_box()
+            self.app.refresh_text_box()
             if popup:
                 popup.destroy()
 
@@ -791,14 +791,14 @@ class TextController:
 
 
     def create_filter_text_image_pairs_widgets_tab5(self):
-        tab_frame = Frame(self.parent.tab5)
+        tab_frame = Frame(self.app.tab5)
         tab_frame.pack(side='top', fill='both')
         btn_frame = Frame(tab_frame)
         btn_frame.pack(side='top', fill='x')
         self.filter_lbl = Label(btn_frame, width=8, text="Filter:")
         self.filter_lbl.pack(side='left', anchor="n", pady=4)
         Tip.create(widget=self.filter_lbl, text="Enter the EXACT text you want to filter by\nThis will filter all img-txt pairs based on the provided text, see below for more info")
-        self.filter_entry = ttk.Entry(btn_frame, width=11, textvariable=self.parent.filter_string_var)
+        self.filter_entry = ttk.Entry(btn_frame, width=11, textvariable=self.app.filter_string_var)
         self.filter_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
         self.entry_helper.bind_helpers(self.filter_entry)
         self.filter_entry.bind('<Return>', lambda event: self.filter_text_image_pairs())
@@ -808,10 +808,10 @@ class TextController:
         self.revert_filter_btn = ttk.Button(btn_frame, text="Clear", width=5, command=lambda: (self.revert_text_image_filter(clear=True)))
         self.revert_filter_btn.pack(side='left', anchor="n", pady=4)
         self.revert_filter_button_tooltip = Tip.create(widget=self.revert_filter_btn, text="Clear any filtering applied")
-        self.regex_filter_chk = ttk.Checkbutton(btn_frame, text="Regex", variable=self.parent.filter_use_regex_var)
+        self.regex_filter_chk = ttk.Checkbutton(btn_frame, text="Regex", variable=self.app.filter_use_regex_var)
         self.regex_filter_chk.pack(side='left', anchor="n", pady=4)
         Tip.create(widget=self.regex_filter_chk, text="Use Regular Expressions for filtering")
-        self.empty_files_chk = ttk.Checkbutton(btn_frame, text="Empty", variable=self.parent.filter_empty_files_var, command=self.toggle_empty_files_filter)
+        self.empty_files_chk = ttk.Checkbutton(btn_frame, text="Empty", variable=self.app.filter_empty_files_var, command=self.toggle_empty_files_filter)
         self.empty_files_chk.pack(side='left', anchor="n", pady=4)
         Tip.create(widget=self.empty_files_chk, text="Check this to show only empty text files\n\nImages without a text pair are also considered as empty")
         text_frame = Frame(tab_frame, borderwidth=0)
@@ -832,18 +832,18 @@ class TextController:
 
 
     def filter_text_image_pairs(self):  # Filter
-        if not self.parent.check_if_directory():
+        if not self.app.check_if_directory():
             return
-        if not self.parent.filter_empty_files_var.get():
+        if not self.app.filter_empty_files_var.get():
             self.revert_text_image_filter(silent=True)
-        filter_string = self.parent.filter_string_var.get()
-        if not filter_string and not self.parent.filter_empty_files_var.get():
-            self.parent.image_index_entry.delete(0, "end")
-            self.parent.image_index_entry.insert(0, "1")
+        filter_string = self.app.filter_string_var.get()
+        if not filter_string and not self.app.filter_empty_files_var.get():
+            self.app.image_index_entry.delete(0, "end")
+            self.app.image_index_entry.insert(0, "1")
             return
         self.filtered_image_files = []
         self.filtered_text_files = []
-        for image_file in self.parent.image_files:
+        for image_file in self.app.image_files:
             text_file = os.path.splitext(image_file)[0] + ".txt"
             filedata = ""
             try:
@@ -851,12 +851,12 @@ class TextController:
                     filedata = file.read()
             except FileNotFoundError:
                 text_file = text_file
-            if self.parent.filter_empty_files_var.get():
+            if self.app.filter_empty_files_var.get():
                 if not filedata.strip():
                     self.filtered_image_files.append(image_file)
                     self.filtered_text_files.append(text_file)
             else:
-                if self.parent.filter_use_regex_var.get():
+                if self.app.filter_use_regex_var.get():
                     if re.search(filter_string, filedata):
                         self.filtered_image_files.append(image_file)
                         self.filtered_text_files.append(text_file)
@@ -878,53 +878,53 @@ class TextController:
             messagebox.showinfo("Filter", f"0 images found matching the filter:\n\n{filter_string}")
             return
         self.filter_is_active = True
-        self.parent.image_files = self.filtered_image_files
-        self.parent.text_files = self.filtered_text_files
+        self.app.image_files = self.filtered_image_files
+        self.app.text_files = self.filtered_text_files
         if hasattr(self, 'total_images_label'):
-            self.parent.total_images_label.config(text=f"of {len(self.parent.image_files)}")
-        self.parent.current_index = 0
-        self.parent.show_pair()
-        messagebox.showinfo("Filter", f"Filter applied successfully.\n\n{len(self.parent.image_files)} images found.")
+            self.app.total_images_label.config(text=f"of {len(self.app.image_files)}")
+        self.app.current_index = 0
+        self.app.show_pair()
+        messagebox.showinfo("Filter", f"Filter applied successfully.\n\n{len(self.app.image_files)} images found.")
         self.revert_filter_btn.config(style="Red.TButton")
         self.revert_filter_button_tooltip.config(text="Filter is active\n\nClear any filtering applied")
-        self.parent.update_total_image_label()
-        if self.parent.is_image_grid_visible_var.get():
-            self.parent.image_grid.reload_grid()
+        self.app.update_total_image_label()
+        if self.app.is_image_grid_visible_var.get():
+            self.app.image_grid.reload_grid()
 
 
 
     def revert_text_image_filter(self, clear=None, silent=False): # Filter
-        last_index = self.parent.current_index
+        last_index = self.app.current_index
         if clear:
-            self.parent.filter_string_var.set("")
-            self.parent.filter_use_regex_var.set(False)
-            self.parent.image_index_entry.delete(0, "end")
-            self.parent.image_index_entry.insert(0, last_index + 1)
-        self.parent.update_image_file_count()
-        self.parent.current_index = last_index if last_index < len(self.parent.image_files) else 0
-        self.parent.show_pair()
+            self.app.filter_string_var.set("")
+            self.app.filter_use_regex_var.set(False)
+            self.app.image_index_entry.delete(0, "end")
+            self.app.image_index_entry.insert(0, last_index + 1)
+        self.app.update_image_file_count()
+        self.app.current_index = last_index if last_index < len(self.app.image_files) else 0
+        self.app.show_pair()
         if not silent:
             messagebox.showinfo("Filter", "Filter has been cleared.")
         self.filter_is_active = False
         self.revert_filter_btn.config(style="")
         self.revert_filter_button_tooltip.config(text="Filter is inactive\n\nClear any filtering applied")
-        self.parent.filter_empty_files_var.set(False)
-        self.parent.update_total_image_label()
-        if self.parent.is_image_grid_visible_var.get():
-            self.parent.image_grid.reload_grid()
-        if self.parent.filter_empty_files_var.get():
+        self.app.filter_empty_files_var.set(False)
+        self.app.update_total_image_label()
+        if self.app.is_image_grid_visible_var.get():
+            self.app.image_grid.reload_grid()
+        if self.app.filter_empty_files_var.get():
             self.toggle_filter_widgets(state=True)
         else:
             self.toggle_filter_widgets(state=False)
 
 
     def toggle_empty_files_filter(self): # Filter
-        if self.parent.filter_empty_files_var.get():
-            self.parent.image_index_entry.delete(0, "end")
-            self.parent.image_index_entry.insert(0, 1)
-            self.parent.filter_string_var.set("")
+        if self.app.filter_empty_files_var.get():
+            self.app.image_index_entry.delete(0, "end")
+            self.app.image_index_entry.insert(0, 1)
+            self.app.filter_string_var.set("")
             self.filter_text_image_pairs()
-            self.parent.filter_use_regex_var.set(False)
+            self.app.filter_use_regex_var.set(False)
             self.toggle_filter_widgets(state=True)
         else:
             self.revert_text_image_filter(silent=True)
@@ -945,22 +945,22 @@ class TextController:
 
 
     def create_custom_active_highlight_widgets_tab6(self):
-        tab_frame = Frame(self.parent.tab6)
+        tab_frame = Frame(self.app.tab6)
         tab_frame.pack(side='top', fill='both')
         btn_frame = Frame(tab_frame)
         btn_frame.pack(side='top', fill='x')
         highlight_lbl = Label(btn_frame, width=8, text="Highlight:")
         highlight_lbl.pack(side='left', anchor="n", pady=4)
         Tip.create(widget=highlight_lbl, text="Enter the text you want to highlight\nUse ' + ' to highlight multiple strings of text\n\nExample: dog + cat")
-        self.highlight_entry = ttk.Entry(btn_frame, textvariable=self.parent.custom_highlight_string_var)
+        self.highlight_entry = ttk.Entry(btn_frame, textvariable=self.app.custom_highlight_string_var)
         self.highlight_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
         self.entry_helper.bind_helpers(self.highlight_entry)
-        self.highlight_entry.bind('<KeyRelease>', lambda event: self.parent.highlight_custom_string())
-        highlight_btn = ttk.Button(btn_frame, text="Go!", width=5, command=self.parent.highlight_custom_string)
+        self.highlight_entry.bind('<KeyRelease>', lambda event: self.app.highlight_custom_string())
+        highlight_btn = ttk.Button(btn_frame, text="Go!", width=5, command=self.app.highlight_custom_string)
         highlight_btn.pack(side='left', anchor="n", pady=4)
         clear_btn = ttk.Button(btn_frame, text="Clear", width=5, command=self.clear_highlight_tab)
         clear_btn.pack(side='left', anchor="n", pady=4)
-        regex_highlight_chk = ttk.Checkbutton(btn_frame, text="Regex", variable=self.parent.highlight_use_regex_var)
+        regex_highlight_chk = ttk.Checkbutton(btn_frame, text="Regex", variable=self.app.highlight_use_regex_var)
         regex_highlight_chk.pack(side='left', anchor="n", pady=4)
         Tip.create(widget=regex_highlight_chk, text="Use Regular Expressions for highlighting text")
         text_frame = Frame(tab_frame, borderwidth=0)
@@ -977,7 +977,7 @@ class TextController:
 
     def clear_highlight_tab(self):
         self.highlight_entry.delete(0, 'end')
-        self.parent.highlight_use_regex_var.set(False)
+        self.app.highlight_use_regex_var.set(False)
 
 
 #endregion
@@ -988,29 +988,29 @@ class TextController:
         def set_font_and_size(font, size):
             if font and size:
                 size = int(size)
-                self.parent.text_box.config(font=(font, size))
+                self.app.text_box.config(font=(font, size))
                 self.font_size_lbl.config(text=f"Size: {size}")
                 font_combo_tooltip.config(text=f"{font}")
         def reset_to_defaults():
-            self.parent.font_var.set(self.parent.default_font)
-            self.size_scale.set(self.parent.default_font_size)
-            set_font_and_size(self.parent.default_font, self.parent.default_font_size)
-        font_lbl = Label(self.parent.tab7, width=8, text="Font:")
+            self.app.font_var.set(self.app.default_font)
+            self.size_scale.set(self.app.default_font_size)
+            set_font_and_size(self.app.default_font, self.app.default_font_size)
+        font_lbl = Label(self.app.tab7, width=8, text="Font:")
         font_lbl.pack(side="left", anchor="n", pady=4)
         Tip.create(widget=font_lbl, text="Recommended Fonts: Courier New, Ariel, Consolas, Segoe UI")
-        font_combo = ttk.Combobox(self.parent.tab7, textvariable=self.parent.font_var, width=4, takefocus=False, state="readonly", values=list(font.families()))
-        font_combo.set(self.parent.current_font_name)
-        font_combo.bind("<<ComboboxSelected>>", lambda event: set_font_and_size(self.parent.font_var.get(), self.size_scale.get()))
+        font_combo = ttk.Combobox(self.app.tab7, textvariable=self.app.font_var, width=4, takefocus=False, state="readonly", values=list(font.families()))
+        font_combo.set(self.app.current_font_name)
+        font_combo.bind("<<ComboboxSelected>>", lambda event: set_font_and_size(self.app.font_var.get(), self.size_scale.get()))
         font_combo.pack(side="left", anchor="n", pady=4, fill="x", expand=True)
-        font_combo_tooltip = Tip.create(widget=font_combo, text=f"{self.parent.current_font_name}")
-        self.font_size_lbl = Label(self.parent.tab7, text=f"Size: {self.parent.font_size_var.get()}", width=14)
+        font_combo_tooltip = Tip.create(widget=font_combo, text=f"{self.app.current_font_name}")
+        self.font_size_lbl = Label(self.app.tab7, text=f"Size: {self.app.font_size_var.get()}", width=14)
         self.font_size_lbl.pack(side="left", anchor="n", pady=4)
         Tip.create(widget=self.font_size_lbl, text="Default size: 10")
-        self.size_scale = ttk.Scale(self.parent.tab7, from_=6, to=24, variable=self.parent.font_size_var, takefocus=False)
-        self.size_scale.set(self.parent.current_font_size)
-        self.size_scale.bind("<B1-Motion>", lambda event: set_font_and_size(self.parent.font_var.get(), self.size_scale.get()))
+        self.size_scale = ttk.Scale(self.app.tab7, from_=6, to=24, variable=self.app.font_size_var, takefocus=False)
+        self.size_scale.set(self.app.current_font_size)
+        self.size_scale.bind("<B1-Motion>", lambda event: set_font_and_size(self.app.font_var.get(), self.size_scale.get()))
         self.size_scale.pack(side="left", anchor="n", pady=4, fill="x", expand=True)
-        reset_btn = ttk.Button(self.parent.tab7, text="Reset", width=5, takefocus=False, command=reset_to_defaults)
+        reset_btn = ttk.Button(self.app.tab7, text="Reset", width=5, takefocus=False, command=reset_to_defaults)
         reset_btn.pack(side="left", anchor="n", pady=4)
 
 
@@ -1028,19 +1028,19 @@ class TextController:
 
 
     def create_stats_widgets_tab9(self):
-        tab_frame = Frame(self.parent.tab9)
+        tab_frame = Frame(self.app.tab9)
         tab_frame.pack(fill='both', expand=True)
         btn_frame = Frame(tab_frame)
         btn_frame.pack(side='top', fill='x', pady=4)
         self.stats_info_lbl = Label(btn_frame, text="Characters: 0  |  Words: 0")
         self.stats_info_lbl.pack(side='left')
-        refresh_btn = ttk.Button(btn_frame, width=10, text="Refresh", takefocus=False, command=lambda: self.parent.stat_calculator.calculate_file_stats(manual_refresh=True))
+        refresh_btn = ttk.Button(btn_frame, width=10, text="Refresh", takefocus=False, command=lambda: self.app.stat_calculator.calculate_file_stats(manual_refresh=True))
         refresh_btn.pack(side='right')
         Tip.create(widget=refresh_btn, text="Refresh the file stats")
-        truncate_chk = ttk.Checkbutton(btn_frame, text="Truncate Captions", takefocus=False, variable=self.parent.truncate_stat_captions_var)
+        truncate_chk = ttk.Checkbutton(btn_frame, text="Truncate Captions", takefocus=False, variable=self.app.truncate_stat_captions_var)
         truncate_chk.pack(side='right')
         Tip.create(widget=truncate_chk, text="Limit the displayed captions if they exceed either 8 words or 50 characters")
-        image_video_chk = ttk.Checkbutton(btn_frame, text="Image/Video Stats", takefocus=False, variable=self.parent.process_image_stats_var)
+        image_video_chk = ttk.Checkbutton(btn_frame, text="Image/Video Stats", takefocus=False, variable=self.app.process_image_stats_var)
         image_video_chk.pack(side='right')
         Tip.create(widget=image_video_chk, text="Enable/Disable image and video stat processing (Can be slow with many HD images or videos)")
         self.filestats_textbox = scrolledtext.ScrolledText(tab_frame, wrap="word", state="disabled")
