@@ -60,9 +60,7 @@ class TextController:
 
 
     def create_search_and_replace_widgets_tab1(self):
-        tab_frame = Frame(self.app.tab1)
-        tab_frame.pack(side='top', fill='both')
-        btn_frame = Frame(tab_frame)
+        btn_frame = Frame(self.app.tab1)
         btn_frame.pack(side='top', fill='x')
         search_lbl = Label(btn_frame, width=8, text="Search:")
         search_lbl.pack(side='left', anchor="n", pady=4)
@@ -88,7 +86,7 @@ class TextController:
         regex_chk = ttk.Checkbutton(btn_frame, text="Regex", variable=self.app.search_and_replace_regex_var)
         regex_chk.pack(side='left', anchor="n", pady=4)
         Tip.create(widget=regex_chk, text="Use Regular Expressions in 'Search'")
-        text_frame = Frame(tab_frame, borderwidth=0)
+        text_frame = Frame(self.app.tab1, borderwidth=0)
         text_frame.pack(side='top', fill="both")
         info_text = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
         info_text.pack(side='bottom', fill='both')
@@ -154,9 +152,7 @@ class TextController:
 
 
     def create_prefix_text_widgets_tab2(self):
-        tab_frame = Frame(self.app.tab2)
-        tab_frame.pack(side='top', fill='both')
-        btn_frame = Frame(tab_frame)
+        btn_frame = Frame(self.app.tab2)
         btn_frame.pack(side='top', fill='x')
         prefix_lbl = Label(btn_frame, width=8, text="Prefix:")
         prefix_lbl.pack(side='left', anchor="n", pady=4)
@@ -173,7 +169,7 @@ class TextController:
         undo_btn = ttk.Button(btn_frame, text="Undo", width=5, command=self.app.restore_backup)
         undo_btn.pack(side='left', anchor="n", pady=4)
         Tip.create(widget=undo_btn, text="Revert last action")
-        text_frame = Frame(tab_frame, borderwidth=0)
+        text_frame = Frame(self.app.tab2, borderwidth=0)
         text_frame.pack(side='top', fill="both")
         info_text = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
         info_text.pack(side='bottom', fill='both')
@@ -221,9 +217,7 @@ class TextController:
 
 
     def create_append_text_widgets_tab3(self):
-        tab_frame = Frame(self.app.tab3)
-        tab_frame.pack(side='top', fill='both')
-        btn_frame = Frame(tab_frame)
+        btn_frame = Frame(self.app.tab3)
         btn_frame.pack(side='top', fill='x')
         append_lbl = Label(btn_frame, width=8, text="Append:")
         append_lbl.pack(side='left', anchor="n", pady=4)
@@ -240,7 +234,7 @@ class TextController:
         undo_btn = ttk.Button(btn_frame, text="Undo", width=5, command=self.app.restore_backup)
         undo_btn.pack(side='left', anchor="n", pady=4)
         Tip.create(widget=undo_btn, text="Revert last action")
-        text_frame = Frame(tab_frame, borderwidth=0)
+        text_frame = Frame(self.app.tab3, borderwidth=0)
         text_frame.pack(side='top', fill="both")
         info_text = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
         info_text.pack(side='bottom', fill='both')
@@ -330,11 +324,9 @@ class TextController:
         batch_chk = ttk.Checkbutton(top_frame, text="Batch", takefocus=False, variable=self.batch_interrogate_images_var)
         batch_chk.pack(side='right')
         Tip.create(widget=batch_chk, text="Interrogate all images\nAn Auto-Insert mode must be selected")
-
         # Main Paned Window
         pane = PanedWindow(self.app.tab4, orient='horizontal', sashwidth=6, bg="#d0d0d0")
         pane.pack(fill='both', expand=True)
-
         # Listbox Frame
         listbox_frame = Frame(pane)
         pane.add(listbox_frame, stretch="never")
@@ -791,9 +783,7 @@ class TextController:
 
 
     def create_filter_text_image_pairs_widgets_tab5(self):
-        tab_frame = Frame(self.app.tab5)
-        tab_frame.pack(side='top', fill='both')
-        btn_frame = Frame(tab_frame)
+        btn_frame = Frame(self.app.tab5)
         btn_frame.pack(side='top', fill='x')
         self.filter_lbl = Label(btn_frame, width=8, text="Filter:")
         self.filter_lbl.pack(side='left', anchor="n", pady=4)
@@ -814,7 +804,7 @@ class TextController:
         self.empty_files_chk = ttk.Checkbutton(btn_frame, text="Empty", variable=self.app.filter_empty_files_var, command=self.toggle_empty_files_filter)
         self.empty_files_chk.pack(side='left', anchor="n", pady=4)
         Tip.create(widget=self.empty_files_chk, text="Check this to show only empty text files\n\nImages without a text pair are also considered as empty")
-        text_frame = Frame(tab_frame, borderwidth=0)
+        text_frame = Frame(self.app.tab5, borderwidth=0)
         text_frame.pack(side='top', fill="both")
         info_text = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
         info_text.pack(side='bottom', fill='both')
@@ -945,9 +935,7 @@ class TextController:
 
 
     def create_custom_active_highlight_widgets_tab6(self):
-        tab_frame = Frame(self.app.tab6)
-        tab_frame.pack(side='top', fill='both')
-        btn_frame = Frame(tab_frame)
+        btn_frame = Frame(self.app.tab6)
         btn_frame.pack(side='top', fill='x')
         highlight_lbl = Label(btn_frame, width=8, text="Highlight:")
         highlight_lbl.pack(side='left', anchor="n", pady=4)
@@ -963,7 +951,7 @@ class TextController:
         regex_highlight_chk = ttk.Checkbutton(btn_frame, text="Regex", variable=self.app.highlight_use_regex_var)
         regex_highlight_chk.pack(side='left', anchor="n", pady=4)
         Tip.create(widget=regex_highlight_chk, text="Use Regular Expressions for highlighting text")
-        text_frame = Frame(tab_frame, borderwidth=0)
+        text_frame = Frame(self.app.tab6, borderwidth=0)
         text_frame.pack(side='top', fill="both")
         info_text = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
         info_text.pack(side='bottom', fill='both')
@@ -1028,9 +1016,7 @@ class TextController:
 
 
     def create_stats_widgets_tab9(self):
-        tab_frame = Frame(self.app.tab9)
-        tab_frame.pack(fill='both', expand=True)
-        btn_frame = Frame(tab_frame)
+        btn_frame = Frame(self.app.tab9)
         btn_frame.pack(side='top', fill='x', pady=4)
         self.stats_info_lbl = Label(btn_frame, text="Characters: 0  |  Words: 0")
         self.stats_info_lbl.pack(side='left')
@@ -1043,7 +1029,7 @@ class TextController:
         image_video_chk = ttk.Checkbutton(btn_frame, text="Image/Video Stats", takefocus=False, variable=self.app.process_image_stats_var)
         image_video_chk.pack(side='right')
         Tip.create(widget=image_video_chk, text="Enable/Disable image and video stat processing (Can be slow with many HD images or videos)")
-        self.filestats_textbox = scrolledtext.ScrolledText(tab_frame, wrap="word", state="disabled")
+        self.filestats_textbox = scrolledtext.ScrolledText(self.app.tab9, wrap="word", state="disabled")
         self.filestats_textbox.pack(fill='both', expand=True)
 
 

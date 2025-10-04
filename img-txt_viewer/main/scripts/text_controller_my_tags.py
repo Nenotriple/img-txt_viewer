@@ -329,14 +329,11 @@ class MyTags:
 
         # Interface
         self.create_custom_dictionary(refresh=False)
-
-        tab_frame = Frame(self.app.tab8)
-        tab_frame.pack(side='top', fill='both', expand=True)
-        tab_frame.grid_rowconfigure(1, weight=1)
-        tab_frame.grid_columnconfigure(0, weight=1)
+        self.app.tab8.grid_rowconfigure(1, weight=1)
+        self.app.tab8.grid_columnconfigure(0, weight=1)
 
         # Top Row
-        top_frame = Frame(tab_frame)
+        top_frame = Frame(self.app.tab8)
         top_frame.grid(row=0, column=0, sticky='ew')
 
         help_btn = ttk.Button(top_frame, text="?", takefocus=False, width=2, command=self.show_my_tags_help)
@@ -417,7 +414,7 @@ class MyTags:
         self.save_btn_tooltip = Tip.create(widget=self.save_btn, text="Save changes to 'My Tags' file")
 
         # Middle Row
-        self.text_frame = ttk.PanedWindow(tab_frame, orient='horizontal')
+        self.text_frame = ttk.PanedWindow(self.app.tab8, orient='horizontal')
         self.text_frame.grid(row=1, column=0, sticky='nsew')
 
         # My Tags section
