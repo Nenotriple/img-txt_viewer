@@ -60,6 +60,8 @@
 - Tag-Editor UI and functionality improvements:
   - Re-worked the UI for a cleaner and simpler experience.
   - Tags can now be sorted after creating pending changes.
+- New `Edit Panel` option: `Clarity`
+  - Adjusts local micro‑contrast: positive sharpens/details, negative softens
 
 **Fixed:**
 
