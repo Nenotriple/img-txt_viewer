@@ -12,27 +12,6 @@ from PIL import Image
 #region Video Thumbnail Generator
 
 
-def _open_video_container(file_path: str) -> Optional[av.container.InputContainer]:
-    """
-    Helper function to open a video file and check if it exists.
-
-    Args:
-        file_path: Path to the video file
-
-    Returns:
-        Container object or None if file doesn't exist or on error
-    """
-    if not os.path.exists(file_path):
-        print(f"File not found: {file_path}")
-        return None
-
-    try:
-        return av.open(file_path)
-    except Exception as e:
-        print(f"Error opening {file_path}: {str(e)}")
-        return None
-
-
 def _get_video_stream(container: av.container.InputContainer) -> Optional[av.video.stream.VideoStream]:
     """
     Helper function to get the video stream from a container.
@@ -89,6 +68,25 @@ def _extract_frame(
         return None
 
 
+def _open_video_and_get_stream(file_path: str):
+    """
+    Helper function to open a video file and get its video stream.
+    Returns (container, stream) or (None, None) if failed.
+    """
+    if not os.path.isfile(file_path):
+        return None, None
+    try:
+        container = av.open(file_path)
+        stream = _get_video_stream(container)
+        if not stream:
+            container.close()
+            return None, None
+        return container, stream
+    except Exception as e:
+        print(f"Error opening video {file_path}: {str(e)}")
+        return None, None
+
+
 def generate_video_thumbnails(
     file_paths: List[str],
     timestamp_seconds: float = 2.0,
@@ -113,14 +111,10 @@ def generate_video_thumbnails(
         # Skip if not an MP4 file
         if not file_path.lower().endswith('.mp4'):
             continue
+        container, stream = _open_video_and_get_stream(file_path)
+        if not container or not stream:
+            continue
         try:
-            container = _open_video_container(file_path)
-            if not container:
-                continue
-            stream = _get_video_stream(container)
-            if not stream:
-                container.close()
-                continue
             # Extract resolution and framerate
             resolution = (stream.width, stream.height)
             framerate = float(stream.average_rate) if stream.average_rate else None
@@ -132,9 +126,10 @@ def generate_video_thumbnails(
                     'resolution': resolution,
                     'framerate': framerate
                 }
-            container.close()
         except Exception as e:
             print(f"Error processing {file_path}: {str(e)}")
+        finally:
+            container.close()
     return video_thumb_dict
 
 
@@ -154,17 +149,14 @@ def get_video_frame(
     Returns:
         PIL Image object of the extracted frame or None if extraction fails
     """
+    container, stream = _open_video_and_get_stream(file_path)
+    if not container or not stream:
+        return None
     try:
-        container = _open_video_container(file_path)
-        if not container:
-            return None
-        stream = _get_video_stream(container)
-        if not stream:
-            container.close()
-            return None
         img = _extract_frame(container, stream, timestamp_seconds, thumbnail_size)
-        container.close()
         return img
     except Exception as e:
         print(f"Error processing {file_path}: {str(e)}")
         return None
+    finally:
+        container.close()
