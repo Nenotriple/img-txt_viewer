@@ -10,6 +10,8 @@ class CustomScrolledText(scrolledtext.ScrolledText):
     def __init__(self, master: tk.Widget = None, **kwargs) -> None:
         super().__init__(master, **kwargs)
         self.bind_wrapping_events()
+        self.bind("<Double-1>", self.custom_select_word_for_text, add="+")
+        self.bind("<Triple-1>", self.custom_select_line_for_text, add="+")
 
 
     def bind_wrapping_events(self) -> None:
@@ -73,3 +75,37 @@ class CustomScrolledText(scrolledtext.ScrolledText):
         cursor_pos = self.index(tk.INSERT)
         self.insert(cursor_pos, f"{opening_char}{closing_char}")
         self.mark_set(tk.INSERT, f"{cursor_pos}+1c")
+
+
+    def custom_select_word_for_text(self, event: tk.Event) -> str:
+        """Select a whole word at or next to the click position (double-click behavior)."""
+        separators = " ,.-|()[]<>\\/\"'{}:;!@#$%^&*+=~`?"
+        click_index = self.index(f"@{event.x},{event.y}")
+        line, char_index = map(int, click_index.split("."))
+        line_text = self.get(f"{line}.0", f"{line}.end")
+        if char_index >= len(line_text):
+            return "break"
+        if line_text[char_index] in separators:
+            self.tag_remove("sel", "1.0", "end")
+            self.tag_add("sel", f"{line}.{char_index}", f"{line}.{char_index + 1}")
+        else:
+            word_start = char_index
+            while word_start > 0 and line_text[word_start - 1] not in separators:
+                word_start -= 1
+            word_end = char_index
+            while word_end < len(line_text) and line_text[word_end] not in separators:
+                word_end += 1
+            self.tag_remove("sel", "1.0", "end")
+            self.tag_add("sel", f"{line}.{word_start}", f"{line}.{word_end}")
+        self.mark_set("insert", f"{line}.{char_index + 1}")
+        return "break"
+
+
+    def custom_select_line_for_text(self, event: tk.Event) -> str:
+        """Select the whole line for a triple-click."""
+        click_index = self.index(f"@{event.x},{event.y}")
+        line, _ = map(int, click_index.split("."))
+        self.tag_remove("sel", "1.0", "end")
+        self.tag_add("sel", f"{line}.0", f"{line}.end")
+        self.mark_set("insert", f"{line}.0")
+        return "break"

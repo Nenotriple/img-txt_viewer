@@ -829,7 +829,7 @@ class ImgTxtViewer:
         self.text_notebook.add(self.tab7, text='Font')
         self.text_notebook.add(self.tab8, text='MyTags')
         self.text_notebook.add(self.tab9, text='Stats')
-        self.text_notebook.pack(fill='both', expand=False)
+        self.text_notebook.pack(fill='both', expand=True)
         self.text_controller.create_search_and_replace_widgets_tab1()
         self.text_controller.create_prefix_text_widgets_tab2()
         self.text_controller.create_append_text_widgets_tab3()
@@ -889,8 +889,6 @@ class ImgTxtViewer:
     # --------------------------------------
     def set_text_box_binds(self):
         # Mouse binds
-        self.text_box.bind("<Double-1>", lambda e: self.custom_select_word_for_text(e, self.text_box))
-        self.text_box.bind("<Triple-1>", lambda e: self.custom_select_line_for_text(e, self.text_box))
         self.text_box.bind("<Button-1>", lambda _: (self.remove_tag(), self.autocomplete.clear_suggestions()))
         self.text_box.bind("<Button-2>", lambda e: (self.delete_tag_under_mouse(e), self.sync_title_with_content(e)))
         self.text_box.bind("<Button-3>", lambda e: (self.show_text_context_menu(e)))
@@ -1039,38 +1037,6 @@ class ImgTxtViewer:
     # --------------------------------------
     # Misc UI logic
     # --------------------------------------
-    def custom_select_word_for_text(self, event, text_widget: 'Text'):
-        widget = text_widget
-        separators = " ,.-|()[]<>\\/\"'{}:;!@#$%^&*+=~`?"
-        click_index = widget.index(f"@{event.x},{event.y}")
-        line, char_index = map(int, click_index.split("."))
-        line_text = widget.get(f"{line}.0", f"{line}.end")
-        if (char_index >= len(line_text)):
-            return "break"
-        if line_text[char_index] in separators:
-            widget.tag_remove("sel", "1.0", "end")
-            widget.tag_add("sel", f"{line}.{char_index}", f"{line}.{char_index + 1}")
-        else:
-            word_start = char_index
-            while word_start > 0 and line_text[word_start - 1] not in separators:
-                word_start -= 1
-            word_end = char_index
-            while word_end < len(line_text) and line_text[word_end] not in separators:
-                word_end += 1
-            widget.tag_remove("sel", "1.0", "end")
-            widget.tag_add("sel", f"{line}.{word_start}", f"{line}.{word_end}")
-        widget.mark_set("insert", f"{line}.{char_index + 1}")
-        return "break"
-
-
-    def custom_select_line_for_text(self, event, text_widget: 'Text'):
-        widget = text_widget
-        click_index = widget.index(f"@{event.x},{event.y}")
-        line, _ = map(int, click_index.split("."))
-        widget.tag_remove("sel", "1.0", "end")
-        widget.tag_add("sel", f"{line}.0", f"{line}.end")
-        widget.mark_set("insert", f"{line}.0")
-        return "break"
 
 
     def get_default_font(self):
