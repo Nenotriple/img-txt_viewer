@@ -2118,50 +2118,48 @@ class ImgTxtViewer:
 
 
     def delete_tag_under_mouse(self, event):
-        def set_text_highlight(tag, color, start=None, end=None):
-            self.text_box.tag_config(tag, background=color)
-            if start and end:
-                self.text_box.tag_add(tag, start, end)
-
-        def delete_tag():
-            if self.delete_tag_job_id is not None:
-                self.text_box.delete(f"{line_start}+{start_of_clicked_tag}c", f"{line_start}+{end_of_clicked_tag}c")
-                cleaned_text = self.cleanup_text(self.text_box.get("1.0", "end"))
-                cleaned_text = '\n'.join([line for line in cleaned_text.split('\n') if line.strip() != ''])
-                self.text_box.delete("1.0", "end")
-                self.text_box.insert("1.0", cleaned_text)
-                set_text_highlight("highlight", "#5da9be")
-                try:
-                    self.text_box.clipboard_get()
-                except TclError: pass
-                self.delete_tag_job_id = None
-                self.sync_title_with_content()
-
-        def get_cursor_and_line_text():
-            cursor_pos = self.text_box.index(f"@{event.x},{event.y}")
-            line_start = self.text_box.index(f"{cursor_pos} linestart")
-            line_end = self.text_box.index(f"{cursor_pos} lineend")
-            line_text = self.text_box.get(line_start, line_end)
-            return cursor_pos, line_start, line_end, line_text
-
-        def find_clicked_tag(line_text, cursor_pos):
-            tags = [(match.group().strip(), match.start(), match.end()) for match in re.finditer(r'[^,]+', line_text)]
-            for tag, start, end in tags:
-                if start <= int(cursor_pos.split('.')[1]) <= end:
-                    return tag, start, end
-            return None, None, None
-
         if not self.cleaning_text_var.get():
             return
-        cursor_pos, line_start, line_end, line_text = get_cursor_and_line_text()
-        clicked_tag, start_of_clicked_tag, end_of_clicked_tag = find_clicked_tag(line_text, cursor_pos)
-        if clicked_tag is None:
+        text_box = self.text_box
+        cursor_index = text_box.index(f"@{event.x},{event.y}")
+        column_index = int(cursor_index.split('.')[1])
+        line_start = text_box.index(f"{cursor_index} linestart")
+        line_end = text_box.index(f"{cursor_index} lineend")
+        line_text = text_box.get(line_start, line_end)
+        tag_chunk_pattern = re.compile(r'[^,]+')
+        match_span = None
+        for match in tag_chunk_pattern.finditer(line_text):
+            start, end = match.span()
+            if start <= column_index <= end:
+                match_span = (start, end)
+                break
+        if match_span is None:
             return
-        set_text_highlight("highlight", "#fd8a8a", f"{line_start}+{start_of_clicked_tag}c", f"{line_start}+{end_of_clicked_tag}c")
-        self.text_box.update_idletasks()
-        if self.delete_tag_job_id is not None:
-            self.text_box.after_cancel(self.delete_tag_job_id)
-        self.delete_tag_job_id = self.text_box.after(100, delete_tag)
+        start_offset, end_offset = match_span
+        highlight_start = f"{line_start}+{start_offset}c"
+        highlight_end = f"{line_start}+{end_offset}c"
+        text_box.tag_config("highlight", background="#ff5d5d")
+        text_box.tag_add("highlight", highlight_start, highlight_end)
+        text_box.update_idletasks()
+
+        def delete_tag(event_release=None):
+            text_box.delete(highlight_start, highlight_end)
+            raw_text = text_box.get("1.0", "end-1c")
+            cleaned_text = self.cleanup_text(raw_text)
+            normalized_text = '\n'.join(line for line in cleaned_text.split('\n') if line.strip())
+            if normalized_text != raw_text:
+                text_box.delete("1.0", "end")
+                text_box.insert("1.0", normalized_text)
+            text_box.tag_config("highlight", background="#5da9be")
+            self.delete_tag_job_id = None
+            self.sync_title_with_content()
+            text_box.tag_remove("highlight", "1.0", "end")
+
+        def on_release(event_release):
+            text_box.unbind("<ButtonRelease-2>")
+            delete_tag(event_release)
+
+        text_box.bind("<ButtonRelease-2>", on_release)
 
 
     def delete_word_before_cursor(self, event=None):
