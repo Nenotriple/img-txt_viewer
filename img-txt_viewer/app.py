@@ -2211,56 +2211,69 @@ class ImgTxtViewer:
         if not self.check_if_directory():
             return
         self.check_working_directory()
-        supported_formats = {".jpg", ".jpeg", ".png", ".jfif", ".jpg_large", ".bmp", ".webp"}
-        filename = self.image_files[self.current_index]
-        base_filename, file_extension = os.path.splitext(filename)
-        if file_extension.lower() not in supported_formats:
+        ext_map = {".jpg": "JPEG", ".jpeg": "JPEG", ".jfif": "JPEG", ".jpg_large": "JPEG", ".png": "PNG", ".bmp": "BMP", ".webp": "WEBP" }
+        src_path = self.image_files[self.current_index]
+        src_basename = os.path.basename(src_path)
+        base_filename, file_extension = os.path.splitext(src_basename)
+        if file_extension.lower() not in ext_map:
             messagebox.showerror("Unsupported Filetype", f"Expanding {file_extension.upper()} is not supported.")
             return
-        new_filename = f"{base_filename}_ex{file_extension}"
-        new_filepath = os.path.join(self.image_dir.get(), new_filename)
+        new_basename = f"{base_filename}_ex{file_extension}"
+        new_filepath = os.path.join(os.path.dirname(src_path), new_basename)
         if os.path.exists(new_filepath):
-            messagebox.showerror("Error: expand_image()", f'Output file:\n\n{os.path.normpath(new_filename)}\n\nAlready exists.')
+            messagebox.showerror("Error: expand_image()", f'Output file:\n\n{os.path.normpath(new_basename)}\n\nAlready exists.')
             return
-        with Image.open(os.path.join(self.image_dir.get(), filename)) as img:
-            width, height = img.size
-            if width == height:
-                messagebox.showwarning("Warning", "The image is already a square aspect ratio.")
-                return
-        confirmation = (
-            "Are you sure you want to expand the current image?\n\n"
-            "This tool works by expanding the shorter side to a square resolution divisible by 8 "
-            "and stretching the pixels around the long side to fill the space.\n\n"
-            "A new image will be saved in the same format and with '_ex' appended to the filename."
-        )
+        confirmation = ("Are you sure you want to expand the current image?\n\n"
+                        "This tool works by expanding the shorter side to a square resolution divisible by 8 and stretching the pixels around the long side to fill the space.\n\n"
+                        "A new image will be saved in the same format and with '_ex' appended to the filename.")
         if not messagebox.askyesno("Expand Image", confirmation):
             return
         try:
-            text_filename = f"{base_filename}.txt"
-            text_filepath = os.path.join(self.image_dir.get(), text_filename)
-            if os.path.exists(text_filepath):
-                new_text_filename = f"{base_filename}_ex.txt"
-                new_text_filepath = os.path.join(self.image_dir.get(), new_text_filename)
-                shutil.copy2(text_filepath, new_text_filepath)
-            with Image.open(os.path.join(self.image_dir.get(), filename)) as img:
-                max_dim = max(width, height)
-                new_img = Image.new("RGB", (max_dim, max_dim), (255, 255, 255))
-                x_offset = (max_dim - width) // 2
-                y_offset = (max_dim - height) // 2
-                new_img.paste(img, (x_offset, y_offset))
-                np_img = numpy.array(new_img)
-                np_img[:, :x_offset] = np_img[:, x_offset:x_offset+1]
-                np_img[:, x_offset+width:] = np_img[:, x_offset+width-1:x_offset+width]
-                np_img[:y_offset, :] = np_img[y_offset:y_offset+1, :]
-                np_img[y_offset+height:, :] = np_img[y_offset+height-1:y_offset+height, :]
-                filled_img = Image.fromarray(np_img)
-                filled_img.save(new_filepath, quality=100 if file_extension in {".jpg", ".jpeg", ".jfif", ".jpg_large"} else 100)
-                self.check_image_dir()
-                index_value = self.image_files.index(new_filename)
+            with Image.open(src_path) as img:
+                width, height = img.size
+                if width == height:
+                    messagebox.showwarning("Warning", "The image is already a square aspect ratio.")
+                    return
+                side = max(width, height)
+                if side % 8 != 0:
+                    side += (8 - (side % 8))
+                left = (side - width) // 2
+                right = side - width - left
+                top = (side - height) // 2
+                bottom = side - height - top
+                preserve_mode = img.mode
+                if preserve_mode not in ("RGB", "RGBA", "L"):
+                    working_img = img.convert("RGB")
+                    preserve_mode = "RGB"
+                else:
+                    working_img = img.copy()
+                np_img = numpy.array(working_img)
+                if np_img.ndim == 2:
+                    pad_spec = ((top, bottom), (left, right))
+                else:
+                    pad_spec = ((top, bottom), (left, right), (0, 0))
+                padded = numpy.pad(np_img, pad_spec, mode="edge")
+                filled_img = Image.fromarray(padded)
+                save_format = ext_map.get(file_extension.lower(), img.format)
+                save_kwargs = {}
+                if save_format == "JPEG":
+                    save_kwargs["quality"] = 95
+                    save_kwargs["subsampling"] = 0
+                filled_img.save(new_filepath, format=save_format, **save_kwargs)
+            text_candidates = [os.path.join(os.path.dirname(src_path), f"{base_filename}.txt")]
+            if getattr(self, "text_dir", ""):
+                text_candidates.append(os.path.join(self.text_dir, f"{base_filename}.txt"))
+            for txt in text_candidates:
+                if os.path.exists(txt):
+                    shutil.copy2(txt, os.path.join(os.path.dirname(new_filepath), f"{base_filename}_ex.txt"))
+                    break
+            self.check_image_dir()
+            index_value = self.get_image_index_by_filename(new_basename)
+            if index_value != -1:
                 self.jump_to_image(index_value)
             self.thumbnail_panel.refresh_thumbnails()
         except Exception as e:
-            messagebox.showerror("Error: expand_image()", f'Failed to process {filename}. Reason: {e}')
+            messagebox.showerror("Error: expand_image()", f'Failed to process {src_basename}. Reason: {e}')
 
 
     def flip_current_image(self):
