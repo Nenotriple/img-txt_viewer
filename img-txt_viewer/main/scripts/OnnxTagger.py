@@ -145,28 +145,18 @@ class OnnxTagger:
     def _preprocess_image(self, image):
         if image.mode != 'RGB':
             image = image.convert('RGB')
-        avg_color = self._get_avg_color(image)
         ratio = float(self.model_input_height) / max(image.size)
         new_size = tuple([int(x * ratio) for x in image.size])
         image = image.resize(new_size, PILImage.LANCZOS)
-        square = PILImage.new("RGB", (self.model_input_height, self.model_input_height), avg_color)
-        square.paste(image, ((self.model_input_height - new_size[0]) // 2, (self.model_input_height - new_size[1]) // 2))
-        np_image = numpy.array(square).astype(numpy.float32)
-        np_image = np_image[:, :, ::-1]  # RGB -> BGR
-        preprocessed_image = numpy.expand_dims(np_image, 0)
+        np_image = numpy.array(image, dtype=numpy.float32)
+        h, w = np_image.shape[:2]
+        padded = numpy.zeros((self.model_input_height, self.model_input_height, 3), dtype=numpy.float32)
+        y_offset = (self.model_input_height - h) // 2
+        x_offset = (self.model_input_height - w) // 2
+        padded[y_offset:y_offset+h, x_offset:x_offset+w] = np_image
+        padded = padded[:, :, ::-1]
+        preprocessed_image = numpy.expand_dims(padded, 0)
         return preprocessed_image
-
-
-    def _get_avg_color(self, image):
-        border_pixels = []
-        for x in range(image.width):
-            border_pixels.append(image.getpixel((x, 0)))
-            border_pixels.append(image.getpixel((x, image.height - 1)))
-        for y in range(image.height):
-            border_pixels.append(image.getpixel((0, y)))
-            border_pixels.append(image.getpixel((image.width - 1, y)))
-        avg_color = tuple(map(lambda x: int(sum(x) / len(x)), zip(*border_pixels)))
-        return avg_color
 
 
     def _interrogate_image(self, image):
