@@ -445,7 +445,9 @@ class ImgTxtViewer:
         self.batch_operations_menu = Menu(self.toolsMenu, tearoff=0)
         self.toolsMenu.add_cascade(label="Batch Operations", state="disable", menu=self.batch_operations_menu)
         self.batch_operations_menu.add_command(label="Batch Crop Images...", command=self.batch_crop_images)
-        self.batch_operations_menu.add_command(label="Create Wildcard From Captions...", command=self.collate_captions)
+        self.batch_operations_menu.add_command(label="Create Wildcard From Text Files...", command=self.collate_captions)
+        self.batch_operations_menu.add_command(label="Clear All Text Files...", command=lambda: self.delete_all_text_or_files(delete_file=False))
+        self.batch_operations_menu.add_command(label="Delete All Text Files...", command=lambda: self.delete_all_text_or_files(delete_file=True))
         # Edit Current Pair
         self.individual_operations_menu = Menu(self.toolsMenu, tearoff=0)
         self.toolsMenu.add_cascade(label="Edit Current Pair", state="disable", menu=self.individual_operations_menu)
@@ -2201,6 +2203,40 @@ class ImgTxtViewer:
             return
         if messagebox.askyesno("Success", f"All captions have been combined into:\n\n{output_file}.\n\nDo you want to open the output directory?"):
             os.startfile(os.path.dirname(output_file))
+
+
+    def delete_all_text_or_files(self, delete_file=False):
+        if not self.check_if_directory():
+            return
+        if delete_file:
+            confirm = messagebox.askyesno("Delete All Text Files", "This will permanently delete ALL text files in the current directory.\n\nAre you sure you want to continue?")
+            if not confirm:
+                return
+            deleted_count = 0
+            for text_file in self.text_files:
+                try:
+                    if os.path.exists(text_file):
+                        os.remove(text_file)
+                        deleted_count += 1
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to delete {text_file}:\n{e}")
+            messagebox.showinfo("Done", f"Deleted {deleted_count} text files.")
+        else:
+            confirm = messagebox.askyesno("Clear All Text Files", "This will erase the contents of ALL text files in the current directory.\n\nAre you sure you want to continue?")
+            if not confirm:
+                return
+            cleared_count = 0
+            for text_file in self.text_files:
+                try:
+                    if os.path.exists(text_file):
+                        with open(text_file, "w", encoding="utf-8") as f:
+                            f.write("")
+                        cleared_count += 1
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to clear {text_file}:\n{e}")
+            messagebox.showinfo("Done", f"Cleared {cleared_count} text files.")
+        self.refresh_file_lists()
+        self.show_pair()
 
 
 #endregion

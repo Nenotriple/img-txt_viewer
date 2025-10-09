@@ -151,7 +151,7 @@ class AboutWindow:
             "⦁ 'Edit > Cleanup All Text Files' This operation will clean all text files from typos like:\n"
             "  ⦁ Duplicate tags, Extra commas, Extra spaces, trailing commas/spaces, commas without spaces, and more.\n\n"
             "⦁ 'Tools > Batch Operations > Batch Crop Images' Crop all listed images to a specific resolution and crop anchor.\n\n"
-            "⦁ 'Tools > Batch Operations > Create Wildcard From Captions' Combine all captions into one text file, each files content added to a new line.\n\n"
+            "⦁ 'Tools > Batch Operations > Create Wildcard From Text Files' Combine all captions into one text file, each files content added to a new line.\n\n"
             "Text Options:\n"
             "  ⦁ Clean-Text: perform text cleanup when saving.\n"
             "  ⦁ Auto-Delete Blank Files: Automatically delete blank text files when saving.\n"

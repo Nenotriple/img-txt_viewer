@@ -166,7 +166,7 @@ or use the links below.
 - **Tools Menu**
   - [Batch Operations](docs/User_Guide.md#batch-operations)
     - [Batch Crop Images](docs/User_Guide.md#batch-crop-images)
-    - [Create Wildcard From Captions](docs/User_Guide.md#create-wildcard-from-captions)
+    - [Create Wildcard From Text Files](docs/User_Guide.md#create-wildcard-from-text-files)
   - [Edit Current Pair](docs/User_Guide.md#edit-current-pair)
     - [Upscale](docs/User_Guide.md#batch-upscale)
     - [Crop](docs/User_Guide.md#_crop)

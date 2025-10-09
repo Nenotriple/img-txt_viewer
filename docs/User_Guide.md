@@ -76,7 +76,7 @@ Last Updated for: `img-txt_viewer v1.97`
   - [**Tools Menu**](#tools-menu)
     - [Batch Operations](#batch-operations)
       - [Batch Crop Images](#batch-crop-images)
-      - [Create Wildcard From Captions](#create-wildcard-from-captions)
+      - [Create Wildcard From Text Files](#create-wildcard-from-text-files)
     - [Edit Current Pair](#edit-current-pair)
       - [Upscale](#batch-upscale)
       - [Crop](#_crop)
@@ -891,7 +891,7 @@ Batch and current image processing tools.
 
 > The crop anchor dictates the area of the image to keep.
 
-##### Create Wildcard From Captions
+##### Create Wildcard From Text Files
 
 - Combine all text files into a single `wildcard` text file where each line corresponds to the tags of an image.
 - Works great in combination with the [AutoTag](#autotag) tool to create diverse wildcard tags.
