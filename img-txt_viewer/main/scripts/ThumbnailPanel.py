@@ -237,3 +237,6 @@ class ThumbnailPanel(Frame):
             thumb_menu.add_command(label="Refresh Thumbnails", command=self.refresh_thumbnails)
             thumb_menu.post(event.x_root, event.y_root)
         return show_context_menu
+
+
+#endregion
