@@ -87,6 +87,7 @@
 - All text Entry widgets now support undo/redo with `CTRL+Z` and `CTRL+Y`.
 - The Crop control panel is now scrollable for smaller screens.
 - All `Edit Panel` adjustments now support RGBA images, preserving transparency.
+- Improved the layout of the first time setup wizard, and user-flow when resetting settings.
 
 ---
 
