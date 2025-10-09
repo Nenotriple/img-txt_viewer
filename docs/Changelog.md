@@ -81,7 +81,8 @@
 
 **Other Changes:**
 
-- Navigating via mouse wheel when hovering the mouse over the image is now bound to `CTRL + Mouse Wheel`.
+- Navigating via mouse wheel when hovering the mouse over the image is now bound to `Shift + Mouse Wheel`.
+- Dragging the displayed image/video to move the window is now bound to `Shift + Left Mouse Button`.
 - Loading and navigating images in the Tagger UI is now quicker and smoother.
 - MyTags now uses YAML format instead of CSV.
 - The MyTags save button text color now changes to red when changes are unsaved.
