@@ -47,21 +47,41 @@ class SettingsManager:
     def save_settings(self):
         """Saves the current user settings to a file."""
         try:
-            self._read_existing_settings()
+            self._load_config_from_file()
             self._save_version_settings()
             self._save_path_settings()
             self._save_window_settings()
             self._save_autocomplete_settings()
             self._save_other_settings()
             self._save_mytags_style_settings()
-            self.write_settings_to_file()
+            self._write_config_to_file()
         except (PermissionError, IOError) as e:
             messagebox.showerror("Error: save_settings()", f"An error occurred while saving the user settings.\n\n{e}")
 
 
-    def _read_existing_settings(self):
-        if os.path.exists(self.app.app_settings_cfg):
-            self.config.read(self.app.app_settings_cfg)
+    def _load_config_from_file(self) -> bool:
+        try:
+            if os.path.exists(self.app.app_settings_cfg):
+                self.config.read(self.app.app_settings_cfg)
+                return True
+            return False
+        except Exception as e:
+            messagebox.showerror("Error: _load_config_from_file()", f"An error occurred while loading the user settings.\n\n{e}")
+            return False
+
+
+    def _write_config_to_file(self, clear=False):
+        try:
+            cfg_dir = os.path.dirname(self.app.app_settings_cfg)
+            if cfg_dir and not os.path.exists(cfg_dir):
+                os.makedirs(cfg_dir, exist_ok=True)
+            with open(self.app.app_settings_cfg, "w", encoding="utf-8") as cfg_file:
+                if clear:
+                    cfg_file.write("")
+                else:
+                    self.config.write(cfg_file)
+        except (PermissionError, IOError) as e:
+            messagebox.showerror("Error: _save_config_to_file()", f"An error occurred while saving the user settings.\n\n{e}")
 
 
     def _add_section(self, section_name):
@@ -174,12 +194,6 @@ class SettingsManager:
         self.config.set("MyTagsStyle", "groups_background", str(groups_style.get('background', '')))
 
 
-    def write_settings_to_file(self):
-        """Writes the current settings to the configuration file."""
-        with open(self.app.app_settings_cfg, "w", encoding="utf-8") as f:
-            self.config.write(f)
-
-
 #endregion
 #region Read
 
@@ -187,8 +201,7 @@ class SettingsManager:
     def read_settings(self):
         """Reads the user settings from the configuration file."""
         try:
-            if os.path.exists(self.app.app_settings_cfg):
-                self.config.read(self.app.app_settings_cfg)
+            if self._load_config_from_file():
                 if not self._is_current_version():
                     self.reset_settings()
                     return
@@ -418,8 +431,7 @@ class SettingsManager:
             self.app.text_box.delete("1.0", "end")
             self.app.text_box.insert("1.0", current_text)
         if messagebox.askyesno("Confirm Reset", "Reset 'My Tags' to default?"):
-            with open(self.app.app_settings_cfg, 'w', encoding="utf-8") as cfg_file:
-                cfg_file.write("")
+            self._write_config_to_file(clear=True)
             self.app.text_controller.my_tags.create_custom_dictionary(reset=True)
         # Extra panels
         self.app.thumbnails_visible.set(value=True)
