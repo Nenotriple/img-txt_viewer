@@ -62,6 +62,9 @@
   - Tags can now be sorted after creating pending changes.
 - New `Edit Panel` option: `Clarity`
   - Adjusts local micro‑contrast: positive sharpens/details, negative softens
+- New `Batch Operations` tools:
+  - `Clear All Text Files`: Erase the contents of all text files in the current directory.
+  - `Delete All Text Files`: Permanently delete all text files in the current directory.
 
 **Fixed:**
 
