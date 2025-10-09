@@ -884,6 +884,8 @@ class TextController:
 
 
     def revert_text_image_filter(self, clear=None, silent=False): # Filter
+        if not self.filter_is_active and not self.app.filter_empty_files_var.get():
+            return
         last_index = self.app.current_index
         if clear:
             self.app.filter_string_var.set("")
