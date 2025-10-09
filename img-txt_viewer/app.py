@@ -458,7 +458,7 @@ class ImgTxtViewer:
         self.individual_operations_menu.add_command(label="Rotate", command=self.rotate_current_image)
         self.individual_operations_menu.add_command(label="Flip", command=self.flip_current_image)
         self.individual_operations_menu.add_separator()
-        self.individual_operations_menu.add_command(label="AutoTag", command=self.text_controller.interrogate_image_tags)
+        self.individual_operations_menu.add_command(label="AutoTag", command=self.text_controller.auto_tag.interrogate_image_tags)
 
 
     def enable_menu_options(self):
@@ -978,7 +978,7 @@ class ImgTxtViewer:
         self.image_context_menu.add_command(label="Open Current Directory...", command=self.open_image_directory)
         self.image_context_menu.add_command(label="Open Current Image...", command=self.open_image)
         self.image_context_menu.add_command(label="Edit Image...", accelerator="F4", command=self.open_image_in_editor)
-        self.image_context_menu.add_command(label="AutoTag", command=self.text_controller.interrogate_image_tags)
+        self.image_context_menu.add_command(label="AutoTag", command=self.text_controller.auto_tag.interrogate_image_tags)
         self.image_context_menu.add_separator()
         # File
         self.image_context_menu.add_command(label="Duplicate img-txt pair", command=self.duplicate_pair)
