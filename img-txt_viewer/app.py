@@ -617,7 +617,7 @@ class ImgTxtViewer:
         self.primary_display_image = ImageZoomWidget(self.master_image_inner_frame)
         self.primary_display_image.grid(row=1, column=0, sticky="nsew")
         self.primary_display_image.canvas.bind("<Double-1>", lambda event: self.open_image(index=self.current_index, event=event))
-        self.primary_display_image.canvas.bind("<Control-MouseWheel>", self.mouse_scroll)
+        self.primary_display_image.canvas.bind("<Shift-MouseWheel>", self.mousewheel_nav)
         self.primary_display_image.canvas.bind("<Button-3>", self.show_image_context_menu)
         # Video Player
         self.video_player = VideoPlayerWidget(master=self.master_image_inner_frame)
@@ -661,7 +661,7 @@ class ImgTxtViewer:
         self.image_index_entry = ttk.Entry(self.index_frame, width=5, state="disabled")
         self.image_index_entry.pack(side="left")
         self.image_index_entry.bind("<Return>", self.jump_to_image)
-        self.image_index_entry.bind("<MouseWheel>", self.mouse_scroll)
+        self.image_index_entry.bind("<MouseWheel>", self.mousewheel_nav)
         self.image_index_entry.bind("<Up>", self.next_pair)
         self.image_index_entry.bind("<Down>", self.prev_pair)
         self.entry_helper.bind_undo_stack(self.image_index_entry)
@@ -1894,13 +1894,13 @@ class ImgTxtViewer:
         self.update_total_image_label()
 
 
-    def mouse_scroll(self, event):
+    def mousewheel_nav(self, event):
         current_time = time.time()
         scroll_debounce_time = 0.05
         if current_time - self.last_scroll_time < scroll_debounce_time:
             return
         self.last_scroll_time = current_time
-        step = 5 if event.state & 0x0001 else 1  # Check if SHIFT is held
+        step = 1
         if event.delta > 0:
             self.update_pair('next', step=step)
         else:

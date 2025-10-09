@@ -2,6 +2,7 @@
 
 
 import datetime
+import tkinter as tk
 from tkinter import ttk, filedialog
 from tkVideoPlayer import TkinterVideo
 
@@ -28,6 +29,7 @@ class VideoPlayerWidget(ttk.Frame):
         - kwargs: Additional arguments to pass to ttk.Frame
         """
         super().__init__(master, **kwargs)
+        self.root = self._find_root()
         # Initialize video player
         self.vid_player = TkinterVideo(keep_aspect=True, master=self)
         self.vid_player.pack(expand=True, fill="both")
@@ -48,6 +50,18 @@ class VideoPlayerWidget(ttk.Frame):
             self.vid_player.bind("<Double-1>", lambda event: app.open_image(index=app.current_index, event=event))
             self.vid_player.bind('<Button-2>', app.open_image_directory)
             self.vid_player.bind("<Button-3>", app.show_image_context_menu)
+            self.vid_player.bind("<Shift-MouseWheel>", app.mousewheel_nav)
+        self.vid_player.bind("<Shift-Button-1>", self.start_drag, add="+")
+        self.vid_player.bind("<Shift-B1-Motion>", self.dragging_window, add="+")
+        self.vid_player.bind("<Shift-ButtonRelease-1>", self.stop_drag, add="+")
+
+
+    def _find_root(self):
+        """Find the root window from master."""
+        master = self.master
+        while master is not None and not isinstance(master, tk.Tk):
+            master = getattr(master, "master", None)
+        return master
 
 
     def _create_controls(self):
@@ -203,3 +217,26 @@ class VideoPlayerWidget(ttk.Frame):
         if self.vid_player and self.vid_player.path:
             return self.vid_player.current_img()
         return None
+
+
+    def start_drag(self, event):
+        self.drag_x = event.x
+        self.drag_y = event.y
+        self.vid_player.config(cursor="size")
+
+
+    def stop_drag(self, event):
+        self.drag_x = None
+        self.drag_y = None
+        self.vid_player.config(cursor="arrow")
+
+
+    def dragging_window(self, event):
+        if self.drag_x is not None and self.drag_y is not None:
+            dx = event.x - self.drag_x
+            dy = event.y - self.drag_y
+            x = self.root.winfo_x() + dx
+            y = self.root.winfo_y() + dy
+            width = self.root.winfo_width()
+            height = self.root.winfo_height()
+            self.root.geometry(f"{width}x{height}+{x}+{y}")

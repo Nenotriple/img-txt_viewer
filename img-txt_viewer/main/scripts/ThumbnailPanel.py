@@ -45,7 +45,7 @@ class ThumbnailPanel(Frame):
         self.app = app
         self.thumbnail_cache: Dict[tuple, ImageTk.PhotoImage] = {}
         self.image_info_cache: Dict[str, dict] = {}
-        self.bind("<MouseWheel>", self.app.mouse_scroll)
+        self.bind("<MouseWheel>", self.app.mousewheel_nav)
 
 
 #endregion
@@ -189,7 +189,7 @@ class ThumbnailPanel(Frame):
             button.config(style="Highlighted.TButton")
         # Add bindings
         button.bind("<Button-3>", self._create_context_menu(button, index))
-        button.bind("<MouseWheel>", self.app.mouse_scroll)
+        button.bind("<MouseWheel>", self.app.mousewheel_nav)
         # Add tooltip
         image_file = self.app.image_files[index]
         image_info = self.image_info_cache[image_file]

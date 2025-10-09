@@ -16,7 +16,7 @@ from PIL.Image import Image as PILImage
 from PIL.ImageTk import PhotoImage as PILPhotoImage
 
 from collections import OrderedDict
-from typing import Optional, Tuple, Any, Union, List
+from typing import Optional, Tuple, Any, List
 
 
 #endregion
@@ -453,6 +453,9 @@ class ImageZoomWidget(tk.Frame):
         self._event_bindings: dict = {}
         self.events = EventController(self)
         self._create_ui()
+        self.drag_x = None
+        self.drag_y = None
+        self.root = self._find_root()
 
 # --- UI construction / initialization ---
     def _create_ui(self) -> None:
@@ -475,6 +478,9 @@ class ImageZoomWidget(tk.Frame):
         self._event_bindings['button_press'] = self.canvas.bind("<ButtonPress-1>", self.events._on_button_press, add="+")
         self._event_bindings['motion'] = self.canvas.bind("<B1-Motion>", self.events._on_mouse_drag, add="+")
         self._event_bindings['button_release'] = self.canvas.bind("<ButtonRelease-1>", self.events._on_button_release, add="+")
+        self._event_bindings['shift_button_press'] = self.canvas.bind("<Shift-Button-1>", self.start_drag, add="+")
+        self._event_bindings['shift_motion'] = self.canvas.bind("<Shift-B1-Motion>", self.dragging_window, add="+")
+        self._event_bindings['shift_button_release'] = self.canvas.bind("<Shift-ButtonRelease-1>", self.stop_drag, add="+")
 
     def unbind_events(self) -> None:
         """Unbind pan and zoom events from the canvas."""
@@ -490,9 +496,22 @@ class ImageZoomWidget(tk.Frame):
                     self.canvas.unbind("<B1-Motion>", bind_id)
                 elif event_type == 'button_release':
                     self.canvas.unbind("<ButtonRelease-1>", bind_id)
+                elif event_type == 'shift_button_press':
+                    self.canvas.unbind("<Shift-Button-1>", bind_id)
+                elif event_type == 'shift_motion':
+                    self.canvas.unbind("<Shift-B1-Motion>", bind_id)
+                elif event_type == 'shift_button_release':
+                    self.canvas.unbind("<Shift-ButtonRelease-1>", bind_id)
             except tk.TclError:
                 pass
         self._event_bindings.clear()
+
+    def _find_root(self):
+        """Find the root window from master."""
+        master = self.master
+        while master is not None and not isinstance(master, tk.Tk):
+            master = getattr(master, "master", None)
+        return master
 
 # --- Public API / High-level actions ---
     def load_image(self, path: str) -> None:
@@ -850,6 +869,29 @@ class ImageZoomWidget(tk.Frame):
         except Exception:
             pass
         super().destroy()
+
+
+    def start_drag(self, event):
+        self.drag_x = event.x
+        self.drag_y = event.y
+        self.canvas.config(cursor="size")
+
+
+    def stop_drag(self, event):
+        self.drag_x = None
+        self.drag_y = None
+        self.canvas.config(cursor="arrow")
+
+
+    def dragging_window(self, event):
+        if self.drag_x is not None and self.drag_y is not None:
+            dx = event.x - self.drag_x
+            dy = event.y - self.drag_y
+            x = self.root.winfo_x() + dx
+            y = self.root.winfo_y() + dy
+            width = self.root.winfo_width()
+            height = self.root.winfo_height()
+            self.root.geometry(f"{width}x{height}+{x}+{y}")
 
 
 #endregion
