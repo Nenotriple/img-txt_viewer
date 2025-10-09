@@ -244,15 +244,6 @@ class EditPanel:
         self.app.refresh_image()
 
 
-    def update_edited_image(self) -> None:
-        display_width = self.app.primary_display_image.winfo_width()
-        display_height = self.app.primary_display_image.winfo_height()
-        self.app.current_image, new_width, new_height = self.app.resize_and_scale_image(self.app.current_image, display_width, display_height, None)
-        self.app.current_image_tk = ImageTk.PhotoImage(self.app.current_image)
-        self.app.primary_display_image.config(image=self.app.current_image_tk)
-        self.app.primary_display_image.image = self.app.current_image_tk
-
-
 #endregion
 #region Edit
 
@@ -286,7 +277,7 @@ class EditPanel:
             value = self.slider_value_dict.get(option)
             if option in adjustment_methods and adjustment_methods[option] and value != 0:
                 adjustment_methods[option](value, image_type="display")
-        self.update_edited_image()
+        self.app.primary_display_image.set_image(self.app.current_image)
 
 
     def edit_image(self, value: int, enhancer_class: Any, image_type: str = "display", image: Optional[Image.Image] = None) -> Optional[Image.Image]:

@@ -47,11 +47,7 @@ class VideoPlayerWidget(ttk.Frame):
         if app:
             self.vid_player.bind("<Double-1>", lambda event: app.open_image(index=app.current_index, event=event))
             self.vid_player.bind('<Button-2>', app.open_image_directory)
-            self.vid_player.bind("<MouseWheel>", app.mouse_scroll)
             self.vid_player.bind("<Button-3>", app.show_image_context_menu)
-            self.vid_player.bind("<ButtonPress-1>", app.start_drag)
-            self.vid_player.bind("<ButtonRelease-1>", app.stop_drag)
-            self.vid_player.bind("<B1-Motion>", app.dragging_window)
 
 
     def _create_controls(self):

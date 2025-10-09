@@ -25,7 +25,6 @@ import time
 import shutil
 import ctypes
 import zipfile
-import threading
 import subprocess
 
 
@@ -68,10 +67,10 @@ from main.scripts import (
 import main.scripts.video_thumbnail_generator as vtg
 from main.scripts.ThumbnailPanel import ThumbnailPanel
 from main.scripts.Autocomplete import SuggestionHandler
-from main.scripts.PopUpZoom import PopUpZoom as PopUpZoom
 from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
 from main.scripts.video_player_widget import VideoPlayerWidget
 from main.scripts.find_replace_widget import FindReplaceEntry
+from main.scripts.image_zoom import ImageZoomWidget
 
 
 #endregion
@@ -169,7 +168,6 @@ class ImgTxtViewer:
         self.panes_swap_ns_var = BooleanVar(value=False)
         self.text_modified_var = False
         self.filepath_contains_images_var = False
-        self.toggle_zoom_var = None
         self.undo_state = StringVar(value="disabled")
         self.previous_window_size = (self.root.winfo_width(), self.root.winfo_height())
         self.initialize_text_pane = True
@@ -298,7 +296,6 @@ class ImgTxtViewer:
         self.root.bind("<Alt-Left>", lambda event: self.prev_pair(event))
         self.root.bind('<Shift-Delete>', lambda event: self.delete_pair())
         self.root.bind('<F1>', lambda event: self.toggle_image_grid(event))
-        self.root.bind('<F2>', lambda event: self.toggle_zoom_popup(event))
         self.root.bind('<F4>', lambda event: self.open_image_in_editor(event))
         self.root.bind('<Control-w>', lambda event: self.on_closing(event))
 
@@ -577,11 +574,9 @@ class ImgTxtViewer:
         self.master_image_inner_frame.grid(row=1, column=0, sticky="nsew")
         self.master_image_inner_frame.grid_columnconfigure(0, weight=1)
         self.master_image_inner_frame.grid_rowconfigure(1, weight=1)
-        self.master_image_inner_frame.bind('<Configure>', self.debounce_refresh_image)
         self.image_grid = image_grid.ImageGrid(self.master_image_frame, self)
         self.image_grid.grid(row=1, column=0, sticky="nsew")
         self.image_grid.grid_remove()
-        self.image_grid.bind('<Configure>', self.debounce_refresh_image)
         # master_control_frame serves as a container for all primary UI frames (except the master image frame)
         self.master_control_frame = Frame(self.primary_tab)
         self.primary_paned_window.add(self.master_control_frame, stretch="always")
@@ -601,7 +596,6 @@ class ImgTxtViewer:
         self.view_menu = Menu(self.view_menubutton, tearoff=0)
         self.view_menubutton.config(menu=self.view_menu)
         self.view_menu.add_checkbutton(label="Toggle Image-Grid", accelerator="F1", variable=self.is_image_grid_visible_var, command=self.toggle_image_grid)
-        self.view_menu.add_checkbutton(label="Toggle Zoom", accelerator="F2", variable=self.toggle_zoom_var, command=self.toggle_zoom_popup)
         self.view_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.debounce_update_thumbnail_panel)
         self.view_menu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
         self.view_menu.add_separator()
@@ -620,23 +614,15 @@ class ImgTxtViewer:
         self.label_image_stats.grid(row=0, column=1, sticky="ew")
         self.label_image_stats_tooltip = Tip.create(widget=self.label_image_stats, text="...")
         # Primary Image
-        self.primary_display_image = Label(self.master_image_inner_frame, cursor="hand2")
+        self.primary_display_image = ImageZoomWidget(self.master_image_inner_frame)
         self.primary_display_image.grid(row=1, column=0, sticky="nsew")
-        self.primary_display_image.bind("<Double-1>", lambda event: self.open_image(index=self.current_index, event=event))
-        self.primary_display_image.bind('<Button-2>', self.open_image_directory)
-        self.primary_display_image.bind("<MouseWheel>", self.mouse_scroll)
-        self.primary_display_image.bind("<Button-3>", self.show_image_context_menu)
-        self.primary_display_image.bind("<ButtonPress-1>", self.start_drag)
-        self.primary_display_image.bind("<ButtonRelease-1>", self.stop_drag)
-        self.primary_display_image.bind("<B1-Motion>", self.dragging_window)
-        self.image_preview_tooltip = Tip.create(widget=self.primary_display_image, text="Right-Click: Menu\nMiddle-Click: Open In File Explorer\nDouble-Click: Open In Image Viewer\nAlt+Left / Alt+Right Or Mouse-Wheel: Navigate Pairs", origin="widget", widget_anchor="sw", justify="left", padx=1, pady=1)
+        self.primary_display_image.canvas.bind("<Double-1>", lambda event: self.open_image(index=self.current_index, event=event))
+        self.primary_display_image.canvas.bind("<Control-MouseWheel>", self.mouse_scroll)
+        self.primary_display_image.canvas.bind("<Button-3>", self.show_image_context_menu)
         # Video Player
         self.video_player = VideoPlayerWidget(master=self.master_image_inner_frame)
         self.video_player.grid(row=1, column=0, sticky="nsew")
         self.video_player.grid_remove()
-        # Pop-up Zoom
-        self.popup_zoom = PopUpZoom(self.primary_display_image)
-        self.toggle_zoom_var = BooleanVar(value=self.popup_zoom.zoom_enabled.get())
         # Thumbnail Panel
         self.thumbnail_panel = ThumbnailPanel(master=self.master_image_inner_frame, app=self)
         self.thumbnail_panel.grid(row=3, column=0, sticky="ew")
@@ -1169,18 +1155,6 @@ class ImgTxtViewer:
                 self.save_button.config(padding=(1, 1))
 
 
-    def toggle_zoom_popup(self, event=None):
-        new_state = not self.popup_zoom.zoom_enabled.get()
-        self.popup_zoom.zoom_enabled.set(new_state)
-        self.toggle_zoom_var.set(new_state)
-        state, text = ("disabled", "") if new_state else ("normal", "Double-Click to open in system image viewer \n\nMiddle click to open in file explorer\n\nALT+Left/Right or Mouse-Wheel to move between img-txt pairs")
-        self.image_preview_tooltip.config(state=state, text=text)
-        if new_state:
-            self.popup_zoom.show_popup(event)
-        else:
-            self.popup_zoom.hide_popup(event)
-
-
 # --------------------------------------
 # PanedWindow
 # --------------------------------------
@@ -1376,7 +1350,7 @@ class ImgTxtViewer:
         }
         self.ui_state = tab_states.get(tab_name)
         if self.ui_state == "ImgTxtViewer":
-            self.debounce_refresh_image()
+            pass
         elif self.ui_state == "BatchTagEdit":
             self.create_batch_tag_edit_ui(show=True)
         elif self.ui_state == "CropUI":
@@ -1425,7 +1399,6 @@ class ImgTxtViewer:
             self.root.bind("<Alt-Left>", lambda event: self.prev_pair(event))
             self.root.bind('<Shift-Delete>', lambda event: self.delete_pair())
             self.root.bind('<F1>', lambda event: self.toggle_image_grid(event))
-            self.root.bind('<F2>', lambda event: self.toggle_zoom_popup(event))
             self.root.bind('<F4>', lambda event: self.open_image_in_editor(event))
         else:
             for binding in bindings:
@@ -1691,102 +1664,45 @@ class ImgTxtViewer:
 
     def display_image(self):
         try:
+            if self.animation_job_id is not None:
+                self.root.after_cancel(self.animation_job_id)
+                self.animation_job_id = None
             self.image_file = self.image_files[self.current_index]
             text_file = self.text_files[self.current_index] if self.current_index < len(self.text_files) else None
             file_extension = os.path.splitext(self.image_file)[1].lower()
-            if self.is_ffmpeg_installed and file_extension == '.mp4':
+            # 1. Regular images
+            if file_extension not in ('.gif', '.mp4'):
+                self.video_player.grid_remove()
+                self.primary_display_image.grid(row=1, column=0, sticky="nsew")
+                self.primary_display_image.load_image(self.image_file)
+                if self.edit_panel_visible_var.get():
+                    self.edit_panel.toggle_edit_panel_widgets("normal")
+                image = self.primary_display_image.get_image(original=False)
+                self.update_imageinfo()
+                return text_file, image, None, None
+            # 2. GIF images
+            elif file_extension == '.gif':
+                try:
+                    self.video_player.grid_remove()
+                    self.primary_display_image.grid(row=1, column=0, sticky="nsew")
+                    self.primary_display_image.load_image(self.image_file)
+                    if self.edit_panel_visible_var.get():
+                        self.edit_panel.toggle_edit_panel_widgets("disabled")
+                    self.update_imageinfo()
+                    return text_file, None, None, None
+                except (FileNotFoundError, UnidentifiedImageError):
+                    self.check_image_dir()
+                    return text_file, None, None, None
+            # 3. MP4 videos
+            elif self.is_ffmpeg_installed and file_extension == '.mp4':
+                self.primary_display_image.grid_remove()
                 self.display_mp4_video()
                 if self.edit_panel_visible_var.get():
                     self.edit_panel.toggle_edit_panel_widgets("disabled")
+                self.update_videoinfo()
                 return text_file, None, None, None
-            else:
-                if not self.primary_display_image.winfo_viewable():
-                    self.primary_display_image.grid()
-                    if self.video_player.playing:
-                        self.video_player.stop
-                    if self.video_player.winfo_viewable():
-                        self.video_player.grid_remove()
-                if self.edit_panel_visible_var.get():
-                    self.edit_panel.toggle_edit_panel_widgets("normal")
-
-            # Start image loading in a background thread
-            def after_load_callback(result):
-                # This runs in the main thread
-                text_file, image, resized_image, resized_width, resized_height, file_extension = result
-                if image is None:
-                    return text_file, None, None, None
-                if file_extension == '.gif':
-                    self.frame_iterator = iter(self.gif_frames)
-                    self.current_frame_index = 0
-                    self.display_animated_gif()
-                    if self.edit_panel_visible_var.get():
-                        self.edit_panel.toggle_edit_panel_widgets("disabled")
-                else:
-                    self.frame_iterator = None
-                    self.current_frame_index = 0
-                    if self.edit_panel_visible_var.get():
-                        self.edit_panel.toggle_edit_panel_widgets("normal")
-                self.popup_zoom.set_image(image)
-                self.current_image = resized_image
-                return text_file, image, resized_width, resized_height
-
-            # Use a threading.Event to synchronize result
-            self._image_load_result = None
-
-            def thread_target():
-                result = self._load_image_in_thread(self.image_file, text_file)
-                self._image_load_result = result
-                self.root.after(0, lambda: after_load_callback(result))
-            threading.Thread(target=thread_target, daemon=True).start()
-            # Return placeholders; actual UI update will happen in callback
-            return text_file, None, None, None
         except ValueError:
             self.check_image_dir()
-
-    def _load_image_in_thread(self, image_file, text_file):
-        # This runs in a background thread
-        try:
-            if not self.is_image_grid_visible_var.get():
-                with Image.open(image_file) as img:
-                    self.original_image_size = img.size
-                    max_size = (self.quality_max_size, self.quality_max_size)
-                    img.thumbnail(max_size, self.quality_filter)
-                    if img.format == 'GIF':
-                        self.gif_frames = [frame.copy() for frame in ImageSequence.Iterator(img)]
-                        self.frame_durations = [frame.info['duration'] for frame in ImageSequence.Iterator(img)]
-                    else:
-                        self.gif_frames = [img.copy()]
-                        self.frame_durations = [None]
-            else:
-                img = None
-        except (FileNotFoundError, UnidentifiedImageError):
-            self.root.after(0, self.update_image_file_count)
-            if image_file in self.image_files:
-                self.image_files.remove(image_file)
-            if text_file in self.text_files:
-                self.text_files.remove(text_file)
-            return (text_file, None, None, None, None, None)
-
-
-        # Resize image (must be done in main thread for Tkinter objects)
-        def resize_in_main_thread():
-            resize_event = Event()
-            resize_event.height = self.primary_display_image.winfo_height()
-            resize_event.width = self.primary_display_image.winfo_width()
-            resized_image, resized_width, resized_height = self.resize_and_scale_image(img, resize_event.width, resize_event.height, resize_event)
-            return (text_file, img, resized_image, resized_width, resized_height, os.path.splitext(image_file)[1].lower())
-
-        # Schedule resize in main thread and wait for result
-        result_holder = {}
-        event = threading.Event()
-
-        def callback():
-            result_holder['result'] = resize_in_main_thread()
-            event.set()
-
-        self.root.after(0, callback)
-        event.wait()
-        return result_holder['result']
 
 
     def display_mp4_video(self):
@@ -1802,59 +1718,6 @@ class ImgTxtViewer:
             print(f"Error loading video: {e}")
 
 
-    def display_animated_gif(self):
-        if self.animation_job_id is not None:
-            self.root.after_cancel(self.animation_job_id)
-            self.animation_job_id = None
-        if self.frame_iterator is not None:
-            try:
-                self.current_frame = next(self.frame_iterator)
-                start_width, start_height = self.current_frame.size
-                scale_factor = min(self.primary_display_image.winfo_width() / start_width, self.primary_display_image.winfo_height() / start_height)
-                new_width = int(start_width * scale_factor)
-                new_height = int(start_height * scale_factor)
-                cache_key = (id(self.current_frame), self.current_frame_index, new_width, new_height)
-                if cache_key not in self.gif_frame_cache:
-                    self.current_frame = self.current_frame.convert("RGBA")
-                    self.current_frame = self.current_frame.resize((new_width, new_height), Image.LANCZOS)
-                    self.gif_frame_cache[cache_key] = self.current_frame
-                else:
-                    self.current_frame = self.gif_frame_cache[cache_key]
-                self.current_gif_frame_image = ImageTk.PhotoImage(self.current_frame)
-                self.primary_display_image.config(image=self.current_gif_frame_image)
-                self.primary_display_image.image = self.current_gif_frame_image
-                delay = self.frame_durations[self.current_frame_index] if self.frame_durations[self.current_frame_index] else 100
-                self.animation_job_id = self.root.after(delay, self.display_animated_gif)
-                self.current_frame_index = (self.current_frame_index + 1) % len(self.gif_frames)
-            except StopIteration:
-                self.frame_iterator = iter(self.gif_frames)
-                self.current_frame_index = 0
-                self.display_animated_gif()
-
-
-    def resize_and_scale_image(self, input_image, max_img_width, max_img_height, event, quality_filter=Image.LANCZOS):
-        if input_image is None:
-            return None, None, None
-        start_width, start_height = self.original_image_size
-        aspect_ratio = start_width / start_height
-        if event is not None:
-            scale_factor = min(event.width / start_width, event.height / start_height)
-        else:
-            scale_factor = min(max_img_width / start_width, max_img_height / start_height)
-        new_width = min(int(start_width * scale_factor), max_img_width)
-        new_height = int(new_width / aspect_ratio)
-        if new_height > max_img_height:
-            new_height = max_img_height
-            new_width = int(new_height * aspect_ratio)
-        resized_image = input_image.resize((new_width, new_height), quality_filter)
-        output_image = ImageTk.PhotoImage(resized_image)
-        self.primary_display_image.config(image=output_image)
-        self.primary_display_image.image = output_image
-        percent_scale = int((new_width / start_width) * 100)
-        self.update_imageinfo(percent_scale)
-        return resized_image, new_width, new_height
-
-
     def show_pair(self):
         if self.image_files:
             text_file, image, max_img_width, max_img_height = self.display_image()
@@ -1865,7 +1728,6 @@ class ImgTxtViewer:
                 self.current_image = self.original_image.copy()
                 self.current_max_img_height = max_img_height
                 self.current_max_img_width = max_img_width
-                self.primary_display_image.bind("<Configure>", self.resize_and_scale_image_event)
             self.autocomplete.clear_suggestions()
             self.toggle_list_mode()
             self.highlight_custom_string()
@@ -1875,16 +1737,8 @@ class ImgTxtViewer:
             self.get_text_summary()
             if self.is_image_grid_visible_var.get():
                 self.image_grid.highlight_thumbnail(self.current_index)
-            self.update_videoinfo()
             self.find_replace_widget.perform_search()
             self.update_mytags_tab()
-
-
-    def resize_and_scale_image_event(self, event):
-        if not self.is_image_grid_visible_var.get():
-            display_width = event.width if event.width else self.primary_display_image.winfo_width()
-            display_height = event.height if event.height else self.primary_display_image.winfo_height()
-            self.resize_and_scale_image(self.current_image, display_width, display_height, None, Image.NEAREST)
 
 
     def refresh_image(self):
@@ -2041,8 +1895,6 @@ class ImgTxtViewer:
 
 
     def mouse_scroll(self, event):
-        if self.popup_zoom.zoom_enabled.get():
-            return
         current_time = time.time()
         scroll_debounce_time = 0.05
         if current_time - self.last_scroll_time < scroll_debounce_time:
@@ -2493,32 +2345,6 @@ class ImgTxtViewer:
             self.quality_max_size, self.quality_filter = quality_settings[var]
         self.refresh_image()
 
-
-#endregion
-#region Window drag setup
-
-
-    def start_drag(self, event):
-        self.drag_x = event.x
-        self.drag_y = event.y
-        self.primary_display_image.config(cursor="size")
-
-
-    def stop_drag(self, event):
-        self.drag_x = None
-        self.drag_y = None
-        self.primary_display_image.config(cursor="hand2")
-
-
-    def dragging_window(self, event):
-        if self.drag_x is not None and self.drag_y is not None:
-            dx = event.x - self.drag_x
-            dy = event.y - self.drag_y
-            x = self.root.winfo_x() + dx
-            y = self.root.winfo_y() + dy
-            width = self.root.winfo_width()
-            height = self.root.winfo_height()
-            self.root.geometry(f"{width}x{height}+{x}+{y}")
 
 #endregion
 #region About Window
