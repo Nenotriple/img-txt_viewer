@@ -50,6 +50,7 @@
 
 **New:**
 
+- Images in the Tagger UI can now be zoomed in and out with the mouse wheel.
 - Window size and position can now be saved and restored on launch.
   - Toggle this setting from `Options > Restore Last Window Size`
 - The height of individual Tagger tool tabs can now be saved and restored when switching tabs.
@@ -80,6 +81,7 @@
 
 **Other Changes:**
 
+- Navigating via mouse wheel when hovering the mouse over the image is now bound to `CTRL + Mouse Wheel`.
 - Loading and navigating images in the Tagger UI is now quicker and smoother.
 - MyTags now uses YAML format instead of CSV.
 - The MyTags save button text color now changes to red when changes are unsaved.
