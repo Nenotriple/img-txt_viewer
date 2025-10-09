@@ -514,40 +514,53 @@ class SettingsManager:
             elif back:
                 clear_widgets()
                 create_dictionary_selection_widgets()
-                setup_window.geometry("400x250")
             else:
                 self.save_settings()
                 clear_widgets()
                 setup_last_word_match_frame()
-                setup_window.geometry("400x350")
 
         def clear_widgets():
             for widget in setup_window.winfo_children():
                 widget.destroy()
 
         def setup_last_word_match_frame():
+            # Top row
+            top_frame = Frame(setup_window)
+            top_frame.pack(side="top", fill="x", padx=10, pady=5)
+            Label(top_frame, text="Select autocomplete matching method").pack(pady=5)
+            ttk.Separator(top_frame, orient="horizontal").pack(fill="x", pady=5)
+            # Middle row
+            mid_frame = Frame(setup_window)
+            mid_frame.pack(side="top", fill="both", expand=True, padx=10, pady=5)
             options = [
                 ("Match only the last word",
-                    "This mode works similar to other autocomplete methods like on your phone, etc."
-                    "\nOnly the current word being typed is used for autocomplete suggestions."
-                    "\nThis mode works best with the English dictionary, but also works fine with booru tags; and you can use underscores to type multi-word tags.",
+                    "Only focus on the word currently being typed."
+                    "\nUse underscores between words for multi-word tags."
+                    "\n\nExample: Type 'white dress' — suggestions will focus on 'dress'",
                     "Match Last Word"
                 ),
                 ("Match entire tag",
-                    "This is intended to make multi-word tags easier to autocomplete by matching all words/characters between commas in the current cursor selection."
-                    "\nThis mode works best with booru tags.",
+                    "Focus on the whole tag under the cursor, helpful for multi-word tags."
+                    "\n\nExample: Type 'white dress' — suggestions will focus on 'white dress'",
                     "Match Whole String"
                 )
             ]
-            Label(setup_window, text="Select autocomplete matching method").pack(pady=5)
-            ttk.Separator(setup_window, orient="horizontal").pack(fill="x", padx=5, pady=5)
             for header, description, value in options:
-                ttk.Radiobutton(setup_window, text=header, variable=last_word_match_var, value=value).pack(pady=5)
-                Label(setup_window, text=description, wraplength=400).pack(pady=5)
-            ttk.Separator(setup_window, orient="horizontal").pack(fill="x", padx=5, pady=5)
-            ttk.Button(setup_window, text="Back", width=10, command=lambda: save_and_continue(back=True)).pack(side="left", anchor="w", pady=5, padx=10)
-            ttk.Button(setup_window, text="Done", width=10, command=lambda: save_and_continue(close=True)).pack(side="right", anchor="e", pady=5, padx=10)
-            ttk.Button(setup_window, text="?", width=10, command= lambda: messagebox.showinfo("Info", "You can test the difference by selecting the 'Danbooru' dictionary and selecting 'Match only last word'.\n\n- Type 'white dress' and watch the suggestions. With 'Match only last word', the first suggestion will be 'dress' when you're done typing.\n\n- Change the mode to 'Match entire tag' and type 'white dress' again. The first suggestion should be 'white dress'.")).pack(side="right", anchor="e", pady=5, padx=10)
+                rb = ttk.Radiobutton(mid_frame, text=header, variable=last_word_match_var, value=value)
+                rb.pack(anchor="w")
+                lbl = Label(mid_frame, text=description, wraplength=480, justify="left")
+                lbl.pack(anchor="w")
+                lbl.config(cursor="hand2")
+                lbl.bind("<Button-1>", lambda e, v=value: last_word_match_var.set(v))
+                ttk.Separator(mid_frame, orient="horizontal").pack(pady=20)
+            # Bottom row
+            bottom_frame = Frame(setup_window)
+            bottom_frame.pack(side="bottom", fill="x", padx=10, pady=10)
+            ttk.Separator(bottom_frame, orient="horizontal").pack(fill="x", pady=(0, 10))
+            button_frame = Frame(bottom_frame)
+            button_frame.pack(fill="x")
+            ttk.Button(button_frame, text="Back", width=10, command=lambda: save_and_continue(back=True)).pack(side="left", padx=5)
+            ttk.Button(button_frame, text="Done", width=10, command=lambda: save_and_continue(close=True)).pack(side="right", padx=5)
 
         def save_and_close():
             self.save_settings()
@@ -558,7 +571,7 @@ class SettingsManager:
             setup_window = Toplevel(self.app.root)
             setup_window.title("Dictionary Setup")
             setup_window.iconphoto(False, self.app.blank_image)
-            window_width, window_height = 400, 250
+            window_width, window_height = 500, 500
             position_right = self.root.winfo_screenwidth() // 2 - window_width // 2
             position_top = self.root.winfo_screenheight() // 2 - window_height // 2
             setup_window.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
@@ -584,33 +597,41 @@ class SettingsManager:
                 else:
                     danbooru_checkbutton.config(state="normal")
 
-            # Widgets
-            Label(setup_window, text="Please select your preferred autocomplete dictionaries").pack(pady=5)
-            ttk.Separator(setup_window, orient="horizontal").pack(fill="x", padx=5, pady=5)
-            # Frame
-            frame_container = Frame(setup_window)
-            frame_container.pack(expand=True, fill="both")
-            frame = Frame(frame_container)
-            frame.pack(padx=5, pady=5, expand=True)
-            frame.rowconfigure(0, weight=1)
-            # First row
-            frame_top = Frame(frame)
-            frame_top.grid(row=0, column=0, columnspan=3)
-            ttk.Checkbutton(frame_top, text="English Dictionary", variable=dictionary_vars["English Dictionary"]).pack(side="left", padx=5, pady=5)
-            danbooru_safe_checkbutton = ttk.Checkbutton(frame_top, text="Danbooru (Safe)", variable=dictionary_vars["Danbooru (Safe)"])
-            danbooru_safe_checkbutton.pack(side="left", padx=5, pady=5)
-            dictionary_vars["Danbooru (Safe)"].trace_add("write", toggle_danbooru)
-            # Second row
-            danbooru_checkbutton = ttk.Checkbutton(frame, text="Danbooru", variable=dictionary_vars["Danbooru"])
-            danbooru_checkbutton.grid(row=1, column=0, padx=5, pady=5)
-            dictionary_vars["Danbooru"].trace_add("write", toggle_danbooru_safe)
-            ttk.Checkbutton(frame, text="e621", variable=dictionary_vars["e621"]).grid(row=1, column=1, padx=5, pady=5)
-            ttk.Checkbutton(frame, text="Derpibooru", variable=dictionary_vars["Derpibooru"]).grid(row=1, column=2, padx=5, pady=5)
-            # Third row
-            ttk.Separator(setup_window, orient="horizontal").pack(fill="x", padx=5, pady=5)
-            Label(setup_window, text="The autocomplete dictionaries and settings can be changed at any time.").pack(pady=5)
-            ttk.Button(setup_window, text="Next", width=10, command=save_and_continue).pack(side="bottom", anchor="e", pady=5, padx=10)
-            # Attach trace callbacks after widgets are created
+            # Top row
+            top_frame = Frame(setup_window)
+            top_frame.pack(side="top", fill="x", padx=10, pady=5)
+            Label(top_frame, text="Please select your preferred autocomplete dictionaries").pack(pady=5)
+            ttk.Separator(top_frame, orient="horizontal").pack(fill="x", pady=5)
+            # Middle row
+            mid_frame = Frame(setup_window)
+            mid_frame.pack(side="top", fill="both", expand=True, padx=10, pady=5)
+            group_top = Frame(mid_frame)
+            group_top.pack(pady=(10, 0), anchor="w")
+            ttk.Checkbutton(group_top, text="English Dictionary", variable=dictionary_vars["English Dictionary"]).pack(side="top", anchor="w", pady=2)
+            Label(group_top, text="(~113k tags) General English words for natural language tags, including common typo corrections.", wraplength=400, justify="left", font=("Arial", 8, "italic"), fg="#555").pack(side="top", anchor="w", padx=(20,0))
+            danbooru_safe_checkbutton = ttk.Checkbutton(group_top, text="Danbooru (Safe)", variable=dictionary_vars["Danbooru (Safe)"])
+            danbooru_safe_checkbutton.pack(side="top", anchor="w", pady=2)
+            Label(group_top, text="(~56k tags) Safe-for-work anime tags from Danbooru, including common typo corrections.", wraplength=400, justify="left", font=("Arial", 8, "italic"), fg="#555").pack(side="top", anchor="w", padx=(20,0))
+            ttk.Separator(mid_frame, orient="horizontal").pack(pady=10)
+            group_bottom = Frame(mid_frame)
+            group_bottom.pack(pady=(0, 10), anchor="w")
+            danbooru_checkbutton = ttk.Checkbutton(group_bottom, text="Danbooru", variable=dictionary_vars["Danbooru"])
+            danbooru_checkbutton.pack(side="top", anchor="w", pady=2)
+            Label(group_bottom, text="(~100k tags) Unfiltered tags from Danbooru, an anime image-board, including common typo corrections. (NSFW)", wraplength=400, justify="left", font=("Arial", 8, "italic"), fg="#555").pack(side="top", anchor="w", padx=(20,0))
+            ttk.Checkbutton(group_bottom, text="e621", variable=dictionary_vars["e621"]).pack(side="top", anchor="w", pady=2)
+            Label(group_bottom, text="(~100k tags) Unfiltered tags from e621, a furry image board, including common typo corrections. (NSFW)", wraplength=400, justify="left", font=("Arial", 8, "italic"), fg="#555").pack(side="top", anchor="w", padx=(20,0))
+            ttk.Checkbutton(group_bottom, text="Derpibooru", variable=dictionary_vars["Derpibooru"]).pack(side="top", anchor="w", pady=2)
+            Label(group_bottom, text="(~95k tags) Unfiltered tags from Derpibooru, a My Little Pony image board. (NSFW)", wraplength=400, justify="left", font=("Arial", 8, "italic"), fg="#555").pack(side="top", anchor="w", padx=(20,0))
+            # Bottom row
+            bottom_frame = Frame(setup_window)
+            bottom_frame.pack(side="bottom", fill="x", padx=10, pady=10)
+            ttk.Separator(bottom_frame, orient="horizontal").pack(fill="x", pady=(0, 10))
+            info_label = Label(bottom_frame, text="The autocomplete dictionaries and settings can be changed at any time.")
+            info_label.pack(pady=(0, 10))
+            button_frame = Frame(bottom_frame)
+            button_frame.pack(fill="x")
+            ttk.Button(button_frame, text="Next", width=10, command=save_and_continue).pack(side="right", padx=5)
+            # Attach trace callbacks
             nonlocal trace_ids
             if trace_ids["Danbooru (Safe)"]:
                 dictionary_vars["Danbooru (Safe)"].trace_remove("write", trace_ids["Danbooru (Safe)"])
@@ -618,7 +639,6 @@ class SettingsManager:
                 dictionary_vars["Danbooru"].trace_remove("write", trace_ids["Danbooru"])
             trace_ids["Danbooru (Safe)"] = dictionary_vars["Danbooru (Safe)"].trace_add("write", lambda *args: toggle_danbooru())
             trace_ids["Danbooru"] = dictionary_vars["Danbooru"].trace_add("write", lambda *args: toggle_danbooru_safe())
-
         setup_window = create_setup_window()
         create_dictionary_selection_widgets()
 
