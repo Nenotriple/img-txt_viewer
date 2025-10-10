@@ -442,7 +442,10 @@ class ImgTxtViewer:
         self.batch_operations_menu = Menu(self.toolsMenu, tearoff=0)
         self.toolsMenu.add_cascade(label="Batch Operations", state="disable", menu=self.batch_operations_menu)
         self.batch_operations_menu.add_command(label="Batch Crop Images...", command=self.batch_crop_images)
+        self.batch_operations_menu.add_separator()
+        self.batch_operations_menu.add_command(label="Trim Excess Tags...", command=self.batch_trim_tags)
         self.batch_operations_menu.add_command(label="Create Wildcard From Text Files...", command=self.collate_captions)
+        self.batch_operations_menu.add_separator()
         self.batch_operations_menu.add_command(label="Clear All Text Files...", command=lambda: self.delete_all_text_or_files(delete_file=False))
         self.batch_operations_menu.add_command(label="Delete All Text Files...", command=lambda: self.delete_all_text_or_files(delete_file=True))
         # Edit Current Pair
@@ -2091,6 +2094,58 @@ class ImgTxtViewer:
             messagebox.showinfo("Done", f"Cleared {cleared_count} text files.")
         self.refresh_file_lists()
         self.show_pair()
+
+
+    def batch_trim_tags(self, max_tags=None):
+        if not self.check_if_directory():
+            return
+        if max_tags is None:
+            max_tags = custom_simpledialog.askinteger("Trim Tags", "Keep how many tags per file?", initialvalue=0, minvalue=0, parent=self.root)
+            if max_tags is None:
+                return
+        if max_tags < 0:
+            messagebox.showerror("Invalid Input", "Please enter a non-negative integer.")
+            return
+        if not messagebox.askyesno("Confirm Trim", f"This will trim all text files so each contains at most {max_tags} tags.\n\nProceed?"):
+            return
+        updated = 0
+        total_tags = 0
+        total_removed = 0
+        total_remaining = 0
+        for text_file in list(self.text_files):
+            try:
+                if not os.path.isfile(text_file):
+                    continue
+                with open(text_file, "r", encoding="utf-8") as f:
+                    content = f.read().strip()
+                if not content:
+                    continue
+                if self.list_mode_var.get():
+                    tags = [t.strip() for t in content.splitlines() if t.strip()]
+                else:
+                    tags = [t.strip() for t in re.split(r'[,\n]+', content) if t.strip()]
+                num_tags = len(tags)
+                total_tags += num_tags
+                if num_tags <= max_tags:
+                    total_remaining += num_tags
+                    continue
+                new_tags = tags[:max_tags]
+                new_content = '\n'.join(new_tags) if self.list_mode_var.get() else ', '.join(new_tags)
+                with open(text_file, "w", encoding="utf-8") as f:
+                    f.write(new_content)
+                updated += 1
+                removed = num_tags - len(new_tags)
+                total_removed += removed
+                total_remaining += len(new_tags)
+            except Exception as e:
+                messagebox.showerror("Error: app.batch_trim_tags()", f"Failed to trim {text_file}:\n{e}")
+        self.refresh_file_lists()
+        self.show_pair()
+        msg = (f"Trimmed {updated} file(s) to {max_tags} tag(s) each.\n\n"
+                f"Total tags before trimming: {total_tags}\n"
+                f"Total tags removed: {total_removed}\n"
+                f"Total tags remaining: {total_remaining}")
+        messagebox.showinfo("Done", msg)
 
 
 #endregion
