@@ -9,7 +9,7 @@ import math
 import concurrent.futures
 
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 
 from PIL import Image, ImageTk, ImageSequence
 from PIL.Image import Image as PILImage
@@ -47,13 +47,8 @@ class ImageManager:
         """Set the manager's original image from a PIL.Image (no file I/O)."""
         if pil_image is None:
             return
-        try:
-            self._orig_image = pil_image.convert("RGBA")
-        except Exception:
-            try:
-                self._orig_image = pil_image.copy()
-            except Exception:
-                self._orig_image = pil_image
+        # Store a consistent RGBA copy and clear any cached resized images / tk refs.
+        self._orig_image = pil_image.convert("RGBA")
         self._clear_cache()
 
     def unload_image(self) -> None:
@@ -513,24 +508,34 @@ class ImageZoomWidget(tk.Frame):
             master = getattr(master, "master", None)
         return master
 
+    def _reset_image_state(self):
+        """Common boilerplate for loading or setting a new image."""
+        self.image_fits_canvas = False
+        self.pan_offset_x = 0
+        self.pan_offset_y = 0
+        self.image_mgr.scale = 1.0
+        self._using_preview = False
+        self._cancel_full_render_job()
+        self._stop_gif_animation()
+
 # --- Public API / High-level actions ---
     def load_image(self, path: str) -> None:
         """Load image, reset view, and request a full render."""
         if not path:
             return
+        self._reset_image_state()
         # Check if GIF
         file_extension = os.path.splitext(path)[1].lower()
         if file_extension == '.gif':
             self._load_gif(path)
         else:
-            self._stop_gif_animation()
             self.image_mgr.load_image(path)
-            self.pan_offset_x = 0
-            self.pan_offset_y = 0
+            # After loading, fit image to canvas (sets scale and pan)
             if self.image_mgr.has_image():
                 self._fit_image_to_canvas()
             else:
                 self.image_fits_canvas = False
+            # Request full render for the new image
             self._cancel_full_render_job()
             self._request_full_render(self._render_sequence)
             self._using_preview = False
@@ -539,16 +544,15 @@ class ImageZoomWidget(tk.Frame):
         """Set widget image from a PIL.Image instance (like load_image but from-memory)."""
         if pil_image is None:
             return
-        # Stop any GIF animation
-        self._stop_gif_animation()
+        self._reset_image_state()
         # Put the image into the manager and reset view / schedule a full render
         self.image_mgr.set_image(pil_image)
-        self.pan_offset_x = 0
-        self.pan_offset_y = 0
+        # After setting, fit image to canvas (sets scale and pan)
         if self.image_mgr.has_image():
             self._fit_image_to_canvas()
         else:
             self.image_fits_canvas = False
+        # Request full render for the new image
         self._cancel_full_render_job()
         self._request_full_render(self._render_sequence)
         self._using_preview = False
@@ -601,7 +605,6 @@ class ImageZoomWidget(tk.Frame):
                 # Extract all frames
                 self._gif_frames = [frame.copy().convert("RGBA") for frame in ImageSequence.Iterator(img)]
                 self._frame_durations = [frame.info.get('duration', 100) for frame in ImageSequence.Iterator(img)]
-
             if not self._gif_frames:
                 return
             # Set first frame to image manager for initial display
@@ -620,7 +623,7 @@ class ImageZoomWidget(tk.Frame):
             # Start animation
             self._play_gif_animation()
         except Exception as e:
-            print(f"Error loading GIF: {e}")
+            messagebox.showerror("Error: image_zoom._load_gif()", f"Error loading GIF: {e}")
             self._is_gif = False
 
     def _play_gif_animation(self) -> None:
@@ -673,7 +676,7 @@ class ImageZoomWidget(tk.Frame):
             self._current_frame_index = 0
             self._play_gif_animation()
         except Exception as e:
-            print(f"Error playing GIF frame: {e}")
+            messagebox.showerror("Error: image_zoom._play_gif_animation()", f"Error playing GIF: {e}")
 
     def _stop_gif_animation(self) -> None:
         """Stop GIF animation and clean up."""
