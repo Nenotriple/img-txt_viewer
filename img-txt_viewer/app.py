@@ -1762,7 +1762,6 @@ class ImgTxtViewer:
 
     def on_imagezoomwidget_render(self):
         current_percent = int(self.primary_display_image.image_mgr.scale * 100)
-        print(self.primary_display_image.image_mgr.scale)
         self.update_imageinfo(current_percent)
 
 

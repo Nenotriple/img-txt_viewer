@@ -48,6 +48,7 @@ class AutoTag:
         self.batch_interrogate_images_var = BooleanVar(value=False)
         self.auto_exclude_tags_var = BooleanVar(value=False)
         self.filter_is_active = False
+        self.use_viewport_as_image = BooleanVar(value=False)
 
 
     def create_auto_tag_widgets_tab4(self):
@@ -82,7 +83,7 @@ class AutoTag:
         self.tag_list_stats_lbl.pack(side='left')
         interrogate_btn = ttk.Button(top_frame, text="Interrogate", takefocus=False, command=self.interrogate_image_tags)
         interrogate_btn.pack(side='right')
-        Tip.create(widget=interrogate_btn, text="Interrogate the current image using the selected ONNX vision model.")
+        Tip.create(widget=interrogate_btn, text="Interrogate the current image using the selected settings.")
         ins_menubutton = ttk.Menubutton(top_frame, text="Auto-Insert", takefocus=False)
         ins_menubutton.pack(side='right')
         ins_menu = Menu(ins_menubutton, tearoff=0)
@@ -95,6 +96,9 @@ class AutoTag:
         batch_chk = ttk.Checkbutton(top_frame, text="Batch", takefocus=False, variable=self.batch_interrogate_images_var)
         batch_chk.pack(side='right')
         Tip.create(widget=batch_chk, text="Interrogate all images\nAn Auto-Insert mode must be selected")
+        viewport_chk = ttk.Checkbutton(top_frame, text="Viewport", takefocus=False, variable=self.use_viewport_as_image)
+        viewport_chk.pack(side='right')
+        Tip.create(widget=viewport_chk, text="When enabled, the current image view will be used for interrogation instead of the original image file.\nUsed to interrogate only the visible portion.\nIgnored when using Batch Interrogate.")
         # Main Paned Window
         pane = PanedWindow(self.app.tab4, orient='horizontal', sashwidth=6, bg="#d0d0d0")
         pane.pack(fill='both', expand=True)
@@ -332,9 +336,15 @@ class AutoTag:
         if self.batch_interrogate_images_var.get():
             self.batch_interrogate_images()
             return
-        image_path = self.app.image_files[self.app.current_index]
-        if image_path.lower().endswith('.mp4'):
-            image_path = self.app.video_player.get_current_frame()
+        if self.use_viewport_as_image.get():
+            image_path = self.app.primary_display_image.get_visible_image()
+        else:
+            image_path = self.app.image_files[self.app.current_index]
+        try:
+            if image_path.lower().endswith('.mp4'):
+                image_path = self.app.video_player.get_current_frame()
+        except AttributeError:
+            pass
         selected_model_path = self.onnx_model_dict.get(self.autotag_model_combo.get())
         if not selected_model_path or not os.path.exists(selected_model_path):
             confirm = messagebox.askyesno("Error", f"Model file not found: {selected_model_path}\n\nWould you like to view the Auto-Tag Help?")

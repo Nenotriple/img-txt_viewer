@@ -606,6 +606,57 @@ class ImageZoomWidget(tk.Frame):
             scale = 1.0
         return self.image_mgr.resize_for_scale(scale)
 
+    def get_visible_image(self) -> Optional[PILImage]:
+        """
+        Return a PIL image of just what's visible on the canvas,
+        cropped from the original image using scaled coordinates.
+        """
+        if not self.image_mgr.has_image():
+            return None
+        # Get canvas dimensions
+        can_w, can_h = self.canvas_ctrl.get_size()
+        # Get current scale and original image dimensions
+        scale = float(self.image_mgr.scale)
+        og_w, og_h = self.image_mgr._orig_image.size
+        # Calculate scaled image dimensions
+        scaled_w = og_w * scale
+        scaled_h = og_h * scale
+        # Calculate image position on canvas (top-left corner)
+        cx, cy = self.canvas_ctrl.center_coords(can_w, can_h, self.pan_offset_x, self.pan_offset_y)
+        img_left = cx - scaled_w / 2.0
+        img_top = cy - scaled_h / 2.0
+        img_right = img_left + scaled_w
+        img_bottom = img_top + scaled_h
+        # Calculate visible region on canvas
+        vis_left = max(0.0, img_left)
+        vis_top = max(0.0, img_top)
+        vis_right = min(float(can_w), img_right)
+        vis_bottom = min(float(can_h), img_bottom)
+        if vis_right <= vis_left or vis_bottom <= vis_top:
+            return None
+        # Convert visible canvas coordinates back to original image coordinates
+        # Formula: original_coord = (canvas_coord - image_canvas_position) / scale
+        orig_left = max(0.0, (vis_left - img_left) / scale)
+        orig_top = max(0.0, (vis_top - img_top) / scale)
+        orig_right = min(float(og_w), (vis_right - img_left) / scale)
+        orig_bottom = min(float(og_h), (vis_bottom - img_top) / scale)
+        # Ensure valid crop box
+        orig_left = int(math.floor(orig_left))
+        orig_top = int(math.floor(orig_top))
+        orig_right = int(math.ceil(orig_right))
+        orig_bottom = int(math.ceil(orig_bottom))
+        # Clamp to image bounds
+        orig_left = max(0, min(og_w, orig_left))
+        orig_top = max(0, min(og_h, orig_top))
+        orig_right = max(orig_left + 1, min(og_w, orig_right))
+        orig_bottom = max(orig_top + 1, min(og_h, orig_bottom))
+        # Crop and return
+        try:
+            cropped = self.image_mgr._orig_image.crop((orig_left, orig_top, orig_right, orig_bottom))
+            return cropped
+        except Exception:
+            return None
+
     def _call_on_render_done(self):
         """Call the on_render_done callback if set."""
         if callable(self.on_render_done):
