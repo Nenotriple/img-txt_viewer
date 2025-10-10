@@ -231,7 +231,7 @@ class BatchCrop:
                 raise ValueError
             resolution = (width, height)
         except ValueError:
-            messagebox.showerror("Error", "Invalid values. Please enter positive integer digits for width and height.")
+            messagebox.showerror("Error: batch_crop_images.process_images()", "Invalid values. Please enter positive integer digits for width and height.")
             return
         files_to_process = []
         for filename in os.listdir(self.filepath):

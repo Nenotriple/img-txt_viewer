@@ -415,7 +415,7 @@ class BatchRename:
                 # Overwrite or skip handled at preview, so just skip here if it still conflicts
                 continue
             except Exception as e:
-                messagebox.showerror("Rename Error", f"Failed to rename {old_name}: {e}")
+                messagebox.showerror("Error: batch_rename.rename_files()", f"Failed to rename {old_name}: {e}")
         self.update_file_tree_view()
 
 
@@ -466,7 +466,7 @@ class BatchRename:
         try:
             os.startfile(path)
         except Exception as e:
-            messagebox.showerror("Open Folder Error", f"Failed to open folder: {e}")
+            messagebox.showerror("Error: batch_rename.open_folder()", f"Failed to open folder: {e}")
 
 
     def open_help_window(self):

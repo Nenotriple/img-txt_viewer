@@ -573,7 +573,7 @@ class BatchUpscale:
             if self.batch_thread_var:
                 messagebox.showinfo("Success", f"Successfully upscaled {count} images!")
         except Exception as e:
-            messagebox.showerror("Error: _batch_upscale()", f"An error occurred during batch upscaling.\n\n{e}")
+            messagebox.showerror("Error: batch_upscale._batch_upscale()", f"An error occurred during batch upscaling.\n\n{e}")
         finally:
             self.set_widget_state(state="normal")
             self.batch_thread_var = False
@@ -645,11 +645,11 @@ class BatchUpscale:
                 if result:
                     os.startfile(upscaled_gif_path)
         except (PermissionError, FileNotFoundError, tk.TclError) as e:
-            messagebox.showerror("Error: _upscale_gif()", f"An error occurred.\n\n{e}")
+            messagebox.showerror("Error: batch_upscale._upscale_gif()", f"An error occurred.\n\n{e}")
             self.process_end()
             return
         except Exception as e:
-            messagebox.showerror("Error: _upscale_gif()", f"An error occurred.\n\n{e}")
+            messagebox.showerror("Error: batch_upscale._upscale_gif()", f"An error occurred.\n\n{e}")
             self.process_end()
 
 
@@ -680,7 +680,7 @@ class BatchUpscale:
                 if result:
                     os.startfile(output_image_path)
         except Exception as e:
-            messagebox.showerror("Error: _upscale_image()", f"An error occurred.\n\n{e}")
+            messagebox.showerror("Error: batch_upscale._upscale_image()", f"An error occurred.\n\n{e}")
             self.process_end()
 
 

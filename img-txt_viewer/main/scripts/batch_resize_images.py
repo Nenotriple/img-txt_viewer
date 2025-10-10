@@ -827,12 +827,12 @@ class BatchResizeImages:
                             eta_str = time.strftime('%H:%M:%S', time.gmtime(eta))
                             self.update_message_text(processed=self.files_processed, elapsed=elapsed_time_str, eta=eta_str)
                         except Exception as e:
-                            messagebox.showerror("ERROR - _resize_thread()", str(e))
+                            messagebox.showerror("Error: batch_resize_images._resize_thread()", str(e))
                     if not self.stop:
                         messagebox.showinfo("Done!", "Resizing finished." if not self.convert_only_var.get() else "Conversion finished.")
                         self.root.focus_force()
             except Exception as e:
-                messagebox.showerror("ERROR - _resize_thread()", str(e))
+                messagebox.showerror("Error: batch_resize_images._resize_thread()", str(e))
             finally:
                 self.button_resize.config(state="normal")
                 self.toggle_widgets(state="normal")
@@ -917,7 +917,7 @@ class BatchResizeImages:
             subprocess.run([exiftool_path, '-overwrite_original', f'-UserComment={metadata_str}', dest_image_path], check=True, creationflags=subprocess.CREATE_NO_WINDOW)
         else:
             self.stop = True
-            messagebox.showerror("Error!",
+            messagebox.showerror("Error: batch_resize_images.copy_png_to_webp()",
                 "Could not copy metadata from PNG-to-WEBP."
                 "\n\nexiftool.exe does not exist in the root path. (Check spelling)"
                 "\n\nDownload the Windows executable from exiftool.org and place in the same folder as batch_resize_images.exe, restart the program and try again."
@@ -948,7 +948,7 @@ class BatchResizeImages:
             self.write_webp_metadata(user_comment, dest_image_path)
         else:
             self.stop = True
-            messagebox.showerror("Error!",
+            messagebox.showerror("Error: batch_resize_images.copy_webp_metadata()",
                 "Could not copy metadata from WEBP-to-WEBP."
                 "\n\nexiftool.exe does not exist in the root path. (Check spelling)"
                 "\n\nDownload the Windows executable from exiftool.org and place in the same folder as batch_resize_images.exe, restart the program and try again."

@@ -135,7 +135,7 @@ class TextController:
                     with open(text_file, 'w', encoding="utf-8") as file:
                         file.write(new_data)
             except Exception as e:
-                messagebox.showerror("Error: search_and_replace()", f"An error occurred while trying to replace text in {text_file}.\n\n{e}")
+                messagebox.showerror("Error: text_controller.search_and_replace()", f"An error occurred while trying to replace text in {text_file}.\n\n{e}")
         self.app.cleanup_all_text_files(show_confirmation=False)
         self.app.show_pair()
         messagebox.showinfo("Search and Replace", f"Search and Replace completed successfully.\n\nFiles altered: {files_altered}\nWords replaced: {words_replaced}")
@@ -200,7 +200,7 @@ class TextController:
                         file.seek(0, 0)
                         file.write(prefix_text + content)
             except Exception as e:
-                messagebox.showerror("Error: prefix_text_files()", f"An error occurred while trying to prefix text in {text_file}.\n\n{e}")
+                messagebox.showerror("Error: text_controller.prefix_text_files()", f"An error occurred while trying to prefix text in {text_file}.\n\n{e}")
         self.app.cleanup_all_text_files(show_confirmation=False)
         self.app.show_pair()
         messagebox.showinfo("Prefix", "Prefix completed successfully.")
@@ -263,7 +263,7 @@ class TextController:
                     with open(text_file, 'a', encoding="utf-8") as file:
                         file.write(append_text)
             except Exception as e:
-                messagebox.showerror("Error: append_text_files()", f"An error occurred while trying to append text in {text_file}.\n\n{e}")
+                messagebox.showerror("Error: text_controller.append_text_files()", f"An error occurred while trying to append text in {text_file}.\n\n{e}")
         self.app.cleanup_all_text_files(show_confirmation=False)
         self.app.show_pair()
         messagebox.showinfo("Append", "Append completed successfully.")

@@ -141,7 +141,7 @@ class CalculateFileStats:
             except FileNotFoundError:
                 pass
             except Exception as e:
-                messagebox.showerror("Error: process_text_files()", f"An error occurred while processing {os.path.basename(text_file)}:\n\n{e}")
+                messagebox.showerror("Error: calculate_file_stats.process_text_files()", f"An error occurred while processing {os.path.basename(text_file)}:\n\n{e}")
 
 
     def process_image_files(self):
@@ -170,7 +170,7 @@ class CalculateFileStats:
             except FileNotFoundError:
                 pass
             except Exception as e:
-                messagebox.showerror("Error: process_image_files()", f"An error occurred while processing {os.path.basename(media_file)}:\n\n{e}")
+                messagebox.showerror("Error: calculate_file_stats.process_image_files()", f"An error occurred while processing {os.path.basename(media_file)}:\n\n{e}")
 
 
     def process_video_file(self, video_file):
@@ -208,7 +208,7 @@ class CalculateFileStats:
                 self.video_formats_counter['.mp4'] += 1
 
         except Exception as e:
-            messagebox.showerror("Error: process_video_file()", f"An error occurred while processing {os.path.basename(video_file)}:\n\n{e}")
+            messagebox.showerror("Error: calculate_file_stats.process_video_file()", f"An error occurred while processing {os.path.basename(video_file)}:\n\n{e}")
 
 
 #endregion

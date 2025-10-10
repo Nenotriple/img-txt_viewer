@@ -548,7 +548,7 @@ class ResizeTool:
             converted_size = self.convert_filesize(image_size)
             self.label_new_size.config(text=converted_size)
         except TypeError:
-            messagebox.showerror("Error!", "Something went wrong while processing this image.\n\nPlease try a different file type.")
+            messagebox.showerror("Error: resize_image.calculate_image_size()", "Something went wrong while processing this image.\n\nPlease try a different file type.")
         except (ValueError, PermissionError, IOError,):
             return
 
@@ -575,11 +575,11 @@ class ResizeTool:
             index = self.get_image_index(os.path.dirname(new_filepath), new_filepath)
             self.close_window(index)
         except TypeError:
-            messagebox.showerror("Error!", "Something went wrong while processing this image.\n\nPlease try a different file type.")
+            messagebox.showerror("Error: resize_image.save_image()", "Something went wrong while processing this image.\n\nPlease try a different file type.")
         except ValueError:
-            messagebox.showerror("Error", "Invalid values. Please enter valid digits.")
+            messagebox.showerror("Error: resize_image.save_image()", "Invalid values. Please enter valid digits.")
         except (PermissionError, IOError):
-            messagebox.showerror("Error", "An error occurred while saving the image.")
+            messagebox.showerror("Error: resize_image.save_image()", "An error occurred while saving the image.")
 
 
     def _save_image(self, file_type, filter_method, new_filepath):

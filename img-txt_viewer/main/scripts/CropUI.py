@@ -1760,7 +1760,7 @@ class CropInterface:
                 self.crop_selection.clear_selection()
             return save_path
         except Exception as e:
-            messagebox.showerror("Save Error", f"Failed to save image: {str(e)}")
+            messagebox.showerror("Error: CropUI.save_cropped_img()", f"Failed to save image: {str(e)}")
             return False
 
 
@@ -1845,7 +1845,7 @@ class CropInterface:
         if not confirm:
             return
         if not self.current_source_path or not self.current_source_path.lower().endswith('.gif'):
-            messagebox.showerror("Error", "No GIF file selected.")
+            messagebox.showerror("Error: CropUI.save_all_gif_frames()", "No GIF file selected.")
             return
         try:
             frames = self.extract_gif_frames(display=False)
@@ -1864,7 +1864,7 @@ class CropInterface:
             if final_confirm:
                 os.startfile(folder_path)
         except Exception as e:
-            messagebox.showerror("Error", f"An error occurred while extracting GIF frames: {e}")
+            messagebox.showerror("Error: CropUI.save_all_gif_frames()", f"An error occurred while extracting GIF frames: {e}")
 
 
     def extract_gif_frames(self, display=True, event=None):
@@ -1878,7 +1878,7 @@ class CropInterface:
                     self.thumb_time_label_var.set(f"01/{len(self.gif_frames)}")
                 return self.gif_frames
         except Exception as e:
-            messagebox.showerror("Error", f"An error occurred while extracting frames: {e}")
+            messagebox.showerror("Error: CropUI.extract_gif_frames()", f"An error occurred while extracting frames: {e}")
             return []
 
 
@@ -1894,7 +1894,7 @@ class CropInterface:
                 self.highlight_thumbnail(index)
                 self.thumb_timeline.set(index)
             except Exception as e:
-                messagebox.showerror("Error", f"An error occurred while saving the image: {e}")
+                messagebox.showerror("Error: CropUI.display_gif_thumbnails()", f"An error occurred while saving the image: {e}")
         for widget in self.thumbnail_frame.winfo_children():
             widget.destroy()
         self.thumb_frame.grid()
@@ -1940,7 +1940,7 @@ class CropInterface:
             padded_index = str(index + 1).zfill(len(str(len(self.gif_frames))))
             self.thumb_time_label_var.set(f"{padded_index}/{len(self.gif_frames)}")
         except (ValueError, IndexError) as e:
-            messagebox.showerror("Error", f"An error occurred while changing the frame: {e}")
+            messagebox.showerror("Error: CropUI.thumbnail_timeline_changed()", f"An error occurred while changing the frame: {e}")
 
 
     def ensure_thumbnail_visible(self, index):

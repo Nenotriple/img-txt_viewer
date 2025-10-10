@@ -613,6 +613,7 @@ class ImgTxtViewer:
         self.label_image_stats = Label(self.stats_frame, text="...")
         self.label_image_stats.grid(row=0, column=1, sticky="ew")
         self.label_image_stats_tooltip = Tip.create(widget=self.label_image_stats, text="...")
+        ttk.Separator(self.stats_frame, orient="horizontal").grid(row=2, column=0, columnspan=2, sticky="ew")
         # Primary Image
         self.primary_display_image = ImageZoomWidget(self.master_image_inner_frame)
         self.primary_display_image.grid(row=1, column=0, sticky="nsew")
@@ -1210,8 +1211,6 @@ class ImgTxtViewer:
     def configure_pane(self):
         self.primary_paned_window.paneconfigure(self.master_image_frame, minsize=200, stretch="always")
         self.primary_paned_window.paneconfigure(self.master_control_frame, minsize=200, stretch="always")
-        if self.is_image_grid_visible_var.get():
-            self.image_grid.reload_grid()
 
 
     def get_windowpane_state(self, windowpane: 'PanedWindow') -> dict:
@@ -1715,7 +1714,7 @@ class ImgTxtViewer:
         try:
             self.video_player.load_video(file_path=self.image_file)
         except Exception as e:
-            print(f"Error loading video: {e}")
+            messagebox.showerror("Error: app.display_mp4_video()", f"Failed to load video:\n{str(e)}")
 
 
     def show_pair(self):
@@ -1759,8 +1758,6 @@ class ImgTxtViewer:
                 self.root.after_cancel(self.is_resizing_job_id)
             if not self.is_image_grid_visible_var.get():
                 self.is_resizing_job_id = self.root.after(250, self.refresh_image)
-            else:
-                self.is_resizing_job_id = self.root.after(250, self.image_grid.reload_grid)
 
 
     def update_videoinfo(self, image_file=None):
@@ -2051,7 +2048,7 @@ class ImgTxtViewer:
                             if content:
                                 outfile.write(content + "\n")
         except Exception as e:
-            messagebox.showerror("Error: collate_captions()", f"An error occurred while collating captions:\n\n{e}")
+            messagebox.showerror("Error: app.collate_captions()", f"An error occurred while collating captions:\n\n{e}")
             return
         if messagebox.askyesno("Success", f"All captions have been combined into:\n\n{output_file}.\n\nDo you want to open the output directory?"):
             os.startfile(os.path.dirname(output_file))
@@ -2071,7 +2068,7 @@ class ImgTxtViewer:
                         os.remove(text_file)
                         deleted_count += 1
                 except Exception as e:
-                    messagebox.showerror("Error", f"Failed to delete {text_file}:\n{e}")
+                    messagebox.showerror("Error: app.delete_all_text_or_files()", f"Failed to delete {text_file}:\n{e}")
             messagebox.showinfo("Done", f"Deleted {deleted_count} text files.")
         else:
             confirm = messagebox.askyesno("Clear All Text Files", "This will erase the contents of ALL text files in the current directory.\n\nAre you sure you want to continue?")
@@ -2085,7 +2082,7 @@ class ImgTxtViewer:
                             f.write("")
                         cleared_count += 1
                 except Exception as e:
-                    messagebox.showerror("Error", f"Failed to clear {text_file}:\n{e}")
+                    messagebox.showerror("Error: app.delete_all_text_or_files()", f"Failed to clear {text_file}:\n{e}")
             messagebox.showinfo("Done", f"Cleared {cleared_count} text files.")
         self.refresh_file_lists()
         self.show_pair()
@@ -2104,12 +2101,12 @@ class ImgTxtViewer:
         src_basename = os.path.basename(src_path)
         base_filename, file_extension = os.path.splitext(src_basename)
         if file_extension.lower() not in ext_map:
-            messagebox.showerror("Unsupported Filetype", f"Expanding {file_extension.upper()} is not supported.")
+            messagebox.showwarning("Unsupported Filetype", f"Expanding {file_extension.upper()} is not supported.")
             return
         new_basename = f"{base_filename}_ex{file_extension}"
         new_filepath = os.path.join(os.path.dirname(src_path), new_basename)
         if os.path.exists(new_filepath):
-            messagebox.showerror("Error: expand_image()", f'Output file:\n\n{os.path.normpath(new_basename)}\n\nAlready exists.')
+            messagebox.showwarning("File Exists", f'Output file:\n\n{os.path.normpath(new_basename)}\n\nAlready exists.')
             return
         confirmation = ("Are you sure you want to expand the current image?\n\n"
                         "This tool works by expanding the shorter side to a square resolution divisible by 8 and stretching the pixels around the long side to fill the space.\n\n"
@@ -2161,12 +2158,12 @@ class ImgTxtViewer:
                 self.jump_to_image(index_value)
             self.thumbnail_panel.refresh_thumbnails()
         except Exception as e:
-            messagebox.showerror("Error: expand_image()", f'Failed to process {src_basename}. Reason: {e}')
+            messagebox.showerror("Error: app.expand_image()", f'Failed to process {src_basename}. Reason: {e}')
 
 
     def flip_current_image(self):
         if self.image_file.lower().endswith('.mp4'):
-            messagebox.showerror("Unsupported Filetype", "Flipping MP4's is not supported.")
+            messagebox.showwarning("Unsupported Filetype", "Flipping MP4's is not supported.")
             return
         filename = self.image_files[self.current_index]
         if filename.lower().endswith('.gif'):
@@ -2187,7 +2184,7 @@ class ImgTxtViewer:
 
     def rotate_current_image(self):
         if self.image_file.lower().endswith('.mp4'):
-            messagebox.showerror("Unsupported Filetype", "Rotating MP4's is not supported.")
+            messagebox.showwarning("Unsupported Filetype", "Rotating MP4's is not supported.")
             return
         filename = self.image_files[self.current_index]
         if filename.lower().endswith('.gif'):
@@ -2208,7 +2205,7 @@ class ImgTxtViewer:
 
     def resize_image(self):
         if self.image_file.lower().endswith('.mp4'):
-            messagebox.showerror("Unsupported Filetype", "Resizing MP4's is not supported.")
+            messagebox.showwarning("Unsupported Filetype", "Resizing MP4's is not supported.")
             return
         main_window_width = self.root.winfo_width()
         main_window_height = self.root.winfo_height()
@@ -2243,7 +2240,7 @@ class ImgTxtViewer:
 
     def open_image_in_editor(self, event=None, index=None):
         if self.image_file.lower().endswith('.mp4'):
-            messagebox.showerror("Unsupported Filetype", "MP4 not supported.\n\nSelect an image and try again.")
+            messagebox.showwarning("Unsupported Filetype", "MP4 not supported.\n\nSelect an image and try again.")
             return
         try:
             if self.image_files:
@@ -2255,12 +2252,12 @@ class ImgTxtViewer:
                 image_path = self.image_files[image_index]
                 subprocess.Popen([app_path, image_path])
         except FileNotFoundError as e:
-            messagebox.showerror("Error: open_image_in_editor()", str(e))
+            messagebox.showerror("Error: app.open_image_in_editor()", str(e))
             self.set_external_image_editor_path()
         except PermissionError as e:
-            messagebox.showerror("Error: open_image_in_editor()", f"Permission denied: {e}")
+            messagebox.showerror("Error: app.open_image_in_editor()", f"Permission denied: {e}")
         except Exception as e:
-            messagebox.showerror("Error: open_image_in_editor()", f"An error occurred while opening the image in the editor:\n\n{e}")
+            messagebox.showerror("Error: app.open_image_in_editor()", f"An error occurred while opening the image in the editor:\n\n{e}")
 
 
     def set_external_image_editor_path(self):
@@ -2275,7 +2272,7 @@ class ImgTxtViewer:
                     self.external_image_editor_path = app_path
                     messagebox.showinfo("Success", f"External image editor set to:\n\n{app_path}")
                 else:
-                    messagebox.showerror("Error", f"The selected path is not a valid file:\n\n{app_path}")
+                    messagebox.showerror("Error: app.set_external_image_editor_path()", f"The selected path is not a valid file:\n\n{app_path}")
                     self.set_external_image_editor_path()
         else:  # No
             return
@@ -2382,7 +2379,7 @@ class ImgTxtViewer:
             if show_confirmation:
                 messagebox.showinfo("Success", "All text files have been cleaned!")
         except Exception as e:
-            messagebox.showerror("Error: cleanup_all_text_files()", f"An unexpected error occurred: {str(e)}")
+            messagebox.showerror("Error: app.cleanup_all_text_files()", f"An unexpected error occurred: {str(e)}")
         self.show_pair()
 
 
@@ -2439,7 +2436,7 @@ class ImgTxtViewer:
                 else:
                     self.root.title(self.title)
         except (PermissionError, IOError, TclError) as e:
-            messagebox.showerror("Error: save_text_file()", f"An error occurred while saving the current text file.\n\n{e}")
+            messagebox.showerror("Error: app.save_text_file()", f"An error occurred while saving the current text file.\n\n{e}")
 
 
     def _save_file(self):
@@ -2713,7 +2710,7 @@ class ImgTxtViewer:
         if not self.check_if_directory():
             return
         if self.current_index >= len(self.image_files):
-            messagebox.showerror("Error: manually_rename_single_pair()", "No valid image selected.")
+            messagebox.showerror("Error: app.manually_rename_single_pair()", "No valid image selected.")
             return
         image_file = self.image_files[self.current_index]
         current_image_name = os.path.basename(image_file)
@@ -2751,11 +2748,11 @@ class ImgTxtViewer:
             new_index = self.image_files.index(new_image_file)
             self.jump_to_image(new_index)
         except PermissionError as e:
-            messagebox.showerror("Error: manually_rename_single_pair()", f"Permission denied while renaming files: {e}")
+            messagebox.showerror("Error: app.manually_rename_single_pair()", f"Permission denied while renaming files: {e}")
         except FileNotFoundError as e:
-            messagebox.showerror("Error: manually_rename_single_pair()", f"File not found: {e}")
+            messagebox.showerror("Error: app.manually_rename_single_pair()", f"File not found: {e}")
         except Exception as e:
-            messagebox.showerror("Error: manually_rename_single_pair()", f"An unexpected error occurred: {e}")
+            messagebox.showerror("Error: app.manually_rename_single_pair()", f"An unexpected error occurred: {e}")
 
 
     def rename_odd_files(self, filename):
@@ -2773,7 +2770,7 @@ class ImgTxtViewer:
             os.rename(os.path.join(self.image_dir.get(), filename), os.path.join(self.image_dir.get(), new_filename))
             return new_filename
         except (PermissionError, IOError, TclError) as e:
-            messagebox.showerror("Error: rename_odd_files()", f"An error occurred while renaming odd files.\n\n{e}")
+            messagebox.showerror("Error: app.rename_odd_files()", f"An error occurred while renaming odd files.\n\n{e}")
 
 
     def create_blank_text_files(self):
@@ -2792,7 +2789,7 @@ class ImgTxtViewer:
                             created_count += 1
                     messagebox.showinfo("Success", f"Created {created_count} blank text files!")
         except Exception as e:
-            messagebox.showerror("Error: create_blank_text_files()", f"Failed to create file: {file_path}\n\n{str(e)}")
+            messagebox.showerror("Error: app.create_blank_text_files()", f"Failed to create file: {file_path}\n\n{str(e)}")
 
 
     def restore_backup(self):
@@ -2820,7 +2817,7 @@ class ImgTxtViewer:
                     os.utime(original_file, (time.time(), time.time()))
                     os.remove(os.path.join(backup_dir, backup_file))
                 except Exception as e:
-                    messagebox.showerror("Error: restore_backup()", f"Something went wrong: {original_file}\n\n{str(e)}")
+                    messagebox.showerror("Error: app.restore_backup()", f"Something went wrong: {original_file}\n\n{str(e)}")
         messagebox.showinfo("Success", "All text files have been restored from the latest backup!")
         self.refresh_text_box()
 
@@ -2848,7 +2845,7 @@ class ImgTxtViewer:
                 if os.path.exists(backup_folder):
                     shutil.rmtree(backup_folder)
             except (PermissionError, IOError, TclError) as e:
-                messagebox.showerror("Error: delete_text_backup()", f"An error occurred while deleting the text backups.\n\n{e}")
+                messagebox.showerror("Error: app.delete_text_backup()", f"An error occurred while deleting the text backups.\n\n{e}")
 
 
     def delete_trash_folder(self):
@@ -2867,7 +2864,7 @@ class ImgTxtViewer:
                         shutil.rmtree(trash_dir)
             self.root.destroy()
         except (PermissionError, IOError, TclError) as e:
-            messagebox.showerror("Error: delete_trash_folder()", f"An error occurred while deleting the trash folder.\n\n{e}")
+            messagebox.showerror("Error: app.delete_trash_folder()", f"An error occurred while deleting the trash folder.\n\n{e}")
 
 
     def delete_pair(self, index=None):
@@ -2915,7 +2912,7 @@ class ImgTxtViewer:
                             try:
                                 os.remove(file_list[index])
                             except (PermissionError, IOError) as e:
-                                messagebox.showerror("Error: delete_pair()", f"An error occurred while deleting the img-txt pair.\n\n{e}")
+                                messagebox.showerror("Error: app.delete_pair()", f"An error occurred while deleting the img-txt pair.\n\n{e}")
                                 return
                             deleted_pair.append((file_list, index, None))
                             del file_list[index]
@@ -2924,7 +2921,7 @@ class ImgTxtViewer:
                 else:
                     pass
         except (PermissionError, IOError, TclError) as e:
-            messagebox.showerror("Error: delete_pair()", f"An error occurred while deleting the img-txt pair.\n\n{e}")
+            messagebox.showerror("Error: app.delete_pair()", f"An error occurred while deleting the img-txt pair.\n\n{e}")
 
 
     def _nav_after_delete(self, index):
@@ -2961,7 +2958,7 @@ class ImgTxtViewer:
                 self.undo_state.set("disabled")
                 self.editMenu.entryconfig("Undo Delete", state="disabled")
         except (PermissionError, ValueError, IOError, TclError) as e:
-            messagebox.showerror("Error: undo_delete_pair()", f"An error occurred while restoring the img-txt pair.\n\n{e}")
+            messagebox.showerror("Error: app.undo_delete_pair()", f"An error occurred while restoring the img-txt pair.\n\n{e}")
 
 
 #endregion

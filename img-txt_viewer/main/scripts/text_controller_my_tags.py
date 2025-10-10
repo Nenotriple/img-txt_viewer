@@ -550,7 +550,7 @@ class MyTags:
         try:
             self._write_mytags_data(data)
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to save MyTags (YAML):\n{e}")
+            messagebox.showerror("Error: text_controller_my_tags.save_my_tags_file()", f"Failed to save MyTags (YAML):\n{e}")
             return
         self.root.after(100, self.refresh_custom_dictionary)
         self.check_unsaved_changes()
@@ -723,7 +723,7 @@ class MyTags:
                 if refresh:
                     self.refresh_custom_dictionary()
         except (PermissionError, IOError, TclError) as e:
-            messagebox.showerror("Error: create_custom_dictionary()", f"An error occurred while creating the MyTags file:\n\n{filename}\n\n{e}")
+            messagebox.showerror("Error: text_controller_my_tags.create_custom_dictionary()", f"An error occurred while creating the MyTags file:\n\n{filename}\n\n{e}")
 
 
     def remove_extra_newlines(self, text: "str"):
@@ -786,7 +786,7 @@ class MyTags:
             self.check_unsaved_changes()
             messagebox.showinfo("Success", "MyTags has been cleaned.")
         except (PermissionError, IOError, TclError) as e:
-            messagebox.showerror("Error: cleanup_custom_dictionary()", f"An error occurred while cleaning MyTags:\n\n{e}")
+            messagebox.showerror("Error: text_controller_my_tags.cleanup_custom_dictionary()", f"An error occurred while cleaning MyTags:\n\n{e}")
 
 
     def add_to_custom_dictionary(self, origin):
@@ -810,7 +810,7 @@ class MyTags:
                     self._write_mytags_data(data)
             self.refresh_custom_dictionary()
         except (PermissionError, IOError, TclError) as e:
-            messagebox.showerror("Error: add_to_custom_dictionary()", f"An error occurred while saving the selection to 'my_tags.yaml'.\n\n{e}")
+            messagebox.showerror("Error: text_controller_my_tags.add_to_custom_dictionary()", f"An error occurred while saving the selection to 'my_tags.yaml'.\n\n{e}")
 
 
     #endregion

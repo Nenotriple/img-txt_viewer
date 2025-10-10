@@ -196,10 +196,10 @@ class OnnxTagger:
                 with PILImage.open(image_path) as image:
                     inferred_tags = self._process_tags(image)
         except FileNotFoundError as e:
-            messagebox.showerror("File Not Found", f"The file specified by {image_path} does not exist.\n\n{e}")
+            messagebox.showerror("Error: OnnxTagger.tag_image()", f"The file specified by {image_path} does not exist.\n\n{e}")
             return
         except Exception as e:
-            messagebox.showerror("Error", f"An error occurred while processing the image: {e}")
+            messagebox.showerror("Error: OnnxTagger.tag_image()", f"An error occurred while processing the image: {e}")
             return
         tag_list, tag_dict = self._format_results(inferred_tags)
         return tag_list, tag_dict

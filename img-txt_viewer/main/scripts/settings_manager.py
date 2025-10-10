@@ -58,7 +58,7 @@ class SettingsManager:
             self._save_mytags_style_settings()
             self._write_config_to_file()
         except (PermissionError, IOError) as e:
-            messagebox.showerror("Error: save_settings()", f"An error occurred while saving the user settings.\n\n{e}")
+            messagebox.showerror("Error: settings_manager.save_settings()", f"An error occurred while saving the user settings.\n\n{e}")
 
 
     def _load_config_from_file(self) -> bool:
@@ -68,7 +68,7 @@ class SettingsManager:
                 return True
             return False
         except Exception as e:
-            messagebox.showerror("Error: _load_config_from_file()", f"An error occurred while loading the user settings.\n\n{e}")
+            messagebox.showerror("Error: settings_manager._load_config_from_file()", f"An error occurred while loading the user settings.\n\n{e}")
             return False
 
 
@@ -83,7 +83,7 @@ class SettingsManager:
                 else:
                     self.config.write(cfg_file)
         except (PermissionError, IOError) as e:
-            messagebox.showerror("Error: _save_config_to_file()", f"An error occurred while saving the user settings.\n\n{e}")
+            messagebox.showerror("Error: settings_manager._save_config_to_file()", f"An error occurred while saving the user settings.\n\n{e}")
 
 
     def _add_section(self, section_name):
