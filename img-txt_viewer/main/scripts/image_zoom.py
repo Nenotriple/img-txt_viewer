@@ -302,6 +302,7 @@ class EventController:
         can_w, can_h = self.widget.canvas_ctrl.get_size()
         if self.widget.image_fits_canvas:
             self.widget._switch_to_fit_and_preview(can_w, can_h, delay=100)
+            self.widget._call_on_render_done()
             return
         # Clamp pan so the image remains visible after resize.
         scale = float(self.widget.image_mgr.scale)
@@ -312,9 +313,12 @@ class EventController:
         # If image now fits the canvas, switch to fit mode and preview.
         if img_w <= float(can_w) + 1e-6 and img_h <= float(can_h) + 1e-6:
             self.widget._switch_to_fit_and_preview(can_w, can_h, delay=100)
+            self.widget._call_on_render_done()
         else:
             # Render a fast viewport preview and schedule a full render.
             self.widget._using_preview = self.widget.canvas_ctrl.render_viewport_preview(self.widget.image_mgr, self.widget.pan_offset_x, self.widget.pan_offset_y)
+            if self.widget._using_preview:
+                self.widget._call_on_render_done()
             self.widget._schedule_full_render()
 
     def _on_mouse_wheel(self, event: tk.Event) -> None:
@@ -359,6 +363,8 @@ class EventController:
         self.widget.image_mgr.scale = s_new
         # Fast preview and schedule full render.
         self.widget._using_preview = self.widget.canvas_ctrl.render_viewport_preview(self.widget.image_mgr, self.widget.pan_offset_x, self.widget.pan_offset_y)
+        if self.widget._using_preview:
+            self.widget._call_on_render_done()
         self.widget._schedule_full_render()
 
     def _on_button_press(self, event: tk.Event) -> None:
@@ -385,6 +391,8 @@ class EventController:
         if self.widget._using_preview:
             # Render preview while dragging and schedule full render.
             self.widget._using_preview = self.widget.canvas_ctrl.render_viewport_preview(self.widget.image_mgr, self.widget.pan_offset_x, self.widget.pan_offset_y)
+            if self.widget._using_preview:
+                self.widget._call_on_render_done()
             self.widget._schedule_full_render()
         else:
             # Move existing full-resolution image for snappy dragging.
@@ -418,8 +426,8 @@ class EventController:
 
 class ImageZoomWidget(tk.Frame):
     """Embeddable image zoom/pan widget for tkinter."""
-# --- Initialization ---
-    def __init__(self, master: Optional[Any] = None, **kwargs: Any) -> None:
+    # --- Initialization ---
+    def __init__(self, master: Optional[Any] = None, on_render_done: Optional[Any] = None, **kwargs: Any) -> None:
         """Initialize state, background executor and UI."""
         super().__init__(master, **kwargs)
         self.image_mgr = ImageManager()
@@ -451,6 +459,8 @@ class ImageZoomWidget(tk.Frame):
         self.drag_x = None
         self.drag_y = None
         self.root = self._find_root()
+        # Optional callback after render loop
+        self.on_render_done = on_render_done
 
 # --- UI construction / initialization ---
     def _create_ui(self) -> None:
@@ -596,6 +606,14 @@ class ImageZoomWidget(tk.Frame):
             scale = 1.0
         return self.image_mgr.resize_for_scale(scale)
 
+    def _call_on_render_done(self):
+        """Call the on_render_done callback if set."""
+        if callable(self.on_render_done):
+            try:
+                self.on_render_done()
+            except Exception:
+                pass
+
 # --- GIF Animation Support ---
     def _load_gif(self, path: str) -> None:
         """Load and prepare GIF animation."""
@@ -665,6 +683,12 @@ class ImageZoomWidget(tk.Frame):
             # Center on canvas
             cx, cy = can_w // 2, can_h // 2
             self.canvas_ctrl.update_canvas_image(tk_img, cx, cy, anchor="center")
+            # Call the callback if set
+            if callable(self.on_render_done):
+                try:
+                    self.on_render_done()
+                except Exception:
+                    pass
             # Schedule next frame
             delay = self._frame_durations[self._current_frame_index] if self._frame_durations[self._current_frame_index] else 100
             self._animation_job_id = self.after(delay, self._play_gif_animation)
@@ -757,13 +781,17 @@ class ImageZoomWidget(tk.Frame):
 
 # --- Rendering pipeline (preview, full, scheduling) ---
     def _render_viewport_preview(self) -> None:
-        if not self._do_image_check():
-            return
-        self._using_preview = self.canvas_ctrl.render_viewport_preview(self.image_mgr, self.pan_offset_x, self.pan_offset_y)
+        # Always try to render preview, even if _do_image_check() is False
+        rendered = self.canvas_ctrl.render_viewport_preview(self.image_mgr, self.pan_offset_x, self.pan_offset_y)
+        self._using_preview = rendered
+        if rendered:
+            self._call_on_render_done()
 
     def _render_full_image(self) -> None:
         """Start background full-resolution render immediately."""
         if not self._do_image_check():
+            # If high-quality render is not appropriate, ensure preview and callback
+            self._render_viewport_preview()
             return
         self._cancel_full_render_job()
         self._request_full_render(self._render_sequence)
@@ -771,6 +799,8 @@ class ImageZoomWidget(tk.Frame):
     def _request_full_render(self, seq: int) -> None:
         """Submit a background resize task and arrange main-thread completion."""
         if not self._do_image_check():
+            # If high-quality render is not appropriate, ensure preview and callback
+            self._render_viewport_preview()
             return
         scale = float(self.image_mgr.scale)
         future = self._executor.submit(self.image_mgr.resize_for_scale, scale)
@@ -812,6 +842,12 @@ class ImageZoomWidget(tk.Frame):
             pass
         self._using_preview = False
         self._pending_future = None
+        # Call the callback if set
+        if callable(self.on_render_done):
+            try:
+                self.on_render_done()
+            except Exception:
+                pass
 
     def _redraw_image(self) -> None:
         self._render_full_image()

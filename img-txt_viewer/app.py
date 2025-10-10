@@ -615,7 +615,7 @@ class ImgTxtViewer:
         self.label_image_stats_tooltip = Tip.create(widget=self.label_image_stats, text="...")
         ttk.Separator(self.stats_frame, orient="horizontal").grid(row=2, column=0, columnspan=2, sticky="ew")
         # Primary Image
-        self.primary_display_image = ImageZoomWidget(self.master_image_inner_frame)
+        self.primary_display_image = ImageZoomWidget(self.master_image_inner_frame, on_render_done=self.on_imagezoomwidget_render)
         self.primary_display_image.grid(row=1, column=0, sticky="nsew")
         self.primary_display_image.canvas.bind("<Double-1>", lambda event: self.open_image(index=self.current_index, event=event))
         self.primary_display_image.canvas.bind("<Shift-MouseWheel>", self.mousewheel_nav)
@@ -1758,6 +1758,12 @@ class ImgTxtViewer:
                 self.root.after_cancel(self.is_resizing_job_id)
             if not self.is_image_grid_visible_var.get():
                 self.is_resizing_job_id = self.root.after(250, self.refresh_image)
+
+
+    def on_imagezoomwidget_render(self):
+        current_percent = int(self.primary_display_image.image_mgr.scale * 100)
+        print(self.primary_display_image.image_mgr.scale)
+        self.update_imageinfo(current_percent)
 
 
     def update_videoinfo(self, image_file=None):
