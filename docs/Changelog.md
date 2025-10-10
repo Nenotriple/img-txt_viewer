@@ -68,6 +68,7 @@
   - `Clear All Text Files`: Erase the contents of all text files in the current directory.
   - `Delete All Text Files`: Permanently delete all text files in the current directory.
   - `Trim Excess Tags`: Remove excess tags from all text files, keeping only a specified number of tags per file.
+  - `Check File Pair Collisions`: Scan the current directory and show files with the same name but different extensions, which may cause text pair conflicts.
 - New `AutoTag` option `Viewport`:
   - When enabled, the current image view will be used for interrogation instead of the original image file.
 
@@ -98,6 +99,7 @@
 - The Crop control panel is now scrollable for smaller screens.
 - All `Edit Panel` adjustments now support RGBA images, preserving transparency.
 - Improved the layout of the first time setup wizard, and user-flow when resetting settings.
+- When saving, the app will now check for file pair collisions and warn the user if any are detected. A collision occurs when multiple files share the same basename but have different file extensions, which can lead to text pair conflicts.
 
 ---
 
