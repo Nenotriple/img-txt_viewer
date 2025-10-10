@@ -33,6 +33,11 @@ class ThumbnailPanel(Frame):
     context menu interactions.
     """
 
+    # Thumbnail spacing constants for precise layout
+    THUMBNAIL_PADDING = 4  # Padding between thumbnails
+    THUMBNAIL_BORDER = 2   # Border around each thumbnail
+    TOTAL_SPACING = THUMBNAIL_PADDING + (THUMBNAIL_BORDER * 2)  # Total spacing per thumbnail
+
     def __init__(self, master: 'Frame', app: 'Main'):
         """
         Initialize the ThumbnailPanel.
@@ -45,6 +50,7 @@ class ThumbnailPanel(Frame):
         self.app = app
         self.thumbnail_cache: Dict[tuple, ImageTk.PhotoImage] = {}
         self.image_info_cache: Dict[str, dict] = {}
+        self._last_layout_info = None  # Cache last layout to detect changes
         self.bind("<MouseWheel>", self.app.mousewheel_nav)
 
 
@@ -63,11 +69,15 @@ class ThumbnailPanel(Frame):
         if not self._should_display_thumbnails():
             self.grid_remove()
             return
+
         self.grid()
-        self._clear_panel_if_needed()
         layout_info = self._calculate_layout()
+        # Only clear if layout has meaningfully changed
+        if self._layout_has_changed(layout_info):
+            self._clear_panel()
+            self._last_layout_info = layout_info
         thumbnail_buttons = self._create_thumbnail_buttons(layout_info)
-        self._display_thumbnails(thumbnail_buttons)
+        self._display_thumbnails(thumbnail_buttons, layout_info)
 
 
     def refresh_thumbnails(self):
@@ -80,6 +90,7 @@ class ThumbnailPanel(Frame):
         """
         self.thumbnail_cache.clear()
         self.image_info_cache.clear()
+        self._last_layout_info = None
         self.app.refresh_file_lists()
         self.update_panel()
 
@@ -93,35 +104,66 @@ class ThumbnailPanel(Frame):
         return self.app.thumbnails_visible.get() and bool(self.app.image_files)
 
 
+    def _layout_has_changed(self, new_layout: dict) -> bool:
+        """Check if layout has meaningfully changed."""
+        if self._last_layout_info is None:
+            return True
+        # Compare key layout parameters
+        return (self._last_layout_info.get('thumbnail_width') != new_layout.get('thumbnail_width') or
+                self._last_layout_info.get('num_thumbnails') != new_layout.get('num_thumbnails') or
+                self._last_layout_info.get('total_images') != new_layout.get('total_images'))
+
+
+    def _clear_panel(self) -> None:
+        """Clear all thumbnails from the panel."""
+        for widget in self.winfo_children():
+            widget.destroy()
+
+
     def _clear_panel_if_needed(self) -> None:
         """Clear existing thumbnails if the number of images has changed."""
         if len(self.winfo_children()) != len(self.app.image_files):
-            for widget in self.winfo_children():
-                widget.destroy()
+            self._clear_panel()
 
 
     def _calculate_layout(self) -> dict:
-        """Calculate layout parameters for thumbnails."""
+        """Calculate layout parameters for thumbnails with precise spacing."""
         thumbnail_width = self.app.thumbnail_width.get()
         panel_width = self.winfo_width() or self.app.master_image_frame.winfo_width()
-        num_thumbnails = max(1, panel_width // (thumbnail_width + 10))
+        # Calculate effective width per thumbnail (thumbnail + spacing)
+        effective_thumbnail_width = thumbnail_width + self.TOTAL_SPACING
+        # Calculate number of thumbnails that fit, accounting for edge padding
+        num_thumbnails = max(1, (panel_width - self.THUMBNAIL_PADDING) // effective_thumbnail_width)
         total_images = len(self.app.image_files)
-        half_visible = num_thumbnails // 2
+        # Early return if no images
+        if total_images == 0:
+            return {
+                'start_index': 0,
+                'num_thumbnails': 0,
+                'total_images': 0,
+                'thumbnail_width': thumbnail_width
+            }
         # Normalize current index for circular navigation
         self.app.current_index = self.app.current_index % total_images
-        # Calculate start index
-        start_index = (0 if total_images <= num_thumbnails else (self.app.current_index - half_visible) % total_images)
+        # Calculate start index for centered current image
+        if total_images <= num_thumbnails:
+            start_index = 0
+        else:
+            half_visible = num_thumbnails // 2
+            start_index = (self.app.current_index - half_visible) % total_images
+
         return {
             'start_index': start_index,
             'num_thumbnails': min(total_images, num_thumbnails),
             'total_images': total_images,
-            'thumbnail_width': thumbnail_width
+            'thumbnail_width': thumbnail_width,
+            'effective_width': effective_thumbnail_width
         }
 
 
     def _is_video_file(self, file_path: str) -> bool:
         """Check if the file is a video file by extension."""
-        return file_path.lower().endswith('.mp4')
+        return file_path.lower().endswith(('.mp4', '.webm', '.mkv', '.avi', '.mov'))
 
 
     def _create_thumbnail(self, image_file: str, thumbnail_width: int) -> ImageTk.PhotoImage:
@@ -132,29 +174,44 @@ class ThumbnailPanel(Frame):
         try:
             # Check if it's a video file
             if self._is_video_file(image_file):
-                # Get the thumbnail from video_thumb_dict if available
-                if hasattr(self.app, 'video_thumb_dict') and image_file in self.app.video_thumb_dict:
-                    img = self.app.video_thumb_dict[image_file]['thumbnail']
-                    img.thumbnail((thumbnail_width, thumbnail_width), self.app.quality_filter)
-                    img = img.convert("RGBA") if img.mode != "RGBA" else img
-                    padded_img = ImageOps.pad(img, (thumbnail_width, thumbnail_width), color=(0, 0, 0, 0))
-                    thumbnail_photo = ImageTk.PhotoImage(padded_img)
-                    self.thumbnail_cache[cache_key] = thumbnail_photo
-                    return thumbnail_photo
-                else:
-                    self.app.update_video_thumbnails()
-                    return self._create_thumbnail(image_file, thumbnail_width)
-            # Regular image handling (or fallback for videos)
-            with Image.open(image_file) as img:
-                img.thumbnail((thumbnail_width, thumbnail_width), self.app.quality_filter)
-                img = img.convert("RGBA") if img.mode != "RGBA" else img
-                padded_img = ImageOps.pad(img, (thumbnail_width, thumbnail_width), color=(0, 0, 0, 0))
-                thumbnail_photo = ImageTk.PhotoImage(padded_img)
-                self.thumbnail_cache[cache_key] = thumbnail_photo
-                return thumbnail_photo
+                return self._create_video_thumbnail(image_file, thumbnail_width, cache_key)
+            # Regular image handling
+            return self._create_image_thumbnail(image_file, thumbnail_width, cache_key)
         except Exception as e:
-            #print(f"Error creating thumbnail for {image_file}: {e}")
+            # Silent error handling - return None to skip problematic files
             return None
+
+
+    def _create_video_thumbnail(self, image_file: str, thumbnail_width: int, cache_key: tuple) -> ImageTk.PhotoImage:
+        """Create thumbnail for video file."""
+        # Check if thumbnail exists in video_thumb_dict
+        if hasattr(self.app, 'video_thumb_dict') and image_file in self.app.video_thumb_dict:
+            img = self.app.video_thumb_dict[image_file]['thumbnail'].copy()
+        else:
+            # Generate video thumbnail
+            self.app.update_video_thumbnails()
+            if hasattr(self.app, 'video_thumb_dict') and image_file in self.app.video_thumb_dict:
+                img = self.app.video_thumb_dict[image_file]['thumbnail'].copy()
+            else:
+                return None
+        # Process and cache the thumbnail
+        img.thumbnail((thumbnail_width, thumbnail_width), self.app.quality_filter)
+        img = img.convert("RGBA") if img.mode != "RGBA" else img
+        padded_img = ImageOps.pad(img, (thumbnail_width, thumbnail_width), color=(0, 0, 0, 0))
+        thumbnail_photo = ImageTk.PhotoImage(padded_img)
+        self.thumbnail_cache[cache_key] = thumbnail_photo
+        return thumbnail_photo
+
+
+    def _create_image_thumbnail(self, image_file: str, thumbnail_width: int, cache_key: tuple) -> ImageTk.PhotoImage:
+        """Create thumbnail for image file."""
+        with Image.open(image_file) as img:
+            img.thumbnail((thumbnail_width, thumbnail_width), self.app.quality_filter)
+            img = img.convert("RGBA") if img.mode != "RGBA" else img
+            padded_img = ImageOps.pad(img, (thumbnail_width, thumbnail_width), color=(0, 0, 0, 0))
+            thumbnail_photo = ImageTk.PhotoImage(padded_img)
+            self.thumbnail_cache[cache_key] = thumbnail_photo
+            return thumbnail_photo
 
 
     def _create_thumbnail_buttons(self, layout_info: dict) -> list:
@@ -165,7 +222,6 @@ class ThumbnailPanel(Frame):
             image_file = self.app.image_files[index]
             # Cache image info if needed
             if image_file not in self.image_info_cache:
-                # Use update_videoinfo for MP4 files, otherwise use get_image_info
                 if self._is_video_file(image_file):
                     self.image_info_cache[image_file] = self.app.update_videoinfo(image_file)
                 else:
@@ -183,25 +239,32 @@ class ThumbnailPanel(Frame):
     def _create_single_thumbnail_button(self, thumbnail_photo: ImageTk.PhotoImage, index: int) -> ttk.Button:
         """Create a single thumbnail button with all necessary configuration."""
         button = ttk.Button(self, image=thumbnail_photo, cursor="hand2", command=lambda idx=index: self.app.jump_to_image(idx))
-        button.image = thumbnail_photo
+        button.image = thumbnail_photo  # Keep reference to prevent garbage collection
         # Style current selection
         if index == self.app.current_index:
             button.config(style="Highlighted.TButton")
         # Add bindings
         button.bind("<Button-3>", self._create_context_menu(button, index))
         button.bind("<MouseWheel>", self.app.mousewheel_nav)
-        # Add tooltip
+        # Add tooltip with image info
         image_file = self.app.image_files[index]
-        image_info = self.image_info_cache[image_file]
-        tooltip_text = f"#{index + 1} | {image_info['filename']} | {image_info['resolution']} | {image_info['size']}"
-        Tip.create(widget=button, text=tooltip_text, show_delay=100, origin='widget', tooltip_anchor='sw', padx=1, pady=-2)
+        if image_file in self.image_info_cache:
+            image_info = self.image_info_cache[image_file]
+            tooltip_text = f"#{index + 1} | {image_info['filename']} | {image_info['resolution']} | {image_info['size']}"
+            Tip.create(widget=button, text=tooltip_text, show_delay=100, origin='widget', tooltip_anchor='sw', padx=1, pady=-2)
         return button
 
 
-    def _display_thumbnails(self, thumbnail_buttons: list) -> None:
-        """Display the thumbnail buttons in the panel."""
+    def _display_thumbnails(self, thumbnail_buttons: list, layout_info: dict) -> None:
+        """Display the thumbnail buttons in the panel with precise spacing."""
         for idx, button in enumerate(thumbnail_buttons):
-            button.grid(row=0, column=idx)
+            button.grid(
+                row=0,
+                column=idx,
+                padx=(self.THUMBNAIL_PADDING if idx == 0 else self.THUMBNAIL_PADDING // 2,
+                      self.THUMBNAIL_PADDING if idx == len(thumbnail_buttons) - 1 else self.THUMBNAIL_PADDING // 2),
+                pady=self.THUMBNAIL_PADDING
+            )
         self.update_idletasks()
 
 
