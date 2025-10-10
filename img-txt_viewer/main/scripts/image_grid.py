@@ -48,6 +48,13 @@ class ImageGrid(ttk.Frame):
         self.prev_selected_thumbnail = None
         self.selected_thumbnail = None
 
+        # Track parent size to prevent unnecessary reloads
+        self.last_parent_size = (None, None)
+        # Debounce state for parent resize handling
+        self.parent_bind_widget = None
+        self._parent_resize_after_id = None
+        self._pending_parent_size = None
+
 
     def _is_video_file(self, file_path: str) -> bool:
         """Check if the file is a video file by extension."""
@@ -66,7 +73,7 @@ class ImageGrid(ttk.Frame):
         self.max_width = 80  # Thumbnail width
         self.max_height = 80  # Thumbnail height
         self.images_per_load = 250  # Num of images to load per set
-        self.padding = 4  # Default padding between thumbnails
+        self.padding = 6  # Default padding between thumbnails
         self.rows = 0  # Num of rows in the grid
         self.columns = 0  # Num of columns in the grid
 
@@ -84,9 +91,16 @@ class ImageGrid(ttk.Frame):
         self.load_images()
         self.is_initialized = True
 
-
-#endregion
-#region Create Interface
+        # Bind the top-level window to catch maximize/unmaximize (better than relying on master)
+        try:
+            toplevel = self.winfo_toplevel()
+            if toplevel and self.parent_bind_widget is not toplevel:
+                toplevel.bind("<Configure>", self.on_parent_configure, add="+")
+                self.parent_bind_widget = toplevel
+                # initialize last_parent_size to current toplevel size
+                self.last_parent_size = (toplevel.winfo_width(), toplevel.winfo_height())
+        except Exception:
+            pass
 
 
     # --- Build Interface ---
@@ -143,7 +157,7 @@ class ImageGrid(ttk.Frame):
 
         self.slider_image_size = ttk.Scale(self.frame_bottom, variable=self.image_size, orient="horizontal", from_=1, to=3, command=self.round_scale_input)
         self.slider_image_size.grid(row=0, column=1, sticky="ew")
-        self.slider_image_size.bind("<ButtonRelease-1>", lambda event: self.reload_grid())
+        self.slider_image_size.bind("<ButtonRelease-1>", lambda *_: self.reload_grid())
         Tip.create(widget=self.slider_image_size, text="Adjust grid size")
 
         self.label_size_value = ttk.Label(self.frame_bottom, textvariable=self.image_size, width=3)
@@ -171,7 +185,8 @@ class ImageGrid(ttk.Frame):
 
 
     # --- Grid Events ---
-    def on_frame_configure(self, _event):
+    def on_frame_configure(self, *args):
+        # ignore the passed event argument, use *args to avoid unused-parameter warnings
         self.configure_scroll_region(reset_view=False)
 
 
@@ -179,7 +194,8 @@ class ImageGrid(ttk.Frame):
 #region Primary Logic
 
 
-    def reload_grid(self, event=None):
+    def reload_grid(self, *args):
+        # accept optional args (e.g., events) but ignore them
         self.clear_frame(self.frame_image_grid)
         self.set_size_settings()
         self.update_image_info_label()
@@ -466,7 +482,7 @@ class ImageGrid(ttk.Frame):
             return
         for index, btn in self.thumbnail_buttons.items():
             if btn == button:
-                for img_tk, path, idx in self.images:
+                for img_tk, _, idx in self.images:
                     if idx == index:
                         button.configure(image=img_tk, style="TButton")
                         button.image = img_tk
@@ -512,7 +528,51 @@ class ImageGrid(ttk.Frame):
             self.canvas_thumbnails.yview_scroll(int(-1*(event.delta/120)), "units")
 
 
-    def round_scale_input(self, event=None):
+    def round_scale_input(self, *args):
         value = float(self.slider_image_size.get())
         if int(value) != value:
             self.slider_image_size.set(round(value))
+
+
+    def on_parent_configure(self, event):
+        try:
+            # if we've set a parent_bind_widget, ignore other widgets' configure events
+            if self.parent_bind_widget is not None and getattr(event, "widget", None) is not self.parent_bind_widget:
+                return
+        except Exception:
+            pass
+
+        if not self.app.is_image_grid_visible_var.get():
+            return
+        try:
+            new_size = (event.width, event.height)
+        except Exception:
+            return
+        # store pending size and (re)schedule the debounced handler
+        self._pending_parent_size = new_size
+        if self._parent_resize_after_id:
+            try:
+                self.after_cancel(self._parent_resize_after_id)
+            except Exception:
+                pass
+        # short debounce to coalesce rapid Configure events (e.g. during maximize)
+        self._parent_resize_after_id = self.after(50, self._handle_parent_resize)
+
+
+    def _handle_parent_resize(self):
+        if not self.app.is_image_grid_visible_var.get():
+            return
+        self._parent_resize_after_id = None
+        new_size = self._pending_parent_size or (None, None)
+        if new_size == self.last_parent_size:
+            return
+        self.last_parent_size = new_size
+        if getattr(self, "is_initialized", False):
+            try:
+                # call reload directly (short tasks) or schedule if needed
+                self.reload_grid()
+            except Exception:
+                try:
+                    self.after_idle(self.reload_grid)
+                except Exception:
+                    pass
