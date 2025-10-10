@@ -55,10 +55,11 @@
   - Toggle this setting from `Options > Restore Last Window Size`
 - The height of individual Tagger tool tabs can now be saved and restored when switching tabs.
   - Toggle this setting from  `Options > Restore Last Text Pane Heights`
-- MyTags can now be sorted into groups and subgroups.
-- Entries in MyTags can now be organized by drag-and-drop with the middle mouse button.
-- Font and text style options can now be adjusted for MyTags.
-- Tag-Editor UI and functionality improvements:
+- `MyTags` improvements:
+  - Tags can now be sorted into groups and subgroups.
+  - Entries can now be organized by drag-and-drop with the middle mouse button.
+  - Font and text style options can now be adjusted.
+- `Tag-Editor` improvements:
   - Re-worked the UI for a cleaner and simpler experience.
   - Tags can now be sorted after creating pending changes.
 - New `Edit Panel` option: `Clarity`
@@ -66,7 +67,7 @@
 - New `Batch Operations` tools:
   - `Clear All Text Files`: Erase the contents of all text files in the current directory.
   - `Delete All Text Files`: Permanently delete all text files in the current directory.
-- New AutoTag option `Viewport`:
+- New `AutoTag` option `Viewport`:
   - When enabled, the current image view will be used for interrogation instead of the original image file.
 
 **Fixed:**
