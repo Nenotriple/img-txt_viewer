@@ -66,6 +66,8 @@
 - New `Batch Operations` tools:
   - `Clear All Text Files`: Erase the contents of all text files in the current directory.
   - `Delete All Text Files`: Permanently delete all text files in the current directory.
+- New AutoTag option `Viewport`:
+  - When enabled, the current image view will be used for interrogation instead of the original image file.
 
 **Fixed:**
 
