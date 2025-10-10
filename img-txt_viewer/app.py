@@ -448,6 +448,8 @@ class ImgTxtViewer:
         self.batch_operations_menu.add_separator()
         self.batch_operations_menu.add_command(label="Clear All Text Files...", command=lambda: self.delete_all_text_or_files(delete_file=False))
         self.batch_operations_menu.add_command(label="Delete All Text Files...", command=lambda: self.delete_all_text_or_files(delete_file=True))
+        self.batch_operations_menu.add_separator()
+        self.batch_operations_menu.add_command(label="Check File Pair Collisions...", command=self.check_file_pair_collisions)
         # Edit Current Pair
         self.individual_operations_menu = Menu(self.toolsMenu, tearoff=0)
         self.toolsMenu.add_cascade(label="Edit Current Pair", state="disable", menu=self.individual_operations_menu)
@@ -2148,6 +2150,77 @@ class ImgTxtViewer:
         messagebox.showinfo("Done", msg)
 
 
+    def check_file_pair_collisions(self, directory=None, file_path=None, show_dialog="all"):
+        if isinstance(show_dialog, bool):
+            show_dialog_mode = "all" if show_dialog else "none"
+        elif isinstance(show_dialog, str):
+            show_dialog_mode = show_dialog.lower()
+            if show_dialog_mode not in ("all", "collision", "none"):
+                show_dialog_mode = "all"
+        else:
+            show_dialog_mode = "all"
+        show_any_dialog = show_dialog_mode != "none"
+        if file_path:
+            if not os.path.isfile(file_path):
+                if show_any_dialog:
+                    messagebox.showwarning("File Not Found", f"The specified file was not found:\n\n{file_path}")
+                return []
+            directory = os.path.dirname(os.path.abspath(file_path))
+            target_base = os.path.splitext(os.path.basename(file_path))[0]
+        else:
+            target_base = None
+            directory = directory or self.image_dir.get()
+        if not os.path.isdir(directory):
+            return []
+        extensions = ['.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif', '.mp4']
+        try:
+            all_files = os.listdir(directory)
+        except Exception:
+            return []
+        groups = {}
+        for fname in all_files:
+            _, ext = os.path.splitext(fname)
+            ext = ext.lower()
+            if ext in extensions:
+                base = os.path.splitext(fname)[0]
+                groups.setdefault(base, []).append(fname)
+        collisions = []
+        items_to_check = {target_base: groups.get(target_base, [])} if target_base is not None else groups
+        for base, fnames in items_to_check.items():
+            exts = {os.path.splitext(f)[1].lower() for f in fnames}
+            if len(fnames) > 1 and len(exts) > 1:
+                collisions.append({
+                    "basename": base,
+                    "files": [os.path.join(directory, f) for f in fnames],
+                    "extensions": sorted(exts)
+                })
+        if show_any_dialog:
+            if collisions:
+                lines = []
+                for c in collisions:
+                    lines.append(f"{c['basename']} -> {', '.join(c['extensions'])}")
+                    for p in c['files']:
+                        lines.append(f"  - {os.path.basename(p)}")
+                    lines.append("")
+                title = "File Pair Collisions Detected"
+                if target_base:
+                    title = f"Collisions for: {target_base}"
+                message = (
+                    "Some files in the selected directory share the same basename but have different file extensions.\n\n"
+                    "Because the text pair uses the basename + .txt, only one text file can be associated with that basename.\n"
+                    "This will cause text collisions. To avoid this, rename each file so every image/video has a unique basename.\n\n"
+                    "The following basenames have multiple filetype associations:\n\n"
+                    + "\n".join(lines))
+                messagebox.showwarning(title, message)
+            else:
+                if show_dialog_mode == "all":
+                    if target_base:
+                        messagebox.showinfo("File Pair Collisions", f"No file pair collisions detected for: {target_base}")
+                    else:
+                        messagebox.showinfo("File Pair Collisions", "No file pair collisions detected.")
+        return collisions
+
+
 #endregion
 #region Image Tools
 
@@ -2484,6 +2557,9 @@ class ImgTxtViewer:
     def save_text_file(self, highlight=False):
         try:
             if self.image_dir.get() != self.dir_placeholder_text and self.check_if_directory() and self.text_files:
+                collision = self.check_file_pair_collisions(file_path=self.image_files[self.current_index], show_dialog="collision")
+                if collision:
+                    messagebox.showwarning("Save Collision", "The text file will be saved, but be aware that multiple files share the same basename. This will cause text pair collisions.\n\nTo avoid this, rename each file so every image/video has a unique basename.")
                 file_saved = self._save_file()
                 if self.cleaning_text_var.get() or self.list_mode_var.get():
                     self.refresh_text_box()
