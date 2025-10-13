@@ -77,11 +77,10 @@
 - Fixed issue where adding tags that contain a comma to MyTags would wrap them in quotes.
 - Fixed issue where duplicate commas could appear when inserting a tag into the text box from MyTags.
 - Fixed issue that would prevent saving if the Stats or All Tags lists were refreshed.
-- The zoom popup view is now centered on centered on the mouse.
 - Fixed issue where the system clipboard could become unresponsive after interacting with text Entry widgets.
 - Fixed issue when navigating or changing tabs with a broken or incorrect directory path set in Tagger.
 - Fixed an issue where the app would allow setting a directory without any supported files.
-- Tagger tool tabs now properly scale when the tab is very large.
+- Tagger tool tab widgets now properly scale when the tab is very large.
 - Fixed a crash when calculating image statistics.
 
 **Other Changes:**
