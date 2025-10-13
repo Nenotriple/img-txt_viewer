@@ -55,6 +55,8 @@ class ImageManager:
         """Clear image and caches."""
         self._orig_image = None
         self._clear_cache()
+        # now drop the Tk image reference so resources are freed when unloading
+        self._drop_tk_image_ref()
         return
 
     def has_image(self) -> bool:
@@ -128,8 +130,11 @@ class ImageManager:
 
     # --- Cache / internal utilities ---
     def _clear_cache(self) -> None:
-        """Clear resize cache and drop PhotoImage reference."""
+        """Clear resize cache but keep current Tk PhotoImage so canvas doesn't go blank while new render is prepared."""
         self._resize_cache.clear()
+
+    def _drop_tk_image_ref(self) -> None:
+        """Explicitly drop stored Tk PhotoImage reference (used when unloading)."""
         self._tk_image = None
 
     def _cache_key(self, width: int, height: int, resample: Optional[int] = None) -> Tuple[int, int, int]:
