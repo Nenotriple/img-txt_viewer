@@ -1,6 +1,3 @@
-# (Windows-only)
-
-
 #region Imports
 
 
@@ -36,12 +33,14 @@ class ImageManager:
         self._resize_cache: "OrderedDict[Tuple[int,int,int], PILImage]" = OrderedDict()
         self._clear_cache()
 
+
     # --- Public / lifecycle ---
     def load_image(self, path: str) -> None:
         """Load image and convert to RGBA for consistent resizing."""
         with Image.open(path) as img:
             self._orig_image = img.convert("RGBA")
         self._clear_cache()
+
 
     def set_image(self, pil_image: PILImage) -> None:
         """Set the manager's original image from a PIL.Image (no file I/O)."""
@@ -51,6 +50,7 @@ class ImageManager:
         self._orig_image = pil_image.convert("RGBA")
         self._clear_cache()
 
+
     def unload_image(self) -> None:
         """Clear image and caches."""
         self._orig_image = None
@@ -59,9 +59,11 @@ class ImageManager:
         self._drop_tk_image_ref()
         return
 
+
     def has_image(self) -> bool:
         """Return True when an image is loaded."""
         return self._orig_image is not None
+
 
     # --- Size / scaling helpers ---
     def compute_fit_scale_and_size(self, can_w: int, can_h: int) -> Tuple[float, int, int]:
@@ -71,6 +73,7 @@ class ImageManager:
         new_w = max(1, int(og_img_w * scale))
         new_h = max(1, int(og_img_h * scale))
         return scale, new_w, new_h
+
 
     def resize_for_scale(self, scale: float) -> PILImage:
         """Return (and cache) a resized PIL image for the given scale.
@@ -88,6 +91,7 @@ class ImageManager:
         resized = self._orig_image.resize((new_w, new_h), resample_mode)
         self._store_cached_resize(key, resized)
         return resized
+
 
     def crop_to_viewport(self, crop_box: Tuple[float, float, float, float], target_size: Tuple[float, float], resample: int = Image.Resampling.NEAREST) -> Optional[PILImage]:
         """Crop to integer bounds and resize to target viewport size."""
@@ -107,15 +111,18 @@ class ImageManager:
             cropped = cropped.resize((width, height), resample)
         return cropped
 
+
     def create_tk_image(self, pil_image: PILImage) -> PILPhotoImage:
         """Create and retain a Tk PhotoImage (must run on Tk main thread)."""
         self._tk_image = ImageTk.PhotoImage(pil_image)
         return self._tk_image
 
+
     # --- Properties ---
     @property
     def scale(self) -> float:
         return self._scale
+
 
     @scale.setter
     def scale(self, value: Any) -> None:
@@ -128,19 +135,23 @@ class ImageManager:
             return
         self._scale = v
 
+
     # --- Cache / internal utilities ---
     def _clear_cache(self) -> None:
         """Clear resize cache but keep current Tk PhotoImage so canvas doesn't go blank while new render is prepared."""
         self._resize_cache.clear()
 
+
     def _drop_tk_image_ref(self) -> None:
         """Explicitly drop stored Tk PhotoImage reference (used when unloading)."""
         self._tk_image = None
+
 
     def _cache_key(self, width: int, height: int, resample: Optional[int] = None) -> Tuple[int, int, int]:
         if resample is None:
             resample = 0
         return width, height, int(resample)
+
 
     def _get_cached_resize(self, key: Tuple[int, int, int]) -> Optional[PILImage]:
         """Return cached image and mark it recently used (LRU)."""
@@ -149,12 +160,14 @@ class ImageManager:
             self._resize_cache.move_to_end(key)
         return cached
 
+
     def _store_cached_resize(self, key: Tuple[int, int, int], image: PILImage) -> None:
         """Store resized image and evict oldest entries when over cap."""
         self._resize_cache[key] = image
         self._resize_cache.move_to_end(key)
         while len(self._resize_cache) > self._cache_size:
             self._resize_cache.popitem(last=False)
+
 
     def _use_nearest_for_scale(self, scale: float = None) -> bool:
         """Decide when to use NEAREST (for high zoom levels)."""
@@ -167,6 +180,7 @@ class ImageManager:
         threshold = 0.4 * float(self._max_scale)
         return s >= threshold
 
+
 #endregion
 #region CanvasController
 
@@ -177,9 +191,11 @@ class CanvasController:
         self.canvas: Optional[tk.Canvas] = None
         self._image_id: Optional[int] = None
 
+
     # --- Attachment / basic queries ---
     def attach_canvas(self, canvas: tk.Canvas) -> None:
         self.canvas = canvas
+
 
     def get_size(self) -> Tuple[int, int]:
         """Return canvas size (width, height), clamped to >=1."""
@@ -187,8 +203,10 @@ class CanvasController:
             return 1, 1
         return max(1, self.canvas.winfo_width()), max(1, self.canvas.winfo_height())
 
+
     def center_coords(self, can_w: int, can_h: int, pan_offset_x: float, pan_offset_y: float) -> Tuple[int, int]:
         return can_w // 2 + int(pan_offset_x), can_h // 2 + int(pan_offset_y)
+
 
     def set_cursor(self, cursor: str) -> None:
         """Safely set canvas cursor (ignore unsupported values)."""
@@ -198,6 +216,7 @@ class CanvasController:
             self.canvas.configure(cursor=cursor)
         except tk.TclError:
             pass
+
 
     # --- Pan/clamp and scale helpers ---
     def clamp_pan(self, pan_x: float, pan_y: float, img_w: float, img_h: float) -> Tuple[float, float]:
@@ -209,12 +228,14 @@ class CanvasController:
         pan_y = min(max_pan_y, max(-max_pan_y, float(pan_y)))
         return pan_x, pan_y
 
+
     def compute_min_scale_for_image(self, image_mgr: "ImageManager") -> float:
         if not image_mgr.has_image():
             return 1.0
         can_w, can_h = self.get_size()
         min_scale, _, _ = image_mgr.compute_fit_scale_and_size(can_w, can_h)
         return float(min_scale)
+
 
     def fit_image_to_canvas(self, image_mgr: "ImageManager") -> float:
         if not image_mgr.has_image():
@@ -223,6 +244,7 @@ class CanvasController:
         fit_scale, _, _ = image_mgr.compute_fit_scale_and_size(can_w, can_h)
         image_mgr.scale = fit_scale
         return float(fit_scale)
+
 
     # --- Canvas image operations ---
     def update_canvas_image(self, tk_image: Any, x: float, y: float, anchor: str = "center") -> int:
@@ -236,6 +258,7 @@ class CanvasController:
         self.canvas.itemconfig(self._image_id, image=tk_image, anchor=anchor)
         return self._image_id
 
+
     def clear_image(self) -> None:
         """Remove current canvas image item if present."""
         if self.canvas is None:
@@ -246,6 +269,7 @@ class CanvasController:
             except tk.TclError:
                 pass
             self._image_id = None
+
 
     # --- Rendering helpers ---
     def render_viewport_preview(self, image_mgr: "ImageManager", pan_offset_x: float, pan_offset_y: float) -> bool:
@@ -280,6 +304,7 @@ class CanvasController:
         self.update_canvas_image(tk_img, vis_left, vis_top, anchor="nw")
         return True
 
+
     def render_full_image(self, image_mgr: "ImageManager", pan_offset_x: float, pan_offset_y: float) -> None:
         """Render the full-resolution scaled image synchronously."""
         if not image_mgr.has_image():
@@ -299,6 +324,7 @@ class EventController:
     """Event handlers for ImageZoomWidget."""
     def __init__(self, widget: "ImageZoomWidget") -> None:
         self.widget = widget
+
 
     def _on_canvas_configure(self, event: tk.Event) -> None:
         """On canvas resize: show fast preview and schedule full render."""
@@ -325,6 +351,7 @@ class EventController:
             if self.widget._using_preview:
                 self.widget._call_on_render_done()
             self.widget._schedule_full_render()
+
 
     def _on_mouse_wheel(self, event: tk.Event) -> None:
         """Zoom about the mouse cursor; keep the cursor point fixed on the image."""
@@ -372,10 +399,12 @@ class EventController:
             self.widget._call_on_render_done()
         self.widget._schedule_full_render()
 
+
     def _on_button_press(self, event: tk.Event) -> None:
         """Begin drag; record start and set pan cursor."""
         self.widget._drag_start = (event.x, event.y, self.widget.pan_offset_x, self.widget.pan_offset_y)
         self.widget.canvas_ctrl.set_cursor("fleur")
+
 
     def _on_mouse_drag(self, event: tk.Event) -> None:
         """Pan while dragging; render preview if active, else move current image."""
@@ -404,6 +433,7 @@ class EventController:
             cx, cy = self.widget.canvas_ctrl.center_coords(can_w, can_h, self.widget.pan_offset_x, self.widget.pan_offset_y)
             if self.widget.image_mgr._tk_image is not None:
                 self.widget.canvas_ctrl.update_canvas_image(self.widget.image_mgr._tk_image, cx, cy, anchor="center")
+
 
     def _on_button_release(self, event: tk.Event) -> None:
         """End drag, restore cursor, and ensure a full render if necessary."""
@@ -467,6 +497,7 @@ class ImageZoomWidget(tk.Frame):
         # Optional callback after render loop
         self.on_render_done = on_render_done
 
+
 # --- UI construction / initialization ---
     def _create_ui(self) -> None:
         """Create canvas and bind input events."""
@@ -475,6 +506,7 @@ class ImageZoomWidget(tk.Frame):
         self.canvas_ctrl.attach_canvas(self.canvas)
         # Bind events by default
         self.bind_events()
+
 
     def bind_events(self) -> None:
         """Bind pan and zoom events to the canvas."""
@@ -491,6 +523,7 @@ class ImageZoomWidget(tk.Frame):
         self._event_bindings['shift_button_press'] = self.canvas.bind("<Shift-Button-1>", self.start_drag, add="+")
         self._event_bindings['shift_motion'] = self.canvas.bind("<Shift-B1-Motion>", self.dragging_window, add="+")
         self._event_bindings['shift_button_release'] = self.canvas.bind("<Shift-ButtonRelease-1>", self.stop_drag, add="+")
+
 
     def unbind_events(self) -> None:
         """Unbind pan and zoom events from the canvas."""
@@ -516,12 +549,14 @@ class ImageZoomWidget(tk.Frame):
                 pass
         self._event_bindings.clear()
 
+
     def _find_root(self):
         """Find the root window from master."""
         master = self.master
         while master is not None and not isinstance(master, tk.Tk):
             master = getattr(master, "master", None)
         return master
+
 
     def _reset_image_state(self):
         """Common boilerplate for loading or setting a new image."""
@@ -532,6 +567,7 @@ class ImageZoomWidget(tk.Frame):
         self._using_preview = False
         self._cancel_full_render_job()
         self._stop_gif_animation()
+
 
 # --- Public API / High-level actions ---
     def load_image(self, path: str) -> None:
@@ -555,6 +591,7 @@ class ImageZoomWidget(tk.Frame):
             self._request_full_render(self._render_sequence)
             self._using_preview = False
 
+
     def set_image(self, pil_image: PILImage) -> None:
         """Set widget image from a PIL.Image instance (like load_image but from-memory)."""
         if pil_image is None:
@@ -572,12 +609,14 @@ class ImageZoomWidget(tk.Frame):
         self._request_full_render(self._render_sequence)
         self._using_preview = False
 
+
     def force_fit_to_canvas(self) -> None:
         """Force fit-to-canvas and trigger immediate full render."""
         if not self._do_image_check():
             return
         self._fit_image_to_canvas()
         self._render_full_image()
+
 
     def unload_image(self) -> None:
         """Unload image and reset widget state."""
@@ -596,6 +635,7 @@ class ImageZoomWidget(tk.Frame):
             except tk.TclError:
                 pass
 
+
     def get_image(self, original: bool = True) -> Optional[PILImage]:
         """Return either original image copy or a scaled PIL.Image."""
         if not self._do_image_check():
@@ -610,6 +650,7 @@ class ImageZoomWidget(tk.Frame):
         except Exception:
             scale = 1.0
         return self.image_mgr.resize_for_scale(scale)
+
 
     def get_visible_image(self) -> Optional[PILImage]:
         """
@@ -662,6 +703,7 @@ class ImageZoomWidget(tk.Frame):
         except Exception:
             return None
 
+
     def _call_on_render_done(self):
         """Call the on_render_done callback if set."""
         if callable(self.on_render_done):
@@ -669,6 +711,7 @@ class ImageZoomWidget(tk.Frame):
                 self.on_render_done()
             except Exception:
                 pass
+
 
 # --- GIF Animation Support ---
     def _load_gif(self, path: str) -> None:
@@ -699,6 +742,7 @@ class ImageZoomWidget(tk.Frame):
         except Exception as e:
             messagebox.showerror("Error: image_zoom._load_gif()", f"Error loading GIF: {e}")
             self._is_gif = False
+
 
     def _play_gif_animation(self) -> None:
         """Play the next frame of GIF animation."""
@@ -758,6 +802,7 @@ class ImageZoomWidget(tk.Frame):
         except Exception as e:
             messagebox.showerror("Error: image_zoom._play_gif_animation()", f"Error playing GIF: {e}")
 
+
     def _stop_gif_animation(self) -> None:
         """Stop GIF animation and clean up."""
         if self._animation_job_id is not None:
@@ -774,9 +819,11 @@ class ImageZoomWidget(tk.Frame):
         self._gif_frame_cache.clear()
         self.bind_events()
 
+
 # --- Canvas / sizing helpers ---
     def _compute_min_scale_for_canvas(self) -> float:
         return self.canvas_ctrl.compute_min_scale_for_image(self.image_mgr)
+
 
     def _fit_image_to_canvas(self) -> None:
         """Set scale to fit canvas and reset pan offsets."""
@@ -789,6 +836,7 @@ class ImageZoomWidget(tk.Frame):
         self.pan_offset_y = 0
         self.image_fits_canvas = True
         self._ensure_min_zoom_steps(base_scale=fit_scale)
+
 
     def _show_fit_preview(self, can_w: int, can_h: int) -> bool:
         """Create a fast NEAREST preview sized to the canvas and place it centered."""
@@ -805,6 +853,7 @@ class ImageZoomWidget(tk.Frame):
         cx, cy = self.canvas_ctrl.center_coords(can_w, can_h, 0, 0)
         self.canvas_ctrl.update_canvas_image(tk_img, cx, cy, anchor="center")
         return True
+
 
     def _switch_to_fit_and_preview(self, can_w: int, can_h: int, delay: int = 100) -> None:
         """Switch to fit mode, display preview, and schedule full render."""
@@ -824,6 +873,7 @@ class ImageZoomWidget(tk.Frame):
             pass
         self._schedule_full_render(delay=delay)
 
+
     def _ensure_min_zoom_steps(self, steps: int = 10, zoom_per_notch: float = 1.1, base_scale: Optional[float] = None) -> None:
         """Make sure image_mgr._max_scale allows at least `steps` zoom increments."""
         try:
@@ -835,6 +885,7 @@ class ImageZoomWidget(tk.Frame):
         except Exception:
             pass
 
+
 # --- Rendering pipeline (preview, full, scheduling) ---
     def _render_viewport_preview(self) -> None:
         # Always try to render preview, even if _do_image_check() is False
@@ -842,6 +893,7 @@ class ImageZoomWidget(tk.Frame):
         self._using_preview = rendered
         if rendered:
             self._call_on_render_done()
+
 
     def _render_full_image(self) -> None:
         """Start background full-resolution render immediately."""
@@ -851,6 +903,7 @@ class ImageZoomWidget(tk.Frame):
             return
         self._cancel_full_render_job()
         self._request_full_render(self._render_sequence)
+
 
     def _request_full_render(self, seq: int) -> None:
         """Submit a background resize task and arrange main-thread completion."""
@@ -869,6 +922,7 @@ class ImageZoomWidget(tk.Frame):
                 pass
 
         future.add_done_callback(_done_callback)
+
 
     def _on_background_render_done(self, future: concurrent.futures.Future, seq: int) -> None:
         """Handle background resize completion on the main thread."""
@@ -905,8 +959,10 @@ class ImageZoomWidget(tk.Frame):
             except Exception:
                 pass
 
+
     def _redraw_image(self) -> None:
         self._render_full_image()
+
 
     def _cancel_full_render_job(self) -> None:
         """Cancel scheduled callbacks and invalidate pending background results."""
@@ -924,6 +980,7 @@ class ImageZoomWidget(tk.Frame):
                 pass
             self._pending_future = None
 
+
     def _schedule_full_render(self, delay: int = 200) -> None:
         """Schedule a delayed full render (runs background work)."""
         if not self._do_image_check():
@@ -935,6 +992,7 @@ class ImageZoomWidget(tk.Frame):
         except tk.TclError:
             self._full_render_job = None
 
+
     def _do_image_check(self) -> bool:
         """Return True if image is loaded and high-quality resize is appropriate."""
         if not self.image_mgr.has_image():
@@ -942,6 +1000,7 @@ class ImageZoomWidget(tk.Frame):
         if self.image_mgr._use_nearest_for_scale(self.image_mgr.scale):
             return False
         return True
+
 
     def destroy(self) -> None:
         """Clean up background executor and pending work on destroy."""
