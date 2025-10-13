@@ -82,6 +82,7 @@
 - Fixed an issue where the app would allow setting a directory without any supported files.
 - Tagger tool tab widgets now properly scale when the tab is very large.
 - Fixed a crash when calculating image statistics.
+- Fixed issue preventing a selection from being created in the Crop tool along the right edge of the image.
 
 **Other Changes:**
 
