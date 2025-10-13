@@ -181,7 +181,7 @@ class BatchRename:
 
 
     def select_all_treeview(self):
-         self.file_treeview.selection_set(self.file_treeview.get_children())
+        self.file_treeview.selection_set(self.file_treeview.get_children())
 
 
     def deselect_all_treeview(self):
