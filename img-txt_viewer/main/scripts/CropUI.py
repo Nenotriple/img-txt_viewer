@@ -89,7 +89,7 @@ class CropSelection:
                 return
             else:
                 self.clear_selection()
-        if not (x_off <= event.x <= x_max and y_off <= event.x <= y_max):
+        if not (x_off <= event.x <= x_max and y_off <= event.y <= y_max):
             return
         if not self.crop_interface.fixed_sel_toggle_var.get():
             self._start_selection(event, x_off, y_off, x_max, y_max)
@@ -156,6 +156,7 @@ class CropSelection:
 
 
     def _on_button_release(self, event):
+        _ = event
         if not self.img_canvas.img_path or not self.rect:
             return
         coords = self.img_canvas.coords(self.rect)
@@ -179,6 +180,7 @@ class CropSelection:
 
 
     def _on_double_click(self, event):
+        _ = event
         if self.rect:
             self.clear_selection()
             self.crop_interface.update_widget_values()
@@ -623,6 +625,7 @@ class CropSelection:
 # Manual Adjustment
 # ----------------------------
     def set_selection_dimensions(self, width=None, height=None, new_x=None, new_y=None, original_value=None):
+        _ = original_value
         if not self.rect:
             return
         x1, y1, x2, y2 = self.img_canvas.coords(self.rect)
@@ -934,6 +937,7 @@ class CropSelGuidelines:
 
 
     def update_guidelines(self, mode=None, event=None):
+        _ = event
         self.clear_guidelines()
         if not self.crop_selection.rect or mode in (None, 'None'):
             return
@@ -1047,7 +1051,7 @@ class ImageCanvas(tk.Canvas):
         self.resize_after_id = None
 
         self.bind("<Configure>", self._resize_img)
-        self.bind("<Button-3>", lambda event: self.crop_interface.crop_selection.clear_selection())
+        self.bind("<Button-3>", lambda _: self.crop_interface.crop_selection.clear_selection())
 
 
     def _display_img(self, img_path):
@@ -1068,6 +1072,7 @@ class ImageCanvas(tk.Canvas):
 
 
     def _resize_img(self, event=None):
+        _ = event
         if not self.img_path:
             return
         new_width, new_height = self.winfo_width(), self.winfo_height()
@@ -1237,7 +1242,7 @@ class CropInterface:
         self.thumb_canvas.configure(xscrollcommand=thumb_scroll.set)
         self.thumbnail_frame = tk.Frame(self.thumb_canvas)
         self.thumb_canvas.create_window((0, 0), window=self.thumbnail_frame, anchor='nw')
-        self.thumbnail_frame.bind("<Configure>", lambda event: self.thumb_canvas.configure(scrollregion=self.thumb_canvas.bbox("all")))
+        self.thumbnail_frame.bind("<Configure>", lambda _: self.thumb_canvas.configure(scrollregion=self.thumb_canvas.bbox("all")))
         thumb_scroll.bind("<MouseWheel>", lambda event: self.thumb_canvas.xview_scroll(-1 * (event.delta // 120), "units"))
         self.thumb_timeline = ttk.Scale(self.thumb_frame, from_=0, to=0, orient="horizontal", command=self.thumbnail_timeline_changed)
         self.thumb_timeline.grid(row=2, column=0, sticky="ew", padx=self.padx)
@@ -1367,7 +1372,7 @@ class CropInterface:
         self.fixed_sel_entry = ttk.Entry(frame, textvariable=self.fixed_sel_entry_var, width=12)
         self.fixed_sel_entry.grid(row=1, column=2, padx=self.pady, pady=self.pady, sticky="ew")
         self.fixed_selection_entry_tooltip = Tip.create(widget=self.fixed_sel_entry, text="Enter a ratio 'W:H' or a decimal '1.0'")
-        self.fixed_sel_entry.bind("<KeyRelease>", lambda event: self.update_widget_values(resize=True))
+        self.fixed_sel_entry.bind("<KeyRelease>", lambda _: self.update_widget_values(resize=True))
         self.entry_helper.bind_helpers(self.fixed_sel_entry)
         # Insert Button
         insert_btn = ttk.Button(frame, text="<", width=1, command=self.insert_selection_dimension)
@@ -1400,7 +1405,7 @@ class CropInterface:
         ttk.Label(frame, text="Guidelines:").grid(row=1, column=0, padx=self.padxl, pady=self.pady, sticky="w")
         self.guideline_combo = ttk.Combobox(frame, values=["None", "Crosshair", "Center Lines", "Rule of Thirds", "Diagonal Lines"], textvariable=self.guidelines_var, state="readonly", width=16)
         self.guideline_combo.grid(row=1, column=1, padx=self.pady, pady=self.pady, sticky="ew")
-        self.guideline_combo.bind("<<ComboboxSelected>>", lambda event: self.crop_selection.guideline_manager.update_guidelines(self.guidelines_var.get()))
+        self.guideline_combo.bind("<<ComboboxSelected>>", lambda _: self.crop_selection.guideline_manager.update_guidelines(self.guidelines_var.get()))
 
 
     def create_transform_widgets(self):
@@ -1513,6 +1518,7 @@ class CropInterface:
 
 
     def toggle_widgets_by_mode(self, event=None):
+        _ = event
         width = self.width_spin
         height = self.height_spin
         message_map = {
@@ -1545,6 +1551,7 @@ class CropInterface:
 
 
     def set_error_pip_color(self, state=None, message=None, event=None):
+        _ = event
         if state == "error":
             self.sel_error_pip.config(bg="#fd8a8a")
             self.selection_error_pip_tooltip.config(state="normal", text=message)
@@ -1567,6 +1574,7 @@ class CropInterface:
 
 
     def determine_best_aspect_ratio(self, event=None):
+        _ = event
         def convert_to_float(ratio):
             if ':' in ratio:
                 width, height = map(float, ratio.split(':'))
@@ -1585,6 +1593,7 @@ class CropInterface:
 
 
     def img_index_changed(self, event=None, index=None):
+        _ = event
         try:
             if not index:
                 index = int(self.img_index_spin.get()) - 1
@@ -1733,14 +1742,14 @@ class CropInterface:
             elif save_mode == 'save_as':
                 save_path = filedialog.asksaveasfilename(defaultextension=".png")
                 if not save_path:
-                    return False
+                    return
                 root, ext = os.path.splitext(save_path)
                 if ext.lower() != ".png":
                     save_path = root + ".png"
             elif save_mode == 'overwrite':
                 confirm = messagebox.askyesno("Confirm Overwrite", "Are you sure you want to overwrite the original image?")
                 if not confirm:
-                    return False
+                    return
                 directory, filename = os.path.split(original_path)
                 name, ext = os.path.splitext(filename)
                 save_path = os.path.join(directory, f"{name}.png")
@@ -1868,6 +1877,7 @@ class CropInterface:
 
 
     def extract_gif_frames(self, display=True, event=None):
+        _ = event
         if not self.current_source_path or not self.current_source_path.lower().endswith('.gif'):
             return []
         try:
@@ -1909,7 +1919,7 @@ class CropInterface:
             thumb_img = ImageTk.PhotoImage(thumb)
             thumb_btn = ttk.Button(self.thumbnail_frame, image=thumb_img, takefocus=False)
             thumb_btn.image = thumb_img
-            thumb_btn.bind("<Button-1>", lambda e, img=frame, index=i: save_and_display_frame(img, index))
+            thumb_btn.bind("<Button-1>", lambda _, img=frame, index=i: save_and_display_frame(img, index))
             thumb_btn.bind("<MouseWheel>", lambda event: self.thumb_canvas.xview_scroll(-1 * (event.delta // 120), "units"))
             thumb_btn.pack(side='left')
         if frames:
@@ -1924,6 +1934,7 @@ class CropInterface:
 
 
     def thumbnail_timeline_changed(self, event=None):
+        _ = event
         if not self.gif_frames:
             return
         try:
@@ -1986,6 +1997,7 @@ class CropInterface:
 # Close CropUI
 # ----------------------------
     def close_crop_ui(self, path=None, event=None):
+        _ = event
         self.app.refresh_text_box()
         self.app.refresh_file_lists()
         self.app.debounce_update_thumbnail_panel()
