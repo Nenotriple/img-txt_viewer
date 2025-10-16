@@ -221,7 +221,6 @@ class EditPanel:
                     pass
                 if isinstance(widget, Frame) or isinstance(widget, ttk.Frame):
                     set_widget_state(widget, state)
-
         set_widget_state(self.app.edit_image_panel, state)
 
 
@@ -296,22 +295,15 @@ class EditPanel:
 
 
     def public_image_edit(self, image: Image.Image, adjustment_methods: Dict[str, Dict[str, Any]]) -> Image.Image:
-        """
-        Apply adjustments directly to the given image using the provided adjustment_methods dict.
-        adjustment_methods: dict of {option: {arg: value, ...}}, e.g. {"Highlights": {"value": 30, "threshold": 140, "blur_radius": 0}}
-        Only valid options and non-zero 'value' are applied.
-        Returns the edited image.
-        """
+        """Apply adjustments directly to the given image using the provided adjustment_methods dict. Returns the edited image."""
         result_image = image.copy()
         for option, args in adjustment_methods.items():
             if not isinstance(args, dict) or not args.get("value"):
                 continue
             method = self.adjustment_methods.get(option)
             if method:
-                # Always pass value and image, then any other args
-                method_args = dict(args)  # copy to avoid mutation
+                method_args = dict(args)
                 value = method_args.pop("value")
-                # image_type is always "original" for public_image_edit
                 result_image = method(value, image_type="original", image=result_image, **method_args)
         return result_image
 
@@ -352,13 +344,8 @@ class EditPanel:
 
 
     def _prepare_image_for_save(self, image: Image.Image, ext: str) -> Image.Image:
-        """Sanitize image and its info before saving.
-        - Ensure icc_profile (if present) is bytes (encode str with latin-1) or remove it on failure.
-        - Convert modes incompatible with target format (e.g. RGBA -> RGB for JPEG/TIFF).
-        Returns a PIL Image suitable for saving.
-        """
+        """Sanitize image and its info before saving."""
         try:
-            # Work on a copy to avoid mutating caller's image/info
             img = image.copy()
             info = getattr(image, "info", {}) or {}
             icc = info.get("icc_profile")
@@ -367,9 +354,7 @@ class EditPanel:
                     info["icc_profile"] = icc.encode("latin-1")
                 except Exception:
                     info.pop("icc_profile", None)
-            # Attach sanitized info dictionary to the image object
             img.info = info
-            # Format-specific safe conversions
             if ext in (".jpg", ".jpeg", ".jfif"):
                 if img.mode in ("RGBA", "LA"):
                     img = img.convert("RGB")
@@ -378,7 +363,6 @@ class EditPanel:
                     img = img.convert("RGB")
             return img
         except Exception:
-            # If anything unexpected happens, return original image
             return image
 
 
@@ -411,6 +395,7 @@ class EditPanel:
 #endregion
 #region Utility
 
+
     def _create_gradient_mask(self, image: Image.Image, threshold: int, blur_radius: int, invert: bool = False) -> Image.Image:
         """Create a gradient mask from the image based on brightness threshold."""
         def sigmoid(x):
@@ -439,6 +424,7 @@ class EditPanel:
             return processed
         else:
             return func(img)
+
 
     def _apply_to_image(self, func: Callable[[Image.Image], Image.Image], image_type: str = "display", image: Optional[Image.Image] = None, preserve_alpha: bool = True) -> Optional[Image.Image]:
         """
@@ -552,7 +538,7 @@ class EditPanel:
         if value == 0:
             return image
         amount = float(value) / 100.0
-        if radius is None:
+        if radius is None or radius == 0:
             radius = max(1, int(1 + abs(value) * 0.05))
         def _adjust(img: Image.Image) -> Image.Image:
             has_alpha = img.mode == 'RGBA'
@@ -571,7 +557,6 @@ class EditPanel:
             if has_alpha and alpha is not None:
                 out_img.putalpha(alpha)
             return out_img
-
         return self._apply_to_image(_adjust, image_type=image_type, image=image, preserve_alpha=False)
 
 
