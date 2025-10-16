@@ -71,6 +71,8 @@
   - `Check File Pair Collisions`: Scan the current directory and show files with the same name but different extensions, which may cause text pair conflicts.
 - New `AutoTag` option `Viewport`:
   - When enabled, the current image view will be used for interrogation instead of the original image file.
+- New primary tab `Batch Img Edit`:
+  - Batch process images with the same adjustment controls as the `Edit Panel`.
 
 **Fixed:**
 
@@ -83,6 +85,7 @@
 - Tagger tool tab widgets now properly scale when the tab is very large.
 - Fixed a crash when calculating image statistics.
 - Fixed issue preventing a selection from being created in the Crop tool along the right edge of the image.
+- Fixed issue where the Tagger `Edit Panel` would not save certain image formats correctly.
 
 **Other Changes:**
 
