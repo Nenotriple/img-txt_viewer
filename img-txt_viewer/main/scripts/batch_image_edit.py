@@ -1,0 +1,715 @@
+#region Imports
+
+import os
+import time
+
+import tkinter as tk
+from tkinter import ttk, messagebox, filedialog
+
+from PIL import Image
+
+from main.scripts import HelpText
+from main.scripts.help_window import HelpWindow
+import main.scripts.entry_helper as entry_helper
+from main.scripts.scrollable_frame import ScrollableFrame
+from main.scripts.image_zoom import ImageZoomWidget
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app import ImgTxtViewer as Main
+
+#endregion
+#region BatchImgEdit
+
+class BatchImgEdit:
+    def __init__(self):
+        self.app: 'Main' = None
+        self.root: 'tk.Tk' = None
+        self.working_dir = None
+        self.help_window = None
+        self.entry_helper = entry_helper
+        self.supported_filetypes = (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".jfif")
+
+        self.previous_adjustments = {}
+        self._var_to_option = {}
+        self.original_selected_image = None
+        self._original_selected_filename = None
+        self._image_preview_update_id = None
+        self.image_filelist = []
+
+        self.batch_running_job = False
+
+    def setup_window(self, app, root):
+        self.app = app
+        self.root = root
+        self.working_dir = self.app.image_dir.get()
+        self.help_window = HelpWindow(self.root)
+        self.setup_ui()
+        self.set_working_directory(self.working_dir)
+
+    def setup_ui(self):
+        self.create_primary_frame()
+        self.create_directory_row()
+        self.create_content_frames()
+        self.create_list_frame()
+        self.create_image_frame()
+        self.create_options_frame()
+        self.create_bottom_row()
+
+    def create_primary_frame(self):
+        self.app.batch_img_edit_tab.grid_rowconfigure(0, weight=1)
+        self.app.batch_img_edit_tab.grid_columnconfigure(0, weight=1)
+        self.batch_img_edit_frame = tk.Frame(self.app.batch_img_edit_tab)
+        self.batch_img_edit_frame.grid(row=0, column=0, sticky="nsew")
+        self.batch_img_edit_frame.grid_rowconfigure(1, weight=1)
+        self.batch_img_edit_frame.grid_columnconfigure(0, weight=1)
+
+    def create_directory_row(self):
+        top_frame = tk.Frame(self.batch_img_edit_frame)
+        top_frame.grid(row=0, column=0, sticky="ew", padx=2, pady=2)
+        top_frame.grid_columnconfigure(0, weight=1)
+        self.entry_directory = ttk.Entry(top_frame)
+        self.entry_directory.insert(0, os.path.normpath(self.working_dir) if self.working_dir else "...")
+        self.entry_directory.grid(row=0, column=0, sticky="ew", padx=2)
+        self.entry_directory.bind("<Return>", lambda event: self.set_working_directory(self.entry_directory.get()))
+        self.entry_directory.bind("<Button-1>", lambda event: self.entry_directory.delete(0, "end") if self.entry_directory.get() == "..." else None)
+        self.entry_helper.bind_helpers(self.entry_directory)
+        self.browse_button = ttk.Button(top_frame, width=8, text="Browse...", command=self.set_working_directory)
+        self.browse_button.grid(row=0, column=1, padx=2)
+        self.open_button = ttk.Button(top_frame, width=8, text="Open", command=self.open_folder)
+        self.open_button.grid(row=0, column=2, padx=2)
+        self.refresh_button = ttk.Button(top_frame, width=8, text="Refresh", command=self.refresh_files)
+        self.refresh_button.grid(row=0, column=3, padx=2)
+        self.help_button = ttk.Button(top_frame, text="?", width=2, command=self.open_help_window)
+        self.help_button.grid(row=0, column=4, padx=2)
+
+    def create_content_frames(self):
+        self.content_frame = tk.Frame(self.batch_img_edit_frame)
+        self.content_frame.grid(row=1, column=0, sticky="nsew")
+        self.content_frame.grid_rowconfigure(0, weight=1, minsize=200)
+        self.content_frame.grid_columnconfigure(0, weight=0, minsize=120)
+        self.content_frame.grid_columnconfigure(1, weight=999, minsize=240)
+        self.content_frame.grid_columnconfigure(2, weight=1, minsize=100)
+        self.left_content_frame = tk.Frame(self.content_frame)
+        self.left_content_frame.grid(row=0, column=0, sticky="nsew", padx=4)
+        self.middle_content_frame = tk.Frame(self.content_frame)
+        self.middle_content_frame.grid(row=0, column=1, sticky="nsew")
+        self.right_content_frame = tk.Frame(self.content_frame)
+        self.right_content_frame.grid(row=0, column=2, sticky="nsew", padx=4)
+        self.right_content_frame.configure(width=250)
+        self.right_content_frame.grid_propagate(False)
+
+    def create_list_frame(self):
+        self.left_content_frame.grid_rowconfigure(1, weight=1)
+        self.left_content_frame.grid_columnconfigure(0, weight=1)
+        ttk.Label(self.left_content_frame, text="Images", anchor="center").grid(row=0, column=0, columnspan=2, sticky="ew")
+        self.image_listbox = tk.Listbox(self.left_content_frame, exportselection=False, selectmode="extended", width=30)
+        self.image_listbox.grid(row=1, column=0, sticky="nsew")
+        self.image_listbox.bind("<<ListboxSelect>>", self.on_listbox_select)
+        list_scroll = ttk.Scrollbar(self.left_content_frame, orient="vertical", command=self.image_listbox.yview)
+        list_scroll.grid(row=1, column=1, sticky="ns")
+        self.image_listbox.config(yscrollcommand=list_scroll.set)
+
+    def create_image_frame(self):
+        self.middle_content_frame.grid_rowconfigure(0, weight=1)
+        self.middle_content_frame.grid_columnconfigure(0, weight=1)
+        self.preview_image = ImageZoomWidget(self.middle_content_frame)
+        self.preview_image.grid(row=0, column=0, sticky="nsew")
+
+    def create_options_frame(self):
+        self.right_content_frame.grid_rowconfigure(0, weight=1)
+        self.right_content_frame.grid_columnconfigure(0, weight=1)
+        self.scrollable = ScrollableFrame(self.right_content_frame, layout="vertical", label="Options")
+        self.scrollable.grid(row=0, column=0, sticky="nsew")
+        self.scrollable.frame.configure(width=100)
+
+        def add_scale(name, var_attr, scale_attr, from_=-100, to_=100, pady=10):
+            frame = ttk.Frame(self.scrollable.frame)
+            frame.pack(fill="x", pady=pady)
+            top_row = ttk.Frame(frame)
+            top_row.pack(fill="x", padx=4)
+            ttk.Label(top_row, text=f"{name}").pack(side="left", anchor="w", padx=4)
+            var = getattr(self, var_attr)
+            self._var_to_option[var_attr] = name
+            value_label = ttk.Label(top_row, text="0", textvariable=var)
+            value_label.pack(side="right", anchor="e", padx=4)
+            def _scale_cmd(v, var=var):
+                var.set(self.float_to_int(v))
+                self.on_option_change()
+            scale = ttk.Scale(frame, from_=from_, to_=to_, variable=var, command=_scale_cmd)
+            setattr(self, scale_attr, scale)
+            scale.pack(fill="x", padx=4)
+            scale.bind("<Button-3>", lambda event, scale_name=name: self.reset_scale(scale_name))
+
+        option_defs = [
+            ("Brightness", "brightness_var", "brightness_scale"),
+            ("Contrast", "contrast_var", "contrast_scale"),
+            ("AutoContrast", "autocontrast_var", "autocontrast_scale"),
+            ("Highlights", "highlights_var", "highlights_scale"),
+            ("Shadows", "shadows_var", "shadows_scale"),
+            ("Saturation", "saturation_var", "saturation_scale"),
+            ("Sharpness", "sharpness_var", "sharpness_scale"),
+            ("Clarity", "clarity_var", "clarity_scale"),
+            ("Hue", "hue_var", "hue_scale"),
+            ("Color Temp", "color_temp_var", "color_temp_scale"),
+        ]
+        self._var_names = []
+        for display_name, var_attr, scale_attr in option_defs:
+            setattr(self, var_attr, tk.IntVar(value=0))
+            self._var_names.append(var_attr)
+            add_scale(display_name, var_attr, scale_attr)
+
+    def create_bottom_row(self):
+        bottom_row = ttk.Frame(self.batch_img_edit_frame)
+        bottom_row.grid(row=2, column=0, sticky="ew", padx=2, pady=2)
+        btn_frame = ttk.Frame(bottom_row)
+        btn_frame.pack(fill="x")
+        self.create_options_menu(btn_frame)
+        self.button_action = ttk.Button(btn_frame, text="Apply!", command=self.process_all_images)
+        self.button_action.pack(side="left", fill="x", expand=True, padx=2, pady=2)
+        self.button_reset = ttk.Button(btn_frame, text="Reset", command=self.reset_scales)
+        self.button_reset.pack(side="left", fill="x", padx=2, pady=2)
+        self.button_cancel = ttk.Button(btn_frame, width=8, state="disabled", text="Cancel", command=self.stop_batch_process)
+        self.button_cancel.pack(side="left", fill="x", padx=2, pady=2)
+        self.info_frame = tk.Frame(bottom_row)
+        self.info_frame.pack(fill="x")
+        self.total_var = tk.StringVar(value="Total: 0")
+        tk.Label(self.info_frame, anchor="w", textvariable=self.total_var, relief="groove", width=15).pack(side="left", fill="both", padx=2)
+        self.processed_var = tk.StringVar(value="Processed: 0")
+        tk.Label(self.info_frame, anchor="w", textvariable=self.processed_var, relief="groove", width=15).pack(side="left", fill="both", padx=2)
+        self.elapsed_var = tk.StringVar(value="Elapsed: ..")
+        tk.Label(self.info_frame, anchor="w", textvariable=self.elapsed_var, relief="groove", width=15).pack(side="left", fill="both", padx=2)
+        self.eta_var = tk.StringVar(value="ETA: ...")
+        tk.Label(self.info_frame, anchor="w", textvariable=self.eta_var, relief="groove", width=15).pack(side="left", fill="both", padx=2)
+        self.progress_var = tk.StringVar()
+        ttk.Progressbar(self.info_frame, value=0, length=100, variable=self.progress_var).pack(side="left", fill="both", expand=True, padx=2)
+
+    def create_options_menu(self, btn_frame):
+        m_btn = ttk.Menubutton(btn_frame, text="Options")
+        menu = tk.Menu(m_btn, tearoff=0)
+        self.save_path_var = tk.IntVar(value=1)
+        menu.add_command(label="Save To", state="disabled")
+        menu.add_radiobutton(label="Subfolder", variable=self.save_path_var, value=1)
+        menu.add_radiobutton(label="Same Folder", variable=self.save_path_var, value=2)
+        menu.add_separator()
+        self.save_format_var = tk.IntVar(value=1)
+        menu.add_command(label="Save As", state="disabled")
+        menu.add_radiobutton(label="Same Format", variable=self.save_format_var, value=1)
+        menu.add_radiobutton(label="JPEG", variable=self.save_format_var, value=2)
+        menu.add_radiobutton(label="PNG", variable=self.save_format_var, value=3)
+        menu.add_separator()
+        self.overwrite_mode_var = tk.IntVar(value=2)
+        menu.add_command(label="Overwrite", state="disabled")
+        menu.add_radiobutton(label="Always", variable=self.overwrite_mode_var, value=1)
+        menu.add_radiobutton(label="On Conflict", variable=self.overwrite_mode_var, value=2)
+        menu.add_radiobutton(label="Never", variable=self.overwrite_mode_var, value=3)
+        m_btn.configure(menu=menu)
+        m_btn.pack(side="left", padx=2, pady=2)
+
+    def stop_batch_process(self):
+        if self.batch_running_job:
+            self.batch_running_job = False
+            self.button_cancel.config(state="disabled")
+
+#endregion
+#region Events
+
+    def on_listbox_select(self, event):
+        selection = self.get_listbox_selection_idx()
+        if not selection:
+            return
+        return self.display_selected_image(selection)
+
+    def on_option_change(self, *args):
+        self.previous_adjustments = self.get_adjustment_methods()
+        if self._show_original_if_no_adjustments():
+            return
+        self._schedule_preview_update(200)
+        self.processed_var.set(f"Processed: 0")
+        self.elapsed_var.set("Elapsed: ..")
+        self.eta_var.set("ETA: ...")
+        self.set_progress(0)
+
+#endregion
+#region Image display
+
+    def display_selected_image(self, selection=None):
+        if not selection:
+            selection = self.get_listbox_selection_idx()
+        try:
+            idx = selection[0]
+            filename = self.image_listbox.get(idx)
+            return self._update_original_image(filename)
+        except Exception as e:
+            messagebox.showerror("Error: batch_image_edit.display_selected_image()", f"Unexpected error loading image: {e}")
+
+    def _update_original_image(self, filename):
+        if os.path.isabs(filename):
+            fullpath = filename
+        else:
+            fullpath = os.path.join(self.working_dir, filename) if self.working_dir else filename
+        img = self.get_pil_image(filename)
+        if img is None:
+            return
+        self.preview_image.set_image(img)
+        if fullpath != self._original_selected_filename:
+            self.original_selected_image = img.copy()
+            self._original_selected_filename = fullpath
+            self._schedule_preview_update(200)
+
+    def _schedule_preview_update(self, delay=200):
+        self._cancel_scheduled_preview()
+        try:
+            self._image_preview_update_id = self.root.after(delay, self._perform_scheduled_preview)
+        except Exception:
+            self._image_preview_update_id = None
+
+    def _perform_scheduled_preview(self):
+        self._image_preview_update_id = None
+        adjustment_methods = self.get_adjustment_methods()
+        if self._show_original_if_no_adjustments():
+            return
+        if not adjustment_methods:
+            return
+        image = self.original_selected_image
+        if image is None:
+            return
+        self._apply_adjustments_to_preview(adjustment_methods, image)
+
+    def _apply_adjustments_to_preview(self, adjustment_methods, image):
+        try:
+            edited_image = self.app.edit_panel.public_image_edit(image, adjustment_methods)
+            self.preview_image.set_image(edited_image, keep_view=True)
+        except Exception as e:
+            messagebox.showerror("Error: batch_image_edit._apply_adjustments_to_preview()", f"Failed to update preview: {e}")
+
+    def _cancel_scheduled_preview(self):
+        if getattr(self, "_image_preview_update_id", None):
+            try:
+                self.root.after_cancel(self._image_preview_update_id)
+            except Exception:
+                pass
+            self._image_preview_update_id = None
+
+    def _show_original_if_no_adjustments(self):
+        if all(getattr(self, var_attr).get() == 0 for var_attr in self._var_to_option):
+            if self.original_selected_image is not None:
+                self.preview_image.set_image(self.original_selected_image, keep_view=True)
+            return True
+        return False
+
+#endregion
+#region Listbox utility
+
+    def get_listbox_selection_idx(self):
+        return [int(i) for i in self.image_listbox.curselection()]
+
+    def populate_listbox(self):
+        self.image_listbox.delete(0, "end")
+        for file in self.image_filelist:
+            file = os.path.basename(file)
+            if file.lower().endswith(self.supported_filetypes):
+                self.image_listbox.insert("end", file)
+
+    def set_listbox_selection(self, index=0):
+        if self.image_listbox.size() > 0:
+            self.image_listbox.selection_set(index)
+            self.display_selected_image()
+
+    def update_image_filelist(self):
+        self.image_filelist = []
+        if not self.working_dir or not os.path.isdir(self.working_dir):
+            return
+        if self.working_dir == self.app.image_dir.get():
+            self.image_filelist = list(self.app.image_files)
+            return
+        else:
+            for fname in os.listdir(self.working_dir):
+                fpath = os.path.join(self.working_dir, fname)
+                if os.path.isfile(fpath) and fname.lower().endswith(self.supported_filetypes):
+                    self.image_filelist.append(fname)
+        self.populate_listbox()
+
+#endregion
+#region UI Helpers
+
+    def update_total_count(self):
+        total = len(self.image_filelist) if self.image_filelist else 0
+        self.total_var.set(f"Total: {total}")
+
+    def set_progress(self, value=0):
+        self.progress_var.set(value)
+        self.root.update()
+
+#endregion
+#region Widget State
+
+    def set_widget_states(self, container, enabled=True, exclude=None):
+        if exclude is None:
+            exclude_list = []
+        elif isinstance(exclude, (list, tuple, set)):
+            exclude_list = list(exclude)
+        else:
+            exclude_list = [exclude]
+        exclude_list = self._expand_exclude_list(exclude_list)
+        children = container.winfo_children()
+        for child in children:
+            if self._should_exclude_widget(child, exclude_list):
+                continue
+            try:
+                state_val = "normal" if enabled else "disabled"
+                child.configure(state=state_val)
+            except Exception:
+                pass
+            self.set_widget_states(child, enabled=enabled, exclude=exclude_list)
+
+    def _expand_exclude_list(self, exclude_list):
+        expanded = []
+        for item in exclude_list:
+            if isinstance(item, str):
+                expanded.append(item)
+                continue
+            try:
+                children = getattr(item, "winfo_children", None)
+                if callable(children):
+                    expanded.extend(self._collect_widget_and_children(item))
+                else:
+                    expanded.append(item)
+            except Exception:
+                expanded.append(item)
+        return expanded
+
+    def _collect_widget_and_children(self, widget):
+        collected = [widget]
+        try:
+            for child in widget.winfo_children():
+                collected.extend(self._collect_widget_and_children(child))
+        except Exception:
+            pass
+        return collected
+
+    def _widget_matches_exclude(self, widget, exclude_item):
+        if widget is exclude_item:
+            return True
+        if isinstance(exclude_item, str):
+            try:
+                if str(widget) == exclude_item or widget.winfo_name() == exclude_item:
+                    return True
+            except Exception:
+                pass
+        return False
+
+    def _should_exclude_widget(self, widget, exclude_list):
+        if not exclude_list:
+            return False
+        for it in exclude_list:
+            if self._widget_matches_exclude(widget, it):
+                return True
+        return False
+
+#endregion
+#region Adjustment/Utility
+
+    def _get_option_mapping(self):
+        if getattr(self, "_var_to_option", None):
+            return self._var_to_option
+        return {attr: attr[:-4].replace("_", " ").title() for attr in dir(self) if attr.endswith("_var")}
+
+    def _set_option_var(self, var_attr, value):
+        var = getattr(self, var_attr, None)
+        if var is not None:
+            try:
+                var.set(self.float_to_int(value))
+            except Exception:
+                pass
+
+    def get_adjustment_methods(self):
+        adjustments = {}
+        mapping = self._get_option_mapping()
+        for var_attr, option_name in mapping.items():
+            var = getattr(self, var_attr, None)
+            if var is None:
+                continue
+            try:
+                value = self.float_to_int(var.get())
+            except Exception:
+                continue
+            if value != 0:
+                adjustments[option_name] = {"value": value}
+        return adjustments
+
+    def set_adjustment_methods(self, adjustments):
+        mapping = self._get_option_mapping()
+        option_to_var = {v: k for k, v in mapping.items()}
+        for option_name, params in adjustments.items():
+            var_attr = option_to_var.get(option_name)
+            if var_attr:
+                self._set_option_var(var_attr, params.get("value", 0))
+        self.on_option_change()
+
+    def reset_scales(self):
+        var_names = getattr(self, "_var_names", None)
+        if var_names:
+            for var_attr in var_names:
+                self._set_option_var(var_attr, 0)
+        self.on_option_change()
+
+    def reset_scale(self, scale_name):
+        var_attr = f"{scale_name.lower().replace(' ', '_')}_var"
+        if hasattr(self, var_attr):
+            self._set_option_var(var_attr, 0)
+            self.on_option_change()
+
+    def float_to_int(self, value):
+        try:
+            return int(float(value))
+        except ValueError:
+            return 0
+
+    def get_pil_image(self, filepath):
+        if not filepath:
+            return None
+        if not os.path.isabs(filepath) and self.working_dir:
+            candidate = os.path.join(self.working_dir, filepath)
+            if os.path.isfile(candidate):
+                filepath = candidate
+        if not os.path.isfile(filepath):
+            return None
+        ext = os.path.splitext(filepath)[1].lower()
+        if ext not in self.supported_filetypes:
+            return None
+        try:
+            img = Image.open(filepath)
+            img = img.convert("RGBA")
+            return img
+        except Exception as e:
+            messagebox.showerror("Error: batch_image_edit.get_pil_image()", f"Failed to open image: {e}")
+            return None
+
+#endregion
+#region Processing
+
+    def process_all_images(self):
+        self.set_progress(0)
+        adjustments = self.get_adjustment_methods()
+        if not adjustments:
+            messagebox.showinfo("Info", "No adjustments selected.\n\nAt least one adjustment must be set.")
+            return
+        result = self._validate_dir_and_confirm()
+        if not result:
+            return
+        _, files, output_dir = result
+        files_to_process = []
+        for fname in files:
+            src = self._resolve_full_src(fname)
+            if not self._should_skip_file(src):
+                files_to_process.append(fname)
+        if not files_to_process:
+            messagebox.showinfo("Info", "No valid images to process (all files missing or unsupported).")
+            return
+        self.set_progress(10)
+        self.button_cancel.config(state="normal")
+        exclude = [self.button_cancel, self.info_frame]
+        self.set_widget_states(self.app.batch_img_edit_tab, enabled=False, exclude=exclude)
+        saved = 0
+        errors = []
+        processed = 0
+        total_files = len(files_to_process)
+        self.batch_running_job = True
+        self._start_timer()
+        self._initialize_timer_display()
+        try:
+            for fname in files_to_process:
+                if not self.batch_running_job:
+                    break
+                src = self._resolve_full_src(fname)
+                ok, err = self._process_and_save(src, output_dir, adjustments)
+                if ok:
+                    saved += 1
+                elif err:
+                    errors.append(err)
+                processed += 1
+                self.processed_var.set(f"Processed: {processed}")
+                self._update_timer_display(processed, total_files)
+                progress_val = int((processed / total_files) * 100) if total_files else 100
+                self.set_progress(progress_val)
+        finally:
+            self._finalize_timer_display(processed, total_files)
+            self.set_widget_states(self.app.batch_img_edit_tab, enabled=True)
+            self.button_cancel.config(state="disabled")
+            self.batch_running_job = False
+        summary = f"Saved: {saved}\nErrors: {len(errors)}"
+        messagebox.showinfo("Complete", summary)
+
+    def _resolve_full_src(self, fname):
+        if os.path.isabs(fname):
+            return fname
+        if self.working_dir:
+            return os.path.join(self.working_dir, fname)
+        return fname
+
+    def _should_skip_file(self, src):
+        if not os.path.isfile(src):
+            return True
+        ext = os.path.splitext(src)[1].lower()
+        return ext not in self.supported_filetypes
+
+    def _process_and_save(self, src, output_dir, adjustments):
+        try:
+            img = self.get_pil_image(src)
+            if img is None:
+                return False, f"{src}: failed to open"
+            self.set_progress(50)
+            edited = self.app.edit_panel.public_image_edit(img, adjustments)
+            self.set_progress(75)
+            base = os.path.basename(src)
+            save_path = os.path.join(output_dir, base)
+            ext = os.path.splitext(src)[1].lower()
+            save_format = self.save_format_var.get()
+            if save_format == 2:
+                new_ext = ".jpg"
+            elif save_format == 3:
+                new_ext = ".png"
+            else:
+                new_ext = ext
+            if new_ext != ext:
+                save_path = os.path.splitext(save_path)[0] + new_ext
+            overwrite_mode = self.overwrite_mode_var.get()
+            save_path_var = self.save_path_var.get()
+            if overwrite_mode == 1:
+                if save_path_var == 1 and os.path.exists(src):
+                    os.remove(src)
+            elif overwrite_mode == 3:
+                save_path = self._get_unique_filename(save_path)
+            if new_ext in (".jpg", ".jpeg", ".jfif"):
+                prepared = self.app.edit_panel._prepare_image_for_save(edited, new_ext)
+                prepared.save(save_path, format="JPEG", quality=100)
+            elif new_ext == ".png":
+                prepared = self.app.edit_panel._prepare_image_for_save(edited, new_ext)
+                prepared.save(save_path, format="PNG")
+            else:
+                prepared = self.app.edit_panel._prepare_image_for_save(edited, new_ext)
+                prepared.save(save_path)
+            self.set_progress(90)
+            return True, None
+        except Exception as e:
+            return False, f"{src}: {e}"
+
+    def _get_unique_filename(self, filepath):
+        if not os.path.exists(filepath):
+            return filepath
+        directory = os.path.dirname(filepath)
+        basename = os.path.basename(filepath)
+        name, ext = os.path.splitext(basename)
+        counter = 1
+        while True:
+            new_name = f"{name}_{counter}{ext}"
+            new_path = os.path.join(directory, new_name)
+            if not os.path.exists(new_path):
+                return new_path
+            counter += 1
+
+    def _validate_dir_and_confirm(self):
+        if not self.working_dir or not os.path.isdir(self.working_dir):
+            messagebox.showerror("Error", "Working directory is not set or does not exist.")
+            return False
+        save_path_mode = self.save_path_var.get()
+        overwrite_mode = self.overwrite_mode_var.get()
+        if save_path_mode == 1:
+            output_dir = os.path.join(self.working_dir, "Edited Images")
+            try:
+                os.makedirs(output_dir, exist_ok=True)
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to create output folder: {e}")
+                return False
+        else:
+            output_dir = self.working_dir
+        files = list(self.image_filelist) or []
+        if not files:
+            messagebox.showinfo("Info", "No images to process.")
+            return False
+        overwrite_labels = {1: "Always", 2: "On Conflict", 3: "Never"}
+        overwrite_text = overwrite_labels.get(overwrite_mode, "Unknown")
+        if save_path_mode == 1:
+            msg = f"Apply adjustments to {len(files)} images and save to:\n\n{output_dir}\n\nOverwrite mode: {overwrite_text}"
+        else:
+            if overwrite_mode == 1:
+                msg = f"WARNING: This will REMOVE {len(files)} original files and save edited versions!\n\nOverwrite mode: {overwrite_text}\n\nAre you sure?"
+            else:
+                msg = f"Apply adjustments to {len(files)} images in the same folder.\n\nOverwrite mode: {overwrite_text}"
+        if not messagebox.askyesno("Confirm Batch Edit", msg):
+            return False
+        return True, files, output_dir
+
+#endregion
+#region Timing
+
+    def _start_timer(self):
+        self._start_time = time.time()
+
+    def _elapsed_seconds(self):
+        return int(time.time() - getattr(self, "_start_time", time.time()))
+
+    def _format_hhmmss(self, seconds):
+        return time.strftime("%H:%M:%S", time.gmtime(max(0, int(seconds))))
+
+    def _compute_eta_seconds(self, processed, total):
+        if processed <= 0:
+            return 0
+        elapsed = self._elapsed_seconds()
+        avg_per = elapsed / processed
+        remaining = max(0, total - processed)
+        return int(avg_per * remaining)
+
+    def _initialize_timer_display(self):
+        self.elapsed_var.set("Elapsed: 00:00:00")
+        self.eta_var.set("ETA: 00:00:00")
+
+    def _update_timer_display(self, processed, total):
+        elapsed = self._elapsed_seconds()
+        eta = self._compute_eta_seconds(processed, total)
+        self.elapsed_var.set(f"Elapsed: {self._format_hhmmss(elapsed)}")
+        self.eta_var.set(f"ETA: {self._format_hhmmss(eta)}")
+
+    def _finalize_timer_display(self, processed, total):
+        elapsed = self._elapsed_seconds()
+        self.elapsed_var.set(f"Elapsed: {self._format_hhmmss(elapsed)}")
+        if processed >= total:
+            self.eta_var.set("ETA: 00:00:00")
+
+#endregion
+#region Other Functions
+
+    def set_working_directory(self, path=None):
+        if path is None:
+            path = filedialog.askdirectory(initialdir=self.working_dir)
+            if not os.path.isdir(path):
+                return
+            self.working_dir = path
+        else:
+            self.working_dir = path
+        self.entry_directory.delete(0, "end")
+        self.entry_directory.insert(0, os.path.normpath(self.working_dir))
+        self.update_image_filelist()
+        self.populate_listbox()
+        self.set_listbox_selection(index=0)
+        self.update_total_count()
+        self.set_progress(0)
+
+    def refresh_files(self):
+        path = self.working_dir
+        self.set_working_directory(path=path)
+        self.set_listbox_selection(index=0)
+
+    def open_folder(self):
+        path = self.working_dir
+        try:
+            os.startfile(path)
+        except Exception as e:
+            messagebox.showerror("Error: batch_image_edit.open_folder()", f"Failed to open folder: {e}")
+
+    def open_help_window(self):
+        help_text = HelpText.BATCH_IMAGE_EDIT_HELP
+        self.help_window.open_window(geometry="450x700", help_text=help_text)
+
+#endregion
