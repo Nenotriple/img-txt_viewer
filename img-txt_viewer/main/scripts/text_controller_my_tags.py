@@ -425,7 +425,7 @@ class MyTags:
 
         top_frame = Frame(my_tags_frame)
         top_frame.grid(row=0, column=0, sticky='ew', padx=2, pady=(2, 0))
-        ttk.Label(top_frame, text="My Tags:").pack(side='left', padx=(0, 5))
+        ttk.Label(top_frame, text="My Tags").pack(side='left', padx=(0, 5))
 
         self.custom_dictionary_treeview = ttk.Treeview(my_tags_frame, show='tree', selectmode='extended', height=12)
         self.custom_dictionary_treeview.column('#0', anchor='w')
