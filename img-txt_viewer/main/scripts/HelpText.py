@@ -67,6 +67,45 @@ CROP_UI_HELP = {
 
 
 #endregion
+#region Batch Image Edit
+
+
+BATCH_IMAGE_EDIT_HELP = {
+"Batch Image Edit Help": "",
+
+"Supported Filetypes:":
+    ".jpg, .jpeg, .png, .webp, .bmp, .tif, .tiff, .jfif\n",
+
+"Adjustment Controls:":
+    "**Brightness:** Adjust overall image brightness (-100 to +100)\n"
+    "**Contrast:** Enhance or reduce contrast (-100 to +100)\n"
+    "**AutoContrast:** Automatic contrast optimization (-100 to +100)\n"
+    "**Highlights:** Control bright areas of the image (-100 to +100)\n"
+    "**Shadows:** Control dark areas of the image (-100 to +100)\n"
+    "**Saturation:** Adjust color intensity (-100 to +100)\n"
+    "**Sharpness:** Enhance or soften image details (-100 to +100)\n"
+    "**Clarity:** Enhance mid-tone contrast and detail (-100 to +100)\n"
+    "**Hue:** Shift the color spectrum (-100 to +100)\n"
+    "**Color Temp:** Adjust warm/cool tones (-100 to +100)\n",
+
+"Instructions:":
+    "1. Select an input directory containing images to edit.\n"
+    "2. Select desired adjustment settings using the sliders.\n"
+    "3. Click 'Apply Edits' to process the images.\n",
+
+"Options:":
+    "• **Save to 'Edited Images' subfolder**: Save images to a new 'Edited Images' folder within the input directory.\n"
+    "• **Overwrite Original Files**: Save images to input directory and overwrite original images.\n"
+    "• **Save as same format**: Save output images in the same format as the input images.\n"
+    "• **Save as JPEG**: Save output images as JPEG files.\n"
+    "• **Save as PNG**: Save output images as PNG files.\n",
+
+"Notes:":
+    "• Reset all sliders using the 'Reset' button, or individually by right-clicking a slider handle.\n",
+}
+
+
+#endregion
 #region Batch Upscale
 
 
