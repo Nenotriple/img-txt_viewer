@@ -569,42 +569,72 @@ class ImageZoomWidget(tk.Frame):
         self._stop_gif_animation()
 
 
+    def _capture_view_state(self) -> Optional[dict]:
+        if not self.image_mgr.has_image():
+            return None
+        return {
+            "scale": float(self.image_mgr.scale),
+            "pan_x": float(self.pan_offset_x),
+            "pan_y": float(self.pan_offset_y),
+        }
+
+
+    def _restore_view_state(self, state: dict) -> None:
+        if not state or not self.image_mgr.has_image():
+            return
+        can_w, can_h = self.canvas_ctrl.get_size()
+        min_scale = self.canvas_ctrl.compute_min_scale_for_image(self.image_mgr)
+        scale = max(min_scale, float(state.get("scale", min_scale)))
+        self.image_mgr.scale = scale
+        og_w, og_h = self.image_mgr._orig_image.size
+        img_w = og_w * scale
+        img_h = og_h * scale
+        pan_x = float(state.get("pan_x", 0.0))
+        pan_y = float(state.get("pan_y", 0.0))
+        self.pan_offset_x, self.pan_offset_y = self.canvas_ctrl.clamp_pan(pan_x, pan_y, img_w, img_h)
+        self.image_fits_canvas = img_w <= float(can_w) + 1e-6 and img_h <= float(can_h) + 1e-6
+        self._ensure_min_zoom_steps(base_scale=min_scale)
+
+
 # --- Public API / High-level actions ---
-    def load_image(self, path: str) -> None:
-        """Load image, reset view, and request a full render."""
+    def load_image(self, path: str, keep_view: bool = False) -> None:
+        """Load image, optionally preserving the current view, and request a full render."""
         if not path:
             return
+        view_state = self._capture_view_state() if keep_view else None
         self._reset_image_state()
         # Check if GIF
         file_extension = os.path.splitext(path)[1].lower()
         if file_extension == '.gif':
             self._load_gif(path)
+            return
+        self.image_mgr.load_image(path)
+        if not self.image_mgr.has_image():
+            self.image_fits_canvas = False
+            return
+        if view_state is not None:
+            self._restore_view_state(view_state)
         else:
-            self.image_mgr.load_image(path)
-            # After loading, fit image to canvas (sets scale and pan)
-            if self.image_mgr.has_image():
-                self._fit_image_to_canvas()
-            else:
-                self.image_fits_canvas = False
-            # Request full render for the new image
-            self._cancel_full_render_job()
-            self._request_full_render(self._render_sequence)
-            self._using_preview = False
+            self._fit_image_to_canvas()
+        self._cancel_full_render_job()
+        self._request_full_render(self._render_sequence)
+        self._using_preview = False
 
 
-    def set_image(self, pil_image: PILImage) -> None:
-        """Set widget image from a PIL.Image instance (like load_image but from-memory)."""
+    def set_image(self, pil_image: PILImage, keep_view: bool = False) -> None:
+        """Set widget image from a PIL.Image instance, optionally preserving the current view."""
         if pil_image is None:
             return
+        view_state = self._capture_view_state() if keep_view else None
         self._reset_image_state()
-        # Put the image into the manager and reset view / schedule a full render
         self.image_mgr.set_image(pil_image)
-        # After setting, fit image to canvas (sets scale and pan)
         if self.image_mgr.has_image():
-            self._fit_image_to_canvas()
+            if view_state is not None:
+                self._restore_view_state(view_state)
+            else:
+                self._fit_image_to_canvas()
         else:
             self.image_fits_canvas = False
-        # Request full render for the new image
         self._cancel_full_render_job()
         self._request_full_render(self._render_sequence)
         self._using_preview = False
