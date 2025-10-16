@@ -12,7 +12,7 @@ from tkinter import ttk, Tk, messagebox, Frame, Label, BooleanVar, TclError
 # Third-Party Libraries
 import numpy
 from TkToolTip.TkToolTip import TkToolTip as Tip
-from PIL import Image, ImageTk, ImageOps, ImageEnhance, ImageFilter
+from PIL import Image, ImageOps, ImageEnhance, ImageFilter
 
 
 # Type Hinting
@@ -41,11 +41,25 @@ class EditPanel:
             "Sharpness": 0,
             "Clarity": 0,
             "Hue": 0,
-            "Color Temperature": 0,
+            "Color Temp": 0,
         }
         self.edit_last_slider_dict: Dict[str, int] = {}
         self.edit_is_reverted_var: bool = False
         self.edit_cumulative_var: BooleanVar = BooleanVar(value=False)
+
+        # Adjustment methods map
+        self.adjustment_methods = {
+            "Brightness": self.adjust_brightness,
+            "Contrast": self.adjust_contrast,
+            "AutoContrast": self.adjust_autocontrast,
+            "Highlights": self.adjust_highlights,
+            "Shadows": self.adjust_shadows,
+            "Saturation": self.adjust_saturation,
+            "Sharpness": self.adjust_sharpness,
+            "Clarity": self.adjust_clarity,
+            "Hue": self.adjust_hue,
+            "Color Temp": self.adjust_color_temperature,
+        }
 
 
 #endregion
@@ -74,7 +88,7 @@ class EditPanel:
 
     def create_edit_panel_widgets(self) -> None:
         # Edit Mode Combobox
-        self.edit_combobox = ttk.Combobox(self.app.edit_image_panel, values=["Brightness", "Contrast", "AutoContrast", "Highlights", "Shadows", "Saturation", "Sharpness", "Clarity", "Hue", "Color Temperature"], width=18, state="readonly")
+        self.edit_combobox = ttk.Combobox(self.app.edit_image_panel, values=["Brightness", "Contrast", "AutoContrast", "Highlights", "Shadows", "Saturation", "Sharpness", "Clarity", "Hue", "Color Temp"], width=18, state="readonly")
         self.edit_combobox.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
         self.edit_combobox.set("Brightness")
         self.edit_combobox.bind("<<ComboboxSelected>>", self.update_slider_value)
@@ -256,18 +270,7 @@ class EditPanel:
 
     def _apply_image_edit(self) -> None:
         self.app.current_image = self.app.original_image.copy()
-        adjustment_methods = {
-            "Brightness": self.adjust_brightness,
-            "Contrast": self.adjust_contrast,
-            "AutoContrast": self.adjust_autocontrast,
-            "Highlights": self.adjust_highlights,
-            "Shadows": self.adjust_shadows,
-            "Saturation": self.adjust_saturation,
-            "Sharpness": self.adjust_sharpness,
-            "Clarity": self.adjust_clarity,
-            "Hue": self.adjust_hue,
-            "Color Temperature": self.adjust_color_temperature,
-        }
+        adjustment_methods = self.adjustment_methods
         if self.edit_cumulative_var.get():
             for option, value in self.slider_value_dict.items():
                 if option in adjustment_methods and adjustment_methods[option] and value != 0:
@@ -277,7 +280,7 @@ class EditPanel:
             value = self.slider_value_dict.get(option)
             if option in adjustment_methods and adjustment_methods[option] and value != 0:
                 adjustment_methods[option](value, image_type="display")
-        self.app.primary_display_image.set_image(self.app.current_image)
+        self.app.primary_display_image.set_image(self.app.current_image, keep_view=True)
 
 
     def edit_image(self, value: int, enhancer_class: Any, image_type: str = "display", image: Optional[Image.Image] = None) -> Optional[Image.Image]:
@@ -292,6 +295,27 @@ class EditPanel:
         return image
 
 
+    def public_image_edit(self, image: Image.Image, adjustment_methods: Dict[str, Dict[str, Any]]) -> Image.Image:
+        """
+        Apply adjustments directly to the given image using the provided adjustment_methods dict.
+        adjustment_methods: dict of {option: {arg: value, ...}}, e.g. {"Highlights": {"value": 30, "threshold": 140, "blur_radius": 0}}
+        Only valid options and non-zero 'value' are applied.
+        Returns the edited image.
+        """
+        result_image = image.copy()
+        for option, args in adjustment_methods.items():
+            if not isinstance(args, dict) or not args.get("value"):
+                continue
+            method = self.adjustment_methods.get(option)
+            if method:
+                # Always pass value and image, then any other args
+                method_args = dict(args)  # copy to avoid mutation
+                value = method_args.pop("value")
+                # image_type is always "original" for public_image_edit
+                result_image = method(value, image_type="original", image=result_image, **method_args)
+        return result_image
+
+
 #endregion
 #region Save
 
@@ -304,18 +328,7 @@ class EditPanel:
             return
         original_filepath = self.app.image_files[self.app.current_index]
         with Image.open(original_filepath) as original_image:
-            adjustment_methods = {
-                "Brightness": self.adjust_brightness,
-                "Contrast": self.adjust_contrast,
-                "AutoContrast": self.adjust_autocontrast,
-                "Highlights": self.adjust_highlights,
-                "Shadows": self.adjust_shadows,
-                "Saturation": self.adjust_saturation,
-                "Sharpness": self.adjust_sharpness,
-                "Clarity": self.adjust_clarity,
-                "Hue": self.adjust_hue,
-                "Color Temperature": self.adjust_color_temperature,
-            }
+            adjustment_methods = self.adjustment_methods
             if self.edit_cumulative_var.get():
                 for option, value in self.slider_value_dict.items():
                     if option in adjustment_methods and adjustment_methods[option]:
@@ -329,9 +342,44 @@ class EditPanel:
             name, ext = os.path.splitext(filename)
             new_filename = f"{name}_edit{ext}"
             new_filepath = os.path.join(directory, new_filename)
-            original_image.save(new_filepath)
+            prepared = self._prepare_image_for_save(original_image, ext.lower())
+            if ext.lower() in (".jpg", ".jpeg", ".jfif"):
+                prepared.save(new_filepath, format="JPEG", quality=100)
+            else:
+                prepared.save(new_filepath)
         self.app.refresh_file_lists()
         messagebox.showinfo("Image Saved", f"Image saved as {new_filename}")
+
+
+    def _prepare_image_for_save(self, image: Image.Image, ext: str) -> Image.Image:
+        """Sanitize image and its info before saving.
+        - Ensure icc_profile (if present) is bytes (encode str with latin-1) or remove it on failure.
+        - Convert modes incompatible with target format (e.g. RGBA -> RGB for JPEG/TIFF).
+        Returns a PIL Image suitable for saving.
+        """
+        try:
+            # Work on a copy to avoid mutating caller's image/info
+            img = image.copy()
+            info = getattr(image, "info", {}) or {}
+            icc = info.get("icc_profile")
+            if icc is not None and isinstance(icc, str):
+                try:
+                    info["icc_profile"] = icc.encode("latin-1")
+                except Exception:
+                    info.pop("icc_profile", None)
+            # Attach sanitized info dictionary to the image object
+            img.info = info
+            # Format-specific safe conversions
+            if ext in (".jpg", ".jpeg", ".jfif"):
+                if img.mode in ("RGBA", "LA"):
+                    img = img.convert("RGB")
+            if ext in (".tif", ".tiff"):
+                if img.mode == "RGBA":
+                    img = img.convert("RGB")
+            return img
+        except Exception:
+            # If anything unexpected happens, return original image
+            return image
 
 
 #endregion
@@ -446,27 +494,31 @@ class EditPanel:
         return self._apply_to_image(_adjust, image_type=image_type, image=image, preserve_alpha=True)
 
 
-    def adjust_highlights(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None) -> Optional[Image.Image]:
+    def adjust_highlights(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None, threshold: Optional[int] = None, blur_radius: Optional[int] = None) -> Optional[Image.Image]:
         if value == 0:
             return image
         old_min, old_max = -100, 100
         new_min, new_max = -30, 30
         mapped_value = ((value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
         factor = (mapped_value + 100) / 100.0
-        threshold = self.validate_spinbox_value(self.highlights_threshold_spinbox, min_value=1, max_value=256, integer=True)
-        blur_radius = self.validate_spinbox_value(self.highlights_blur_radius_spinbox, min_value=0, max_value=100, integer=True)
+        if threshold is None:
+            threshold = self.validate_spinbox_value(self.highlights_threshold_spinbox, min_value=1, max_value=256, integer=True)
+        if blur_radius is None:
+            blur_radius = self.validate_spinbox_value(self.highlights_blur_radius_spinbox, min_value=0, max_value=100, integer=True)
         def _adjust(img: Image.Image) -> Image.Image:
             mask = self._create_gradient_mask(img, threshold, blur_radius, invert=True)
             return Image.composite(img, ImageEnhance.Brightness(img).enhance(factor), mask)
         return self._apply_to_image(_adjust, image_type=image_type, image=image, preserve_alpha=True)
 
 
-    def adjust_shadows(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None) -> Optional[Image.Image]:
+    def adjust_shadows(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None, threshold: Optional[int] = None, blur_radius: Optional[int] = None) -> Optional[Image.Image]:
         if value == 0:
             return image
         factor = (value + 100) / 100.0
-        threshold = self.validate_spinbox_value(self.shadows_threshold_spinbox, min_value=1, max_value=256, integer=True)
-        blur_radius = self.validate_spinbox_value(self.shadows_blur_radius_spinbox, min_value=0, max_value=100, integer=True)
+        if threshold is None:
+            threshold = self.validate_spinbox_value(self.shadows_threshold_spinbox, min_value=1, max_value=256, integer=True)
+        if blur_radius is None:
+            blur_radius = self.validate_spinbox_value(self.shadows_blur_radius_spinbox, min_value=0, max_value=100, integer=True)
         def _adjust(img: Image.Image) -> Image.Image:
             mask = self._create_gradient_mask(img, threshold, blur_radius)
             return Image.composite(img, ImageEnhance.Brightness(img).enhance(factor), mask)
@@ -496,11 +548,12 @@ class EditPanel:
         return self._apply_to_image(_adjust, image_type=image_type, image=image, preserve_alpha=True)
 
 
-    def adjust_clarity(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None) -> Optional[Image.Image]:
+    def adjust_clarity(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None, radius: Optional[int] = None) -> Optional[Image.Image]:
         if value == 0:
             return image
         amount = float(value) / 100.0
-        radius = max(1, int(1 + abs(value) * 0.05))
+        if radius is None:
+            radius = max(1, int(1 + abs(value) * 0.05))
         def _adjust(img: Image.Image) -> Image.Image:
             has_alpha = img.mode == 'RGBA'
             alpha = None
