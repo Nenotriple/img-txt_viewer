@@ -48,23 +48,37 @@ from PIL import Image, ImageTk, ImageSequence, UnidentifiedImageError
 from main.scripts import (
     about_img_txt_viewer,
     calculate_file_stats,
-    batch_resize_images,
-    custom_scrolledtext,
     custom_simpledialog,
     batch_crop_images,
     settings_manager,
+    entry_helper,
+    image_grid,
+    edit_panel,
+)
+
+import main.scripts.video_thumbnail_generator as vtg
+
+# Tabbed tools
+from main.scripts import (
+    batch_resize_images,
+    batch_image_edit,
     batch_tag_edit,
     find_dupe_file,
-    text_controller,
     batch_upscale,
     batch_rename,
-    entry_helper,
+    CropUI,
+)
+
+# Tagger imports
+from main.scripts import (
+    calculate_file_stats,
+    custom_scrolledtext,
+    text_controller,
     resize_image,
     image_grid,
     edit_panel,
-    CropUI,
 )
-import main.scripts.video_thumbnail_generator as vtg
+
 from main.scripts.ThumbnailPanel import ThumbnailPanel
 from main.scripts.Autocomplete import SuggestionHandler
 from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
@@ -107,6 +121,7 @@ class ImgTxtViewer:
         self.stat_calculator = calculate_file_stats.CalculateFileStats(self, self.root)
         self.batch_resize_images = batch_resize_images.BatchResizeImages()
         self.batch_rename = batch_rename.BatchRename()
+        self.batch_img_edit = batch_image_edit.BatchImgEdit()
         self.batch_upscale = batch_upscale.BatchUpscale()
         self.edit_panel = edit_panel.EditPanel(self, self.root)
         self.batch_tag_edit = batch_tag_edit.BatchTagEdit()
@@ -548,6 +563,7 @@ class ImgTxtViewer:
         self.batch_upscale_tab = Frame(self.main_notebook)
         self.batch_resize_images_tab = Frame(self.main_notebook)
         self.batch_rename_tab = Frame(self.main_notebook)
+        self.batch_img_edit_tab = Frame(self.main_notebook)
         self.find_dupe_file_tab = Frame(self.main_notebook)
         # Add Tabs to Notebook
         self.main_notebook.add(self.primary_tab, text="Tagger")
@@ -556,6 +572,7 @@ class ImgTxtViewer:
         self.main_notebook.add(self.batch_upscale_tab, text="Batch Upscale")
         self.main_notebook.add(self.batch_resize_images_tab, text="Batch Resize")
         self.main_notebook.add(self.batch_rename_tab, text="Batch Rename")
+        self.main_notebook.add(self.batch_img_edit_tab, text="Batch Img Edit")
         self.main_notebook.add(self.find_dupe_file_tab, text="Find Duplicates")
         # Disable all but the primary tab
         self.toggle_main_notebook_state("disable")
@@ -1325,6 +1342,7 @@ class ImgTxtViewer:
             self.batch_upscale_tab,
             self.batch_resize_images_tab,
             self.batch_rename_tab,
+            self.batch_img_edit_tab,
             self.find_dupe_file_tab,
         ]
         if state == "normal":
@@ -1350,6 +1368,7 @@ class ImgTxtViewer:
             "Batch Upscale": "BatchUpscale",
             "Batch Resize": "BatchResize",
             "Batch Rename": "BatchRename",
+            "Batch Img Edit": "BatchImgEdit",
             "Find Duplicates": "FindDupeFile",
         }
         self.ui_state = tab_states.get(tab_name)
@@ -1365,6 +1384,8 @@ class ImgTxtViewer:
             self.create_batch_resize_images_ui(show=True)
         elif self.ui_state == "BatchRename":
             self.create_batch_rename_ui(show=True)
+        elif self.ui_state == "BatchImgEdit":
+            self.create_batch_img_edit_ui(show=True)
         elif self.ui_state == "FindDupeFile":
             self.create_find_dupe_file_ui(show=True)
         self.update_menu_state()
@@ -1446,6 +1467,10 @@ class ImgTxtViewer:
 
     def create_batch_rename_ui(self, show=False):
         self.create_ui_tab(self.batch_rename, self.batch_rename_tab, show=show)
+
+
+    def create_batch_img_edit_ui(self, show=False):
+        self.create_ui_tab(self.batch_img_edit, self.batch_img_edit_tab, show=show)
 
 
     def create_find_dupe_file_ui(self, show=False):
