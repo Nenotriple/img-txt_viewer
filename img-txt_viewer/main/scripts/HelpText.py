@@ -71,37 +71,68 @@ CROP_UI_HELP = {
 
 
 BATCH_IMAGE_EDIT_HELP = {
-"Batch Image Edit Help": "",
+"Batch Image Edit Help":
+    "Batch Image Edit lets you apply adjustments to multiple images at once. The interface is divided into three main panels:\n"
+    "• Left: Image file list (select images and preview adjustments)\n"
+    "• Center: Image preview (shows original and adjusted preview)\n"
+    "• Right: Adjustment controls (sliders and advanced options)\n"
+    "\n"
+    "The top row provides directory selection, browsing, and refresh controls. The bottom row shows batch options, progress, and status info.\n",
 
 "Supported Filetypes:":
     ".jpg, .jpeg, .png, .webp, .bmp, .tif, .tiff, .jfif\n",
 
 "Adjustment Controls:":
-    "**Brightness:** Adjust overall image brightness (-100 to +100)\n"
-    "**Contrast:** Enhance or reduce contrast (-100 to +100)\n"
-    "**AutoContrast:** Automatic contrast optimization (-100 to +100)\n"
-    "**Highlights:** Control bright areas of the image (-100 to +100)\n"
-    "**Shadows:** Control dark areas of the image (-100 to +100)\n"
-    "**Saturation:** Adjust color intensity (-100 to +100)\n"
-    "**Sharpness:** Enhance or soften image details (-100 to +100)\n"
-    "**Clarity:** Enhance mid-tone contrast and detail (-100 to +100)\n"
-    "**Hue:** Shift the color spectrum (-100 to +100)\n"
-    "**Color Temp:** Adjust warm/cool tones (-100 to +100)\n",
+    "• Brightness: Adjust overall image brightness (-100 to +100)\n"
+    "• Contrast: Enhance or reduce contrast (-100 to +100)\n"
+    "• AutoContrast: Automatic contrast optimization (-100 to +100)\n"
+    "• Highlights: Control bright areas (-200 to +200, advanced: threshold)\n"
+    "• Shadows: Control dark areas (-200 to +200, advanced: threshold)\n"
+    "• Saturation: Adjust color intensity (-100 to +100)\n"
+    "• Vibrance: Boost muted colors (-100 to +100)\n"
+    "• Hue: Shift the color spectrum (-100 to +100)\n"
+    "• Color Temp: Adjust warm/cool tones (-100 to +100)\n"
+    "• Sharpness: Enhance or soften details (-100 to +100, advanced: boost)\n"
+    "• Clarity: Enhance mid-tone contrast (-100 to +100, advanced: radius)\n"
+    "\n"
+    "Advanced options (threshold, boost, radius) are available for some adjustments via the '+' button next to the slider.\n",
 
 "Instructions:":
-    "1. Select an input directory containing images to edit.\n"
-    "2. Select desired adjustment settings using the sliders.\n"
-    "3. Click 'Apply Edits' to process the images.\n",
+    "1. Select an input directory containing images to edit (top row).\n"
+    "2. Adjust settings using the sliders (right panel). Click value labels to enter values directly.\n"
+    "3. Use advanced options for fine-tuning (click '+' next to slider).\n"
+    "4. Click 'Apply!' to process all images in the directory.\n"
+    "5. Progress and status are shown at the bottom.\n",
 
 "Options:":
-    "• **Save to 'Edited Images' subfolder**: Save images to a new 'Edited Images' folder within the input directory.\n"
-    "• **Overwrite Original Files**: Save images to input directory and overwrite original images.\n"
-    "• **Save as same format**: Save output images in the same format as the input images.\n"
-    "• **Save as JPEG**: Save output images as JPEG files.\n"
-    "• **Save as PNG**: Save output images as PNG files.\n",
+    "• Save To:\n"
+    "   - Subfolder: Save edited images to an 'Edited Images' subfolder.\n"
+    "   - Same Folder: Save in the original directory.\n"
+    "• Save As:\n"
+    "   - Same Format: Keep original filetype.\n"
+    "   - JPEG: Save as JPEG.\n"
+    "   - PNG: Save as PNG.\n"
+    "• Overwrite:\n"
+    "   - Always: Remove originals and overwrite.\n"
+    "   - On Conflict: Only overwrite if filename matches, otherwise create unique filename.\n"
+    "   - Never: Always create unique filenames to avoid overwriting.\n",
 
-"Notes:":
-    "• Reset all sliders using the 'Reset' button, or individually by right-clicking a slider handle.\n",
+"Preview & Workflow:":
+    "• The center panel shows a live preview of adjustments for the selected image.\n"
+    "• Right-click the preview to temporarily show the original image.\n"
+    "• Adjustments are applied only when sliders are moved from zero.\n"
+    "• Click 'Reset' to set all sliders and advanced options to default.\n"
+    "• You can reset individual sliders by right-clicking their handle.\n"
+    "• Click value labels to enter values directly with the keyboard.\n",
+
+"Tips:":
+    "• Use the directory entry or 'Browse...' to change the working folder.\n"
+    "• 'Open' opens the current folder in File Explorer.\n"
+    "• 'Refresh' reloads the file list from disk.\n"
+    "• The help button '?' opens this help window.\n"
+    "• Processing time depends on image size, number of images, and adjustments.\n"
+    "• Only supported filetypes are shown and processed.\n"
+    "• All adjustments are non-destructive until you click 'Apply!'.\n",
 }
 
 
