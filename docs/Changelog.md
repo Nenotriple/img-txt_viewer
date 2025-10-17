@@ -51,58 +51,61 @@
 **New:**
 
 - Images in the Tagger UI can now be zoomed in and out with the mouse wheel.
-- Window size and position can now be saved and restored on launch.
-  - Toggle this setting from `Options > Restore Last Window Size`
-- The height of individual Tagger tool tabs can now be saved and restored when switching tabs.
-  - Toggle this setting from  `Options > Restore Last Text Pane Heights`
-- `MyTags` improvements:
-  - Tags can now be sorted into groups and subgroups.
-  - Entries can now be organized by drag-and-drop with the middle mouse button.
-  - Font and text style options can now be adjusted.
-- `Tag-Editor` improvements:
-  - Re-worked the UI for a cleaner and simpler experience.
-  - Tags can now be sorted after creating pending changes.
-- New `Edit Panel` option: `Clarity`
-  - Adjusts local micro‑contrast: positive sharpens/details, negative softens
-- New `Batch Operations` tools:
+- Window size and position can now be saved and restored at launch.
+  - Toggle this from `Options > Restore Last Window Size`
+- Heights of individual Tagger tool tabs can now be saved and restored when switching tabs.
+  - Toggle this from `Options > Restore Last Text Pane Heights`
+- MyTags improvements:
+  - Tags can be sorted into groups and subgroups.
+  - Entries can be organized by drag-and-drop using the middle mouse button.
+  - Font and text-style options are now adjustable.
+- Tag-Editor improvements:
+  - Reworked UI for a cleaner, simpler experience.
+  - Tags can be sorted after creating pending changes.
+- New Edit Panel options:
+  - `Clarity`: Adjusts local micro-contrast. Positive values sharpen and enhance detail; negative values soften.
+  - `Vibrance`: Similar to Saturation but affects less-saturated colors more, leaving well-saturated colors less affected.
+- New Batch Operations tools:
   - `Clear All Text Files`: Erase the contents of all text files in the current directory.
   - `Delete All Text Files`: Permanently delete all text files in the current directory.
   - `Trim Excess Tags`: Remove excess tags from all text files, keeping only a specified number of tags per file.
-  - `Check File Pair Collisions`: Scan the current directory and show files with the same name but different extensions, which may cause text pair conflicts.
-- New `AutoTag` option `Viewport`:
-  - When enabled, the current image view will be used for interrogation instead of the original image file.
+  - `Check File Pair Collisions`: Scan the current directory and show files that share the same basename but different extensions, which may cause text-pair conflicts.
+- New AutoTag option `Viewport`:
+  - When enabled, the current image view is used for auto-tagging instead of the original image file.
 - New primary tab `Batch Img Edit`:
-  - Batch process images with the same adjustment controls as the `Edit Panel`.
+  - Batch-process images with the same adjustment controls as the Edit Panel.
 
 **Fixed:**
 
-- Fixed issue where adding tags that contain a comma to MyTags would wrap them in quotes.
-- Fixed issue where duplicate commas could appear when inserting a tag into the text box from MyTags.
-- Fixed issue that would prevent saving if the Stats or All Tags lists were refreshed.
-- Fixed issue where the system clipboard could become unresponsive after interacting with text Entry widgets.
-- Fixed issue when navigating or changing tabs with a broken or incorrect directory path set in Tagger.
-- Fixed an issue where the app would allow setting a directory without any supported files.
-- Tagger tool tab widgets now properly scale when the tab is very large.
+- Fixed an issue that wrapped tags containing commas in quotes when added to MyTags.
+- Fixed duplicate commas appearing when inserting a tag from MyTags into the text box.
+- Fixed an issue that prevented saving if the Stats or All Tags lists were refreshed.
+- Fixed the system clipboard becoming unresponsive after interacting with text-entry widgets.
+- Fixed an issue when navigating or changing tabs with a broken or incorrect directory path set in Tagger.
+- Fixed an issue that allowed setting a directory without any supported files.
+- Tagger tool tab widgets now scale properly when the tab is very large.
 - Fixed a crash when calculating image statistics.
-- Fixed issue preventing a selection from being created in the Crop tool along the right edge of the image.
-- Fixed issue where the Tagger `Edit Panel` would not save certain image formats correctly.
+- Fixed an issue that prevented creating a selection in the Crop tool along the image's right edge.
+- Fixed an issue where the Tagger Edit Panel did not save certain image formats correctly.
 
 **Other Changes:**
 
-- Navigating via mouse wheel when hovering the mouse over the image is now bound to `Shift + Mouse Wheel`.
-- Dragging the displayed image/video to move the window is now bound to `Shift + Left Mouse Button`.
-- Loading and navigating images in the Tagger UI is now quicker and smoother.
+- Mouse-wheel navigation over the image is now bound to `Shift + Mouse Wheel`.
+- Dragging the displayed image/video to move the window now requires `Shift + Left Mouse Button`.
+- Loading and navigating images in the Tagger UI is now faster and smoother.
 - MyTags now uses YAML format instead of CSV.
-- The MyTags save button text color now changes to red when changes are unsaved.
-- Improved image grid thumbnail spacing to prevent empty space.
-- Updated [TkToolTips](https://github.com/Nenotriple/TkToolTip) to (v1.12). Tooltips now have a smooth sliding fade animation and general improvements.
-- Added an Options menu command: `Reset Window and Tab Size`, which will reset the main window and text pane tabs to their defaults.
-- Updated all input popups *(like in Tag-Editor, etc.)* for a more modern look.
-- All text Entry widgets now support undo/redo with `CTRL+Z` and `CTRL+Y`.
+- The MyTags save button text changes to red when there are unsaved changes.
+- Improved image-grid thumbnail spacing to avoid empty gaps.
+- Updated [TkToolTip](https://github.com/Nenotriple/TkToolTip) to v1.12. Tooltips have a smoother fade/slide animation and other improvements.
+- Added Options menu command: `Reset Window and Tab Size` — resets the main window and text-pane tabs to their defaults.
+- Updated all input popups (e.g., Tag-Editor) for a more modern look.
+- All text-entry widgets now support undo/redo with `CTRL+Z` and `CTRL+Y`.
 - The Crop control panel is now scrollable for smaller screens.
-- All `Edit Panel` adjustments now support RGBA images, preserving transparency.
-- Improved the layout of the first time setup wizard, and user-flow when resetting settings.
-- When saving, the app will now check for file pair collisions and warn the user if any are detected. A collision occurs when multiple files share the same basename but have different file extensions, which can lead to text pair conflicts.
+- All Edit Panel adjustments now support RGBA images, preserving transparency.
+- Improved the layout of the first-time setup wizard and the user flow when resetting settings.
+- When saving, the app now checks for file-pair collisions and warns the user if any are detected.
+  - A collision occurs when multiple files share the same basename but have different extensions, which can lead to text-pair conflicts.
+  - Saving still proceeds as normal, but the user is informed of the issue.
 
 ---
 
