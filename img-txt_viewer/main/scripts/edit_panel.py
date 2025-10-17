@@ -38,6 +38,7 @@ class EditPanel:
             "Highlights": 0,
             "Shadows": 0,
             "Saturation": 0,
+            "Vibrance": 0,
             "Sharpness": 0,
             "Clarity": 0,
             "Hue": 0,
@@ -55,6 +56,7 @@ class EditPanel:
             "Highlights": self.adjust_highlights,
             "Shadows": self.adjust_shadows,
             "Saturation": self.adjust_saturation,
+            "Vibrance": self.adjust_vibrance,
             "Sharpness": self.adjust_sharpness,
             "Clarity": self.adjust_clarity,
             "Hue": self.adjust_hue,
@@ -88,7 +90,7 @@ class EditPanel:
 
     def create_edit_panel_widgets(self) -> None:
         # Edit Mode Combobox
-        self.edit_combobox = ttk.Combobox(self.app.edit_image_panel, values=["Brightness", "Contrast", "AutoContrast", "Highlights", "Shadows", "Saturation", "Sharpness", "Clarity", "Hue", "Color Temp"], width=18, state="readonly")
+        self.edit_combobox = ttk.Combobox(self.app.edit_image_panel, values=["Brightness", "Contrast", "AutoContrast", "Highlights", "Shadows", "Saturation", "Vibrance", "Sharpness", "Clarity", "Hue", "Color Temp"], width=18, state="readonly")
         self.edit_combobox.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
         self.edit_combobox.set("Brightness")
         self.edit_combobox.bind("<<ComboboxSelected>>", self.update_slider_value)
@@ -122,16 +124,8 @@ class EditPanel:
         Tip.create(widget=self.highlights_threshold_label, text=["From 1 to 256", "Lower values affect more pixels"], show_delay=25)
         self.highlights_threshold_spinbox = ttk.Spinbox(self.highlights_spinbox_frame, from_=1, to=256, increment=8, width=5, command=self.apply_image_edit)
         self.highlights_threshold_spinbox.grid(row=0, column=1, padx=5, sticky="ew")
-        self.highlights_threshold_spinbox.set(128)
+        self.highlights_threshold_spinbox.set(190)
         self.highlights_threshold_spinbox.bind("<KeyRelease>", self.apply_image_edit)
-        # Blur Radius
-        self.highlights_blur_radius_label = ttk.Label(self.highlights_spinbox_frame, text="Blur Radius:")
-        self.highlights_blur_radius_label.grid(row=0, column=2, padx=5, sticky="w")
-        Tip.create(widget=self.highlights_blur_radius_label, text=["From 0 to 10", "Higher values increase the blur effect"], show_delay=25)
-        self.highlights_blur_radius_spinbox = ttk.Spinbox(self.highlights_spinbox_frame, from_=0, to=10, width=5, command=self.apply_image_edit)
-        self.highlights_blur_radius_spinbox.grid(row=0, column=3, padx=5, sticky="ew")
-        self.highlights_blur_radius_spinbox.set(0)
-        self.highlights_blur_radius_spinbox.bind("<KeyRelease>", self.apply_image_edit)
         # Spinbox Frame - Shadows
         self.shadows_spinbox_frame = ttk.Frame(self.app.edit_image_panel)
         self.shadows_spinbox_frame.grid(row=1, column=0, columnspan=2, pady=(0,5), sticky="ew")
@@ -141,16 +135,8 @@ class EditPanel:
         Tip.create(widget=self.shadows_threshold_label, text=["From 1 to 256", "Higher values affect more pixels"], show_delay=25)
         self.shadows_threshold_spinbox = ttk.Spinbox(self.shadows_spinbox_frame, from_=1, to=256, increment=8, width=5, command=self.apply_image_edit)
         self.shadows_threshold_spinbox.grid(row=0, column=1, padx=5, sticky="ew")
-        self.shadows_threshold_spinbox.set(128)
+        self.shadows_threshold_spinbox.set(64)
         self.shadows_threshold_spinbox.bind("<KeyRelease>", self.apply_image_edit)
-        # Blur Radius
-        self.shadows_blur_radius_label = ttk.Label(self.shadows_spinbox_frame, text="Blur Radius:")
-        self.shadows_blur_radius_label.grid(row=0, column=2, padx=5, sticky="w")
-        Tip.create(widget=self.shadows_blur_radius_label, text=["From 0 to 10", "Higher values increase the blur effect"], show_delay=25)
-        self.shadows_blur_radius_spinbox = ttk.Spinbox(self.shadows_spinbox_frame, from_=0, to=10, width=5, command=self.apply_image_edit)
-        self.shadows_blur_radius_spinbox.grid(row=0, column=3, padx=5, sticky="ew")
-        self.shadows_blur_radius_spinbox.set(0)
-        self.shadows_blur_radius_spinbox.bind("<KeyRelease>", self.apply_image_edit)
         # Spinbox Frame - Sharpness
         self.sharpness_spinbox_frame = ttk.Frame(self.app.edit_image_panel)
         self.sharpness_spinbox_frame.grid(row=1, column=0, columnspan=2, pady=(0,5), sticky="ew")
@@ -249,10 +235,8 @@ class EditPanel:
         self.edit_last_slider_dict = self.slider_value_dict.copy()
         self.edit_slider.set(0)
         self.edit_value_label.config(text="0")
-        self.highlights_threshold_spinbox.set(128)
-        self.highlights_blur_radius_spinbox.set(0)
-        self.shadows_threshold_spinbox.set(128)
-        self.shadows_blur_radius_spinbox.set(0)
+        self.highlights_threshold_spinbox.set(190)
+        self.shadows_threshold_spinbox.set(64)
         self.sharpness_boost_spinbox.set(1)
         self.app.refresh_image()
 
@@ -480,34 +464,47 @@ class EditPanel:
         return self._apply_to_image(_adjust, image_type=image_type, image=image, preserve_alpha=True)
 
 
-    def adjust_highlights(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None, threshold: Optional[int] = None, blur_radius: Optional[int] = None) -> Optional[Image.Image]:
+    def adjust_highlights(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None, threshold: Optional[int] = None) -> Optional[Image.Image]:
         if value == 0:
             return image
-        old_min, old_max = -100, 100
-        new_min, new_max = -30, 30
-        mapped_value = ((value - old_min) / (old_max - old_min)) * (new_max - new_min) + new_min
-        factor = (mapped_value + 100) / 100.0
+        factor = (value + 100) / 100.0
         if threshold is None:
             threshold = self.validate_spinbox_value(self.highlights_threshold_spinbox, min_value=1, max_value=256, integer=True)
-        if blur_radius is None:
-            blur_radius = self.validate_spinbox_value(self.highlights_blur_radius_spinbox, min_value=0, max_value=100, integer=True)
-        def _adjust(img: Image.Image) -> Image.Image:
-            mask = self._create_gradient_mask(img, threshold, blur_radius, invert=True)
-            return Image.composite(img, ImageEnhance.Brightness(img).enhance(factor), mask)
+        def _adjust(img_rgb: Image.Image) -> Image.Image:
+            mask = self._create_gradient_mask(img_rgb, threshold, 0, invert=False)
+            mask_arr = numpy.asarray(mask, dtype=numpy.float32) / 255.0  # 0..1 where 1 == bright
+            emphasis = numpy.power(mask_arr, 2.2)
+            mult = 1.0 + (factor - 1.0) * emphasis
+            hsv = img_rgb.convert('HSV')
+            arr = numpy.asarray(hsv).astype(numpy.float32)  # H,S,V 0..255
+            v = arr[..., 2]
+            v = v * mult
+            numpy.clip(v, 0, 255, out=v)
+            arr[..., 2] = v
+            out = Image.fromarray(arr.astype(numpy.uint8), mode='HSV').convert('RGB')
+            return out
         return self._apply_to_image(_adjust, image_type=image_type, image=image, preserve_alpha=True)
 
 
-    def adjust_shadows(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None, threshold: Optional[int] = None, blur_radius: Optional[int] = None) -> Optional[Image.Image]:
+    def adjust_shadows(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None, threshold: Optional[int] = None) -> Optional[Image.Image]:
         if value == 0:
             return image
         factor = (value + 100) / 100.0
         if threshold is None:
             threshold = self.validate_spinbox_value(self.shadows_threshold_spinbox, min_value=1, max_value=256, integer=True)
-        if blur_radius is None:
-            blur_radius = self.validate_spinbox_value(self.shadows_blur_radius_spinbox, min_value=0, max_value=100, integer=True)
-        def _adjust(img: Image.Image) -> Image.Image:
-            mask = self._create_gradient_mask(img, threshold, blur_radius)
-            return Image.composite(img, ImageEnhance.Brightness(img).enhance(factor), mask)
+        def _adjust(img_rgb: Image.Image) -> Image.Image:
+            mask = self._create_gradient_mask(img_rgb, threshold, 0, invert=False)
+            mask_arr = numpy.asarray(mask, dtype=numpy.float32) / 255.0  # 0..1 where 1==bright
+            shadow_focus = numpy.power(1.0 - mask_arr, 2.0)
+            mult = 1.0 + (factor - 1.0) * shadow_focus
+            hsv = img_rgb.convert('HSV')
+            arr = numpy.asarray(hsv).astype(numpy.float32)  # H,S,V 0..255
+            v = arr[..., 2]
+            v = v * mult
+            numpy.clip(v, 0, 255, out=v)
+            arr[..., 2] = v
+            out = Image.fromarray(arr.astype(numpy.uint8), mode='HSV').convert('RGB')
+            return out
         return self._apply_to_image(_adjust, image_type=image_type, image=image, preserve_alpha=True)
 
 
@@ -517,6 +514,26 @@ class EditPanel:
         factor = (value + 100) / 100.0
         def _adjust(img_rgb: Image.Image) -> Image.Image:
             return ImageEnhance.Color(img_rgb).enhance(factor)
+        return self._apply_to_image(_adjust, image_type=image_type, image=image, preserve_alpha=True)
+
+
+    def adjust_vibrance(self, value: int, image_type: str = "display", image: Optional[Image.Image] = None) -> Optional[Image.Image]:
+        if value == 0:
+            return image
+        factor = (value + 100) / 100.0
+        def _adjust(img_rgb: Image.Image) -> Image.Image:
+            if img_rgb.mode != 'RGB':
+                img_rgb = img_rgb.convert('RGB')
+            hsv = img_rgb.convert('HSV')
+            h, s, v = hsv.split()
+            s_arr = numpy.asarray(s, dtype=numpy.float32)
+            sat_normalized = s_arr / 255.0
+            weight = numpy.power(1.0 - sat_normalized, 0.5)
+            adjustment = (factor - 1.0) * weight
+            new_s = s_arr * (1.0 + adjustment)
+            numpy.clip(new_s, 0, 255, out=new_s)
+            s_new = Image.fromarray(new_s.astype(numpy.uint8), mode='L')
+            return Image.merge('HSV', (h, s_new, v)).convert('RGB')
         return self._apply_to_image(_adjust, image_type=image_type, image=image, preserve_alpha=True)
 
 
