@@ -100,7 +100,7 @@ The main toolbar gives quick access to image and text tools. These use the same 
 
 **Tag-Editor:**
 - Display and edit image tags. Tags are listed with their occurrences.
-- Changes are pending until you apply save them.
+- Changes are pending until you apply or save them.
 - Respects Tagger UI 'Filter' settings, just remember to refresh the view.
 
 **Crop:**
@@ -113,7 +113,7 @@ The main toolbar gives quick access to image and text tools. These use the same 
 - Supports batch processing for multiple images at once.
 - Adjust upscale factor (e.g., 0.5, 2.0, 4.0) to control the final output size.
 - Adjust upscale strength to control the level of blending between original and upscaled images.
-- Add your own RESRGAN NCNN models (.bin and .param) to the *models/ncnn_models* folder.
+- Add your own **Real-ESRGAN NCNN models (.bin and .param)** to the *models/ncnn_models* folder.
 
 **Batch Resize:**
 - Resize image(s) using various methods and conditions.
@@ -135,7 +135,7 @@ The main toolbar gives quick access to image and text tools. These use the same 
 - *Edit > Cleanup All Text Files*: This operation will clean all text files from typos like:
     - Duplicate tags, Extra commas, Extra spaces, trailing commas/spaces, commas without spaces, and more.
 - *Tools > Batch Operations > Batch Crop Images*: Crop all listed images to a specific resolution and crop anchor.
-- *Tools > Batch Operations > Create Wildcard From Text Files*: Combine all captions into one text file, each files content added to a new line.
+- *Tools > Batch Operations > Create Wildcard From Text Files*: Combine all captions into one text file, each file's content added to a new line.
 
 **Text Options:**
 - *Clean-Text*: perform text cleanup when saving.
@@ -150,10 +150,10 @@ The main toolbar gives quick access to image and text tools. These use the same 
 - Ascending or Descending order.
 
 **Autocomplete:**
-- *Dictionary*: Select the appropriate dictionary(s) for text suggestions. Multiple selections are allowed, but due to performance reasons, the resulting suggestions may be limited.
+- *Dictionary*: Select the appropriate dictionary(ies) for text suggestions. Multiple selections are allowed, but due to performance reasons, the resulting suggestions may be limited.
 - *Threshold*: Essentially widens the range of text considered for suggestions, allowing for more flexible matching. (slower==more flexible)
 - *Quantity*: Control the number of suggestions returned.
-- *Match Mode*: Controls how text is matched against the selected dictionary(s) and typed content.
+- *Match Mode*: Controls how text is matched against the selected dictionary(ies) and typed content.
     - *Match Whole String*: Match all text between the commas in the cursor selection.
     - *Match Last Word*: Only the current text under the cursor is used for autocomplete.
 
@@ -163,7 +163,7 @@ The main toolbar gives quick access to image and text tools. These use the same 
 For more detailed information regarding the tools and features, look for (?) buttons throughout the interface or view the `docs/User_Guide.md` file in the repo.
 """
 
-
+#endregion
 #region Crop UI
 
 
@@ -172,7 +172,7 @@ CROP_UI_HELP = """
 
 This tool is tied to the *Tagger* tab; the working directory is shared between both tools.
 
-## Supported Filetypes
+## Supported File types
 *.png, .jpg, .jpeg, .webp, .gif*
 
 ## Basic Usage
@@ -247,7 +247,7 @@ A tool to apply image adjustments to many files at once. The UI is divided into 
 - *Center:* Live preview (original and adjusted)
 - *Right:* Adjustment controls (sliders + advanced options)
 
-## Supported Filetypes
+## Supported File types
 *.jpg, .jpeg, .png, .webp, .bmp, .tif, .tiff, .jfif*
 
 ## Adjustment Controls
@@ -277,7 +277,7 @@ A tool to apply image adjustments to many files at once. The UI is divided into 
     - *Subfolder:* Save edited images to an "Edited Images" subfolder.
     - *Same Folder:* Save into the original folder.
 - **Save As**
-    - *Same Format:* Keep original filetype.
+    - *Same Format:* Keep original file type.
     - *JPEG / PNG:* Force output format.
 - **Overwrite**
     - *Always:* Overwrite originals.
@@ -298,7 +298,7 @@ A tool to apply image adjustments to many files at once. The UI is divided into 
 - **Refresh** reloads the file list from disk.
 - The help button **?** opens this help window.
 - Processing time depends on image size, image count, and selected adjustments.
-- Only supported filetypes are shown and processed.
+- Only supported file types are shown and processed.
 - All adjustments are *non-destructive* until you click **Apply!**.
 """
 
@@ -310,7 +310,7 @@ A tool to apply image adjustments to many files at once. The UI is divided into 
 BATCH_UPSCALE_HELP = """
 # Batch Upscale Help
 
-## Supported Filetypes
+## Supported File types
 *.png, .webp, .jpg, .jpeg, .jpg_large, .jfif, .tif, .tiff, .bmp, .gif*
 
 ## Upscale Models
@@ -423,7 +423,7 @@ Batch Tag Edit lets you view, filter, edit, and delete tags across all text file
 BATCH_RESIZE_IMAGES_HELP = """
 # Batch Resize Help
 
-## Supported Filetypes
+## Supported File types
 - *.jpg*, *.jpeg*, *.png*, *.webp*, *.bmp*, *.tif*, *.tiff*
 
 ## Overview
@@ -450,7 +450,7 @@ A tool to resize or convert many images at once. Choose a resize method, set out
 
 ## Quality & Output Format
 - **Quality** - Controls output quality for *JPG* and *WEBP*. Higher values produce higher quality output. *Ignored for PNG.*
-- **Filetype** - Choose *AUTO* to keep the input filetype, or select a specific format to force all outputs to that type.
+- **File type** - Choose *AUTO* to keep the input file type, or select a specific format to force all outputs to that type.
 
 ## Output Location & Overwrite
 - **Use Output Folder** - When enabled, a folder named *Resize Output* is created inside the source folder and resized images are saved there.
@@ -460,11 +460,11 @@ A tool to resize or convert many images at once. Choose a resize method, set out
 - **Save PNG Info** - If saving as PNG, preserved PNG chunk info is written to the output. If converting from PNG to another format, a text file containing PNG chunk info is created alongside the converted file.
 
 ## Convert Only
-- **Convert Only** - When enabled, images are converted to the chosen filetype without changing dimensions. Resize settings are ignored.
+- **Convert Only** - When enabled, images are converted to the chosen file type without changing dimensions. Resize settings are ignored.
 
 ## Tips
 - Test with a small set of images to verify settings before processing large folders.
-- Use *AUTO* filetype to preserve original formats when you only need resizing.
+- Use *AUTO* file type to preserve original formats when you only need resizing.
 - Be cautious with *Overwrite Files* as there is no automatic undo.
 """
 
@@ -476,7 +476,7 @@ A tool to resize or convert many images at once. Choose a resize method, set out
 BATCH_RENAME_HELP = """
 # Batch Rename Help
 
-## Supported Filetypes
+## Supported File types
 - *.txt, *.jpg, *.jpeg, *.png, *.webp, *.bmp, *.tif, *.tiff, *.gif*
 
 ## Instructions
@@ -545,7 +545,7 @@ FIND_DUPLICATE_FILE_HELP = """
 ## Options Menu Features
 - **Process Mode:** Choose between MD5 (*fast*) or SHA-256 (*thorough*) comparison
 - **Max Scan Size:** Set maximum file size limit for scanning (*in MB*)
-- **Filetypes to Scan:** Customize which file extensions to check
+- **File types to Scan:** Customize which file extensions to check
 - **Recursive Scanning:** Enable or disable subfolder scanning
 - **Scanning Mode:** Choose between Images-only or All Files
 - **Duplication Handling:** Select Single or Both mode
