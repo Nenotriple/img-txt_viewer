@@ -16,10 +16,13 @@ from tkinter import (
 )
 
 
+# Third Party Library
+from tkmarktext import TextWindow
+
+
 # Custom Libraries
 from TkToolTip.TkToolTip import TkToolTip as Tip
 from main.scripts import custom_simpledialog
-from main.scripts.help_window import HelpWindow
 import main.scripts.HelpText as HelpText
 import main.scripts.entry_helper as EntryHelper
 
@@ -40,7 +43,6 @@ class FindDupeFile:
         self.app: 'Main' = None
         self.root: 'Tk' = None
         self.working_dir = None
-        self.help_window = None
         self.entry_helper = EntryHelper
 
         # Local Variables
@@ -80,7 +82,7 @@ class FindDupeFile:
         self.app = app
         self.root = root
         self.working_dir = path
-        self.help_window = HelpWindow(self.root)
+        self.help_window = TextWindow(self.root)
         self.setup_ui()
         if path:
             self.folder_entry.insert(0, path)
@@ -706,7 +708,7 @@ class FindDupeFile:
 
 
     def open_help_window(self):
-        self.help_window.open_window(geometry="550x700", help_text=HelpText.FIND_DUPLICATE_FILE_HELP)
+        self.help_window.open_window(text=HelpText.FIND_DUPLICATE_FILE_HELP, title="Find Duplicates Help", geometry="550x700", icon=self.app.blank_image)
 
 
 #endregion

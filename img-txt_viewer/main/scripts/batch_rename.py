@@ -9,9 +9,11 @@ import time
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog, BooleanVar, StringVar
 
+# Third-Party Library
+from tkmarktext import TextWindow
+
 # Local
 from main.scripts import HelpText
-from main.scripts.help_window import HelpWindow
 import main.scripts.entry_helper as entry_helper
 
 # Type Hinting
@@ -30,7 +32,6 @@ class BatchRename:
         self.app: 'Main' = None
         self.root: 'tk.Tk' = None
         self.working_dir = None
-        self.help_window = None
         self.entry_helper = entry_helper
         # Variables
         self.supported_filetypes = (".txt", ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".gif", ".mp4")
@@ -49,7 +50,7 @@ class BatchRename:
         self.app = app
         self.root = root
         self.working_dir = self.app.image_dir.get()
-        self.help_window = HelpWindow(self.root)
+        self.help_window = TextWindow(self.root)
         self.setup_ui()
         self.set_working_directory(self.working_dir)
 
@@ -470,5 +471,4 @@ class BatchRename:
 
 
     def open_help_window(self):
-        help_text = HelpText.BATCH_RENAME_HELP
-        self.help_window.open_window(geometry="450x700", help_text=help_text)
+        self.help_window.open_window(text=HelpText.BATCH_RENAME_HELP, title="Batch Rename Help", geometry="450x700", icon=self.app.blank_image)

@@ -17,14 +17,14 @@ import tkinter.font as tkfont
 
 
 # Third-Party Libraries
-from TkToolTip.TkToolTip import TkToolTip as Tip
 import yaml
+from tkmarktext import TextWindow
+from TkToolTip.TkToolTip import TkToolTip as Tip
 
 
 # Custom Libraries
 import main.scripts.custom_simpledialog as custom_dialog
 from main.scripts import HelpText
-from main.scripts.help_window import HelpWindow
 import main.scripts.entry_helper as EntryHelper
 
 
@@ -108,7 +108,7 @@ class MyTags:
         self.groups_overstrike_var = BooleanVar(value=self._style_groups['overstrike'])
 
         # Help Window
-        self.help_window = HelpWindow(self.root)
+        self.help_window = TextWindow(self.root)
 
 
     #region UI Build
@@ -502,7 +502,7 @@ class MyTags:
 
 
     def show_my_tags_help(self):
-        self.help_window.open_window(geometry="600x700", help_text=HelpText.MY_TAGS_HELP)
+        self.help_window.open_window(text=HelpText.MY_TAGS_HELP, title="My Tags Help", geometry="600x700", icon=self.app.blank_image)
 
 
     #endregion

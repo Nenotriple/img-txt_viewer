@@ -15,11 +15,12 @@ from tkinter import (
 )
 
 # Third-Party Libraries
+from tkmarktext import TextWindow
 from TkToolTip.TkToolTip import TkToolTip as Tip
 
 
 # Custom Libraries
-from main.scripts import TagEditor, help_window, HelpText, custom_simpledialog
+from main.scripts import TagEditor, HelpText, custom_simpledialog
 import main.scripts.entry_helper as entry_helper
 
 
@@ -41,7 +42,6 @@ class BatchTagEdit:
         self.text_files = None
         self.working_dir = None
         self.batch_tag_edit_frame = None
-        self.help_window = None
         # Local Variables
         self.tag_counts = 0
         self.total_unique_tags = 0
@@ -102,7 +102,7 @@ class BatchTagEdit:
         self.text_files = self.app.text_files
         self.working_dir = self.app.image_dir.get()
         self.batch_tag_edit_frame = None
-        self.help_window = help_window.HelpWindow(self.root)
+        self.help_window = TextWindow(self.root)
         tag_dict = self.get_tags()
         self.tag_counts, self.total_unique_tags = self.count_file_tags(tag_dict)
         self.original_tags = []
@@ -911,8 +911,7 @@ class BatchTagEdit:
 
 
     def open_help_window(self):
-        help_text = HelpText.BATCH_TAG_EDIT_HELP
-        self.help_window.open_window(geometry="700x700", help_text=help_text)
+        self.help_window.open_window(text=HelpText.BATCH_TAG_EDIT_HELP, title="Batch Tag Edit Help", geometry="700x700", icon=self.app.blank_image)
 
 
 #endregion

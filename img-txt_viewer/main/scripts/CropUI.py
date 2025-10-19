@@ -11,13 +11,13 @@ from tkinter import ttk, filedialog, messagebox
 
 
 # Third Party Library
+from tkmarktext import TextWindow
 from PIL import Image, ImageTk, ImageSequence
 from TkToolTip.TkToolTip import TkToolTip as Tip
 
 
 # Local
 from main.scripts import HelpText
-from main.scripts.help_window import HelpWindow
 from main.scripts.scrollable_frame import ScrollableFrame
 import main.scripts.entry_helper as entry_helper
 
@@ -1174,7 +1174,7 @@ class CropInterface:
         self.root = root
         self.img_files = self.app.image_files
         self.text_controller = self.app.text_controller
-        self.help_window = HelpWindow(self.root)
+        self.help_window = TextWindow(self.root)
         # Window
         self.create_main_frame()
         self.setup_top_frame()
@@ -1620,8 +1620,7 @@ class CropInterface:
 
 
     def open_help_window(self):
-        help_text = HelpText.CROP_UI_HELP
-        self.help_window.open_window(geometry="500x700", help_text=help_text)
+        self.help_window.open_window(text=HelpText.CROP_UI_HELP, title="Crop UI Help", geometry="500x700", icon=self.app.blank_image)
 
 
     def toggle_overlay(self):

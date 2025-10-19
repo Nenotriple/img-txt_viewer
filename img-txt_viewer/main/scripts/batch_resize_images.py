@@ -14,13 +14,13 @@ from tkinter import ttk, filedialog, messagebox
 
 
 # Third-Party Libraries
+from tkmarktext import TextWindow
 from PIL import Image, PngImagePlugin
 from TkToolTip.TkToolTip import TkToolTip as Tip
 
 
 # Local
 from main.scripts import HelpText
-from main.scripts.help_window import HelpWindow
 import main.scripts.entry_helper as entry_helper
 
 
@@ -39,7 +39,6 @@ class BatchResizeImages:
         self.app: 'Main' = None
         self.root: 'tk.Tk' = None
         self.working_dir = None
-        self.help_window = None
         self.entry_helper = entry_helper
 
         self.resize_thread = None
@@ -55,7 +54,7 @@ class BatchResizeImages:
         self.app = app
         self.root = root
         self.working_dir = path
-        self.help_window = HelpWindow(self.root)
+        self.help_window = TextWindow(self.root)
         self.setup_ui()
         self.set_working_directory(path)
 
@@ -461,8 +460,7 @@ class BatchResizeImages:
 
 
     def open_help_window(self):
-        help_text = HelpText.BATCH_RESIZE_IMAGES_HELP
-        self.help_window.open_window(geometry="450x700", help_text=help_text)
+        self.help_window.open_window(text=HelpText.BATCH_RESIZE_IMAGES_HELP, title="Batch ResizeHelp", geometry="450x700", icon=self.app.blank_image)
 
 
     def _get_sorted_files(self):

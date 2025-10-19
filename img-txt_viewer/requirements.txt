@@ -3,4 +3,5 @@ Pillow==11.0.0
 pyyaml==6.0.2
 onnxruntime-directml==1.22.0
 git+https://github.com/Nenotriple/TkToolTip.git@v1.12
+git+https://github.com/Nenotriple/TkMarkText.git@main
 git+https://github.com/Nenotriple/tkVideoPlayer.git@master

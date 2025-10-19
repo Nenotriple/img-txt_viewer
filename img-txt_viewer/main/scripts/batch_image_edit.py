@@ -7,9 +7,9 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 
 from PIL import Image
+from tkmarktext import TextWindow
 
 from main.scripts import HelpText
-from main.scripts.help_window import HelpWindow
 import main.scripts.entry_helper as entry_helper
 from main.scripts.scrollable_frame import ScrollableFrame
 from main.scripts.image_zoom import ImageZoomWidget
@@ -49,7 +49,7 @@ class BatchImgEdit:
         self.app = app
         self.root = root
         self.working_dir = self.app.image_dir.get()
-        self.help_window = HelpWindow(self.root)
+        self.help_window = TextWindow(self.root)
         self.setup_ui()
         self.set_working_directory(self.working_dir)
 
@@ -977,7 +977,6 @@ class BatchImgEdit:
             return 0
 
     def open_help_window(self):
-        help_text = HelpText.BATCH_IMAGE_EDIT_HELP
-        self.help_window.open_window(geometry="450x700", help_text=help_text)
+        self.help_window.open_window(text=HelpText.BATCH_IMAGE_EDIT_HELP, title="Batch Image Edit Help", geometry="450x700", icon=self.app.blank_image)
 
 #endregion

@@ -25,6 +25,7 @@ import time
 import shutil
 import ctypes
 import zipfile
+import webbrowser
 import subprocess
 
 
@@ -32,7 +33,7 @@ import subprocess
 from tkinter import (
     ttk, Tk, messagebox, filedialog,
     StringVar, BooleanVar, IntVar,
-    Frame, PanedWindow, Menu, scrolledtext,
+    Frame, PanedWindow, Menu,
     Label, Text,
     Event, TclError
 )
@@ -40,13 +41,13 @@ from tkinter import (
 
 # Third-Party Libraries
 import numpy
+from tkmarktext import TextPanel, TextWindow
 from TkToolTip import TkToolTip as Tip
 from PIL import Image, ImageTk, ImageSequence, UnidentifiedImageError
 
 
 # Custom Libraries
 from main.scripts import (
-    about_img_txt_viewer,
     calculate_file_stats,
     custom_simpledialog,
     batch_crop_images,
@@ -54,6 +55,8 @@ from main.scripts import (
     entry_helper,
     image_grid,
     edit_panel,
+    PyTrominos,
+    HelpText,
 )
 
 import main.scripts.video_thumbnail_generator as vtg
@@ -116,7 +119,7 @@ class ImgTxtViewer:
 
     def initial_class_setup(self):
         # Setup tools
-        self.about_window = about_img_txt_viewer.AboutWindow(self, self.root, self.blank_image)
+        self.about_window = TextWindow(self.root)
         self.settings_manager = settings_manager.SettingsManager(self, self.root)
         self.stat_calculator = calculate_file_stats.CalculateFileStats(self, self.root)
         self.batch_resize_images = batch_resize_images.BatchResizeImages()
@@ -343,7 +346,7 @@ class ImgTxtViewer:
         self.optionsMenu = Menu(self.main_menu_bar, tearoff=0)
         self.main_menu_bar.add_cascade(label="Options", menu=self.optionsMenu)
         # About
-        self.main_menu_bar.add_command(label="About", command=self.toggle_about_window)
+        self.main_menu_bar.add_command(label="About", command=self.open_about_window)
 
 
     def create_file_menu(self):
@@ -752,23 +755,8 @@ class ImgTxtViewer:
         self.suggestion_menubutton = ttk.Button(self.suggestion_frame, text="☰", takefocus=False, width=2, command=lambda: self.show_suggestion_context_menu(button=True))
         self.suggestion_menubutton.pack(side="right", padx=2)
         # Startup info text
-        self.info_text = scrolledtext.ScrolledText(self.master_control_frame, padx=5, pady=5)
+        self.info_text = TextPanel(self.master_control_frame, text=HelpText.IMG_TXT_VIEWER_ABOUT, rich_text=True)
         self.info_text.pack(expand=True, fill="both")
-        for header, section in zip(self.about_window.info_headers, self.about_window.info_content):
-            self.info_text.insert("end", header + "\n", "header")
-            self.info_text.insert("end", section + "\n\n", "section")
-        self.info_text.tag_config("header", font=("Segoe UI", 9, "bold"), spacing3=8)
-        self.info_text.tag_config("section", font=("Segoe UI", 9), lmargin1=10, lmargin2=20, spacing1=2, spacing3=6, rmargin=8)
-        self.info_text.tag_config("bullet", lmargin1=22, lmargin2=36)
-        total_lines = int(self.info_text.index('end-1c').split('.')[0])
-        for line_no in range(1, total_lines + 1):
-            line_start = f"{line_no}.0"
-            line_end = f"{line_no}.0 lineend"
-            line_text = self.info_text.get(line_start, line_end)
-            if line_text.lstrip().startswith("⦁") or line_text.lstrip().startswith("•"):
-                self.info_text.tag_add("bullet", line_start, line_end)
-        self.info_text.config(state='disabled', wrap="word", height=1)
-        self.info_text.bind("<Button-3>", self.show_text_context_menu)
 
 
 #endregion
@@ -942,40 +930,37 @@ class ImgTxtViewer:
         if hasattr(self, 'text_box'):
             self.text_box.focus_set()
         widget_in_focus = self.root.focus_get()
-        text_context_menu = Menu(root, tearoff=0)
-        if widget_in_focus in [self.info_text, getattr(self, 'text_box', None)]:
+        text_context_menu = Menu(self.root, tearoff=0)
+        if widget_in_focus == getattr(self, 'text_box', None):
             widget_in_focus.focus_set()
-            if widget_in_focus == getattr(self, 'text_box', None):
-                select_state = "disabled"
-                cleaning_state = "normal" if self.cleaning_text_var.get() else "disabled"
-                try:
-                    selected_text = self.text_box.get("sel.first", "sel.last")
-                    if len(selected_text) >= 3:
-                        select_state = "normal"
-                except TclError:
-                    pass
-                text_context_menu.add_command(label="Cut", accelerator="Ctrl+X", command=lambda: (widget_in_focus.event_generate('<<Cut>>'), self.sync_title_with_content()))
-                text_context_menu.add_command(label="Copy", accelerator="Ctrl+C", command=lambda: (widget_in_focus.event_generate('<<Copy>>')))
-                text_context_menu.add_command(label="Paste", accelerator="Ctrl+V", command=lambda: (widget_in_focus.event_generate('<<Paste>>'), self.sync_title_with_content()))
-                text_context_menu.add_command(label="Delete", accelerator="Del", command=lambda: (widget_in_focus.event_generate('<<Clear>>'), self.sync_title_with_content()))
-                text_context_menu.add_command(label="Refresh", command=self.refresh_text_box)
-                text_context_menu.add_separator()
-                text_context_menu.add_command(label="Undo", accelerator="Ctrl+Z", command=lambda: (widget_in_focus.event_generate('<<Undo>>'), self.sync_title_with_content()))
-                text_context_menu.add_command(label="Redo", accelerator="Ctrl+Y", command=lambda: (widget_in_focus.event_generate('<<Redo>>'), self.sync_title_with_content()))
-                text_context_menu.add_separator()
-                text_context_menu.add_command(label="Open Text Directory...", command=self.open_text_directory)
-                text_context_menu.add_command(label="Open Text File...", command=self.open_textfile)
-                text_context_menu.add_command(label="Add to MyTags", state=select_state, command=lambda: self.text_controller.my_tags.add_to_custom_dictionary(origin="text_box"))
-                text_context_menu.add_separator()
-                text_context_menu.add_command(label="Highlight all Duplicates", accelerator="Ctrl+F", command=self.highlight_all_duplicates)
-                text_context_menu.add_command(label="Next Empty Text File", accelerator="Ctrl+E", command=self.index_goto_next_empty)
-                text_context_menu.add_separator()
-                text_context_menu.add_checkbutton(label="Highlight Selection", variable=self.highlight_selection_var)
-                text_context_menu.add_checkbutton(label="Clean-Text", variable=self.cleaning_text_var, command=self.toggle_list_menu)
-                text_context_menu.add_checkbutton(label="List View", variable=self.list_mode_var, state=cleaning_state, command=self.toggle_list_mode)
-            elif widget_in_focus == self.info_text:
-                text_context_menu.add_command(label="Copy", command=lambda: widget_in_focus.event_generate('<<Copy>>'))
-            text_context_menu.tk_popup(event.x_root, event.y_root)
+            select_state = "disabled"
+            cleaning_state = "normal" if self.cleaning_text_var.get() else "disabled"
+            try:
+                selected_text = self.text_box.get("sel.first", "sel.last")
+                if len(selected_text) >= 3:
+                    select_state = "normal"
+            except TclError:
+                pass
+            text_context_menu.add_command(label="Cut", accelerator="Ctrl+X", command=lambda: (widget_in_focus.event_generate('<<Cut>>'), self.sync_title_with_content()))
+            text_context_menu.add_command(label="Copy", accelerator="Ctrl+C", command=lambda: (widget_in_focus.event_generate('<<Copy>>')))
+            text_context_menu.add_command(label="Paste", accelerator="Ctrl+V", command=lambda: (widget_in_focus.event_generate('<<Paste>>'), self.sync_title_with_content()))
+            text_context_menu.add_command(label="Delete", accelerator="Del", command=lambda: (widget_in_focus.event_generate('<<Clear>>'), self.sync_title_with_content()))
+            text_context_menu.add_command(label="Refresh", command=self.refresh_text_box)
+            text_context_menu.add_separator()
+            text_context_menu.add_command(label="Undo", accelerator="Ctrl+Z", command=lambda: (widget_in_focus.event_generate('<<Undo>>'), self.sync_title_with_content()))
+            text_context_menu.add_command(label="Redo", accelerator="Ctrl+Y", command=lambda: (widget_in_focus.event_generate('<<Redo>>'), self.sync_title_with_content()))
+            text_context_menu.add_separator()
+            text_context_menu.add_command(label="Open Text Directory...", command=self.open_text_directory)
+            text_context_menu.add_command(label="Open Text File...", command=self.open_textfile)
+            text_context_menu.add_command(label="Add to MyTags", state=select_state, command=lambda: self.text_controller.my_tags.add_to_custom_dictionary(origin="text_box"))
+            text_context_menu.add_separator()
+            text_context_menu.add_command(label="Highlight all Duplicates", accelerator="Ctrl+F", command=self.highlight_all_duplicates)
+            text_context_menu.add_command(label="Next Empty Text File", accelerator="Ctrl+E", command=self.index_goto_next_empty)
+            text_context_menu.add_separator()
+            text_context_menu.add_checkbutton(label="Highlight Selection", variable=self.highlight_selection_var)
+            text_context_menu.add_checkbutton(label="Clean-Text", variable=self.cleaning_text_var, command=self.toggle_list_menu)
+            text_context_menu.add_checkbutton(label="List View", variable=self.list_mode_var, state=cleaning_state, command=self.toggle_list_mode)
+        text_context_menu.tk_popup(event.x_root, event.y_root)
 
 
     # --------------------------------------
@@ -2505,13 +2490,27 @@ class ImgTxtViewer:
 #region About Window
 
 
-    def toggle_about_window(self):
-        if self.about_window_open:
-            self.about_window.close_about_window()
-            self.about_window_open = False
-        else:
-            self.about_window.create_about_window()
-            self.about_window_open = True
+    def open_about_window(self):
+        self.about_window.open_window(text=HelpText.IMG_TXT_VIEWER_ABOUT, footer=self._create_about_footer, title="About - img-txt Viewer", geometry="850x650", icon=self.blank_image)
+
+
+    def _create_about_footer(self, parent):
+        def open_game():
+            game = PyTrominos.PyTrominosGame(self.root, icon_path=self.icon_path)
+            game.run()
+        github_url = "https://github.com/Nenotriple/img-txt_viewer"
+        footer = Frame(parent)
+        footer.pack(fill="x")
+        url_button = ttk.Button(footer, text=f"{github_url}", command=lambda: webbrowser.open(f"{github_url}"))
+        url_button.pack(side="left", fill="x", padx=10, ipadx=10)
+        Tip.create(widget=url_button, text="Click this button to open the repo in your default browser", show_delay=10)
+        game_button = ttk.Button(footer, text=f"Play PyTrominos!", command=open_game)
+        game_button.pack(side="left", fill="x", padx=10, ipadx=10)
+        Tip.create(widget=game_button, text="Click this button to play PyTrominos", show_delay=10)
+        made_by_label = Label(footer, text=f"{self.app_version} - img-txt_viewer - Created by: Nenotriple (2023-2025)", font=("Segoe UI", 10))
+        made_by_label.pack(side="right", padx=10, pady=10)
+        Tip.create(widget=made_by_label, text="🤍Thank you for using my app!🤍 (^‿^)", show_delay=10)
+        return footer
 
 
 #endregion

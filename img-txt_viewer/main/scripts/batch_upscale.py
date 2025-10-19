@@ -15,13 +15,13 @@ from tkinter import ttk, filedialog, messagebox
 
 
 # Third-Party Libraries
+from tkmarktext import TextWindow
 from PIL import Image, ImageSequence
 from TkToolTip.TkToolTip import TkToolTip as Tip
 
 
 # Custom Libraries
 from main.scripts import HelpText
-from main.scripts.help_window import HelpWindow
 import main.scripts.entry_helper as entry_helper
 
 
@@ -40,7 +40,6 @@ class BatchUpscale:
         self.app: 'Main' = None
         self.root: 'tk.Tk' = None
         self.working_dir = None
-        self.help_window = None
         self.entry_helper = entry_helper
 
         # Other Filepaths
@@ -70,7 +69,7 @@ class BatchUpscale:
         self.app = app
         self.root = root
         self.working_dir = self.app.image_dir.get()
-        self.help_window = HelpWindow(self.root)
+        self.help_window = TextWindow(self.root)
 
         self.working_img_path = self.app.image_files[self.app.current_index]
         self.executable_path = os.path.join(self.app.app_root_path, "main", "resrgan", "realesrgan-ncnn-vulkan.exe")
@@ -486,8 +485,7 @@ class BatchUpscale:
 
 
     def open_help_window(self):
-        help_text = HelpText.BATCH_UPSCALE_HELP
-        self.help_window.open_window(geometry="550x700", help_text=help_text)
+        self.help_window.open_window(text=HelpText.BATCH_UPSCALE_HELP, title="Batch Upscale Help", geometry="550x700", icon=self.app.blank_image)
 
 
 #endregion
