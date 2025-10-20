@@ -106,6 +106,7 @@
 - When saving, the app now checks for file-pair collisions and warns the user if any are detected.
   - A collision occurs when multiple files share the same basename but have different extensions, which can lead to text-pair conflicts.
   - Saving still proceeds as normal, but the user is informed of the issue.
+- Seeking in videos is now much smoother and more responsive, including the video timelines.
 
 ---
 
