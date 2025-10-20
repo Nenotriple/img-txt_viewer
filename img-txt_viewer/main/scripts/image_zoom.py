@@ -6,14 +6,14 @@ import math
 import concurrent.futures
 
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import ttk, filedialog, messagebox
 
 from PIL import Image, ImageTk, ImageSequence
 from PIL.Image import Image as PILImage
 from PIL.ImageTk import PhotoImage as PILPhotoImage
 
 from collections import OrderedDict
-from typing import Optional, Tuple, Any, List
+from typing import Optional, Callable, Tuple, Any, List
 
 
 #endregion
@@ -327,14 +327,12 @@ class EventController:
 
 
     def _on_canvas_configure(self, event: tk.Event) -> None:
-        """On canvas resize: show fast preview and schedule full render."""
+        """On canvas resize: preserve view state, show fast preview, and schedule full render."""
         if not self.widget.image_mgr.has_image():
             return
+        # Capture view state before resize
+        view_state = self.widget._capture_view_state()
         can_w, can_h = self.widget.canvas_ctrl.get_size()
-        if self.widget.image_fits_canvas:
-            self.widget._switch_to_fit_and_preview(can_w, can_h, delay=100)
-            self.widget._call_on_render_done()
-            return
         # Clamp pan so the image remains visible after resize.
         scale = float(self.widget.image_mgr.scale)
         og_w, og_h = self.widget.image_mgr._orig_image.size
@@ -346,6 +344,9 @@ class EventController:
             self.widget._switch_to_fit_and_preview(can_w, can_h, delay=100)
             self.widget._call_on_render_done()
         else:
+            # Restore view state after resize
+            if view_state is not None:
+                self.widget._restore_view_state(view_state)
             # Render a fast viewport preview and schedule a full render.
             self.widget._using_preview = self.widget.canvas_ctrl.render_viewport_preview(self.widget.image_mgr, self.widget.pan_offset_x, self.widget.pan_offset_y)
             if self.widget._using_preview:
@@ -646,6 +647,19 @@ class ImageZoomWidget(tk.Frame):
             return
         self._fit_image_to_canvas()
         self._render_full_image()
+
+
+    def set_pan_and_zoom(self, scale: float, pan_x: float, pan_y: float) -> None:
+        """Set zoom scale and pan offsets, then redraw image."""
+        self.image_mgr.scale = scale
+        self.pan_offset_x = pan_x
+        self.pan_offset_y = pan_y
+        self._render_full_image()
+
+
+    def get_pan_and_zoom(self) -> Tuple[float, float, float]:
+        """Return (scale, pan_offset_x, pan_offset_y) for current view."""
+        return float(self.image_mgr.scale), float(self.pan_offset_x), float(self.pan_offset_y)
 
 
     def unload_image(self) -> None:
@@ -1076,6 +1090,84 @@ class ImageZoomWidget(tk.Frame):
             width = self.root.winfo_width()
             height = self.root.winfo_height()
             self.root.geometry(f"{width}x{height}+{x}+{y}")
+
+
+#endregion
+#region SplitImage
+
+
+class SplitImage(ttk.Frame):
+    def __init__(self, master: Optional[tk.Misc] = None) -> None:
+        super().__init__(master)
+        self._syncing: bool = False
+        self._create_ui()
+        self._bind_sync_events()
+
+
+    # --- Public API ---
+    def _get_image(self, side: str) -> ImageZoomWidget:
+        """Return the image widget for a given side ('left'|'right')."""
+        if side not in ("left", "right"):
+            raise ValueError("side must be 'left' or 'right'")
+        return getattr(self, f"{side}_image")
+
+
+    def load_image(self, side: str, path: str) -> None:
+        """Load an image into the specified pane ('left' or 'right') from a given path."""
+        self._get_image(side).load_image(path)
+
+
+    def fit_both(self) -> None:
+        """Fit both images to their canvases."""
+        self.left_image.force_fit_to_canvas()
+        self.right_image.force_fit_to_canvas()
+
+
+    def unload_both(self) -> None:
+        """Unload both images."""
+        self.left_image.unload_image()
+        self.right_image.unload_image()
+
+
+    # --- UI creation ---
+    def _create_ui(self) -> None:
+        self.pane = ttk.Panedwindow(self, orient="horizontal")
+        self.pane.pack(fill="both", expand=True)
+        # Left panel
+        left_frame = ttk.Frame(self.pane)
+        self.pane.add(left_frame, weight=1)
+        self.left_image = ImageZoomWidget(left_frame)
+        self.left_image.pack(fill="both", expand=True)
+        # Right panel
+        right_frame = ttk.Frame(self.pane)
+        self.pane.add(right_frame, weight=1)
+        self.right_image = ImageZoomWidget(right_frame)
+        self.right_image.pack(fill="both", expand=True)
+
+
+    # --- Event binding ---
+    def _bind_sync_events(self) -> None:
+        """Bind to canvas events to detect pan/zoom changes"""
+        for side in ("left", "right"):
+            canvas = getattr(self, f"{side}_image").canvas
+            self._bind_canvas_events(canvas, lambda s=side: self._sync_from(s))
+
+
+    def _bind_canvas_events(self, canvas: tk.Canvas, callback: Callable[[], None]) -> None:
+        canvas.bind("<ButtonRelease-1>", lambda e, cb=callback: cb(), add="+")
+        for ev in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
+            canvas.bind(ev, lambda e, cb=callback: self.after(10, cb), add="+")
+
+
+    def _sync_from(self, side: str) -> None:
+        if self._syncing:
+            return
+        self._syncing = True
+        src = self._get_image(side)
+        dst = self.right_image if side == "left" else self.left_image
+        scale, pan_x, pan_y = src.get_pan_and_zoom()
+        dst.set_pan_and_zoom(scale, pan_x, pan_y)
+        self._syncing = False
 
 
 #endregion

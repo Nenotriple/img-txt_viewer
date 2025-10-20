@@ -443,66 +443,82 @@ BATCH_RENAME_HELP = """
 
 
 BATCH_IMAGE_EDIT_HELP = """
-# Batch Image Edit Help
+# Batch Image Edit
 
 A tool to apply image adjustments to many files at once. The UI is divided into three panels:
-- *Left:* Image file list (select images, multi-select, preview)
-- *Center:* Live preview (original and adjusted)
-- *Right:* Adjustment controls (sliders + advanced options)
+- Left: Image file list (select images, multi-select, preview)
+- Center: Live preview (original and adjusted)
+- Right: Adjustment controls (sliders + advanced options)
 
-## Supported File types
-*.jpg, .jpeg, .png, .webp, .bmp, .tif, .tiff, .jfif*
+## Supported file types
+- *.jpg, *.jpeg, *.png, *.webp, *.bmp, *.tif, *.tiff, *.jfif*
 
 ## Adjustment Controls
-- **Brightness:** Adjust overall brightness (*-100 to +100*)
-- **Contrast:** Enhance or reduce contrast (*-100 to +100*)
-- **AutoContrast:** Automatic contrast optimization (*-100 to +100*)
-- **Highlights:** Control bright areas (*-200 to +200*, *advanced: threshold*)
-- **Shadows:** Control dark areas (*-200 to +200*, *advanced: threshold*)
-- **Saturation:** Adjust color intensity (*-100 to +100*)
-- **Vibrance:** Boost muted colors (*-100 to +100*)
-- **Hue:** Shift the color spectrum (*-100 to +100*)
-- **Color Temp:** Adjust warm/cool tones (*-100 to +100*)
-- **Sharpness:** Enhance or soften details (*-100 to +100*, *advanced: boost*)
-- **Clarity:** Enhance mid-tone contrast (*-100 to +100*, *advanced: radius*)
+- **Brightness:** Adjust overall brightness
+- **Contrast:** Enhance or reduce contrast
+- **AutoContrast:** Automatic contrast optimization
+- **Highlights:** Control bright areas
+    - *threshold: The level considered a highlight*
+- **Shadows:** Control dark areas
+    - *threshold: The level considered a shadow*
+- **Saturation:** Adjust color intensity
+- **Vibrance:** Boost muted colors
+- **Hue:** Shift the color spectrum
+- **Color Temp:** Adjust warm/cool tones
+- **Sharpness:** Enhance or soften details
+    - *boost: Multiply sharpness effect*
+- **Clarity:** Enhance mid-tone contrast
+    - *radius: Controls the radius for mid-tone contrast*
 
-*Advanced options* (threshold, boost, radius) are available via the **+** button next to applicable sliders.
+*Advanced options* are available using the "+" button for applicable sliders.
 
-## Instructions
-1. Select an input directory containing images (top row controls).
-2. Adjust sliders in the right panel. Click value labels to type values directly.
-3. Use **+** to open advanced options for fine-tuning.
-4. Click **Apply!** to process the selected images.
-5. Monitor progress and status in the bottom row.
+## Controls & Shortcuts
+- Click a slider value label to type a numeric value. Press *Enter* to apply, *Esc* to cancel.
+- Right-click a slider handle to reset that slider to its default (main sliders reset to 0; advanced sliders reset to their advanced default).
+- Click the **Reset** button to return all sliders and advanced options to defaults (clears temporary edited preview).
 
-## Options
-- **Save To**
-    - *Subfolder:* Save edited images to an "Edited Images" subfolder.
-    - *Same Folder:* Save into the original folder.
-- **Save As**
-    - *Same Format:* Keep original file type.
-    - *JPEG / PNG:* Force output format.
-- **Overwrite**
-    - *Always:* Overwrite originals.
-    - *On Conflict:* Overwrite when filename matches; otherwise create unique name.
-    - *Never:* Always create unique filenames to avoid overwriting.
+## Preview behavior
+- *Single view:* preview shows the edited image. Press and hold *right mouse button* on the preview to temporarily show the original; release to return to edited.
+- *Split view (Options > Use Split View):* left pane shows original; right pane shows edited. Right-click press temporarily shows original in the right pane.
 
-## Preview & Workflow
-- The center preview shows live adjustments for the selected image.
-- *Right-click* the preview to temporarily show the original image.
-- Adjustments are applied only when sliders differ from zero.
-- Click **Reset** to return all sliders and advanced options to defaults.
-- Reset individual sliders by right-clicking their handle.
-- Click value labels to enter numeric values via keyboard.
-
-## Tips
-- Use the directory entry or **Browse...** to change the working folder.
-- **Open** opens the current folder in File Explorer.
-- **Refresh** reloads the file list from disk.
-- The help button **?** opens this help window.
-- Processing time depends on image size, image count, and selected adjustments.
+## Batch processing & files
+- The batch operation applies to the current working directory image list (all supported images shown in the left list).
+- Selection is used for preview only and does not limit which files are processed.
+- To process a subset, change the working folder or remove unwanted files from the folder before running.
 - Only supported file types are shown and processed.
-- All adjustments are *non-destructive* until you click **Apply!**.
+
+## Save & Overwrite options
+- **Save To:**
+  - *Subfolder* (default) - saves edited images to an "Edited Images" subfolder in the working directory.
+  - *Same Folder* - saves edited images into the same folder as originals.
+- **Save As:**
+  - *Same Format* (default) - keep original file type.
+  - *JPEG* - force output to JPEG (saved with quality=100).
+  - *PNG* - force output to PNG.
+- **Overwrite:**
+  - *Always* - will remove originals when saving to a Subfolder (current implementation removes the original file when Subfolder + Always are selected).
+  - *On Conflict* (default) - existing files at the target path will be overwritten.
+  - *Never* - always create a unique filename (append _1, _2, ...) to avoid overwriting.
+
+## Running the batch
+1. Select a working directory (Browse..., Enter path, or use the app's main image directory).
+2. Adjust sliders and advanced options.
+3. Use the Options menu to choose: Save To / Save As / Overwrite and toggle Split View options.
+4. Click **Apply!** to process all images shown in the list.
+5. Click **Cancel** to stop processing; the run stops after the current image finishes.
+6. A summary is shown.
+
+## Progress & status
+- Bottom row shows *Total*, *Processed*, *Elapsed time*, *ETA*, and a progress bar.
+- Progress bar and counts update as files are processed.
+- The processed counts will update during processing.
+
+## Tips & behavior details
+- Use **Open** to reveal the working folder in File Explorer.
+- **Refresh** reloads the file list from disk.
+- The same image editing pipeline is used for previews and batch saves; the preview is representative of saved output.
+
+Processing time depends on image size, number of images, and complexity of adjustments. *All adjustments are non-destructive until you click **Apply!***.
 """
 
 

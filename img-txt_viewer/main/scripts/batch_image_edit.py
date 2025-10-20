@@ -12,7 +12,7 @@ from tkmarktext import TextWindow
 from main.scripts import HelpText
 import main.scripts.entry_helper as entry_helper
 from main.scripts.scrollable_frame import ScrollableFrame
-from main.scripts.image_zoom import ImageZoomWidget
+from main.scripts.image_zoom import ImageZoomWidget, SplitImage
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -41,6 +41,10 @@ class BatchImgEdit:
         self.is_batch_running = False
         self._edited_selected_image = None
         self._active_value_entry = None
+
+        # New preview widget state
+        self.preview_widget = None
+        self._preview_right_bind_ids = []
 
 #endregion
 #region Initialization & Setup
@@ -133,11 +137,126 @@ class BatchImgEdit:
     def create_image_frame(self):
         self.middle_content_frame.grid_rowconfigure(0, weight=1)
         self.middle_content_frame.grid_columnconfigure(0, weight=1)
+        # Create a container preview (ImageZoomWidget or SplitImage based on option)
+        self._create_preview_widget()
 
-        self.preview_image = ImageZoomWidget(self.middle_content_frame)
-        self.preview_image.grid(row=0, column=0, sticky="nsew")
-        self.preview_image.canvas.bind("<ButtonPress-3>", self.on_preview_right_press)
-        self.preview_image.canvas.bind("<ButtonRelease-3>", self.on_preview_right_release)
+    def _create_preview_widget(self):
+        # Remove previous preview and unbind
+        try:
+            self._unbind_preview_right_clicks()
+        except Exception:
+            pass
+        if getattr(self, "preview_widget", None) is not None:
+            try:
+                self.preview_widget.destroy()
+            except Exception:
+                pass
+        # Determine split mode: if option var exists and true -> split, else single
+        split = getattr(self, "use_split_view_var", None) and self.use_split_view_var.get()
+        if split:
+            widget = SplitImage(self.middle_content_frame)
+        else:
+            widget = ImageZoomWidget(self.middle_content_frame)
+        self.preview_widget = widget
+        widget.grid(row=0, column=0, sticky="nsew")
+        # Bind right mouse handlers to appropriate canvases
+        self._bind_preview_right_clicks()
+        # Populate with currently loaded images if any
+        self._update_preview_images_from_state()
+
+    def _get_preview_canvases(self):
+        canvases = []
+        if getattr(self, "preview_widget", None) is None:
+            return canvases
+        if isinstance(self.preview_widget, SplitImage):
+            try:
+                canvases.append(self.preview_widget.left_image.canvas)
+                canvases.append(self.preview_widget.right_image.canvas)
+            except Exception:
+                pass
+        else:
+            try:
+                canvases.append(self.preview_widget.canvas)
+            except Exception:
+                pass
+        return canvases
+
+    def _bind_preview_right_clicks(self):
+        self._unbind_preview_right_clicks()
+        self._preview_right_bind_ids = []
+        for canvas in self._get_preview_canvases():
+            try:
+                id_press = canvas.bind("<ButtonPress-3>", self.on_preview_right_press, add="+")
+                id_release = canvas.bind("<ButtonRelease-3>", self.on_preview_right_release, add="+")
+                self._preview_right_bind_ids.append((canvas, "<ButtonPress-3>", id_press))
+                self._preview_right_bind_ids.append((canvas, "<ButtonRelease-3>", id_release))
+            except Exception:
+                pass
+
+    def _unbind_preview_right_clicks(self):
+        if not getattr(self, "_preview_right_bind_ids", None):
+            return
+        for canvas, seq, bind_id in list(self._preview_right_bind_ids):
+            try:
+                canvas.unbind(seq, bind_id)
+            except Exception:
+                pass
+        self._preview_right_bind_ids = []
+
+    def _preview_set_image(self, pil_image, side="single", keep_view=False):
+        """Set image on preview; side can be 'single', 'left', 'right', or 'both'."""
+        if getattr(self, "preview_widget", None) is None:
+            return
+        if isinstance(self.preview_widget, SplitImage):
+            if side in ("left", "both"):
+                try:
+                    self.preview_widget.left_image.set_image(pil_image, keep_view=keep_view)
+                except Exception:
+                    pass
+            if side in ("right", "both"):
+                try:
+                    self.preview_widget.right_image.set_image(pil_image, keep_view=keep_view)
+                except Exception:
+                    pass
+        else:
+            try:
+                self.preview_widget.set_image(pil_image, keep_view=keep_view)
+            except Exception:
+                pass
+
+    def _update_preview_images_from_state(self):
+        """After preview creation, populate it with known images (original/edited)."""
+        if self.original_selected_image is None:
+            return
+        if isinstance(self.preview_widget, SplitImage):
+            # left = original
+            try:
+                self.preview_widget.left_image.set_image(self.original_selected_image)
+            except Exception:
+                pass
+            # right = edited if available else original
+            if self._edited_selected_image is not None:
+                try:
+                    self.preview_widget.right_image.set_image(self._edited_selected_image, keep_view=True)
+                except Exception:
+                    pass
+            else:
+                try:
+                    self.preview_widget.right_image.set_image(self.original_selected_image)
+                except Exception:
+                    pass
+        else:
+            # Single mode: show edited if available else original
+            if self._edited_selected_image is not None:
+                try:
+                    self.preview_widget.set_image(self._edited_selected_image, keep_view=True)
+                except Exception:
+                    pass
+            else:
+                try:
+                    self.preview_widget.set_image(self.original_selected_image)
+                except Exception:
+                    pass
 
     def create_options_frame(self):
         self.right_content_frame.grid_rowconfigure(0, weight=1)
@@ -362,9 +481,20 @@ class BatchImgEdit:
         menu.add_radiobutton(label="Always", variable=self.overwrite_mode_var, value=1)
         menu.add_radiobutton(label="On Conflict", variable=self.overwrite_mode_var, value=2)
         menu.add_radiobutton(label="Never", variable=self.overwrite_mode_var, value=3)
+        menu.add_separator()
+
+        self.use_split_view_var = tk.IntVar(value=0)
+        menu.add_command(label="View", state="disabled")
+        menu.add_checkbutton(label="Use Split View", variable=self.use_split_view_var)
 
         m_btn.configure(menu=menu)
         m_btn.pack(side="left", padx=2, pady=2)
+        # Trace toggle to rebuild preview
+        try:
+            self.use_split_view_var.trace_add("write", lambda *_: self._on_toggle_split_view())
+        except Exception:
+            # Older tkinter fallback
+            self.use_split_view_var.trace("w", lambda *_: self._on_toggle_split_view())
 
     def _make_label_clickable(self, label, var, from_val, to_val, is_special_radius=False):
         """Make a value label clickable to allow direct value entry."""
@@ -460,13 +590,20 @@ class BatchImgEdit:
 
     def on_preview_right_press(self, event):
         if self.original_selected_image is not None:
-            self.preview_image.set_image(self.original_selected_image, keep_view=True)
+            # In split view, show original in RIGHT pane (left is already original)
+            if isinstance(self.preview_widget, SplitImage):
+                self._preview_set_image(self.original_selected_image, side="right", keep_view=True)
+            else:
+                self._preview_set_image(self.original_selected_image, keep_view=True)
 
     def on_preview_right_release(self, event):
         if self._show_original_if_no_adjustments():
             return
         if self._edited_selected_image is not None:
-            self.preview_image.set_image(self._edited_selected_image, keep_view=True)
+            if isinstance(self.preview_widget, SplitImage):
+                self._preview_set_image(self._edited_selected_image, side="right", keep_view=True)
+            else:
+                self._preview_set_image(self._edited_selected_image, keep_view=True)
         elif self.original_selected_image is not None:
             adjustment_methods = self.get_adjustment_methods()
             if adjustment_methods:
@@ -573,7 +710,11 @@ class BatchImgEdit:
         img = self.get_pil_image(filename)
         if img is None:
             return
-        self.preview_image.set_image(img)
+        # Set original on preview (single or left split)
+        if isinstance(self.preview_widget, SplitImage):
+            self._preview_set_image(img, side="left")
+        else:
+            self._preview_set_image(img)
         if fullpath != self._original_selected_filename:
             self.original_selected_image = img.copy()
             self._original_selected_filename = fullpath
@@ -601,7 +742,11 @@ class BatchImgEdit:
     def _apply_adjustments_to_preview(self, adjustment_methods, image):
         try:
             edited_image = self.app.edit_panel.public_image_edit(image, adjustment_methods)
-            self.preview_image.set_image(edited_image, keep_view=True)
+            # For split view put edited on right pane, otherwise single preview
+            if isinstance(self.preview_widget, SplitImage):
+                self._preview_set_image(edited_image, side="right", keep_view=True)
+            else:
+                self._preview_set_image(edited_image, keep_view=True)
             self._edited_selected_image = edited_image.copy()
         except Exception as e:
             messagebox.showerror("Error: batch_image_edit._apply_adjustments_to_preview()", f"Failed to update preview: {e}")
@@ -617,7 +762,11 @@ class BatchImgEdit:
     def _show_original_if_no_adjustments(self):
         if all(getattr(self, var_attr).get() == 0 for var_attr in self._var_to_option):
             if self.original_selected_image is not None:
-                self.preview_image.set_image(self.original_selected_image, keep_view=True)
+                if isinstance(self.preview_widget, SplitImage):
+                    # set both panes to original
+                    self._preview_set_image(self.original_selected_image, side="both", keep_view=True)
+                else:
+                    self._preview_set_image(self.original_selected_image, keep_view=True)
             return True
         return False
 
@@ -978,5 +1127,13 @@ class BatchImgEdit:
 
     def open_help_window(self):
         self.help_window.open_window(text=HelpText.BATCH_IMAGE_EDIT_HELP, title="Batch Image Edit Help", geometry="450x700", icon=self.app.blank_image)
+
+    # New: handle when use-split option is toggled
+    def _on_toggle_split_view(self):
+        # Recreate preview widget and restore current image state
+        try:
+            self._create_preview_widget()
+        except Exception:
+            pass
 
 #endregion
