@@ -6,6 +6,7 @@ import os
 import tkinter as tk
 from tkinter import PhotoImage, ttk, filedialog
 from tkVideoPlayer import TkinterVideo
+from PIL import Image, ImageTk
 
 
 # Type Hinting
@@ -15,6 +16,8 @@ if TYPE_CHECKING:
 
 
 #endregion
+
+
 #region TimelineCanvas
 
 
@@ -164,6 +167,7 @@ class VideoPlayerWidget(ttk.Frame):
                 show_controls: bool = True,
                 play_image: Optional[Union[PhotoImage, str]] = None,
                 pause_image: Optional[Union[PhotoImage, str]] = None,
+                loading_image: Optional[Union[PhotoImage, str, Image.Image]] = None,
                 **kwargs: Any
                 ) -> None:
         """
@@ -172,41 +176,22 @@ class VideoPlayerWidget(ttk.Frame):
         Parameters:
         - master: Parent tk.Frame or tk.Tk instance
         - show_controls: Whether to show playback controls
+        - play_image: Image for play button
+        - pause_image: Image for pause button
+        - loading_image: Optional image to display while loading (will rotate)
         - kwargs: Additional arguments to pass to ttk.Frame
         """
         super().__init__(master, **kwargs)
         self.root = self._find_root()
-        # Initialize video player
         self.player: Optional[TkinterVideo] = TkinterVideo(keep_aspect=True, master=self)
         self.player.pack(expand=True, fill="both")
-        # Create loading label (initially hidden)
-        self.loading_label = ttk.Label(self, text="Loading...", font=('', 14))
-        # Initialize repeat state
         self.repeat: bool = True
         self.playing: bool = False
-        # Bind video events
-        self.player.bind("<<Duration>>", self._update_duration)
-        self.player.bind("<<SecondChanged>>", self._update_progress)
-        self.player.bind("<<Ended>>", self._handle_video_ended)
-        # Convert file paths to PhotoImage if needed
-        if isinstance(play_image, str) and os.path.isfile(play_image):
-            play_image = PhotoImage(file=play_image)
-        if isinstance(pause_image, str) and os.path.isfile(pause_image):
-            pause_image = PhotoImage(file=pause_image)
-        self.play_image = play_image
-        self.pause_image = pause_image
-        # Create player controls if enabled
+        self._initialize_loading_image(loading_image)
+        self._initialize_playback_images(play_image, pause_image)
         if show_controls:
             self._create_controls()
-        # Bind events to app if provided
-        if app:
-            self.player.bind("<Double-1>", lambda event: app.open_image(index=app.current_index, event=event))
-            self.player.bind('<Button-2>', app.open_image_directory)
-            self.player.bind("<Button-3>", app.show_image_context_menu)
-            self.player.bind("<Shift-MouseWheel>", app.mousewheel_nav)
-        self.player.bind("<Shift-Button-1>", self.start_drag, add="+")
-        self.player.bind("<Shift-B1-Motion>", self.dragging_window, add="+")
-        self.player.bind("<Shift-ButtonRelease-1>", self.stop_drag, add="+")
+        self._bind_events(app)
         self._timeline_update_job: Optional[str] = None
 
 
@@ -218,22 +203,48 @@ class VideoPlayerWidget(ttk.Frame):
         return master
 
 
-    def _set_play_pause_btn(self, playing: bool) -> None:
-        """Update play/pause button image or text based on state."""
-        if not hasattr(self, 'play_pause_btn'):
-            return
-        if playing:
-            if self.pause_image:
-                self.play_pause_btn.config(image=self.pause_image)
-                self.play_pause_btn.image = self.pause_image
-            else:
-                self.play_pause_btn.config(text="◼")
+    def _initialize_loading_image(self, loading_image):
+        self.loading_image_original: Optional[Image.Image] = None
+        if loading_image is not None:
+            if isinstance(loading_image, str) and os.path.isfile(loading_image):
+                self.loading_image_original = Image.open(loading_image)
+            elif isinstance(loading_image, PhotoImage):
+                self.loading_image_original = None
+            elif isinstance(loading_image, Image.Image):
+                self.loading_image_original = loading_image
+        if self.loading_image_original:
+            self.loading_label = ttk.Label(self)
         else:
-            if self.play_image:
-                self.play_pause_btn.config(image=self.play_image)
-                self.play_pause_btn.image = self.play_image
-            else:
-                self.play_pause_btn.config(text="▶")
+            self.loading_label = ttk.Label(self, text="Loading...", font=('', 14))
+        self._loading_rotation_angle: float = 0.0
+        self._loading_rotation_job: Optional[str] = None
+
+
+    def _initialize_playback_images(self, play_image, pause_image):
+        if isinstance(play_image, str) and os.path.isfile(play_image):
+            play_image = PhotoImage(file=play_image)
+        if isinstance(pause_image, str) and os.path.isfile(pause_image):
+            pause_image = PhotoImage(file=pause_image)
+        self.play_image = play_image
+        self.pause_image = pause_image
+
+
+    def _bind_events(self, app):
+        self.player.bind("<<Duration>>", self._update_duration)
+        self.player.bind("<<SecondChanged>>", self._update_progress)
+        self.player.bind("<<Ended>>", self._handle_video_ended)
+        self.player.bind("<Shift-Button-1>", self.start_drag, add="+")
+        self.player.bind("<Shift-B1-Motion>", self.dragging_window, add="+")
+        self.player.bind("<Shift-ButtonRelease-1>", self.stop_drag, add="+")
+        if app:
+            self.player.bind("<Double-1>", lambda event: app.open_image(index=app.current_index, event=event))
+            self.player.bind('<Button-2>', app.open_image_directory)
+            self.player.bind("<Button-3>", app.show_image_context_menu)
+            self.player.bind("<Shift-MouseWheel>", app.mousewheel_nav)
+
+
+#endregion
+#region UI Controls and State
 
 
     def _create_controls(self) -> None:
@@ -268,19 +279,30 @@ class VideoPlayerWidget(ttk.Frame):
         full_w = self.full_duration_label.winfo_reqwidth()
         frame.grid_columnconfigure(1, minsize=curr_w)
         frame.grid_columnconfigure(3, minsize=full_w)
-        # Track state
+
         self._was_playing: bool = False
 
 
-    def show_loading_label(self) -> None:
-        """Place a centered loading label over the player."""
-        self.loading_label.place(relx=0.5, rely=0.5, anchor='center')
-        self.update_idletasks()
+    def _set_play_pause_btn(self, playing: bool) -> None:
+        """Update play/pause button image or text based on state."""
+        if not hasattr(self, 'play_pause_btn'):
+            return
+        if playing:
+            if self.pause_image:
+                self.play_pause_btn.config(image=self.pause_image)
+                self.play_pause_btn.image = self.pause_image
+            else:
+                self.play_pause_btn.config(text="◼")
+        else:
+            if self.play_image:
+                self.play_pause_btn.config(image=self.play_image)
+                self.play_pause_btn.image = self.play_image
+            else:
+                self.play_pause_btn.config(text="▶")
 
 
-    def hide_loading_label(self) -> None:
-        """Hide the loading label."""
-        self.loading_label.place_forget()
+#endregion
+#region Loading and Playback
 
 
     def load_video(self, file_path: Optional[str] = None) -> bool:
@@ -352,6 +374,47 @@ class VideoPlayerWidget(ttk.Frame):
             current_pos = self.player.current_duration()
             new_pos = max(0.0, current_pos + seconds)
             self.seek(new_pos)
+
+
+#endregion
+#region Loading Animation
+
+
+    def show_loading_label(self, rotation_speed: int = 12, angle_tick: float = 6.0) -> None:
+        """Place a centered loading label over the player."""
+        self.loading_label.place(relx=0.5, rely=0.5, anchor='center')
+        self.update_idletasks()
+        if self.loading_image_original:
+            self._loading_rotation_angle = 0.0
+            self._rotation_speed = rotation_speed
+            self._angle_tick = angle_tick
+            self._rotate_loading_image()
+
+
+    def hide_loading_label(self) -> None:
+        """Hide the loading label and stop rotation animation."""
+        self.loading_label.place_forget()
+
+        if self._loading_rotation_job is not None:
+            self.after_cancel(self._loading_rotation_job)
+            self._loading_rotation_job = None
+        self._loading_rotation_angle = 0.0
+
+
+    def _rotate_loading_image(self) -> None:
+        """Rotate the loading image and schedule next rotation."""
+        if self.loading_image_original is None:
+            return
+        rotated = self.loading_image_original.rotate(self._loading_rotation_angle, resample=Image.BICUBIC, expand=False)
+        photo = ImageTk.PhotoImage(rotated)
+        self.loading_label.config(image=photo)
+        self.loading_label.image = photo  # Keep reference
+        self._loading_rotation_angle = (self._loading_rotation_angle + self._angle_tick) % 360
+        self._loading_rotation_job = self.after(self._rotation_speed, self._rotate_loading_image)
+
+
+#endregion
+#region Timeline and Progress
 
 
     def _on_timeline_press(self) -> None:
@@ -448,6 +511,11 @@ class VideoPlayerWidget(ttk.Frame):
             self.timeline.set_position(0)
 
 
+#endregion
+#region Utility
+
+
+
     def get_player(self) -> Optional[TkinterVideo]:
         """Return the internal TkinterVideo instance."""
         return self.player
@@ -466,6 +534,10 @@ class VideoPlayerWidget(ttk.Frame):
         if self.player and getattr(self.player, "video_path", None):
             return self.player.current_img()
         return None
+
+
+#endregion
+#region Window Dragging
 
 
     def start_drag(self, event: tk.Event) -> None:
@@ -492,3 +564,6 @@ class VideoPlayerWidget(ttk.Frame):
             width = self.root.winfo_width()
             height = self.root.winfo_height()
             self.root.geometry(f"{width}x{height}+{x}+{y}")
+
+
+#endregion
