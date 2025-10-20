@@ -107,7 +107,7 @@ class AutoTag:
         pane.add(listbox_frame, stretch="never")
         pane.paneconfig(listbox_frame, width=200, minsize=40)
         scrollbar = Scrollbar(listbox_frame, orient="vertical")
-        self.autotag_listbox = Listbox(listbox_frame, width=20, selectmode="extended", exportselection=False, yscrollcommand=scrollbar.set)
+        self.autotag_listbox = Listbox(listbox_frame, width=20, selectmode="extended", activestyle='none', exportselection=False, yscrollcommand=scrollbar.set)
         self.autotag_listbox.bind('<<ListboxSelect>>', lambda event: self.update_auto_tag_stats_label())
         self.autotag_listbox.bind("<Button-3>", lambda event: contextmenu.tk_popup(event.x_root, event.y_root))
         scrollbar.config(command=self.autotag_listbox.yview)

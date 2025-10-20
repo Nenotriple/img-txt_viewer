@@ -122,7 +122,7 @@ class BatchImgEdit:
 
         ttk.Label(self.left_content_frame, text="Images", anchor="center").grid(row=0, column=0, columnspan=2, sticky="ew")
 
-        self.image_listbox = tk.Listbox(self.left_content_frame, exportselection=False, selectmode="extended", width=30)
+        self.image_listbox = tk.Listbox(self.left_content_frame, exportselection=False, selectmode="extended", activestyle='none', width=30)
         self.image_listbox.grid(row=1, column=0, sticky="nsew")
         self.image_listbox.bind("<<ListboxSelect>>", self.on_listbox_select)
 

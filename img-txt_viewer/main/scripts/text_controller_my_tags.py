@@ -488,7 +488,7 @@ class MyTags:
         alltags_lbl = ttk.Label(self.alltags_frame, text="All Tags")
         alltags_lbl.grid(row=0, column=0, sticky='w', padx=2, pady=(2, 0))
 
-        self.alltags_listbox = Listbox(self.alltags_frame, selectmode='extended')
+        self.alltags_listbox = Listbox(self.alltags_frame, selectmode='extended', activestyle='none')
         self.alltags_listbox.grid(row=1, column=0, columnspan=2, sticky='nsew')
         self.alltags_listbox.bind("<Button-3>", show_context_menu)
         self.alltags_listbox.bind("<Double-Button-1>", lambda event: self.insert_selected_tags(self.alltags_listbox, 'end'))
