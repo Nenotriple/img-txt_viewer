@@ -2,8 +2,9 @@
 
 
 import datetime
+import os
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import PhotoImage, ttk, filedialog
 from tkVideoPlayer import TkinterVideo
 
 
@@ -150,7 +151,7 @@ class TimelineCanvas(tk.Canvas):
 
 class VideoPlayerWidget(ttk.Frame):
     """A Tkinter widget for video playback using tkVideoPlayer"""
-    def __init__(self, master=None, app: 'Main'=None, show_controls=True, **kwargs):
+    def __init__(self, master=None, app: 'Main'=None, show_controls=True, play_image=None, pause_image=None, **kwargs):
         """
         Initialize the video player widget
 
@@ -173,6 +174,13 @@ class VideoPlayerWidget(ttk.Frame):
         self.player.bind("<<Duration>>", self._update_duration)
         self.player.bind("<<SecondChanged>>", self._update_progress)
         self.player.bind("<<Ended>>", self._handle_video_ended)
+        # Convert file paths to PhotoImage if needed
+        if isinstance(play_image, str) and os.path.isfile(play_image):
+            play_image = PhotoImage(file=play_image)
+        if isinstance(pause_image, str) and os.path.isfile(pause_image):
+            pause_image = PhotoImage(file=pause_image)
+        self.play_image = play_image
+        self.pause_image = pause_image
         # Create player controls if enabled
         if show_controls:
             self._create_controls()
@@ -196,13 +204,35 @@ class VideoPlayerWidget(ttk.Frame):
         return master
 
 
+    def _set_play_pause_btn(self, playing: bool):
+        """Set play/pause button icon or text based on playing state."""
+        if not hasattr(self, 'play_pause_btn'):
+            return
+        if playing:
+            if self.pause_image:
+                self.play_pause_btn.config(image=self.pause_image)
+                self.play_pause_btn.image = self.pause_image
+            else:
+                self.play_pause_btn.config(text="◼")
+        else:
+            if self.play_image:
+                self.play_pause_btn.config(image=self.play_image)
+                self.play_pause_btn.image = self.play_image
+            else:
+                self.play_pause_btn.config(text="▶")
+
+
     def _create_controls(self):
         """Create player controls"""
         # Single control row
         frame = ttk.Frame(self)
         frame.pack(side="bottom", fill="x", padx=5)
         # Play/Pause button
-        self.play_pause_btn = ttk.Button(frame, text="▶", command=self.toggle_play_pause, width=2)
+        if self.play_image:
+            self.play_pause_btn = ttk.Button(frame, image=self.play_image, command=self.toggle_play_pause, width=2, takefocus=False)
+            self.play_pause_btn.image = self.play_image
+        else:
+            self.play_pause_btn = ttk.Button(frame, text="▶", command=self.toggle_play_pause, width=2, takefocus=False)
         self.play_pause_btn.pack(side="left")
         # Current duration label
         self.current_duration_label = ttk.Label(frame, text="0:00:00")
@@ -237,7 +267,7 @@ class VideoPlayerWidget(ttk.Frame):
             file_path = filedialog.askopenfilename(filetypes=[("Video files", "*.mp4"), ("All files", "*.*")])
         if file_path:
             self.player.load(file_path)
-            self.play_pause_btn.config(text="▶")
+            self._set_play_pause_btn(playing=False)
             self.timeline.set_duration(0)
             self.timeline.set_position(0)
             self.show_loading_label()
@@ -250,7 +280,7 @@ class VideoPlayerWidget(ttk.Frame):
         """Play the video"""
         self.hide_loading_label()
         self.player.play()
-        self.play_pause_btn.config(text="◼")
+        self._set_play_pause_btn(playing=True)
         self.playing = True
         self._start_timeline_update()
 
@@ -258,7 +288,7 @@ class VideoPlayerWidget(ttk.Frame):
     def pause(self):
         """Pause the video"""
         self.player.pause()
-        self.play_pause_btn.config(text="▶")
+        self._set_play_pause_btn(playing=False)
         self.playing = False
         self._stop_timeline_update()
 
@@ -276,7 +306,7 @@ class VideoPlayerWidget(ttk.Frame):
     def stop(self):
         """Stop the video"""
         self.player.stop()
-        self.play_pause_btn.config(text="▶")
+        self._set_play_pause_btn(playing=False)
         self.timeline.set_position(0)
         self.playing = False
         self._stop_timeline_update()
@@ -380,7 +410,7 @@ class VideoPlayerWidget(ttk.Frame):
             self.seek(0)
             self.play()
         else:
-            self.play_pause_btn.config(text="▶")
+            self._set_play_pause_btn(playing=False)
             self.timeline.set_position(0)
 
 
