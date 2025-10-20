@@ -849,6 +849,11 @@ class ImgTxtViewer:
         self.config_text_pane_for_tab()
         self.update_mytags_tab()
         self.initialize_text_pane = False
+        tabs_to_disable = ['S&R', 'Prefix', 'Append', 'Filter', 'Highlight', 'Font']
+        if self.current_text_notebook_tab in tabs_to_disable:
+            self.text_pane.bind("<B1-Motion>", self.disable_button)
+        else:
+            self.text_pane.unbind("<B1-Motion>")
 
 
     def on_text_widget_frame_configure(self, event):
