@@ -116,11 +116,11 @@ class MyTags:
 
     def load_treeview_icons(self):
         try:
-            group_icon = PhotoImage(file=os.path.join(self.app.app_root_path, "main", "tree_group_icon2.png"))
+            group_icon = PhotoImage(file=os.path.join(self.app.app_root_path, "main", "tree_group_icon.png"))
         except Exception:
             group_icon = None
         try:
-            item_icon = PhotoImage(file=os.path.join(self.app.app_root_path, "main", "tree_item_icon2.png"))
+            item_icon = PhotoImage(file=os.path.join(self.app.app_root_path, "main", "tree_item_icon.png"))
         except Exception:
             item_icon = None
         return group_icon, item_icon
@@ -446,14 +446,11 @@ class MyTags:
         self.custom_dictionary_treeview.column('#0', anchor='w')
         self.custom_dictionary_treeview.grid(row=1, column=0, sticky='nsew')
         self._apply_treeview_styles()
-        # Ensure Treeview uses the custom style
-        try:
-            self.custom_dictionary_treeview.configure(style=self._tree_style_name)
-        except Exception:
-            pass
+        self.custom_dictionary_treeview.configure(style=self._tree_style_name)
 
         self.custom_dictionary_treeview.bind("<Button-3>", show_context_menu)
         self.custom_dictionary_treeview.bind("<Double-Button-1>", lambda event: self.insert_selected_tags(self.custom_dictionary_treeview, 'end'))
+        self.custom_dictionary_treeview.bind("<Button-1>", self.clear_treeview_selection_on_empty_click, add='+')
 
         # Drag & Drop (middle mouse)
         self.custom_dictionary_treeview.bind("<Button-2>", self._dnd_start)
@@ -660,24 +657,27 @@ class MyTags:
         folder_iid = None
         if len(sel) == 1:
             try:
-                if 'folder' in tree.item(sel[0], 'tags'):
+                tags = tree.item(sel[0], 'tags')
+                if 'folder' in tags:
                     folder_iid = sel[0]
+                elif 'item' in tags:
+                    folder_iid = tree.parent(sel[0]) or ''
             except Exception:
                 folder_iid = None
         changed = False
-        if folder_iid:
+        if folder_iid is not None:
             existing = set(tree.item(i)['text'] for i in tree.get_children(folder_iid) if 'item' in tree.item(i, 'tags'))
             for idx in selected_indices:
                 tag = self.alltags_listbox.get(idx)
                 if tag not in existing:
-                    tree.insert(folder_iid, 'end', text=tag, tags=('item',))
+                    self._insert_item(folder_iid, tag)
                     changed = True
         else:
             existing = set(tree.item(i)['text'] for i in tree.get_children('') if 'folder' not in tree.item(i, 'tags'))
             for idx in selected_indices:
                 tag = self.alltags_listbox.get(idx)
                 if tag not in existing:
-                    tree.insert('', 'end', text=tag, tags=('item',))
+                    self._insert_item('', tag)
                     changed = True
         if changed:
             self.check_unsaved_changes()
@@ -1426,6 +1426,13 @@ class MyTags:
             return
         self._sort_folders_recursively(tree, '')
         self.check_unsaved_changes()
+
+
+    def clear_treeview_selection_on_empty_click(self, event):
+        tree: 'ttk.Treeview' = event.widget
+        iid = tree.identify_row(event.y)
+        if not iid:
+            tree.selection_remove(tree.selection())
 
 
     #endregion
