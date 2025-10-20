@@ -238,28 +238,36 @@ class VideoPlayerWidget(ttk.Frame):
 
     def _create_controls(self) -> None:
         """Create control row: play/pause, time labels and timeline canvas."""
-        # Single control row
+
         frame = ttk.Frame(self)
         frame.pack(side="bottom", fill="x", padx=5)
-        # Play/Pause button
+
+        frame.columnconfigure(2, weight=1)
+
         if self.play_image:
             self.play_pause_btn = ttk.Button(frame, image=self.play_image, command=self.toggle_play_pause, width=2, takefocus=False)
             self.play_pause_btn.image = self.play_image
         else:
             self.play_pause_btn = ttk.Button(frame, text="▶", command=self.toggle_play_pause, width=2, takefocus=False)
-        self.play_pause_btn.pack(side="left")
-        # Current duration label
+        self.play_pause_btn.grid(row=0, column=0, sticky="w")
+
         self.current_duration_label = ttk.Label(frame, text="0:00:00")
-        self.current_duration_label.pack(side="left")
-        # Custom Canvas timeline
+        self.current_duration_label.grid(row=0, column=1, sticky="w", padx=(6, 6))
+
         self.timeline = TimelineCanvas(frame)
         self.timeline.position_callback = self._seek_from_timeline
         self.timeline.press_callback = self._on_timeline_press
         self.timeline.release_callback = self._on_timeline_release
-        self.timeline.pack(side="left", fill="x", expand=True, padx=5)
-        # Total video duration label
+        self.timeline.grid(row=0, column=2, sticky="ew", padx=5)
+
         self.full_duration_label = ttk.Label(frame, text="0:00:00")
-        self.full_duration_label.pack(side="left")
+        self.full_duration_label.grid(row=0, column=3, sticky="e", padx=(6, 0))
+
+        self.update_idletasks()
+        curr_w = self.current_duration_label.winfo_reqwidth()
+        full_w = self.full_duration_label.winfo_reqwidth()
+        frame.grid_columnconfigure(1, minsize=curr_w)
+        frame.grid_columnconfigure(3, minsize=full_w)
         # Track state
         self._was_playing: bool = False
 
