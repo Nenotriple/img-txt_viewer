@@ -272,7 +272,7 @@ class FindReplaceEntry(ttk.Frame):
         self.find_entry.bind("<Escape>", lambda e: self.hide_widget())
         EntryHelper.bind_helpers(self.find_entry)
         # Options menubutton
-        self.options_menubutton = ttk.Menubutton(self, text="☰")
+        self.options_menubutton = ttk.Menubutton(self, text="☰", width=2)
         self.options_menubutton.grid(row=0, column=3)
         self.options_menu = tk.Menu(self.options_menubutton, tearoff=0)
         self.options_menubutton.config(menu=self.options_menu)

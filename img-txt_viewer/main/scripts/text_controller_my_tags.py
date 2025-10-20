@@ -24,8 +24,9 @@ from TkToolTip.TkToolTip import TkToolTip as Tip
 
 # Custom Libraries
 import main.scripts.custom_simpledialog as custom_dialog
-from main.scripts import HelpText
 import main.scripts.entry_helper as EntryHelper
+from main.scripts.buttonmenu import ButtonMenu
+from main.scripts import HelpText
 
 
 # Type Hinting
@@ -351,31 +352,41 @@ class MyTags:
         top_frame = Frame(self.app.tab8)
         top_frame.grid(row=0, column=0, sticky='ew')
 
-        help_btn = ttk.Button(top_frame, text="?", takefocus=False, width=2, command=self.show_my_tags_help)
-        help_btn.pack(side='left')
+        # Tag entry + Add + Save
+        entry_frame = Frame(top_frame)
+        entry_frame.pack(side='left', fill='x', expand=True, pady=4)
+
+        self.tag_entry = ttk.Entry(entry_frame)
+        self.tag_entry.pack(side='left', fill='x', expand=True)
+        self.tag_entry.bind('<Return>', lambda event: (self.add_tag(self.tag_entry.get()), self.tag_entry.delete(0, 'end')))
+        EntryHelper.bind_helpers(self.tag_entry)
+
+        add_btn = ttk.Button(entry_frame, text="Add", command=lambda: (self._insert_item('', self.tag_entry.get().strip()), self.tag_entry.delete(0, 'end')))
+        add_btn.pack(side='left')
+        Tip.create(widget=add_btn, text="Add tag to 'My Tags'")
+
+        self.save_btn = ttk.Button(top_frame, text="Save Tags", takefocus=False, command=self.save_my_tags_file)
+        self.save_btn.pack(side='left')
+        self.save_btn_tooltip = Tip.create(widget=self.save_btn, text="Save changes to 'My Tags' file")
 
         # Options Menu
-        menubutton = ttk.Menubutton(top_frame, text="Options", takefocus=False)
-        menubutton.pack(side='left')
-        menu = Menu(menubutton, tearoff=0)
-        menubutton.config(menu=menu)
-        menu.add_checkbutton(label="Use: MyTags", variable=self.app.use_mytags_var, command=self.refresh_custom_dictionary)
-        menu.add_checkbutton(label="Show: All Tags", variable=self.show_all_tags_var, command=self.toggle_all_tags_listbox)
-        menu.add_separator()
-        menu.add_command(label="Refresh: My Tags", command=self.load_my_tags_file)
-        menu.add_command(label="Refresh: All Tags", command=self.refresh_all_tags_listbox)
-        menu.add_separator()
-        menu.add_checkbutton(label="Hide: My Tags - Controls", variable=self.hide_mytags_controls_var, command=self.toggle_mytags_controls)
-        menu.add_checkbutton(label="Hide: All Tags - Controls", variable=self.hide_alltags_controls_var, command=self.toggle_alltags_controls)
-        menu.add_separator()
-        menu.add_command(label="Sort MyTags Tags", command=self.sort_all_groups_items)
-        menu.add_command(label="Sort MyTags Groups", command=self.sort_all_groups)
-        menu.add_separator()
-
+        btn_menu = ButtonMenu(top_frame, text="☰", width=2)
+        btn_menu.pack(side='left')
+        btn_menu.menu.add_checkbutton(label="Use: MyTags", variable=self.app.use_mytags_var, command=self.refresh_custom_dictionary)
+        btn_menu.menu.add_checkbutton(label="Show: All Tags", variable=self.show_all_tags_var, command=self.toggle_all_tags_listbox)
+        btn_menu.menu.add_separator()
+        btn_menu.menu.add_command(label="Refresh: My Tags", command=self.load_my_tags_file)
+        btn_menu.menu.add_command(label="Refresh: All Tags", command=self.refresh_all_tags_listbox)
+        btn_menu.menu.add_separator()
+        btn_menu.menu.add_checkbutton(label="Hide: My Tags - Controls", variable=self.hide_mytags_controls_var, command=self.toggle_mytags_controls)
+        btn_menu.menu.add_checkbutton(label="Hide: All Tags - Controls", variable=self.hide_alltags_controls_var, command=self.toggle_alltags_controls)
+        btn_menu.menu.add_separator()
+        btn_menu.menu.add_command(label="Sort MyTags Tags", command=self.sort_all_groups_items)
+        btn_menu.menu.add_command(label="Sort MyTags Groups", command=self.sort_all_groups)
+        btn_menu.menu.add_separator()
         # MyTags Font Style submenu
-        font_menu = Menu(menu, tearoff=0)
-        menu.add_cascade(label="MyTags Font Style", menu=font_menu)
-
+        font_menu = Menu(btn_menu.menu, tearoff=0)
+        btn_menu.menu.add_cascade(label="MyTags Font Style", menu=font_menu)
         # Groups Style submenu
         groups_menu = Menu(font_menu, tearoff=0)
         font_menu.add_cascade(label="Groups", menu=groups_menu)
@@ -391,7 +402,6 @@ class MyTags:
         groups_menu.add_command(label="Background...", command=lambda: self._choose_color('groups', 'background'))
         groups_menu.add_separator()
         groups_menu.add_command(label="Reset", command=lambda: self._reset_font_style('groups'))
-
         # Items Style submenu
         items_menu = Menu(font_menu, tearoff=0)
         font_menu.add_cascade(label="Items", menu=items_menu)
@@ -407,26 +417,12 @@ class MyTags:
         items_menu.add_command(label="Background...", command=lambda: self._choose_color('items', 'background'))
         items_menu.add_separator()
         items_menu.add_command(label="Reset", command=lambda: self._reset_font_style('items'))
-        menu.add_separator()
-        menu.add_command(label="Cleanup MyTags", command=self.cleanup_custom_dictionary)
-        menu.add_command(label="Open MyTags File...", command=lambda: self.app.open_textfile(self.app.my_tags_yml))
-
-        # Tag entry + Add + Save
-        entry_frame = Frame(top_frame)
-        entry_frame.pack(side='left', fill='x', expand=True, pady=4)
-
-        self.tag_entry = ttk.Entry(entry_frame)
-        self.tag_entry.pack(side='left', fill='x', expand=True)
-        self.tag_entry.bind('<Return>', lambda event: (self.add_tag(self.tag_entry.get()), self.tag_entry.delete(0, 'end')))
-        EntryHelper.bind_helpers(self.tag_entry)
-
-        add_btn = ttk.Button(entry_frame, text="Add", command=lambda: (self.add_tag(self.tag_entry.get()), self.tag_entry.delete(0, 'end')))
-        add_btn.pack(side='left')
-        Tip.create(widget=add_btn, text="Add tag to 'My Tags'")
-
-        self.save_btn = ttk.Button(top_frame, text="Save Tags", takefocus=False, command=self.save_my_tags_file)
-        self.save_btn.pack(side='right')
-        self.save_btn_tooltip = Tip.create(widget=self.save_btn, text="Save changes to 'My Tags' file")
+        # Other commands
+        btn_menu.menu.add_separator()
+        btn_menu.menu.add_command(label="Cleanup MyTags", command=self.cleanup_custom_dictionary)
+        btn_menu.menu.add_command(label="Open MyTags File...", command=lambda: self.app.open_textfile(self.app.my_tags_yml))
+        btn_menu.menu.add_separator()
+        btn_menu.menu.add_command(label="Help", command=self.show_my_tags_help)
 
         # Middle Row
         self.text_frame = ttk.PanedWindow(self.app.tab8, orient='horizontal')

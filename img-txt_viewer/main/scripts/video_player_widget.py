@@ -70,7 +70,7 @@ class VideoPlayerWidget(ttk.Frame):
         controls = ttk.Frame(self)
         controls.pack(side="bottom", fill="x", padx=5)
         # Play/Pause button
-        self.play_pause_btn = ttk.Button(controls, text="▶", command=self.toggle_play_pause, width=3)
+        self.play_pause_btn = ttk.Button(controls, text="▶", command=self.toggle_play_pause, width=2)
         self.play_pause_btn.pack(side="left")
         # Start time label
         self.start_time = ttk.Label(controls, text="0:00:00")

@@ -574,62 +574,183 @@ FIND_DUPLICATE_FILE_HELP = """
 
 
 #endregion
+#region Search and Replace
+
+
+SEARCH_AND_REPLACE_HELP = """
+# Search and Replace
+
+Use this tool to search for a string of text across all text files in the selected directory.
+
+## How It Works
+
+If a match is found, it will be replaced exactly with the given text.
+
+## Example
+
+- **Search for:** *the big brown dog*
+- **Replace with:** *the big red dog*
+
+This will replace all instances of *the big brown dog* with *the big red dog*.
+
+## Filtering
+
+If a filter is applied, only text files that match the filter will be affected.
+"""
+
+
+#endregion
+#region Prefix
+
+
+PREFIX_HELP = """
+# Prefix Tool
+
+Use this tool to prefix all text files in the selected directory with the entered text.
+
+## How It Works
+
+- **The entered text will appear at the start of each text file.**
+- *Commas will be inserted as needed for formatting.*
+
+## Filtering
+
+- If a filter is applied, only text files that match the filter will be affected.
+
+"""
+
+
+#endregion
+#region Append
+
+
+APPEND_HELP = """
+# Append Tool
+
+Use this tool to append all text files in the selected directory with the entered text.
+
+## How It Works
+
+- **The entered text will appear at the end of each text file.**
+- *Commas will be inserted as needed for formatting.*
+
+## Filtering
+
+- If a filter is applied, only text files that match the filter will be affected.
+
+"""
+
+
+#endregion
+#region AutoTag
+
+
+AUTOTAG_HELP = """ """
+
+
+
+#endregion
+#region Filter
+
+
+FILTER_HELP = """
+# Filter Tool
+
+This tool will filter all img-txt pairs based on the provided text.
+
+## How To Use
+
+- Enter any string of text to display only img-txt pairs containing that text.
+- Use ` + ` to include multiple strings when filtering.
+- Use `!` before the text to exclude any pairs containing that text.
+
+### Examples
+
+- *dog* (shows only pairs containing the text dog)
+- *!dog* (removes all pairs containing the text dog)
+- *!dog + cat* (remove dog pairs, display cat pairs)
+
+"""
+
+
+
+#endregion
+#region Highlight
+
+
+HIGHLIGHT_HELP = """
+# Highlight Tool
+
+Enter the text you want to highlight each time you move to a new img-txt pair.
+
+## How To Use
+
+- Use ` + ` to highlight multiple strings of text.
+
+### Example
+
+- *dog + cat*
+
+"""
+
+
+#endregion
 #region MyTags
 
 
 MY_TAGS_HELP = """
 # MyTags - Information
 
-Curate your own tags (with optional folders) for autocomplete and quick insertion into the caption box.
+Curate your own tags (*with optional folders*) for autocomplete and quick insertion into the caption box.
 
 ## Layout
 
-- *My Tags (left):* your library as a tree (groups and items).
-- *All Tags (right):* tags aggregated from your files (toggle via Options - Show: All Tags).
+- *My Tags (left):* your library as a tree (*groups and items*).
+- *All Tags (right):* tags aggregated from your files (*toggle via Options - Show: All Tags*).
 
 ## Add & Organize
 
-- Type in the box and press Enter or click Add.
-- To add inside a folder: select exactly one folder, then add; or right-click a folder -> New Tag...
-- New group: right-click in the My Tags tree -> New Group...
-- From All Tags: select and click "<" or right-click -> Add to MyTags.
-- From elsewhere: right-click selected text or the AutoTag list -> Add to MyTags.
+- Type in the box and press *Enter* or click *Add*.
+- To add inside a folder: select exactly one folder, then add; or right-click a folder - *New Tag...*
+- New group: right-click in the My Tags tree - *New Group...*
+- From All Tags: select and click "<" or right-click - *Add to MyTags*.
+- From elsewhere: right-click selected text or the AutoTag list - *Add to MyTags*.
 
 ## Selecting & Menus
 
-- Use Ctrl / Shift to multi-select; right-click for context actions.
-- Selection tools: All, Invert, Select All Groups, Select All Tags.
-- Move to...: move selected items into any folder (choose (Root) for top level).
+- Use *Ctrl / Shift* to multi-select; right-click for context actions.
+- Selection tools: *All, Invert, Select All Groups, Select All Tags*.
+- *Move to...*: move selected items into any folder (*choose (Root) for top level*).
 
 ## Insert Into Text
 
 - *Prefix* inserts before existing text; *Append* inserts after.
-- Double-click any tag to Append. Works from both panes.
+- Double-click any tag to *Append*. Works from both panes.
 
 ## Edit, Move, Reorder
 
-- Edit / Rename: select and click Edit or right-click -> Rename...
-- Remove: deletes selected rows (deleting a group removes its contents).
-- Reorder: drag with the middle mouse button (within the same parent) or use Move Up / Down.
+- *Edit / Rename*: select and click *Edit* or right-click - *Rename...*
+- *Remove*: deletes selected rows (*deleting a group removes its contents*).
+- *Reorder*: drag with the middle mouse button (*within the same parent*) or use *Move Up / Down*.
 - Drag-and-drop shows a blue placeholder; multi-select reorder is supported.
 
 ## Save & Refresh
 
-- Save Tags writes changes to *my_tags.yaml* and updates autocomplete.
-- Refresh My Tags reloads from file (unsaved changes are discarded).
-- Refresh All Tags recomputes the right pane from your files.
+- *Save Tags* writes changes to *my_tags.yaml* and updates autocomplete.
+- *Refresh My Tags* reloads from file (*unsaved changes are discarded*).
+- *Refresh All Tags* recomputes the right pane from your files.
 
 ## Options & Appearance
 
-- Use: MyTags - enable or disable MyTags for autocomplete.
-- Show: All Tags - toggle the All Tags panel.
-- Hide: controls - show or hide button rows under each pane.
-- MyTags Font Style - set font, size, bold, italic, underline, overstrike and colors separately for Groups and Items; Reset restores defaults; row height auto-adjusts.
-- Open MyTags File... - open *my_tags.yaml* in your editor.
+- *Use: MyTags* - enable or disable MyTags for autocomplete.
+- *Show: All Tags* - toggle the All Tags panel.
+- *Hide: controls* - show or hide button rows under each pane.
+- *MyTags Font Style* - set font, size, bold, italic, underline, overstrike and colors separately for Groups and Items; *Reset* restores defaults; row height auto-adjusts.
+- *Open MyTags File...* - open *my_tags.yaml* in your editor.
 
 ## Maintenance
 
-- Cleanup MyTags removes duplicates (case-sensitive), empty or quoted tags, and empty groups. This cannot be undone.
+- *Cleanup MyTags* removes duplicates (*case-sensitive*), empty or quoted tags, and empty groups. *This cannot be undone.*
 
 ## Notes
 

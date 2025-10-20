@@ -16,14 +16,16 @@ from tkinter import (
 
 
 # Third-Party Libraries
+from tkmarktext import TextWindow
 from TkToolTip.TkToolTip import TkToolTip as Tip
 
 
 # Custom Libraries
+import main.scripts.HelpText as HelpText
 import main.scripts.entry_helper as entry_helper
+from main.scripts.buttonmenu import ButtonMenu
 from main.scripts.text_controller_my_tags import MyTags
 from main.scripts.text_controller_auto_tag import AutoTag
-
 
 # Type Hinting
 from typing import TYPE_CHECKING
@@ -41,12 +43,14 @@ class TextController:
         self.root = root
         self.entry_helper = entry_helper
 
-        # Filter
         self.filter_is_active = False
-        # AutoTag
         self.auto_tag = AutoTag(self.app, self.root)
-        # MyTags
         self.my_tags = MyTags(self.app, self.root)
+
+
+    def show_help_dialog(self, text):
+        window = TextWindow(master=self.root)
+        window.open_window(text=text, title="Help", geometry="600x300", icon=self.app.blank_image)
 
 
 #endregion
@@ -55,45 +59,31 @@ class TextController:
 
     def create_search_and_replace_widgets_tab1(self):
         btn_frame = Frame(self.app.tab1)
-        btn_frame.pack(side='top', fill='x')
+        btn_frame.pack(fill='x', pady=4)
         search_lbl = Label(btn_frame, width=8, text="Search:")
-        search_lbl.pack(side='left', anchor="n", pady=4)
+        search_lbl.pack(side='left', anchor="n")
         Tip.create(widget=search_lbl, text="Enter the EXACT text you want to search for")
         self.search_entry = ttk.Entry(btn_frame, textvariable=self.app.search_string_var, width=4)
-        self.search_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
+        self.search_entry.pack(side='left', anchor="n", fill='both', expand=True)
         self.entry_helper.bind_helpers(self.search_entry)
         replace_lbl = Label(btn_frame, width=8, text="Replace:")
-        replace_lbl.pack(side='left', anchor="n", pady=4)
+        replace_lbl.pack(side='left', anchor="n")
         Tip.create(widget=replace_lbl, text="Enter the text you want to replace the searched text with\n\nLeave empty to replace with nothing (delete)")
         self.replace_entry = ttk.Entry(btn_frame, textvariable=self.app.replace_string_var, width=4)
-        self.replace_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
+        self.replace_entry.pack(side='left', anchor="n", fill='both', expand=True)
         self.entry_helper.bind_helpers(self.replace_entry)
         self.replace_entry.bind('<Return>', lambda event: self.search_and_replace())
         replace_btn = ttk.Button(btn_frame, text="Go!", width=5, command=self.search_and_replace)
-        replace_btn.pack(side='left', anchor="n", pady=4)
+        replace_btn.pack(side='left', anchor="n")
         Tip.create(widget=replace_btn, text="Text files will be backup up")
-        clear_btn = ttk.Button(btn_frame, text="Clear", width=5, command=self.clear_search_and_replace_tab)
-        clear_btn.pack(side='left', anchor="n", pady=4)
-        undo_btn = ttk.Button(btn_frame, text="Undo", width=5, command=self.app.restore_backup)
-        undo_btn.pack(side='left', anchor="n", pady=4)
-        Tip.create(widget=undo_btn, text="Revert last action")
-        regex_chk = ttk.Checkbutton(btn_frame, text="Regex", variable=self.app.search_and_replace_regex_var)
-        regex_chk.pack(side='left', anchor="n", pady=4)
-        Tip.create(widget=regex_chk, text="Use Regular Expressions in 'Search'")
-        text_frame = Frame(self.app.tab1, borderwidth=0)
-        text_frame.pack(side='top', fill="both")
-        info_text = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
-        info_text.pack(side='bottom', fill='both')
-        info_text.insert("1.0",
-            "Use this tool to search for a string of text across all text files in the selected directory.\n\n"
-            "If a match is found, it will be replaced exactly with the given text.\n\n"
-            "Example:\n"
-            "Search for: the big brown dog\n"
-            "Replace with: the big red dog\n\n"
-            "This will replace all instances of 'the big brown dog' with 'the big red dog'.\n\n"
-            "If a filter is applied, only text files that match the filter will be affected."
-        )
-        info_text.config(state="disabled", wrap="word")
+        menu_btn = ButtonMenu(btn_frame, text="☰", width=2)
+        menu_btn.pack(side='left', anchor="n")
+        menu_btn.menu.add_command(label="Clear Fields", command=self.clear_search_and_replace_tab)
+        menu_btn.menu.add_command(label="Undo Last Action", command=self.app.restore_backup)
+        menu_btn.menu.add_separator()
+        menu_btn.menu.add_checkbutton(label="Use Regular Expressions", variable=self.app.search_and_replace_regex_var)
+        menu_btn.menu.add_separator()
+        menu_btn.menu.add_command(label="Help", command=lambda: self.show_help_dialog(HelpText.SEARCH_AND_REPLACE_HELP))
 
 
     def clear_search_and_replace_tab(self):
@@ -147,32 +137,23 @@ class TextController:
 
     def create_prefix_text_widgets_tab2(self):
         btn_frame = Frame(self.app.tab2)
-        btn_frame.pack(side='top', fill='x')
+        btn_frame.pack(fill='x', pady=4)
         prefix_lbl = Label(btn_frame, width=8, text="Prefix:")
-        prefix_lbl.pack(side='left', anchor="n", pady=4)
+        prefix_lbl.pack(side='left', anchor="n")
         Tip.create(widget=prefix_lbl, text="Enter the text you want to insert at the START of all text files\n\nCommas will be inserted as needed")
         self.prefix_entry = ttk.Entry(btn_frame, textvariable=self.app.prefix_string_var)
-        self.prefix_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
+        self.prefix_entry.pack(side='left', anchor="n", fill='both', expand=True)
         self.entry_helper.bind_helpers(self.prefix_entry)
         self.prefix_entry.bind('<Return>', lambda event: self.prefix_text_files())
         prefix_btn = ttk.Button(btn_frame, text="Go!", width=5, command=self.prefix_text_files)
-        prefix_btn.pack(side='left', anchor="n", pady=4)
+        prefix_btn.pack(side='left', anchor="n")
         Tip.create(widget=prefix_btn, text="Text files will be backup up")
-        clear_btn = ttk.Button(btn_frame, text="Clear", width=5, command=lambda: self.prefix_entry.delete(0, 'end'))
-        clear_btn.pack(side='left', anchor="n", pady=4)
-        undo_btn = ttk.Button(btn_frame, text="Undo", width=5, command=self.app.restore_backup)
-        undo_btn.pack(side='left', anchor="n", pady=4)
-        Tip.create(widget=undo_btn, text="Revert last action")
-        text_frame = Frame(self.app.tab2, borderwidth=0)
-        text_frame.pack(side='top', fill="both")
-        info_text = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
-        info_text.pack(side='bottom', fill='both')
-        info_text.insert("1.0",
-            "Use this tool to prefix all text files in the selected directory with the entered text.\n\n"
-            "This means that the entered text will appear at the start of each text file.\n\n"
-            "If a filter is applied, only text files that match the filter will be affected."
-        )
-        info_text.config(state="disabled", wrap="word")
+        menu_btn = ButtonMenu(btn_frame, text="☰", width=2)
+        menu_btn.pack(side='left', anchor="n")
+        menu_btn.menu.add_command(label="Clear Field", command=lambda: self.prefix_entry.delete(0, 'end'))
+        menu_btn.menu.add_command(label="Undo Last Action", command=self.app.restore_backup)
+        menu_btn.menu.add_separator()
+        menu_btn.menu.add_command(label="Help", command=lambda: self.show_help_dialog(HelpText.PREFIX_HELP))
 
 
     def prefix_text_files(self):
@@ -212,32 +193,23 @@ class TextController:
 
     def create_append_text_widgets_tab3(self):
         btn_frame = Frame(self.app.tab3)
-        btn_frame.pack(side='top', fill='x')
+        btn_frame.pack(fill='x', pady=4)
         append_lbl = Label(btn_frame, width=8, text="Append:")
-        append_lbl.pack(side='left', anchor="n", pady=4)
+        append_lbl.pack(side='left', anchor="n")
         Tip.create(widget=append_lbl, text="Enter the text you want to insert at the END of all text files\n\nCommas will be inserted as needed")
         self.append_entry = ttk.Entry(btn_frame, textvariable=self.app.append_string_var)
-        self.append_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
+        self.append_entry.pack(side='left', anchor="n", fill='both', expand=True)
         self.entry_helper.bind_helpers(self.append_entry)
         self.append_entry.bind('<Return>', lambda event: self.append_text_files())
         append_btn = ttk.Button(btn_frame, text="Go!", width=5, command=self.append_text_files)
-        append_btn.pack(side='left', anchor="n", pady=4)
+        append_btn.pack(side='left', anchor="n")
         Tip.create(widget=append_btn, text="Text files will be backup up")
-        clear_btn = ttk.Button(btn_frame, text="Clear", width=5, command=lambda: self.append_entry.delete(0, 'end'))
-        clear_btn.pack(side='left', anchor="n", pady=4)
-        undo_btn = ttk.Button(btn_frame, text="Undo", width=5, command=self.app.restore_backup)
-        undo_btn.pack(side='left', anchor="n", pady=4)
-        Tip.create(widget=undo_btn, text="Revert last action")
-        text_frame = Frame(self.app.tab3, borderwidth=0)
-        text_frame.pack(side='top', fill="both")
-        info_text = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
-        info_text.pack(side='bottom', fill='both')
-        info_text.insert("1.0",
-            "Use this tool to append all text files in the selected directory with the entered text.\n\n"
-            "This means that the entered text will appear at the end of each text file.\n\n"
-            "If a filter is applied, only text files that match the filter will be affected."
-        )
-        info_text.config(state="disabled", wrap="word")
+        menu_btn = ButtonMenu(btn_frame, text="☰", width=2)
+        menu_btn.pack(side='left', anchor="n")
+        menu_btn.menu.add_command(label="Clear Field", command=lambda: self.append_entry.delete(0, 'end'))
+        menu_btn.menu.add_command(label="Undo Last Action", command=self.app.restore_backup)
+        menu_btn.menu.add_separator()
+        menu_btn.menu.add_command(label="Help", command=lambda: self.show_help_dialog(HelpText.APPEND_HELP))
 
 
     def append_text_files(self):
@@ -283,41 +255,25 @@ class TextController:
 
     def create_filter_text_image_pairs_widgets_tab5(self):
         btn_frame = Frame(self.app.tab5)
-        btn_frame.pack(side='top', fill='x')
+        btn_frame.pack(fill='x', pady=4)
         self.filter_lbl = Label(btn_frame, width=8, text="Filter:")
-        self.filter_lbl.pack(side='left', anchor="n", pady=4)
+        self.filter_lbl.pack(side='left', anchor="n")
         Tip.create(widget=self.filter_lbl, text="Enter the EXACT text you want to filter by\nThis will filter all img-txt pairs based on the provided text, see below for more info")
         self.filter_entry = ttk.Entry(btn_frame, width=11, textvariable=self.app.filter_string_var)
-        self.filter_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
+        self.filter_entry.pack(side='left', anchor="n", fill='both', expand=True)
         self.entry_helper.bind_helpers(self.filter_entry)
         self.filter_entry.bind('<Return>', lambda event: self.filter_text_image_pairs())
         self.filter_btn = ttk.Button(btn_frame, text="Go!", width=5, command=self.filter_text_image_pairs)
-        self.filter_btn.pack(side='left', anchor="n", pady=4)
+        self.filter_btn.pack(side='left', anchor="n")
         Tip.create(widget=self.filter_btn, text="Text files will be filtered based on the entered text")
-        self.revert_filter_btn = ttk.Button(btn_frame, text="Clear", width=5, command=lambda: (self.revert_text_image_filter(clear=True)))
-        self.revert_filter_btn.pack(side='left', anchor="n", pady=4)
-        self.revert_filter_button_tooltip = Tip.create(widget=self.revert_filter_btn, text="Clear any filtering applied")
-        self.regex_filter_chk = ttk.Checkbutton(btn_frame, text="Regex", variable=self.app.filter_use_regex_var)
-        self.regex_filter_chk.pack(side='left', anchor="n", pady=4)
-        Tip.create(widget=self.regex_filter_chk, text="Use Regular Expressions for filtering")
-        self.empty_files_chk = ttk.Checkbutton(btn_frame, text="Empty", variable=self.app.filter_empty_files_var, command=self.toggle_empty_files_filter)
-        self.empty_files_chk.pack(side='left', anchor="n", pady=4)
-        Tip.create(widget=self.empty_files_chk, text="Check this to show only empty text files\n\nImages without a text pair are also considered as empty")
-        text_frame = Frame(self.app.tab5, borderwidth=0)
-        text_frame.pack(side='top', fill="both")
-        info_text = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
-        info_text.pack(side='bottom', fill='both')
-        info_text.insert("1.0",
-            "This tool will filter all img-txt pairs based on the provided text.\n\n"
-            "Enter any string of text to display only img-txt pairs containing that text.\n"
-            "Use ' + ' to include multiple strings when filtering.\n"
-            "Use '!' before the text to exclude any pairs containing that text.\n\n"
-            "Examples:\n"
-            "'dog' (shows only pairs containing the text dog)\n"
-            "'!dog' (removes all pairs containing the text dog)\n"
-            "'!dog + cat' (remove dog pairs, display cat pairs)"
-        )
-        info_text.config(state="disabled", wrap="word")
+        menu_btn = ButtonMenu(btn_frame, text="☰", width=2)
+        menu_btn.pack(side='left', anchor="n")
+        menu_btn.menu.add_command(label="Clear And Reset Filter", command=lambda: self.filter_entry.delete(0, 'end'))
+        menu_btn.menu.add_separator()
+        menu_btn.menu.add_checkbutton(label="Use Regular Expressions", variable=self.app.filter_use_regex_var)
+        menu_btn.menu.add_checkbutton(label="Show Empty Text Files Only", variable=self.app.filter_empty_files_var, command=self.toggle_empty_files_filter)
+        menu_btn.menu.add_separator()
+        menu_btn.menu.add_command(label="Help", command=lambda: self.show_help_dialog(HelpText.FILTER_HELP))
 
 
     def filter_text_image_pairs(self):  # Filter
@@ -374,8 +330,6 @@ class TextController:
         self.app.current_index = 0
         self.app.show_pair()
         messagebox.showinfo("Filter", f"Filter applied successfully.\n\n{len(self.app.image_files)} images found.")
-        self.revert_filter_btn.config(style="Red.TButton")
-        self.revert_filter_button_tooltip.config(text="Filter is active\n\nClear any filtering applied")
         self.app.update_total_image_label()
         if self.app.is_image_grid_visible_var.get():
             self.app.image_grid.reload_grid()
@@ -397,8 +351,6 @@ class TextController:
         if not silent:
             messagebox.showinfo("Filter", "Filter has been cleared.")
         self.filter_is_active = False
-        self.revert_filter_btn.config(style="")
-        self.revert_filter_button_tooltip.config(text="Filter is inactive\n\nClear any filtering applied")
         self.app.filter_empty_files_var.set(False)
         self.app.update_total_image_label()
         if self.app.is_image_grid_visible_var.get():
@@ -424,10 +376,10 @@ class TextController:
 
     def toggle_filter_widgets(self, state): # Filter
             if state:
-                for widget in [self.filter_lbl, self.filter_entry, self.filter_btn, self.regex_filter_chk]:
+                for widget in [self.filter_lbl, self.filter_entry, self.filter_btn]:
                     widget.config(state="disabled")
             else:
-                for widget in [self.filter_lbl, self.filter_entry, self.filter_btn, self.regex_filter_chk]:
+                for widget in [self.filter_lbl, self.filter_entry, self.filter_btn]:
                     widget.config(state="normal")
 
 
@@ -437,31 +389,23 @@ class TextController:
 
     def create_custom_active_highlight_widgets_tab6(self):
         btn_frame = Frame(self.app.tab6)
-        btn_frame.pack(side='top', fill='x')
+        btn_frame.pack(fill='x', pady=4)
         highlight_lbl = Label(btn_frame, width=8, text="Highlight:")
-        highlight_lbl.pack(side='left', anchor="n", pady=4)
+        highlight_lbl.pack(side='left', anchor="n")
         Tip.create(widget=highlight_lbl, text="Enter the text you want to highlight\nUse ' + ' to highlight multiple strings of text\n\nExample: dog + cat")
         self.highlight_entry = ttk.Entry(btn_frame, textvariable=self.app.custom_highlight_string_var)
-        self.highlight_entry.pack(side='left', anchor="n", pady=4, fill='both', expand=True)
+        self.highlight_entry.pack(side='left', anchor="n", fill='both', expand=True)
         self.entry_helper.bind_helpers(self.highlight_entry)
         self.highlight_entry.bind('<KeyRelease>', lambda event: self.app.highlight_custom_string())
         highlight_btn = ttk.Button(btn_frame, text="Go!", width=5, command=self.app.highlight_custom_string)
-        highlight_btn.pack(side='left', anchor="n", pady=4)
-        clear_btn = ttk.Button(btn_frame, text="Clear", width=5, command=self.clear_highlight_tab)
-        clear_btn.pack(side='left', anchor="n", pady=4)
-        regex_highlight_chk = ttk.Checkbutton(btn_frame, text="Regex", variable=self.app.highlight_use_regex_var)
-        regex_highlight_chk.pack(side='left', anchor="n", pady=4)
-        Tip.create(widget=regex_highlight_chk, text="Use Regular Expressions for highlighting text")
-        text_frame = Frame(self.app.tab6, borderwidth=0)
-        text_frame.pack(side='top', fill="both")
-        info_text = scrolledtext.ScrolledText(text_frame, bg="#f0f0f0")
-        info_text.pack(side='bottom', fill='both')
-        info_text.insert("1.0",
-            "Enter the text you want to highlight each time you move to a new img-txt pair.\n\n"
-            "Use ' + ' to highlight multiple strings of text\n\n"
-            "Example: dog + cat"
-        )
-        info_text.config(state="disabled", wrap="word")
+        highlight_btn.pack(side='left', anchor="n")
+        Tip.create(widget=highlight_btn, text="Highlight the entered text in the current text file")
+        menu_btn = ButtonMenu(btn_frame, text="☰", width=2)
+        menu_btn.pack(side='left', anchor="n")
+        menu_btn.menu.add_command(label="Clear Field", command=lambda: self.clear_highlight_tab())
+        menu_btn.menu.add_checkbutton(label="Use Regular Expressions", variable=self.app.highlight_use_regex_var)
+        menu_btn.menu.add_separator()
+        menu_btn.menu.add_command(label="Help", command=lambda: self.show_help_dialog(HelpText.HIGHLIGHT_HELP))
 
 
     def clear_highlight_tab(self):
@@ -484,23 +428,26 @@ class TextController:
             self.app.font_var.set(self.app.default_font)
             self.size_scale.set(self.app.default_font_size)
             set_font_and_size(self.app.default_font, self.app.default_font_size)
+
+        self.app.tab7.config(pady=4)
+
         font_lbl = Label(self.app.tab7, width=8, text="Font:")
-        font_lbl.pack(side="left", anchor="n", pady=4)
+        font_lbl.pack(side="left", anchor="n")
         Tip.create(widget=font_lbl, text="Recommended Fonts: Courier New, Ariel, Consolas, Segoe UI")
         font_combo = ttk.Combobox(self.app.tab7, textvariable=self.app.font_var, width=4, takefocus=False, state="readonly", values=list(font.families()))
         font_combo.set(self.app.current_font_name)
         font_combo.bind("<<ComboboxSelected>>", lambda event: set_font_and_size(self.app.font_var.get(), self.size_scale.get()))
-        font_combo.pack(side="left", anchor="n", pady=4, fill="x", expand=True)
+        font_combo.pack(side="left", anchor="n", fill="x", expand=True)
         font_combo_tooltip = Tip.create(widget=font_combo, text=f"{self.app.current_font_name}")
         self.font_size_lbl = Label(self.app.tab7, text=f"Size: {self.app.font_size_var.get()}", width=14)
-        self.font_size_lbl.pack(side="left", anchor="n", pady=4)
+        self.font_size_lbl.pack(side="left", anchor="n")
         Tip.create(widget=self.font_size_lbl, text="Default size: 10")
         self.size_scale = ttk.Scale(self.app.tab7, from_=6, to=24, variable=self.app.font_size_var, takefocus=False)
         self.size_scale.set(self.app.current_font_size)
         self.size_scale.bind("<B1-Motion>", lambda event: set_font_and_size(self.app.font_var.get(), self.size_scale.get()))
-        self.size_scale.pack(side="left", anchor="n", pady=4, fill="x", expand=True)
+        self.size_scale.pack(side="left", anchor="n", fill="x", expand=True)
         reset_btn = ttk.Button(self.app.tab7, text="Reset", width=5, takefocus=False, command=reset_to_defaults)
-        reset_btn.pack(side="left", anchor="n", pady=4)
+        reset_btn.pack(side="left", anchor="n")
 
 
 #endregion
@@ -517,17 +464,17 @@ class TextController:
 
 
     def create_stats_widgets_tab9(self):
-        btn_frame = Frame(self.app.tab9)
-        btn_frame.pack(side='top', fill='x', pady=4)
-        self.stats_info_lbl = Label(btn_frame, text="Characters: 0  |  Words: 0")
+        tab = Frame(self.app.tab9)
+        tab.pack(fill='x', pady=4)
+        self.stats_info_lbl = Label(tab, text="Characters: 0  |  Words: 0")
         self.stats_info_lbl.pack(side='left')
-        refresh_btn = ttk.Button(btn_frame, width=10, text="Refresh", takefocus=False, command=lambda: self.app.stat_calculator.calculate_file_stats(manual_refresh=True))
+        refresh_btn = ttk.Button(tab, width=10, text="Refresh", takefocus=False, command=lambda: self.app.stat_calculator.calculate_file_stats(manual_refresh=True))
         refresh_btn.pack(side='right')
         Tip.create(widget=refresh_btn, text="Refresh the file stats")
-        truncate_chk = ttk.Checkbutton(btn_frame, text="Truncate Captions", takefocus=False, variable=self.app.truncate_stat_captions_var)
+        truncate_chk = ttk.Checkbutton(tab, text="Truncate Captions", takefocus=False, variable=self.app.truncate_stat_captions_var)
         truncate_chk.pack(side='right')
         Tip.create(widget=truncate_chk, text="Limit the displayed captions if they exceed either 8 words or 50 characters")
-        image_video_chk = ttk.Checkbutton(btn_frame, text="Image/Video Stats", takefocus=False, variable=self.app.process_image_stats_var)
+        image_video_chk = ttk.Checkbutton(tab, text="Image/Video Stats", takefocus=False, variable=self.app.process_image_stats_var)
         image_video_chk.pack(side='right')
         Tip.create(widget=image_video_chk, text="Enable/Disable image and video stat processing (Can be slow with many HD images or videos)")
         self.filestats_textbox = scrolledtext.ScrolledText(self.app.tab9, wrap="word", state="disabled")
