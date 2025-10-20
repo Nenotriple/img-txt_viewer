@@ -273,19 +273,19 @@ class BatchTagEdit:
         Tip.create(widget=help_button, text="Show/Hide Help", show_delay=50)
         # Actions Menubutton
         self.actions_menu = Menu(buttons_frame, tearoff=0)
-        self.actions_menu.add_command(label="Convert to Lowercase", command=lambda: self.transform_selected_tags("lower"))
-        self.actions_menu.add_command(label="Convert to Uppercase", command=lambda: self.transform_selected_tags("upper"))
-        self.actions_menu.add_command(label="Convert to Title Case", command=lambda: self.transform_selected_tags("title"))
+        self.actions_menu.add_command(label="Convert to Lowercase", command=lambda: self.transform_selected_tags("Convert to Lowercase"))
+        self.actions_menu.add_command(label="Convert to Uppercase", command=lambda: self.transform_selected_tags("Convert to Uppercase"))
+        self.actions_menu.add_command(label="Convert to Title Case", command=lambda: self.transform_selected_tags("Convert to Title Case"))
         self.actions_menu.add_separator()
-        self.actions_menu.add_command(label="Convert Spaces to Underscores", command=lambda: self.transform_selected_tags("spaces_to_underscores"))
-        self.actions_menu.add_command(label="Convert Underscores to Spaces", command=lambda: self.transform_selected_tags("underscores_to_spaces"))
+        self.actions_menu.add_command(label="Convert Spaces to Underscores", command=lambda: self.transform_selected_tags("Convert Spaces to Underscores"))
+        self.actions_menu.add_command(label="Convert Underscores to Spaces", command=lambda: self.transform_selected_tags("Convert Underscores to Spaces"))
         self.actions_menu.add_separator()
-        self.actions_menu.add_command(label="Remove Escape Characters Around Parentheses/Brackets", command=lambda: self.transform_selected_tags("remove_escape"))
-        self.actions_menu.add_command(label="Remove Non-Alphanumeric Characters", command=lambda: self.transform_selected_tags("remove_non_alphanumeric"))
-        self.actions_menu.add_command(label="Remove Punctuation", command=lambda: self.transform_selected_tags("remove_punctuation"))
-        self.actions_menu.add_command(label="Remove Digits", command=lambda: self.transform_selected_tags("remove_digits"))
+        self.actions_menu.add_command(label="Remove Escape Characters Around Parentheses/Brackets", command=lambda: self.transform_selected_tags("Remove Escape Characters Around Parentheses/Brackets"))
+        self.actions_menu.add_command(label="Remove Non-Alphanumeric Characters", command=lambda: self.transform_selected_tags("Remove Non-Alphanumeric Characters"))
+        self.actions_menu.add_command(label="Remove Punctuation", command=lambda: self.transform_selected_tags("Remove Punctuation"))
+        self.actions_menu.add_command(label="Remove Digits", command=lambda: self.transform_selected_tags("Remove Digits"))
         self.actions_menu.add_separator()
-        self.actions_menu.add_command(label="Add Escape Characters Around Parentheses/Brackets", command=lambda: self.transform_selected_tags("add_escape"))
+        self.actions_menu.add_command(label="Add Escape Characters Around Parentheses/Brackets", command=lambda: self.transform_selected_tags("Add Escape Characters Around Parentheses/Brackets"))
         actions_menubutton = ttk.Menubutton(buttons_frame, text="Actions", menu=self.actions_menu, width=8)
         actions_menubutton.pack(side="right")
         actions_menubutton["menu"] = self.actions_menu
@@ -856,6 +856,9 @@ class BatchTagEdit:
         selected_iids = list(self.tag_tree.selection())
         if not selected_iids:
             return
+        confirm = messagebox.askokcancel("Confirm Action", f"Apply:\n\n{transform_type.replace('_', ' ').title()}\n\nto {len(selected_iids)} selected tag(s)?")
+        if not confirm:
+            return
         original_selection = list(selected_iids)
         for iid in original_selection:
             idx = self.tag_tree.index(iid)
@@ -882,25 +885,25 @@ class BatchTagEdit:
     def _apply_transformation(self, text: str, transform_type: str) -> str:
         if text is None:
             return text
-        if transform_type == "lower":
+        if transform_type == "Convert to Lowercase":
             return text.lower()
-        if transform_type == "upper":
+        if transform_type == "Convert to Uppercase":
             return text.upper()
-        if transform_type == "title":
+        if transform_type == "Convert to Title Case":
             return text.title()
-        if transform_type == "spaces_to_underscores":
+        if transform_type == "Convert Spaces to Underscores":
             return text.replace(" ", "_")
-        if transform_type == "underscores_to_spaces":
+        if transform_type == "Convert Underscores to Spaces":
             return text.replace("_", " ")
-        if transform_type == "remove_non_alphanumeric":
-            return re.sub(r'[^a-zA-Z0-9_\-\s]', '', text)
-        if transform_type == "remove_escape":
+        if transform_type == "Remove Escape Characters Around Parentheses/Brackets":
             return re.sub(r'\\([\(\)\[\]\{\}])', r'\1', text)
-        if transform_type == "remove_punctuation":
+        if transform_type == "Remove Non-Alphanumeric Characters":
+            return re.sub(r'[^a-zA-Z0-9_\-\s]', '', text)
+        if transform_type == "Remove Punctuation":
             return re.sub(r'[^\w\s]', '', text)
-        if transform_type == "remove_digits":
+        if transform_type == "Remove Digits":
             return re.sub(r'\d', '', text)
-        if transform_type == "add_escape":
+        if transform_type == "Add Escape Characters Around Parentheses/Brackets":
             return re.sub(r'([\(\)\[\]\{\}])', r'\\\1', text)
         # default: no change
         return text
