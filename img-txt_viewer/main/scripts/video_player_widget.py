@@ -265,7 +265,7 @@ class VideoPlayerWidget(ttk.Frame):
 
     def toggle_play_pause(self):
         """Toggle between play and pause"""
-        if not self.player.path:
+        if not self.player or not self.player.video_path:
             return  # No video loaded yet
         if self.player.is_paused():
             self.play()
@@ -284,18 +284,20 @@ class VideoPlayerWidget(ttk.Frame):
 
     def seek(self, position):
         """Seek to a specific position in seconds"""
-        self.player.seek(float(position))
-        self.timeline.set_position(position)
-        if not self.playing:
-            self.toggle_play_pause()
-            self.after(20, self.toggle_play_pause)
+        if self.player:
+            self.player.seek(float(position))
+            self.timeline.set_position(position)
+            if not self.playing:
+                self.toggle_play_pause()
+                self.after(20, self.toggle_play_pause)
 
 
     def skip(self, seconds):
         """Skip forward or backward by the specified seconds"""
-        current_pos = self.player.current_duration()
-        new_pos = max(0, current_pos + seconds)
-        self.seek(new_pos)
+        if self.player:
+            current_pos = self.player.current_duration()
+            new_pos = max(0, current_pos + seconds)
+            self.seek(new_pos)
 
 
     def _on_timeline_press(self):
@@ -402,7 +404,7 @@ class VideoPlayerWidget(ttk.Frame):
         Returns:
             PIL.Image: The current frame or None if no frame is available
         """
-        if self.player and self.player.path:
+        if self.player and self.player.video_path:
             return self.player.current_img()
         return None
 
