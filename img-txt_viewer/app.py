@@ -1699,21 +1699,8 @@ class ImgTxtViewer:
                 image = self.primary_display_image.get_image(original=False)
                 self.update_imageinfo()
                 return text_file, image, None, None
-            # 2. GIF images
-            elif file_extension == '.gif':
-                try:
-                    self.video_player.grid_remove()
-                    self.primary_display_image.grid(row=1, column=0, sticky="nsew")
-                    self.primary_display_image.load_image(self.image_file)
-                    if self.edit_panel_visible_var.get():
-                        self.edit_panel.toggle_edit_panel_widgets("disabled")
-                    self.update_imageinfo()
-                    return text_file, None, None, None
-                except (FileNotFoundError, UnidentifiedImageError):
-                    self.check_image_dir()
-                    return text_file, None, None, None
-            # 3. MP4 videos
-            elif self.is_ffmpeg_installed and file_extension == '.mp4':
+            # 2. MP4 and GIF images
+            elif self.is_ffmpeg_installed and file_extension in ('.mp4', '.gif'):
                 self.primary_display_image.grid_remove()
                 self.display_mp4_video()
                 if self.edit_panel_visible_var.get():
