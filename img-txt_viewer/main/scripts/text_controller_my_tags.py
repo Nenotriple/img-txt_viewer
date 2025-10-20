@@ -12,7 +12,7 @@ from tkinter import (
     Frame, Menu,
     Listbox
 )
-from tkinter import colorchooser
+from tkinter import colorchooser, PhotoImage
 import tkinter.font as tkfont
 
 
@@ -109,6 +109,21 @@ class MyTags:
 
         # Help Window
         self.help_window = TextWindow(self.root)
+
+        # Load Treeview icons
+        self.tree_group_icon, self.tree_item_icon = self.load_treeview_icons()
+
+
+    def load_treeview_icons(self):
+        try:
+            group_icon = PhotoImage(file=os.path.join(self.app.app_root_path, "main", "tree_group_icon2.png"))
+        except Exception:
+            group_icon = None
+        try:
+            item_icon = PhotoImage(file=os.path.join(self.app.app_root_path, "main", "tree_item_icon2.png"))
+        except Exception:
+            item_icon = None
+        return group_icon, item_icon
 
 
     #region UI Build
@@ -1171,20 +1186,30 @@ class MyTags:
             yaml.safe_dump({'items': items, 'groups': groups}, f, allow_unicode=True, sort_keys=False)
 
 
+    def _insert_folder(self, parent_iid, name):
+        """Insert a folder (group) into the treeview."""
+        return self.custom_dictionary_treeview.insert(parent_iid, 'end', text=name, tags=('folder'), image=self.tree_group_icon if self.tree_group_icon else None )
+
+
+    def _insert_item(self, parent_iid, name):
+        """Insert an item (tag) into the treeview."""
+        return self.custom_dictionary_treeview.insert(parent_iid, 'end', text=name, tags=('item'), image=self.tree_item_icon if self.tree_item_icon else None )
+
+
     def _populate_tree_from_data(self, data: dict):
         tree = self.custom_dictionary_treeview
 
         def insert_group(parent_iid, grp: dict):
-            folder_iid = tree.insert(parent_iid, 'end', text=grp.get('name', 'Group'), tags=('folder',))
+            folder_iid = self._insert_folder(parent_iid, grp.get('name', 'Group'))
             for item in grp.get('items', []) or []:
-                tree.insert(folder_iid, 'end', text=item, tags=('item',))
+                self._insert_item(folder_iid, item)
             for child in grp.get('groups', []) or []:
                 insert_group(folder_iid, child)
             tree.item(folder_iid, open=bool(grp.get('open', True)))
 
         # Root items
         for tag in data.get('items', []) or []:
-            tree.insert('', 'end', text=tag, tags=('item',))
+            self._insert_item('', tag)
         # Groups (recursive)
         for grp in data.get('groups', []) or []:
             insert_group('', grp)
@@ -1223,7 +1248,7 @@ class MyTags:
         if not name:
             return
         parent = parent_iid or ''
-        self.custom_dictionary_treeview.insert(parent, 'end', text=name, tags=('folder',))
+        self._insert_folder(parent, name)
         self.check_unsaved_changes()
 
     def add_item_to_folder(self, folder_iid: str | None, name: str | None = None):
@@ -1241,7 +1266,7 @@ class MyTags:
                 return
         existing = set(tree.item(i)['text'] for i in tree.get_children(folder_iid) if 'item' in (tree.item(i, 'tags') or ()))
         if name not in existing:
-            tree.insert(folder_iid, 'end', text=name, tags=('item',))
+            self._insert_item(folder_iid, name)
             self.check_unsaved_changes()
 
 
