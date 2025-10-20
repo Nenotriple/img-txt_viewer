@@ -163,6 +163,70 @@ The main toolbar gives quick access to image and text tools. These use the same 
 For more detailed information regarding the tools and features, look for (?) buttons throughout the interface or view the `docs/User_Guide.md` file in the repo.
 """
 
+
+#endregion
+#region Batch Tag Edit
+
+
+BATCH_TAG_EDIT_HELP = """
+# Tag-Editor Help
+
+## Overview
+Batch Tag Edit lets you view, filter, edit, and delete tags across all text files in your working directory. All changes are staged as *pending* until you **commit** them.
+
+## Technical Notes
+- Designed for CSV-like text files. Both commas and periods are treated as tag or caption delimiters.
+- Some special characters or formatting may not be handled as expected.
+- *Always back up your text files before committing changes.*
+
+## Instructions
+1. Use the filter controls to narrow the tag list.
+    - *Filter by tag text* or by *tag count* (see Filter Tips).
+    - Filtering is disabled while there are pending changes.
+2. Select tags to edit or delete (Ctrl+Click or Shift+Click for multi select).
+3. To edit: enter a new tag in the Edit box and click **Apply** (or press Enter).
+    - To delete: leave the Edit box empty and click **Apply**, or use the right-click menu.
+    - Right-click a tag for **Edit / Delete / Copy** and quick actions.
+4. Pending changes appear in the *Action* and *New Tag* columns and are highlighted (green = edit, red = delete).
+5. Click **Commit Changes** to apply all pending edits and deletes to the text files. This cannot be undone.
+6. Use **Refresh** to reload the tag list and clear pending changes and filters.
+
+## Filter Tips
+- Filter options:
+    - *Contains Text*: show tags containing the input text.
+    - *Does Not Contain*: exclude tags containing the input text.
+    - *Count Equals / Not Equals*: filter tags by exact count.
+    - *Count Less Than / Greater Than*: filter tags by count range.
+- For most options you can enter multiple values separated by commas.
+- Example: to show tags used exactly 1 or 2 times, select *Count Equals* and enter `1,2`.
+
+## Sorting
+- Click column headers to sort by *Count*, *Tag*, *Length*, *Action*, or *New Tag*.
+- The Tag column cycles through: *Name*, *Name (reverse)*, *Length*, *Length (reverse)*.
+
+## Context Menu & Quick Actions
+- Right-click selected tags for quick actions: **Edit**, **Delete**, **Copy**, **Quick Actions** (transformations), selection tools, and **Revert changes**.
+- Quick Actions include: convert case, replace spaces/underscores, add or remove escape characters, strip punctuation or digits, and other text transforms.
+
+## Selection Hotkeys
+- **Ctrl+A**: Select All
+- **Ctrl+I**: Invert Selection
+- **Esc**: Clear Selection
+- **Ctrl+C**: Copy selected tags
+
+## Pending Changes
+- Pending edits are highlighted *green*; deletes are *red*.
+- Filtering is disabled while pending changes exist.
+- Use **Revert Selection** or **Refresh** to discard pending changes.
+
+## Other Features
+- Double-click a tag to quickly edit it.
+- Tooltips show long tag names on hover.
+- The info bar displays total, filtered, selected, and pending counts.
+- Use the *Tagger* tab to change the working directory or file set.
+"""
+
+
 #endregion
 #region Crop UI
 
@@ -236,74 +300,6 @@ All values can be entered manually or adjusted via spinbox controls.
 
 
 #endregion
-#region Batch Image Edit
-
-
-BATCH_IMAGE_EDIT_HELP = """
-# Batch Image Edit Help
-
-A tool to apply image adjustments to many files at once. The UI is divided into three panels:
-- *Left:* Image file list (select images, multi-select, preview)
-- *Center:* Live preview (original and adjusted)
-- *Right:* Adjustment controls (sliders + advanced options)
-
-## Supported File types
-*.jpg, .jpeg, .png, .webp, .bmp, .tif, .tiff, .jfif*
-
-## Adjustment Controls
-- **Brightness:** Adjust overall brightness (*-100 to +100*)
-- **Contrast:** Enhance or reduce contrast (*-100 to +100*)
-- **AutoContrast:** Automatic contrast optimization (*-100 to +100*)
-- **Highlights:** Control bright areas (*-200 to +200*, *advanced: threshold*)
-- **Shadows:** Control dark areas (*-200 to +200*, *advanced: threshold*)
-- **Saturation:** Adjust color intensity (*-100 to +100*)
-- **Vibrance:** Boost muted colors (*-100 to +100*)
-- **Hue:** Shift the color spectrum (*-100 to +100*)
-- **Color Temp:** Adjust warm/cool tones (*-100 to +100*)
-- **Sharpness:** Enhance or soften details (*-100 to +100*, *advanced: boost*)
-- **Clarity:** Enhance mid-tone contrast (*-100 to +100*, *advanced: radius*)
-
-*Advanced options* (threshold, boost, radius) are available via the **+** button next to applicable sliders.
-
-## Instructions
-1. Select an input directory containing images (top row controls).
-2. Adjust sliders in the right panel. Click value labels to type values directly.
-3. Use **+** to open advanced options for fine-tuning.
-4. Click **Apply!** to process the selected images.
-5. Monitor progress and status in the bottom row.
-
-## Options
-- **Save To**
-    - *Subfolder:* Save edited images to an "Edited Images" subfolder.
-    - *Same Folder:* Save into the original folder.
-- **Save As**
-    - *Same Format:* Keep original file type.
-    - *JPEG / PNG:* Force output format.
-- **Overwrite**
-    - *Always:* Overwrite originals.
-    - *On Conflict:* Overwrite when filename matches; otherwise create unique name.
-    - *Never:* Always create unique filenames to avoid overwriting.
-
-## Preview & Workflow
-- The center preview shows live adjustments for the selected image.
-- *Right-click* the preview to temporarily show the original image.
-- Adjustments are applied only when sliders differ from zero.
-- Click **Reset** to return all sliders and advanced options to defaults.
-- Reset individual sliders by right-clicking their handle.
-- Click value labels to enter numeric values via keyboard.
-
-## Tips
-- Use the directory entry or **Browse...** to change the working folder.
-- **Open** opens the current folder in File Explorer.
-- **Refresh** reloads the file list from disk.
-- The help button **?** opens this help window.
-- Processing time depends on image size, image count, and selected adjustments.
-- Only supported file types are shown and processed.
-- All adjustments are *non-destructive* until you click **Apply!**.
-"""
-
-
-#endregion
 #region Batch Upscale
 
 
@@ -350,69 +346,6 @@ When enabled, output filenames and directories are generated automatically relat
 ## Tips & Recommendations
 - Add your own Real-ESRGAN NCNN models (.bin and .param) to *models/ncnn_models*.
 - Use lower upscale factors for faster processing; use higher factors when larger outputs are required.
-"""
-
-
-#endregion
-#region Batch Tag Edit
-
-
-BATCH_TAG_EDIT_HELP = """
-# Tag-Editor Help
-
-## Overview
-Batch Tag Edit lets you view, filter, edit, and delete tags across all text files in your working directory. All changes are staged as *pending* until you **commit** them.
-
-## Technical Notes
-- Designed for CSV-like text files. Both commas and periods are treated as tag or caption delimiters.
-- Some special characters or formatting may not be handled as expected.
-- *Always back up your text files before committing changes.*
-
-## Instructions
-1. Use the filter controls to narrow the tag list.
-    - *Filter by tag text* or by *tag count* (see Filter Tips).
-    - Filtering is disabled while there are pending changes.
-2. Select tags to edit or delete (Ctrl+Click or Shift+Click for multi select).
-3. To edit: enter a new tag in the Edit box and click **Apply** (or press Enter).
-    - To delete: leave the Edit box empty and click **Apply**, or use the right-click menu.
-    - Right-click a tag for **Edit / Delete / Copy** and quick actions.
-4. Pending changes appear in the *Action* and *New Tag* columns and are highlighted (green = edit, red = delete).
-5. Click **Commit Changes** to apply all pending edits and deletes to the text files. This cannot be undone.
-6. Use **Refresh** to reload the tag list and clear pending changes and filters.
-
-## Filter Tips
-- Filter options:
-    - *Contains Text*: show tags containing the input text.
-    - *Does Not Contain*: exclude tags containing the input text.
-    - *Count Equals / Not Equals*: filter tags by exact count.
-    - *Count Less Than / Greater Than*: filter tags by count range.
-- For most options you can enter multiple values separated by commas.
-- Example: to show tags used exactly 1 or 2 times, select *Count Equals* and enter `1,2`.
-
-## Sorting
-- Click column headers to sort by *Count*, *Tag*, *Length*, *Action*, or *New Tag*.
-- The Tag column cycles through: *Name*, *Name (reverse)*, *Length*, *Length (reverse)*.
-
-## Context Menu & Quick Actions
-- Right-click selected tags for quick actions: **Edit**, **Delete**, **Copy**, **Quick Actions** (transformations), selection tools, and **Revert changes**.
-- Quick Actions include: convert case, replace spaces/underscores, add or remove escape characters, strip punctuation or digits, and other text transforms.
-
-## Selection Hotkeys
-- **Ctrl+A**: Select All
-- **Ctrl+I**: Invert Selection
-- **Esc**: Clear Selection
-- **Ctrl+C**: Copy selected tags
-
-## Pending Changes
-- Pending edits are highlighted *green*; deletes are *red*.
-- Filtering is disabled while pending changes exist.
-- Use **Revert Selection** or **Refresh** to discard pending changes.
-
-## Other Features
-- Double-click a tag to quickly edit it.
-- Tooltips show long tag names on hover.
-- The info bar displays total, filtered, selected, and pending counts.
-- Use the *Tagger* tab to change the working directory or file set.
 """
 
 
@@ -502,6 +435,74 @@ BATCH_RENAME_HELP = """
 - **Ctrl+D:** Deselect All
 - **Ctrl+I:** Invert Selection
 - **F5:** Refresh
+"""
+
+
+#endregion
+#region Batch Image Edit
+
+
+BATCH_IMAGE_EDIT_HELP = """
+# Batch Image Edit Help
+
+A tool to apply image adjustments to many files at once. The UI is divided into three panels:
+- *Left:* Image file list (select images, multi-select, preview)
+- *Center:* Live preview (original and adjusted)
+- *Right:* Adjustment controls (sliders + advanced options)
+
+## Supported File types
+*.jpg, .jpeg, .png, .webp, .bmp, .tif, .tiff, .jfif*
+
+## Adjustment Controls
+- **Brightness:** Adjust overall brightness (*-100 to +100*)
+- **Contrast:** Enhance or reduce contrast (*-100 to +100*)
+- **AutoContrast:** Automatic contrast optimization (*-100 to +100*)
+- **Highlights:** Control bright areas (*-200 to +200*, *advanced: threshold*)
+- **Shadows:** Control dark areas (*-200 to +200*, *advanced: threshold*)
+- **Saturation:** Adjust color intensity (*-100 to +100*)
+- **Vibrance:** Boost muted colors (*-100 to +100*)
+- **Hue:** Shift the color spectrum (*-100 to +100*)
+- **Color Temp:** Adjust warm/cool tones (*-100 to +100*)
+- **Sharpness:** Enhance or soften details (*-100 to +100*, *advanced: boost*)
+- **Clarity:** Enhance mid-tone contrast (*-100 to +100*, *advanced: radius*)
+
+*Advanced options* (threshold, boost, radius) are available via the **+** button next to applicable sliders.
+
+## Instructions
+1. Select an input directory containing images (top row controls).
+2. Adjust sliders in the right panel. Click value labels to type values directly.
+3. Use **+** to open advanced options for fine-tuning.
+4. Click **Apply!** to process the selected images.
+5. Monitor progress and status in the bottom row.
+
+## Options
+- **Save To**
+    - *Subfolder:* Save edited images to an "Edited Images" subfolder.
+    - *Same Folder:* Save into the original folder.
+- **Save As**
+    - *Same Format:* Keep original file type.
+    - *JPEG / PNG:* Force output format.
+- **Overwrite**
+    - *Always:* Overwrite originals.
+    - *On Conflict:* Overwrite when filename matches; otherwise create unique name.
+    - *Never:* Always create unique filenames to avoid overwriting.
+
+## Preview & Workflow
+- The center preview shows live adjustments for the selected image.
+- *Right-click* the preview to temporarily show the original image.
+- Adjustments are applied only when sliders differ from zero.
+- Click **Reset** to return all sliders and advanced options to defaults.
+- Reset individual sliders by right-clicking their handle.
+- Click value labels to enter numeric values via keyboard.
+
+## Tips
+- Use the directory entry or **Browse...** to change the working folder.
+- **Open** opens the current folder in File Explorer.
+- **Refresh** reloads the file list from disk.
+- The help button **?** opens this help window.
+- Processing time depends on image size, image count, and selected adjustments.
+- Only supported file types are shown and processed.
+- All adjustments are *non-destructive* until you click **Apply!**.
 """
 
 
@@ -635,3 +636,6 @@ Curate your own tags (with optional folders) for autocomplete and quick insertio
 - Data is stored in *my_tags.yaml*. If a legacy *my_tags.csv* exists, it is imported automatically once.
 - Ordering controls autocomplete priority and the default insertion order.
 """
+
+
+#endregion
