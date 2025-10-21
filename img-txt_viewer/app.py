@@ -1786,6 +1786,8 @@ class ImgTxtViewer:
             video_data = self.video_thumb_dict.get(image_file)
             original_width = original_height = None
             framerate = None
+            total_frames = None
+            frame_duration = None
             if video_data:
                 original_width, original_height = video_data.get('resolution', (None, None))
                 framerate = video_data.get('framerate')
@@ -1794,6 +1796,8 @@ class ImgTxtViewer:
                     with Image.open(image_file) as im:
                         original_width, original_height = im.size
                         duration = im.info.get('duration')
+                        total_frames = getattr(im, "n_frames", None)
+                        frame_duration = duration
                         if duration and not framerate:
                             framerate = 1000.0 / duration if duration > 0 else None
                 except Exception:
@@ -1804,7 +1808,11 @@ class ImgTxtViewer:
                 size_str = f"{round(size_kb)} KB" if size_kb < 1024 else f"{round(size_kb / 1024, 2)} MB"
                 filename = os.path.basename(image_file)
                 _filename = (filename[:40] + '(...)') if len(filename) > 45 else filename
-                framerate_str = f"{framerate:.2f} fps" if framerate else "Unknown fps"
+                framerate_str = f"{self.format_framerate(framerate)} fps" if framerate else "Unknown fps"
+                # Build GIF extra info
+                gif_extra = ""
+                if image_file.lower().endswith('.gif'):
+                    gif_extra = f" | Frames: {total_frames if total_frames is not None else '?'} | Frame Duration: {frame_duration if frame_duration is not None else '?'} ms"
                 try:
                     if hasattr(self, "video_player") and self.video_player.winfo_ismapped():
                         disp_w = self.video_player.winfo_width()
@@ -1831,9 +1839,29 @@ class ImgTxtViewer:
                 except Exception:
                     scale = 1.0
                 percent_scale = max(1, int(scale * 100))
-                self.label_image_stats.config(text=f"  |  {_filename}  |  {original_width} x {original_height}  |  {percent_scale}%  |  {size_str}  |  {framerate_str}", anchor="w")
-                self.label_image_stats_tooltip.config(text=f"Filename: {filename}\nResolution: {original_width} x {original_height}\nScale: {percent_scale}%\nFramerate: {framerate_str}\nSize: {size_str}")
-                return {"filename": filename, "resolution": f"{original_width} x {original_height}", "framerate": framerate_str, "size": size_str, "scale": f"{percent_scale}%"}
+                self.label_image_stats.config(text=f"  |  {_filename}  |  {original_width} x {original_height}  |  {percent_scale}%  |  {size_str}  |  {framerate_str}{gif_extra}", anchor="w")
+                tooltip_text = (
+                    f"Filename: {filename}\n"
+                    f"Resolution: {original_width} x {original_height}\n"
+                    f"Scale: {percent_scale}%\n"
+                    f"Framerate: {framerate_str}\n"
+                    f"Size: {size_str}"
+                )
+                if image_file.lower().endswith('.gif'):
+                    tooltip_text += (
+                        f"\n{total_frames if total_frames is not None else '?'}"
+                        f"\n{frame_duration if frame_duration is not None else '?'} ms"
+                    )
+                self.label_image_stats_tooltip.config(text=tooltip_text)
+                return {
+                    "filename": filename,
+                    "resolution": f"{original_width} x {original_height}",
+                    "framerate": framerate_str,
+                    "size": size_str,
+                    "scale": f"{percent_scale}%",
+                    "total_frames": total_frames,
+                    "frame_duration": frame_duration
+                }
             else:
                 return self.on_imagezoomwidget_render()
 
@@ -1861,6 +1889,21 @@ class ImgTxtViewer:
         filename = os.path.basename(image_file)
         filename = (filename[:40] + '(...)') if len(filename) > 45 else filename
         return {"filename": filename, "resolution": f"{width} x {height}", "size": size_str, "color_mode": color_mode}
+
+
+    def format_framerate(self, val):
+        if val is None:
+            return None
+        try:
+            val = float(val)
+            if val.is_integer():
+                return str(int(val))
+            else:
+                s = f"{val:.2f}"
+                s = s.rstrip('0').rstrip('.') if '.' in s else s
+                return s
+        except Exception:
+            return str(val)
 
 
 #endregion
