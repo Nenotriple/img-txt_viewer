@@ -17,6 +17,7 @@ from tkinter import (
 
 
 # Third-Party Libraries
+from tkmarktext import TextWindow
 from TkToolTip.TkToolTip import TkToolTip as Tip
 
 
@@ -24,6 +25,7 @@ from TkToolTip.TkToolTip import TkToolTip as Tip
 from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
 import main.scripts.video_thumbnail_generator as vtg
 import main.scripts.entry_helper as entry_helper
+import main.scripts.HelpText as HelpText
 
 
 # Type Hinting
@@ -33,7 +35,7 @@ if TYPE_CHECKING:
 
 
 #endregion
-#region TextController
+#region AutoTag
 
 
 class AutoTag:
@@ -243,26 +245,12 @@ class AutoTag:
         clear_btn = ttk.Button(btn_frame, text="Clear", command=clear_selection)
         clear_btn.grid(row=1, column=2, sticky='ew', pady=2)
         Tip.create(widget=clear_btn, text="Clear the current selection")
+        # Help Window
+        self.help_window = TextWindow(master=self.root)
 
 
     def show_auto_tag_help(self):
-        confirm = messagebox.askokcancel("Auto-Tag Help",
-            "Auto-Tagging uses an ONNX vision model to analyze images and generate tags displayed in the listbox.\n\n"
-            "Download additional models from:\n\nhttps://huggingface.co/SmilingWolf\n\n"
-            "Place models in subfolders within the 'onnx_models' directory, located in the same folder as this program. The subfolder name will be used as the model name.\n\n"
-            "Each model subfolder should contain a 'model.onnx' file and a 'selected_tags.csv' file.\n\n"
-            "Restart the program to load new models.\n\n"
-            "Example:\n"
-            "img-txt_viewer/\n"
-            "  └── onnx_models/\n"
-            "      └── wd-v1-4-moat-tagger-v2/\n"
-            "          ├── model.onnx\n"
-            "          └── selected_tags.csv\n\n"
-            "Auto-Tagging was primarily tested with the 'wd-v1-4-moat-tagger-v2' model.\n\nCopy URL to clipboard?"
-        )
-        if confirm:
-            self.app.text_box.clipboard_clear()
-            self.app.text_box.clipboard_append("https://huggingface.co/SmilingWolf")
+        self.help_window.open_window(text=HelpText.AUTOTAG_HELP, title="Auto-Tag Help", geometry="600x500", icon=self.app.blank_image)
 
 
     def update_auto_tag_stats_label(self):
@@ -347,8 +335,7 @@ class AutoTag:
             pass
         selected_model_path = self.onnx_model_dict.get(self.autotag_model_combo.get())
         if not selected_model_path or not os.path.exists(selected_model_path):
-            confirm = messagebox.askyesno("Error", f"Model file not found: {selected_model_path}\n\nWould you like to view the Auto-Tag Help?")
-            if confirm:
+            if messagebox.askyesno("Error", f"Model file not found: {selected_model_path}\n\nWould you like to view the Auto-Tag Help?"):
                 self.show_auto_tag_help()
             return
         self.update_tag_thresholds()
@@ -424,8 +411,7 @@ class AutoTag:
             messagebox.showinfo("Batch Interrogate", "Auto-Insert must be enabled to use Batch Interrogate")
             return
         try:
-            confirm = messagebox.askyesno("Batch Interrogate", "Interrogate all images in the current directory?")
-            if not confirm:
+            if not messagebox.askyesno("Batch Interrogate", "Interrogate all images in the current directory?"):
                 return
             self.stop_batch = False
             popup = Toplevel(self.root)
@@ -448,8 +434,7 @@ class AutoTag:
             popup.protocol("WM_DELETE_WINDOW", stop_batch_process)
             selected_model_path = self.onnx_model_dict.get(self.autotag_model_combo.get())
             if not selected_model_path or not os.path.exists(selected_model_path):
-                confirm = messagebox.askyesno("Error", f"Model file not found: {selected_model_path}\n\nWould you like to view the Auto-Tag Help?")
-                if confirm:
+                if messagebox.askyesno("Error", f"Model file not found: {selected_model_path}\n\nWould you like to view the Auto-Tag Help?"):
                     self.show_auto_tag_help()
                 popup.destroy()
                 return

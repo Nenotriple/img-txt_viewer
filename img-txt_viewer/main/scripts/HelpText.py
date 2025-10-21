@@ -661,8 +661,100 @@ Use this tool to append all text files in the selected directory with the entere
 #region AutoTag
 
 
-AUTOTAG_HELP = """ """
+AUTOTAG_HELP = """
+# Auto-Tag Help
 
+##  Overview
+
+*Auto-Tagging* uses an **ONNX** vision model to analyze images and generate tags. Generated tags appear in the Auto-Tag listbox with confidence scores. You can insert these tags into the caption box or save them to image text files during *Batch* operations.
+
+##  Models
+
+- Download additional models from: https://huggingface.co/SmilingWolf
+- Place models in subfolders under `onnx_models`. The subfolder name becomes the model label.
+- Each model requires:
+    - `model.onnx`
+    - `selected_tags.csv`
+- Restart the program to load new models.
+
+Example:
+img-txt_viewer/
+    └── onnx_models/
+        └── wd-v1-4-moat-tagger-v2/
+            - model.onnx
+            - selected_tags.csv
+
+##  Quick Start
+
+1. Select a *Model* from the dropdown.
+2. Adjust *General Threshold*, *Character Threshold*, and *Max Tags*.
+3. Set up *Exclude*, *Keep*, and *Replace/With* lists, and the *Keep escape* options.
+4. Click *Interrogate* to analyze the current image or video frame.
+5. Use the listbox and Insert modes (*Prefix*, *Append*, *Replace*) to add tags to the text box.
+6. To process a whole folder, enable **Batch**, choose an Auto-Insert mode, then click *Interrogate*.
+
+##  UI Reference and Options
+
+- **Auto-Insert**:
+    - *Disable* - no automatic insertion.
+    - *Prefix* - insert tags at the start.
+    - *Append* - insert tags at the end.
+    - *Replace* - replace the entire text box.
+
+- **Batch**:
+    - Processes all images in the current directory.
+    - Requires Auto-Insert to be set (Prefix, Append, or Replace).
+    - Updates or creates text files for each image.
+
+- **Viewport**:
+    - When enabled (non-batch), interrogates only the visible part of the displayed image.
+    - Ignored during Batch interrogation.
+
+- **Thresholds & Limits**:
+    - *General Threshold*: 0.00 - 1.00 (lower = more permissive).
+    - *Character Threshold*: 0.00 - 1.00 for character tags.
+    - *Max Tags*: maximum number of tags returned (default is about 40).
+
+- **Preserve Options**:
+    - *Keep underscores* - preserve `_` instead of replacing with spaces.
+    - *Keep escape* - preserve backslashes in tags.
+
+- **Lists**:
+    - *Exclude*: comma-separated tags to exclude. Enabling *Auto* adds existing tags to the exclusion list.
+    - *Keep*: comma-separated tags that are always included.
+    - *Replace / With*: parallel lists where each Replace entry maps to the same-index With entry.
+
+##  Listbox and Selection
+
+- Each item shows `score: tag`.
+- Visual cues: character tags in *green*, keep tags in *red*.
+- Multi-select is supported.
+- Context menu actions:
+    - Insert (Prefix, Append, Replace)
+    - Copy Selected Tags
+    - Select All, Invert Selection, Clear Selection
+    - Add to MyTags (adds to your custom dictionary)
+    - Add to Exclude / Add to Keep (sanitizes escapes)
+
+##  Replace Mapping and Edge Cases
+
+- Replace/With mapping is index-based; unmapped entries are ignored.
+- Exclude/Keep lists are normalized (trimmed).
+- Escape handling depends on the *Keep escape* option.
+
+##  Video Handling
+
+- For non-batch .mp4 files, interrogation uses the current video player frame.
+- For batch .mp4 files, a frame is extracted at about 2 seconds; if extraction fails, the image is skipped.
+
+##  Tips & Troubleshooting
+
+- If a model does not appear, check that the folder contains both `model.onnx` and `selected_tags.csv`, then restart the program.
+- Use *Auto* exclude to avoid adding tags already present in your text files.
+- Copy selected tags to the clipboard for use elsewhere.
+- Use *Add to MyTags* to build your personal tag dictionary.
+- Batch operations can take time; the modal shows ETA and you can stop safely at any time.
+"""
 
 
 #endregion
