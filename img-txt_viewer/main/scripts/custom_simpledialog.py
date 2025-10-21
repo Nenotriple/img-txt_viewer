@@ -14,6 +14,7 @@ Public API:
 - askyesno(title, prompt, detail=None, parent=None, icon_image=None) -> bool
 - askyesnocancel(title, prompt, detail=None, parent=None, icon_image=None) -> Optional[bool]
 - showinfo(title, prompt, detail=None, parent=None, icon_image=None) -> None
+- showprogress(title, prompt, task_function, args=(), kwargs=None, max_value=100, parent=None, icon_image=None, auto_close=True) -> Any
 
 Notes:
 - askradio accepts a sequence of choices. Each choice may be:
@@ -35,14 +36,16 @@ Example:
 from __future__ import annotations
 import tkinter as tk
 from tkinter import ttk, messagebox
-from typing import Optional, Sequence, Union
+from typing import Optional, Sequence, Union, Callable, Any
+import threading
+import queue
 
 
 # endregion
 # region Constants
 
 
-__all__ = ["askstring", "askinteger", "askfloat", "askcombo", "askradio", "askyesno", "askyesnocancel", "showinfo"]
+__all__ = ["askstring", "askinteger", "askfloat", "askcombo", "askradio", "askyesno", "askyesnocancel", "showinfo", "showprogress"]
 ChoiceValue = Union[str, tuple[str, str]]
 
 
@@ -519,6 +522,180 @@ class _ConfirmDialog(tk.Toplevel):
 
 
 # endregion
+# region _ProgressDialog
+
+
+class _ProgressDialog(tk.Toplevel):
+    """Dialog for displaying progress of long-running tasks with threading support.
+
+    Parameters:
+        parent: Parent window
+        title: Dialog window title
+        prompt: Text prompt displayed above the progress bar
+        task_function: The function to execute in background thread
+        args: Positional arguments for task_function
+        kwargs: Keyword arguments for task_function
+        max_value: Maximum progress value (default 100)
+        icon_image: Optional window icon
+        auto_close: Whether to automatically close on completion
+
+    The task_function will receive a 'progress_callback' keyword argument that can be called with:
+        progress_callback(value, message=None, detail=None)
+    """
+    def __init__(
+        self,
+        parent: tk.Misc,
+        title: Optional[str],
+        prompt: str,
+        task_function: Callable,
+        args: tuple = (),
+        kwargs: Optional[dict] = None,
+        max_value: int = 100,
+        icon_image: Optional["tk.PhotoImage"] = None,
+        auto_close: bool = True
+    ) -> None:
+        super().__init__(parent)
+        self.result: Optional[Any] = None
+        self._task_function = task_function
+        self._task_args = args
+        self._task_kwargs = kwargs or {}
+        self._max_value = max_value
+        self._auto_close = auto_close
+        self._cancelled = threading.Event()
+        self._queue: queue.Queue = queue.Queue()
+        self._thread: Optional[threading.Thread] = None
+
+
+        _setup_dialog_window(self, parent, title or "Processing", icon_image)
+        self.protocol("WM_DELETE_WINDOW", self._on_close_attempt)
+        container = self._create_dialog_widgets(prompt)
+        self._show_dialog(parent)
+        # Start background thread
+        self._thread = threading.Thread(target=self._run_task, daemon=True)
+        self._thread.start()
+        # Begin polling queue
+        self._check_queue()
+
+
+    def _create_dialog_widgets(self, prompt: str) -> ttk.Frame:
+        container = _create_container(self, prompt)
+        # Progress bar
+        self._progress_bar = ttk.Progressbar(container, maximum=self._max_value, length=400, mode="determinate")
+        self._progress_bar.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(0, 8))
+        # Status label
+        self._status_label = ttk.Label(container, text="Starting...", anchor="w", justify="left")
+        self._status_label.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(0, 4))
+        # Detail label (smaller, gray text)
+        self._detail_label = ttk.Label(container, text="", anchor="w", justify="left", font=("TkDefaultFont", 9), foreground="gray50", wraplength=400)
+        self._detail_label.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(0, 12))
+        # Cancel button
+        btn_frame = ttk.Frame(container)
+        btn_frame.grid(row=4, column=0, columnspan=2, sticky="e")
+        self._cancel_btn = ttk.Button(btn_frame, text="Cancel", command=self._on_cancel)
+        self._cancel_btn.grid(row=0, column=0)
+        _bind_widget_cursor_hand2(self._cancel_btn)
+        return container
+
+
+    def _show_dialog(self, parent: Optional[tk.Misc]) -> None:
+        _center_window_to_parent(self, parent)
+        self.deiconify()
+        self.grab_set()
+        self.focus_set()
+
+
+    def _run_task(self) -> None:
+        """Execute the task in the background thread."""
+        try:
+            # Inject progress callback into task
+            def progress_callback(value: Union[int, float], message: Optional[str] = None, detail: Optional[str] = None) -> None:
+                if self._cancelled.is_set():
+                    raise InterruptedError("Task cancelled by user")
+                self._queue.put(("progress", value, message, detail))
+            # Add progress_callback to kwargs
+            task_kwargs = self._task_kwargs.copy()
+            task_kwargs["progress_callback"] = progress_callback
+            # Execute task
+            result = self._task_function(*self._task_args, **task_kwargs)
+            # Send completion message
+            self._queue.put(("done", result))
+        except InterruptedError:
+            self._queue.put(("cancelled", None))
+        except Exception as e:
+            self._queue.put(("error", str(e)))
+
+
+    def _check_queue(self) -> None:
+        """Process messages from the worker thread."""
+        try:
+            while True:
+                msg = self._queue.get_nowait()
+                self._handle_message(msg)
+        except queue.Empty:
+            pass
+        # Continue polling if thread is alive
+        if self._thread and self._thread.is_alive():
+            self.after(100, self._check_queue)
+
+
+    def _handle_message(self, msg: tuple) -> None:
+        """Handle messages from the background thread."""
+        msg_type = msg[0]
+        if msg_type == "progress":
+            _, value, message, detail = msg
+            self._update_progress(value, message, detail)
+        elif msg_type == "done":
+            _, result = msg
+            self.result = result
+            self._progress_bar["value"] = self._max_value
+            self._status_label.config(text="Completed!")
+            self._detail_label.config(text="")
+            self._cancel_btn.config(state="disabled")
+            if self._auto_close:
+                self.after(800, self.destroy)
+            else:
+                self._cancel_btn.config(text="Close", state="normal", command=self.destroy)
+        elif msg_type == "cancelled":
+            self._status_label.config(text="Cancelled by user")
+            self._detail_label.config(text="")
+            self._cancel_btn.config(state="disabled")
+            if self._auto_close:
+                self.after(800, self.destroy)
+            else:
+                self._cancel_btn.config(text="Close", state="normal", command=self.destroy)
+        elif msg_type == "error":
+            _, error_msg = msg
+            self._status_label.config(text="Error occurred")
+            self._detail_label.config(text=error_msg, foreground="red")
+            self._cancel_btn.config(text="Close", state="normal", command=self.destroy)
+
+
+    def _update_progress(self, value: Union[int, float], message: Optional[str], detail: Optional[str]) -> None:
+        """Update progress bar and labels."""
+        self._progress_bar["value"] = value
+        if message is not None:
+            self._status_label.config(text=message)
+        if detail is not None:
+            self._detail_label.config(text=detail)
+
+
+    def _on_cancel(self) -> None:
+        """Handle cancel button click."""
+        self._cancelled.set()
+        self._status_label.config(text="Cancelling...")
+        self._detail_label.config(text="")
+        self._cancel_btn.config(state="disabled")
+
+
+    def _on_close_attempt(self) -> None:
+        """Handle window close attempt."""
+        if self._thread and self._thread.is_alive() and not self._cancelled.is_set():
+            self._status_label.config(text="Task still running...")
+        else:
+            self.destroy()
+
+
+# endregion
 # endregion
 # region Public API
 
@@ -747,6 +924,64 @@ def showinfo(
     )
 
 
+def showprogress(
+    title: Optional[str],
+    prompt: str,
+    task_function: Callable,
+    args: tuple = (),
+    kwargs: Optional[dict] = None,
+    max_value: int = 100,
+    parent: Optional[tk.Misc] = None,
+    icon_image: Optional["tk.PhotoImage"] = None,
+    auto_close: bool = True
+) -> Any:
+    """Show a progress dialog and execute a task in a background thread.
+
+    The task_function will be called with a 'progress_callback' keyword argument that
+    can be used to update the progress display:
+        progress_callback(value, message=None, detail=None)
+
+    The task can check for cancellation by catching InterruptedError, which will be
+    raised when the user clicks Cancel.
+
+    Parameters:
+        title: Dialog window title
+        prompt: Text prompt displayed above the progress bar
+        task_function: Callable to execute in background thread
+        args: Positional arguments for task_function
+        kwargs: Keyword arguments for task_function (progress_callback will be added)
+        max_value: Maximum progress value (default 100)
+        parent: Parent window
+        icon_image: Optional window icon
+        auto_close: If True, dialog closes automatically on completion (default True)
+
+    Returns:
+        The return value of task_function, or None if cancelled or error occurred
+
+    Example:
+        def my_task(items, progress_callback):
+            for i, item in enumerate(items):
+                process(item)
+                progress_callback(i + 1, f"Processing {item}", f"Item {i+1} of {len(items)}")
+            return "Done"
+
+        result = showprogress("Processing", "Please wait...", my_task,
+                            args=([1,2,3,4,5],), max_value=5)
+    """
+    return _run_dialog(
+        _ProgressDialog,
+        title=title,
+        prompt=prompt,
+        task_function=task_function,
+        args=args,
+        kwargs=kwargs,
+        max_value=max_value,
+        parent=parent,
+        icon_image=icon_image,
+        auto_close=auto_close
+    )
+
+
 # endregion
 # region Test Block
 
@@ -798,6 +1033,20 @@ if __name__ == "__main__":
         showinfo("showinfo", "This is an info message.", "Additional details can go here.")
 
 
+    def test_showprogress():
+        import time
+
+        def example_task(duration, item_count, progress_callback):
+            """Example long-running task with progress updates."""
+            for i in range(item_count + 1):
+                time.sleep(duration / item_count)
+                progress_callback(i, f"Processing item {i} of {item_count}", f"Completed: {(i / item_count * 100):.1f}%")
+            return f"Successfully processed {item_count} items"
+
+        result = showprogress("Processing Items", "Please wait while items are being processed...", example_task, args=(3, 20), max_value=20, auto_close=True)
+        print("Progress result:", repr(result))
+
+
     test_askstring()
     test_askinteger()
     test_askfloat()
@@ -806,6 +1055,7 @@ if __name__ == "__main__":
     test_askyesno()
     test_askyesnocancel()
     test_showinfo()
+    test_showprogress()
 
 
 # endregion
