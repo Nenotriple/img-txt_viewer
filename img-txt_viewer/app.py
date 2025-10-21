@@ -50,8 +50,11 @@ from PIL import Image, ImageTk, ImageSequence, UnidentifiedImageError
 from main.scripts import (
     calculate_file_stats,
     custom_simpledialog,
+    custom_scrolledtext,
     batch_crop_images,
     settings_manager,
+    text_controller,
+    resize_image,
     entry_helper,
     image_grid,
     edit_panel,
@@ -59,7 +62,6 @@ from main.scripts import (
     HelpText,
 )
 
-import main.scripts.video_thumbnail_generator as vtg
 
 # Tabbed tools
 from main.scripts import (
@@ -72,22 +74,14 @@ from main.scripts import (
     CropUI,
 )
 
-# Tagger imports
-from main.scripts import (
-    calculate_file_stats,
-    custom_scrolledtext,
-    text_controller,
-    resize_image,
-    image_grid,
-    edit_panel,
-)
-
+from main.scripts import frame_extractor
+from main.scripts.image_zoom import ImageZoomWidget
+import main.scripts.video_thumbnail_generator as vtg
 from main.scripts.ThumbnailPanel import ThumbnailPanel
 from main.scripts.Autocomplete import SuggestionHandler
 from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
-from main.scripts.video_player_widget import VideoPlayerWidget
 from main.scripts.find_replace_widget import FindReplaceEntry
-from main.scripts.image_zoom import ImageZoomWidget
+from main.scripts.video_player_widget import VideoPlayerWidget
 
 
 #endregion
@@ -479,6 +473,8 @@ class ImgTxtViewer:
         self.individual_operations_menu.add_command(label="Flip", command=self.flip_current_image)
         self.individual_operations_menu.add_separator()
         self.individual_operations_menu.add_command(label="AutoTag", command=self.text_controller.auto_tag.interrogate_image_tags)
+        self.individual_operations_menu.add_separator()
+        self.individual_operations_menu.add_command(label="Extract GIF/Video Frames...", command=lambda: frame_extractor.extract_frames(self))
 
 
     def enable_menu_options(self):
