@@ -1,17 +1,22 @@
 # Build Instructions for img-txt Viewer
 
-## Steps to Build the Executable:
+## Steps
 
-1. Activate the Project Virtual Environment
-2. Upgrade PyInstaller
-```
+**1.** Activate the Project Virtual Environment
+
+**2.** Upgrade PyInstaller
+
+```sh
 pip install --upgrade pyinstaller
 ```
-3. Run PyInstaller
-```
+
+**3.** Run PyInstaller
+
+```sh
 pyinstaller app.py --name img_txt_viewer --onefile --windowed --icon="main\icon.ico" --add-data="main;main"
 ```
-## Breakdown of the PyInstaller Command:
+
+## Breakdown of the PyInstaller Command
 
 1. `pyinstaller`
    - Main command to run PyInstaller.
