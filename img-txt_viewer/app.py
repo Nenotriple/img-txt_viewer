@@ -1717,6 +1717,13 @@ class ImgTxtViewer:
         loading_image = os.path.join(self.app_root_path, "main", "loading.png")
         self.video_player = VideoPlayerWidget(master=self.master_image_inner_frame, app=self, play_image=play_image, pause_image=pause_image, loading_image=loading_image)
         self.video_player.grid(row=1, column=0, sticky="nsew")
+        # Keep video info updated when player/widget is resized
+        try:
+            self.video_player.bind("<Configure>", lambda e: self.update_videoinfo())
+        except Exception:
+            pass
+        # Schedule an initial update after geometry settle
+        self.root.after(100, lambda: self.update_videoinfo())
         try:
             self.video_player.load_video(file_path=self.image_file)
         except Exception as e:
@@ -1775,20 +1782,60 @@ class ImgTxtViewer:
         if not self.is_ffmpeg_installed or not self.image_files:
             return
         image_file = image_file if image_file else self.image_file
-        if image_file.lower().endswith((".mp4")):
+        if image_file.lower().endswith((".mp4", ".gif")):
             video_data = self.video_thumb_dict.get(image_file)
+            original_width = original_height = None
+            framerate = None
             if video_data:
-                original_width, original_height = video_data['resolution']
-                framerate = video_data['framerate']
+                original_width, original_height = video_data.get('resolution', (None, None))
+                framerate = video_data.get('framerate')
+            if image_file.lower().endswith('.gif') and (not original_width or not original_height):
+                try:
+                    with Image.open(image_file) as im:
+                        original_width, original_height = im.size
+                        duration = im.info.get('duration')
+                        if duration and not framerate:
+                            framerate = 1000.0 / duration if duration > 0 else None
+                except Exception:
+                    original_width = original_height = None
+            if original_width and original_height:
                 file_size = os.path.getsize(image_file)
                 size_kb = file_size / 1024
                 size_str = f"{round(size_kb)} KB" if size_kb < 1024 else f"{round(size_kb / 1024, 2)} MB"
                 filename = os.path.basename(image_file)
                 _filename = (filename[:40] + '(...)') if len(filename) > 45 else filename
                 framerate_str = f"{framerate:.2f} fps" if framerate else "Unknown fps"
-                self.label_image_stats.config(text=f"  |  {_filename}  |  {original_width} x {original_height}  |  {size_str}  |  {framerate_str}", anchor="w")
-                self.label_image_stats_tooltip.config(text=f"Filename: {filename}\nResolution: {original_width} x {original_height}\nFramerate: {framerate_str}\nSize: {size_str}")
-                return {"filename": filename, "resolution": f"{original_width} x {original_height}", "framerate": framerate_str, "size": size_str}
+                try:
+                    if hasattr(self, "video_player") and self.video_player.winfo_ismapped():
+                        disp_w = self.video_player.winfo_width()
+                        disp_h = self.video_player.winfo_height()
+                    elif hasattr(self, "primary_display_image") and self.primary_display_image.winfo_ismapped():
+                        disp_w = self.primary_display_image.winfo_width()
+                        disp_h = self.primary_display_image.winfo_height()
+                    else:
+                        disp_w = getattr(self, "video_player", None).winfo_width() if hasattr(self, "video_player") else 0
+                        disp_h = getattr(self, "video_player", None).winfo_height() if hasattr(self, "video_player") else 0
+                except Exception:
+                    disp_w = disp_h = 0
+                if disp_w <= 1:
+                    disp_w = self.master_image_inner_frame.winfo_width() if hasattr(self, "master_image_inner_frame") else 0
+                if disp_h <= 1:
+                    disp_h = self.master_image_inner_frame.winfo_height() if hasattr(self, "master_image_inner_frame") else 0
+                try:
+                    if original_width and original_height and disp_w and disp_h:
+                        scale = min(float(disp_w) / original_width, float(disp_h) / original_height)
+                    elif original_width and disp_w:
+                        scale = float(disp_w) / original_width
+                    else:
+                        scale = 1.0
+                except Exception:
+                    scale = 1.0
+                percent_scale = max(1, int(scale * 100))
+                self.label_image_stats.config(text=f"  |  {_filename}  |  {original_width} x {original_height}  |  {percent_scale}%  |  {size_str}  |  {framerate_str}", anchor="w")
+                self.label_image_stats_tooltip.config(text=f"Filename: {filename}\nResolution: {original_width} x {original_height}\nScale: {percent_scale}%\nFramerate: {framerate_str}\nSize: {size_str}")
+                return {"filename": filename, "resolution": f"{original_width} x {original_height}", "framerate": framerate_str, "size": size_str, "scale": f"{percent_scale}%"}
+            else:
+                return self.on_imagezoomwidget_render()
 
 
     def update_imageinfo(self, percent_scale=100):
