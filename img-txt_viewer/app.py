@@ -474,7 +474,7 @@ class ImgTxtViewer:
         self.individual_operations_menu.add_separator()
         self.individual_operations_menu.add_command(label="AutoTag", command=self.text_controller.auto_tag.interrogate_image_tags)
         self.individual_operations_menu.add_separator()
-        self.individual_operations_menu.add_command(label="Extract GIF/Video Frames...", command=lambda: frame_extractor.extract_frames(self))
+        self.individual_operations_menu.add_command(label="Extract GIF/Video Frames", command=lambda: frame_extractor.extract_frames(self))
 
 
     def enable_menu_options(self):
@@ -968,6 +968,14 @@ class ImgTxtViewer:
     # Image Context Menu
     # --------------------------------------
     def show_image_context_menu(self, event):
+        # Check if image or GIF/Video is being displayed
+        ext = os.path.splitext(self.image_files[self.current_index])[1].lower()
+        if ext == ".gif":
+            gif_state = "normal"
+            state = "disabled"
+        else:
+            gif_state = "disabled"
+            state = "normal"
         self.image_context_menu = Menu(self.root, tearoff=0)
         # Open
         self.image_context_menu.add_command(label="Open Current Directory...", command=self.open_image_directory)
@@ -986,9 +994,10 @@ class ImgTxtViewer:
         self.image_context_menu.add_command(label="Resize...", command=self.resize_image)
         self.image_context_menu.add_command(label="Crop...", command=lambda: self.create_crop_ui(show=True, refresh=True))
         self.image_context_menu.add_separator()
-        self.image_context_menu.add_command(label="Expand", command=self.expand_image)
-        self.image_context_menu.add_command(label="Rotate", command=self.rotate_current_image)
-        self.image_context_menu.add_command(label="Flip", command=self.flip_current_image)
+        self.image_context_menu.add_command(label="Extract GIF/Video Frames", state=gif_state, command=lambda: frame_extractor.extract_frames(self))
+        self.image_context_menu.add_command(label="Expand", state=state, command=self.expand_image)
+        self.image_context_menu.add_command(label="Rotate", state=state, command=self.rotate_current_image)
+        self.image_context_menu.add_command(label="Flip", state=state, command=self.flip_current_image)
         self.image_context_menu.tk_popup(event.x_root, event.y_root)
 
 

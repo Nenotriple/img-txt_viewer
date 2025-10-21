@@ -32,6 +32,9 @@ def extract_frames(app: "Main", input_path: Optional[str] = None) -> Optional[st
 	input_path = _resolve_input_path(app, input_path)
 	if input_path is None:
 		return None
+	out_dir = get_out_dir(input_path)
+	if not messagebox.askyesno("Confirm Extraction", f"Extract frames from:\n\n{input_path}\n\nInto the folder:\n\n{out_dir}\n\nThis may take some time depending on the frame size and number of frames."):
+		return None
 	out_dir = _prepare_output_directory(input_path)
 	if out_dir is None:
 		return None
@@ -40,12 +43,12 @@ def extract_frames(app: "Main", input_path: Optional[str] = None) -> Optional[st
 		if ext == '.gif':
 			success, frame_count = _extract_gif_frames_with_progress(input_path, out_dir)
 			if success:
-				messagebox.showinfo("Done", f"Extracted {frame_count} frame(s) to:\n\n{out_dir}")
+				_show_done_and_open_folder(frame_count, out_dir)
 				return out_dir
 		elif ext == '.mp4':
 			success, frame_count = _extract_mp4_frames_with_progress(app, input_path, out_dir)
 			if success:
-				messagebox.showinfo("Done", f"Extracted {frame_count} frame(s) to:\n\n{out_dir}")
+				_show_done_and_open_folder(frame_count, out_dir)
 				return out_dir
 	except subprocess.CalledProcessError as e:
 		messagebox.showerror("FFmpeg Error", f"FFmpeg failed to extract frames:\n\n{e}")
@@ -79,9 +82,7 @@ def _resolve_input_path(app: "Main", input_path: Optional[str]) -> Optional[str]
 
 def _prepare_output_directory(input_path: str) -> Optional[str]:
 	"""Create or clear the output folder named after the input file (without extension)."""
-	parent_dir = os.path.dirname(input_path)
-	base_name = os.path.splitext(os.path.basename(input_path))[0]
-	out_dir = os.path.join(parent_dir, base_name)
+	out_dir = get_out_dir(input_path)
 	if os.path.exists(out_dir) and os.listdir(out_dir):
 		if not messagebox.askyesno("Output Folder Exists", f"The folder:\n\n{out_dir}\n\nalready exists and contains files.\n\nDelete its contents and continue?"):
 			return None
@@ -92,6 +93,33 @@ def _prepare_output_directory(input_path: str) -> Optional[str]:
 			return None
 	os.makedirs(out_dir, exist_ok=True)
 	return out_dir
+
+
+def get_out_dir(input_path: str) -> str:
+	"""Return the output directory path for the given input file."""
+	parent_dir = os.path.dirname(input_path)
+	base_name = os.path.splitext(os.path.basename(input_path))[0]
+	out_dir = os.path.join(parent_dir, base_name)
+	return out_dir
+
+
+def _show_done_and_open_folder(frame_count: int, out_dir: str):
+	"""Show 'Done' dialog and optionally open folder in explorer."""
+	if messagebox.askyesno("Done", f"Extracted {frame_count} frame(s) to:\n\n{out_dir}\n\nOpen this folder in File Explorer?"):
+		_open_folder_in_explorer(out_dir)
+
+
+def _open_folder_in_explorer(path: str):
+	"""Open the given folder in the system's file explorer."""
+	try:
+		if os.name == 'nt':
+			os.startfile(path)
+		elif os.name == 'posix':
+			subprocess.Popen(['xdg-open', path])
+		else:
+			messagebox.showinfo("Open Folder", f"Please open the folder manually:\n{path}")
+	except Exception as e:
+		messagebox.showerror("Error", f"Could not open folder:\n\n{e}")
 
 
 #endregion
