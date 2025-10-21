@@ -110,6 +110,7 @@
   - Seeking in videos is now much smoother and more responsive, including the video timelines.
   - `.gif` files now use the video player widget in the Tagger UI for better control.
   - A loading animation is now shown when loading videos.
+- Tool help popups have generally been updated with clearer instructions and better formatting.
 
 ---
 
