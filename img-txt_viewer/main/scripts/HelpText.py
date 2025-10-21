@@ -4,163 +4,103 @@
 IMG_TXT_VIEWER_ABOUT = """
 # Quick Start
 
-Welcome to img-txt Viewer!
+Welcome to img-txt Viewer.
 
-This application is designed to help you quickly manage and tag image datasets.
+This application helps you organize, tag, and edit image datasets and their matching captions. An *image-text pair* is an image file and a text (.txt) file that share the same base filename.
 
 **Supported formats:** *PNG, JPG, JPEG, JFIF, JPG_LARGE, WEBP, BMP, GIF, MP4*
 
-To get started, select a directory containing image-text pairs using the `Browse...` button.
+To begin, select the folder that contains your image-text pairs using the `Browse...` button.
 
 ## Tagger Shortcuts
 
-- **ALT + LEFT/RIGHT:** Quickly move between img-txt pairs.
-- **SHIFT + DEL:** Move the current pair to a local trash folder.
-- **ALT:** Cycle through autocomplete suggestions.
-- **TAB:** Insert the highlighted suggestion.
-- **CTRL + S:** Save the current text file.
-- **CTRL + E:** Jump to the next empty text file.
-- **CTRL + R:** Jump to a random img-txt pair.
-- **CTRL + F:** Open Find and Replace.
-- **CTRL + Z / CTRL + Y:** Undo / Redo.
-- **CTRL + W:** Close the window.
-- **F1:** Toggle Image-Grid view.
-- **F2:** Toggle zoom popup.
-- **F4:** Open the current image in your default editor.
-- **Middle-click on a tag:** Delete it.
+- **Alt + Left/Right**: Move between image-text pairs.
+- **Shift + Del**: Move the current pair to a local Trash folder.
+- **Alt**: Cycle autocomplete suggestions.
+- **Tab**: Insert the highlighted suggestion.
+- **Ctrl + S**: Save the current text file.
+- **Ctrl + E**: Jump to the next empty text file.
+- **Ctrl + R**: Jump to a random pair.
+- **Ctrl + F**: Open Find and Replace.
+- **Ctrl + Z / Ctrl + Y**: Undo / Redo.
+- **Ctrl + W**: Close the window.
+- **F1**: Toggle Image Grid view.
+- **F2**: Toggle zoom popup.
+- **F4**: Open the current image in your default editor.
+- **Middle-click on a tag**: Delete that tag.
 
 ## Tagger Tips
 
-A guided setup will run on first launch to configure your autocomplete dictionaries and matching settings.
+A guided setup runs on first launch to configure autocomplete dictionaries and matching settings.
 
-- Go to *Options > Reset Settings* to re-run the setup.
+- Re-run the setup: *Options > Reset Settings*.
+- Configure autocomplete: *Options > Autocomplete* or use the menu button on the suggestion row.
+- Use an asterisk (*) while typing for fuzzy autocomplete suggestions.
+- *Match Modes*:
+    - **Match Last Word**: Use only the last typed word (recommended for natural suggestions).
+    - **Match Whole String**: Match the whole comma-separated tag.
 
-Autocomplete suggestions are based on your current dictionary and Suggestions options.
-
-- Go to *Options > Autocomplete* or click the (☰) menu button on the suggestion row to change the settings.
-- Use an asterisk (*) while typing for fuzzy search autocomplete suggestions.
-- **Match Modes:** 'Last Word' matches only the last word typed, 'Whole String' matches the entire tag between commas.
-- Use *Match Mode: Last Word* for more natural and less strict autocomplete.
-
-- Highlight matching words by selecting similar text.
-- Quickly create text pairs via *Edit > Create Blank Text Files* or by loading the image and saving the text.
-- **List Mode:** Display tags in a list format while saving them in standard format.
-- Right-click the *Browse...* button to set or clear the alternate text path, allowing you to load text files from a separate folder than images.
-- Right-click the displayed image to access various options and tools.
-
-Use the *View* menu above the displayed image to access additional options like:
-
-- **Image Grid (F1):** Display images in a grid format for easier navigation.
-- **Zoom (F2):** Toggle zoom popup for the displayed image.
-- **Thumbnail Panel:** Toggle thumbnail panel visibility.
-- **Edit Panel:** Toggle image edit panel which allows you to edit image brightness, contrast, and other properties.
+- Right-click the *Browse...* button to set or clear an alternate text folder if captions are stored separately.
+- Right-click the displayed image to access image-specific tools.
 
 ## Tagger Toolbar
 
-A variety of tools are available in the bottom toolbar below the text box. Expand the toolbar or click the (?) button for more information.
+Tools appear below the text box. Click (?) for detailed help.
 
-**Search and Replace (S&R):**
-- Search for specific text across all listed files and replace it with another.
-
-**Prefix:**
-- Insert text at the START of all listed text files.
-
-**Append:**
-- Insert text at the END of all listed text files.
-
-**AutoTag:**
-- Automatically tag images using ONNX vision models like *wd-v1-4-vit-tagger-v2*.
-- Can also be triggered via image right-click context menu.
-
-**Filter:**
-- Filter pairs based on input text.
-- Effectively alters the listed files, allowing other tools like S&R, Prefix, and Append to work with the filtered results.
-- Can filter just 'empty' text files.
-- Supports multi string matching and exclusion patterns using (+) and (!).
-
-**Highlight:**
-- Always highlight specific text if it exists in the displayed text.
-- Can be used to quickly locate important or repeated tags/words.
-- Supports multi string matching using (+).
-
-**Font:**
-- Adjust font size and style for better readability.
-
-**My Tags:**
-- Add your own custom tags for autocomplete suggestions.
-- This tool also displays all tags in the dataset and allows you to quickly add them to your own list or to the current tag file.
-- Saved to *my_tags.csv*.
-
-**Stats:**
-- View statistics about your dataset, including text/image/video statistics, most common words, a list of all tags, and more.
+- **Search and Replace (S&R)**: Search across files and replace text.
+- **Prefix**: Insert text at the start of selected files.
+- **Append**: Insert text at the end of selected files.
+- **AutoTag**: Generate tags using an ONNX vision model.
+    - ONNX (Open Neural Network Exchange) is a portable model format for running pre-trained AI models.
+    - Place models under `onnx_models/<model_name>/model.onnx` and `selected_tags.csv`, then restart.
+- **Filter**: Show only pairs that match or exclude specified text.
+    - Use `+` to include multiple strings and `!` to exclude strings.
+- **Highlight**: Always highlight specified words when viewing files.
+- **Font**: Adjust font size and style for the text editor.
+- **My Tags**: Save custom tags for autocomplete; saved to *my_tags.csv*.
+- **Stats**: View dataset statistics and most common tags.
 
 ## Main Toolbar
 
-The main toolbar gives quick access to image and text tools. These use the same directory as set in the Tagger UI. For Tag-Editor and Crop, set a directory in Tagger UI first.
+Quick tools operating on the current working folder.
 
-**Tag-Editor:**
-- Display and edit image tags. Tags are listed with their occurrences.
-- Changes are pending until you apply or save them.
-- Respects Tagger UI 'Filter' settings, just remember to refresh the view.
-
-**Crop:**
-- Crop images to a specific aspect ratio or resolution.
-- Can also extract GIFs into individual frames or crop them.
-- Use *Auto Fixed Selection* mode to automatically select the closest aspect ratio based on image dimensions.
-
-**Batch Upscale:**
-- Upscale image(s) using *realesrgan-ncnn-vulkan*.
-- Supports batch processing for multiple images at once.
-- Adjust upscale factor (e.g., 0.5, 2.0, 4.0) to control the final output size.
-- Adjust upscale strength to control the level of blending between original and upscaled images.
-- Add your own **Real-ESRGAN NCNN models (.bin and .param)** to the *models/ncnn_models* folder.
-
-**Batch Resize:**
-- Resize image(s) using various methods and conditions.
-- See the (?) help documentation for more details.
-
-**Batch Rename:**
-- Used to cleanup file names and quickly rename using a couple presets.
-- Choose between Numbered or Dated naming presets.
-
-**Find Duplicates:**
-- Used to identify and manage duplicate files in your dataset.
-- Uses simple hashing techniques to detect duplicates quickly.
-- Can be used for images or any other files.
-- Supports a variety of options, see the (?) help documentation for more details.
+- **Tag-Editor**: Edit tags across files; edits are staged until committed.
+- **Crop**: Crop images, extract GIF frames, or use fixed aspect ratios.
+- **Batch Upscale**: Upscale images using Real-ESRGAN NCNN models.
+    - Add `.bin` and `.param` model files to `models/ncnn_models`.
+- **Batch Resize**: Resize and convert many images at once.
+- **Batch Rename**: Rename files using presets (numbered or dated).
+- **Find Duplicates**: Locate duplicate files using hashing and manage them.
 
 ## Other
 
-- *File > Zip Dataset*: Compress all images and text files into a single ZIP archive.
-- *Edit > Cleanup All Text Files*: This operation will clean all text files from typos like:
-    - Duplicate tags, Extra commas, Extra spaces, trailing commas/spaces, commas without spaces, and more.
-- *Tools > Batch Operations > Batch Crop Images*: Crop all listed images to a specific resolution and crop anchor.
-- *Tools > Batch Operations > Create Wildcard From Text Files*: Combine all captions into one text file, each file's content added to a new line.
+- *File > Zip Dataset*: Compress images and text into a ZIP archive.
+- *Edit > Cleanup All Text Files*: Remove duplicate tags, extra commas/spaces, and similar formatting issues.
+- *Tools > Batch Operations*: Includes Batch Crop Images and Create Wildcard From Text Files.
 
-**Text Options:**
-- *Clean-Text*: perform text cleanup when saving.
-- *Auto-Delete Blank Files*: Automatically delete blank text files when saving.
-- *Highlight Selection*: When selecting text, other matching text will be highlighted.
-- *Add Comma After Tag*: Automatically insert a comma after inserting a suggested tag.
-- *List View*: Display text in a list format for easier navigation. (expects csv like format)
-- *Auto-Save*: Automatically save changes made to text files when navigating between pairs.
+## Text Options & Loading
 
-**Loading Order:**
-- Choose between Name, File Size, Date Created, Extension, Last Access Time, Last Time Written.
-- Ascending or Descending order.
+- **Text Options**:
+    - *Clean-Text*: Apply cleanup when saving.
+    - *Auto-Delete Blank Files*: Remove empty caption files when saving.
+    - *Highlight Selection*: Highlight matching text when selecting.
+    - *Add Comma After Tag*: Insert a comma after inserted tags.
+    - *List View*: Show tags in a CSV-like list format.
+    - *Auto-Save*: Save changes when moving between pairs.
 
-**Autocomplete:**
-- *Dictionary*: Select the appropriate dictionary(ies) for text suggestions. Multiple selections are allowed, but due to performance reasons, the resulting suggestions may be limited.
-- *Threshold*: Essentially widens the range of text considered for suggestions, allowing for more flexible matching. (slower==more flexible)
-- *Quantity*: Control the number of suggestions returned.
-- *Match Mode*: Controls how text is matched against the selected dictionary(ies) and typed content.
-    - *Match Whole String*: Match all text between the commas in the cursor selection.
-    - *Match Last Word*: Only the current text under the cursor is used for autocomplete.
+- **Loading Order**: Choose Name, File Size, Date Created, Extension, Last Access Time, or Last Written. Use Ascending or Descending.
 
-- *Options > Restore Last Path*: Restore the last used file path when launching the app.
-- *About*: Display this information.
+## Autocomplete
 
-For more detailed information regarding the tools and features, look for (?) buttons throughout the interface or view the `docs/User_Guide.md` file in the repo.
+- **Dictionary**: Select one or more dictionaries for suggestions.
+- **Threshold**: Lower values widen matches (may be slower).
+- **Quantity**: Limit the number of suggestions returned.
+- **Match Mode**: See *Tagger Tips* for guidance.
+
+- Restore the last used path at startup: *Options > Restore Last Path*.
+- Open this help: *About*.
+
+For more details and examples, use the (?) help buttons in the app or read `docs/User_Guide.md`.
 """
 
 
@@ -172,58 +112,74 @@ BATCH_TAG_EDIT_HELP = """
 # Tag-Editor Help
 
 ## Overview
-Batch Tag Edit lets you view, filter, edit, and delete tags across all text files in your working directory. All changes are staged as *pending* until you **commit** them.
 
-## Technical Notes
-- Designed for CSV-like text files. Both commas and periods are treated as tag or caption delimiters.
-- Some special characters or formatting may not be handled as expected.
+This tool is integrated with the Tagger tab and shares the same working directory.
+
+Batch Tag Edit lets you view, filter, edit, and delete tags across all text files in the current working directory.
+All changes are staged as *pending* and are not written to disk until you **commit** them.
+
+## Notes on file parsing
+
+- This tool is designed for CSV-like text files. Tags are parsed by splitting on commas and periods.
+- Periods in captions or sentences will be treated as separators and can produce separate tags.
+- Some special characters or uncommon formatting may not be handled as expected.
 - *Always back up your text files before committing changes.*
 
 ## Instructions
-1. Use the filter controls to narrow the tag list.
+
+- Use the filter controls to narrow the tag list:
     - *Filter by tag text* or by *tag count* (see Filter Tips).
-    - Filtering is disabled while there are pending changes.
-2. Select tags to edit or delete (Ctrl+Click or Shift+Click for multi select).
-3. To edit: enter a new tag in the Edit box and click **Apply** (or press Enter).
-    - To delete: leave the Edit box empty and click **Apply**, or use the right-click menu.
-    - Right-click a tag for **Edit / Delete / Copy** and quick actions.
-4. Pending changes appear in the *Action* and *New Tag* columns and are highlighted (green = edit, red = delete).
-5. Click **Commit Changes** to apply all pending edits and deletes to the text files. This cannot be undone.
-6. Use **Refresh** to reload the tag list and clear pending changes and filters.
+    - Filtering is disabled while there are pending changes to avoid hiding uncommitted edits.
+- Select tags to edit or delete (Ctrl+Click or Shift+Click to multi-select).
+- To edit:
+    - Enter the new tag in the Edit box and click **Apply** (or press Enter).
+- To delete:
+    - Leave the Edit box empty and click **Apply**, or use the right-click menu.
+- Right-click a tag for quick actions: **Edit**, **Delete**, **Copy**, and **Quick Actions**.
+- Pending changes appear in the *Action* and *New Tag* columns and are highlighted:
+    - *green* = edit; *red* = delete.
+    - Icons and column text also indicate the pending actions.
+- Click **Commit Changes** to apply all pending edits and deletes to the text files. This action cannot be undone.
+- Use **Refresh** to reload the tag list and clear pending changes and filters.
 
 ## Filter Tips
+
 - Filter options:
     - *Contains Text*: show tags containing the input text.
     - *Does Not Contain*: exclude tags containing the input text.
     - *Count Equals / Not Equals*: filter tags by exact count.
     - *Count Less Than / Greater Than*: filter tags by count range.
 - For most options you can enter multiple values separated by commas.
-- Example: to show tags used exactly 1 or 2 times, select *Count Equals* and enter `1,2`.
+- Example: to show tags used exactly 1 or 2 times, select *Count Equals* and enter 1,2.
 
 ## Sorting
+
 - Click column headers to sort by *Count*, *Tag*, *Length*, *Action*, or *New Tag*.
 - The Tag column cycles through: *Name*, *Name (reverse)*, *Length*, *Length (reverse)*.
 
 ## Context Menu & Quick Actions
-- Right-click selected tags for quick actions: **Edit**, **Delete**, **Copy**, **Quick Actions** (transformations), selection tools, and **Revert changes**.
-- Quick Actions include: convert case, replace spaces/underscores, add or remove escape characters, strip punctuation or digits, and other text transforms.
+
+- Right-click selected tags for quick actions: **Edit**, **Delete**, **Copy**, **Quick Actions**, selection tools, and **Revert changes**.
+- Quick Actions include:
+    - convert case (upper/lower/title),
+    - replace spaces or underscores,
+    - add or remove escape characters,
+    - strip punctuation or digits,
+    - trim whitespace and other common text transforms.
 
 ## Selection Hotkeys
+
 - **Ctrl+A**: Select All
 - **Ctrl+I**: Invert Selection
 - **Esc**: Clear Selection
 - **Ctrl+C**: Copy selected tags
 
-## Pending Changes
-- Pending edits are highlighted *green*; deletes are *red*.
-- Filtering is disabled while pending changes exist.
-- Use **Revert Selection** or **Refresh** to discard pending changes.
-
 ## Other Features
-- Double-click a tag to quickly edit it.
-- Tooltips show long tag names on hover.
+
+- Double-click a tag to edit it quickly, this action can also be changed to delete via the Options menu.
 - The info bar displays total, filtered, selected, and pending counts.
 - Use the *Tagger* tab to change the working directory or file set.
+- Tooltips show long tag names on hover.
 """
 
 
@@ -234,68 +190,89 @@ Batch Tag Edit lets you view, filter, edit, and delete tags across all text file
 CROP_UI_HELP = """
 # Crop Tool Help
 
-This tool is tied to the *Tagger* tab; the working directory is shared between both tools.
+This tool is integrated with the Tagger tab and shares the same working directory.
 
-## Supported File types
-*.png, .jpg, .jpeg, .webp, .gif*
+Use the Crop tool to select, crop, and transform images, and to extract frames from animated GIFs.
 
-## Basic Usage
-1. Select an image using the navigation controls.
-2. Click and drag on the image to create a selection.
-3. Adjust the selection using handles or input fields.
-4. Click **Crop Selection** to apply the crop.
-5. Choose how to save the cropped image.
+## Supported file types
 
-## Selection Controls
-- Click and drag to create a selection.
-- Double-click for a centered selection maintaining the displayed image's aspect ratio.
+- *png*, *jpg*, *jpeg*, *webp*, *gif*
+
+## Basic usage
+
+- 1) Select an image using the navigation controls.
+- 2) Click and drag on the image to create a selection.
+- 3) Adjust the selection using corner/edge handles or the size/position fields.
+- 4) Click **Crop Selection** to apply the crop.
+- 5) Choose a save option to store the cropped image.
+
+## Selection controls
+
+- Click and drag to create or resize a selection.
+- Double-click to create a centered selection constrained to the displayed image's aspect ratio.
 - Click outside the selection to clear it.
 - Use corner and edge handles to resize the selection.
 - Click inside the selection and drag to move it.
-- Use mouse wheel to resize: *Shift+wheel* for width, *Ctrl+wheel* for height, *Ctrl+Shift+wheel* for both.
+- Use the mouse wheel to resize:
+    - *Shift + wheel* — adjust width
+    - *Ctrl + wheel* — adjust height
+    - *Ctrl + Shift + wheel* — adjust both
 
-## Size & Position
-- **W (px):** Width of selection in pixels.
-- **H (px):** Height of selection in pixels.
-- **X (px):** Horizontal position from top-left.
-- **Y (px):** Vertical position from top-left.
+## Size & position
 
-All values can be entered manually or adjusted via spinbox controls.
+- **W (px):** Width of the selection in pixels.
+- **H (px):** Height of the selection in pixels.
+- **X (px):** Horizontal offset from the image's top-left.
+- **Y (px):** Vertical offset from the image's top-left.
 
-## Fixed Selection
-- **Aspect Ratio:** Maintain a specific width-to-height ratio (e.g., *16:9*, *1:1*, *3:2*).
-- **Width:** Lock the width and freely adjust height.
-- **Height:** Lock the height and freely adjust width.
-- **Size:** Lock both width and height to specific dimensions.
-- **Auto:** Automatically select the closest aspect ratio from predefined options.
-- Use the **'<'** button to insert current selection dimensions into the field.
+All values can be entered manually or adjusted using spinbox controls.
 
-## Guidelines
-- **No Guides:** No guidelines displayed.
-- **Center Lines:** Display horizontal and vertical center lines.
-- **Rule of Thirds:** Display a 3x3 grid.
-- **Diagonal Lines:** Display diagonal guides from corners.
+## Fixed selection modes
+
+- **Aspect Ratio:** Keep a specific width-to-height ratio (for example, *16:9*, *1:1*, *3:2*).
+- **Width:** Lock the width; height is adjustable.
+- **Height:** Lock the height; width is adjustable.
+- **Size:** Lock both width and height to exact pixel dimensions.
+- **Auto:** Select the closest predefined aspect ratio automatically from a list.
+- Use the **'<'** button to insert the current selection dimensions into the field.
+
+## Guidelines overlays
+
+- **No Guides:** No overlay guides are shown.
+- **Center Lines:** Show horizontal and vertical center lines.
+- **Rule of Thirds:** Show a 3x3 grid.
+- **Diagonal Lines:** Show diagonal guides across the selection.
 
 ## Options
-- **Expand Center:** Selection expands equally from its center point.
-- **Highlight:** Toggle darkened overlay outside the selection.
 
-## Transform Tools
-- **Rotate:** Rotate image 90° clockwise.
+- **Expand Center:** Expand or contract the selection equally from its center point.
+- **Highlight:** Toggle a darkened overlay outside the selection to emphasize the crop area.
+
+## Transform tools
+
+- **Rotate:** Rotate the image 90° clockwise.
 - **Flip X:** Mirror the image horizontally.
 - **Flip Y:** Mirror the image vertically.
 
-## GIF Handling
-- For GIF files, frames are displayed as thumbnails.
-- Click a thumbnail to select that frame for editing.
-- Use the timeline slider to navigate through frames.
-- **Extract GIF:** Save all frames as individual PNG files.
+## GIF handling
 
-## After Crop
-- **Save and Close:** Apply the crop and close the tab.
+- Animated GIF frames appear as thumbnails.
+- Click a frame thumbnail to select it for editing.
+- Use the timeline slider to navigate frames.
+- **Extract GIF:** Save all frames as separate PNG files.
+
+## After cropping
+
+- **Save and Close:** Apply the crop and switch back to the Tagger tab.
 - **Save and Next:** Apply the crop and load the next image.
-- **Save as...:** Choose a save location and filename for the cropped image.
-- **Save:** Apply the crop and save in the same location with a unique filename.
+- **Save as...:** Choose a save location and filename via the file dialog.
+- **Save:** Save to the same folder with a unique filename to avoid overwriting; then do nothing.
+
+## Tips
+
+- Use **Save as...** to preserve the original image.
+- Use **Extract GIF** when you need individual frames for further editing.
+- Right-click the image for additional context actions and keyboard shortcuts.
 """
 
 
@@ -306,46 +283,58 @@ All values can be entered manually or adjusted via spinbox controls.
 BATCH_UPSCALE_HELP = """
 # Batch Upscale Help
 
-## Supported File types
-*.png, .webp, .jpg, .jpeg, .jpg_large, .jfif, .tif, .tiff, .bmp, .gif*
+This tool is integrated with the Tagger tab and shares the same working directory.
 
-## Upscale Models
-- *realesr-animevideov3-x4*
-- *RealESRGAN_General_x4_v3*
-- *realesrgan-x4plus*
-- *realesrgan-x4plus-anime*
-- *AnimeSharp-4x*
-- *UltraSharp-4x*
-- *Any additional "ESRGAN x4" models found in the `ncnn_models` directory will be added automatically.*
+## Supported file types
 
-## Upscale Strength
-Adjusts the blend between the original and upscaled images:
-- *0%* — returns the original image.
-- *100%* — applies the full upscaling effect.
+- *png*, *webp*, *jpg*, *jpeg*, *jpg_large*, *jfif*, *tif*, *tiff*, *bmp*, *gif*
 
-## Processing Modes
+## Upscale models
 
-### Single Mode
-1. Select an image using the *Browse...* button or from the file list.
-2. Adjust *Upscale Model*, *Upscale Factor*, and *Upscale Strength*.
-3. Click **Upscale** to process the image.
+These models are included by default:
 
-### Batch Mode
-1. Enable *Batch Mode*.
-2. Select an input directory containing the images to upscale.
-3. Click **Upscale** to process all supported images.
-4. Click **Cancel** to stop processing at any time.
+- realesr-animevideov3-x4
+- RealESRGAN_General_x4_v3
+- realesrgan-x4plus
+- realesrgan-x4plus-anime
+- AnimeSharp-4x
+- UltraSharp-4x
 
-## Auto Output Naming
-When enabled, output filenames and directories are generated automatically relative to the input path.
+Add your own Real-ESRGAN NCNN model files (.bin and .param) to *models/ncnn_models* to use them in the app.
+New models are loaded at startup.
 
-## Additional Note
-- The tool performs an initial *4x* upscaling before applying the selected resize factor.
-- Adjusting the upscale factor controls final size but does not change the internal 4x upscale step's behavior.
 
-## Tips & Recommendations
-- Add your own Real-ESRGAN NCNN models (.bin and .param) to *models/ncnn_models*.
-- Use lower upscale factors for faster processing; use higher factors when larger outputs are required.
+## Upscale strength
+
+This setting blends the original and upscaled images together; lower values preserve more of the original detail
+
+- 0% - returns the original image
+- 100% - applies the full upscaling effect
+
+## Upscale factor
+
+Controls the final output size relative to the input size.
+- 1x - Returns the original size image.
+
+## Processing modes
+
+### Single mode
+
+1. Select an image with the Browse... button or from the file list
+2. Choose Upscale Model, Upscale Factor, and Upscale Strength
+3. Click **Upscale** to process the selected image
+
+### Batch mode
+
+1. Enable Batch Mode
+2. Choose an input directory containing supported images
+3. Click **Upscale** to process all supported images in the directory
+4. Click **Cancel** at any time to stop processing after the current image finishes
+
+## Auto output naming
+
+- When enabled, the app generates output folders and filenames automatically using the input path as the base
+- This helps organize results and avoid filename conflicts
 """
 
 
@@ -356,17 +345,20 @@ When enabled, output filenames and directories are generated automatically relat
 BATCH_RESIZE_IMAGES_HELP = """
 # Batch Resize Help
 
-## Supported File types
-- *.jpg*, *.jpeg*, *.png*, *.webp*, *.bmp*, *.tif*, *.tiff*
+This tool is integrated with the Tagger tab and shares the same working directory.
 
-## Overview
-A tool to resize or convert many images at once. Choose a resize method, set output options, then run the operation.
+Use this tool to resize or convert many images at once. Select a resize mode, set output and quality options, then run the operation.
+
+## Supported file types
+
+- *jpg*, *jpeg*, *png*, *webp*, *bmp*, *tif*, *tiff*
 
 ## Resize Modes
+
 - **Resize to Resolution**
     - Resize to a specific width and height. *This ignores aspect ratio.*
 - **Resize to Percentage**
-    - Scale the image by a percent value (e.g., 50% = half size).
+    - Scale the image by a percent value (for example, 50% = half size).
 - **Resize to Width**
     - Target a specific width; height is adjusted to preserve aspect ratio.
 - **Resize to Height**
@@ -377,28 +369,44 @@ A tool to resize or convert many images at once. Choose a resize method, set out
     - Resize so the longer side matches the target while preserving aspect ratio.
 
 ## Scaling Rules
-- **Upscale and Downscale** - Apply the resize regardless of whether the result is larger or smaller than the original.
-- **Upscale Only** - Resize only if the new dimensions are larger than the original.
-- **Downscale Only** - Resize only if the new dimensions are smaller than the original.
+
+- **Upscale and Downscale**
+    - Apply the resize regardless of whether the result is larger or smaller than the original.
+- **Upscale Only**
+    - Resize only if the new dimensions are larger than the original (no change if smaller).
+    - Example: original 800x600 -> target 1200x900 = *resized*; target 400x300 = *skipped*.
+- **Downscale Only**
+    - Resize only if the new dimensions are smaller than the original.
 
 ## Quality & Output Format
-- **Quality** - Controls output quality for *JPG* and *WEBP*. Higher values produce higher quality output. *Ignored for PNG.*
-- **File type** - Choose *AUTO* to keep the input file type, or select a specific format to force all outputs to that type.
+
+- **Quality**
+    - Controls output quality for *JPG* and *WEBP* (typically 1-100). Higher values increase visual quality and file size. *Ignored for PNG.*
+- **File type**
+    - Choose *AUTO* to keep each input file's original format.
+    - Select a specific format to convert all outputs to that format.
+    - Note: converting PNG to JPEG removes transparency.
 
 ## Output Location & Overwrite
-- **Use Output Folder** - When enabled, a folder named *Resize Output* is created inside the source folder and resized images are saved there.
-- **Overwrite Files** - If disabled, conflicting filenames receive a unique suffix (e.g., _1). If enabled, existing files with the same basename are overwritten.
+
+- **Use Output Folder**
+    - When enabled, a folder named *Resize Output* is created inside the source folder and resized images are saved there.
+    - When disabled, resized images are saved next to the originals.
+- **Overwrite Files**
+    - If disabled, conflicting filenames receive a unique suffix (for example, _1).
+    - If enabled, existing files with the same basename are overwritten.
+    - There is no automatic undo for overwrites; back up originals if needed.
 
 ## PNG Metadata
-- **Save PNG Info** - If saving as PNG, preserved PNG chunk info is written to the output. If converting from PNG to another format, a text file containing PNG chunk info is created alongside the converted file.
+
+For A1111-style PNG metadata preservation.
+
+- When saving as PNG, preserved PNG chunk metadata is written to the output PNG.
+- If converting a PNG to another format, a text file containing the PNG chunk metadata is created alongside the converted file.
 
 ## Convert Only
-- **Convert Only** - When enabled, images are converted to the chosen file type without changing dimensions. Resize settings are ignored.
 
-## Tips
-- Test with a small set of images to verify settings before processing large folders.
-- Use *AUTO* file type to preserve original formats when you only need resizing.
-- Be cautious with *Overwrite Files* as there is no automatic undo.
+When enabled, images are converted to the chosen file type without changing dimensions. Resize settings are ignored.
 """
 
 
@@ -409,32 +417,42 @@ A tool to resize or convert many images at once. Choose a resize method, set out
 BATCH_RENAME_HELP = """
 # Batch Rename Help
 
-## Supported File types
-- *.txt, *.jpg, *.jpeg, *.png, *.webp, *.bmp, *.tif, *.tiff, *.gif*
+This tool is integrated with the Tagger tab and shares the same working directory.
+
+Rename files in bulk using presets and options. Select files, choose a preset, and apply the renaming operation.
+
+## Supported file types
+
+- *txt*, *jpg*, *jpeg*, *png*, *webp*, *bmp*, *tif*, *tiff*, *gif*
 
 ## Instructions
-1. *Select a folder containing files to rename.*
-2. *Select files to rename by clicking on them.*
-   - Use **Ctrl+Shift** and click for multi-select.
-3. *Adjust options as needed:*
-   - **Handle Duplicates:** Rename, Move to Folder, Overwrite, Skip
-   - **Respect Img-Txt Pairs:** Keep image-text pairs matched when renaming
-4. *Choose a preset for renaming:*
-   - **Numbering:** Sequential numbering
-   - **Auto-Date:** Use modified date and numbering
-5. *Click **Rename Files** to apply changes.*
-6. *Confirm the operation if prompted.*
 
-## Note
-- **There is no undo for this operation!**
-- Use caution when renaming files.
+1. Select a folder containing files to rename using the Browse... button.
+2. Select files to rename by clicking them.
+    - Hold Ctrl+Shift and click for multi-select.
+3. Adjust options as needed:
+    - **Handle duplicates**: Rename, Move to Folder, Overwrite, or Skip.
+    - **Respect img-txt pairs**: When enabled, image files and their matching .txt files (same base name) are renamed together.
+4. Choose a renaming preset:
+    - **Numbering**: Sequential numbering (for example, 0001.jpg).
+    - **Auto-Date**: Use the file's modified date plus numbering.
+5. Click **Rename Files** to apply changes.
+6. Confirm the operation if prompted.
+
+## Notes
+
+- **Naming Conflicts**: If a target filename already exists, the selected duplicate handling option is applied.
+    - For *Rename*, a unique suffix (_1, _2, etc.) is added.
+    - Run the tool multiple times to resolve conflicts if needed.
+- **No undo:** This operation cannot be undone. Back up important files before renaming.
 
 ## Hotkeys
-- **Ctrl+Click:** Select/Deselect
-- **Ctrl+A:** Select All
-- **Ctrl+D:** Deselect All
-- **Ctrl+I:** Invert Selection
-- **F5:** Refresh
+
+- **Ctrl+Click:** Select or deselect a file.
+- **Ctrl+A:** Select all.
+- **Ctrl+D:** Deselect all.
+- **Ctrl+I:** Invert selection.
+- **F5:** Refresh the file list.
 """
 
 
@@ -445,80 +463,81 @@ BATCH_RENAME_HELP = """
 BATCH_IMAGE_EDIT_HELP = """
 # Batch Image Edit
 
-A tool to apply image adjustments to many files at once. The UI is divided into three panels:
+This tool is integrated with the Tagger tab and shares the same working directory.
+
+A tool to apply image adjustments to multiple files at once. The UI has three panels:
 - Left: Image file list (select images, multi-select, preview)
 - Center: Live preview (original and adjusted)
 - Right: Adjustment controls (sliders + advanced options)
 
 ## Supported file types
-- *.jpg, *.jpeg, *.png, *.webp, *.bmp, *.tif, *.tiff, *.jfif*
+- *jpg*, *jpeg*, *png*, *webp*, *bmp*, *tif*, *tiff*, *jfif*
 
 ## Adjustment Controls
-- **Brightness:** Adjust overall brightness
-- **Contrast:** Enhance or reduce contrast
-- **AutoContrast:** Automatic contrast optimization
-- **Highlights:** Control bright areas
-    - *threshold: The level considered a highlight*
-- **Shadows:** Control dark areas
-    - *threshold: The level considered a shadow*
-- **Saturation:** Adjust color intensity
-- **Vibrance:** Boost muted colors
-- **Hue:** Shift the color spectrum
-- **Color Temp:** Adjust warm/cool tones
-- **Sharpness:** Enhance or soften details
-    - *boost: Multiply sharpness effect*
-- **Clarity:** Enhance mid-tone contrast
-    - *radius: Controls the radius for mid-tone contrast*
+- **Brightness**: Adjust overall brightness
+- **Contrast**: Increase or decrease contrast
+- **AutoContrast**: Automatic contrast optimization
+- **Highlights**: Control bright areas
+    - *threshold*: the level considered a highlight
+- **Shadows**: Control dark areas
+    - *threshold*: the level considered a shadow
+- **Saturation**: Adjust color intensity
+- **Vibrance**: Boost muted colors
+- **Hue**: Shift the color spectrum
+- **Color Temp**: Adjust warm/cool tones
+- **Sharpness**: Enhance or soften details
+    - *boost*: multiplies the sharpness effect
+- **Clarity**: Enhance mid-tone contrast
+    - *radius*: controls the radius for mid-tone contrast
 
-*Advanced options* are available using the "+" button for applicable sliders.
+*Advanced options* are available via the "+" button for applicable sliders.
 
 ## Controls & Shortcuts
-- Click a slider value label to type a numeric value. Press *Enter* to apply, *Esc* to cancel.
-- Right-click a slider handle to reset that slider to its default (main sliders reset to 0; advanced sliders reset to their advanced default).
-- Click the **Reset** button to return all sliders and advanced options to defaults (clears temporary edited preview).
+- Click a slider value to type a numeric value. Press *Enter* to apply, *Esc* to cancel.
+- Right-click a slider handle to reset that slider to its default (main sliders default to 0; advanced sliders revert to their advanced defaults).
+- Click the **Reset** button to restore all sliders and advanced options to defaults. This clears any temporary preview edits.
 
 ## Preview behavior
-- *Single view:* preview shows the edited image. Press and hold *right mouse button* on the preview to temporarily show the original; release to return to edited.
-- *Split view (Options > Use Split View):* left pane shows original; right pane shows edited. Right-click press temporarily shows original in the right pane.
+- *Single view*: the preview shows the edited image. Press and hold the *right mouse button* on the preview to temporarily show the original; release to return to the edited view.
+- *Split view (Options > Use Split View)*: left pane shows the original; right pane shows the edited image. Right-click press temporarily shows the original in the right pane.
 
 ## Batch processing & files
 - The batch operation applies to the current working directory image list (all supported images shown in the left list).
-- Selection is used for preview only and does not limit which files are processed.
+- Selection affects preview only and does not limit which files are processed.
 - To process a subset, change the working folder or remove unwanted files from the folder before running.
 - Only supported file types are shown and processed.
 
 ## Save & Overwrite options
-- **Save To:**
-  - *Subfolder* (default) - saves edited images to an "Edited Images" subfolder in the working directory.
-  - *Same Folder* - saves edited images into the same folder as originals.
-- **Save As:**
-  - *Same Format* (default) - keep original file type.
-  - *JPEG* - force output to JPEG (saved with quality=100).
-  - *PNG* - force output to PNG.
-- **Overwrite:**
-  - *Always* - will remove originals when saving to a Subfolder (current implementation removes the original file when Subfolder + Always are selected).
-  - *On Conflict* (default) - existing files at the target path will be overwritten.
-  - *Never* - always create a unique filename (append _1, _2, ...) to avoid overwriting.
+- **Save To**
+    - *Subfolder* (default): saves edited images to an "Edited Images" subfolder in the working directory.
+    - *Same Folder*: saves edited images to the same folder as the originals.
+- **Save As**
+    - *Same Format* (default): keep the original file type.
+    - *JPEG*: force output to JPEG (saved with quality=100).
+    - *PNG*: force output to PNG.
+- **Overwrite**
+    - *Always*: if combined with Save To = Subfolder, the originals are removed (current behaviour).
+    - *On Conflict* (default): overwrite only when a file with the same name exists at the target path.
+    - *Never*: always create a unique filename (append _1, _2, ...) to avoid overwriting.
 
 ## Running the batch
-1. Select a working directory (Browse..., Enter path, or use the app's main image directory).
+1. Select a working directory (Browse..., enter a path, or use the app's main image directory).
 2. Adjust sliders and advanced options.
-3. Use the Options menu to choose: Save To / Save As / Overwrite and toggle Split View options.
+3. Use the Options menu to choose Save To, Save As, Overwrite, and Split View.
 4. Click **Apply!** to process all images shown in the list.
 5. Click **Cancel** to stop processing; the run stops after the current image finishes.
-6. A summary is shown.
+6. A summary is displayed when processing completes or is cancelled.
 
 ## Progress & status
-- Bottom row shows *Total*, *Processed*, *Elapsed time*, *ETA*, and a progress bar.
-- Progress bar and counts update as files are processed.
-- The processed counts will update during processing.
+- The bottom row shows *Total*, *Processed*, *Elapsed time*, *ETA*, and a progress bar.
+- Progress counts and the progress bar update as files are processed.
 
-## Tips & behavior details
+## Tips & behavior
 - Use **Open** to reveal the working folder in File Explorer.
-- **Refresh** reloads the file list from disk.
-- The same image editing pipeline is used for previews and batch saves; the preview is representative of saved output.
+- Use **Refresh** to reload the file list from disk.
+- The same image editing pipeline is used for previews and saving; previewed edits represent the final output.
 
-Processing time depends on image size, number of images, and complexity of adjustments. *All adjustments are non-destructive until you click **Apply!***.
+Processing time depends on image size, number of images, and complexity of adjustments. All adjustments are non-destructive until you click **Apply!**.
 """
 
 
@@ -529,63 +548,71 @@ Processing time depends on image size, number of images, and complexity of adjus
 FIND_DUPLICATE_FILE_HELP = """
 # Find Duplicate Files Help
 
-## Processing Modes
-- **MD5 - Fast:**
-    - Quick file comparison but slightly less accurate (*Recommended*)
-- **SHA-256 - Slow:**
-    - More thorough comparison but takes longer to process
+This tool is integrated with the Tagger tab and shares the same working directory.
 
-## Duplicate Handling
-- **Single Mode:**
-    - Moves only the duplicate files, leaving one copy in the original location
-- **Both Mode:**
-    - Moves all duplicate files to the duplicates folder and groups them together
+- Use this tool to locate and manage duplicate files safely.
+- Files are compared by computing cryptographic hashes (MD5 or SHA-256).
+
+## Processing Modes
+
+- **MD5 — Fast**
+    - Quick comparisons for large sets. *Recommended*.
+- **SHA-256 — Thorough**
+    - Slower but reduces the risk of false matches **(rare)**.
 
 ## Scanning Options
-- **Images:**
-    - Only scans supported image file types
-  - Enables the *Move Captions* option for handling associated text files
-- **All Files:**
-    - Scans all files regardless of type
-- **Recursive:**
-    - Includes subfolders in the scan (only compares files within the same folder)
-- **Move Captions:**
-    - Moves associated *.txt* files when moving duplicate images
 
-## File Menu Features
-- **Select Folder:** Choose a directory to scan
-- **Open Folder:** Open the current directory in File Explorer
-- **Restore Moved Duplicates:** Return files to their original locations
-- **Move All Duplicates Upfront:** Consolidate duplicates to the root folder
-- **Delete All Duplicates:** Permanently remove duplicate files
+- **Images**
+    - Scans only supported image file types.
+    - Enables *Move Captions* to move matching `.txt` caption files that share the same base filename.
+- **All Files**
+    - Scans every file type.
+- **Recursive**
+    - Includes subfolders in the scan.
+    - Files are compared only against other files in the *same* folder (duplicates across different folders are not compared).
+- **Move Captions**
+    - When enabled, moves associated `.txt` caption files alongside moved images.
 
-## Options Menu Features
-- **Process Mode:** Choose between MD5 (*fast*) or SHA-256 (*thorough*) comparison
-- **Max Scan Size:** Set maximum file size limit for scanning (*in MB*)
-- **File types to Scan:** Customize which file extensions to check
-- **Recursive Scanning:** Enable or disable subfolder scanning
-- **Scanning Mode:** Choose between Images-only or All Files
-- **Duplication Handling:** Select Single or Both mode
+## Duplicate Handling
 
-## Usage Instructions
+- **Single Mode**
+    - Keeps one original file in place and moves detected duplicates.
+- **Both Mode**
+    - Moves all copies of a duplicate set into the duplicates folder and groups them together.
 
-### Basic Usage
-1. Select a folder using the Browse button or File menu
-2. Choose your scanning options (*Images/All Files, Single/Both mode*)
-3. Enable Recursive if you want to scan subfolders
-4. Click *Find Duplicates* to begin scanning
+## File Menu Actions
 
-### Managing Results
-- Duplicates are moved to a *'_Duplicate__Files'* folder
-- Use the Undo button to restore moved files
-- The status bar shows progress and duplicate count
+- **Select Folder** — Choose the folder to scan.
+- **Open Folder** — Reveal the current folder in File Explorer.
+- **Restore Moved Duplicates** — Return moved files to their original locations (original folder structure is preserved).
+- **Move All Duplicates Upfront** — Consolidate duplicates in the scan root before further actions.
+- **Delete All Duplicates** — Permanently delete duplicates (this cannot be undone).
+
+## Options
+
+- **Process Mode** — Select MD5 or SHA-256.
+- **Max Scan Size** — Skip files larger than this limit (in MB).
+- **File types to Scan** — Specify which extensions to include.
+- **Recursive Scanning** — Enable or disable subfolder scanning.
+- **Scanning Mode** — Choose Images-only or All Files.
+- **Duplication Handling** — Choose Single or Both mode.
+
+## Usage
+
+1. Select a folder using *Select Folder* or the Browse button.
+2. Choose scanning options and process mode.
+3. Enable *Recursive* to include subfolders (see Recursive note).
+4. Click *Find Duplicates* to start scanning.
+
+## Managing Results
+
+- Duplicates are moved to a `_Duplicate_Files` folder in the scanned directory.
+- Use *Undo* or *Restore Moved Duplicates* to revert moves.
+- The status bar shows scan progress and duplicate counts.
 
 ## Important Notes
-- The tool uses file hash comparison for accurate duplicate detection
-- Large files may take longer to process, especially in SHA-256 mode
-- Recursive mode only compares files within their respective folders
-- The original file structure is preserved when restoring files
-- Actions like deletion and upfront moves cannot be undone
+
+Actions such as deleting duplicates or moving them upfront are irreversible — back up important files first.
 """
 
 
@@ -596,64 +623,86 @@ FIND_DUPLICATE_FILE_HELP = """
 SEARCH_AND_REPLACE_HELP = """
 # Search and Replace
 
-Use this tool to search for a string of text across all text files in the selected directory.
+Use this tool to find and replace text across all *text (.txt) files* in the selected folder.
 
-## How It Works
+## How it works
 
-If a match is found, it will be replaced exactly with the given text.
+- Enter the text to search for and the replacement text.
+- By default the search is an exact, case-sensitive string match.
+- Enable *Use Regular Expressions* in the menu to treat the search as a regex pattern.
+- A backup of affected text files is created automatically before changes are applied.
 
-## Example
+## Examples
 
-- **Search for:** *the big brown dog*
-- **Replace with:** *the big red dog*
+- *Search for:* *the big brown dog*.
+- *Replace with:* *the big red dog*.
 
-This will replace all instances of *the big brown dog* with *the big red dog*.
+This replaces every exact occurrence of *the big brown dog* with *the big red dog*.
+
+- *Regex example:* enable regex and use \\d+ to match one or more digits.
+- To make a regex case-insensitive, use the inline flag `(?i)`, for example `(?i)dog`.
 
 ## Filtering
 
-If a filter is applied, only text files that match the filter will be affected.
+If a filter is applied, only matching text files will be modified.
+
+## Safety & Undo
+
+- A backup is created automatically before any changes are saved.
+- Use *Undo Last Action* in the menu to revert changes if needed.
+- Test on a small set of files before running large replacements.
+
+## Notes
+
+- Only text (.txt) files are affected; image files and filenames are not changed.
+- Regular expressions are powerful and can change many matches; use them carefully.
 """
-
-
-#endregion
-#region Prefix
 
 
 PREFIX_HELP = """
 # Prefix Tool
 
-Use this tool to prefix all text files in the selected directory with the entered text.
+Use this tool to insert the provided text at the start of each *text (.txt) file* in the selected folder.
 
-## How It Works
+## How it works
 
-- **The entered text will appear at the start of each text file.**
-- *Commas will be inserted as needed for formatting.*
+- The supplied text is inserted at the very start of each file, before any existing content.
+- If the prefix does not end with ", " (a comma and a space), the app will add ", " automatically to keep tag formatting consistent.
+- If a .txt file does not exist for an image, a new file is created with the prefixed text.
+- A backup of affected files is created before changes are applied. Use *Undo Last Action* to restore backups.
 
 ## Filtering
 
-- If a filter is applied, only text files that match the filter will be affected.
+If a filter is active, only matching text files will be changed.
 
+## Tips
+
+- Test prefixing on a small set of files first.
+- Use *Undo Last Action* in the menu to revert changes if needed.
 """
-
-
-#endregion
-#region Append
 
 
 APPEND_HELP = """
 # Append Tool
 
-Use this tool to append all text files in the selected directory with the entered text.
+Use this tool to add the same text to the end of all *text (.txt) files* in the selected folder.
 
-## How It Works
+## How it works
 
-- **The entered text will appear at the end of each text file.**
-- *Commas will be inserted as needed for formatting.*
+- Enter the text to append in the Append field.
+- If your text does not start with ", " (a comma and a space), the app will add a leading ", " automatically to keep tag formatting consistent.
+- You will be asked to confirm before changes are applied.
+- A backup of affected files is created automatically. Use *Undo Last Action* to restore files if needed.
+- If a text file does not exist for an image, a new .txt file will be created.
 
 ## Filtering
 
-- If a filter is applied, only text files that match the filter will be affected.
+If a filter is active, only matching text files will be modified.
 
+## Tips
+
+- Test on a small set of files before running large operations.
+- To remove appended text later, use Search & Replace with a backup in place.
 """
 
 
@@ -666,94 +715,97 @@ AUTOTAG_HELP = """
 
 ##  Overview
 
-*Auto-Tagging* uses an **ONNX** vision model to analyze images and generate tags. Generated tags appear in the Auto-Tag listbox with confidence scores. You can insert these tags into the caption box or save them to image text files during *Batch* operations.
+- *Auto-Tagging* analyzes images with an **ONNX** vision model and suggests descriptive tags.
+- Suggested tags appear in the Auto-Tag listbox with confidence scores.
+- Tags can be inserted into the caption box or saved to all text files during batch operations.
 
 ##  Models
 
-- Download additional models from: https://huggingface.co/SmilingWolf
-- Place models in subfolders under `onnx_models`. The subfolder name becomes the model label.
-- Each model requires:
-    - `model.onnx`
-    - `selected_tags.csv`
-- Restart the program to load new models.
+Example source: https://huggingface.co/SmilingWolf
 
-Example:
-img-txt_viewer/
-    └── onnx_models/
-        └── wd-v1-4-moat-tagger-v2/
-            - model.onnx
-            - selected_tags.csv
+- Place each model in its own folder under `onnx_models`. The folder name becomes the model label.
+    - Required files:
+        - `model.onnx`
+        - `selected_tags.csv`
+- Restart the program after adding models to load them.
+- Example folder layout:
+    - img-txt_viewer/
+        - onnx_models/
+            - wd-v1-4-moat-tagger-v2/
+                - model.onnx
+                - selected_tags.csv
 
 ##  Quick Start
 
-1. Select a *Model* from the dropdown.
-2. Adjust *General Threshold*, *Character Threshold*, and *Max Tags*.
-3. Set up *Exclude*, *Keep*, and *Replace/With* lists, and the *Keep escape* options.
-4. Click *Interrogate* to analyze the current image or video frame.
-5. Use the listbox and Insert modes (*Prefix*, *Append*, *Replace*) to add tags to the text box.
-6. To process a whole folder, enable **Batch**, choose an Auto-Insert mode, then click *Interrogate*.
+1) Select a **Model** from the dropdown.
+2) Set *General Threshold*, *Character Threshold*, and *Max Tags*.
+3) Configure *Exclude*, *Keep*, and *Replace / With* lists and the *Keep escape* options.
+4) Click **Interrogate** to analyze the current image or video frame.
+5) Use the listbox and Insert modes (**Prefix**, **Append**, **Replace**) to add tags to the caption box.
+6) To process a folder, enable **Batch**, choose an Auto-Insert mode, then click **Interrogate**.
 
 ##  UI Reference and Options
 
-- **Auto-Insert**:
-    - *Disable* - no automatic insertion.
-    - *Prefix* - insert tags at the start.
-    - *Append* - insert tags at the end.
-    - *Replace* - replace the entire text box.
-
-- **Batch**:
+- **Auto-Insert**
+    - *Disable* — do not insert automatically.
+    - *Prefix* — insert tags at the start.
+    - *Append* — insert tags at the end.
+    - *Replace* — replace the entire text box.
+- **Batch**
     - Processes all images in the current directory.
     - Requires Auto-Insert to be set (Prefix, Append, or Replace).
     - Updates or creates text files for each image.
-
-- **Viewport**:
-    - When enabled (non-batch), interrogates only the visible part of the displayed image.
+- **Viewport**
+    - When enabled (non-batch), interrogates only the visible portion of the displayed image.
     - Ignored during Batch interrogation.
-
-- **Thresholds & Limits**:
-    - *General Threshold*: 0.00 - 1.00 (lower = more permissive).
-    - *Character Threshold*: 0.00 - 1.00 for character tags.
-    - *Max Tags*: maximum number of tags returned (default is about 40).
-
-- **Preserve Options**:
-    - *Keep underscores* - preserve `_` instead of replacing with spaces.
-    - *Keep escape* - preserve backslashes in tags.
-
-- **Lists**:
-    - *Exclude*: comma-separated tags to exclude. Enabling *Auto* adds existing tags to the exclusion list.
+- **Thresholds & Limits**
+    - *General Threshold*: 0.00 - 1.00 (lower is more permissive).
+    - *Character Threshold*: 0.00 - 1.00 (used for character tags).
+    - *Max Tags*: maximum number of tags returned (default ~40).
+- **Preserve Options**
+    - *Keep underscores* — preserve `_` instead of replacing with spaces.
+    - *Keep escape* — preserve backslashes in tags (for escaped characters).
+- **Lists**
+    - *Exclude*: comma-separated tags to exclude. Enabling *Auto* adds tags already present in the caption.
     - *Keep*: comma-separated tags that are always included.
-    - *Replace / With*: parallel lists where each Replace entry maps to the same-index With entry.
+    - *Replace / With*: parallel, comma-separated lists; each Replace item maps to the With item at the same index.
 
 ##  Listbox and Selection
 
-- Each item shows `score: tag`.
-- Visual cues: character tags in *green*, keep tags in *red*.
+- Each item displays `score: tag` with the confidence score first.
+- Visual cues:
+    - Character tags are shown in green.
+    - Keep tags are shown in red.
 - Multi-select is supported.
 - Context menu actions:
     - Insert (Prefix, Append, Replace)
     - Copy Selected Tags
     - Select All, Invert Selection, Clear Selection
-    - Add to MyTags (adds to your custom dictionary)
-    - Add to Exclude / Add to Keep (sanitizes escapes)
+    - Add to MyTags
+    - Add to Exclude / Add to Keep (escapes are sanitized)
 
 ##  Replace Mapping and Edge Cases
 
-- Replace/With mapping is index-based; unmapped entries are ignored.
-- Exclude/Keep lists are normalized (trimmed).
-- Escape handling depends on the *Keep escape* option.
+- Replace/With mapping is index-based; unmatched entries are ignored.
+- Exclude and Keep lists are normalized (trimmed and cleaned).
+- Escape handling follows the *Keep escape* option.
+- Use Auto Exclude to avoid adding tags already present in the caption.
+
+Example:
+- Replace: `cat, dog`
+- With: `feline, canine`
 
 ##  Video Handling
 
-- For non-batch .mp4 files, interrogation uses the current video player frame.
-- For batch .mp4 files, a frame is extracted at about 2 seconds; if extraction fails, the image is skipped.
+- For a single (non-batch) .mp4, the current video player frame is interrogated.
+- For batch .mp4 files, a frame is extracted at about 2 seconds; if extraction fails, the file is skipped.
 
 ##  Tips & Troubleshooting
 
-- If a model does not appear, check that the folder contains both `model.onnx` and `selected_tags.csv`, then restart the program.
-- Use *Auto* exclude to avoid adding tags already present in your text files.
-- Copy selected tags to the clipboard for use elsewhere.
+- If a model does not appear, ensure the folder contains both `model.onnx` and `selected_tags.csv`, then restart the app.
+- Use *Auto* exclude to avoid duplicating tags already in captions.
 - Use *Add to MyTags* to build your personal tag dictionary.
-- Batch operations can take time; the modal shows ETA and you can stop safely at any time.
+- Batch operations can take time. The modal shows ETA and can be stopped safely at any time.
 """
 
 
@@ -764,22 +816,32 @@ img-txt_viewer/
 FILTER_HELP = """
 # Filter Tool
 
-This tool will filter all img-txt pairs based on the provided text.
+Use this tool to show only image-text pairs whose caption text matches the filter.
 
-## How To Use
+## How to use
 
-- Enter any string of text to display only img-txt pairs containing that text.
-- Use ` + ` to include multiple strings when filtering.
-- Use `!` before the text to exclude any pairs containing that text.
+- Enter one or more text terms to search within caption files.
+- Use ' + ' (space-plus-space) to require multiple terms; all included terms must be present.
+- Prefix a term with '!' to exclude captions that contain that term.
+- Matching is a simple substring search by default and is case-sensitive.
+    - Enable **Use Regular Expressions** (menu) to treat the filter as a regex.
+    - For case-insensitive regex, add the inline flag `(?i)` at the start of your pattern.
 
-### Examples
+## Examples
 
-- *dog* (shows only pairs containing the text dog)
-- *!dog* (removes all pairs containing the text dog)
-- *!dog + cat* (remove dog pairs, display cat pairs)
+- *dog* — show pairs with captions that contain *dog*.
+- *!dog* — exclude pairs whose captions contain *dog*.
+- *dog + cat* — show pairs that contain both *dog* and *cat*.
+- *!dog + cat* — show pairs that contain *cat* and do not contain *dog*.
+- *!dog + !cat* — exclude pairs containing *dog* or *cat*.
 
+## Notes & tips
+
+- Filters adjust the file list for most tools and operations.
+    - Use **Clear And Reset Filter** to restore the full image list.
+- Use **Show Empty Text Files Only** (menu) to list images with empty or missing captions.
+- Filtering searches caption text only; image or text filenames are not searched.
 """
-
 
 
 #endregion
@@ -789,16 +851,25 @@ This tool will filter all img-txt pairs based on the provided text.
 HIGHLIGHT_HELP = """
 # Highlight Tool
 
-Enter the text you want to highlight each time you move to a new img-txt pair.
+Enter words or phrases to highlight in the textbox.
+Highlights are applied automatically as you move to a new image-text pair.
 
-## How To Use
+## How to use
 
-- Use ` + ` to highlight multiple strings of text.
+- Type one or more terms to highlight.
+- Use ' + ' (space-plus-space) to highlight multiple terms at once.
+- Matching is a plain substring search (case-sensitive) by default.
+- To use regular expressions or case-insensitive matches, enable *Use Regular Expressions* from the Highlight menu.
 
 ### Example
 
 - *dog + cat*
+    - Highlights all occurrences of *dog* and *cat* in the caption text.
 
+### Notes
+
+- Highlights are visual only and do not change the underlying text files.
+- Clear the Highlight field to remove highlights.
 """
 
 
@@ -807,63 +878,65 @@ Enter the text you want to highlight each time you move to a new img-txt pair.
 
 
 MY_TAGS_HELP = """
-# MyTags - Information
+# My Tags
 
-Curate your own tags (*with optional folders*) for autocomplete and quick insertion into the caption box.
+Manage custom tags and optional folders for autocomplete and quick insertion into caption files.
 
 ## Layout
 
-- *My Tags (left):* your library as a tree (*groups and items*).
-- *All Tags (right):* tags aggregated from your files (*toggle via Options - Show: All Tags*).
+- *My Tags (left):* a view of your tag groups and items.
+- *All Tags (right):* tags aggregated from your caption files (toggle via Options > Show: All Tags).
 
-## Add & Organize
+## Add and organize
 
-- Type in the box and press *Enter* or click *Add*.
-- To add inside a folder: select exactly one folder, then add; or right-click a folder - *New Tag...*
-- New group: right-click in the My Tags tree - *New Group...*
-- From All Tags: select and click "<" or right-click - *Add to MyTags*.
-- From elsewhere: right-click selected text or the AutoTag list - *Add to MyTags*.
+- Type a tag, then press *Enter* or click *Add*.
+- To add inside a folder: select exactly one folder, then add; or right-click a folder and choose *New Tag...*
+- To add a new group: right-click the My Tags tree and choose *New Group...*
+- From All Tags: select tags and click "<" or right-click and choose *Add to MyTags*.
+- From other places (editor or AutoTag): right-click selected text and choose *Add to MyTags*.
 
-## Selecting & Menus
+## Selection and menus
 
-- Use *Ctrl / Shift* to multi-select; right-click for context actions.
-- Selection tools: *All, Invert, Select All Groups, Select All Tags*.
-- *Move to...*: move selected items into any folder (*choose (Root) for top level*).
+- Use *Ctrl* or *Shift* to multi-select items.
+- Right-click for context actions and quick tools.
+- Selection tools include: *All, Invert, Select All Groups, Select All Tags*.
+- *Move to...* moves selected items into any MyTags folder. Choose *(Root)* to place items at the top level.
 
-## Insert Into Text
+## Insert into text
 
-- *Prefix* inserts before existing text; *Append* inserts after.
-- Double-click any tag to *Append*. Works from both panes.
+- *Prefix* inserts before existing text.
+- *Append* inserts after existing text.
+- Double-click any tag to *Append* into the Textbox. Works from both panes.
 
-## Edit, Move, Reorder
+## Edit, move, and reorder
 
-- *Edit / Rename*: select and click *Edit* or right-click - *Rename...*
-- *Remove*: deletes selected rows (*deleting a group removes its contents*).
-- *Reorder*: drag with the middle mouse button (*within the same parent*) or use *Move Up / Down*.
-- Drag-and-drop shows a blue placeholder; multi-select reorder is supported.
+- Use *Edit / Rename* to change a tag or group name.
+- *Remove* deletes selected rows. Deleting a group removes its contents.
+- Reorder by dragging with the middle mouse button (within the same parent) or use *Move Up / Move Down*.
+- Drag-and-drop shows a blue placeholder. Multi-select reorder is supported.
 
-## Save & Refresh
+## Save and refresh
 
 - *Save Tags* writes changes to *my_tags.yaml* and updates autocomplete.
-- *Refresh My Tags* reloads from file (*unsaved changes are discarded*).
-- *Refresh All Tags* recomputes the right pane from your files.
+- *Refresh My Tags* reloads the file; unsaved changes are discarded.
+- *Refresh All Tags* recomputes the All Tags panel from your files.
 
-## Options & Appearance
+## Options and appearance
 
-- *Use: MyTags* - enable or disable MyTags for autocomplete.
-- *Show: All Tags* - toggle the All Tags panel.
-- *Hide: controls* - show or hide button rows under each pane.
-- *MyTags Font Style* - set font, size, bold, italic, underline, overstrike and colors separately for Groups and Items; *Reset* restores defaults; row height auto-adjusts.
-- *Open MyTags File...* - open *my_tags.yaml* in your editor.
+- *Use: MyTags* toggles whether My Tags are used by autocomplete.
+- *Show: All Tags* toggles the All Tags panel.
+- *Hide: controls* shows or hides button rows under each pane.
+- *MyTags Font Style* lets you configure font family, size, weight, slant, underline, overstrike, and colors separately for Groups and Items. *Reset* restores defaults. Row height adjusts automatically.
+- *Open MyTags File...* opens *my_tags.yaml* in your editor.
 
 ## Maintenance
 
-- *Cleanup MyTags* removes duplicates (*case-sensitive*), empty or quoted tags, and empty groups. *This cannot be undone.*
+- *Cleanup MyTags* removes duplicate tags (case-sensitive), empty or quoted tags, and empty groups. This action cannot be undone.
 
 ## Notes
 
-- Data is stored in *my_tags.yaml*. If a legacy *my_tags.csv* exists, it is imported automatically once.
-- Ordering controls autocomplete priority and the default insertion order.
+- Data is stored in *my_tags.yaml*. If a legacy *my_tags.csv* exists, it will be imported automatically once.
+- Tag order controls autocomplete priority and the default insertion order.
 """
 
 
