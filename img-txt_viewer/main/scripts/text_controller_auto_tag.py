@@ -54,28 +54,6 @@ class AutoTag:
 
 
     def create_auto_tag_widgets_tab4(self):
-        def invert_selection():
-            for i in range(self.autotag_listbox.size()):
-                if self.autotag_listbox.selection_includes(i):
-                    self.autotag_listbox.selection_clear(i)
-                else:
-                    self.autotag_listbox.select_set(i)
-            self.update_auto_tag_stats_label()
-
-        def clear_selection():
-            self.autotag_listbox.selection_clear(0, 'end')
-            self.update_auto_tag_stats_label()
-
-        def all_selection():
-            self.autotag_listbox.select_set(0, 'end')
-            self.update_auto_tag_stats_label()
-
-        def copy_selection():
-            _, extracted_tags = self.get_auto_tag_selection()
-            if extracted_tags:
-                self.autotag_listbox.clipboard_clear()
-                self.autotag_listbox.clipboard_append(', '.join(extracted_tags))
-
         # Top Frame for Buttons
         top_frame = Frame(self.app.tab4)
         top_frame.pack(fill='x')
@@ -111,25 +89,12 @@ class AutoTag:
         scrollbar = Scrollbar(listbox_frame, orient="vertical")
         self.autotag_listbox = Listbox(listbox_frame, width=20, selectmode="extended", activestyle='none', exportselection=False, yscrollcommand=scrollbar.set)
         self.autotag_listbox.bind('<<ListboxSelect>>', lambda event: self.update_auto_tag_stats_label())
-        self.autotag_listbox.bind("<Button-3>", lambda event: contextmenu.tk_popup(event.x_root, event.y_root))
         scrollbar.config(command=self.autotag_listbox.yview)
         self.autotag_listbox.pack(side='left', fill='both', expand=True)
         scrollbar.pack(side='left', fill='y')
         # Listbox - Context Menu
-        contextmenu = Menu(self.autotag_listbox, tearoff=0)
-        contextmenu.add_command(label="Insert: Prefix", command=lambda: self.insert_listbox_selection(prefix=True))
-        contextmenu.add_command(label="Insert: Append", command=lambda: self.insert_listbox_selection(append=True))
-        contextmenu.add_command(label="Insert: Replace", command=lambda: self.insert_listbox_selection(replace=True))
-        contextmenu.add_separator()
-        contextmenu.add_command(label="Copy Selected Tags", command=copy_selection)
-        contextmenu.add_command(label="Select All", command=all_selection)
-        contextmenu.add_command(label="Invert Selection", command=invert_selection)
-        contextmenu.add_command(label="Clear Selection", command=clear_selection)
-        contextmenu.add_separator()
-        contextmenu.add_command(label="Add to MyTags", command=lambda: self.app.text_controller.my_tags.add_to_custom_dictionary(origin="auto_tag"))
-        contextmenu.add_separator()
-        contextmenu.add_command(label="Add to Exclude", command=lambda: self.add_selected_tags_to_excluded_tags())
-        contextmenu.add_command(label="Add to Keep", command=lambda: self.add_selected_tags_to_keep_tags())
+        #self.setup_autotag_context_menu()
+        self.autotag_listbox.bind("<Button-3>", self.create_listbox_context_menu)
         # Control Frame
         control_frame = Frame(pane)
         pane.add(control_frame, stretch="always")
@@ -233,20 +198,74 @@ class AutoTag:
         ins_sel_append_btn.grid(row=0, column=1, sticky='ew', pady=2)
         ins_sel_append_btn.bind("<Button-3>", lambda event: self.insert_listbox_selection(replace=True))
         Tip.create(widget=ins_sel_append_btn, text="Insert the selected tags at the END of the text box\nRight-click to replace the current tags")
-        copy_btn = ttk.Button(btn_frame, text="Copy", command=copy_selection)
+        copy_btn = ttk.Button(btn_frame, text="Copy", command=self.copy_selection)
         copy_btn.grid(row=0, column=2, sticky='ew', pady=2)
         Tip.create(widget=copy_btn, text="Copy the selected tags to the clipboard")
-        all_btn = ttk.Button(btn_frame, text="All", command=all_selection)
+        all_btn = ttk.Button(btn_frame, text="All", command=self.all_selection)
         all_btn.grid(row=1, column=0, sticky='ew', pady=2)
         Tip.create(widget=all_btn, text="Select all tags")
-        invert_btn = ttk.Button(btn_frame, text="Invert", command=invert_selection)
+        invert_btn = ttk.Button(btn_frame, text="Invert", command=self.invert_selection)
         invert_btn.grid(row=1, column=1, sticky='ew', pady=2)
         Tip.create(widget=invert_btn, text="Invert the current selection")
-        clear_btn = ttk.Button(btn_frame, text="Clear", command=clear_selection)
+        clear_btn = ttk.Button(btn_frame, text="Clear", command=self.clear_selection)
         clear_btn.grid(row=1, column=2, sticky='ew', pady=2)
         Tip.create(widget=clear_btn, text="Clear the current selection")
         # Help Window
         self.help_window = TextWindow(master=self.root)
+
+
+    def create_listbox_context_menu(self, event=None):
+        # Select the item under the mouse on right-click
+        if event is not None:
+            index = self.autotag_listbox.nearest(event.y)
+            if index >= 0:
+                if index not in self.autotag_listbox.curselection():
+                    self.autotag_listbox.selection_clear(0, 'end')
+                    self.autotag_listbox.select_set(index)
+        menu = Menu(self.autotag_listbox, tearoff=0)
+        state = "normal" if self.autotag_listbox.curselection() else "disabled"
+        menu.add_command(label="Insert: Prefix", command=lambda: self.insert_listbox_selection(prefix=True), state=state)
+        menu.add_command(label="Insert: Append", command=lambda: self.insert_listbox_selection(append=True), state=state)
+        menu.add_command(label="Insert: Replace", command=lambda: self.insert_listbox_selection(replace=True), state=state)
+        menu.add_separator()
+        menu.add_command(label="Copy Selected Tags", command=self.copy_selection, state=state)
+        menu.add_command(label="Select All", command=self.all_selection, state=state)
+        menu.add_command(label="Invert Selection", command=self.invert_selection, state=state)
+        menu.add_command(label="Clear Selection", command=self.clear_selection, state=state)
+        menu.add_separator()
+        menu.add_command(label="Add to MyTags", command=lambda: self.app.text_controller.my_tags.add_to_custom_dictionary(origin="auto_tag"), state=state)
+        menu.add_separator()
+        menu.add_command(label="Add to Exclude", command=lambda: self.add_selected_tags_to_excluded_tags(), state=state)
+        menu.add_command(label="Add to Keep", command=lambda: self.add_selected_tags_to_keep_tags(), state=state)
+        self.autotag_context_menu = menu
+        self.autotag_context_menu.tk_popup(event.x_root, event.y_root)
+
+
+
+    def invert_selection(self):
+        for i in range(self.autotag_listbox.size()):
+            if self.autotag_listbox.selection_includes(i):
+                self.autotag_listbox.selection_clear(i)
+            else:
+                self.autotag_listbox.select_set(i)
+        self.update_auto_tag_stats_label()
+
+
+    def clear_selection(self):
+        self.autotag_listbox.selection_clear(0, 'end')
+        self.update_auto_tag_stats_label()
+
+
+    def all_selection(self):
+        self.autotag_listbox.select_set(0, 'end')
+        self.update_auto_tag_stats_label()
+
+
+    def copy_selection(self):
+        _, extracted_tags = self.get_auto_tag_selection()
+        if extracted_tags:
+            self.autotag_listbox.clipboard_clear()
+            self.autotag_listbox.clipboard_append(', '.join(extracted_tags))
 
 
     def show_auto_tag_help(self):

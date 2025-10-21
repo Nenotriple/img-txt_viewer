@@ -289,7 +289,7 @@ This tool is integrated with the Tagger tab and shares the same working director
 
 - *png*, *webp*, *jpg*, *jpeg*, *jpg_large*, *jfif*, *tif*, *tiff*, *bmp*, *gif*
 
-## Upscale models
+## Models
 
 These models are included by default:
 
@@ -300,8 +300,22 @@ These models are included by default:
 - AnimeSharp-4x
 - UltraSharp-4x
 
-Add your own Real-ESRGAN NCNN model files (.bin and .param) to *models/ncnn_models* to use them in the app.
-New models are loaded at startup.
+Add your own models by placing each model in its own folder under `models/ncnn_models`. The folder name becomes the model label.
+
+- Required files:
+    - `.bin` (model weights)
+    - `.param` (model parameters)
+
+Restart the program after adding models to load them.
+
+Example folder layout:
+.
+└── img-txt_viewer/
+    └── models/
+        └── ncnn_models/
+            └── realesr-animevideov3-x4/
+                ├── realesr-animevideov3-x4.bin
+                └── realesr-animevideov3-x4.param
 
 
 ## Upscale strength
@@ -722,18 +736,21 @@ AUTOTAG_HELP = """
 ##  Models
 
 Example source: https://huggingface.co/SmilingWolf
+Add your own models by placing each model in its own folder under `onnx_models`. The folder name becomes the model label.
 
-- Place each model in its own folder under `onnx_models`. The folder name becomes the model label.
-    - Required files:
-        - `model.onnx`
-        - `selected_tags.csv`
-- Restart the program after adding models to load them.
-- Example folder layout:
-    - img-txt_viewer/
-        - onnx_models/
-            - wd-v1-4-moat-tagger-v2/
-                - model.onnx
-                - selected_tags.csv
+- Required files:
+    - `model.onnx`
+    - `selected_tags.csv`
+
+Restart the program after adding models to load them.
+
+Example folder layout:
+.
+└── img-txt_viewer/
+    └── onnx_models/
+        └── wd-v1-4-moat-tagger-v2/
+            ├── model.onnx
+            └── selected_tags.csv
 
 ##  Quick Start
 

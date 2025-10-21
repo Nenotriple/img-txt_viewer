@@ -50,7 +50,7 @@ class TextController:
 
     def show_help_dialog(self, text):
         window = TextWindow(master=self.root)
-        window.open_window(text=text, title="Help", geometry="600x300", icon=self.app.blank_image)
+        window.open_window(text=text, title="Help", geometry="600x480", icon=self.app.blank_image)
 
 
 #endregion
