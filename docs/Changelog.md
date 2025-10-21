@@ -111,6 +111,7 @@
   - `.gif` files now use the video player widget in the Tagger UI for better control.
   - A loading animation is now shown when loading videos.
 - Tool help popups have generally been updated with clearer instructions and better formatting.
+- Videos and GIFs now show the relative scale percentage in the info bar. GIFs also show the total frame count and frame duration.
 
 ---
 
