@@ -70,6 +70,8 @@
   - `Delete All Text Files`: Permanently delete all text files in the current directory.
   - `Trim Excess Tags`: Remove excess tags from all text files, keeping only a specified number of tags per file.
   - `Check File Pair Collisions`: Scan the current directory and show files that share the same basename but different extensions, which may cause text-pair conflicts.
+- New Current Pair Tools:
+  - `Extract GIF/Video Frames`: Extract frames from the current GIF or video file to a subfolder.
 - New AutoTag option `Viewport`:
   - When enabled, the current image view is used for auto-tagging instead of the original image file.
 - New primary tab `Batch Img Edit`:
