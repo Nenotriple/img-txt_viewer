@@ -1,20 +1,17 @@
 #region Imports
 
 
-# Standard Library
+# Standard
 from typing import Dict
-import os
 
-# Standard Library - GUI
+# tkinter
 from tkinter import ttk, Frame, Menu
 
-# Third-Party Libraries
+# Third-Party
+from nenotk import ToolTip as Tip
 from PIL import Image, ImageTk, ImageOps
 
-# Custom Libraries
-from TkToolTip.TkToolTip import TkToolTip as Tip
-
-# Type Hinting
+# Typing
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main

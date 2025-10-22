@@ -1,11 +1,15 @@
 #region Imports
 
 
-import av
+# Standard
 import os
-from typing import List, Dict, Optional, Tuple, Any
 
+# Third Party
+import av
 from PIL import Image
+
+# Typing
+from typing import List, Dict, Optional, Tuple, Any
 
 
 #endregion

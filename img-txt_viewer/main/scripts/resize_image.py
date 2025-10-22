@@ -1,31 +1,22 @@
 #region Imports
 
 
-# Standard Library
+# Standard
 import os
 from io import BytesIO
 
+# tkinter
+from tkinter import ttk, Tk, Toplevel, messagebox, IntVar, StringVar, BooleanVar, Frame, Label, Button
 
-# Standard Library - GUI
-from tkinter import (
-    ttk, Tk, Toplevel, messagebox,
-    IntVar, StringVar, BooleanVar,
-    Frame, Label, Button
-)
-
-
-# Third-Party Libraries
+# Third-Party
+import nenotk as ntk
 from PIL import Image, ImageSequence
 
-
-# Type Hinting
+# Typing
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main
 
-
-# Custom Libraries
-import main.scripts.entry_helper as EntryHelper
 
 #endregion
 #region ResizeTool
@@ -136,7 +127,7 @@ class ResizeTool:
         self.entry_width.bind("<Button-3>", lambda event, entry="width": self.reset_entry(entry))
         self.entry_width.bind("<Up>", lambda event: self.adjust_entry_value(event, self.entry_width_var, True))
         self.entry_width.bind("<Down>", lambda event: self.adjust_entry_value(event, self.entry_width_var, False))
-        EntryHelper.bind_helpers(self.entry_width)
+        ntk.bind_helpers(self.entry_width)
         # Link Button
         frame_checkbutton = Frame(frame_width_height)
         frame_checkbutton.pack(side="left", fill="both", padx=10, pady=10)
@@ -155,7 +146,7 @@ class ResizeTool:
         self.entry_height.bind("<Button-3>", lambda event, entry="height": self.reset_entry(entry))
         self.entry_height.bind("<Up>", lambda event: self.adjust_entry_value(event, self.entry_height_var, True))
         self.entry_height.bind("<Down>", lambda event: self.adjust_entry_value(event, self.entry_height_var, False))
-        EntryHelper.bind_helpers(self.entry_height)
+        ntk.bind_helpers(self.entry_height)
 
 
     def create_quality_widgets(self):

@@ -1,19 +1,19 @@
 #region Imports
 
 
-# Standard Library
+# Standard
 import os
 import csv
 
-# Standard Library - GUI
+# tkinter
 from tkinter import BooleanVar, messagebox
 
-# Third-Party Libraries
+# Third-Party
 import numpy
 from PIL import Image as PILImage
 from onnxruntime import InferenceSession
 
-# Type Hinting
+# Typing
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main

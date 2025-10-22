@@ -1,21 +1,18 @@
 #region Imports
 
 
-# Standard Library
+# Standard
 import os
 
-
-# Standard Library - GUI
+# tkinter
 from tkinter import ttk, Tk, messagebox, Frame, Label, BooleanVar, TclError
 
-
-# Third-Party Libraries
+# Third-Party
 import numpy
-from TkToolTip.TkToolTip import TkToolTip as Tip
+from nenotk import ToolTip as Tip
 from PIL import Image, ImageOps, ImageEnhance, ImageFilter
 
-
-# Type Hinting
+# Typing
 from typing import TYPE_CHECKING, Optional, Any, Dict, Union, Callable
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main

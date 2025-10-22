@@ -186,6 +186,8 @@ REM ==============================================
     set "PIP_FLAGS=--timeout %PIP_TIMEOUT%"
     if "%QUIET_MODE%"=="TRUE" set "PIP_FLAGS=!PIP_FLAGS! --quiet"
     python -m pip install --upgrade pip !PIP_FLAGS! 2>nul
+    call :LogInfo "Upgrading setuptools..."
+    python -m pip install --upgrade setuptools !PIP_FLAGS! 2>nul
     call :InstallRequirements
 exit /b 0
 

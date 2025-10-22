@@ -1,34 +1,23 @@
 #region Imports
 
 
-# Standard Library
+# Standard
 import os
 import time
 
+# tkinter
+from tkinter import ttk, Tk, Toplevel, messagebox, StringVar, BooleanVar, Frame, Menu, Scrollbar, PanedWindow, Label, Listbox, TclError
 
-# Standard Library - GUI
-from tkinter import (
-    ttk, Tk, Toplevel, messagebox,
-    StringVar, BooleanVar,
-    Frame, Menu, Scrollbar, PanedWindow,
-    Label, Listbox,
-    TclError
-)
+# Third-Party
+import nenotk as ntk
+from nenotk import ToolTip as Tip
 
-
-# Third-Party Libraries
-from tkmarktext import TextWindow
-from TkToolTip.TkToolTip import TkToolTip as Tip
-
-
-# Custom Libraries
+# Local
 from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
 import main.scripts.video_thumbnail_generator as vtg
-import main.scripts.entry_helper as entry_helper
 import main.scripts.HelpText as HelpText
 
-
-# Type Hinting
+# Typing
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main
@@ -42,7 +31,6 @@ class AutoTag:
     def __init__(self, app: 'Main', root: 'Tk'):
         self.app = app
         self.root = root
-        self.entry_helper = entry_helper
 
         # AutoTag
         self.onnx_model_dict = {}
@@ -157,7 +145,7 @@ class AutoTag:
         Tip.create(widget=exclude_tags_lbl, text="Enter tags that will be excluded from interrogation\nSeparate tags with commas")
         self.excluded_tags_entry = ttk.Entry(excluded_entry_frame, width=5)
         self.excluded_tags_entry.pack(side='left', fill='both', expand=True)
-        self.entry_helper.bind_helpers(self.excluded_tags_entry)
+        ntk.bind_helpers(self.excluded_tags_entry)
         auto_exclude_tags_chk = ttk.Checkbutton(excluded_entry_frame, text="Auto", takefocus=False, variable=self.auto_exclude_tags_var)
         auto_exclude_tags_chk.pack(side='left', anchor='w', padx=2, pady=2)
         Tip.create(widget=auto_exclude_tags_chk, text="Automatically exclude tags that are already in the text box")
@@ -168,7 +156,7 @@ class AutoTag:
         Tip.create(widget=keep_tags_lbl, text="Enter tags that will always be included in interrogation\nSeparate tags with commas")
         self.keep_tags_entry = ttk.Entry(keep_entry_frame, width=25)
         self.keep_tags_entry.pack(side='left', fill='both', expand=True)
-        self.entry_helper.bind_helpers(self.keep_tags_entry)
+        ntk.bind_helpers(self.keep_tags_entry)
         replace_entry_frame = Frame(entry_frame)
         replace_entry_frame.pack(side='top', fill='x', padx=2, pady=2)
         replace_tags_lbl = Label(replace_entry_frame, text="Replace:", width=9, anchor="w")
@@ -176,13 +164,13 @@ class AutoTag:
         Tip.create(widget=replace_tags_lbl, text="Enter tags that will be replaced during interrogation\nSeparate tags with commas, the index of the tag in the 'Replace' entry will be used to replace the tag in the 'With' entry")
         self.replace_tags_entry = ttk.Entry(replace_entry_frame, width=1)
         self.replace_tags_entry.pack(side='left', fill='both', expand=True)
-        self.entry_helper.bind_helpers(self.replace_tags_entry)
+        ntk.bind_helpers(self.replace_tags_entry)
         replace_with_tags_lbl = Label(replace_entry_frame, text="With:", anchor="w")
         replace_with_tags_lbl.pack(side='left')
         Tip.create(widget=replace_with_tags_lbl, text="Enter tags that will replace the tags entered in the 'Replace' entry\nSeparate tags with commas, ensure tags match the index of the tags in the 'Replace' entry")
         self.replace_with_tags_entry = ttk.Entry(replace_entry_frame, width=1)
         self.replace_with_tags_entry.pack(side='left', fill='both', expand=True)
-        self.entry_helper.bind_helpers(self.replace_with_tags_entry)
+        ntk.bind_helpers(self.replace_with_tags_entry)
         # Selection Button Frame
         btn_frame = ttk.LabelFrame(control_frame, text="Selection")
         btn_frame.pack(side="bottom", fill='both', padx=2)
@@ -211,7 +199,7 @@ class AutoTag:
         clear_btn.grid(row=1, column=2, sticky='ew', pady=2)
         Tip.create(widget=clear_btn, text="Clear the current selection")
         # Help Window
-        self.help_window = TextWindow(master=self.root)
+        self.help_window = ntk.TextWindow(master=self.root)
 
 
     def create_listbox_context_menu(self, event=None):

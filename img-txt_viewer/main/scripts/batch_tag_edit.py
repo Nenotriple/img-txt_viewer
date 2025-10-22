@@ -1,30 +1,21 @@
 #region Imports
 
 
-# Standard Library
-from collections import Counter
+# Standard
 import re
+from collections import Counter
 
+# tkinter
+from tkinter import ttk, Tk, messagebox, Frame, Menu, Label, font, Scrollbar, BooleanVar
 
-# Standard Library - GUI
-from tkinter import (
-    ttk, Tk, messagebox,
-    Frame, Menu, Label,
-    font, Scrollbar,
-    BooleanVar,
-)
+# Third-Party
+import nenotk as ntk
+from nenotk import ToolTip as Tip
 
-# Third-Party Libraries
-from tkmarktext import TextWindow
-from TkToolTip.TkToolTip import TkToolTip as Tip
+# Local
+from main.scripts import TagEditor, HelpText
 
-
-# Custom Libraries
-from main.scripts import TagEditor, HelpText, custom_simpledialog
-import main.scripts.entry_helper as entry_helper
-
-
-# Type Hinting
+# Typing
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main
@@ -102,7 +93,7 @@ class BatchTagEdit:
         self.text_files = self.app.text_files
         self.working_dir = self.app.image_dir.get()
         self.batch_tag_edit_frame = None
-        self.help_window = TextWindow(self.root)
+        self.help_window = ntk.TextWindow(self.root)
         tag_dict = self.get_tags()
         self.tag_counts, self.total_unique_tags = self.count_file_tags(tag_dict)
         self.original_tags = []
@@ -168,7 +159,7 @@ class BatchTagEdit:
         self.filter_entry = ttk.Entry(filter_frame)
         self.filter_entry.grid(row=0, column=2, sticky="ew")
         self.filter_entry.bind("<KeyRelease>", lambda event: self.warn_before_action(action="filter"))
-        entry_helper.bind_helpers(self.filter_entry)
+        ntk.bind_helpers(self.filter_entry)
         # Button
         self.filter_apply_button = ttk.Button(filter_frame, text="Apply", width=8, command=lambda: self.warn_before_action(action="filter"))
         self.filter_apply_button.grid(row=0, column=3, sticky="e")
@@ -192,7 +183,7 @@ class BatchTagEdit:
         self.edit_entry = ttk.Entry(edit_row_frame)
         self.edit_entry.grid(row=0, column=1, sticky="ew")
         self.edit_entry.bind("<Return>", self.apply_commands_to_tree)
-        entry_helper.bind_helpers(self.edit_entry)
+        ntk.bind_helpers(self.edit_entry)
         # Button
         edit_apply_button = ttk.Button(edit_row_frame, text="Apply", width=8, command=self.apply_commands_to_tree)
         edit_apply_button.grid(row=0, column=2, sticky="e")
@@ -364,7 +355,7 @@ class BatchTagEdit:
             idx = self.tag_tree.index(selection[0])
             if idx < len(self.original_tags):
                 initialvalue = self.original_tags[idx][0]
-        edit_string = custom_simpledialog.askstring("Edit Tag", "Enter new tag:", parent=self.root, initialvalue=initialvalue)
+        edit_string = ntk.askstring("Edit Tag", "Enter new tag:", parent=self.root, initialvalue=initialvalue)
         if edit_string is not None:
             self.apply_commands_to_tree(edit=edit_string)
 

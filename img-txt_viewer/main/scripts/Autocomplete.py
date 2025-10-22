@@ -1,20 +1,21 @@
 #region Imports
 
 
-# Standard Library
+# Standard
 import os
 import re
 import sys
 import csv
+import yaml
 import pickle
 import itertools
-import tkinter as tk
 from functools import partial
 from collections import defaultdict
-import yaml
 
+# tkinter
+import tkinter as tk
 
-# Type Hinting
+# Typing
 from typing import TYPE_CHECKING, Dict, List, Tuple, Set, Optional, Pattern, Any, Union, DefaultDict, Sequence
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main

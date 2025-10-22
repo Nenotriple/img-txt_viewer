@@ -1,19 +1,19 @@
 #region Imports
 
 
-# Standard Library
+# Standard
 import os
 import re
 import statistics
 from collections import Counter
 
-# Standard Library - GUI
+# tkinter
 from tkinter import Tk, messagebox
 
-# Third-Party Libraries
+# Third-Party
 from PIL import Image
 
-# Type Hinting
+# Typing
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main

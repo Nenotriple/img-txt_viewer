@@ -16,7 +16,7 @@ More info here: https://github.com/Nenotriple/img-txt_viewer
 #region Imports
 
 
-# Standard Library
+# Standard
 import os
 import re
 import sys
@@ -28,42 +28,30 @@ import zipfile
 import webbrowser
 import subprocess
 
+# tkinter
+from tkinter import ttk, Tk, messagebox, filedialog, StringVar, BooleanVar, IntVar, Frame, PanedWindow, Menu, Label, Text, Event, TclError
 
-# Standard Library - GUI
-from tkinter import (
-    ttk, Tk, messagebox, filedialog,
-    StringVar, BooleanVar, IntVar,
-    Frame, PanedWindow, Menu,
-    Label, Text,
-    Event, TclError
-)
-
-
-# Third-Party Libraries
+# Third-Party
 import numpy
-from tkmarktext import TextPanel, TextWindow
-from TkToolTip import TkToolTip as Tip
+import nenotk as ntk
+from nenotk import ToolTip as Tip
 from PIL import Image, ImageTk, ImageSequence, UnidentifiedImageError
 
-
-# Custom Libraries
+# Local - Tagger/Main
 from main.scripts import (
     calculate_file_stats,
-    custom_simpledialog,
     custom_scrolledtext,
     batch_crop_images,
     settings_manager,
     text_controller,
     resize_image,
-    entry_helper,
     image_grid,
     edit_panel,
     PyTrominos,
     HelpText,
 )
 
-
-# Tabbed tools
+# Local - Tabbed tools
 from main.scripts import (
     batch_resize_images,
     batch_image_edit,
@@ -74,13 +62,12 @@ from main.scripts import (
     CropUI,
 )
 
+# Local - Misc
 from main.scripts import video_frame_extractor
-from main.scripts.image_zoom import ImageZoomWidget
 import main.scripts.video_thumbnail_generator as vtg
 from main.scripts.ThumbnailPanel import ThumbnailPanel
 from main.scripts.Autocomplete import SuggestionHandler
 from main.scripts.OnnxTagger import OnnxTagger as OnnxTagger
-from main.scripts.find_replace_widget import FindReplaceEntry
 from main.scripts.video_player_widget import VideoPlayerWidget
 
 
@@ -113,7 +100,7 @@ class ImgTxtViewer:
 
     def initial_class_setup(self):
         # Setup tools
-        self.about_window = TextWindow(self.root)
+        self.about_window = ntk.TextWindow(self.root)
         self.settings_manager = settings_manager.SettingsManager(self, self.root)
         self.stat_calculator = calculate_file_stats.CalculateFileStats(self, self.root)
         self.batch_resize_images = batch_resize_images.BatchResizeImages()
@@ -127,7 +114,6 @@ class ImgTxtViewer:
         self.onnx_tagger = OnnxTagger(self)
         self.autocomplete = SuggestionHandler(self)
         self.text_controller = text_controller.TextController(self, self.root)
-        self.entry_helper = entry_helper
 
         # Setup UI state
         self.ui_state = "ImgTxtViewer"
@@ -629,7 +615,7 @@ class ImgTxtViewer:
         self.label_image_stats_tooltip = Tip.create(widget=self.label_image_stats, text="...")
         ttk.Separator(self.stats_frame, orient="horizontal").grid(row=2, column=0, columnspan=2, sticky="ew")
         # Primary Image
-        self.primary_display_image = ImageZoomWidget(self.master_image_inner_frame, on_render_done=self.on_imagezoomwidget_render)
+        self.primary_display_image = ntk.ImageZoomWidget(self.master_image_inner_frame, on_render_done=self.on_imagezoomwidget_render)
         self.primary_display_image.grid(row=1, column=0, sticky="nsew")
         self.primary_display_image.canvas.bind("<Double-1>", lambda event: self.open_image(index=self.current_index, event=event))
         self.primary_display_image.canvas.bind("<Shift-MouseWheel>", self.mousewheel_nav)
@@ -655,7 +641,7 @@ class ImgTxtViewer:
         self.directory_entry.pack(side="left", fill="both", expand=True, pady=2)
         self.directory_entry.bind('<Return>', self.set_working_directory)
         self.directory_entry.bind('<FocusOut>', self.check_image_dir)
-        _, self.dir_context_menu, _ = self.entry_helper.bind_helpers(self.directory_entry)
+        _, self.dir_context_menu, _ = ntk.bind_helpers(self.directory_entry)
         self.directory_entry_tooltip = Tip.create(widget=self.directory_entry, text="...", padx=1, pady=2, origin="widget", widget_anchor="sw")
         self.dir_context_menu.add_command(label="Set Text File Path...", state="disabled", command=self.set_text_file_path)
         self.dir_context_menu.add_command(label="Reset Text Path To Image Path", state="disabled", command=lambda: self.set_text_file_path(self.image_dir.get()))
@@ -679,7 +665,7 @@ class ImgTxtViewer:
         self.image_index_entry.bind("<MouseWheel>", self.mousewheel_nav)
         self.image_index_entry.bind("<Up>", self.next_pair)
         self.image_index_entry.bind("<Down>", self.prev_pair)
-        self.entry_helper.bind_undo_stack(self.image_index_entry)
+        ntk.bind_undo_stack(self.image_index_entry)
         self.index_context_menu = Menu(self.directory_entry, tearoff=0)
         self.index_context_menu.add_command(label="First", command=lambda: self.index_goto(0))
         self.index_context_menu.add_command(label="Last", command=lambda: self.index_goto(len(self.image_files)))
@@ -744,7 +730,7 @@ class ImgTxtViewer:
         self.suggestion_menubutton = ttk.Button(self.suggestion_frame, text="☰", takefocus=False, width=2, command=lambda: self.show_suggestion_context_menu(button=True))
         self.suggestion_menubutton.pack(side="right", padx=2)
         # Startup info text
-        self.info_text = TextPanel(self.master_control_frame, text=HelpText.IMG_TXT_VIEWER_ABOUT, rich_text=True)
+        self.info_text = ntk.TextPanel(self.master_control_frame, text=HelpText.IMG_TXT_VIEWER_ABOUT, rich_text=True)
         self.info_text.pack(expand=True, fill="both")
 
 
@@ -772,7 +758,7 @@ class ImgTxtViewer:
             self.text_box.tag_configure("highlight", background="#5da9be", foreground="white")
             self.text_box.config(font=(self.font_var.get(), self.font_size_var.get()))
             # Create FindReplaceEntry
-            self.find_replace_widget = FindReplaceEntry(self.text_frame, self.text_box)
+            self.find_replace_widget = ntk.FindReplaceEntry(self.text_frame, self.text_box)
             self.find_replace_widget.grid(row=0, column=0, sticky="ew")
             self.find_replace_widget.grid_remove()
             self.set_text_box_binds()
@@ -2147,7 +2133,7 @@ class ImgTxtViewer:
         if not self.check_if_directory():
             return
         if max_tags is None:
-            max_tags = custom_simpledialog.askinteger("Trim Tags", "Keep how many tags per file?", initialvalue=0, minvalue=0, parent=self.root)
+            max_tags = ntk.askinteger("Trim Tags", "Keep how many tags per file?", initialvalue=0, minvalue=0, parent=self.root)
             if max_tags is None:
                 return
         if max_tags < 0:
@@ -2911,7 +2897,7 @@ class ImgTxtViewer:
         current_image_name = os.path.basename(image_file)
         text_file = self.text_files[self.current_index] if self.current_index < len(self.text_files) and os.path.exists(self.text_files[self.current_index]) else None
         current_text_name = os.path.basename(text_file) if text_file else "(No associated text file)"
-        new_name = custom_simpledialog.askstring("Rename", "Enter the new name for the pair (without extension):", initialvalue=os.path.splitext(current_image_name)[0])
+        new_name = ntk.askstring("Rename", "Enter the new name for the pair (without extension):", initialvalue=os.path.splitext(current_image_name)[0])
         if not new_name:
             return
         new_image_name = new_name + os.path.splitext(image_file)[1]

@@ -1,33 +1,23 @@
 #region Imports
 
 
-# Standard Library
+# Standard
 import os
 import shutil
 import hashlib
 import threading
 
+# tkinter
+from tkinter import ttk, Tk, messagebox, filedialog, StringVar, BooleanVar, Menu, Text
 
-# Standard Library - GUI
-from tkinter import (
-    ttk, Tk, messagebox, filedialog,
-    StringVar, BooleanVar,
-    Menu, Text,
-)
+# Third-Party
+import nenotk as ntk
+from nenotk import ToolTip as Tip
 
-
-# Third Party Library
-from tkmarktext import TextWindow
-
-
-# Custom Libraries
-from TkToolTip.TkToolTip import TkToolTip as Tip
-from main.scripts import custom_simpledialog
+# Local
 import main.scripts.HelpText as HelpText
-import main.scripts.entry_helper as EntryHelper
 
-
-# Type Hinting
+# Typing
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main
@@ -43,7 +33,6 @@ class FindDupeFile:
         self.app: 'Main' = None
         self.root: 'Tk' = None
         self.working_dir = None
-        self.entry_helper = EntryHelper
 
         # Local Variables
         self.is_closing = False
@@ -82,7 +71,7 @@ class FindDupeFile:
         self.app = app
         self.root = root
         self.working_dir = path
-        self.help_window = TextWindow(self.root)
+        self.help_window = ntk.TextWindow(self.root)
         self.setup_ui()
         if path:
             self.folder_entry.insert(0, path)
@@ -185,7 +174,7 @@ class FindDupeFile:
         # Entry - Folder Entry
         self.folder_entry = ttk.Entry(self.folder_frame)
         self.folder_entry.pack(side="left", fill="x", expand=True)
-        self.entry_helper.bind_helpers(self.folder_entry)
+        ntk.bind_helpers(self.folder_entry)
         # Button - Browse
         self.browse_button = ttk.Button(self.folder_frame, text="Browse...", command=self.set_working_directory)
         Tip.create(widget=self.browse_button, text="Select a folder to analyze for duplicate files.", padx=2)
@@ -626,7 +615,7 @@ class FindDupeFile:
 
     # Set max image scanning size
     def open_max_scan_size_dialog(self):
-        temp = custom_simpledialog.askinteger("Input", f"Current Max Scan Size: {self.max_scan_size} MB\n\nEnter Max Scan Size in megabytes (MB)\nExample (1GB): 1024", self.max_scan_size, parent=self.root)
+        temp = ntk.askinteger("Input", f"Current Max Scan Size: {self.max_scan_size} MB\n\nEnter Max Scan Size in megabytes (MB)\nExample (1GB): 1024", self.max_scan_size, parent=self.root)
         if temp is not None:
             self.max_scan_size = temp
 
@@ -634,7 +623,7 @@ class FindDupeFile:
     # Set filetypes to scan
     def open_filetypes_dialog(self):
         current_filetypes = ', '.join(self.filetypes_to_scan)
-        new_filetypes = custom_simpledialog.askstring("Input", f"Current filetypes: {current_filetypes}\n\nEnter filetypes you want to scan. Unlisted filetypes will be skipped.\n\nEnter: 'All' to return to default.\n\nExample: .jpg, .png, .txt", current_filetypes, parent=self.root)
+        new_filetypes = ntk.askstring("Input", f"Current filetypes: {current_filetypes}\n\nEnter filetypes you want to scan. Unlisted filetypes will be skipped.\n\nEnter: 'All' to return to default.\n\nExample: .jpg, .png, .txt", current_filetypes, parent=self.root)
         if new_filetypes is not None and new_filetypes.strip() != '':
             self.filetypes_to_scan = [ftype.strip() for ftype in new_filetypes.split(',')]
 

@@ -1,23 +1,25 @@
 #region Imports
 
 
-import datetime
+# Standard
 import os
+import datetime
+
+# tkinter
 import tkinter as tk
 from tkinter import PhotoImage, ttk, filedialog
+
+# Third-Party
 from tkVideoPlayer import TkinterVideo
 from PIL import Image, ImageTk
 
-
-# Type Hinting
+# Typing
 from typing import TYPE_CHECKING, Optional, Callable, Any, Union
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main
 
 
 #endregion
-
-
 #region TimelineCanvas
 
 

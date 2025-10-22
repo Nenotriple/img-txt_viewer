@@ -1,16 +1,16 @@
 #region Imports
 
 
+# Standard
 import os
 import shutil
 import subprocess
 
-from tkinter import messagebox
-
+# Third-Party
+import nenotk as ntk
 from PIL import Image, ImageSequence
 
-import main.scripts.custom_simpledialog as custom_simpledialog
-
+# Typing
 from typing import TYPE_CHECKING, Optional, Tuple
 if TYPE_CHECKING:
 	from app import ImgTxtViewer as Main
@@ -28,9 +28,10 @@ def extract(app: "Main", input_path: Optional[str] = None) -> Optional[str]:
 	if input_path is None:
 		return None
 	out_dir = get_out_dir(input_path)
-	if not messagebox.askyesno("Confirm Extraction", f"Extract frames from:\n\n{input_path}\n\nInto the folder:\n\n{out_dir}\n\nThis may take some time depending on the frame size and number of frames."):
+	confirmed, chosen_dir = ntk.confirmpath("Confirm Extraction Folder", f"Extract frames from:\n\n{input_path}\n\nInto the folder below:", path=out_dir)
+	if not confirmed or not chosen_dir:
 		return None
-	out_dir = _prepare_output_directory(input_path)
+	out_dir = _prepare_output_directory(chosen_dir)
 	if out_dir is None:
 		return None
 	ext = os.path.splitext(input_path)[1].lower()
@@ -46,9 +47,9 @@ def extract(app: "Main", input_path: Optional[str] = None) -> Optional[str]:
 				_show_done_and_open_folder(frame_count, out_dir)
 				return out_dir
 	except subprocess.CalledProcessError as e:
-		messagebox.showerror("FFmpeg Error", f"FFmpeg failed to extract frames:\n\n{e}")
+		ntk.showinfo("FFmpeg Error", f"FFmpeg failed to extract frames:\n\n{e}")
 	except Exception as e:
-		messagebox.showerror("Error", f"An error occurred while extracting frames:\n\n{e}")
+		ntk.showinfo("Error", f"An error occurred while extracting frames:\n\n{e}")
 	return None
 
 
@@ -62,15 +63,15 @@ def _resolve_input_path(app: "Main", input_path: Optional[str]) -> Optional[str]
 		if not app.check_if_directory():
 			return None
 		if not app.image_files:
-			messagebox.showwarning("No File Selected", "No image or video file is selected.")
+			ntk.showinfo("No File Selected", "No image or video file is selected.")
 			return None
 		input_path = app.image_files[app.current_index]
 	if not os.path.isfile(input_path):
-		messagebox.showerror("File Not Found", f"The file does not exist:\n\n{input_path}")
+		ntk.showinfo("File Not Found", f"The file does not exist:\n\n{input_path}")
 		return None
 	ext = os.path.splitext(input_path)[1].lower()
 	if ext not in ('.gif', '.mp4'):
-		messagebox.showwarning("Unsupported Filetype", "Only GIF and MP4 files can be extracted.")
+		ntk.showinfo("Unsupported Filetype", "Only GIF and MP4 files can be extracted.")
 		return None
 	return input_path
 
@@ -79,12 +80,12 @@ def _prepare_output_directory(input_path: str) -> Optional[str]:
 	"""Create or clear the output folder named after the input file (without extension)."""
 	out_dir = get_out_dir(input_path)
 	if os.path.exists(out_dir) and os.listdir(out_dir):
-		if not messagebox.askyesno("Output Folder Exists", f"The folder:\n\n{out_dir}\n\nalready exists and contains files.\n\nDelete its contents and continue?"):
+		if not ntk.askyesno("Output Folder Exists", f"The folder:\n\n{out_dir}\n\nalready exists and contains files.\n\nDelete its contents and continue?"):
 			return None
 		try:
 			shutil.rmtree(out_dir)
 		except Exception as e:
-			messagebox.showerror("Error", f"Failed to clear existing output folder:\n\n{e}")
+			ntk.showinfo("Error", f"Failed to clear existing output folder:\n\n{e}")
 			return None
 	os.makedirs(out_dir, exist_ok=True)
 	return out_dir
@@ -100,7 +101,7 @@ def get_out_dir(input_path: str) -> str:
 
 def _show_done_and_open_folder(frame_count: int, out_dir: str):
 	"""Show 'Done' dialog and optionally open folder in explorer."""
-	if messagebox.askyesno("Done", f"Extracted {frame_count} frame(s) to:\n\n{out_dir}\n\nOpen this folder in File Explorer?"):
+	if ntk.askyesno("Done", f"Extracted {frame_count} frame(s) to:\n\n{out_dir}\n\nOpen this folder in File Explorer?"):
 		_open_folder_in_explorer(out_dir)
 
 
@@ -109,7 +110,7 @@ def _open_folder_in_explorer(path: str):
 	try:
 		os.startfile(path)
 	except Exception as e:
-		messagebox.showerror("Error", f"Could not open folder:\n\n{e}")
+		ntk.showinfo("Error", f"Could not open folder:\n\n{e}")
 
 
 #endregion
@@ -156,14 +157,14 @@ def _extract_gif_frames_with_progress(input_path: str, out_dir: str) -> Tuple[bo
 		# fallback: count frames
 		with Image.open(input_path) as img:
 			total_frames = sum(1 for _ in ImageSequence.Iterator(img))
-	frame_count = custom_simpledialog.showprogress("Extracting GIF Frames", "Extracting frames from GIF...", gif_task, args=(), max_value=total_frames)
+	frame_count = ntk.showprogress("Extracting GIF Frames", "Extracting frames from GIF...", gif_task, args=(), max_value=total_frames)
 	return (frame_count is not None), frame_count or 0
 
 
 def _extract_mp4_frames_with_progress(app: "Main", input_path: str, out_dir: str) -> Tuple[bool, int]:
 	"""Extract frames from an MP4 using ffmpeg with progress dialog."""
 	if not app.is_ffmpeg_installed:
-		messagebox.showwarning("FFmpeg Not Found", "FFmpeg is required to extract frames from videos.\n\nPlease install FFmpeg and ensure it is in your PATH.")
+		ntk.showinfo("FFmpeg Not Found", "FFmpeg is required to extract frames from videos.\n\nPlease install FFmpeg and ensure it is in your PATH.")
 		return False, 0
 
 	def mp4_task(progress_callback):
@@ -193,7 +194,7 @@ def _extract_mp4_frames_with_progress(app: "Main", input_path: str, out_dir: str
 		total_frames = _estimate_frames_with_ffprobe(input_path)
 	except Exception:
 		total_frames = None
-	frame_count = custom_simpledialog.showprogress("Extracting MP4 Frames", "Extracting frames from MP4...", mp4_task, args=(), max_value=total_frames if total_frames else 1000)
+	frame_count = ntk.showprogress("Extracting MP4 Frames", "Extracting frames from MP4...", mp4_task, args=(), max_value=total_frames if total_frames else 1000)
 	return (frame_count is not None), frame_count or 0
 
 

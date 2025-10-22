@@ -1,24 +1,18 @@
 #region Imports
 
 
-# Standard Library
+# Standard
 import os
 
+# tkinter
+from tkinter import ttk, IntVar, Frame, Canvas
 
-# Standard Library - GUI
-from tkinter import (
-    ttk,
-    IntVar,
-    Frame, Canvas
-)
-
-
-# Third-Party Libraries
-from TkToolTip.TkToolTip import TkToolTip as Tip
+# Third-Party
+from nenotk import ToolTip as Tip
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 
 
-# Type Hinting
+# Typing
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main

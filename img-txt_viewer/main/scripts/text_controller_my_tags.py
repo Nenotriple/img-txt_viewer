@@ -4,32 +4,19 @@
 # Standard Library
 import os
 
-
-# Standard Library - GUI
-from tkinter import (
-    ttk, Tk, messagebox, TclError,
-    BooleanVar,
-    Frame, Menu,
-    Listbox
-)
-from tkinter import colorchooser, PhotoImage
+# tkinter
+from tkinter import ttk, Tk, messagebox, TclError, BooleanVar, Frame, Menu, Listbox, colorchooser, PhotoImage
 import tkinter.font as tkfont
 
-
-# Third-Party Libraries
+# Third-Party
 import yaml
-from tkmarktext import TextWindow
-from TkToolTip.TkToolTip import TkToolTip as Tip
+import nenotk as ntk
+from nenotk import ToolTip as Tip
 
-
-# Custom Libraries
-import main.scripts.custom_simpledialog as custom_dialog
-import main.scripts.entry_helper as EntryHelper
-from main.scripts.buttonmenu import ButtonMenu
+# Local
 from main.scripts import HelpText
 
-
-# Type Hinting
+# Typing
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main
@@ -109,7 +96,7 @@ class MyTags:
         self.groups_overstrike_var = BooleanVar(value=self._style_groups['overstrike'])
 
         # Help Window
-        self.help_window = TextWindow(self.root)
+        self.help_window = ntk.TextWindow(self.root)
 
         # Load Treeview icons
         self.tree_group_icon, self.tree_item_icon = self.load_treeview_icons()
@@ -359,7 +346,7 @@ class MyTags:
         self.tag_entry = ttk.Entry(entry_frame)
         self.tag_entry.pack(side='left', fill='x', expand=True)
         self.tag_entry.bind('<Return>', lambda event: (self.add_tag(self.tag_entry.get()), self.tag_entry.delete(0, 'end')))
-        EntryHelper.bind_helpers(self.tag_entry)
+        ntk.bind_helpers(self.tag_entry)
 
         add_btn = ttk.Button(entry_frame, text="Add", command=lambda: (self._insert_item('', self.tag_entry.get().strip()), self.tag_entry.delete(0, 'end')))
         add_btn.pack(side='left')
@@ -370,7 +357,7 @@ class MyTags:
         self.save_btn_tooltip = Tip.create(widget=self.save_btn, text="Save changes to 'My Tags' file")
 
         # Options Menu
-        btn_menu = ButtonMenu(top_frame, text="☰", width=2)
+        btn_menu = ntk.ButtonMenu(top_frame, text="☰", width=2)
         btn_menu.pack(side='left')
         btn_menu.menu.add_checkbutton(label="Use: MyTags", variable=self.app.use_mytags_var, command=self.refresh_custom_dictionary)
         btn_menu.menu.add_checkbutton(label="Show: All Tags", variable=self.show_all_tags_var, command=self.toggle_all_tags_listbox)
@@ -950,7 +937,7 @@ class MyTags:
         except Exception:
             families = []
         current = self._style_items['family'] if which == 'items' else self._style_groups['family']
-        name = custom_dialog.askcombo("Font Family", "Select font", values=families, initialvalue=current or '', parent=self.root, icon_image=self.app.blank_image)
+        name = ntk.askcombo("Font Family", "Select font", values=families, initialvalue=current or '', parent=self.root, icon_image=self.app.blank_image)
         if name is None:
             return
         name = name.strip()
@@ -963,7 +950,7 @@ class MyTags:
 
     def _prompt_font_size(self, which: str):
         current = self._style_items['size'] if which == 'items' else self._style_groups['size']
-        val = custom_dialog.askstring("Font Size", "Enter font size (e.g., 9)", initialvalue=str(current), parent=self.root, icon_image=self.app.blank_image)
+        val = ntk.askstring("Font Size", "Enter font size (e.g., 9)", initialvalue=str(current), parent=self.root, icon_image=self.app.blank_image)
         if val is None:
             return
         try:
@@ -1237,7 +1224,7 @@ class MyTags:
 
     # Convenience actions for folders/items
     def add_group_via_prompt(self, parent_iid=None):
-        name = custom_dialog.askstring("New Group", "Enter group name:", parent=self.root, icon_image=self.app.blank_image)
+        name = ntk.askstring("New Group", "Enter group name:", parent=self.root, icon_image=self.app.blank_image)
         if not name:
             return
         name = name.strip()
@@ -1254,7 +1241,7 @@ class MyTags:
         if not tree:
             return
         if name is None:
-            name = custom_dialog.askstring("New Item", "Enter item name:", parent=self.root, icon_image=self.app.blank_image)
+            name = ntk.askstring("New Item", "Enter item name:", parent=self.root, icon_image=self.app.blank_image)
             if name is None:
                 return
             name = name.strip()
@@ -1277,7 +1264,7 @@ class MyTags:
         except Exception:
             is_folder = False
         title = "Rename Group" if is_folder else "Rename Item"
-        new_name = custom_dialog.askstring(title, "Enter new name:", initialvalue=text, parent=self.root, icon_image=self.app.blank_image)
+        new_name = ntk.askstring(title, "Enter new name:", initialvalue=text, parent=self.root, icon_image=self.app.blank_image)
         if new_name is None:
             return
         new_name = new_name.strip()

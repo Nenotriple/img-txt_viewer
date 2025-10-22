@@ -1,9 +1,18 @@
 """TextWrapper extends ScrolledText to add text wrapping functionality for brackets and quotes."""
 
+#region Imports
 
+
+# tkinter
 import tkinter as tk
 from tkinter import scrolledtext
+
+# Typing
 from typing import Tuple
+
+
+#endregion
+#region CustomScrolledText
 
 
 class CustomScrolledText(scrolledtext.ScrolledText):

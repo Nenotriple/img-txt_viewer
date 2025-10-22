@@ -1,33 +1,23 @@
 #region Imports
 
 
-# Standard Library
+# Standard
 import os
 import re
 
+# tkinter
+from tkinter import ttk, Tk, messagebox, Frame, scrolledtext, Label, font
 
-# Standard Library - GUI
-from tkinter import (
-    ttk, Tk, messagebox,
-    Frame, scrolledtext,
-    Label,
-    font
-)
+# Third-Party
+import nenotk as ntk
+from nenotk import ToolTip as Tip
 
-
-# Third-Party Libraries
-from tkmarktext import TextWindow
-from TkToolTip.TkToolTip import TkToolTip as Tip
-
-
-# Custom Libraries
+# Local
 import main.scripts.HelpText as HelpText
-import main.scripts.entry_helper as entry_helper
-from main.scripts.buttonmenu import ButtonMenu
 from main.scripts.text_controller_my_tags import MyTags
 from main.scripts.text_controller_auto_tag import AutoTag
 
-# Type Hinting
+# Typing
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main
@@ -41,7 +31,6 @@ class TextController:
     def __init__(self, app: 'Main', root: 'Tk'):
         self.app = app
         self.root = root
-        self.entry_helper = entry_helper
 
         self.filter_is_active = False
         self.auto_tag = AutoTag(self.app, self.root)
@@ -49,7 +38,7 @@ class TextController:
 
 
     def show_help_dialog(self, text):
-        window = TextWindow(master=self.root)
+        window = ntk.TextWindow(master=self.root)
         window.open_window(text=text, title="Help", geometry="600x480", icon=self.app.blank_image)
 
 
@@ -65,18 +54,18 @@ class TextController:
         Tip.create(widget=search_lbl, text="Enter the EXACT text you want to search for")
         self.search_entry = ttk.Entry(btn_frame, textvariable=self.app.search_string_var, width=4)
         self.search_entry.pack(side='left', anchor="n", fill='both', expand=True)
-        self.entry_helper.bind_helpers(self.search_entry)
+        ntk.bind_helpers(self.search_entry)
         replace_lbl = Label(btn_frame, width=8, text="Replace:")
         replace_lbl.pack(side='left', anchor="n")
         Tip.create(widget=replace_lbl, text="Enter the text you want to replace the searched text with\n\nLeave empty to replace with nothing (delete)")
         self.replace_entry = ttk.Entry(btn_frame, textvariable=self.app.replace_string_var, width=4)
         self.replace_entry.pack(side='left', anchor="n", fill='both', expand=True)
-        self.entry_helper.bind_helpers(self.replace_entry)
+        ntk.bind_helpers(self.replace_entry)
         self.replace_entry.bind('<Return>', lambda event: self.search_and_replace())
         replace_btn = ttk.Button(btn_frame, text="Go!", width=5, command=self.search_and_replace)
         replace_btn.pack(side='left', anchor="n")
         Tip.create(widget=replace_btn, text="Text files will be backup up")
-        menu_btn = ButtonMenu(btn_frame, text="☰", width=2)
+        menu_btn = ntk.ButtonMenu(btn_frame, text="☰", width=2)
         menu_btn.pack(side='left', anchor="n")
         menu_btn.menu.add_command(label="Clear Fields", command=self.clear_search_and_replace_tab)
         menu_btn.menu.add_command(label="Undo Last Action", command=self.app.restore_backup)
@@ -143,12 +132,12 @@ class TextController:
         Tip.create(widget=prefix_lbl, text="Enter the text you want to insert at the START of all text files\n\nCommas will be inserted as needed")
         self.prefix_entry = ttk.Entry(btn_frame, textvariable=self.app.prefix_string_var)
         self.prefix_entry.pack(side='left', anchor="n", fill='both', expand=True)
-        self.entry_helper.bind_helpers(self.prefix_entry)
+        ntk.bind_helpers(self.prefix_entry)
         self.prefix_entry.bind('<Return>', lambda event: self.prefix_text_files())
         prefix_btn = ttk.Button(btn_frame, text="Go!", width=5, command=self.prefix_text_files)
         prefix_btn.pack(side='left', anchor="n")
         Tip.create(widget=prefix_btn, text="Text files will be backup up")
-        menu_btn = ButtonMenu(btn_frame, text="☰", width=2)
+        menu_btn = ntk.ButtonMenu(btn_frame, text="☰", width=2)
         menu_btn.pack(side='left', anchor="n")
         menu_btn.menu.add_command(label="Clear Field", command=lambda: self.prefix_entry.delete(0, 'end'))
         menu_btn.menu.add_command(label="Undo Last Action", command=self.app.restore_backup)
@@ -199,12 +188,12 @@ class TextController:
         Tip.create(widget=append_lbl, text="Enter the text you want to insert at the END of all text files\n\nCommas will be inserted as needed")
         self.append_entry = ttk.Entry(btn_frame, textvariable=self.app.append_string_var)
         self.append_entry.pack(side='left', anchor="n", fill='both', expand=True)
-        self.entry_helper.bind_helpers(self.append_entry)
+        ntk.bind_helpers(self.append_entry)
         self.append_entry.bind('<Return>', lambda event: self.append_text_files())
         append_btn = ttk.Button(btn_frame, text="Go!", width=5, command=self.append_text_files)
         append_btn.pack(side='left', anchor="n")
         Tip.create(widget=append_btn, text="Text files will be backup up")
-        menu_btn = ButtonMenu(btn_frame, text="☰", width=2)
+        menu_btn = ntk.ButtonMenu(btn_frame, text="☰", width=2)
         menu_btn.pack(side='left', anchor="n")
         menu_btn.menu.add_command(label="Clear Field", command=lambda: self.append_entry.delete(0, 'end'))
         menu_btn.menu.add_command(label="Undo Last Action", command=self.app.restore_backup)
@@ -261,12 +250,12 @@ class TextController:
         Tip.create(widget=self.filter_lbl, text="Enter the EXACT text you want to filter by\nThis will filter all img-txt pairs based on the provided text, see below for more info")
         self.filter_entry = ttk.Entry(btn_frame, width=11, textvariable=self.app.filter_string_var)
         self.filter_entry.pack(side='left', anchor="n", fill='both', expand=True)
-        self.entry_helper.bind_helpers(self.filter_entry)
+        ntk.bind_helpers(self.filter_entry)
         self.filter_entry.bind('<Return>', lambda event: self.filter_text_image_pairs())
         self.filter_btn = ttk.Button(btn_frame, text="Go!", width=5, command=self.filter_text_image_pairs)
         self.filter_btn.pack(side='left', anchor="n")
         Tip.create(widget=self.filter_btn, text="Text files will be filtered based on the entered text")
-        menu_btn = ButtonMenu(btn_frame, text="☰", width=2)
+        menu_btn = ntk.ButtonMenu(btn_frame, text="☰", width=2)
         menu_btn.pack(side='left', anchor="n")
         menu_btn.menu.add_command(label="Clear And Reset Filter", command=lambda: self.filter_entry.delete(0, 'end'))
         menu_btn.menu.add_separator()
@@ -395,12 +384,12 @@ class TextController:
         Tip.create(widget=highlight_lbl, text="Enter the text you want to highlight\nUse ' + ' to highlight multiple strings of text\n\nExample: dog + cat")
         self.highlight_entry = ttk.Entry(btn_frame, textvariable=self.app.custom_highlight_string_var)
         self.highlight_entry.pack(side='left', anchor="n", fill='both', expand=True)
-        self.entry_helper.bind_helpers(self.highlight_entry)
+        ntk.bind_helpers(self.highlight_entry)
         self.highlight_entry.bind('<KeyRelease>', lambda event: self.app.highlight_custom_string())
         highlight_btn = ttk.Button(btn_frame, text="Go!", width=5, command=self.app.highlight_custom_string)
         highlight_btn.pack(side='left', anchor="n")
         Tip.create(widget=highlight_btn, text="Highlight the entered text in the current text file")
-        menu_btn = ButtonMenu(btn_frame, text="☰", width=2)
+        menu_btn = ntk.ButtonMenu(btn_frame, text="☰", width=2)
         menu_btn.pack(side='left', anchor="n")
         menu_btn.menu.add_command(label="Clear Field", command=lambda: self.clear_highlight_tab())
         menu_btn.menu.add_checkbutton(label="Use Regular Expressions", variable=self.app.highlight_use_regex_var)

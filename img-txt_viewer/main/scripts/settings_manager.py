@@ -8,19 +8,19 @@ Default settings should be set in both the main application (Main) and the Setti
 #region Imports
 
 
-# Standard Library
+# Standard
 import os
 import ast
 import traceback
 import configparser
 
-# Standard Library - GUI
+# tkinter
 from tkinter import Tk, messagebox
 
 # Local
 from main.scripts.setup_wizard import SetupWizard
 
-# Type Hinting
+# Typing
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main

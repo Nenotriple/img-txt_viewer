@@ -1,9 +1,13 @@
 #region Imports
 
 
-from tkinter import ttk, Toplevel, StringVar, BooleanVar, Frame, Label
+# Standard
 from abc import ABC, abstractmethod
 
+# tkinter
+from tkinter import ttk, Toplevel, StringVar, BooleanVar, Frame, Label
+
+# Typing
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .settings_manager import SettingsManager

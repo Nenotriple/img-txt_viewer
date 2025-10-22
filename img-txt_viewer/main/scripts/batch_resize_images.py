@@ -1,30 +1,25 @@
 #region Imports
 
 
-# Standard Library
+# Standard
 import os
 import time
 import threading
 import subprocess
 
-
-# Standard Library - GUI
+# tkinter
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
-
-# Third-Party Libraries
-from tkmarktext import TextWindow
+# Third-Party
+import nenotk as ntk
+from nenotk import ToolTip as Tip
 from PIL import Image, PngImagePlugin
-from TkToolTip.TkToolTip import TkToolTip as Tip
-
 
 # Local
 from main.scripts import HelpText
-import main.scripts.entry_helper as entry_helper
 
-
-# Type Hinting
+# Typing
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main
@@ -39,8 +34,6 @@ class BatchResizeImages:
         self.app: 'Main' = None
         self.root: 'tk.Tk' = None
         self.working_dir = None
-        self.entry_helper = entry_helper
-
         self.resize_thread = None
         self.files_processed = 0
         self.supported_filetypes = (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff")
@@ -54,7 +47,7 @@ class BatchResizeImages:
         self.app = app
         self.root = root
         self.working_dir = path
-        self.help_window = TextWindow(self.root)
+        self.help_window = ntk.TextWindow(self.root)
         self.setup_ui()
         self.set_working_directory(path)
 
@@ -101,7 +94,7 @@ class BatchResizeImages:
         self.entry_directory.pack(side="left", fill="x", expand=True, padx=2)
         self.entry_directory.bind("<Return>", lambda event: self.set_working_directory(self.entry_directory.get()))
         self.entry_directory.bind("<Button-1>", lambda event: self.entry_directory.delete(0, "end") if self.entry_directory.get() == "..." else None)
-        self.entry_helper.bind_helpers(self.entry_directory)
+        ntk.bind_helpers(self.entry_directory)
         # Browse
         self.browse_button = ttk.Button(self.frame_top_row, width=8, text="Browse...", command=self.set_working_directory)
         self.browse_button.pack(side="left", padx=2)
@@ -185,7 +178,7 @@ class BatchResizeImages:
         self.width_entry = ttk.Entry(self.width_frame, width=20)
         self.width_entry.pack(side="left", padx=2, pady=2)
         self.width_entry.bind("<KeyRelease>", self.update_file_tree_info)
-        self.entry_helper.bind_helpers(self.width_entry)
+        ntk.bind_helpers(self.width_entry)
         # Height Frame
         self.height_frame = tk.Frame(self.frame_sizes)
         self.height_frame.pack(side="top", anchor="w")
@@ -194,7 +187,7 @@ class BatchResizeImages:
         self.height_entry = ttk.Entry(self.height_frame, width=20)
         self.height_entry.pack(side="left", padx=2, pady=2)
         self.height_entry.bind("<KeyRelease>", self.update_file_tree_info)
-        self.entry_helper.bind_helpers(self.height_entry)
+        ntk.bind_helpers(self.height_entry)
         # Quality Frame
         self.frame_quality = tk.Frame(self.frame_sizes)
         self.frame_quality.pack(fill="x")

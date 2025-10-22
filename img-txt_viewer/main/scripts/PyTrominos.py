@@ -1,9 +1,11 @@
 #region Imports
 
 
+# Standard
 import random
 from collections import deque
 
+# tkinter
 from tkinter import ttk, Tk, Toplevel, messagebox, Frame, LabelFrame, Canvas, Label, TclError
 import tkinter as tk
 

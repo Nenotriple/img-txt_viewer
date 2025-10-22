@@ -1,31 +1,26 @@
 #region Imports
 
 
-# Standard Library
+# Standard
 import os
 import time
 import shutil
 import threading
 import subprocess
 
-
-# Standard Library - GUI
+# tkinter
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
-
-# Third-Party Libraries
-from tkmarktext import TextWindow
+# Third-Party
+import nenotk as ntk
+from nenotk import ToolTip as Tip
 from PIL import Image, ImageSequence
-from TkToolTip.TkToolTip import TkToolTip as Tip
 
-
-# Custom Libraries
+# Local
 from main.scripts import HelpText
-import main.scripts.entry_helper as entry_helper
 
-
-# Type Hinting
+# Typing
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main
@@ -40,7 +35,6 @@ class BatchUpscale:
         self.app: 'Main' = None
         self.root: 'tk.Tk' = None
         self.working_dir = None
-        self.entry_helper = entry_helper
 
         # Other Filepaths
         self.executable_path = None
@@ -69,7 +63,7 @@ class BatchUpscale:
         self.app = app
         self.root = root
         self.working_dir = self.app.image_dir.get()
-        self.help_window = TextWindow(self.root)
+        self.help_window = ntk.TextWindow(self.root)
 
         self.working_img_path = self.app.image_files[self.app.current_index]
         self.executable_path = os.path.join(self.app.app_root_path, "main", "resrgan", "realesrgan-ncnn-vulkan.exe")
@@ -167,7 +161,7 @@ class BatchUpscale:
         # Entry
         self.entry_input_path = ttk.Entry(input_frame, textvariable=self.input_path_var)
         self.entry_input_path.pack(side="left", fill="x", expand=True)
-        self.entry_helper.bind_helpers(self.entry_input_path)
+        ntk.bind_helpers(self.entry_input_path)
         # Batch Mode
         self.batch_mode_checkbox = ttk.Checkbutton(input_frame, text="Batch Mode", variable=self.batch_mode_var, width=12, takefocus=False, command=self.toggle_batch_mode)
         self.batch_mode_checkbox.pack(side="left", fill="x")
@@ -186,7 +180,7 @@ class BatchUpscale:
         # Entry
         self.entry_output_path = ttk.Entry(batch_output_frame, textvariable=self.output_path_var)
         self.entry_output_path.pack(side="left", fill="x", expand=True)
-        self.entry_helper.bind_helpers(self.entry_output_path)
+        ntk.bind_helpers(self.entry_output_path)
         # Auto
         self.auto_output_checkbox = ttk.Checkbutton(batch_output_frame, text="Auto Name", variable=self.auto_output_var, width=12, takefocus=False, command=self.toggle_batch_mode)
         self.auto_output_checkbox.pack(side="left", fill="x")

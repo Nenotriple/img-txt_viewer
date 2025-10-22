@@ -1,22 +1,26 @@
 #region Imports
 
+# Standard
 import os
 import time
 
+# tkinter
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 
+# Third-Party
+import nenotk as ntk
 from PIL import Image
 from tkmarktext import TextWindow
 
+# Local
 from main.scripts import HelpText
-import main.scripts.entry_helper as entry_helper
-from main.scripts.scrollable_frame import ScrollableFrame
-from main.scripts.image_zoom import ImageZoomWidget, SplitImage
 
+# Typing
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main
+
 
 #endregion
 #region BatchImgEdit
@@ -27,7 +31,6 @@ class BatchImgEdit:
         self.root: 'tk.Tk' = None
         self.working_dir = None
         self.help_window = None
-        self.entry_helper = entry_helper
 
         self.supported_filetypes = (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff", ".jfif")
         self.previous_adjustments = {}
@@ -87,7 +90,7 @@ class BatchImgEdit:
         self.entry_directory.grid(row=0, column=0, sticky="ew", padx=2)
         self.entry_directory.bind("<Return>", lambda event: self.set_working_directory(self.entry_directory.get()))
         self.entry_directory.bind("<Button-1>", lambda event: self.entry_directory.delete(0, "end") if self.entry_directory.get() == "..." else None)
-        self.entry_helper.bind_helpers(self.entry_directory)
+        ntk.bind_helpers(self.entry_directory)
 
         self.browse_button = ttk.Button(top_frame, width=8, text="Browse...", command=self.set_working_directory)
         self.browse_button.grid(row=0, column=1, padx=2)
@@ -154,9 +157,9 @@ class BatchImgEdit:
         # Determine split mode: if option var exists and true -> split, else single
         split = getattr(self, "use_split_view_var", None) and self.use_split_view_var.get()
         if split:
-            widget = SplitImage(self.middle_content_frame)
+            widget = ntk.SplitImage(self.middle_content_frame)
         else:
-            widget = ImageZoomWidget(self.middle_content_frame)
+            widget = ntk.ImageZoomWidget(self.middle_content_frame)
         self.preview_widget = widget
         widget.grid(row=0, column=0, sticky="nsew")
         # Bind right mouse handlers to appropriate canvases
@@ -168,7 +171,7 @@ class BatchImgEdit:
         canvases = []
         if getattr(self, "preview_widget", None) is None:
             return canvases
-        if isinstance(self.preview_widget, SplitImage):
+        if isinstance(self.preview_widget, ntk.SplitImage):
             try:
                 canvases.append(self.preview_widget.left_image.canvas)
                 canvases.append(self.preview_widget.right_image.canvas)
@@ -207,7 +210,7 @@ class BatchImgEdit:
         """Set image on preview; side can be 'single', 'left', 'right', or 'both'."""
         if getattr(self, "preview_widget", None) is None:
             return
-        if isinstance(self.preview_widget, SplitImage):
+        if isinstance(self.preview_widget, ntk.SplitImage):
             if side in ("left", "both"):
                 try:
                     self.preview_widget.left_image.set_image(pil_image, keep_view=keep_view)
@@ -228,7 +231,7 @@ class BatchImgEdit:
         """After preview creation, populate it with known images (original/edited)."""
         if self.original_selected_image is None:
             return
-        if isinstance(self.preview_widget, SplitImage):
+        if isinstance(self.preview_widget, ntk.SplitImage):
             # left = original
             try:
                 self.preview_widget.left_image.set_image(self.original_selected_image)
@@ -262,7 +265,7 @@ class BatchImgEdit:
         self.right_content_frame.grid_rowconfigure(0, weight=1)
         self.right_content_frame.grid_columnconfigure(0, weight=1)
 
-        self.scrollable = ScrollableFrame(self.right_content_frame, layout="vertical", label="Options")
+        self.scrollable = ntk.ScrollFrame(self.right_content_frame, layout="vertical", label="Options")
         self.scrollable.grid(row=0, column=0, sticky="nsew")
         self.scrollable.frame.configure(width=100)
         self._advanced_frames = {}
@@ -591,7 +594,7 @@ class BatchImgEdit:
     def on_preview_right_press(self, event):
         if self.original_selected_image is not None:
             # In split view, show original in RIGHT pane (left is already original)
-            if isinstance(self.preview_widget, SplitImage):
+            if isinstance(self.preview_widget, ntk.SplitImage):
                 self._preview_set_image(self.original_selected_image, side="right", keep_view=True)
             else:
                 self._preview_set_image(self.original_selected_image, keep_view=True)
@@ -600,7 +603,7 @@ class BatchImgEdit:
         if self._show_original_if_no_adjustments():
             return
         if self._edited_selected_image is not None:
-            if isinstance(self.preview_widget, SplitImage):
+            if isinstance(self.preview_widget, ntk.SplitImage):
                 self._preview_set_image(self._edited_selected_image, side="right", keep_view=True)
             else:
                 self._preview_set_image(self._edited_selected_image, keep_view=True)
@@ -711,7 +714,7 @@ class BatchImgEdit:
         if img is None:
             return
         # Set original on preview (single or left split)
-        if isinstance(self.preview_widget, SplitImage):
+        if isinstance(self.preview_widget, ntk.SplitImage):
             self._preview_set_image(img, side="left")
         else:
             self._preview_set_image(img)
@@ -743,7 +746,7 @@ class BatchImgEdit:
         try:
             edited_image = self.app.edit_panel.public_image_edit(image, adjustment_methods)
             # For split view put edited on right pane, otherwise single preview
-            if isinstance(self.preview_widget, SplitImage):
+            if isinstance(self.preview_widget, ntk.SplitImage):
                 self._preview_set_image(edited_image, side="right", keep_view=True)
             else:
                 self._preview_set_image(edited_image, keep_view=True)
@@ -762,7 +765,7 @@ class BatchImgEdit:
     def _show_original_if_no_adjustments(self):
         if all(getattr(self, var_attr).get() == 0 for var_attr in self._var_to_option):
             if self.original_selected_image is not None:
-                if isinstance(self.preview_widget, SplitImage):
+                if isinstance(self.preview_widget, ntk.SplitImage):
                     # set both panes to original
                     self._preview_set_image(self.original_selected_image, side="both", keep_view=True)
                 else:

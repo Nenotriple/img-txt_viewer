@@ -1,27 +1,17 @@
 #region Imports
 
 
-# Standard Library
+# Standard
 import os
 import shutil
 import threading
 
+# tkinter
+from tkinter import ttk, Toplevel, Frame, Label, Button, StringVar
 
-# Standard Library - GUI
-from tkinter import (
-    ttk, Toplevel, messagebox,
-    StringVar,
-    Frame, Label, Button,
-)
-
-
-# Third-Party Libraries
+# Third-Party
+import nenotk as ntk
 from PIL import Image
-
-
-# Custom Libraries
-import main.scripts.entry_helper as EntryHelper
-from main.scripts import custom_simpledialog
 
 
 #endregion
@@ -87,7 +77,7 @@ class BatchCrop:
         self.entry_width = ttk.Spinbox(self.frame_width, from_=1, to=20000, textvariable=self.entry_width_var, width=16)
         self.entry_width.pack(padx=5)
         self.entry_width.bind("<Return>", self.process_images)
-        EntryHelper.bind_helpers(self.entry_width)
+        ntk.bind_helpers(self.entry_width)
         # Height Entry
         self.frame_height = Frame(self.frame_width_height)
         self.frame_height.pack(side="left", fill="x", padx=10, pady=10)
@@ -97,7 +87,7 @@ class BatchCrop:
         self.entry_height = ttk.Spinbox(self.frame_height, from_=1, to=20000, textvariable=self.entry_height_var, width=16)
         self.entry_height.pack(padx=5)
         self.entry_height.bind("<Return>", self.process_images)
-        EntryHelper.bind_helpers(self.entry_height)
+        ntk.bind_helpers(self.entry_height)
 
 
     def _create_anchor_buttons(self):
@@ -231,7 +221,7 @@ class BatchCrop:
                 raise ValueError
             resolution = (width, height)
         except ValueError:
-            messagebox.showerror("Error: batch_crop_images.process_images()", "Invalid values. Please enter positive integer digits for width and height.")
+            ntk.showinfo("Error: batch_crop_images.process_images()", "Invalid values. Please enter positive integer digits for width and height.")
             return
         files_to_process = []
         for filename in os.listdir(self.filepath):
@@ -242,9 +232,9 @@ class BatchCrop:
             if any(lower_name.endswith(fmt) for fmt in self.supported_formats):
                 files_to_process.append(filename)
         if not files_to_process:
-            messagebox.showinfo("No Images", "No supported image files were found to process.")
+            ntk.showinfo("No Images", "No supported image files were found to process.")
             return
-        if not messagebox.askyesno("Confirm Batch Crop", f"This will crop {len(files_to_process)} image(s) to {resolution[0]}x{resolution[1]}.\n\nContinue?"):
+        if not ntk.askyesno("Confirm Batch Crop", f"This will crop {len(files_to_process)} image(s) to {resolution[0]}x{resolution[1]}.\n\nContinue?"):
             return
         new_directory = os.path.join(self.filepath, 'cropped_images')
         os.makedirs(new_directory, exist_ok=True)
@@ -289,17 +279,17 @@ class BatchCrop:
 
     def _on_processing_finished(self, processed, errors, new_directory):
         if processed == 0:
-            messagebox.showinfo("No Images", "No supported image files were found to process.")
+            ntk.showinfo("No Images", "No supported image files were found to process.")
             self._set_ui_state("normal")
             return
-        result = messagebox.askyesno("Crop Successful", f"Cropped {processed} image(s).\n\nOutput path:\n{new_directory}\n\nOpen output path?")
+        result = ntk.askyesno("Crop Successful", f"Cropped {processed} image(s).\n\nOutput path:\n{new_directory}\n\nOpen output path?")
         if result:
             try:
                 os.startfile(new_directory)
             except Exception:
                 pass
         if errors:
-            messagebox.showwarning("Some files skipped", f"{len(errors)} file(s) were skipped due to errors.")
+            ntk.showinfo("Some files skipped", f"{len(errors)} file(s) were skipped due to errors.")
         self._set_ui_state("normal")
         self.close_window()
 
