@@ -11,21 +11,16 @@ from PIL import Image, ImageSequence
 
 import main.scripts.custom_simpledialog as custom_simpledialog
 
-
-#endregion
-#region Type Hinting
-
-
 from typing import TYPE_CHECKING, Optional, Tuple
 if TYPE_CHECKING:
-    from app import ImgTxtViewer as Main
+	from app import ImgTxtViewer as Main
 
 
 #endregion
 #region Main Controller
 
 
-def extract_frames(app: "Main", input_path: Optional[str] = None) -> Optional[str]:
+def extract(app: "Main", input_path: Optional[str] = None) -> Optional[str]:
 	"""Extract frames from a GIF or MP4 into PNG files.
 	Returns the output directory path on success, otherwise None.
 	"""
@@ -110,14 +105,9 @@ def _show_done_and_open_folder(frame_count: int, out_dir: str):
 
 
 def _open_folder_in_explorer(path: str):
-	"""Open the given folder in the system's file explorer."""
+	"""Open the given folder in Windows File Explorer."""
 	try:
-		if os.name == 'nt':
-			os.startfile(path)
-		elif os.name == 'posix':
-			subprocess.Popen(['xdg-open', path])
-		else:
-			messagebox.showinfo("Open Folder", f"Please open the folder manually:\n{path}")
+		os.startfile(path)
 	except Exception as e:
 		messagebox.showerror("Error", f"Could not open folder:\n\n{e}")
 
@@ -198,7 +188,7 @@ def _extract_mp4_frames_with_progress(app: "Main", input_path: str, out_dir: str
 		frame_count = _count_image_files(out_dir)
 		progress_callback(frame_count, f"Extracting frame {frame_count}", f"{frame_count} extracted")
 		return frame_count
-	# Estimate total frames if possible (use helper)
+
 	try:
 		total_frames = _estimate_frames_with_ffprobe(input_path)
 	except Exception:

@@ -74,7 +74,7 @@ from main.scripts import (
     CropUI,
 )
 
-from main.scripts import frame_extractor
+from main.scripts import video_frame_extractor
 from main.scripts.image_zoom import ImageZoomWidget
 import main.scripts.video_thumbnail_generator as vtg
 from main.scripts.ThumbnailPanel import ThumbnailPanel
@@ -222,9 +222,6 @@ class ImgTxtViewer:
         self.is_image_grid_visible_var = BooleanVar(value=False)
 
 
-# --------------------------------------
-# Settings
-# --------------------------------------
     def define_app_settings(self):
         # Misc Settings
         app_path = self.get_direct_app_path()
@@ -298,9 +295,6 @@ class ImgTxtViewer:
         self.last_word_match_var = BooleanVar(value=False)
 
 
-# --------------------------------------
-# Bindings
-# --------------------------------------
     def setup_general_binds(self):
         #self.root.bind("<Control-f>", lambda event: self.toggle_highlight_all_duplicates())
         self.root.bind("<Control-s>", lambda event: self.save_text_file(highlight=True))
@@ -448,7 +442,6 @@ class ImgTxtViewer:
         self.optionsMenu.add_command(label="Reset Window and Tab Size", state="disable", command=self.reset_window_geometry)
 
 
-
     def create_tools_menu(self):
         # Batch Operations
         self.batch_operations_menu = Menu(self.toolsMenu, tearoff=0)
@@ -474,7 +467,7 @@ class ImgTxtViewer:
         self.individual_operations_menu.add_separator()
         self.individual_operations_menu.add_command(label="AutoTag", command=self.text_controller.auto_tag.interrogate_image_tags)
         self.individual_operations_menu.add_separator()
-        self.individual_operations_menu.add_command(label="Extract GIF/Video Frames", command=lambda: frame_extractor.extract_frames(self))
+        self.individual_operations_menu.add_command(label="Extract GIF/Video Frames", command=lambda: video_frame_extractor.extract(self))
 
 
     def enable_menu_options(self):
@@ -759,18 +752,12 @@ class ImgTxtViewer:
 #region Text Box setup
 
 
-    # --------------------------------------
-    # Text Pane
-    # --------------------------------------
     def create_text_pane(self):
         if not hasattr(self, 'text_pane'):
             self.text_pane = PanedWindow(self.master_control_frame, orient="vertical", sashwidth=6, bg="#d0d0d0", bd=0)
             self.text_pane.pack(side="bottom", fill="both", expand=1)
 
 
-    # --------------------------------------
-    # Text Box
-    # --------------------------------------
     def create_text_box(self):
         self.create_text_pane()
         if not hasattr(self, 'text_frame'):
@@ -796,9 +783,6 @@ class ImgTxtViewer:
             self.create_text_control_frame()
 
 
-    # --------------------------------------
-    # Text Widget Frame
-    # --------------------------------------
     def create_text_control_frame(self):
         self.text_widget_frame = Frame(self.master_control_frame)
         self.text_widget_frame.bind("<Configure>", self.on_text_widget_frame_configure)
@@ -834,7 +818,6 @@ class ImgTxtViewer:
         self.text_controller.create_font_widgets_tab7()
         self.text_controller.create_custom_dictionary_widgets_tab8()
         self.text_controller.create_stats_widgets_tab9()
-        #self.text_widget_frame.bind("<Configure>", lambda event: print(f"text_widget_frame height: {event.height}"))
 
 
     def on_text_notebook_tab_change(self, event):
@@ -884,9 +867,6 @@ class ImgTxtViewer:
             self.text_controller.my_tags.refresh_all_tags_listbox()
 
 
-    # --------------------------------------
-    # Text Box Binds
-    # --------------------------------------
     def set_text_box_binds(self):
         # Mouse binds
         self.text_box.bind("<Button-1>", lambda _: (self.remove_tag(), self.autocomplete.clear_suggestions()))
@@ -924,9 +904,6 @@ class ImgTxtViewer:
         #self.text_box.bind("<F5>", lambda e: self.refresh_text_box())
 
 
-    # --------------------------------------
-    # Text Box Context Menu
-    # --------------------------------------
     def show_text_context_menu(self, event):
         if hasattr(self, 'text_box'):
             self.text_box.focus_set()
@@ -964,11 +941,7 @@ class ImgTxtViewer:
         text_context_menu.tk_popup(event.x_root, event.y_root)
 
 
-    # --------------------------------------
-    # Image Context Menu
-    # --------------------------------------
     def show_image_context_menu(self, event):
-        # Check if image or GIF/Video is being displayed
         ext = os.path.splitext(self.image_files[self.current_index])[1].lower()
         if ext == ".gif":
             gif_state = "normal"
@@ -994,16 +967,13 @@ class ImgTxtViewer:
         self.image_context_menu.add_command(label="Resize...", command=self.resize_image)
         self.image_context_menu.add_command(label="Crop...", command=lambda: self.create_crop_ui(show=True, refresh=True))
         self.image_context_menu.add_separator()
-        self.image_context_menu.add_command(label="Extract GIF/Video Frames", state=gif_state, command=lambda: frame_extractor.extract_frames(self))
+        self.image_context_menu.add_command(label="Extract GIF/Video Frames", state=gif_state, command=lambda: video_frame_extractor.extract(self))
         self.image_context_menu.add_command(label="Expand", state=state, command=self.expand_image)
         self.image_context_menu.add_command(label="Rotate", state=state, command=self.rotate_current_image)
         self.image_context_menu.add_command(label="Flip", state=state, command=self.flip_current_image)
         self.image_context_menu.tk_popup(event.x_root, event.y_root)
 
 
-    # --------------------------------------
-    # Suggestion Context Menu
-    # --------------------------------------
     def show_suggestion_context_menu(self, event=None, button=False):
         suggestion_context_menu = Menu(self.root, tearoff=0)
         suggestion_context_menu.add_command(label="Suggestion Options", state="disabled")
@@ -1040,11 +1010,6 @@ class ImgTxtViewer:
         suggestion_context_menu.tk_popup(x, y)
 
 
-    # --------------------------------------
-    # Misc UI logic
-    # --------------------------------------
-
-
     def get_default_font(self):
         self.current_font = self.text_box.cget("font")
         self.current_font_name = self.text_box.tk.call("font", "actual", self.current_font, "-family")
@@ -1066,9 +1031,6 @@ class ImgTxtViewer:
             return 0, 0
 
 
-# --------------------------------------
-# Browse button context menu
-# --------------------------------------
     def open_browse_context_menu(self, event):
         try:
             self.browse_context_menu.tk_popup(event.x_root, event.y_root)
@@ -1108,9 +1070,6 @@ class ImgTxtViewer:
 #region Additional UI Setup
 
 
-# --------------------------------------
-# Index entry context menu helpers
-# --------------------------------------
     def open_index_context_menu(self, event):
         try:
             self.index_context_menu.tk_popup(event.x_root, event.y_root)
@@ -1158,9 +1117,6 @@ class ImgTxtViewer:
         return None
 
 
-# --------------------------------------
-# Misc setup
-# --------------------------------------
     def toggle_save_button_height(self, event=None, reset=None):
         if reset:
             self.big_save_button_var.set(True)
@@ -1173,9 +1129,6 @@ class ImgTxtViewer:
                 self.save_button.config(padding=(1, 1))
 
 
-# --------------------------------------
-# PanedWindow
-# --------------------------------------
     def configure_pane_position(self):
         window_width = self.root.winfo_width()
         self.primary_paned_window.sash_place(0, window_width // 2, 0)
@@ -1315,9 +1268,6 @@ class ImgTxtViewer:
         self.root.after_idle(apply_position)
 
 
-# --------------------------------------
-# Thumbnail Panel
-# --------------------------------------
     def debounce_update_thumbnail_panel(self, event=None):
         if not hasattr(self, 'thumbnail_panel'):
             return
@@ -1472,9 +1422,6 @@ class ImgTxtViewer:
         self.create_ui_tab(self.find_dupe_file, self.find_dupe_file_tab, show=show)
 
 
-# --------------------------------------
-# ImgTxtViewer states
-# --------------------------------------
     def toggle_image_grid(self, event=None):
         if event is not None:
             self.is_image_grid_visible_var.set(not self.is_image_grid_visible_var.get())
@@ -1726,12 +1673,10 @@ class ImgTxtViewer:
         loading_image = os.path.join(self.app_root_path, "main", "loading.png")
         self.video_player = VideoPlayerWidget(master=self.master_image_inner_frame, app=self, play_image=play_image, pause_image=pause_image, loading_image=loading_image)
         self.video_player.grid(row=1, column=0, sticky="nsew")
-        # Keep video info updated when player/widget is resized
         try:
             self.video_player.bind("<Configure>", lambda e: self.update_videoinfo())
         except Exception:
             pass
-        # Schedule an initial update after geometry settle
         self.root.after(100, lambda: self.update_videoinfo())
         try:
             self.video_player.load_video(file_path=self.image_file)
