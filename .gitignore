@@ -42,3 +42,4 @@ img-txt_viewer/models/onnx_models/wd-vit-tagger-v3/selected_tags.csv
 test_space/
 /.github
 /img-txt_viewer/models/onnx_models/wd-eva02-large-tagger-v3
+/img-txt_viewer/models/ncnn_models
