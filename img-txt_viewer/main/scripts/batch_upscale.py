@@ -44,9 +44,9 @@ class BatchUpscale:
         # Supported Filetypes
         self.supported_filetypes = (".png", ".webp", ".jpg", ".jpeg", ".jpg_large", ".jfif", ".tif", ".tiff", ".bmp", ".gif")
 
-        # Included Models
-        self.ncnn_models = ["realesr-animevideov3-x4", "RealESRGAN_General_x4_v3", "realesrgan-x4plus", "realesrgan-x4plus-anime", "AnimeSharp-4x", "UltraSharp-4x"]
-        self.extra_models_path = None
+        # Models
+        self.models_path = None
+        self.available_models = []
 
         # Batch Mode
         self.batch_thread_var = False
@@ -67,8 +67,8 @@ class BatchUpscale:
 
         self.working_img_path = self.app.image_files[self.app.current_index]
         self.executable_path = os.path.join(self.app.app_root_path, "main", "resrgan", "realesrgan-ncnn-vulkan.exe")
-        self.extra_models_path = os.path.join(self.app.get_direct_app_path(), self.app.ncnn_models_dir)
-        self.ncnn_models = self.find_additional_models()
+        self.models_path = os.path.join(self.app.get_direct_app_path(), self.app.ncnn_models_dir)
+        self.available_models = self.find_models()
         self.input_path_var.set(self.working_dir)
         self.output_path_var.set(value=os.path.join(self.input_path_var.get(), "Upscale_Output"))
         self.total_images = len([file for file in os.listdir(self.working_dir) if file.lower().endswith(self.supported_filetypes)])
@@ -223,9 +223,13 @@ class BatchUpscale:
         self.label_upscale_model.pack(side="left")
         Tip.create(widget=self.label_upscale_model, text="Select the RESRGAN upscale model")
         # Combobox
-        self.combobox_upscale_model = ttk.Combobox(frame_model, width=25, state="readonly", values=self.ncnn_models)
+        self.combobox_upscale_model = ttk.Combobox(frame_model, width=25, state="readonly", values=self.available_models)
         self.combobox_upscale_model.pack(side="top", fill="x")
-        self.combobox_upscale_model.set("realesr-animevideov3-x4")
+        if self.available_models:
+            self.combobox_upscale_model.set(self.available_models[0])
+        else:
+            self.combobox_upscale_model.set("")
+            messagebox.showwarning("No Models Found", "No upscale models found in the models\\ncnn_models directory.\n\nPlease ensure models are placed in the correct directory.")
 
         # Upscale Factor
         frame_size = tk.Frame(settings_frame)
@@ -487,6 +491,11 @@ class BatchUpscale:
 
 
     def determine_image_type(self, event=None):
+        # Check if models are available before proceeding
+        if not self.available_models:
+            messagebox.showerror("No Models Available",
+                "No upscale models found. Please add model files to the models directory.")
+            return
         if self.batch_mode_var.get():
             self.batch_upscale()
         else:
@@ -593,10 +602,9 @@ class BatchUpscale:
             "-o", output_path,
             "-n", model,
             "-s", "4",
-            "-f", "jpg"
+            "-f", "jpg",
+            "-m", self.models_path
         ]
-        if model not in self.ncnn_models:
-            upscale_command.extend(["-m", self.extra_models_path])
         return upscale_command
 
 
@@ -740,6 +748,13 @@ class BatchUpscale:
 
     def refresh_files(self):
         path = self.working_dir
+        self.available_models = self.find_models()
+        self.combobox_upscale_model['values'] = self.available_models
+        if self.available_models:
+            if self.combobox_upscale_model.get() not in self.available_models:
+                self.combobox_upscale_model.set(self.available_models[0])
+        else:
+            self.combobox_upscale_model.set("")
         self.set_working_directory(path=path)
 
 
@@ -750,16 +765,17 @@ class BatchUpscale:
             self.working_dir = self.input_path_var.get()
 
 
-    def find_additional_models(self):
-        if not os.path.exists(self.extra_models_path):
-            return self.ncnn_models
-        all_files = os.listdir(self.extra_models_path)
+    def find_models(self):
+        """Find all available upscaling models by locating paired .bin and .param files."""
+        if not os.path.exists(self.models_path):
+            os.makedirs(self.models_path, exist_ok=True)
+            return []
+        all_files = os.listdir(self.models_path)
         bin_files = {os.path.splitext(f)[0] for f in all_files if f.endswith('.bin')}
         param_files = {os.path.splitext(f)[0] for f in all_files if f.endswith('.param')}
-        paired_models = bin_files & param_files
-        additional_models = {model for model in paired_models if model not in self.ncnn_models}
-        combined_models = list(set(self.ncnn_models) | additional_models)
-        return combined_models
+        paired_models = list(bin_files & param_files)
+        paired_models.sort()
+        return paired_models
 
 
     def convert_webp_to_jpg(self, directory, filename):

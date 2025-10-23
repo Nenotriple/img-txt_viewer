@@ -306,7 +306,7 @@ Add your own models by placing them in `models/ncnn_models`.
     - `.bin` (model weights)
     - `.param` (model parameters)
 
-Restart the program after adding models to load them.
+Press the **Refresh** button to reload models after adding new ones.
 
 Example folder layout:
 .
