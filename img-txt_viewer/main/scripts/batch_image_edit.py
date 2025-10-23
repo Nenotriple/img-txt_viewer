@@ -11,7 +11,6 @@ from tkinter import ttk, messagebox, filedialog
 # Third-Party
 import nenotk as ntk
 from PIL import Image
-from tkmarktext import TextWindow
 
 # Local
 from main.scripts import HelpText
@@ -56,7 +55,7 @@ class BatchImgEdit:
         self.app = app
         self.root = root
         self.working_dir = self.app.image_dir.get()
-        self.help_window = TextWindow(self.root)
+        self.help_window = ntk.TextWindow(self.root)
         self.setup_ui()
         self.set_working_directory(self.working_dir)
 
