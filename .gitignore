@@ -5,41 +5,30 @@ venv/
 # Visual Studio Code workspace settings
 /.vscode
 
-
 # pycache
 __pycache__/
-
 
 # Dictionary Pre-Cache
 main/dict/cache/
 /img-txt_viewer/main/dict/cache
-
 
 # PyInstaller
 dist/
 build/
 *.spec
 
-
 # App Settings file
 settings.cfg
-
 
 # MyTags file
 my_tags.csv
 my_tags.yaml
 my_tags.yml
 
-
 # ONNX Models
 *.onnx
-img-txt_viewer/models/onnx_models/wd-v1-4-moat-tagger-v2/selected_tags.csv
-img-txt_viewer/models/onnx_models/wd-vit-tagger-v3/selected_tags.csv
-
-
 
 # Misc
-test_space/
 /.github
-/img-txt_viewer/models/onnx_models/wd-eva02-large-tagger-v3
+img-txt_viewer/models/onnx_models
 /img-txt_viewer/models/ncnn_models
