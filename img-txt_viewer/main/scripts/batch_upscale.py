@@ -114,7 +114,7 @@ class BatchUpscale:
         self.button_refresh = ttk.Button(button_fame, text="Refresh", command=self.refresh_files)
         self.button_refresh.pack(side="left", fill="x")
         # Cancel
-        self.button_cancel = ttk.Button(button_fame, text="Cancel", command=self.process_end)
+        self.button_cancel = ttk.Button(button_fame, text="Cancel", command=self.cancel_batch_process)
         self.button_cancel.pack(side="left", fill="x")
         # Help
         self.button_help = ttk.Button(button_fame, text="?", width=2, command=self.open_help_window)
@@ -374,6 +374,7 @@ class BatchUpscale:
         widget_list = [
             # Upscale
             self.button_upscale,
+            self.button_refresh,
             # Input
             self.entry_input_path,
             self.batch_mode_checkbox,
@@ -491,10 +492,8 @@ class BatchUpscale:
 
 
     def determine_image_type(self, event=None):
-        # Check if models are available before proceeding
         if not self.available_models:
-            messagebox.showerror("No Models Available",
-                "No upscale models found. Please add model files to the models directory.")
+            messagebox.showerror("No Models Available", "No upscale models found. Please add model files to the models directory.")
             return
         if self.batch_mode_var.get():
             self.batch_upscale()
@@ -578,6 +577,8 @@ class BatchUpscale:
         finally:
             self.set_widget_state(state="normal")
             self.batch_thread_var = False
+            self.button_cancel.config(text="Cancel")
+            self.update_progress(0)
 
 
     def _build_output_path(self, input_filepath, batch_mode, suffix="", ext_override=None):
@@ -817,7 +818,12 @@ class BatchUpscale:
     def process_end(self, event=None):
         self.batch_thread_var = False
         self.delete_temp_dir()
-        self.set_widget_state(state="normal")
+
+
+    def cancel_batch_process(self):
+        """Signal the batch process to stop."""
+        self.batch_thread_var = False
+        self.button_cancel.config(text="Stopping...")
 
 
     def verify_selected_file(self, filepath):
