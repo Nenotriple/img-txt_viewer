@@ -300,9 +300,9 @@ These models are included by default:
 - AnimeSharp-4x
 - UltraSharp-4x
 
-Add your own models by placing each model in its own folder under `models/ncnn_models`. The folder name becomes the model label.
+Add your own models by placing them in `models/ncnn_models`.
 
-- Required files:
+- Models require two files:
     - `.bin` (model weights)
     - `.param` (model parameters)
 
@@ -313,7 +313,6 @@ Example folder layout:
 └── img-txt_viewer/
     └── models/
         └── ncnn_models/
-            └── realesr-animevideov3-x4/
                 ├── realesr-animevideov3-x4.bin
                 └── realesr-animevideov3-x4.param
 
