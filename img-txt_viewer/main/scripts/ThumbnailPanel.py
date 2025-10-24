@@ -2,7 +2,8 @@
 
 
 # Standard
-from typing import Dict
+import os
+import logging
 
 # tkinter
 from tkinter import ttk, Frame, Menu
@@ -12,7 +13,7 @@ from nenotk import ToolTip as Tip
 from PIL import Image, ImageTk, ImageOps
 
 # Typing
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Optional
 if TYPE_CHECKING:
     from app import ImgTxtViewer as Main
 
@@ -31,9 +32,9 @@ class ThumbnailPanel(Frame):
     """
 
     # Thumbnail spacing constants for precise layout
-    THUMBNAIL_PADDING = 4  # Padding between thumbnails
-    THUMBNAIL_BORDER = 2   # Border around each thumbnail
-    TOTAL_SPACING = THUMBNAIL_PADDING + (THUMBNAIL_BORDER * 2)  # Total spacing per thumbnail
+    THUMB_PAD = 4  # Padding between thumbnails
+    THUMB_BORDER = 2   # Border around each thumbnail
+    TOTAL_SPACING = THUMB_PAD + (THUMB_BORDER * 2)  # Total spacing per thumbnail
 
     def __init__(self, master: 'Frame', app: 'Main'):
         """
@@ -48,7 +49,9 @@ class ThumbnailPanel(Frame):
         self.thumbnail_cache: Dict[tuple, ImageTk.PhotoImage] = {}
         self.image_info_cache: Dict[str, dict] = {}
         self._last_layout_info = None  # Cache last layout to detect changes
+        # Keep geometry updated and respond to resizes
         self.bind("<MouseWheel>", self.app.mousewheel_nav)
+        self.bind("<Configure>", lambda e: self.update_panel())
 
 
 #endregion
@@ -63,10 +66,11 @@ class ThumbnailPanel(Frame):
 
         Call this function whenever the panel should be updated.
         """
+        # Make sure geometry is current before computing layout
+        self._refresh_geometry()
         if not self._should_display_thumbnails():
             self.grid_remove()
             return
-
         self.grid()
         layout_info = self._calculate_layout()
         # Only clear if layout has meaningfully changed
@@ -120,19 +124,28 @@ class ThumbnailPanel(Frame):
 
 
     def _clear_panel_if_needed(self) -> None:
-        """Clear existing thumbnails if the number of images has changed."""
-        if len(self.winfo_children()) != len(self.app.image_files):
+        """Clear existing thumbnails if the number of images has changed.
+
+        Count only widgets that look like thumbnail buttons (have an 'image' attribute) so other widgets don't cause unnecessary clears.
+        """
+        thumb_widgets = [w for w in self.winfo_children() if getattr(w, "image", None) is not None]
+        if len(thumb_widgets) != len(self.app.image_files):
             self._clear_panel()
 
 
     def _calculate_layout(self) -> dict:
         """Calculate layout parameters for thumbnails with precise spacing."""
         thumbnail_width = self.app.thumbnail_width.get()
-        panel_width = self.winfo_width() or self.app.master_image_frame.winfo_width()
+        # Ensure geometry is up-to-date
+        self._refresh_geometry()
+        panel_width = self.winfo_width() or self.app.master_image_frame.winfo_width() or 1
         # Calculate effective width per thumbnail (thumbnail + spacing)
         effective_thumbnail_width = thumbnail_width + self.TOTAL_SPACING
         # Calculate number of thumbnails that fit, accounting for edge padding
-        num_thumbnails = max(1, (panel_width - self.THUMBNAIL_PADDING) // effective_thumbnail_width)
+        try:
+            num_thumbnails = max(1, (panel_width - self.THUMB_PAD) // effective_thumbnail_width)
+        except Exception:
+            num_thumbnails = 1
         total_images = len(self.app.image_files)
         # Early return if no images
         if total_images == 0:
@@ -167,7 +180,7 @@ class ThumbnailPanel(Frame):
         return file_path.lower().endswith(('.mp4', '.webm', '.mkv', '.avi', '.mov'))
 
 
-    def _create_thumbnail(self, image_file: str, thumbnail_width: int) -> ImageTk.PhotoImage:
+    def _create_thumbnail(self, image_file: str, thumbnail_width: int) -> Optional[ImageTk.PhotoImage]:
         """Create and cache a thumbnail for the given image or video file."""
         cache_key = (image_file, thumbnail_width)
         if cache_key in self.thumbnail_cache:
@@ -232,12 +245,12 @@ class ThumbnailPanel(Frame):
             if not thumbnail_photo:
                 continue
             # Create and configure button
-            button = self._create_single_thumbnail_button(thumbnail_photo, index)
+            button = self._create_button(thumbnail_photo, index)
             thumbnail_buttons.append(button)
         return thumbnail_buttons
 
 
-    def _create_single_thumbnail_button(self, thumbnail_photo: ImageTk.PhotoImage, index: int) -> ttk.Button:
+    def _create_button(self, thumbnail_photo: ImageTk.PhotoImage, index: int) -> ttk.Button:
         """Create a single thumbnail button with all necessary configuration."""
         button = ttk.Button(self, image=thumbnail_photo, cursor="hand2", command=lambda idx=index: self.app.jump_to_image(idx))
         button.image = thumbnail_photo  # Keep reference to prevent garbage collection
@@ -248,12 +261,19 @@ class ThumbnailPanel(Frame):
         button.bind("<Button-3>", self._create_context_menu(button, index))
         button.bind("<MouseWheel>", self.app.mousewheel_nav)
         # Add tooltip with image info
+        self._create_thumbnail_tooltip(index, button)
+        return button
+
+
+    def _create_thumbnail_tooltip(self, index, button):
         image_file = self.app.image_files[index]
         if image_file in self.image_info_cache:
             image_info = self.image_info_cache[image_file]
-            tooltip_text = f"#{index + 1} | {image_info['filename']} | {image_info['resolution']} | {image_info['size']}"
+            filename = image_info.get('filename') or os.path.basename(image_file)
+            resolution = image_info.get('resolution') or image_info.get('size', '')
+            size = image_info.get('size', '')
+            tooltip_text = f"#{index + 1} | {filename} | {resolution} | {size}"
             Tip.create(widget=button, text=tooltip_text, show_delay=100, origin='widget', tooltip_anchor='sw', padx=1, pady=-2)
-        return button
 
 
     def _display_thumbnails(self, thumbnail_buttons: list, layout_info: dict) -> None:
@@ -262,11 +282,18 @@ class ThumbnailPanel(Frame):
             button.grid(
                 row=0,
                 column=idx,
-                padx=(self.THUMBNAIL_PADDING if idx == 0 else self.THUMBNAIL_PADDING // 2,
-                      self.THUMBNAIL_PADDING if idx == len(thumbnail_buttons) - 1 else self.THUMBNAIL_PADDING // 2),
-                pady=self.THUMBNAIL_PADDING
+                padx=(self.THUMB_PAD if idx == 0 else self.THUMB_PAD // 2,
+                      self.THUMB_PAD if idx == len(thumbnail_buttons) - 1 else self.THUMB_PAD // 2),
+                pady=self.THUMB_PAD
             )
-        self.update_idletasks()
+        self._refresh_geometry()
+
+
+    def _refresh_geometry(self):
+        try:
+            self.update_idletasks()
+        except Exception:
+            pass
 
 
 #endregion
