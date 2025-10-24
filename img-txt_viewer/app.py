@@ -177,7 +177,6 @@ class ImgTxtViewer:
         self.is_resizing_job_id = None
         self.delete_tag_job_id = None
         self.animation_job_id = None
-        self.update_thumbnail_job_id = None
 
         # Image Resize Variables
         self.current_image: ImageTk.PhotoImage = None
@@ -596,7 +595,6 @@ class ImgTxtViewer:
         self.view_menu = Menu(self.view_menubutton, tearoff=0)
         self.view_menubutton.config(menu=self.view_menu)
         self.view_menu.add_checkbutton(label="Toggle Image-Grid", accelerator="F1", variable=self.is_image_grid_visible_var, command=self.toggle_image_grid)
-        self.view_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.debounce_update_thumbnail_panel)
         self.view_menu.add_checkbutton(label="Toggle Edit Panel", variable=self.edit_panel_visible_var, command=self.edit_panel.toggle_edit_panel)
         self.view_menu.add_separator()
         self.view_menu.add_checkbutton(label="Always On Top", variable=self.always_on_top_var, command=self.set_always_on_top)
@@ -627,6 +625,7 @@ class ImgTxtViewer:
         # Thumbnail Panel
         self.thumbnail_panel = ThumbnailPanel(master=self.master_image_inner_frame, app=self)
         self.thumbnail_panel.grid(row=3, column=0, sticky="ew")
+        self.view_menu.add_checkbutton(label="Toggle Thumbnail Panel", variable=self.thumbnails_visible, command=self.thumbnail_panel.update_panel)
         # Edit Image Panel
         self.edit_image_panel = Frame(self.master_image_inner_frame, relief="ridge", bd=1)
         self.edit_image_panel.grid(row=2, column=0, sticky="ew")
@@ -1254,14 +1253,6 @@ class ImgTxtViewer:
         self.root.after_idle(apply_position)
 
 
-    def debounce_update_thumbnail_panel(self, event=None):
-        if not hasattr(self, 'thumbnail_panel'):
-            return
-        if self.update_thumbnail_job_id is not None:
-            self.root.after_cancel(self.update_thumbnail_job_id)
-        self.update_thumbnail_job_id = self.root.after(20, self.thumbnail_panel.update_panel)
-
-
 #endregion
 #region Alt-UI Setup
 
@@ -1685,7 +1676,7 @@ class ImgTxtViewer:
             self.highlight_custom_string()
             self.append_comma_to_text()
             self.highlight_all_duplicates_var.set(False)
-            self.debounce_update_thumbnail_panel()
+            self.thumbnail_panel.update_panel()
             self.get_text_summary()
             if self.is_image_grid_visible_var.get():
                 self.image_grid.highlight_thumbnail(self.current_index)
@@ -1696,7 +1687,7 @@ class ImgTxtViewer:
     def refresh_image(self):
         if self.image_files:
             self.display_image()
-            self.debounce_update_thumbnail_panel()
+            self.thumbnail_panel.update_panel()
 
 
     def debounce_refresh_image(self, event=None):

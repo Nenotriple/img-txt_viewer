@@ -3,7 +3,8 @@
 
 # Standard
 import os
-import logging
+import queue
+import threading
 
 # tkinter
 from tkinter import ttk, Frame, Menu
@@ -23,13 +24,7 @@ if TYPE_CHECKING:
 
 
 class ThumbnailPanel(Frame):
-    """
-    A panel that displays thumbnails of images in a horizontal scrollable view.
-
-    This class extends tkinter's Frame to create a thumbnail navigation panel
-    that shows previews of images, handles thumbnail caching, and provides
-    context menu interactions.
-    """
+    """Panel displaying image thumbnails in a horizontal scrollable view."""
 
     # Thumbnail spacing constants for precise layout
     THUMB_PAD = 4  # Padding between thumbnails
@@ -38,34 +33,37 @@ class ThumbnailPanel(Frame):
 
     def __init__(self, master: 'Frame', app: 'Main'):
         """
-        Initialize the ThumbnailPanel.
-
         Args:
-            master: The master widget
-            app: The main application instance implementing ThumbnailPanelParent interface
+            master: Parent widget.
+            app: Main application instance.
         """
         super().__init__(master)
         self.app = app
         self.thumbnail_cache: Dict[tuple, ImageTk.PhotoImage] = {}
-        self.image_info_cache: Dict[str, dict] = {}
+        self.image_info_cache: Dict[str, dict] = {}  # Cache for image info {}
         self._last_layout_info = None  # Cache last layout to detect changes
+        self._thumbnail_queue = queue.Queue()  # Queue for completed thumbnails
+        self._thumbnail_lock = threading.Lock()  # Lock for pending thumbnails
+        self._pending_thumbnails = {}  # {(image_file, thumbnail_width): True}
+        self._update_pending = False  # Debounce flag for panel updates
+        self._main_thread_id = threading.get_ident()  # Store main thread ID
+        self._thumbnail_buttons = {}  # {index: button_widget} to track buttons for replacement
         # Keep geometry updated and respond to resizes
         self.bind("<MouseWheel>", self.app.mousewheel_nav)
-        self.bind("<Configure>", lambda e: self.update_panel())
-
+        self.bind("<Configure>", lambda e: self._schedule_update_panel())
+        # Start processing queue
+        self._process_thumbnail_queue()
 
 #endregion
 #region Main
 
 
     def update_panel(self) -> None:
-        """
-        Update the thumbnail panel display.
-
-        Hides the panel if needed, clears existing thumbnails, calculates layout, and displays new thumbnails.
-
-        Call this function whenever the panel should be updated.
-        """
+        """Update thumbnail panel display. Must be called from main thread."""
+        # Ensure we're on the main thread
+        if threading.get_ident() != self._main_thread_id:
+            self._schedule_update_panel()
+            return
         # Make sure geometry is current before computing layout
         self._refresh_geometry()
         if not self._should_display_thumbnails():
@@ -82,16 +80,17 @@ class ThumbnailPanel(Frame):
 
 
     def refresh_thumbnails(self):
-        """
-        Clear thumbnail and image info caches and refresh the thumbnail panel.
+        """Clear caches and refresh thumbnails. Must be called from main thread."""
+        # Ensure we're on the main thread
+        if threading.get_ident() != self._main_thread_id:
+            self.after(0, self.refresh_thumbnails)
+            return
 
-        Forces a complete regeneration of all thumbnails.
-
-        Call this function whenever the image list has changed.
-        """
         self.thumbnail_cache.clear()
         self.image_info_cache.clear()
         self._last_layout_info = None
+        with self._thumbnail_lock:
+            self._pending_thumbnails.clear()
         self.app.refresh_file_lists()
         self.update_panel()
 
@@ -121,12 +120,12 @@ class ThumbnailPanel(Frame):
         """Clear all thumbnails from the panel."""
         for widget in self.winfo_children():
             widget.destroy()
+        self._thumbnail_buttons.clear()  # Clear button tracking
 
 
     def _clear_panel_if_needed(self) -> None:
         """Clear existing thumbnails if the number of images has changed.
-
-        Count only widgets that look like thumbnail buttons (have an 'image' attribute) so other widgets don't cause unnecessary clears.
+        - Count only widgets that look like thumbnail buttons (have an 'image' attribute) so other widgets don't cause unnecessary clears.
         """
         thumb_widgets = [w for w in self.winfo_children() if getattr(w, "image", None) is not None]
         if len(thumb_widgets) != len(self.app.image_files):
@@ -181,51 +180,120 @@ class ThumbnailPanel(Frame):
 
 
     def _create_thumbnail(self, image_file: str, thumbnail_width: int) -> Optional[ImageTk.PhotoImage]:
-        """Create and cache a thumbnail for the given image or video file."""
+        """Create and cache a thumbnail for the given image or video file.
+        - PIL work is done in a background thread, conversion to ImageTk.PhotoImage and UI update is done on the main thread.
+        - Returns None immediately; UI update is handled asynchronously.
+        - Thread-safe: Can be called from main thread only (checks cache and spawns background thread).
+        """
         cache_key = (image_file, thumbnail_width)
         if cache_key in self.thumbnail_cache:
             return self.thumbnail_cache[cache_key]
+        # If already pending, just return None (will update later)
+        with self._thumbnail_lock:
+            if cache_key in self._pending_thumbnails:
+                return None
+            self._pending_thumbnails[cache_key] = True
+        # Start background thread for PIL work
+        threading.Thread(target=self._generate_thumbnail_bg, args=(image_file, thumbnail_width, cache_key), daemon=True).start()
+        return None
+
+
+    def _generate_thumbnail_bg(self, image_file, thumbnail_width, cache_key):
+        """Background thread: generate PIL thumbnail, then schedule conversion/UI update.
+        - Thread-safe: Runs in background thread, does NOT touch GUI.
+        """
         try:
-            # Check if it's a video file
             if self._is_video_file(image_file):
-                return self._create_video_thumbnail(image_file, thumbnail_width, cache_key)
-            # Regular image handling
-            return self._create_image_thumbnail(image_file, thumbnail_width, cache_key)
-        except Exception as e:
-            # Silent error handling - return None to skip problematic files
-            return None
+                pil_img = self._get_video_pil_thumbnail(image_file, thumbnail_width)
+            else:
+                pil_img = self._get_image_pil_thumbnail(image_file, thumbnail_width)
+            if pil_img is not None:
+                # Queue the PIL image for main thread processing
+                self._thumbnail_queue.put((cache_key, pil_img))
+        except Exception:
+            # Clear pending flag on error
+            with self._thumbnail_lock:
+                self._pending_thumbnails.pop(cache_key, None)
 
 
-    def _create_video_thumbnail(self, image_file: str, thumbnail_width: int, cache_key: tuple) -> ImageTk.PhotoImage:
-        """Create thumbnail for video file."""
+    def _get_video_pil_thumbnail(self, image_file, thumbnail_width):
+        """Generate video thumbnail in background thread.
+        - Thread-safe: May need to call main thread for video thumbnail generation.
+        """
         # Check if thumbnail exists in video_thumb_dict
         if hasattr(self.app, 'video_thumb_dict') and image_file in self.app.video_thumb_dict:
             img = self.app.video_thumb_dict[image_file]['thumbnail'].copy()
         else:
-            # Generate video thumbnail
+            # Generate video thumbnail - this may need main thread access
+            # Schedule on main thread if not already there
+            if threading.get_ident() != self._main_thread_id:
+                # Can't safely generate video thumbnail from background thread
+                return None
             self.app.update_video_thumbnails()
             if hasattr(self.app, 'video_thumb_dict') and image_file in self.app.video_thumb_dict:
                 img = self.app.video_thumb_dict[image_file]['thumbnail'].copy()
             else:
                 return None
-        # Process and cache the thumbnail
         img.thumbnail((thumbnail_width, thumbnail_width), self.app.quality_filter)
         img = img.convert("RGBA") if img.mode != "RGBA" else img
         padded_img = ImageOps.pad(img, (thumbnail_width, thumbnail_width), color=(0, 0, 0, 0))
-        thumbnail_photo = ImageTk.PhotoImage(padded_img)
-        self.thumbnail_cache[cache_key] = thumbnail_photo
-        return thumbnail_photo
+        return padded_img
 
 
-    def _create_image_thumbnail(self, image_file: str, thumbnail_width: int, cache_key: tuple) -> ImageTk.PhotoImage:
-        """Create thumbnail for image file."""
+    def _get_image_pil_thumbnail(self, image_file, thumbnail_width):
         with Image.open(image_file) as img:
             img.thumbnail((thumbnail_width, thumbnail_width), self.app.quality_filter)
             img = img.convert("RGBA") if img.mode != "RGBA" else img
             padded_img = ImageOps.pad(img, (thumbnail_width, thumbnail_width), color=(0, 0, 0, 0))
-            thumbnail_photo = ImageTk.PhotoImage(padded_img)
+            return padded_img
+
+
+    def _finish_thumbnail_main(self, cache_key, pil_img):
+        """Main thread: convert PIL image to ImageTk.PhotoImage, cache, and schedule update.
+        - Thread-safe: Must be called from main thread only.
+        """
+        try:
+            thumbnail_photo = ImageTk.PhotoImage(pil_img)
             self.thumbnail_cache[cache_key] = thumbnail_photo
-            return thumbnail_photo
+        finally:
+            # Always remove from pending, even if conversion fails
+            with self._thumbnail_lock:
+                self._pending_thumbnails.pop(cache_key, None)
+        # Schedule panel update (debounced)
+        self._schedule_update_panel()
+
+
+    def _process_thumbnail_queue(self):
+        """Process completed thumbnails from the queue on the main thread.
+        - Thread-safe: Runs on main thread, processes queue items.
+        """
+        try:
+            # Process all available items in the queue (batch processing)
+            while True:
+                cache_key, pil_img = self._thumbnail_queue.get_nowait()
+                self._finish_thumbnail_main(cache_key, pil_img)
+        except queue.Empty:
+            pass
+        finally:
+            # Schedule next check
+            self.after(50, self._process_thumbnail_queue)
+
+
+    def _schedule_update_panel(self):
+        """Schedule a debounced panel update on the main thread.
+        - Thread-safe: Can be called from any thread.
+        """
+        if not self._update_pending:
+            self._update_pending = True
+            self.after_idle(self._do_update_panel)
+
+
+    def _do_update_panel(self):
+        """Execute the actual panel update and reset debounce flag.
+        - Thread-safe: Runs on main thread only.
+        """
+        self._update_pending = False
+        self.update_panel()
 
 
     def _create_thumbnail_buttons(self, layout_info: dict) -> list:
@@ -242,10 +310,23 @@ class ThumbnailPanel(Frame):
                     self.image_info_cache[image_file] = self.app.get_image_info(image_file)
             # Create thumbnail
             thumbnail_photo = self._create_thumbnail(image_file, layout_info['thumbnail_width'])
+            # If thumbnail not ready, create a placeholder button (disabled)
             if not thumbnail_photo:
+                # Check if we already have a button for this index
+                if index in self._thumbnail_buttons and self._thumbnail_buttons[index].winfo_exists():
+                    button = self._thumbnail_buttons[index]
+                else:
+                    button = ttk.Button(self, text="...", state="disabled")
+                    self._thumbnail_buttons[index] = button
+                thumbnail_buttons.append(button)
                 continue
-            # Create and configure button
+            # Create and configure button (or update existing placeholder)
+            if index in self._thumbnail_buttons and self._thumbnail_buttons[index].winfo_exists():
+                # Replace placeholder with real thumbnail
+                old_button = self._thumbnail_buttons[index]
+                old_button.destroy()
             button = self._create_button(thumbnail_photo, index)
+            self._thumbnail_buttons[index] = button
             thumbnail_buttons.append(button)
         return thumbnail_buttons
 
@@ -278,7 +359,11 @@ class ThumbnailPanel(Frame):
 
     def _display_thumbnails(self, thumbnail_buttons: list, layout_info: dict) -> None:
         """Display the thumbnail buttons in the panel with precise spacing."""
+        # Remove any buttons that are no longer in the current view
+        current_indices = set()
         for idx, button in enumerate(thumbnail_buttons):
+            i = (layout_info['start_index'] + idx) % layout_info['total_images']
+            current_indices.add(i)
             button.grid(
                 row=0,
                 column=idx,
@@ -286,6 +371,13 @@ class ThumbnailPanel(Frame):
                       self.THUMB_PAD if idx == len(thumbnail_buttons) - 1 else self.THUMB_PAD // 2),
                 pady=self.THUMB_PAD
             )
+        # Clean up buttons that are no longer visible
+        for index in list(self._thumbnail_buttons.keys()):
+            if index not in current_indices:
+                button = self._thumbnail_buttons[index]
+                if button.winfo_exists():
+                    button.destroy()
+                del self._thumbnail_buttons[index]
         self._refresh_geometry()
 
 
@@ -302,14 +394,11 @@ class ThumbnailPanel(Frame):
 
     def _create_context_menu(self, thumbnail_button, index):
         """
-        Create a context menu for thumbnail buttons.
-
         Args:
-            thumbnail_button: The button widget to attach the menu to
-            index: The index of the image in the file list
-
+            thumbnail_button: Button widget.
+            index: Image index in file list.
         Returns:
-            function: Event handler for showing the context menu
+            Event handler for context menu.
         """
         def show_context_menu(event):
             thumb_menu = Menu(thumbnail_button, tearoff=0)
