@@ -8,7 +8,6 @@ import sys
 import csv
 import yaml
 import pickle
-import itertools
 from functools import partial
 from collections import defaultdict
 
@@ -51,12 +50,13 @@ class Autocomplete:
 
         # Settings
         self.max_suggestions: int = 4
-        self.suggestion_threshold: int = 115000
+        self.suggestion_threshold: int = 100
         self.include_my_tags: bool = include_my_tags
 
         # Cache
         self.autocomplete_dict: Optional[Dict[str, Tuple[str, List[str]]]] = None
         self.similar_names_dict: Optional[DefaultDict[str, List[str]]] = None
+        self.similar_name_initial_index: Dict[str, List[str]] = {}
         self.previous_text: Optional[str] = None
         self.previous_suggestions: Optional[List[Tuple[str, Tuple[str, List[str]]]]] = None
         self.previous_threshold_results: Dict[Tuple[str, int], Dict[str, Tuple[str, List[str]]]] = {}
@@ -77,6 +77,7 @@ class Autocomplete:
         """Load autocomplete data if not cached."""
         if not self.autocomplete_dict:
             self.autocomplete_dict, self.similar_names_dict = self.load_autocomplete_data()
+            self._build_similar_name_index()
 
 
     def load_autocomplete_data(self) -> Tuple[Dict[str, Tuple[str, List[str]]], DefaultDict[str, List[str]]]:
@@ -96,6 +97,19 @@ class Autocomplete:
             data_file_path: str = os.path.join(app_path, "main", "dict", filename)
             self._read_csv(data_file_path, autocomplete_data, similar_names_dict)
         return autocomplete_data, similar_names_dict
+
+
+    def _build_similar_name_index(self) -> None:
+        """Pre-compute initial-character index for similar-name lookups."""
+        self.similar_name_initial_index = {}
+        if not self.similar_names_dict:
+            return
+        index: DefaultDict[str, List[str]] = defaultdict(list)
+        for sim_name in self.similar_names_dict.keys():
+            if not sim_name:
+                continue
+            index[sim_name[0].casefold()].append(sim_name)
+        self.similar_name_initial_index = dict(index)
 
 
     def _get_app_path(self) -> str:
@@ -223,6 +237,7 @@ class Autocomplete:
             return self.previous_suggestions[:self.max_suggestions]
         text_with_underscores: str = text.replace(" ", "_")
         pattern: Pattern = self._compile_pattern(text_with_underscores)
+        # Get matches from main dictionary
         suggestions: Dict[str, Tuple[str, List[str]]] = self._get_or_cache_threshold_results(pattern)
         self._include_similar_name_suggestions(pattern, suggestions)
         sorted_suggestions: List[Tuple[str, Tuple[str, List[str]]]] = self._sort_suggestions(suggestions, text_with_underscores)
@@ -248,19 +263,40 @@ class Autocomplete:
 
     def _find_matching_names(self, pattern: Pattern, threshold: int) -> Dict[str, Tuple[str, List[str]]]:
         """Find tags matching pattern within threshold limit."""
-        return {
-            true_name: (classifier_id, similar_names)
-            for true_name, (classifier_id, similar_names)
-            in itertools.islice(self.autocomplete_dict.items(), threshold)
-            if pattern.match(true_name)
-        }
+        matches: Dict[str, Tuple[str, List[str]]] = {}
+        if not self.autocomplete_dict:
+            return matches
+        for true_name, data in self.autocomplete_dict.items():
+            if pattern.match(true_name):
+                matches[true_name] = data
+                if len(matches) >= threshold:
+                    break
+        return matches
+
+
+    def _extract_literal_prefix(self, pattern: Pattern) -> str:
+        """Return literal portion before the first wildcard in the pattern."""
+        literal_prefix: str = pattern.pattern.split('.*', 1)[0]
+        if not literal_prefix:
+            return ''
+        return re.sub(r'\\(.)', r'\1', literal_prefix)
 
 
     def _include_similar_name_suggestions(self, pattern: Pattern, suggestions: Dict[str, Tuple[str, List[str]]]) -> None:
         """Add matching similar names to suggestions."""
-        for sim_name, true_names in self.similar_names_dict.items():
+        if not self.similar_names_dict:
+            return
+        prefix: str = self._extract_literal_prefix(pattern)
+        if prefix:
+            initial_key: str = prefix[0].casefold()
+            candidate_names: List[str] = self.similar_name_initial_index.get(initial_key, [])
+            if not candidate_names:
+                return
+        else:
+            candidate_names = list(self.similar_names_dict.keys())
+        for sim_name in candidate_names:
             if pattern.match(sim_name):
-                for true_name in true_names:
+                for true_name in self.similar_names_dict[sim_name]:
                     suggestions[true_name] = self.autocomplete_dict[true_name]
 
 
@@ -377,8 +413,8 @@ class SuggestionHandler:
         if self._handle_suggestion_event(event):
             self.clear_suggestions()
             return
-        text: str = self.app.text_box.get("1.0", tk.INSERT)
-        current_word: str = self._get_current_word(text)
+        text_before_cursor: str = self._get_text_before_cursor()
+        current_word: str = self._get_current_word(text_before_cursor)
         # Check if suggestions should be shown
         if not current_word or (len(self.selected_csv_files) < 1 and not self.app.use_mytags_var.get()):
             self.clear_suggestions()
@@ -455,6 +491,22 @@ class SuggestionHandler:
         self.app.suggestion_textbox.delete('1.0', tk.END)
         self.app.suggestion_textbox.insert('1.0', "...")
         self.app.suggestion_textbox.config(state='disabled')
+
+
+    def _get_text_before_cursor(self, max_chars: int = 2048) -> str:
+        """Return recent text preceding the cursor, bounded for performance."""
+        widget = self.app.text_box
+        if self.app.last_word_match_var.get():
+            separator_index = widget.search(r'\s', 'insert', stopindex='1.0', backwards=True, regexp=True)
+        else:
+            separator = '\n' if self.app.list_mode_var.get() else ','
+            separator_index = widget.search(separator, 'insert', stopindex='1.0', backwards=True)
+        if separator_index:
+            start_index = widget.index(f"{separator_index} + 1c")
+            return widget.get(start_index, 'insert')
+        start_index = widget.index(f"insert - {max_chars}c")
+        return widget.get(start_index, 'insert')
+
 
     def _get_current_word(self, text: str) -> str:
         if self.app.last_word_match_var.get():
@@ -552,10 +604,10 @@ class SuggestionHandler:
     def set_suggestion_threshold(self) -> None:
         """Set performance/completeness tradeoff threshold."""
         thresholds: Dict[str, int] = {
-            "Slow"  : 275000,
-            "Normal": 130000,
-            "Fast"  : 75000,
-            "Faster": 40000
+            "Slow"  : 1000,
+            "Normal": 100,
+            "Fast"  : 10,
+            "Faster": 0
         }
         self.autocomplete.suggestion_threshold = thresholds.get(self.app.suggestion_threshold_var.get())
 
