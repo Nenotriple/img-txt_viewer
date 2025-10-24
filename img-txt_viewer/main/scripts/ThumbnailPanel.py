@@ -105,10 +105,12 @@ class ThumbnailPanel(Frame):
         """Check if layout has meaningfully changed."""
         if self._last_layout_info is None:
             return True
-        # Compare key layout parameters
+        # Compare key layout parameters including scroll position and current selection
         return (self._last_layout_info.get('thumbnail_width') != new_layout.get('thumbnail_width') or
                 self._last_layout_info.get('num_thumbnails') != new_layout.get('num_thumbnails') or
-                self._last_layout_info.get('total_images') != new_layout.get('total_images'))
+                self._last_layout_info.get('total_images') != new_layout.get('total_images') or
+                self._last_layout_info.get('start_index') != new_layout.get('start_index') or
+                self._last_layout_info.get('current_index') != new_layout.get('current_index'))
 
 
     def _clear_panel(self) -> None:
@@ -138,7 +140,8 @@ class ThumbnailPanel(Frame):
                 'start_index': 0,
                 'num_thumbnails': 0,
                 'total_images': 0,
-                'thumbnail_width': thumbnail_width
+                'thumbnail_width': thumbnail_width,
+                'current_index': 0
             }
         # Normalize current index for circular navigation
         self.app.current_index = self.app.current_index % total_images
@@ -154,7 +157,8 @@ class ThumbnailPanel(Frame):
             'num_thumbnails': min(total_images, num_thumbnails),
             'total_images': total_images,
             'thumbnail_width': thumbnail_width,
-            'effective_width': effective_thumbnail_width
+            'effective_width': effective_thumbnail_width,
+            'current_index': self.app.current_index
         }
 
 
