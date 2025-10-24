@@ -32,3 +32,4 @@ my_tags.yml
 /.github
 img-txt_viewer/models/onnx_models
 /img-txt_viewer/models/ncnn_models
+img-txt_viewer/main/dict/filter_csv.py
