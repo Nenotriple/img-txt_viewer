@@ -1447,7 +1447,9 @@ class ImgTxtViewer:
                 for match in matches:
                     start = match.start()
                     end = match.end()
-                    self.text_box.tag_add(word, f"1.0 + {start} chars", f"1.0 + {end} chars")
+                    start_index = self.text_box.index(f"1.0 + {start}c")
+                    end_index = self.text_box.index(f"1.0 + {end}c")
+                    self.text_box.tag_add(word, start_index, end_index)
 
 
     def toggle_highlight_all_duplicates(self):
@@ -1475,7 +1477,7 @@ class ImgTxtViewer:
                 pos = self.text_box.search(word, start, stopindex="end")
                 if not pos:
                     break
-                end = f"{pos} + {len(word)}c"
+                end = self.text_box.index(f"{pos} + {len(word)}c")
                 self.text_box.tag_add(word, pos, end)
                 start = end
 
@@ -1501,7 +1503,9 @@ class ImgTxtViewer:
                     for match in matches:
                         start = match.start()
                         end = match.end()
-                        self.text_box.tag_add(tag_name, f"1.0 + {start} chars", f"1.0 + {end} chars")
+                        start_index = self.text_box.index(f"1.0 + {start}c")
+                        end_index = self.text_box.index(f"1.0 + {end}c")
+                        self.text_box.tag_add(tag_name, start_index, end_index)
 
 
     def remove_highlight(self, event=None):
@@ -2019,8 +2023,8 @@ class ImgTxtViewer:
         if match_span is None:
             return
         start_offset, end_offset = match_span
-        highlight_start = f"{line_start}+{start_offset}c"
-        highlight_end = f"{line_start}+{end_offset}c"
+        highlight_start = text_box.index(f"{line_start} + {start_offset}c")
+        highlight_end = text_box.index(f"{line_start} + {end_offset}c")
         text_box.tag_config("highlight", background="#ff5d5d")
         text_box.tag_add("highlight", highlight_start, highlight_end)
         text_box.update_idletasks()
@@ -2050,7 +2054,8 @@ class ImgTxtViewer:
         line, col = map(int, current_pos.split("."))
         if col == 0:
             if line > 1:
-                self.text_box.delete(f"{line-1}.end", current_pos)
+                prev_line_end = self.text_box.index(f"{line-1}.end")
+                self.text_box.delete(prev_line_end, current_pos)
                 return "break"
             return None
         line_text = self.text_box.get(f"{line}.0", current_pos)

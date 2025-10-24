@@ -55,8 +55,8 @@ class CustomScrolledText(scrolledtext.ScrolledText):
     def get_selection(self) -> Tuple[str, str, str]:
         """Get the currently selected text."""
         try:
-            start = self.index("sel.first")
-            end = self.index("sel.last")
+            start = self.index(tk.SEL_FIRST)
+            end = self.index(tk.SEL_LAST)
             selected_text = self.get(start, end)
         except tk.TclError:
             start = end = self.index(tk.INSERT)
@@ -72,8 +72,9 @@ class CustomScrolledText(scrolledtext.ScrolledText):
 
     def reselect_wrapped_text(self, start: str, opening_char: str, selected_text: str, closing_char: str) -> None:
         """Reselect the newly wrapped text."""
-        self.tag_remove(tk.SEL, 1.0, tk.END)
-        new_end = self.index(f"{start}+{len(opening_char + selected_text + closing_char)}c")
+        self.tag_remove(tk.SEL, "1.0", tk.END)
+        char_count = len(opening_char + selected_text + closing_char)
+        new_end = self.index(f"{start}+{char_count}c")
         self.tag_add(tk.SEL, start, new_end)
         self.mark_set(tk.INSERT, new_end)
         self.see(tk.INSERT)
@@ -83,7 +84,8 @@ class CustomScrolledText(scrolledtext.ScrolledText):
         """Insert an empty wrap at the current cursor position."""
         cursor_pos = self.index(tk.INSERT)
         self.insert(cursor_pos, f"{opening_char}{closing_char}")
-        self.mark_set(tk.INSERT, f"{cursor_pos}+1c")
+        new_pos = self.index(f"{cursor_pos}+1c")
+        self.mark_set(tk.INSERT, new_pos)
 
 
     def custom_select_word_for_text(self, event: tk.Event) -> str:
@@ -95,8 +97,9 @@ class CustomScrolledText(scrolledtext.ScrolledText):
         if char_index >= len(line_text):
             return "break"
         if line_text[char_index] in separators:
-            self.tag_remove("sel", "1.0", "end")
-            self.tag_add("sel", f"{line}.{char_index}", f"{line}.{char_index + 1}")
+            self.tag_remove(tk.SEL, "1.0", tk.END)
+            self.tag_add(tk.SEL, f"{line}.{char_index}", f"{line}.{char_index + 1}")
+            self.mark_set(tk.INSERT, f"{line}.{char_index + 1}")
         else:
             word_start = char_index
             while word_start > 0 and line_text[word_start - 1] not in separators:
@@ -104,9 +107,9 @@ class CustomScrolledText(scrolledtext.ScrolledText):
             word_end = char_index
             while word_end < len(line_text) and line_text[word_end] not in separators:
                 word_end += 1
-            self.tag_remove("sel", "1.0", "end")
-            self.tag_add("sel", f"{line}.{word_start}", f"{line}.{word_end}")
-        self.mark_set("insert", f"{line}.{char_index + 1}")
+            self.tag_remove(tk.SEL, "1.0", tk.END)
+            self.tag_add(tk.SEL, f"{line}.{word_start}", f"{line}.{word_end}")
+            self.mark_set(tk.INSERT, f"{line}.{word_end}")
         return "break"
 
 
@@ -114,7 +117,7 @@ class CustomScrolledText(scrolledtext.ScrolledText):
         """Select the whole line for a triple-click."""
         click_index = self.index(f"@{event.x},{event.y}")
         line, _ = map(int, click_index.split("."))
-        self.tag_remove("sel", "1.0", "end")
-        self.tag_add("sel", f"{line}.0", f"{line}.end")
-        self.mark_set("insert", f"{line}.0")
+        self.tag_remove(tk.SEL, "1.0", tk.END)
+        self.tag_add(tk.SEL, f"{line}.0", f"{line}.end")
+        self.mark_set(tk.INSERT, f"{line}.0")
         return "break"

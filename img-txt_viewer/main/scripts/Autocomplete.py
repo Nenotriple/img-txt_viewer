@@ -369,7 +369,7 @@ class SuggestionHandler:
         """Refresh suggestions based on current input state."""
         # Initialize empty event if none provided
         event = type('', (), {'keysym': '', 'char': ''})() if event is None else event
-        cursor_position: str = self.app.text_box.index("insert")
+        cursor_position: str = self.app.text_box.index(tk.INSERT)
         # Early returns for special cases
         if self._cursor_inside_tag(cursor_position):
             self.clear_suggestions()
@@ -377,7 +377,7 @@ class SuggestionHandler:
         if self._handle_suggestion_event(event):
             self.clear_suggestions()
             return
-        text: str = self.app.text_box.get("1.0", "insert")
+        text: str = self.app.text_box.get("1.0", tk.INSERT)
         current_word: str = self._get_current_word(text)
         # Check if suggestions should be shown
         if not current_word or (len(self.selected_csv_files) < 1 and not self.app.use_mytags_var.get()):
@@ -412,9 +412,9 @@ class SuggestionHandler:
             else:
                 widget.tag_config(tag_name, relief='flat', borderwidth=0)
                 widget.config(cursor="")
-        widget = self.app.suggestion_textbox
+        widget: tk.Text = self.app.suggestion_textbox
         widget.config(state='normal')
-        widget.delete('1.0', 'end')
+        widget.delete('1.0', tk.END)
         configured_colors: Set[str] = set()
         num_suggestions: int = len(self.suggestions)
         for index, (suggestion_text, classifier_id) in enumerate(self.suggestions):
@@ -423,8 +423,8 @@ class SuggestionHandler:
             suggestion_color: str = self.suggestion_colors[color_index]
             bullet_symbol: str = "⚫" if index == self.selected_suggestion_index else "⚪"
             suggestion: str = f"suggestion_tag_{index}"
-            widget.insert('end', bullet_symbol)
-            widget.insert('end', f" {suggestion_text} ", (suggestion, suggestion_color))
+            widget.insert(tk.END, bullet_symbol)
+            widget.insert(tk.END, f" {suggestion_text} ", (suggestion, suggestion_color))
             if suggestion_color not in configured_colors:
                 widget.tag_config(suggestion_color, foreground=suggestion_color, font=('Segoe UI', '9'))
                 configured_colors.add(suggestion_color)
@@ -432,7 +432,7 @@ class SuggestionHandler:
             widget.tag_bind(suggestion, '<Enter>', partial(on_mouse_hover, suggestion, True))
             widget.tag_bind(suggestion, '<Leave>', partial(on_mouse_hover, suggestion, False))
             if index < num_suggestions - 1:
-                widget.insert('end', ', ')
+                widget.insert(tk.END, ', ')
         widget.config(state='disabled')
 
 
@@ -452,7 +452,7 @@ class SuggestionHandler:
         self.suggestions = []
         self.selected_suggestion_index = 0
         self.app.suggestion_textbox.config(state='normal')
-        self.app.suggestion_textbox.delete('1.0', 'end')
+        self.app.suggestion_textbox.delete('1.0', tk.END)
         self.app.suggestion_textbox.insert('1.0', "...")
         self.app.suggestion_textbox.config(state='disabled')
 
@@ -473,11 +473,11 @@ class SuggestionHandler:
     def _insert_selected_suggestion(self, selected_suggestion: str) -> None:
         """Insert chosen suggestion at cursor position."""
         selected_suggestion = selected_suggestion.strip()
-        text: str = self.app.text_box.get("1.0", "insert").rstrip()
+        text: str = self.app.text_box.get("1.0", tk.INSERT).rstrip()
         current_word: str = self._get_current_word(text)
-        remaining_text: str = self.app.text_box.get("insert", "end").rstrip('\n')
-        start_of_current_word: str = "1.0 + {} chars".format(len(text) - len(current_word))
-        self.app.text_box.delete(start_of_current_word, "insert")
+        remaining_text: str = self.app.text_box.get(tk.INSERT, tk.END).rstrip('\n')
+        start_of_current_word: str = f"1.0 + {len(text) - len(current_word)} chars"
+        self.app.text_box.delete(start_of_current_word, tk.INSERT)
         if self.app.list_mode_var.get() and not remaining_text.startswith('\n') and not self.app.last_word_match_var.get():
             self.app.text_box.insert(start_of_current_word, selected_suggestion + '\n')
         else:
@@ -485,16 +485,16 @@ class SuggestionHandler:
 
         if self.app.list_mode_var.get() and remaining_text:
             self.insert_newline_listmode(called_from_insert=True)
-            self.app.text_box.mark_set("insert", "insert + 1 lines")
+            self.app.text_box.mark_set(tk.INSERT, f"{tk.INSERT} + 1 lines")
         self.app.append_comma_to_text()
 
 
     def insert_newline_listmode(self, event: Optional[tk.Event] = None, called_from_insert: bool = False) -> str:
         """Handle newline insertion in list mode."""
         if self.app.list_mode_var.get():
-            self.app.text_box.insert("insert", '\n')
-            if called_from_insert and self.app.text_box.index("insert") != self.app.text_box.index("end-1c"):
-                self.app.text_box.mark_set("insert", "insert-1l")
+            self.app.text_box.insert(tk.INSERT, '\n')
+            if called_from_insert and self.app.text_box.index(tk.INSERT) != self.app.text_box.index("end-1c"):
+                self.app.text_box.mark_set(tk.INSERT, f"{tk.INSERT}-1l")
             return 'break'
         return ''
 
