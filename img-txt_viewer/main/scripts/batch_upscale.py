@@ -71,7 +71,8 @@ class BatchUpscale:
         self.available_models = self.find_models()
         self.input_path_var.set(self.working_dir)
         self.output_path_var.set(value=os.path.join(self.input_path_var.get(), "Upscale_Output"))
-        self.total_images = len([file for file in os.listdir(self.working_dir) if file.lower().endswith(self.supported_filetypes)])
+        # More efficient: use generator with sum instead of list comprehension
+        self.total_images = sum(1 for file in os.listdir(self.working_dir) if file.lower().endswith(self.supported_filetypes))
 
         self.setup_ui()
         self.populate_file_tree()
@@ -479,7 +480,8 @@ class BatchUpscale:
 
 
     def update_image_count(self):
-        self.total_images = len([file for file in os.listdir(self.working_dir) if file.lower().endswith(self.supported_filetypes)])
+        # More efficient: use generator with sum instead of list comprehension
+        self.total_images = sum(1 for file in os.listdir(self.working_dir) if file.lower().endswith(self.supported_filetypes))
         self.label_total_count.config(text=f"Total: {self.total_images}")
 
 

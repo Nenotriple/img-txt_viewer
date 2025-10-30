@@ -132,9 +132,13 @@ class CalculateFileStats:
                 self.file_word_counts.append((os.path.basename(text_file), len(words)))
                 self.file_char_counts.append((os.path.basename(text_file), len(file_content)))
                 self.file_caption_counts.append((os.path.basename(text_file), captions_count))
+                # More efficient: only update longest_words when we have a longer word
                 for word in words:
-                    self.longest_words.add(word)
-                    if len(self.longest_words) > 5:
+                    if len(self.longest_words) < 5:
+                        self.longest_words.add(word)
+                    elif len(word) > min(len(w) for w in self.longest_words):
+                        self.longest_words.add(word)
+                        # Only sort when we exceed the limit
                         self.longest_words = set(sorted(self.longest_words, key=len, reverse=True)[:5])
                 self.total_text_filesize += os.path.getsize(text_file)
                 self.caption_lengths.extend(len(caption.split()) for caption in captions)

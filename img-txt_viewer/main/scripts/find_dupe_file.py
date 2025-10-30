@@ -413,11 +413,19 @@ class FindDupeFile:
     def get_file_hash(self, file_path):
         try:
             self.tray_label_status.config(text=" Comparing...")
+            # Use chunked reading for better memory efficiency with large files
+            chunk_size = 8192  # 8KB chunks
             with open(file_path, 'rb') as f:
                 if self.process_mode.get() == "md5":
-                    return hashlib.md5(f.read()).hexdigest()
+                    hash_obj = hashlib.md5()
                 elif self.process_mode.get() == "sha-256":
-                    return hashlib.sha256(f.read()).hexdigest()
+                    hash_obj = hashlib.sha256()
+                else:
+                    return None
+                
+                while chunk := f.read(chunk_size):
+                    hash_obj.update(chunk)
+                return hash_obj.hexdigest()
         except IOError:
             self.insert_to_textlog(f"\nERROR - get_file_hash: Cannot open file at {file_path}")
             return None

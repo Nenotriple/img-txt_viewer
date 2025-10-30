@@ -1008,7 +1008,8 @@ class ImgTxtViewer:
             if hasattr(self, 'text_box'):
                 text_content = self.text_box.get("1.0", "end-1c")
                 char_count = len(text_content)
-                word_count = len([word for word in text_content.split() if word.strip()])
+                # More efficient: split() already filters empty strings, no need for strip() check
+                word_count = len(text_content.split())
                 self.text_controller.stats_info_lbl.config(text=f"Characters: {char_count}  |  Words: {word_count}")
                 return char_count, word_count
             return 0, 0
@@ -1590,12 +1591,15 @@ class ImgTxtViewer:
             for filename in files_in_dir:
                 if self.check_odd_files(filename):
                     self.rename_odd_files(filename)
+        # Build extensions tuple once instead of on each iteration
+        extensions = (".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif")
+        if self.is_ffmpeg_installed:
+            extensions = extensions + (".mp4",)
+        
+        image_dir = self.image_dir.get()
         for filename in files_in_dir:
-            extensions = [".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif"]
-            if self.is_ffmpeg_installed:
-                extensions.append(".mp4")
-            if str(filename).lower().endswith(tuple(extensions)):
-                image_file_path = os.path.join(self.image_dir.get(), filename)
+            if str(filename).lower().endswith(extensions):
+                image_file_path = os.path.join(image_dir, filename)
                 self.image_files.append(image_file_path)
                 text_filename = os.path.splitext(filename)[0] + ".txt"
                 text_file_path = os.path.join(self.text_dir, text_filename)
@@ -1917,11 +1921,17 @@ class ImgTxtViewer:
 
 
     def update_image_file_count(self):
-        extensions = ['.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif']
+        extensions = ('.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif')
         if self.is_ffmpeg_installed:
-            extensions.append('.mp4')
+            extensions = extensions + ('.mp4',)
             self.update_video_thumbnails()
-        self.image_files = [file for ext in extensions for file in glob.glob(f"{self.image_dir.get()}/*{ext}")]
+        # More efficient: single directory scan instead of multiple glob calls
+        image_dir = self.image_dir.get()
+        self.image_files = [
+            os.path.join(image_dir, f) 
+            for f in os.listdir(image_dir) 
+            if f.lower().endswith(extensions)
+        ]
         self.image_files.sort(key=self.get_file_sort_key(), reverse=self.reverse_load_order_var.get())
         self.text_files = [os.path.splitext(file)[0] + '.txt' for file in self.image_files]
         self.update_total_image_label()
@@ -2700,17 +2710,21 @@ class ImgTxtViewer:
 
 
     def check_dir_for_img(self, directory):
-        extensions = ['.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif']
+        extensions = ('.jpg', '.jpeg', '.jpg_large', '.jfif', '.png', '.webp', '.bmp', '.gif')
         if self.is_ffmpeg_installed:
-            extensions.append('.mp4')
+            extensions = extensions + ('.mp4',)
             self.update_video_thumbnails()
-        if any(str(fname).lower().endswith(tuple(extensions)) for fname in os.listdir(directory)):
-            self.filepath_contains_images_var = True
-            return True
-        else:
-            messagebox.showwarning("No Images", "The selected directory does not contain any images.")
-            self.filepath_contains_images_var = False
-            return False
+        # More efficient: use os.scandir with early exit instead of os.listdir
+        try:
+            for entry in os.scandir(directory):
+                if entry.is_file() and entry.name.lower().endswith(extensions):
+                    self.filepath_contains_images_var = True
+                    return True
+        except Exception:
+            pass
+        messagebox.showwarning("No Images", "The selected directory does not contain any images.")
+        self.filepath_contains_images_var = False
+        return False
 
 
     def choose_working_directory(self):
@@ -2871,8 +2885,8 @@ class ImgTxtViewer:
         zip_filename = filedialog.asksaveasfilename(defaultextension=".zip", filetypes=[("Zip files", "*.zip")], title="Save As", initialdir=folder_path, initialfile="dataset.zip")
         if not zip_filename:
             return
-        allowed_extensions = [".txt", ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif", ".jfif", ".jpg_large", ".mp4"]
-        file_list = [os.path.join(folder_path, file) for file in os.listdir(folder_path) if any(file.lower().endswith(ext) for ext in allowed_extensions)]
+        allowed_extensions = (".txt", ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif", ".jfif", ".jpg_large", ".mp4")
+        file_list = [os.path.join(folder_path, file) for file in os.listdir(folder_path) if file.lower().endswith(allowed_extensions)]
         num_images = sum(1 for file in file_list if file.lower().endswith(('.jpg', '.jpeg', '.png', '.webp', '.bmp', '.gif', '.jfif', '.jpg_large')))
         num_videos = sum(1 for file in file_list if file.lower().endswith('.mp4'))
         num_texts = sum(1 for file in file_list if file.lower().endswith('.txt'))

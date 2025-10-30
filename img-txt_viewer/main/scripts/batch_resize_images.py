@@ -369,7 +369,8 @@ class BatchResizeImages:
 
     def update_message_text(self, filecount=None, processed=None, elapsed=None, eta=None):
         if filecount:
-            count = sum(1 for file in os.listdir(self.working_dir) if file.endswith(self.supported_filetypes))
+            # More efficient: use generator expression with sum
+            count = sum(1 for file in os.listdir(self.working_dir) if file.lower().endswith(self.supported_filetypes))
             self.info_label_total.config(text=f"Total: {count}")
         if processed:
             self.info_label_processed.config(text=f"Processed: {processed}")
