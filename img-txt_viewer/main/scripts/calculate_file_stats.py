@@ -24,6 +24,10 @@ if TYPE_CHECKING:
 
 
 class CalculateFileStats:
+    # Pre-compile regex patterns for better performance
+    _word_pattern = re.compile(r'\b\w+\b')
+    _sentence_pattern = re.compile(r'[.!?]')
+    
     def __init__(self, app: 'Main', root: 'Tk'):
         self.app = app
         self.root = root
@@ -124,7 +128,8 @@ class CalculateFileStats:
                 self.char_counter.update(file_content)
                 self.word_lengths.extend(len(word) for word in words)
                 self.total_sentences += len(sentences)
-                self.sentence_lengths.extend(len(re.findall(r'\b\w+\b', sentence)) for sentence in sentences)
+                # Use pre-compiled pattern for sentence word counting
+                self.sentence_lengths.extend(len(self._word_pattern.findall(sentence)) for sentence in sentences)
                 self.total_paragraphs += len(paragraphs)
                 self.update_caption_counter(captions)
                 captions_count = len(captions)
@@ -398,8 +403,9 @@ class CalculateFileStats:
         """Read and process a single text file."""
         with open(text_file, 'r', encoding="utf-8") as file:
             file_content = file.read()
-        words = re.findall(r'\b\w+\b', file_content.lower())
-        sentences = re.split(r'[.!?]', file_content)
+        # Use pre-compiled patterns for better performance
+        words = self._word_pattern.findall(file_content.lower())
+        sentences = self._sentence_pattern.split(file_content)
         paragraphs = file_content.split('\n\n')
         captions = [cap.strip() for cap in file_content.split(',')]
         return file_content, words, sentences, paragraphs, captions

@@ -115,6 +115,20 @@ class ImgTxtViewer:
         self.autocomplete = SuggestionHandler(self)
         self.text_controller = text_controller.TextController(self, self.root)
 
+        # Pre-compile regex patterns for text cleanup (performance optimization)
+        self._cleanup_patterns = {
+            'period_newline': re.compile(r'\.\s'),
+            'spaces_around_newlines': re.compile(' *\n *'),
+            'period_comma': re.compile(r'\.\s'),
+            'spaces_around_commas': re.compile(' *, *'),
+            'multiple_spaces': re.compile(' +'),
+            'multiple_commas': re.compile(",+"),
+            'comma_no_space': re.compile(r",(?=[^\s])"),
+            'multiple_backslashes': re.compile(r'\\\\+'),
+            'trailing_commas': re.compile(",+$"),
+            'trailing_spaces': re.compile(" +$"),
+        }
+
         # Setup UI state
         self.ui_state = "ImgTxtViewer"
         self.current_ui_state = {"tab": "Tagger", "index": 0}
@@ -2570,18 +2584,19 @@ class ImgTxtViewer:
     def cleanup_text(self, text, bypass=False):
         if self.cleaning_text_var.get() or bypass:
             text = self.remove_duplicate_CSV_captions(text)
+            # Use pre-compiled regex patterns for better performance
             if self.list_mode_var.get():
-                text = re.sub(r'\.\s', '\n', text)  # Replace period and space with newline
-                text = re.sub(' *\n *', '\n', text)  # Replace spaces around newlines with a single newline
+                text = self._cleanup_patterns['period_newline'].sub('\n', text)
+                text = self._cleanup_patterns['spaces_around_newlines'].sub('\n', text)
             else:
-                text = re.sub(r'\.\s', ', ', text)  # Replace period and space with comma and space
-                text = re.sub(' *, *', ',', text)  # Replace spaces around commas with a single comma
-            text = re.sub(' +', ' ', text)  # Replace multiple spaces with a single space
-            text = re.sub(",+", ",", text)  # Replace multiple commas with a single comma
-            text = re.sub(",(?=[^\s])", ", ", text)  # Add a space after a comma if it's not already there
-            text = re.sub(r'\\\\+', r'\\', text)  # Replace multiple backslashes with a single backslash
-            text = re.sub(",+$", "", text)  # Remove trailing commas
-            text = re.sub(" +$", "", text)  # Remove trailing spaces
+                text = self._cleanup_patterns['period_comma'].sub(', ', text)
+                text = self._cleanup_patterns['spaces_around_commas'].sub(',', text)
+            text = self._cleanup_patterns['multiple_spaces'].sub(' ', text)
+            text = self._cleanup_patterns['multiple_commas'].sub(",", text)
+            text = self._cleanup_patterns['comma_no_space'].sub(", ", text)
+            text = self._cleanup_patterns['multiple_backslashes'].sub(r'\\', text)
+            text = self._cleanup_patterns['trailing_commas'].sub("", text)
+            text = self._cleanup_patterns['trailing_spaces'].sub("", text)
             text = text.strip(",")  # Remove leading and trailing commas
             text = text.strip()  # Remove leading and trailing spaces
         return text
