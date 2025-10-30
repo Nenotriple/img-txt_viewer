@@ -2585,9 +2585,11 @@ class ImgTxtViewer:
             text = self.remove_duplicate_CSV_captions(text)
             # Use pre-compiled regex patterns for better performance
             if self.list_mode_var.get():
+                # Replace "period + space" with newline for list mode
                 text = self._cleanup_patterns['period_space'].sub('\n', text)
                 text = self._cleanup_patterns['spaces_around_newlines'].sub('\n', text)
             else:
+                # Replace "period + space" with comma for normal mode
                 text = self._cleanup_patterns['period_space'].sub(', ', text)
                 text = self._cleanup_patterns['spaces_around_commas'].sub(',', text)
             text = self._cleanup_patterns['multiple_spaces'].sub(' ', text)
