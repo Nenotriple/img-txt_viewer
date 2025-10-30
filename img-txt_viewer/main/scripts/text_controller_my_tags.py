@@ -726,7 +726,8 @@ class MyTags:
 
     def remove_extra_newlines(self, text: "str"):
         lines = text.split('\n')
-        cleaned_lines = [line for line in lines if line.strip() != '']
+        # More efficient: filter and join in one operation
+        cleaned_lines = [line for line in lines if line.strip()]
         result = '\n'.join(cleaned_lines)
         if not result.endswith('\n'):
             result += '\n'

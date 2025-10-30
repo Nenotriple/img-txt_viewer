@@ -451,7 +451,7 @@ class BatchRename:
 
     def update_info_label(self, filecount=None, text=None):
         if filecount:
-            filecount = sum(1 for file in os.listdir(self.working_dir) if file.endswith(self.supported_filetypes))
+            filecount = sum(1 for file in os.listdir(self.working_dir) if file.lower().endswith(self.supported_filetypes))
             selection_count = self.last_preview_count
             digits = len(str(filecount))
             selection_str = str(selection_count).zfill(digits)

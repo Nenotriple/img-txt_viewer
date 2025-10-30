@@ -650,10 +650,11 @@ class BatchImgEdit:
             self.image_filelist = list(self.app.image_files)
             return
         else:
-            for fname in os.listdir(self.working_dir):
-                fpath = os.path.join(self.working_dir, fname)
-                if os.path.isfile(fpath) and fname.lower().endswith(self.supported_filetypes):
-                    self.image_filelist.append(fname)
+            # More efficient: build list with list comprehension instead of append in loop
+            self.image_filelist = [
+                fname for fname in os.listdir(self.working_dir)
+                if os.path.isfile(os.path.join(self.working_dir, fname)) and fname.lower().endswith(self.supported_filetypes)
+            ]
         self.populate_listbox()
 
     def populate_listbox(self):
