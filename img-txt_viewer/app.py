@@ -117,9 +117,8 @@ class ImgTxtViewer:
 
         # Pre-compile regex patterns for text cleanup (performance optimization)
         self._cleanup_patterns = {
-            'period_newline': re.compile(r'\.\s'),
+            'period_space': re.compile(r'\.\s'),  # Used for both newline and comma replacement
             'spaces_around_newlines': re.compile(' *\n *'),
-            'period_comma': re.compile(r'\.\s'),
             'spaces_around_commas': re.compile(' *, *'),
             'multiple_spaces': re.compile(' +'),
             'multiple_commas': re.compile(",+"),
@@ -2586,10 +2585,10 @@ class ImgTxtViewer:
             text = self.remove_duplicate_CSV_captions(text)
             # Use pre-compiled regex patterns for better performance
             if self.list_mode_var.get():
-                text = self._cleanup_patterns['period_newline'].sub('\n', text)
+                text = self._cleanup_patterns['period_space'].sub('\n', text)
                 text = self._cleanup_patterns['spaces_around_newlines'].sub('\n', text)
             else:
-                text = self._cleanup_patterns['period_comma'].sub(', ', text)
+                text = self._cleanup_patterns['period_space'].sub(', ', text)
                 text = self._cleanup_patterns['spaces_around_commas'].sub(',', text)
             text = self._cleanup_patterns['multiple_spaces'].sub(' ', text)
             text = self._cleanup_patterns['multiple_commas'].sub(",", text)
